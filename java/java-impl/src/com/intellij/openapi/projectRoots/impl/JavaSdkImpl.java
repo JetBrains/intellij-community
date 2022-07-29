@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -7,12 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
@@ -65,8 +63,6 @@ import java.util.stream.Stream;
  */
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
-
-  public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
   private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
@@ -197,13 +193,6 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
     return JavaHomeFinder.suggestHomePaths();
-  }
-
-  @Override
-  public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
-    FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
-    descriptor.putUserData(KEY, Boolean.TRUE);
-    return descriptor;
   }
 
   @Override

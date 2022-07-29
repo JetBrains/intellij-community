@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSLoopStatementTest : KotlinSSResourceInspectionTest() {
+class KotlinSSLoopStatementTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "loopStatement"
 
     fun testForLoop() {

@@ -25,7 +25,7 @@ public final class JavaTargetDependentParameters {
 
   @NotNull
   public List<String> toLocalParameters() {
-    return ContainerUtil.map(parameters, (f) -> f.apply(new LocalTargetEnvironmentRequest()).toLocalParameter());
+    return ContainerUtil.map(parameters, f -> f.apply(new LocalTargetEnvironmentRequest()).toLocalParameter());
   }
 
   @NotNull

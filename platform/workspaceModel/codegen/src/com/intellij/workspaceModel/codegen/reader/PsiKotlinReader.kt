@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.codegen.patcher
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.workspaceModel.deft.api.annotations.Ignore
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
@@ -12,6 +11,7 @@ import com.intellij.workspaceModel.codegen.deft.model.*
 import com.intellij.workspaceModel.codegen.deft.model.KtAnnotation
 import com.intellij.workspaceModel.codegen.deft.model.KtConstructor
 import com.intellij.workspaceModel.codegen.deft.model.KtFile
+import com.intellij.workspaceModel.deft.api.annotations.Default
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -162,7 +162,11 @@ class PsiKotlinReader(val file: KtFile) {
 
   private fun `val`(ktProperty: KtProperty) {
     val nameRange = ktProperty.nameIdentifier!!.srcRange
-    val getterBody = ktProperty.getter?.bodyExpression?.text
+    val getter = ktProperty.getter
+    val getterBody = getter?.bodyExpression?.text
+    val annotationEntries = mutableListOf<KtAnnotationEntry>()
+    annotationEntries.addAll(ktProperty.annotationEntries)
+    if (getter != null) annotationEntries.addAll(getter.annotationEntries)
     leafBlock.defs.add(DefField(
       nameRange,
       nameRange.text,
@@ -171,7 +175,7 @@ class PsiKotlinReader(val file: KtFile) {
       getterBody,
       constructorParam = false,
       suspend = false,
-      annotation(ktProperty.annotationEntries, ktProperty),
+      annotation(annotationEntries, ktProperty),
       type(ktProperty.receiverTypeReference),
       ktProperty.delegateExpression?.srcRange // TODO:: check that working
     ))
@@ -212,7 +216,7 @@ class PsiKotlinReader(val file: KtFile) {
 
   private fun `annotation`(annotationEntries: List<KtAnnotationEntry>, parentElement: PsiElement): KtAnnotations {
     val annotations = KtAnnotations()
-    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName, Ignore::class.simpleName).forEach { annotationName ->
+    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName, Default::class.simpleName).forEach { annotationName ->
       val annotation = annotationEntries.find { it.shortName?.identifier == annotationName }
       if (annotation != null) {
         val intRange = (annotation.textRange.startOffset + 1) until annotation.textRange.endOffset

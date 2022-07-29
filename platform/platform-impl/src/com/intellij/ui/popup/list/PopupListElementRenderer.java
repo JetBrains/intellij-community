@@ -144,11 +144,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
+      myMnemonicLabel.setMinimumSize(JBUI.size(12, myMnemonicLabel.getMinimumSize().height));
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
@@ -229,6 +229,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (myIconLabel == null) return;
     myIconLabel.setIcon(icon);
     myIconLabel.setDisabledIcon(disabledIcon);
+    if (ExperimentalUI.isNewUI() && icon != null && icon.getIconWidth() != -1 && icon.getIconHeight() != -1) {
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+    }
   }
 
   @NotNull
@@ -294,6 +297,13 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
       ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
+
+      int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+      Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      boolean hasNextIcon = myNextStepLabel.getIcon() != null && myNextStepLabel.isVisible();
+      //noinspection UseDPIAwareBorders
+      myComponent.setBorder(
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon ? leftRightInset : leftRightInset + leftRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {

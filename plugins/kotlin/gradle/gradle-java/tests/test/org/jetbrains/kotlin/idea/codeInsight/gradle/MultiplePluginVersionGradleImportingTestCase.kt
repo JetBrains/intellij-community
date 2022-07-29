@@ -10,17 +10,13 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runners.Parameterized
-import java.io.File
-
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
@@ -29,7 +25,14 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         data class Exact(val version: KotlinToolingVersion) : KotlinVersionRequirement()
         data class Range(
             val lowestIncludedVersion: KotlinToolingVersion?, val highestIncludedVersion: KotlinToolingVersion?
-            ) : KotlinVersionRequirement()
+        ) : KotlinVersionRequirement()
+    }
+
+    data class KotlinPluginVersionParam(
+        val version: KotlinToolingVersion,
+        val name: String = version.toString()
+    ) {
+        override fun toString(): String = name
     }
 
     @Rule
@@ -38,19 +41,14 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     @JvmField
     @Parameterized.Parameter(1)
-    var kotlinPluginParameter: String = ""
+    var kotlinPluginVersionParam: KotlinPluginVersionParam? = null
 
-    val kotlinPluginVersion: KotlinToolingVersion get() = KotlinToolingVersion(kotlinPluginVersionString)
-
-    open val kotlinPluginVersionString: String get() = if (kotlinPluginParameter == "master") masterKotlinPluginVersion else kotlinPluginParameter
-
+    val kotlinPluginVersion: KotlinToolingVersion
+        get() = checkNotNull(kotlinPluginVersionParam) {
+            "Missing 'kotlinPluginVersionParam'"
+        }.version
 
     override fun setUp() {
-        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
-            assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
-            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        }
         super.setUp()
         setupSystemProperties()
     }
@@ -81,23 +79,30 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: LAST_SNAPSHOT.toString()
         const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            return if (IS_UNDER_SAFE_PUSH) listOf(
-                /* Safe push tested with latest released versions */
-                arrayOf("7.3.3", V_1_6_21.toString())
-            ) else listOf(
-                /* Progressively updated Gradle and KGP versions */
-                arrayOf("6.8.3", V_1_4_32.toString()),
-                arrayOf("6.9.2", V_1_5_32.toString()),
-                arrayOf("7.3.3", V_1_6_21.toString()),
-                arrayOf("7.4.2", "master")
+            val parameters = mutableListOf<Array<Any>>()
+
+            fun addVersions(
+                gradleVersion: String, kotlinVersion: KotlinToolingVersion, kotlinVersionName: String = kotlinVersion.toString()
+            ) = parameters.add(arrayOf(gradleVersion, KotlinPluginVersionParam(kotlinVersion, kotlinVersionName)))
+
+            if (!IS_UNDER_SAFE_PUSH) {
+                addVersions("6.8.3", V_1_4_32)
+                addVersions("6.9.2", V_1_5_32)
+                addVersions("7.3.3", V_1_6_21)
+            }
+
+            addVersions(
+                "7.4.2", KotlinGradlePluginVersions.latest,
+                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
             )
+
+            return parameters
         }
     }
 
@@ -126,13 +131,15 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     protected val disableHmppProperties: String
         get() = if (isHmppEnabledByDefault) "kotlin.mpp.hierarchicalStructureSupport=false" else ""
 
-    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
+    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(
+        useKts, GradleVersion.version(gradleVersion), kotlinPluginVersion
+    )
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidProperties)
             putAll(hmppProperties)
-            put("kotlin_plugin_version", kotlinPluginVersionString)
+            put("kotlin_plugin_version", kotlinPluginVersion.toString())
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
         }
@@ -169,8 +176,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    fun checkHighlightingOnAllModules() {
-        createHighlightingCheck().invokeOnAllModules()
+    fun checkHighlightingOnAllModules(testLineMarkers: Boolean = true) {
+        createHighlightingCheck(testLineMarkers).invokeOnAllModules()
     }
 }
 
@@ -180,12 +187,4 @@ fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(vers
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
-}
-
-private fun localKotlinGradlePluginExists(): Boolean {
-    val localKotlinGradlePlugin = File(System.getProperty("user.home"))
-        .resolve(".m2/repository")
-        .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/${MultiplePluginVersionGradleImportingTestCase.masterKotlinPluginVersion}")
-
-    return localKotlinGradlePlugin.exists()
 }

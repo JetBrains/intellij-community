@@ -65,7 +65,7 @@ class TextCompletionPopup<T>(
     list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_SELECT_ALL))
     list.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
       @Suppress("UNCHECKED_CAST")
-      val selectedValue = list.selectedValue as Item<T>
+      val selectedValue = list.selectedValue as? Item<T>
       if (selectedValue is Item.Just) {
         contributor.fireItemChosen(selectedValue.item)
       }

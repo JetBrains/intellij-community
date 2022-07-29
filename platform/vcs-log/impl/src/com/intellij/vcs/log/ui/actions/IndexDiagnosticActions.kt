@@ -1,25 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.Consumer
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getFirstCommits
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
@@ -29,6 +24,8 @@ import java.util.*
 import java.util.function.Supplier
 
 abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
@@ -55,21 +52,14 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
     val commitIds = getCommitsToCheck(e, logManager)
     if (commitIds.isEmpty()) return
 
-    logManager.dataManager.commitDetailsGetter.loadCommitsData(commitIds, Consumer { commitDetails ->
-      runCheck(project, dataGetter, commitIds, commitDetails)
-    }, thisLogger()::error, null)
-  }
-
-  private fun runCheck(project: Project,
-                       dataGetter: IndexDataGetter,
-                       commitsList: List<Int>,
-                       detailsList: List<VcsFullCommitDetails>) {
     val report = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      return@ThrowableComputable dataGetter.getDiffFor(commitsList, detailsList)
+      val detailsList = logManager.dataManager.commitDetailsGetter.getCommitDetails(commitIds)
+      return@ThrowableComputable dataGetter.getDiffFor(commitIds, detailsList)
     }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
     if (report.isBlank()) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(project, VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
-                                                                                         commitsList.size),
+      VcsBalloonProblemNotifier.showOverVersionControlView(project,
+                                                           VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
+                                                                                commitIds.size),
                                                            MessageType.INFO)
       return
     }
@@ -87,18 +77,18 @@ class CheckSelectedCommits :
   IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.selected.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
-    val vcsLog = e.getData(VcsLogDataKeys.VCS_LOG)
-    if (vcsLog == null) {
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+    if (selection == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selectedCommits = getSelectedCommits(logManager.dataManager, vcsLog, false)
+    val selectedCommits = getSelectedCommits(logManager.dataManager, selection, false)
     e.presentation.isVisible = true
     e.presentation.isEnabled = selectedCommits.isNotEmpty()
   }
 
-  private fun getSelectedCommits(vcsLogData: VcsLogData, vcsLog: VcsLog, reportNotIndexed: Boolean): List<Int> {
-    val selectedCommits = vcsLog.selectedCommits.map { vcsLogData.getCommitIndex(it.hash, it.root) }
+  private fun getSelectedCommits(vcsLogData: VcsLogData, selection: VcsLogCommitSelection, reportNotIndexed: Boolean): List<Int> {
+    val selectedCommits = selection.ids
     if (selectedCommits.isEmpty()) return emptyList()
 
     val selectedIndexedCommits = selectedCommits.filter { vcsLogData.index.isIndexed(it) }
@@ -111,7 +101,7 @@ class CheckSelectedCommits :
   }
 
   override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
-    return getSelectedCommits(logManager.dataManager, e.getRequiredData(VcsLogDataKeys.VCS_LOG), true)
+    return getSelectedCommits(logManager.dataManager, e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION), true)
   }
 }
 

@@ -4,6 +4,7 @@ package com.intellij.remote;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
 import com.intellij.remote.ext.CredentialsCase;
+import org.jetbrains.annotations.NotNull;
 
 public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
@@ -15,7 +16,7 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   @Deprecated
   void setInitialized(boolean initialized);
 
-  RemoteConnectionCredentialsWrapper connectionCredentials();
+  @NotNull RemoteConnectionCredentialsWrapper connectionCredentials();
 
   <C> void setCredentials(Key<C> key, C credentials);
 

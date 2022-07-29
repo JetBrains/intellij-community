@@ -62,10 +62,7 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   fun getBottomInset(): Int = commitButton.getBottomInset()
   fun setTargetComponent(component: JComponent) = primaryCommitActionsToolbar.setTargetComponent(component)
 
-  fun setupShortcuts(component: JComponent, parentDisposable: Disposable) {
-    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, parentDisposable)
-    ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, parentDisposable)
-  }
+  fun createActions() = listOf(DefaultCommitAction(), ShowCustomCommitActions())
 
   // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
   //  See CheckinProjectPanel.getCommitActionName() usages.
@@ -99,6 +96,10 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
   inner class DefaultCommitAction : DumbAwareAction() {
+    init {
+      shortcutSet = DEFAULT_COMMIT_ACTION_SHORTCUT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isDefaultExecutorEnabled() && commitButton.isDefaultButton
     }
@@ -107,6 +108,10 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   }
 
   private inner class ShowCustomCommitActions : DumbAwareAction() {
+    init {
+      shortcutSet = getDefaultShowPopupShortcut()
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isActive && commitButton.isEnabled
     }

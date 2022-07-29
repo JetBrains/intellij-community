@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -140,17 +139,9 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
       }
 
-      if (JBTabsImpl.NEW_TABS) {
-        if (getLastLayoutPass() == null || getLastLayoutPass().getExtraBorderLines() == null) return;
-        List<LayoutPassInfo.LineCoordinates> borderLines = getLastLayoutPass().getExtraBorderLines();
-        for (LayoutPassInfo.LineCoordinates borderLine : borderLines) {
-          getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), borderLine.from(), borderLine.to());
-        }
-      } else {
-        getTabPainter()
-          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
-                           new Point(x + width, y + myHeaderFitSize.height));
-      }
+      getTabPainter()
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
+                         new Point(x + width, y + myHeaderFitSize.height));
     }
 
     public void setSideMask(@SideBorder.SideMask int mask) {

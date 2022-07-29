@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.nio.file.Paths
 
 abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
+    override fun isFirPlugin(): Boolean = true
+
     fun doTest(testFilePath: String) {
         myFixture.configureByFile(testFilePath) as KtFile
 

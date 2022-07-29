@@ -35,6 +35,7 @@ class WorkspaceEntityEqualityTest {
     }
 
     assertEquals(entityOne, entityTwo)
+    assertEquals(entityTwo, entityOne)
   }
 
   @Test

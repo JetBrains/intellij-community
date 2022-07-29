@@ -18,28 +18,28 @@ interface TreeEntity : WorkspaceEntity {
   val parentEntity: TreeEntity
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: TreeEntity, ModifiableWorkspaceEntity<TreeEntity>, ObjBuilder<TreeEntity> {
-      override var data: String
-      override var entitySource: EntitySource
-      override var children: List<TreeEntity>
-      override var parentEntity: TreeEntity
+  interface Builder : TreeEntity, ModifiableWorkspaceEntity<TreeEntity>, ObjBuilder<TreeEntity> {
+    override var data: String
+    override var entitySource: EntitySource
+    override var children: List<TreeEntity>
+    override var parentEntity: TreeEntity
   }
-  
-  companion object: Type<TreeEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeEntity {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<TreeEntity, Builder>() {
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeEntity {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit) = modifyEntity(TreeEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit) = modifyEntity(
+  TreeEntity.Builder::class.java, entity, modification)
 //endregion

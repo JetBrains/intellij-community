@@ -15,6 +15,7 @@ import junit.framework.Assert.*
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 class EntityStorageSerializationTest {
   @Test
@@ -47,11 +48,24 @@ class EntityStorageSerializationTest {
       put("ab", "bc")
       put("bc", "ce")
     }
-    val entity = SampleEntity(false, SampleEntitySource("test"), "MyEntity", stringListProperty,
-                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"))
+    val entity = SampleEntity(false, "MyEntity", stringListProperty,
+                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
     builder.addEntity(entity)
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
+  }
+
+  @Test
+  fun `entity uuid serialization`() {
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
+    val builder = createEmptyBuilder()
+    val entity = SampleEntity(false, "MyEntity", emptyList(),
+                              emptyMap(), virtualFileManager.fromUrl("file:///tmp"), SampleEntitySource("test")) {
+      randomUUID = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66")
+    }
+    builder.addEntity(entity)
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
   }
 
   @Test
@@ -76,7 +90,7 @@ class EntityStorageSerializationTest {
   fun `serializer version`() {
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
 
-    val kryo = serializer.createKryo()
+    val (kryo, _) = serializer.createKryo()
 
     val registration = (10..1_000).mapNotNull { kryo.getRegistration(it) }.joinToString(separator = "\n")
 
@@ -135,26 +149,26 @@ class EntityStorageSerializationTest {
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string
 private val expectedKryoRegistration = """
-  [10, com.google.common.collect.HashMultimap]
-  [11, com.intellij.workspaceModel.storage.impl.ConnectionId]
-  [12, com.intellij.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
-  [13, com.intellij.workspaceModel.storage.impl.ChildEntityId]
-  [14, com.intellij.workspaceModel.storage.impl.ParentEntityId]
-  [15, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
-  [16, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}TypeInfo]
-  [17, java.util.ArrayList]
-  [18, java.util.HashMap]
-  [19, com.intellij.util.SmartList]
-  [20, java.util.LinkedHashMap]
-  [21, com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap]
-  [22, com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap]
-  [23, java.util.HashSet]
-  [24, com.intellij.util.containers.BidirectionalMultiMap]
-  [25, com.google.common.collect.HashBiMap]
-  [26, java.util.LinkedHashSet]
-  [27, com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
-  [28, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
-  [29, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
+  [10, com.intellij.workspaceModel.storage.impl.ConnectionId]
+  [11, com.intellij.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
+  [12, com.intellij.workspaceModel.storage.impl.ChildEntityId]
+  [13, com.intellij.workspaceModel.storage.impl.ParentEntityId]
+  [14, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
+  [15, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}TypeInfo]
+  [16, java.util.ArrayList]
+  [17, java.util.HashMap]
+  [18, com.intellij.util.SmartList]
+  [19, java.util.LinkedHashMap]
+  [20, com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap]
+  [21, com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap]
+  [22, java.util.HashSet]
+  [23, com.intellij.util.containers.BidirectionalMultiMap]
+  [24, com.google.common.collect.HashBiMap]
+  [25, java.util.LinkedHashSet]
+  [26, com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
+  [27, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
+  [28, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
+  [29, java.util.List]
   [30, kotlin.collections.builders.ListBuilder]
   [31, kotlin.collections.builders.MapBuilder]
   [32, java.util.Arrays${'$'}ArrayList]
@@ -193,4 +207,5 @@ private val expectedKryoRegistration = """
   [65, kotlin.collections.EmptyList]
   [66, kotlin.collections.EmptySet]
   [67, Object[]]
+  [68, java.util.UUID]
 """.trimIndent()

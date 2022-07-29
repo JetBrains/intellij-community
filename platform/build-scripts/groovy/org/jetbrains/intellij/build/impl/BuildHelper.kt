@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
 import java.io.File
@@ -59,15 +60,15 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
   copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
 }
 
-fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Boolean) {
-  zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress)
+fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+  zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress, addDirEntriesMode)
 }
 
-fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean) {
+fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
-      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntries = false)
+      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntriesMode = addDirEntriesMode)
     }
 }
 
@@ -141,8 +142,7 @@ fun runApplicationStarter(context: BuildContext,
                           arguments: List<String>,
                           systemProperties: Map<String, Any> = emptyMap(),
                           vmOptions: List<String> = emptyList(),
-                          timeoutMillis: Long = DEFAULT_TIMEOUT,
-                          classpathCustomizer: ((MutableSet<String>) -> Unit)? = null) {
+                          timeoutMillis: Long = DEFAULT_TIMEOUT) {
   Files.createDirectories(tempDir)
   val jvmArgs = ArrayList<String>()
   val systemDir = tempDir.resolve("system")
@@ -174,18 +174,19 @@ fun runApplicationStarter(context: BuildContext,
       }
     }
   }
-  classpathCustomizer?.invoke(effectiveIdeClasspath)
   disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
   runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis) {
     val logFile = systemDir.resolve("log").resolve("idea.log")
-    val logFileToPublish = File.createTempFile("idea-", ".log")
-    logFile.copyTo(logFileToPublish.toPath(), true)
-    context.notifyArtifactBuilt(logFileToPublish.toPath())
-    try {
-      context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
-    }
-    catch (_: BuildScriptsLoggedError) {
-      // skip exception thrown by logger.error
+    if (Files.exists(logFile)) {
+      val logFileToPublish = File.createTempFile("idea-", ".log")
+      logFile.copyTo(logFileToPublish.toPath(), true)
+      context.notifyArtifactBuilt(logFileToPublish.toPath())
+      try {
+        context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+      }
+      catch (_: BuildScriptsLoggedError) {
+        // skip exception thrown by logger.error
+      }
     }
   }
 }
@@ -196,7 +197,7 @@ private fun readPluginId(pluginJar: Path): String? {
   }
 
   try {
-    FileSystems.newFileSystem(pluginJar, null).use {
+    FileSystems.newFileSystem(pluginJar, null as ClassLoader).use {
       return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
     }
   }
@@ -210,14 +211,6 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
                                             explicitlyEnabledPlugins: Set<String?>) {
   val toDisable = LinkedHashSet<String>()
   for (moduleName in context.productProperties.productLayout.compatiblePluginsToIgnore) {
-    // TODO: It is temporary solution to avoid exclude Kotlin from searchable options build because Kotlin team
-    // need to use the same id in fir plugin.
-    // Remove it when "kotlin.plugin-fir" will removed from compatiblePluginsToIgnore
-    // see: org/jetbrains/intellij/build/BaseIdeaProperties.groovy:179
-    if (moduleName == "kotlin.plugin-fir") {
-      continue
-    }
-
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")!!
     val child = readXmlAsModel(Files.newInputStream(pluginXml)).getChild("id")
     val pluginId = child?.content ?: continue

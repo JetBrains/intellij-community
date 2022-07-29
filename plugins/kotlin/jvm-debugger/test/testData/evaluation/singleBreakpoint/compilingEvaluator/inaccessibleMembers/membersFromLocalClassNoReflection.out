@@ -12,6 +12,7 @@ a.test()
 
 // RESULT: Method threw 'java.lang.VerifyError' exception.
 
+Compiling evaluator failed: Method threw 'java.lang.VerifyError' exception.
 Disconnected from the target VM
 
 Process finished with exit code 0

@@ -92,7 +92,7 @@ public final class IconLoader {
       String modified = path.substring(0, path.length() - 4) + "@" + width + "x" + height + ".svg";
       try {
         Icon foundIcon = findIcon(new URL(modified));
-        if (foundIcon instanceof CachedImageIcon && foundIcon.getIconWidth() == width && foundIcon.getIconHeight() == height) {
+        if (foundIcon instanceof CachedImageIcon && foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
           return foundIcon;
         }
       }

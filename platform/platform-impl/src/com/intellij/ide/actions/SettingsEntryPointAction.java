@@ -228,7 +228,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     return !uiSettings.getShowMainToolbar() &&
            !uiSettings.getShowNavigationBar() &&
            !ExperimentalUI.isNewUI() &&
-           !(toolbarSettings.isEnabled() && toolbarSettings.isVisible());
+           !(toolbarSettings.isAvailable() && toolbarSettings.isVisible());
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";

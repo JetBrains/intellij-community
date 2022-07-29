@@ -173,8 +173,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
-    return executeCommand(new GetFrameCommand(this, threadId, frameId)).getVariables();
+  public XValueChildrenList loadFrame(final String threadId, final String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return executeCommand(new GetFrameCommand(this, threadId, frameId, groupType)).getVariables();
   }
 
   @Override

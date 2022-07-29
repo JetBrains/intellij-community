@@ -9,18 +9,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementResolvingContext
-import com.intellij.packaging.impl.artifacts.ArtifactModelBase
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
+import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
@@ -57,7 +54,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     return store
       .entities(ArtifactEntity::class.java)
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
-      .filter { ArtifactModelBase.VALID_ARTIFACT_CONDITION.value(it) }
+      .filter { VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
   }
 
@@ -313,6 +310,10 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       get() = getMutableExternalMapping(ARTIFACT_BRIDGE_MAPPING_ID)
 
     private val LOG = logger<ArtifactManagerBridge>()
+
+    const val FEATURE_TYPE = "com.intellij.packaging.artifacts.ArtifactType";
+
+    val VALID_ARTIFACT_CONDITION: Condition<Artifact> = Condition { it !is InvalidArtifact }
   }
 
   override fun dispose() {

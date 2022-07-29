@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.utils.WrappedValues
 
 
@@ -22,6 +23,8 @@ class StoredExceptionsThrowToggleAction :
     override fun setSelected(e: AnActionEvent, state: Boolean) {
         WrappedValues.throwWrappedProcessCanceledException = state
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         super.update(e)

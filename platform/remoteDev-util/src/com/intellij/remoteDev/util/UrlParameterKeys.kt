@@ -20,5 +20,10 @@ class UrlParameterKeys {
     @Deprecated("Use sourceUrl")
     const val download = "download"
     const val sourceUrl = "sourceUrl"
+    // should only be allowed for locally round-tripped URLs, not from external sources
+    const val localUploadPath = "localUploadPath"
+    // used in Gateway-from-IDE scenario to go around the local path limitation
+    const val runFromIdeToken = "runFromIdeToken"
+    const val runFromIdeTokenEnvVar = "GTW_FROM_IDE_TOKEN"
   }
 }

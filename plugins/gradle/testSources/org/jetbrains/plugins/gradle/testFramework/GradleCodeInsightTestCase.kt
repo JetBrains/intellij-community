@@ -33,6 +33,23 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     assertTrue("<caret>" in expression, "Please define caret position in build script.")
   }
 
+  fun testIntention(before: String, after: String, intentionPrefix: String) {
+    testIntention("build.gradle", before, after, intentionPrefix)
+  }
+
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun testIntention(fileName: String, before: String, after: String, intentionPrefix: String) {
+    checkCaret(before)
+    val file = findOrCreateFile(fileName, before)
+    runInEdtAndWait {
+      codeInsightFixture.configureFromExistingVirtualFile(file)
+      val intention = codeInsightFixture.filterAvailableIntentions(intentionPrefix).single()
+      codeInsightFixture.launchAction(intention)
+      codeInsightFixture.checkResult(after)
+      gradleFixture.fileFixture.rollback(fileName)
+    }
+  }
+
   fun testHighlighting(expression: String) = testHighlighting("build.gradle", expression)
   fun testHighlighting(relativePath: String, expression: String) {
     val file = findOrCreateFile(relativePath, expression)

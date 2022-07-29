@@ -3,6 +3,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.jdkEx.JdkEx;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -24,6 +25,12 @@ import java.util.Objects;
  * @author Alexander Lobas
  */
 public class MergeAllWindowsAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();

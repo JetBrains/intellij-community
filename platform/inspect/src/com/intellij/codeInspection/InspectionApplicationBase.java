@@ -16,7 +16,6 @@ import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -35,6 +34,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -58,6 +58,7 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.future.FutureKt;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -229,7 +230,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       onFailure(convertErrorBuffer.toString());
       return null;
     }
-
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, null);
       if (configurator.isApplicable(context)) {
@@ -377,7 +377,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     LOG.info("Waiting for startup activities");
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
-      StartupManagerEx.getInstanceEx(project).getAllActivitiesPassedFuture().get(timeout, TimeUnit.MINUTES);
+      FutureKt.asCompletableFuture(StartupManager.getInstance(project).getAllActivitiesPassedFuture()).get(timeout, TimeUnit.MINUTES);
       LOG.info("Startup activities finished");
     }
     catch (TimeoutException e) {
@@ -488,7 +488,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     // convert report
     if (reportConverter != null) {
       try {
-        List<File> results = ContainerUtil.map2List(inspectionsResults, path -> path.toFile());
+        List<File> results = ContainerUtil.map2List(inspectionsResults, Path::toFile);
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 results);
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);
@@ -760,18 +760,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
-    InspectionProfileManager.getInstance().getProfiles(); //force init provided profiles
+    InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
-    if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + profileName + "' shared project profile");
-    }
-    else {
-      //check if ide profile is used for project
+    if (inspectionProfile == null) {  // check if the IDE profile is used for the project
       for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
-          reportMessage(1, "Loaded the '" + profileName + "' local profile");
           break;
         }
       }

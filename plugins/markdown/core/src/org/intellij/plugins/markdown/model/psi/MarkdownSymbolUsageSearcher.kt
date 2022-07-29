@@ -39,6 +39,7 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
       val symbolPointer = Pointer.hardPointer(target)
       return SearchService.getInstance()
         .searchWord(project, searchText)
+        .caseSensitive(false)
         .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
         .inScope(searchScope)
         .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, Companion::findReferencesToSymbol))

@@ -9,11 +9,8 @@ import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -30,46 +27,46 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     override val persistentId: LibraryId
         get() = LibraryId(name, tableId)
 
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(1)
-    interface Builder: LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var tableId: LibraryTableId
-        override var roots: List<LibraryRoot>
-        override var excludedRoots: List<VirtualFileUrl>
-        override var sdk: SdkEntity?
-        override var libraryProperties: LibraryPropertiesEntity?
-        override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
+    override var name: String
+    override var entitySource: EntitySource
+    override var tableId: LibraryTableId
+    override var roots: List<LibraryRoot>
+    override var excludedRoots: List<VirtualFileUrl>
+    override var sdk: SdkEntity?
+    override var libraryProperties: LibraryPropertiesEntity?
+    override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
+  }
+
+  companion object : Type<LibraryEntity, Builder>() {
+    operator fun invoke(name: String,
+                        tableId: LibraryTableId,
+                        roots: List<LibraryRoot>,
+                        excludedRoots: List<VirtualFileUrl>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): LibraryEntity {
+      val builder = builder()
+      builder.name = name
+      builder.entitySource = entitySource
+      builder.tableId = tableId
+      builder.roots = roots
+      builder.excludedRoots = excludedRoots
+      init?.invoke(builder)
+      return builder
     }
-    
-    companion object: Type<LibraryEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): LibraryEntity {
-            val builder = builder()
-            builder.name = name
-            builder.entitySource = entitySource
-            builder.tableId = tableId
-            builder.roots = roots
-            builder.excludedRoots = excludedRoots
-            init?.invoke(builder)
-            return builder
-        }
-    }
-    //@formatter:on
-    //endregion
+  }
+  //endregion
 
 }
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
-var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
-    get() {
-        return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
 
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(
+  LibraryEntity.Builder::class.java, entity, modification)
+
+var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
+  by WorkspaceEntity.extension()
 //endregion
 
 interface LibraryPropertiesEntity : WorkspaceEntity {
@@ -78,32 +75,32 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     val libraryType: String
     val propertiesXmlTag: String?
 
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
+    override var library: LibraryEntity
+    override var entitySource: EntitySource
+    override var libraryType: String
+    override var propertiesXmlTag: String?
+  }
 
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(1)
-    interface Builder: LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
-        override var library: LibraryEntity
-        override var entitySource: EntitySource
-        override var libraryType: String
-        override var propertiesXmlTag: String?
+  companion object : Type<LibraryPropertiesEntity, Builder>() {
+    operator fun invoke(libraryType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
+      val builder = builder()
+      builder.entitySource = entitySource
+      builder.libraryType = libraryType
+      init?.invoke(builder)
+      return builder
     }
-    
-    companion object: Type<LibraryPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, libraryType: String, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
-            val builder = builder()
-            builder.entitySource = entitySource
-            builder.libraryType = libraryType
-            init?.invoke(builder)
-            return builder
-        }
-    }
-    //@formatter:on
-    //endregion
+  }
+  //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit) = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
+                                      modification: LibraryPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+  LibraryPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface SdkEntity : WorkspaceEntity {
@@ -111,30 +108,30 @@ interface SdkEntity : WorkspaceEntity {
 
     val homeUrl: VirtualFileUrl
 
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(1)
-    interface Builder: SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
-        override var library: LibraryEntity
-        override var entitySource: EntitySource
-        override var homeUrl: VirtualFileUrl
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
+    override var library: LibraryEntity
+    override var entitySource: EntitySource
+    override var homeUrl: VirtualFileUrl
+  }
+
+  companion object : Type<SdkEntity, Builder>() {
+    operator fun invoke(homeUrl: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
+      val builder = builder()
+      builder.entitySource = entitySource
+      builder.homeUrl = homeUrl
+      init?.invoke(builder)
+      return builder
     }
-    
-    companion object: Type<SdkEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, homeUrl: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SdkEntity {
-            val builder = builder()
-            builder.entitySource = entitySource
-            builder.homeUrl = homeUrl
-            init?.invoke(builder)
-            return builder
-        }
-    }
-    //@formatter:on
-    //endregion
+  }
+  //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit) = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit) = modifyEntity(
+  SdkEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class LibraryRootTypeId(val name: String) : Serializable {

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -90,8 +89,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
 
-  public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, BuildScriptClasspathData.KEY.getProcessingWeight());
-
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
@@ -108,7 +105,12 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
     final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
     if (dependencyAccessorsModel != null) {
-      ideProject.createChild(ACCESSORS, dependencyAccessorsModel);
+      ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
+    }
+
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getExtraProject(VersionCatalogsModel.class);
+    if (versionCatalogsModel != null) {
+      ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
     }
 
     populateProjectSdkModel(gradleProject, ideProject);
@@ -849,7 +851,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
       IntelliJSettings.class,
-      DependencyAccessorsModel.class
+      DependencyAccessorsModel.class,
+      VersionCatalogsModel.class
     );
   }
 

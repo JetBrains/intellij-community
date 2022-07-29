@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -15,9 +15,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -28,8 +27,10 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author spleaner
@@ -74,7 +76,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   }
 
   public GlassPaneDialogWrapperPeer(@NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
-    this(null, wrapper);
+    this((Project)null, wrapper);
   }
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, @NotNull Component parent) throws GlasspanePeerUnavailableException {
@@ -91,7 +93,13 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     createDialog(owner);
   }
 
-  private void createDialog(final Window owner) throws GlasspanePeerUnavailableException {
+  @ApiStatus.Internal
+  public GlassPaneDialogWrapperPeer(@NotNull Window owner, @NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
+    myWrapper = wrapper;
+    createDialog(owner);
+  }
+
+  private void createDialog(@NotNull Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (active instanceof JDialog || !(owner instanceof IdeFrame)) {
       throw new GlasspanePeerUnavailableException();
@@ -257,14 +265,14 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   }
 
   @Override
-  public ActionCallback show() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+  public CompletableFuture<?> show() {
+    LOG.assertTrue(EDT.isCurrentThreadEdt(), "Access is allowed from event dispatch thread only");
 
     hidePopupsIfNeeded();
 
     myDialog.setVisible(true);
 
-    return ActionCallback.DONE;
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
@@ -316,9 +324,11 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
 
-    final StackingPopupDispatcher stackingPopupDispatcher = StackingPopupDispatcher.getInstance();
+    StackingPopupDispatcher stackingPopupDispatcher = StackingPopupDispatcher.getInstance();
     stackingPopupDispatcher.hidePersistentPopups();
 
     Disposer.register(myDialog, new Disposable() {

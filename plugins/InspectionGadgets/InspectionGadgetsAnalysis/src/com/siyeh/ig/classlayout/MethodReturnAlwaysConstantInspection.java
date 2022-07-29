@@ -103,10 +103,10 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
   private static boolean alwaysReturnsConstant(@NotNull PsiLambdaExpression lambdaExpression) {
     PsiElement body = lambdaExpression.getBody();
     if (body instanceof PsiCodeBlock) {
-      return alwaysReturnsConstant(((PsiCodeBlock)body));
+      return alwaysReturnsConstant((PsiCodeBlock)body);
     }
     if (body instanceof PsiExpression) {
-      return PsiUtil.isConstantExpression(((PsiExpression)body));
+      return PsiUtil.isConstantExpression((PsiExpression)body);
     }
     return false;
   }

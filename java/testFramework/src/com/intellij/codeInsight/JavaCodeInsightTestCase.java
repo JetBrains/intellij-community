@@ -523,7 +523,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void deleteLine() {
-    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor, getProject());
   }
 
   protected void type(@NotNull String s) {

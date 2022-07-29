@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 import com.intellij.execution.RunManager
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader

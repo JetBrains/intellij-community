@@ -60,11 +60,11 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     boolean inTheStartOfSubElement =
-      PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT
+      isYamlElementType(element) && PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT
       ||
-      element.getTextRange().getStartOffset() == caretOffset && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.INDENT
+      element.getTextRange().getStartOffset() == caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.INDENT
       ||
-      element.getTextRange().getStartOffset() >= caretOffset && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.SEQUENCE_MARKER;
+      element.getTextRange().getStartOffset() >= caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.SEQUENCE_MARKER;
 
     if (!inTheStartOfSubElement) {
       return null;
@@ -94,13 +94,22 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
           break;
         }
 
-        if (!YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(nextElement))) {
+        IElementType elementType = PsiUtilCore.getElementType(nextElement);
+        if (!(elementType instanceof YAMLElementType)) {
+          return null;
+        }
+
+        if (!YAMLElementTypes.BLANK_ELEMENTS.contains(elementType)) {
           return null;
         }
       }
     }
 
     return StringUtil.repeatSymbol(' ', caretOffset - lineStartOffset) + text;
+  }
+
+  private static boolean isYamlElementType(PsiElement element) {
+    return PsiUtilCore.getElementType(element) instanceof YAMLElementType;
   }
 
   @NotNull

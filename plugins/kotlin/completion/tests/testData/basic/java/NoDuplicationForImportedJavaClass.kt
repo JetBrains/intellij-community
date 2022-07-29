@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 import java.io.InputStreamReader
 
 val x = InputStreamReader<caret>

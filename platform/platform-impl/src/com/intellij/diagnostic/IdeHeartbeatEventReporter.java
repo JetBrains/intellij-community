@@ -36,7 +36,7 @@ public final class IdeHeartbeatEventReporter implements Disposable {
   IdeHeartbeatEventReporter() {
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
     myThread = myExecutor.scheduleWithFixedDelay(
-      () -> recordHeartbeat(),
+      this::recordHeartbeat,
       Registry.intValue("ide.heartbeat.delay") /* don't execute during start-up */, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
     );
   }
@@ -76,7 +76,7 @@ public final class IdeHeartbeatEventReporter implements Disposable {
     }
   }
 
-  public static class Loader implements StartupActivity {
+  final static class Loader implements StartupActivity, StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       ApplicationManager.getApplication().getService(IdeHeartbeatEventReporter.class);

@@ -39,14 +39,14 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 23_000
+    val expectedSize = 19_000
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               "v33" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               "v37" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test
@@ -56,9 +56,15 @@ class ImlSerializationTest {
   }
 
   @Test
+  fun ultimateProject() {
+    val projectDir = File("/Users/Alex.Plate/Develop/Work/intellij")
+    loadProjectAndCheck(projectDir)
+  }
+
+  @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("Test", Source, true)
+    val entity = SampleEntity2("Test", true, Source)
     builder.addEntity(entity)
     val index = builder.getMutableExternalMapping<String>("test.my.index")
     index.addMapping(entity, "Hello")

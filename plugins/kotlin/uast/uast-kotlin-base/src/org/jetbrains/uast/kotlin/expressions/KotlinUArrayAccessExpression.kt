@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.uast.UArrayAccessExpression
@@ -20,5 +21,9 @@ class KotlinUArrayAccessExpression(
         sourcePsi.indexExpressions.map {
             baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this)
         }
+    }
+
+    override fun resolve(): PsiElement? {
+        return baseResolveProviderService.resolveCall(sourcePsi)
     }
 }

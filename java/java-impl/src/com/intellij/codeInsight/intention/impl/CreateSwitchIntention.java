@@ -54,22 +54,27 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
     return expressionStatement != null &&
            expressionStatement.getParent() instanceof PsiCodeBlock &&
            !(expressionStatement.getExpression() instanceof PsiAssignmentExpression) &&
+           !(expressionStatement.getExpression() instanceof PsiLiteralExpression) &&
            PsiTreeUtil.findChildOfType(expressionStatement.getExpression(), PsiErrorElement.class) == null &&
            isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
   private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
-    if (type == null) {
-      return false;
-    }
-
     if (type instanceof PsiClassType) {
       PsiClass resolvedClass = ((PsiClassType)type).resolve();
       if (resolvedClass == null) {
         return false;
       }
-      return (PsiUtil.isLanguageLevel5OrHigher(context) && resolvedClass.isEnum())
+      return (PsiUtil.isLanguageLevel5OrHigher(context) &&
+              (resolvedClass.isEnum() || isSuitablePrimitiveType(PsiPrimitiveType.getUnboxedType(type))))
              || (PsiUtil.isLanguageLevel7OrHigher(context) && CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName()));
+    }
+    return isSuitablePrimitiveType(type);
+  }
+
+  private static boolean isSuitablePrimitiveType(@Nullable PsiType type) {
+    if (type == null) {
+      return false;
     }
     return type.equals(PsiType.INT) || type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR);
   }

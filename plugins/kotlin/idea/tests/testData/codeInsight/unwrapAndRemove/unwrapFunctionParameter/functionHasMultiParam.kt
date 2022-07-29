@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// OPTION: 0
 fun test() {
     val i = 1
     foo(baz<caret>(i, 2))

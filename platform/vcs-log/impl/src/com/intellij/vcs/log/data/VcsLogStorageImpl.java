@@ -29,6 +29,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -307,8 +308,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public boolean isEqual(@NotNull VcsRef val1, @NotNull VcsRef val2) {
-      return val1.equals(val2);
+    public boolean isEqual(@Nullable VcsRef val1, @Nullable VcsRef val2) {
+      return Objects.equals(val1, val2);
     }
 
     @Override

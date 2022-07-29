@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -191,7 +191,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (DumbService.getInstance(project).isDumb()) {
       return WidgetStatus.ENABLED;
     }
-    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
+    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
       return WidgetStatus.MAYBE_SUPPRESSED;
     }
     return WidgetStatus.ENABLED;
@@ -346,7 +346,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         mySuppressInfoRef.set(null);
       }
       else {
-        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream()
+          .anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);

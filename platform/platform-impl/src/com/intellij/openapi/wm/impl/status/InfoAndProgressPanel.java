@@ -59,6 +59,15 @@ import java.util.List;
 import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
+
+  public interface ScrollableToSelected {
+    enum Limit {
+      UNLIMITED, LIMIT_ONCE;
+    }
+
+    void updateScrollToSelectedLimit(Limit limit);
+  }
+
   public static final Object FAKE_BALLOON = new Object();
 
   private final ProcessPopup myPopup;
@@ -253,10 +262,20 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
+  private void updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit navBarScrollToSelectedLimit) {
+    if (myCentralComponent instanceof ScrollableToSelected) {
+      ((ScrollableToSelected)myCentralComponent).updateScrollToSelectedLimit(navBarScrollToSelectedLimit);
+    }
+  }
+
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
 
     synchronized (myOriginals) {
+      if (myOriginals.isEmpty()) {
+        updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit.LIMIT_ONCE);
+      }
+
       myOriginals.add(original);
       myInfos.add(info);
 
@@ -315,6 +334,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
 
       if (last) {
+        updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit.UNLIMITED);
         myInlinePanel.updateState(null);
         if (myShouldClosePopupAndOnProcessFinish) {
           hideProcessPopup();

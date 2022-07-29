@@ -244,7 +244,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   public static boolean isJavadocRequired(PsiMethod method){
-    return EP_NAME.extensions().noneMatch(condition -> condition.value(method));
+    return EP_NAME.getExtensionList().stream().noneMatch(condition -> condition.value(method));
   }
 
   private static boolean isJavadocRequired(@NotNull Options options, @NotNull PsiModifierListOwner element) {

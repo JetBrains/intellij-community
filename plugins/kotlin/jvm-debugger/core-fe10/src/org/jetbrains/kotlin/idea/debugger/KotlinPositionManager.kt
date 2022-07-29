@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -30,6 +30,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.frame.XStackFrame
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
@@ -41,16 +42,21 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
-import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getElementsAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
+import org.jetbrains.kotlin.idea.debugger.core.containsKotlinStrata
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
@@ -60,9 +66,8 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import java.util.*
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()
@@ -240,9 +245,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             .toList()
     }
 
-    class KotlinSourcePositionWithEntireLineHighlighted(delegate: SourcePosition) : DelegateSourcePosition(delegate)
-    class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)
-
     private fun getAlternativeSource(location: Location): PsiFile? {
         val manager = PsiManager.getInstance(debugProcess.project)
         val qName = location.declaringType().name()
@@ -282,8 +284,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getLambdaOrFunIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
         val currentLocationClassName = location.getClassName() ?: return null
 
-        val start = CodeInsightUtils.getStartLineOffset(file, lineNumber)
-        val end = CodeInsightUtils.getEndLineOffset(file, lineNumber)
+        val start = getStartLineOffset(file, lineNumber)
+        val end = getEndLineOffset(file, lineNumber)
         if (start == null || end == null) return null
 
         val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)
@@ -298,7 +300,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         currentLocationClassName: String
     ): KtFunction? {
         for (literal in this) {
-            if (InlineUtil.isInlinedArgument(literal, literal.analyze(BodyResolveMode.PARTIAL), true)) {
+            if (AnalysisApiBasedInlineUtil.isInlinedArgument(literal, true)) {
                 if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
                     return literal
                 }
@@ -314,13 +316,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
-        val internalClassNames = DebuggerClassNameProvider(
+        val classNameProvider = ClassNameProvider(
             debugProcess.project,
             debugProcess.searchScope,
-            alwaysReturnLambdaParentClass = false
-        ).getOuterClassNamesForElement(this, emptySet()).classNames
+            ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
+        )
 
-        return internalClassNames.any { it == currentLocationClassName }
+        return classNameProvider.getCandidatesForElement(this).any { it == currentLocationClassName }
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
@@ -384,13 +386,14 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (psiFile is KtFile) {
             if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return emptyList()
 
-            val referenceTypesInKtFile = hopelessAware {
-                getReferenceTypesForPositionInKtFile(sourcePosition)
-            }.orEmpty()
+            val referenceTypesInKtFile = syncNonBlockingReadAction(psiFile.project) {
+                getReferenceTypesForPositionInKotlinFile(sourcePosition)
+            }
 
             if (sourcePosition.isInsideProjectWithCompose()) {
                 return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)
             }
+
             return referenceTypesInKtFile
         }
 
@@ -405,19 +408,36 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         throw NoDataException.INSTANCE
     }
 
-    private fun getReferenceTypesForPositionInKtFile(sourcePosition: SourcePosition): List<ReferenceType> {
-        val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
-        val lineNumber = runReadAction { sourcePosition.line }
-        val classes = debuggerClassNameProvider.getClassesForPosition(sourcePosition)
-            .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
-        return classes
-            .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
-            .ifEmpty { classes }
+    @RequiresReadLock
+    private fun getReferenceTypesForPositionInKotlinFile(sourcePosition: SourcePosition): List<ReferenceType> {
+        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
+        val lineNumber = sourcePosition.line
+
+        try {
+            val allCandidates = classNameProvider.getCandidates(sourcePosition)
+                .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+
+            val matchingCandidates = allCandidates
+                .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
+
+            return matchingCandidates.ifEmpty { allCandidates }
+        } catch (e: IncompatibleThreadStateException) {
+            return emptyList()
+        } catch (e: VMDisconnectedException) {
+            return emptyList()
+        }
     }
 
+    @Deprecated("Use 'ClassNameProvider' directly")
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
-        val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
-        return debuggerClassNameProvider.getOuterClassNamesForPosition(position)
+        return runReadAction {
+            val classNameProvider = ClassNameProvider(
+                debugProcess.project,
+                debugProcess.searchScope,
+                ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
+            )
+            classNameProvider.getCandidates(position)
+        }
     }
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
@@ -425,8 +445,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
         try {
-            if (debugProcess.isDexDebug()) {
-                val inlineLocations = runReadAction { getLocationsOfInlinedLine(type, position, debugProcess.searchScope) }
+            if (DexDebugFacility.isDex(debugProcess)) {
+                val inlineLocations = runReadAction { DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope) }
                 if (inlineLocations.isNotEmpty()) {
                     return inlineLocations
                 }
@@ -474,22 +494,21 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         })
     }
 
+    @RequiresReadLock
     private fun createKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
-        val actualPosition =
-            if (requestor is SourcePositionRefiner)
-                requestor.refineSourcePosition(position)
-            else
-                position
-        val classNames =
-            DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
-                .getOuterClassNamesForPosition(actualPosition)
-
-        return classNames.flatMap { name ->
-            listOfNotNull(
-                debugProcess.requestsManager.createClassPrepareRequest(requestor, name),
-                debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
-            )
+        val refinedPosition = when (requestor) {
+            is SourcePositionRefiner -> requestor.refineSourcePosition(position)
+            else -> position
         }
+
+        return ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
+            .getCandidates(refinedPosition)
+            .flatMap { name ->
+                listOfNotNull(
+                    debugProcess.requestsManager.createClassPrepareRequest(requestor, name),
+                    debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
+                )
+            }
     }
 }
 
@@ -517,7 +536,7 @@ private fun decorateSourcePosition(location: Location, sourcePosition: SourcePos
     if (lambda !is KtFunctionLiteral) return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
-        return KotlinPositionManager.KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
+        return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
     }
     return sourcePosition
 }

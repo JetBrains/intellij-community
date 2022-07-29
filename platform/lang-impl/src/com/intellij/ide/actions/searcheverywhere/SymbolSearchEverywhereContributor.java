@@ -18,7 +18,7 @@ import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersS
 /**
  * @author Konstantin Bulenkov
  */
-public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor {
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 

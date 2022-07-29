@@ -8,7 +8,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.util.runCommandOnAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 open class ChangeVisibilityModifierIntention protected constructor(val modifier: KtModifierKeywordToken) :
-    SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.lazyMessage("make.0", modifier.value)) {
+  SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.lazyMessage("make.0", modifier.value)) {
     override fun startInWriteAction(): Boolean = false
 
     override fun applicabilityRange(element: KtDeclaration): TextRange? {

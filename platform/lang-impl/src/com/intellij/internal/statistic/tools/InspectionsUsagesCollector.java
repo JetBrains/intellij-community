@@ -165,6 +165,11 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
       return Collections.emptyList();
     }
 
+    if (!tool.isInitialized()) {
+      // trade-off : we would like to not trigger class loading and instantiation of unnecessary inspections
+      return Collections.emptyList();
+    }
+
     InspectionProfileEntry entry = tool.getTool();
     Map<String, Attribute> options = getOptions(entry);
     if (options.isEmpty()) {

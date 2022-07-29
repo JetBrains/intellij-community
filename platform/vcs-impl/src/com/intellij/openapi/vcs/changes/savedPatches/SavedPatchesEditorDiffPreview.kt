@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.containers.isEmpty
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -33,6 +32,6 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
 
   override fun updateDiffAction(event: AnActionEvent) {
     event.presentation.isVisible = true
-    event.presentation.isEnabled = !changeViewProcessor.allChanges.isEmpty()
+    event.presentation.isEnabled = changeViewProcessor.iterateAllChanges().any()
   }
 }

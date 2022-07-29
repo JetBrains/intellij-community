@@ -56,7 +56,7 @@ suspend fun <T> withModalProgressIndicator(
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return withModalProgressIndicator(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
 }
 
 /**
@@ -75,7 +75,7 @@ suspend fun <T> withModalProgressIndicator(
 suspend fun <T> withModalProgressIndicator(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
   val service = ApplicationManager.getApplication().getService(TaskSupport::class.java)

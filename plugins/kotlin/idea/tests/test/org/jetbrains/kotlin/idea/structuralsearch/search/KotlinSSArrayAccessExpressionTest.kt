@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSArrayAccessExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSArrayAccessExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "arrayAccessExpression"
 
     fun testConstAccess() { doTest("a[0]") }

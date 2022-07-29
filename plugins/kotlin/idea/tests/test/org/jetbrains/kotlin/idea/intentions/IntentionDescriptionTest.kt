@@ -17,6 +17,11 @@ class IntentionDescriptionTest : LightPlatformTestCase() {
     private val necessaryNormalNames = listOf("description.html", "before.kt.template", "after.kt.template")
     private val necessaryXmlNames = listOf("description.html", "before.xml.template", "after.xml.template")
     private val necessaryMavenNames = listOf("description.html")
+    private val directories = listOf(
+        KotlinRoot.DIR.resolve("idea/resources-en/intentionDescriptions"),
+        KotlinRoot.DIR.resolve("code-insight/intentions-shared/resources-en/intentionDescriptions"),
+        KotlinRoot.DIR.resolve("code-insight/descriptions/resources-en/intentionDescriptions"),
+    )
 
     fun testDescriptionsAndShortNames() {
         val intentionTools = loadKotlinIntentions()
@@ -24,8 +29,8 @@ class IntentionDescriptionTest : LightPlatformTestCase() {
         for (tool in intentionTools) {
             val className = tool.className
             val shortName = className.substringAfterLast(".").replace("$", "")
-            val directory = KotlinRoot.DIR.resolve("idea/resources-en/intentionDescriptions/$shortName")
-            if (!directory.exists() || !directory.isDirectory) {
+            val directory = directories.map { it.resolve(shortName)}.filter { it.exists() }.firstOrNull()
+            if (directory == null || !directory.exists() || !directory.isDirectory) {
                 if (tool.categories != null) {
                     errors.append("No description directory for intention '").append(className).append("'\n")
                 }

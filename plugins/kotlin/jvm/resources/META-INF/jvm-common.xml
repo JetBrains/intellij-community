@@ -51,13 +51,10 @@
 
         <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-        <projectService serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches"
-                        serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches"/>
-
         <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
                         serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
 
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.versions.SuppressNotificationState"/>
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState"/>
 
         <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesState"/>
 
@@ -105,10 +102,10 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService"
-                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
 
-        <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>
+        <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
 
         <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
@@ -148,15 +145,8 @@
             serviceInterface="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar"
             serviceImplementation="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrarImpl"/>
 
-      <registryKey key="kotlin.use.ultra.light.classes"
-                   description="Whether to use an experimental implementation of Kotlin-as-Java classes"
-                   defaultValue="true"
-                   restartRequired="false"/>
-
-      <registryKey key="kotlin.ultra.light.classes.error.on.old.backend"
-                   description="Throw an exception on attempt to use the backend from light classes"
-                   defaultValue="false"
-                   restartRequired="false"/>
+      <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                         bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
       <registryKey key="kotlin.ultra.light.classes.empty.text.range"
                    description="Return 'null' text range as in old light class implementation"
@@ -205,9 +195,10 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.CommonIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
@@ -229,16 +220,9 @@
         <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
         <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
 
-        <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit5KotlinTestFramework"/>
-        <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit4KotlinTestFramework"/>
-        <kotlinTestFramework id="junit3PsiFramework" order="before delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit3KotlinTestFramework"/>
-        <kotlinTestFramework id="delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework"/>
+        <kotlinTestFramework id="delegateTestFramework"  order="last" implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework"/>
     </extensions>
 
-    <extensionPoints>
-      <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
-                      interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework" dynamic="true"/>
-    </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"

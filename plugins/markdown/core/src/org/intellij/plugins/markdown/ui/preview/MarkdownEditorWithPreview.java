@@ -81,6 +81,20 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   protected void onLayoutChange(Layout oldValue, Layout newValue) {
     myLayoutListeners.forEach(listener -> listener.onLayoutChange(oldValue, newValue));
     super.onLayoutChange(oldValue, newValue);
+    // Editor tab will lose focus after switching to JCEF preview for some reason.
+    // So we should explicitly request focus for our editor here.
+    if (newValue == Layout.SHOW_PREVIEW) {
+      requestFocusForPreview();
+    }
+  }
+
+  private void requestFocusForPreview() {
+    final var preferredComponent = myPreview.getPreferredFocusedComponent();
+    if (preferredComponent != null) {
+      preferredComponent.requestFocus();
+      return;
+    }
+    myPreview.getComponent().requestFocus();
   }
 
   public boolean isAutoScrollPreview() {

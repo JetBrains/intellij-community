@@ -6,7 +6,6 @@ import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
 import com.intellij.compiler.cache.client.CompilerCachesServerClient;
 import com.intellij.compiler.cache.git.GitCommitsIterator;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
-import com.intellij.compiler.cache.statistic.CompilerCacheLoadingStats;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +29,7 @@ public class CompilerCacheConfigurator {
 
     Map<String, String> authHeaders = CompilerCacheServerAuthUtil.getRequestHeaders(project, true);
     if (authHeaders.isEmpty()) return null;
-    Pair<String, Integer> commit = getCommitToDownload(project, serverUrl);
+    Pair<String, Integer> commit = getCommitToDownload(project, serverUrl, CompilerCacheLoadingSettings.getForceUpdateValue());
     if (commit == null) return null;
 
     CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.Builder builder =
@@ -39,8 +38,11 @@ public class CompilerCacheConfigurator {
     builder.setDownloadCommit(commit.first);
     builder.setCommitsCountLatestBuild(commit.second);
     builder.putAllAuthHeaders(authHeaders);
-    builder.setDecompressionSpeed(CompilerCacheLoadingStats.getApproximateDecompressionSpeed());
-    builder.setDeletionSpeed(CompilerCacheLoadingStats.getApproximateDeletionSpeed());
+    builder.setDecompressionSpeed(CompilerCacheLoadingSettings.getApproximateDecompressionSpeed());
+    builder.setDeletionSpeed(CompilerCacheLoadingSettings.getApproximateDeletionSpeed());
+    builder.setForceDownload(CompilerCacheLoadingSettings.getForceUpdateValue());
+    builder.setDisableDownload(CompilerCacheLoadingSettings.getDisableUpdateValue());
+    builder.setMaxDownloadDuration(CompilerCacheLoadingSettings.getMaxDownloadDuration());
     return builder.build();
   }
 
@@ -49,14 +51,14 @@ public class CompilerCacheConfigurator {
   }
 
   @Nullable
-  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl) {
+  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl, boolean forceUpdate) {
     Map<String, Set<String>> availableCommitsPerRemote = CompilerCachesServerClient.getCacheKeysPerRemote(project, serverUrl);
     GitCommitsIterator commitsIterator = new GitCommitsIterator(project, INTELLIJ_REPO_NAME);
     String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
     String latestBuiltCommit = GitRepositoryUtil.getLatestBuiltMasterCommitId();
     Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
     if (availableCommitsForRemote == null) {
-      LOG.warn("Not found any caches for the latest commits in the branch");
+      LOG.warn("Not found any caches for the remote: " + commitsIterator.getRemote());
       return null;
     }
 
@@ -82,7 +84,7 @@ public class CompilerCacheConfigurator {
       if (latestBuiltCommitFound && !commitToDownload.isEmpty()) break;
     }
 
-    if (commitsCountBetweenCompilation == 0) {
+    if (!forceUpdate && commitsCountBetweenCompilation == 0) {
       LOG.warn("No new commits since last success compilation");
       return null;
     }
@@ -90,14 +92,14 @@ public class CompilerCacheConfigurator {
       LOG.warn("Not found any caches for the latest commits in the branch");
       return null;
     }
-    LOG.info("Non Compiled commits count: " + commitsCountBetweenCompilation + ". " + commitsBehind + " commits behind the master. " +
-             "Commit to download: " + commitToDownload);
-    if (commitToDownload.equals(latestDownloadedCommit)) {
+    LOG.info("Project contains " + commitsCountBetweenCompilation + " non compiled commits. Cache will be downloaded for " + commitsBehind + " commits before the current master." +
+             " The rest commits will be build locally. Commit hash for download: " + commitToDownload);
+    if (!forceUpdate && commitToDownload.equals(latestDownloadedCommit)) {
       LOG.info("The system contains up-to-date caches");
       return null;
     }
-    if (commitToDownload.equals(latestBuiltCommit)) {
-      LOG.info("Caches for the built commit won't be downloaded");
+    if (!forceUpdate && commitToDownload.equals(latestBuiltCommit)) {
+      LOG.info("Commit already compiled, thus caches for it won't be download");
       return null;
     }
     return Pair.create(commitToDownload, commitsCountBetweenCompilation);

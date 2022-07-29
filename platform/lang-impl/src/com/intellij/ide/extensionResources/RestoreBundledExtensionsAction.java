@@ -2,6 +2,7 @@
 package com.intellij.ide.extensionResources;
 
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.extensions.PluginId;
@@ -22,6 +23,11 @@ public class RestoreBundledExtensionsAction extends DumbAwareAction {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean isDirectory = file != null && file.isDirectory();
     e.getPresentation().setEnabledAndVisible(isDirectory && ExtensionsRootType.getInstance().getPath(file) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

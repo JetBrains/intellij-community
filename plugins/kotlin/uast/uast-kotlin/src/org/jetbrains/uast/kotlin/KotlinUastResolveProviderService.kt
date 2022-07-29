@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
+import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.*
@@ -209,6 +210,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
         val fqName = DescriptorUtils.getFqNameSafe(resolvedCall.candidateDescriptor)
         return when {
+            resolvedCall.resultingDescriptor is SamConstructorDescriptor ||
+            resolvedCall.resultingDescriptor.original is SamConstructorDescriptor ||
             resolvedCall.resultingDescriptor is ConstructorDescriptor -> UastCallKind.CONSTRUCTOR_CALL
             isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
             else -> UastCallKind.METHOD_CALL

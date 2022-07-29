@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.containers.Stack
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -120,12 +121,12 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
 
-  override fun <V> block(blockName: String, task: () -> V): V {
+  override fun <V> block(blockName: String, task: ThrowableComputable<V, Exception>): V {
     spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
       try {
         blockNames.push(blockName)
         processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-        return task()
+        return task.compute()
       }
       catch (e: Throwable) {
         // print all pending spans

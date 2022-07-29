@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
@@ -24,10 +24,10 @@ public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHi
     return ContainerUtil.exists(activeVcses, it -> vcsKey.equals(it.getKeyInstanceMethod()));
   }
 
-  public static class InitMappingsListenerActivity implements VcsMappingListener {
+  static final class InitMappingsListenerActivity implements VcsMappingListener {
     private final Project myProject;
 
-    public InitMappingsListenerActivity(@NotNull Project project) {
+    InitMappingsListenerActivity(@NotNull Project project) {
       myProject = project;
     }
 

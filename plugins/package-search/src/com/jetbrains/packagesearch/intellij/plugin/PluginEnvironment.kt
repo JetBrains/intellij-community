@@ -46,7 +46,7 @@ internal object PluginEnvironment {
     object Caches {
 
         val version
-            get() = 2
+            get() = 3
 
         val maxAttempts
             get() = System.getProperty("idea.pkgs.caches.attempts")?.toInt() ?: 30

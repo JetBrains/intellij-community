@@ -18,12 +18,17 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myDelegate.update(e);
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    myDelegate.beforeActionPerformedUpdate(e);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myDelegate.actionPerformed(e);
   }
 

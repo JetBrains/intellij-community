@@ -13,8 +13,8 @@ import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtilKt;
-import org.jetbrains.kotlin.idea.debugger.SafeUtilKt;
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil;
+import org.jetbrains.kotlin.idea.debugger.base.util.SafeUtilKt;
 
 public class DebuggerSteppingHelper {
     public static DebugProcessImpl.ResumeCommand createStepOverCommand(
@@ -57,7 +57,7 @@ public class DebuggerSteppingHelper {
                             @Override
                             public int getNextStepDepth(SuspendContextImpl context) {
                                 StackFrameProxyImpl frameProxy = context.getFrameProxy();
-                                if (frameProxy != null && DebuggerUtilKt.isOnSuspensionPoint(frameProxy)) {
+                                if (frameProxy != null && DebuggerUtil.isOnSuspensionPoint(frameProxy)) {
                                     return StepRequest.STEP_OVER;
                                 }
 

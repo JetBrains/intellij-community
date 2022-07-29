@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -116,7 +116,7 @@ public final class TemplateContext {
 
   /**
    * Mark contexts explicitly as excluded which are excluded because some of their bases is explicitly marked as excluded.
-   * Otherwise that `excluded` status will be forgotten if the base context is enabled.
+   * Otherwise, that `excluded` status will be forgotten if the base context is enabled.
    */
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
@@ -191,8 +191,8 @@ public final class TemplateContext {
    * Base value is `false`.
    * <p>
    * If default value is defined (as in our example)  we must not take base value in account.
-   * Because on init `setDefaultContext` will be called and we will have own value.
-   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * Because on init `setDefaultContext` will be called, and we will have own value.
+   * Otherwise, it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.
    */
   private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {

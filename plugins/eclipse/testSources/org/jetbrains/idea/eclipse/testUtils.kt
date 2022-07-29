@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -18,7 +19,9 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import java.nio.file.Path
 
@@ -102,8 +105,10 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   try {
     runBlocking {
       loadProject(projectDir) { project ->
-        runWriteActionAndWait {
-          edit(project)
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().runWriteAction {
+            edit(project)
+          }
         }
         project.stateStore.save(true)
         projectDir.assertMatches(directoryContentOf(originalProjectDir), filePathFilter = { path ->
@@ -127,5 +132,5 @@ internal fun forceSave(project: Project) {
     it.moduleFile!!.delete(project)
     it.stateStore.clearCaches()
   }
-  JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
+  JpsProjectModelSynchronizer.getInstance(project).markAllEntitiesAsDirty()
 }

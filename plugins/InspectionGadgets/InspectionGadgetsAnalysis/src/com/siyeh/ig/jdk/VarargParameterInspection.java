@@ -17,6 +17,7 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -71,6 +73,12 @@ public class VarargParameterInspection extends BaseInspection {
     }
 
     @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      doFix(project, previewDescriptor);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)element.getParent();
@@ -87,43 +95,68 @@ public class VarargParameterInspection extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
-      final List<PsiElement> prepare = new ArrayList<>();
-      prepare.add(parameterList);
-      for (PsiReference reference : references) {
-        prepare.add(reference.getElement());
+      final List<PsiElement> refElements = getReferences(method);
+      if (!method.isPhysical()) {
+        performModification(method, parameters, lastParameter, typeElement, refElements);
       }
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
-        return;
+      else {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.append(refElements, method))) {
+          return;
+        }
+        WriteAction.run(() -> {
+          performModification(method, parameters, lastParameter, typeElement, refElements);
+        });
       }
-      WriteAction.run(() -> {
-        final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
-        final PsiType componentType = type.getComponentType();
-        final String typeText;
-        if (componentType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)componentType;
-          typeText = classType.rawType().getCanonicalText();
-        } else {
-          typeText = componentType.getCanonicalText();
-        }
-        for (PsiReference reference : references) {
-          modifyCall(reference, typeText, parameters.length - 1);
-        }
-        final PsiType arrayType = type.toArrayType();
-        final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS);
-        if (annotation != null) {
-          annotation.delete();
-        }
-        typeElement.replace(newTypeElement);
-      });
     }
 
-    public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
-      final PsiElement element = reference.getElement();
-      final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
+    @NotNull
+    private static List<PsiElement> getReferences(@NotNull PsiMethod method) {
+      if (!method.isPhysical()) {
+        return SyntaxTraverser.psiTraverser(method.getContainingFile())
+          .filter(ref -> ref instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)ref).isReferenceTo(method) ||
+                         ref instanceof PsiEnumConstant && method.isEquivalentTo(((PsiEnumConstant)ref).resolveMethod()))
+          .toList();
+      }
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      final List<PsiElement> refElements = new ArrayList<>();
+      for (PsiReference reference : references) {
+        refElements.add(reference.getElement());
+      }
+      return refElements;
+    }
+
+    private static void performModification(@NotNull PsiMethod method,
+                                            @NotNull PsiParameter @NotNull [] parameters,
+                                            @NotNull PsiParameter lastParameter,
+                                            @NotNull PsiTypeElement typeElement,
+                                            @NotNull List<PsiElement> references) {
+      final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
+      final PsiType componentType = type.getComponentType();
+      final String typeText;
+      if (componentType instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType)componentType;
+        typeText = classType.rawType().getCanonicalText();
+      }
+      else {
+        typeText = componentType.getCanonicalText();
+      }
+      for (PsiElement reference : references) {
+        modifyCall(typeText, parameters.length - 1, reference);
+      }
+      final PsiType arrayType = type.toArrayType();
+      final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS);
+      if (annotation != null) {
+        annotation.delete();
+      }
+      typeElement.replace(newTypeElement);
+    }
+
+    public static void modifyCall(String arrayTypeText, int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
+      final PsiCall call = (PsiCall)(reference instanceof PsiCall ? reference : reference.getParent());
       JavaResolveResult result = call.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+      if (result instanceof MethodCandidateInfo &&
+          ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
         return;
       }
       final PsiExpressionList argumentList = call.getArgumentList();
@@ -140,8 +173,9 @@ public class VarargParameterInspection extends BaseInspection {
         }
       }
       builder.append('}');
-      final Project project = element.getProject();
-      final PsiExpression arrayExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), element);
+      final Project project = reference.getProject();
+      final PsiExpression arrayExpression =
+        JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), reference);
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -18,7 +17,7 @@ import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     OPEN_KEYWORD, FINAL_KEYWORD, OVERRIDE_KEYWORD,
@@ -36,7 +36,8 @@ internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     LATEINIT_KEYWORD
 )
 
-class CanBeParameterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+
+class CanBeParameterInspection : AbstractKotlinInspection() {
     private fun PsiReference.usedAsPropertyIn(klass: KtClass): Boolean {
         if (this !is KtSimpleNameReference) return true
         val nameExpression = element

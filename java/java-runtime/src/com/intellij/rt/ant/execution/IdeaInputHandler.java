@@ -43,7 +43,7 @@ public class IdeaInputHandler implements InputHandler {
     packet.sendThrough(err);
     try {
       final byte[] lengthValue = readBytes(4);
-      final int length = (toUnsignedInt(lengthValue[0]) << 24) | ((toUnsignedInt(lengthValue[1])) << 16) | ((toUnsignedInt(lengthValue[2])) << 8) | toUnsignedInt(lengthValue[3]);
+      final int length = (toUnsignedInt(lengthValue[0]) << 24) | (toUnsignedInt(lengthValue[1]) << 16) | (toUnsignedInt(lengthValue[2]) << 8) | toUnsignedInt(lengthValue[3]);
       final String input = new String(readBytes(length));
       request.setInput(input);
       if (!request.isInputValid()) {

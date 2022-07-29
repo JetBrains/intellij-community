@@ -414,7 +414,7 @@
     <group id="Diff.EditorGutterPopupMenu">
       <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
     </group>
-    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain"/>
+    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"/>
 
     <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -625,9 +625,16 @@
             </group>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
+            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true">
+              <action id="StatusTextModeAction" class="com.intellij.openapi.wm.impl.status.StatusTextModeAction"/>
+            </group>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
+        </group>
+
+        <group id="MainToolbarPopupActions" searchable="false">
+          <reference id="ViewToolBar"/>
+          <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
@@ -853,6 +860,7 @@
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
           <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction"/>
+          <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
           <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" internal="true"/>
@@ -1210,6 +1218,7 @@
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"/>
+        <action id="AddRandomNamesTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddRandomNamesTestProcessAction"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses"/>
         <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress"/>
         <action id="TestProgressWindow" internal="true" class="com.intellij.internal.TestProgressWindow"/>
@@ -1511,5 +1520,9 @@
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
 
     <action id="MainMenuButton.ShowMenu" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+    <group id="FindInFiles.Results.ContextMenu" searchable="false">
+      <reference id="CopyReferencePopupGroup"/>
+    </group>
   </actions>
 </idea-plugin>

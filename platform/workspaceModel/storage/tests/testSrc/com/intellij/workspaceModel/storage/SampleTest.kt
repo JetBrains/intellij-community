@@ -11,13 +11,13 @@ import kotlin.test.assertTrue
 class SampleTest {
   @Test
   fun `entity creation`() {
-    val entity = SampleEntity2("myData", MySource, true)
+    val entity = SampleEntity2("myData", true, MySource)
     assertEquals("myData", entity.data)
   }
 
   @Test
   fun `optional field`() {
-    val entity = SampleEntity2("", MySource, true){
+    val entity = SampleEntity2("", true, MySource){
       this.optionalData = null
     }
     val builder = MutableEntityStorage.create()

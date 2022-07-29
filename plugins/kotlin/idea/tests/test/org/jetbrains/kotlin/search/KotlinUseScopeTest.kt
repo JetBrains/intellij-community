@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.search.useScope
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import kotlin.test.assertNotEquals
 

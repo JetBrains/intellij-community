@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert to local" "true-preview"
 class Test {
 
     int getFoo1() {

@@ -1014,6 +1014,25 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/contextReceivers")
+    public static class ContextReceivers extends AbstractResolveByStubTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers");
+            super.setUp();
+        }
+
+        @TestMetadata("SimpleContextReceivers.kt")
+        public void testSimpleContextReceivers() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers/SimpleContextReceivers.kt"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/coroutines")
     public static class Coroutines extends AbstractResolveByStubTest {
         private void runTest(String testDataFilePath) throws Exception {

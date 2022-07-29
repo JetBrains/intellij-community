@@ -3,7 +3,7 @@
 import java.util.Objects;
 
 /**
- * Cool record.  
+ * Cool record.
  */
 final class R {
     private final int a;

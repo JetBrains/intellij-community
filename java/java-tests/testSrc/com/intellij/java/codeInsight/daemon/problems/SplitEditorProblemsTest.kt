@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -21,14 +22,13 @@ import com.intellij.util.ArrayUtilRt
 import javax.swing.SwingConstants
 
 internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
-
-  private var myManager: FileEditorManagerImpl? = null
+  private var manager: FileEditorManagerImpl? = null
 
   override fun setUp() {
     super.setUp()
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
-    myManager = FileEditorManagerImpl(project).also { it.initDockableContentFactory() }
-    project.registerComponentInstance(FileEditorManager::class.java, myManager!!, testRootDisposable)
+    manager = FileEditorManagerExImpl(project).also { it.initDockableContentFactory() }
+    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
   }
 
@@ -60,7 +60,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    val editorManager = myManager!!
+    val editorManager = manager!!
     editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
     val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
     rehighlight(parentEditor)
@@ -92,7 +92,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     """.trimIndent())
 
     // open parent class and rehighlight
-    val editorManager = myManager!!
+    val editorManager = manager!!
     val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditorImpl
     val parentEditor = parentTextEditor.editor
     rehighlight(parentEditor)

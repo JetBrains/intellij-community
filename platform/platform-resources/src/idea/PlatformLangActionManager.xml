@@ -43,7 +43,6 @@
     <group id="InspectCodeActionInPopupMenus">
       <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.SecondaryActions">

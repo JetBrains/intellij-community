@@ -1137,21 +1137,10 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                                                            @NotNull Class<T> entityClass,
                                                                            @NotNull Predicate<T> hasAnnotationRoot) {
       for (EntityChange<T> change : event.getChanges(entityClass)) {
-        if (change instanceof EntityChange.Added<?>) {
-          if (hasAnnotationRoot.test(((EntityChange.Added<T>)change).getEntity())) {
-            return true;
-          }
-        }
-        else if (change instanceof EntityChange.Removed<?>) {
-          if (hasAnnotationRoot.test(((EntityChange.Removed<T>)change).getEntity())) {
-            return true;
-          }
-        }
-        else if (change instanceof EntityChange.Replaced<?>) {
-          if (hasAnnotationRoot.test(((EntityChange.Replaced<T>)change).getOldEntity()) ||
-              hasAnnotationRoot.test(((EntityChange.Replaced<T>)change).getNewEntity())) {
-            return true;
-          }
+        T newEntity = change.getNewEntity();
+        T oldEntity = change.getOldEntity();
+        if (newEntity != null && hasAnnotationRoot.test(newEntity) || oldEntity != null && hasAnnotationRoot.test(oldEntity)) {
+          return true;
         }
       }
       return false;

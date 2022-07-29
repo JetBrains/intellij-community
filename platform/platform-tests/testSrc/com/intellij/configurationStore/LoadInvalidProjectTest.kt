@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.impl.TrustedPaths
@@ -52,7 +52,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `load empty iml`() {
+  fun `load empty iml`() = runBlocking {
     loadProjectAndCheckResults("empty-iml-file") { project ->
       assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
       assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
@@ -61,7 +61,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `malformed xml in iml`() {
+  fun `malformed xml in iml`() = runBlocking {
     loadProjectAndCheckResults("malformed-xml-in-iml") { project ->
       assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
       assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
@@ -70,7 +70,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `unknown classpath provider in iml`() {
+  fun `unknown classpath provider in iml`() = runBlocking {
     loadProjectAndCheckResults("unknown-classpath-provider-in-iml") { project ->
       assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
       assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
@@ -79,7 +79,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `no iml file`() {
+  fun `no iml file`() = runBlocking {
     loadProjectAndCheckResults("no-iml-file") { project ->
       //this repeats behavior in the old model: if iml files doesn't exist we create a module with empty configuration and report no errors
       assertThat(ModuleManager.getInstance(project).modules.single().name).isEqualTo("foo")
@@ -88,7 +88,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `empty library xml`() {
+  fun `empty library xml`() = runBlocking {
     loadProjectAndCheckResults("empty-library-xml") { project ->
       //this repeats behavior in the old model: if library configuration file cannot be parsed it's silently ignored
       assertThat(LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries).isEmpty()
@@ -97,7 +97,7 @@ class LoadInvalidProjectTest {
   }
 
   @Test
-  fun `duplicating libraries`() {
+  fun `duplicating libraries`() = runBlocking {
     loadProjectAndCheckResults("duplicating-libraries") { project ->
       assertThat(LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.single().name).isEqualTo("foo")
       assertThat(errors).isEmpty()
@@ -129,7 +129,9 @@ class LoadInvalidProjectTest {
     }
   }
 
-  private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
-    return loadProjectAndCheckResults(listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
+  private suspend fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
+    return loadProjectAndCheckResults(projectPaths = listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)),
+                                      tempDirectory = tempDirectory,
+                                      checkProject = checkProject)
   }
 }

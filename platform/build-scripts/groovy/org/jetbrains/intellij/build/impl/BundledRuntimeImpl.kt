@@ -4,16 +4,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.PosixFilePermissionsUtil
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
-import java.io.BufferedInputStream
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -21,7 +15,6 @@ import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
-import kotlin.streams.toList
 
 class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
   companion object {
@@ -64,7 +57,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
     val targetDir = context.paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
-    val archive = findArchiveImpl(prefix, os, arch)
+    val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
       context.paths.communityHomeDir,
@@ -82,14 +75,10 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   override fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
-    doExtract(findArchiveImpl(prefix, os, arch), destinationDir, os)
+    doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  override fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    return findArchiveImpl(prefix, os, arch)
-  }
-
-  private fun findArchiveImpl(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  private fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
     val archiveName = archiveName(prefix, arch, os)
     val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
     return BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDir, url)
@@ -100,12 +89,12 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
    *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
    */
-  override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily): String {
+  override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean): String {
     val split = build.split('b')
     if (split.size != 2) {
       throw IllegalArgumentException("$build doesn't match '<update>b<build_number>' format (e.g.: 17.0.2b387.1)")
     }
-    val version = split[0]
+    val version = if (forceVersionWithUnderscores) split[0].replace(".", "_") else split[0]
     val buildNumber = "b${split[1]}"
     val archSuffix = getArchSuffix(arch)
     return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
@@ -120,85 +109,6 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
     }
     context.messages.info("Fastdebug runtime build is requested")
     return "fastdebug-"
-  }
-
-  override fun checkExecutablePermissions(distribution: Path, root: String, os: OsFamily) {
-    if (os == OsFamily.WINDOWS) {
-      return
-    }
-
-    val patterns = executableFilesPatterns(os).map {
-      FileSystems.getDefault().getPathMatcher("glob:$it")
-    }
-    val entries: List<String>
-    if (Files.isDirectory(distribution)) {
-      @Suppress("NAME_SHADOWING") val distribution = distribution.resolve(root)
-      entries = Files.walk(distribution).use { files ->
-        val expectedExecutables = files.filter { file ->
-          val relativePath = distribution.relativize(file)
-          !Files.isDirectory(file) && patterns.any {
-            it.matches(relativePath)
-          }
-        }.toList()
-        if (expectedExecutables.size < patterns.size) {
-          context.messages.error("Executable files patterns:\n" +
-                                 executableFilesPatterns(os).joinToString(separator = "\n") +
-                                 "\nFound files:\n" +
-                                 expectedExecutables.joinToString(separator = "\n"))
-        }
-        expectedExecutables.stream()
-          .filter { OWNER_EXECUTE !in Files.getPosixFilePermissions(it) }
-          .map { distribution.relativize(it).toString() }
-          .toList()
-      }
-    }
-    else if ("$distribution".endsWith(".tar.gz")) {
-      entries = TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(Files.newInputStream(distribution)))).use { stream ->
-        val expectedExecutables = mutableListOf<TarArchiveEntry>()
-          while (true) {
-            val entry = (stream.nextEntry ?: break) as TarArchiveEntry
-            var entryPath = Path.of(entry.name)
-            if (!root.isEmpty()) {
-              entryPath = Path.of(root).relativize(entryPath)
-            }
-            if (!entry.isDirectory && patterns.any { it.matches(entryPath) }) {
-              expectedExecutables.add(entry)
-            }
-          }
-          if (expectedExecutables.size < patterns.size) {
-            context.messages.error("Executable files patterns:\n" +
-                                   executableFilesPatterns(os).joinToString(separator = "\n") +
-                                   "\nFound files:\n" +
-                                   expectedExecutables.joinToString(separator = "\n"))
-          }
-          expectedExecutables
-            .filter { OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(it.mode) }
-            .map { "${it.name}: mode is 0${Integer.toOctalString(it.mode)}" }
-        }
-    }
-    else {
-      entries = ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
-        val expectedExecutables = zipFile.entries.asSequence().filter { entry ->
-          var entryPath = Path.of(entry.name)
-          if (!root.isEmpty()) {
-            entryPath = Path.of(root).relativize(entryPath)
-          }
-          !entry.isDirectory && patterns.any { it.matches(entryPath) }
-        }.toList()
-        if (expectedExecutables.size < patterns.size) {
-          context.messages.error("Executable files patterns:\n" +
-                                 executableFilesPatterns(os).joinToString(separator = "\n") +
-                                 "\nFound files:\n" +
-                                 expectedExecutables.joinToString(separator = "\n"))
-        }
-        expectedExecutables
-          .filter { entry -> OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode) }
-          .map { "${it.name}: mode is 0${Integer.toOctalString(it.unixMode)}" }
-      }
-    }
-    if (entries.isNotEmpty()) {
-      context.messages.error("Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n"))
-    }
   }
 
   /**
@@ -221,15 +131,6 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
   return when (arch) {
     JvmArchitecture.x64 -> "x64"
     JvmArchitecture.aarch64 -> "aarch64"
-  }
-}
-
-/**
- * @return JBR top directory, see JBR-1295
- */
-fun getJbrTopDir(archive: Path): String {
-  return createTarGzInputStream(archive).use {
-    it.nextTarEntry?.name ?: throw IllegalStateException("Unable to read $archive")
   }
 }
 

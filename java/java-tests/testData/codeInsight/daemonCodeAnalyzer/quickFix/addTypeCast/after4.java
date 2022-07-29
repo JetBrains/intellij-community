@@ -1,4 +1,4 @@
-// "Cast to 'int'" "true"
+// "Cast to 'int'" "true-preview"
 class a {
  void f() {
    int i;

@@ -5,12 +5,11 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.idea.processExtensions
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import javax.swing.UIManager.LookAndFeelInfo
@@ -18,9 +17,7 @@ import javax.swing.UIManager.LookAndFeelInfo
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
 internal class UiThemeProviderListManager {
-
   companion object {
-
     @JvmStatic
     fun getInstance(): UiThemeProviderListManager = service()
 
@@ -32,7 +29,8 @@ internal class UiThemeProviderListManager {
         "Dark", 1,
         "High contrast", 2
       )
-    } else if (PlatformUtils.isRider()) {
+    }
+    else if (PlatformUtils.isRider()) {
       java.util.Map.of(
         "Rider Dark", 0,
         "Rider Light", 1,
@@ -42,7 +40,8 @@ internal class UiThemeProviderListManager {
         "Darcula", 4,
         "High contrast", 5
       )
-    } else {
+    }
+    else {
       java.util.Map.of(
         "IntelliJ Light", 0,
         "macOS Light", 1,
@@ -56,7 +55,7 @@ internal class UiThemeProviderListManager {
       get() = if (!ExperimentalUI.isNewUI()) listOf("Light", "Dark", "New Dark") else emptyList()
 
     fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
-      list.sortWith { t1: LookAndFeelInfo, t2: LookAndFeelInfo ->
+      list.sortWith { t1, t2 ->
         val n1 = t1.name
         val n2 = t2.name
         if (n1 == n2) {
@@ -98,10 +97,7 @@ internal class UiThemeProviderListManager {
   }
 
   fun themeProviderRemoved(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
-    val oldLaF = findLaFByProviderId(provider)
-    if (oldLaF == null) {
-      return null
-    }
+    val oldLaF = findLaFByProviderId(provider) ?: return null
 
     lafList = lafList - oldLaF
     editorColorsManager().handleThemeRemoved(oldLaF.theme)
@@ -114,16 +110,9 @@ internal class UiThemeProviderListManager {
 }
 
 private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
-  val point = UIThemeProvider.EP_NAME
-    .point as ExtensionPointImpl<UIThemeProvider>
-
-  val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(point.size())
-  val application = ApplicationManager.getApplication()
-  for (adapter in point.sortedAdapters) {
-    adapter.createInstance<UIThemeProvider>(application)
-      ?.createTheme()
-      ?.let { UIThemeBasedLookAndFeelInfo(it) }
-      ?.let { themes.add(it) }
+  val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(UIThemeProvider.EP_NAME.point.size())
+  UIThemeProvider.EP_NAME.processExtensions { provider, _ ->
+    themes.add(UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: return@processExtensions))
   }
   sortThemes(themes)
   return themes

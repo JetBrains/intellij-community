@@ -312,8 +312,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         anchor instanceof JavaMethodReferenceReturnAnchor ? ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression() :
         null;
       if (expression == null || shouldBeSuppressed(expression)) return;
-      if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
-        .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
+      if (ContainerUtil.exists(JavaPsiPatternUtil.getExposedPatternVariables(expression),
+                               var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
         return;
       }
       reporter.registerProblem(expression,
@@ -332,7 +332,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
-      if (switchBlock == null || !canRemoveUnreachableBranches(labelStatement, switchBlock)) continue;
+      if (switchBlock == null || !canRemoveUnreachableBranches(labelStatement, label, switchBlock)) continue;
       if (!canRemoveTheOnlyReachableLabel(label, switchBlock)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
@@ -400,8 +400,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return false;
   }
 
-  private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
-    if (Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElementCount() != 1) return true;
+  private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement,
+                                                      PsiCaseLabelElement label,
+                                                      PsiSwitchBlock statement) {
+    PsiCaseLabelElementList labelElementList = Objects.requireNonNull(labelStatement.getCaseLabelElementList());
+    if (labelElementList.getElementCount() != 1 &&
+        !ContainerUtil.and(labelElementList.getElements(), element -> element == label || element instanceof PsiDefaultCaseLabelElement)) {
+      return true;
+    }
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
     if (statement instanceof PsiSwitchStatement) {
@@ -409,8 +415,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
-    return (allBranches.size() <= 2 &&
-           !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch))) ||
+    return !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.hasOnlyDefaultCase(branch)) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
   }
@@ -421,7 +426,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (selector == null) return false;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return false;
-    if (!JavaPsiPatternUtil.isTotalForType(((PsiPattern)label), selectorType)) return true;
+    if (!JavaPsiPatternUtil.isTotalForType(label, selectorType)) return true;
     int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
     // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
     return branchCount > 1;

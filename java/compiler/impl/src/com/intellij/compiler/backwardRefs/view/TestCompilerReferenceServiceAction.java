@@ -3,10 +3,7 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,6 +25,11 @@ public abstract class TestCompilerReferenceServiceAction extends AnAction {
   protected abstract void startActionFor(@NotNull PsiElement element);
 
   protected abstract boolean canBeAppliedFor(@NotNull PsiElement element);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public final void update(@NotNull AnActionEvent e) {

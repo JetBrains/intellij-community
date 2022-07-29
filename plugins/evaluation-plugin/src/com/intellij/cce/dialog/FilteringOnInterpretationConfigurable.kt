@@ -2,11 +2,11 @@ package com.intellij.cce.dialog
 
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.workspace.Config
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 class FilteringOnInterpretationConfigurable : EvaluationConfigurable {
   private lateinit var probabilityTextField: JTextField
@@ -24,12 +24,8 @@ class FilteringOnInterpretationConfigurable : EvaluationConfigurable {
         cell {
           label(EvaluationPluginBundle.message("evaluation.settings.interpretation.probability"))
           probabilityTextField(growPolicy = GrowPolicy.SHORT_TEXT).apply {
-            component.document.addDocumentListener(object : DocumentListener {
-              override fun changedUpdate(e: DocumentEvent) = update()
-              override fun removeUpdate(e: DocumentEvent) = update()
-              override fun insertUpdate(e: DocumentEvent) = update()
-
-              private fun update() {
+            component.document.addDocumentListener(object : DocumentAdapter() {
+              override fun textChanged(e: DocumentEvent) {
                 val value = probabilityTextField.text.toDoubleOrNull()
                 seedTextField.isEnabled = value != null && 0 < value && value < 1
               }

@@ -24,7 +24,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.util.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
 import org.jetbrains.kotlin.idea.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty

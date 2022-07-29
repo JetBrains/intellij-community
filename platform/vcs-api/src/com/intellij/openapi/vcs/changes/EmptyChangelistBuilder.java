@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,15 +14,15 @@ import javax.swing.*;
 
 public class EmptyChangelistBuilder implements ChangelistBuilder {
   @Override
-  public void processChange(final Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
   }
 
   @Override
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
   }
 
   @Override
-  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
   }
 
   @Override

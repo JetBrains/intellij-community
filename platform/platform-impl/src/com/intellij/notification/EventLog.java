@@ -217,7 +217,7 @@ public final class EventLog {
         showMore.set(true);
         continue;
       }
-      list.add(Pair.create(new TextRange(marker.getStartOffset(), marker.getEndOffset()), links.get(marker)));
+      list.add(Pair.create(marker.getTextRange(), links.get(marker)));
     }
 
     if (showMore.get()) {
@@ -252,7 +252,7 @@ public final class EventLog {
       if (!marker.isValid()) {
         continue;
       }
-      list.add(Pair.create(new TextRange(marker.getStartOffset(), marker.getEndOffset()), links.get(marker)));
+      list.add(Pair.create(marker.getTextRange(), links.get(marker)));
     }
 
     int msgStart = editor.getDocument().getTextLength();

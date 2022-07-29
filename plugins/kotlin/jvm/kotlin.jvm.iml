@@ -33,12 +33,15 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.core" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.repl" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
@@ -59,5 +62,6 @@
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

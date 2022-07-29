@@ -6,6 +6,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -75,7 +76,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                        configuration.setMainClassName(getJvmName(className));
                                      }
                                    },
-                                   configuration -> true);
+                                   Predicates.alwaysTrue());
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);
     mainClassFragment.setEditorGetter(field -> {

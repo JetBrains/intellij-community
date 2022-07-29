@@ -8,10 +8,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
+import org.jetbrains.idea.maven.importing.MavenModuleType;
 import org.jetbrains.idea.maven.importing.ModuleModelProxy;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenImportingSettings;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -30,16 +34,15 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
 
   public LegacyMavenProjectImportContextProvider(@NotNull Project project,
                                                  @NotNull MavenProjectsTree projectsTree,
-                                                 @NotNull Map<MavenProject, MavenProjectChanges> changes,
                                                  @NotNull ModuleModelProxy moduleModel,
                                                  @NotNull MavenImportingSettings importingSettings) {
-    super(project, projectsTree, changes, importingSettings, new HashMap<>());
+    super(project, projectsTree, importingSettings, new HashMap<>());
     myModuleModel = moduleModel;
   }
 
   @Override
   protected @Nullable String getModuleName(MavenProject project) {
-    return MavenModelUtil.getModuleName(project, myProjectsTree, myMavenProjectToModuleName);
+    return MavenImportUtil.getModuleName(project, myProjectsTree, myMavenProjectToModuleName);
   }
 
   @NotNull
@@ -77,10 +80,10 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
   }
 
   private static String getModuleDirPath(MavenProject project, MavenModuleType type) {
-    if (type == MavenModuleType.TEST) {
+    if (type == MavenModuleType.TEST_ONLY) {
       return Path.of(project.getDirectory(), "src", "test").toString();
     }
-    if (type == MavenModuleType.MAIN) {
+    if (type == MavenModuleType.MAIN_ONLY) {
       return Path.of(project.getDirectory(), "src", "main").toString();
     }
     return project.getDirectory();

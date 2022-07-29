@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,13 +17,15 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
     ShowSettingsUtil.getInstance().showSettingsDialog(e.project, SettingsSyncConfigurable::class.java)
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     val p = e.presentation
     if (!isSettingsSyncEnabledByKey()) {
       p.isEnabledAndVisible = false
       return
     }
-    when(getStatus()) {
+    when (getStatus()) {
       SyncStatus.ON -> {
         p.icon = SettingsSyncIcons.StatusEnabled
         @Suppress("DialogTitleCapitalization") // we use "is", not "Is

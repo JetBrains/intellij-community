@@ -13,7 +13,15 @@ import java.util.Set;
 
 @ApiStatus.Experimental
 public interface PluginEnabler {
-  PluginEnabler HEADLESS = new DisabledPluginsState();
+
+  interface Headless extends PluginEnabler {
+
+    boolean isIgnoredDisabledPlugins();
+
+    void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins);
+  }
+
+  Headless HEADLESS = new DisabledPluginsState();
 
   static @NotNull PluginEnabler getInstance() {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {

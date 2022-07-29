@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -46,6 +48,18 @@ public final class EditContractIntention extends BaseIntentionAction implements 
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }
     return null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiMethod method = getTargetMethod(editor, file);
+    PsiAnnotation annotation = method == null ? null : JavaMethodContractUtil.findContractAnnotation(method);
+    String text = "(\"...\")";
+    if (annotation != null) {
+      text = annotation.getParameterList().getText();
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "@Contract()\nclass X{}",
+                                               "@Contract" + text + "\nclass X{}");
   }
 
   @Override

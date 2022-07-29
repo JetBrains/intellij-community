@@ -11,9 +11,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent: RowImpl) : CellBaseImpl<T>() {
 
-  protected var placeholderCellData: PlaceholderCellData? = null
-    private set
-
+  private var placeholderCellData: PlaceholderCellData? = null
   private var visible = true
   private var enabled = true
 

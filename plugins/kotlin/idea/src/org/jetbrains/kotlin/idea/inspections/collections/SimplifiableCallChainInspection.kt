@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection

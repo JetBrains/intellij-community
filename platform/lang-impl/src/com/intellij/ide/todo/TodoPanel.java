@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -340,7 +340,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     Object userObject = node.getUserObject();
-    final PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject);
+    final PsiElement selectedElement = myProject != null ? TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject) : null;
     if (selectedElement != null) return selectedElement;
     return getSelectedFile();
   }
@@ -597,6 +597,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       return todoPanel != null && todoPanel.mySettings.arePackagesShown;
@@ -621,6 +626,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -651,6 +661,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       e.getPresentation().setText("   " + getTemplateText());
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       e.getPresentation().setEnabled(todoPanel != null && todoPanel.mySettings.arePackagesShown);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

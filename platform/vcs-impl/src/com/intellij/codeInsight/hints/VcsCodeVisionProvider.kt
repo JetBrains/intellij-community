@@ -104,7 +104,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val language = psiFile.language
     val project = editor.project ?: return null
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
-    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
+    val virtualFile = psiFile.virtualFile
+    if (virtualFile == null) return null
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile) ?: return null
     if ("Git" != vcs.name) {
       return null
     }
@@ -232,7 +234,19 @@ private fun VcsCodeAuthorInfo.getText(): String {
 private sealed class Result<out T>(val isSuccess: Boolean, val result: T?) {
 
   companion object {
-    val SUCCESS_EMPTY = Success(null)
+    private var mySuccess: Success<Nothing?>? = null
+
+    val SUCCESS_EMPTY : Success<Nothing?>
+      get() {
+        // initializing lazily to avoid deadlock. Not a problem to access it from different threads (safe race)
+        val mySuccessVal = mySuccess
+        if (mySuccessVal != null) {
+          return mySuccessVal
+        }
+        val success = Success(null)
+        mySuccess = success
+        return success
+      }
   }
 
   class Success<T>(result: T) : Result<T>(true, result)

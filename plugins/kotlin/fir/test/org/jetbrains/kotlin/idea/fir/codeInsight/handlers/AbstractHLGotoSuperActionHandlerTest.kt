@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 
 abstract class AbstractHLGotoSuperActionHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
+    override fun isFirPlugin(): Boolean = true
+
     fun doTest(testFilePath: String) {
         val ktFile = myFixture.configureByFile(testFilePath) as KtFile
         val data = KotlinSuperDeclarationsInfoService.getForDeclarationAtCaret(ktFile, myFixture.editor)

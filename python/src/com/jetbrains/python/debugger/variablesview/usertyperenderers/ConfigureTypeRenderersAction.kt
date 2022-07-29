@@ -11,7 +11,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PyBundle
@@ -71,6 +70,16 @@ fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
 }
 
 class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
+  init {
+    templatePresentation.text = PyBundle.message("action.PyDebugger.CustomizeDataView.text")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isVisible = getSelectedNodes(e.dataContext).size <= 1
+  }
+
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
     val debugValue = node.valueContainer as? PyDebugValue ?: return
@@ -85,20 +94,6 @@ class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
     }
     else {
       showSettingsWithNewRenderer(project, debugValue)
-    }
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = false
-    val tree = XDebuggerTree.getTree(e.dataContext)
-    tree?.selectionPaths?.let {
-      if (it.size > 1) return
-      e.presentation.text = PyBundle.message("action.PyDebugger.CustomizeDataView.text")
-      e.presentation.isVisible = true
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -17,6 +17,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,7 +247,9 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    StopWatch sw = StopWatch.start("Reading Git repo info in " + getShortRepositoryName(this));
+    Span span =
+      TraceManager.INSTANCE.getTracer("vcs").spanBuilder("reading Git repo info").setAttribute("repository", getShortRepositoryName(this))
+        .startSpan();
     File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(configFile);
     myRepositoryFiles.updateCustomPaths(config.parseCore());
@@ -258,7 +261,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    sw.report(LOG);
+    span.end();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
                            new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
                            new LinkedHashSet<>(trackInfos),

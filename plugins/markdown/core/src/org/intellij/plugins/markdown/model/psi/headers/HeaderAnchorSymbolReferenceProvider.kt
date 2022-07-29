@@ -13,12 +13,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
 
 internal class HeaderAnchorSymbolReferenceProvider: PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (element !is MarkdownLinkDestination) {
+      return emptyList()
+    }
+    if (MarkdownLinkDefinition.isUnderCommentWrapper(element)) {
       return emptyList()
     }
     val range = ElementManipulators.getValueTextRange(element)

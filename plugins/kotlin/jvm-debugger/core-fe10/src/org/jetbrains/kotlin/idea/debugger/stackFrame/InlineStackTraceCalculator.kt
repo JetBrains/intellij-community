@@ -9,7 +9,14 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.VariableWithLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
+import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.filterRepeatedVariables
+import org.jetbrains.kotlin.idea.debugger.sortedVariablesWithLocation
 import org.jetbrains.kotlin.load.java.JvmAbi
 
 object InlineStackTraceCalculator {
@@ -365,7 +372,7 @@ private fun fetchCallLocations(
 
         // Skip to the previous location if the call location lands on a synthetic fake.kt:1 line.
         // These lines are inserted by the compiler to force new line numbers for single line lambdas.
-        if (DebuggerUtils.isKotlinFakeLineNumber(allLocations[locationIndex])) {
+        if (isKotlinFakeLineNumber(allLocations[locationIndex])) {
             locationIndex = (locationIndex - 1).coerceAtLeast(0)
         }
         prev.callLocation = allLocations[locationIndex]

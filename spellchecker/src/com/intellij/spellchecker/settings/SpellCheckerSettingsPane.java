@@ -137,7 +137,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   private static String getSupportedDictionariesDescription() {
-    final String supported = CustomDictionaryProvider.EP_NAME.extensions()
+    final String supported = CustomDictionaryProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.getDictionaryType())
       .collect(Collectors.joining(", "));
 

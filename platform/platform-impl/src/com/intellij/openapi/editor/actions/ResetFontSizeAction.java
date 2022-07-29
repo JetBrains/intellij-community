@@ -23,10 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
-public class ResetFontSizeAction extends EditorAction {
+public final class ResetFontSizeAction extends EditorAction {
   private static final String FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
   private static final String FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
@@ -40,7 +37,7 @@ public class ResetFontSizeAction extends EditorAction {
     }
   }
 
-  private static class SingleEditorStrategy implements Strategy {
+  private static final class SingleEditorStrategy implements Strategy {
     private final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     private final EditorEx myEditorEx;
@@ -63,8 +60,7 @@ public class ResetFontSizeAction extends EditorAction {
     }
   }
 
-  private static class AllEditorsStrategy implements Strategy {
-    private PropertiesComponent c = PropertiesComponent.getInstance();
+  private static final class AllEditorsStrategy implements Strategy {
     private final EditorEx myEditorEx;
 
     AllEditorsStrategy(EditorEx editorEx) {
@@ -73,10 +69,11 @@ public class ResetFontSizeAction extends EditorAction {
 
     @Override
     public float getFontSize() {
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
       if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
-        return c.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
+        return propertyComponent.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
       }
-      return c.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
+      return propertyComponent.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
     }
 
     @Override
@@ -124,12 +121,11 @@ public class ResetFontSizeAction extends EditorAction {
       if (!(editor instanceof EditorEx)) {
         return;
       }
-      EditorEx editorEx = (EditorEx)editor;
-      getStrategy(editorEx).reset();
+      getStrategy((EditorEx)editor).reset();
     }
   }
 
-  private static class Listener implements EditorColorsListener, ApplicationInitializedListener {
+  private static final class Listener implements EditorColorsListener, ApplicationInitializedListener {
     @Override
     public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
       impl(false);
@@ -140,13 +136,13 @@ public class ResetFontSizeAction extends EditorAction {
       impl(true);
     }
 
-    private void impl(boolean force) {
-      PropertiesComponent c = PropertiesComponent.getInstance();
+    private static void impl(boolean force) {
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (force || !c.getValue(PREVIOUS_COLOR_SCHEME, "").equals(globalScheme.getName())) {
-        c.setValue(PREVIOUS_COLOR_SCHEME, globalScheme.getName());
-        c.setValue(FONT_SIZE_TO_RESET_CONSOLE, globalScheme.getConsoleFontSize2D(), -1);
-        c.setValue(FONT_SIZE_TO_RESET_EDITOR, globalScheme.getEditorFontSize2D(), -1);
+      if (force || !propertyComponent.getValue(PREVIOUS_COLOR_SCHEME, "").equals(globalScheme.getName())) {
+        propertyComponent.setValue(PREVIOUS_COLOR_SCHEME, globalScheme.getName());
+        propertyComponent.setValue(FONT_SIZE_TO_RESET_CONSOLE, globalScheme.getConsoleFontSize2D(), -1);
+        propertyComponent.setValue(FONT_SIZE_TO_RESET_EDITOR, globalScheme.getEditorFontSize2D(), -1);
       }
     }
   }

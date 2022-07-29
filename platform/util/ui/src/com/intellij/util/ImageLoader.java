@@ -557,10 +557,15 @@ public final class ImageLoader {
   }
 
   public static @Nullable Image loadCustomIcon(@NotNull File file) throws IOException {
+    return loadCustomIcon(file.toURI().toURL());
+  }
+
+  public static @Nullable Image loadCustomIcon(@NotNull URL url) throws IOException {
+    String iconPath = url.toString();
     ScaleContext scaleContext = ScaleContext.create();
     // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
     float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-    ImageDescriptor imageDescriptor = new ImageDescriptor(file.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(file.getPath(), ".svg"), file.getPath().contains("_dark."));
+    ImageDescriptor imageDescriptor = new ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."));
     Image icon = ImageUtil.ensureHiDPI(loadByDescriptor(imageDescriptor, USE_CACHE, null, null, null, ImageCache.INSTANCE, null), scaleContext);
     if (icon == null) {
       return null;
@@ -569,7 +574,7 @@ public final class ImageLoader {
     int w = icon.getWidth(null);
     int h = icon.getHeight(null);
     if (w <= 0 || h <= 0) {
-      getLogger().error("negative image size: w=" + w + ", h=" + h + ", path=" + file.getPath());
+      getLogger().error("negative image size: w=" + w + ", h=" + h + ", path=" + iconPath);
       return null;
     }
 

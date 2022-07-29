@@ -32,7 +32,8 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 
@@ -348,48 +348,43 @@ object TemplateInlayUtil {
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
     var (commentsStringsOccurrences, textOccurrences) = initOptions // model
     val panel = panel {
-      row(LangBundle.message("inlay.rename.also.rename.options.title")) {
+      buttonsGroup(LangBundle.message("inlay.rename.also.rename.options.title")) {
         commentsStringsOccurrences?.let {
           row {
-            cell {
-              checkBox(
-                text = RefactoringBundle.message("comments.and.strings"),
-                isSelected = it,
-                actionListener = { _, cb ->
-                  commentsStringsOccurrences = cb.isSelected
+            checkBox(RefactoringBundle.message("comments.and.strings"))
+              .applyToComponent {
+                isSelected = it
+                addActionListener {
+                  commentsStringsOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
                 }
-              ).focused()
-              component(JLabel(AllIcons.Actions.InlayRenameInComments))
-            }
+              }.gap(RightGap.SMALL)
+              .focused()
+            icon(AllIcons.Actions.InlayRenameInComments)
           }
         }
         textOccurrences?.let {
           row {
-            cell {
-              val cb = checkBox(
-                text = RefactoringBundle.message("text.occurrences"),
-                isSelected = it,
-                actionListener = { _, cb ->
-                  textOccurrences = cb.isSelected
+            val cb = checkBox(RefactoringBundle.message("text.occurrences"))
+              .applyToComponent {
+                isSelected = it
+                addActionListener {
+                  textOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
                 }
-              )
-              if (commentsStringsOccurrences == null) {
-                cb.focused()
-              }
-              component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
+              }.gap(RightGap.SMALL)
+            if (commentsStringsOccurrences == null) {
+              cb.focused()
             }
+            icon(AllIcons.Actions.InlayRenameInNoCodeFiles)
           }
         }
       }
       row {
-        cell {
-          link(LangBundle.message("inlay.rename.link.label.more.options"), null) {
-            doRename(editor, renameAction, null)
-          }.component.isFocusable = true
-          comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
-        }
+        link(LangBundle.message("inlay.rename.link.label.more.options")) {
+          doRename(editor, renameAction, null)
+        }.gap(RightGap.SMALL)
+        comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
       }
     }
     DumbAwareAction.create {

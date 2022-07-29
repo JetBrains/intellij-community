@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -68,6 +68,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 class ExternalSystemStorageTest {
   companion object {
@@ -596,7 +597,7 @@ class ExternalSystemStorageTest {
   @Test
   fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
     loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
-      JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
+      JpsProjectModelSynchronizer.getInstance(project).markAllEntitiesAsDirty()
     }
   }
 
@@ -842,12 +843,12 @@ class ExternalSystemStorageTest {
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: (Project) -> Unit) {
     @Suppress("RedundantSuspendModifier")
-    suspend fun copyProjectFiles(dir: VirtualFile): Path {
-      val projectDir = VfsUtil.virtualToIoFile(dir)
-      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir)
+    fun copyProjectFiles(dir: VirtualFile): Path {
+      val projectDir = dir.toNioPath()
+      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir.toFile())
       val testProjectFilesDir = testDataRoot.resolve(testDataDirName).resolve("project").toFile()
       if (testProjectFilesDir.exists()) {
-        FileUtil.copyDir(testProjectFilesDir, projectDir)
+        FileUtil.copyDir(testProjectFilesDir, projectDir.toFile())
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
@@ -855,7 +856,7 @@ class ExternalSystemStorageTest {
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)
-      return projectDir.toPath()
+      return projectDir
     }
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {
@@ -870,8 +871,9 @@ class ExternalSystemStorageTest {
 
   private fun suppressLogs(action: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-        message == null || !message.contains("Trying to load multiple modules with the same name.")
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+        if (message.contains("Trying to load multiple modules with the same name.")) Action.NONE
+        else Action.ALL
     }) {
       action()
     }

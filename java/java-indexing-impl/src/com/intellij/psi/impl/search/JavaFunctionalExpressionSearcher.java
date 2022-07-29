@@ -39,6 +39,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ThreeState;
@@ -261,14 +262,21 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     FileViewProvider viewProvider = file.getViewProvider();
     try {
       PsiMember member = Objects.requireNonNull(PsiTreeUtil.getStubOrPsiParentOfType(expression, PsiMember.class));
-      PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
-                                                       range -> createMemberCopyFromText(member, range));
-      PsiFunctionalExpression psi = findPsiByAST(fragment, entry.exprStart - entry.contextStart);
+      PsiFunctionalExpression psi = null;
+      Exception ex = null;
+      try {
+        PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
+                                                         range -> createMemberCopyFromText(member, range));
+        psi = findPsiByAST(fragment, entry.exprStart - entry.contextStart);
+      }
+      catch (IncorrectOperationException e) {
+        ex = e;
+      }
       if (psi == null) {
         StubTextInconsistencyException.checkStubTextConsistency(file);
         throw new RuntimeExceptionWithAttachments(
           "No functional expression at " + entry + ", file will be reindexed",
-          new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
+          ex, new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
       }
       return psi;
     }

@@ -127,7 +127,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   private InjectionPanel getField(Field field) {
     try {
-      return ((InjectionPanel)field.get(this));
+      return (InjectionPanel)field.get(this);
     }
     catch (IllegalAccessException e) {
       throw new Error(e);

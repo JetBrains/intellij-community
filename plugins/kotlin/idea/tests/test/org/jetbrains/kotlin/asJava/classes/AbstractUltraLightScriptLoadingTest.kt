@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractUltraLightScriptLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -33,15 +34,16 @@ abstract class AbstractUltraLightScriptLoadingTest : KotlinLightCodeInsightFixtu
         val expectedTextFile = File(testDataPath.replaceFirst("\\.kts\$".toRegex(), ".java"))
         if (expectedTextFile.exists()) {
             val ultraLightScript = LightClassGenerationSupport.getInstance(script.project).createUltraLightClassForScript(script)
-            TestCase.assertTrue(ultraLightScript is KtUltraLightClassForScript)
-            ultraLightScript!!
             val renderedResult = ultraLightScript.renderClass()
             KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
             checkDescriptorsLeak(ultraLightScript)
             return
         }
 
-        val ultraLightClass = UltraLightChecker.checkScriptEquivalence(script)
+        val ultraLightClass = KotlinAsJavaSupport.getInstance(script.project).getLightClassForScript(script).also {
+            assertTrue(it is KtUltraLightClassForScript)
+        }!!
+
         checkDescriptorsLeak(ultraLightClass)
     }
 }

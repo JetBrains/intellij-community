@@ -39,25 +39,10 @@ final class KotlinPluginBuilder {
   private final ProductProperties properties
 
   @SuppressWarnings('SpellCheckingInspection')
-  public static final List<String> FIR_IDE_MODULES = List.of(
-    "kotlin.base.fir.analysis-api-providers",
-    "kotlin.fir",
-    "kotlin.fir.fir-fe10-binding",
-    "kotlin.uast.uast-kotlin-fir",
-    "kotlin.uast.uast-kotlin-idea-fir",
-    "kotlin.fir.fir-low-level-api-ide-impl",
-  )
-
-  @SuppressWarnings('SpellCheckingInspection')
-  public static final List<String> FIR_IDE_LIBRARIES = List.of(
-    "kotlinc.high-level-api-fir",
-    "kotlinc.kotlin-compiler-fir",
-    "kotlinc.low-level-api-fir",
-    "kotlinc.symbol-light-classes",
-  )
-
-  @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
+    "kotlin.plugin.common",
+    "kotlin.plugin.k1",
+    "kotlin.plugin.k2",
     "kotlin.base.util",
     "kotlin.base.indices",
     "kotlin.base.compiler-configuration",
@@ -67,15 +52,17 @@ final class KotlinPluginBuilder {
     "kotlin.base.project-model",
     "kotlin.base.platforms",
     "kotlin.base.facet",
+    "kotlin.base.klib",
     "kotlin.base.project-structure",
+    "kotlin.base.external-build-system",
     "kotlin.base.scripting",
     "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
     "kotlin.base.highlighting",
     "kotlin.base.line-markers",
     "kotlin.base.code-insight",
-    "kotlin.base.inspections",
     "kotlin.base.jps",
+    "kotlin.base.analysis-api.utils",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.obsolete-compat",
     "kotlin.base.resources",
@@ -83,6 +70,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.fe10.plugin",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.analysis-api-providers",
+    "kotlin.base.analysis-api-helpers",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
@@ -92,7 +80,7 @@ final class KotlinPluginBuilder {
     "kotlin.fir.frontend-independent",
     "kotlin.line-indent-provider",
     "kotlin.jvm",
-    "kotlin.refIndex",
+    "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",
@@ -115,14 +103,15 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
     "kotlin.compiler-plugins.android-extensions-stubs",
-    "kotlin.jvm-run-configurations",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
-    "kotlin.gradle.gradle-idea",
+    "kotlin.gradle.gradle",
+    "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
-    "kotlin.gradle.gradle-native",
+    "kotlin.gradle.code-insight-groovy",
     "kotlin.native",
     "kotlin.grazie",
+    "kotlin.run-configurations.jvm",
     "kotlin.run-configurations.junit",
     "kotlin.run-configurations.junit-fe10",
     "kotlin.run-configurations.testng",
@@ -133,7 +122,6 @@ final class KotlinPluginBuilder {
     "kotlin.scripting",
     "kotlin.coverage",
     "kotlin.ml-completion",
-    "kotlin.groovy",
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
@@ -142,12 +130,15 @@ final class KotlinPluginBuilder {
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
     "kotlin.j2k.new",
+    "kotlin.plugin-updater",
+    "kotlin.preferences",
+    "kotlin.project-configuration",
     "kotlin.project-wizard.cli",
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
-    "kotlin.project-wizard-compose",
+    "kotlin.project-wizard.compose",
     "kotlin.jvm-debugger.base.util",
     "kotlin.jvm-debugger.util",
     "kotlin.jvm-debugger.core",
@@ -161,7 +152,24 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
-    "kotlin.features-trainer"
+    "kotlin.migration",
+    "kotlin.inspections",
+    "kotlin.inspections-fe10",
+    "kotlin.features-trainer",
+    "kotlin.base.fir.analysis-api-providers",
+    "kotlin.base.fir.code-insight",
+    "kotlin.code-insight.api",
+    "kotlin.code-insight.utils",
+    "kotlin.code-insight.intentions-shared",
+    "kotlin.code-insight.inspections-shared",
+    "kotlin.code-insight.impl-base",
+    "kotlin.code-insight.descriptions",
+    "kotlin.code-insight.intentions-k2",
+    "kotlin.code-insight.inspections-k2",
+    "kotlin.fir",
+    "kotlin.uast.uast-kotlin-fir",
+    "kotlin.uast.uast-kotlin-idea-fir",
+    "kotlin.fir.fir-low-level-api-ide-impl",
   )
 
   @SuppressWarnings('SpellCheckingInspection')
@@ -178,7 +186,11 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-gradle-statistics",
     "kotlin-gradle-plugin-idea",
     "kotlin-gradle-plugin-idea-proto",
-    "kotlin-tooling-core"
+    "kotlin-tooling-core",
+    "kotlinc.high-level-api-fir",
+    "kotlinc.kotlin-compiler-fir",
+    "kotlinc.low-level-api-fir",
+    "kotlinc.symbol-light-classes",
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -200,12 +212,11 @@ final class KotlinPluginBuilder {
   static PluginLayout kotlinPlugin(KotlinUltimateSources ultimateSources) {
     return kotlinPlugin(
       KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
-      KotlinPluginType.valueOf(System.getProperty("kotlin.plugin.type", KotlinPluginType.FE10.name())),
       ultimateSources,
     )
   }
 
-  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinPluginType type, KotlinUltimateSources ultimateSources) {
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinUltimateSources ultimateSources) {
     return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
@@ -213,10 +224,10 @@ final class KotlinPluginBuilder {
           mainJarName = "kotlin-plugin.jar"
       }
 
-      for (String moduleName : MODULES + type.additionalModules) {
+      for (String moduleName : MODULES) {
         withModule(moduleName)
       }
-      for (String library : LIBRARIES + type.additionalLibraries) {
+      for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
@@ -254,23 +265,6 @@ final class KotlinPluginBuilder {
           })
         }
       })
-
-      if (type == KotlinPluginType.FIR) {
-        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
-          @Override
-          void accept(ModuleOutputPatcher patcher, BuildContext context) {
-            def firResourcesDir = context.findModule("kotlin.plugin-fir").sourceRoots
-              .findAll { it.rootType instanceof JavaResourceRootType }[0]
-              .file.toPath()
-
-            Files.walk(firResourcesDir)
-              .filter { Files.isRegularFile(it) }
-              .forEach { resource ->
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, "META-INF/" + resource.fileName.toString(), resource.toFile().text, true)
-              }
-          }
-        })
-      }
 
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -396,19 +390,6 @@ final class KotlinPluginBuilder {
   def build() {
     BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
-  }
-
-  enum KotlinPluginType {
-    FIR(FIR_IDE_MODULES, FIR_IDE_LIBRARIES),
-    FE10(List.<String>of(), List.<String>of())
-
-    List< String> additionalModules
-    List< String> additionalLibraries
-
-    KotlinPluginType(List<String> additionalModules, List<String> additionalLibraries) {
-      this.additionalModules = additionalModules
-      this.additionalLibraries = additionalLibraries
-    }
   }
 
   enum KotlinUltimateSources {

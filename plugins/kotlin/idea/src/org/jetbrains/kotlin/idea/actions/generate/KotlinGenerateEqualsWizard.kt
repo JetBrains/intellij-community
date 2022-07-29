@@ -12,7 +12,7 @@ import com.intellij.refactoring.classMembers.AbstractMemberInfoModel
 import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.util.containers.HashMap
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo

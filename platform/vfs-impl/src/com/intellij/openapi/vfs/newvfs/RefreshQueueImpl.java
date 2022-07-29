@@ -203,6 +203,5 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     RefreshWorker.ourTestListener = testListener;
-    LocalFileSystemRefreshWorker.setTestListener(testListener);
   }
 }

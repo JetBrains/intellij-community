@@ -14,7 +14,6 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS = "org.junit.jupiter.api.Assertions";
   public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";
-  public static final String ORG_HAMCREST_MATCHER_ASSERT = "org.hamcrest.MatcherAssert";
   public static final String ORG_JUNIT_TEST = "org.junit.Test";
   public static final String ORG_JUNIT_IGNORE = "org.junit.Ignore";
   public static final String ORG_JUNIT_RULE = "org.junit.Rule";
@@ -50,6 +49,7 @@ public final class JUnitCommonClassNames {
                    ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE);
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
   public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
+  public static final String ORG_JUNIT_JUPITER_API_DISABLED = "org.junit.jupiter.api.Disabled";
   public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
   public static final String ORG_JUNIT_JUPITER_API_TEST_FACTORY = "org.junit.jupiter.api.TestFactory";
   public static final String ORG_JUNIT_JUPITER_API_NESTED = "org.junit.jupiter.api.Nested";

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
@@ -21,11 +21,11 @@ import com.sun.jdi.Location
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.isDexDebug
-import org.jetbrains.kotlin.idea.debugger.safeLocation
-import org.jetbrains.kotlin.idea.debugger.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -67,21 +67,21 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
             else -> super.createMethodFilter(stepTarget)
         }
-}
 
-private fun findSmartStepTargetsInReadAction(position: SourcePosition, session: DebuggerSession?) =
-    ReadAction.nonBlocking<List<SmartStepTarget>> {
-        findSmartStepTargets(position, session)
-    }.executeSynchronously()
+    private fun findSmartStepTargetsInReadAction(position: SourcePosition, session: DebuggerSession?) =
+        ReadAction.nonBlocking<List<SmartStepTarget>> {
+            findSmartStepTargets(position, session)
+        }.executeSynchronously()
 
-private fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> {
-    val topmostElement = position.getTopmostElement() ?: return emptyList()
-    val lines = topmostElement.getLines() ?: return emptyList()
-    val targets = findSmartStepTargets(topmostElement, lines)
-    if (session != null) {
-        return calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
+    private fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> {
+        val topmostElement = position.getTopmostElement() ?: return emptyList()
+        val lines = topmostElement.getLines() ?: return emptyList()
+        var targets = findSmartStepTargets(topmostElement, lines)
+        if (session != null) {
+            targets = calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
+        }
+        return reorderWithSteppingFilters(targets)
     }
-    return targets
 }
 
 private fun findSmartStepTargets(topmostElement: KtElement, lines: Range<Int>): List<SmartStepTarget> {
@@ -110,7 +110,7 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     lines: ClosedRange<Int>
 ): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    if (debugProcess.isDexDebug() || size <= 1) return this
+    if (DexDebugFacility.isDex(debugProcess) || size <= 1) return this
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: return this
     return filterSmartStepTargets(location, lines, this, debugProcess)

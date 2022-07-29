@@ -222,7 +222,7 @@ public class PyPsiRefactoringUtil {
     if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
     final PsiFileSystemItem elementSource = element instanceof PsiDirectory ? (PsiFileSystemItem)element : element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
-    if (elementSource == file) return false;
+    if (elementSource == file || elementSource == file.getOriginalFile()) return false;
     final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
       return false;

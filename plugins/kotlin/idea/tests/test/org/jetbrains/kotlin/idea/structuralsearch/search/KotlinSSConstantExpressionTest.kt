@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSConstantExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSConstantExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "constantExpression"
 
     fun testNull() { doTest("null") }

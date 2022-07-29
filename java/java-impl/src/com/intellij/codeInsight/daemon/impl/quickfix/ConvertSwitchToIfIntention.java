@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,6 +30,11 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
 
   public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {
     mySwitchStatement = switchStatement;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ConvertSwitchToIfIntention(PsiTreeUtil.findSameElementInCopy(mySwitchStatement, target));
   }
 
   @NotNull
@@ -72,7 +78,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return mySwitchStatement;
+    return mySwitchStatement.getContainingFile();
   }
 
   @Override

@@ -21,208 +21,210 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        
-        
-        val connections = listOf<ConnectionId>(
-        )
+open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
 
-    }
-        
-    @JvmField var _myName: String? = null
-    override val myName: String
-        get() = _myName!!
-                        
-    @JvmField var _next: LinkedListEntityId? = null
-    override val next: LinkedListEntityId
-        get() = _next!!
-    
-    override fun connectionIdList(): List<ConnectionId> {
-        return connections
-    }
+  companion object {
 
-    class Builder(val result: LinkedListEntityData?): ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
-        constructor(): this(LinkedListEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity LinkedListEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isMyNameInitialized()) {
-                error("Field LinkedListEntity#myName should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field LinkedListEntity#entitySource should be initialized")
-            }
-            if (!getEntityData().isNextInitialized()) {
-                error("Field LinkedListEntity#next should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var myName: String
-            get() = getEntityData().myName
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().myName = value
-                changedProperty.add("myName")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-            
-        override var next: LinkedListEntityId
-            get() = getEntityData().next
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().next = value
-                changedProperty.add("next")
-                
-            }
-        
-        override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
-        override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
-    }
-}
-    
-class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<LinkedListEntity>(), SoftLinkable {
-    lateinit var myName: String
-    lateinit var next: LinkedListEntityId
 
-    fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-    fun isNextInitialized(): Boolean = ::next.isInitialized
+    val connections = listOf<ConnectionId>(
+    )
 
-    override fun getLinks(): Set<PersistentEntityId<*>> {
-        val result = HashSet<PersistentEntityId<*>>()
-        result.add(next)
-        return result
-    }
+  }
 
-    override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
-        index.index(this, next)
-    }
+  @JvmField
+  var _myName: String? = null
+  override val myName: String
+    get() = _myName!!
 
-    override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
-        // TODO verify logic
-        val mutablePreviousSet = HashSet(prev)
-        val removedItem_next = mutablePreviousSet.remove(next)
-        if (!removedItem_next) {
-            index.index(this, next)
-        }
-        for (removed in mutablePreviousSet) {
-            index.remove(this, removed)
-        }
-    }
+  @JvmField
+  var _next: LinkedListEntityId? = null
+  override val next: LinkedListEntityId
+    get() = _next!!
 
-    override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
-        var changed = false
-        val next_data =         if (next == oldLink) {
-            changed = true
-            newLink as LinkedListEntityId
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
+    constructor() : this(LinkedListEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
         }
         else {
-            null
+          error("Entity LinkedListEntity is already created in a different builder")
         }
-        if (next_data != null) {
-            next = next_data
-        }
-        return changed
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
-        val modifiable = LinkedListEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isMyNameInitialized()) {
+        error("Field LinkedListEntity#myName should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field LinkedListEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isNextInitialized()) {
+        error("Field LinkedListEntity#next should be initialized")
+      }
     }
 
-    override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
-        val entity = LinkedListEntityImpl()
-        entity._myName = myName
-        entity._next = next
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
-        return LinkedListEntityId(myName)
-    }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return LinkedListEntity::class.java
-    }
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
+      }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+      }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as LinkedListEntityData
-        
-        if (this.myName != other.myName) return false
-        if (this.entitySource != other.entitySource) return false
-        if (this.next != other.next) return false
-        return true
-    }
+    override var next: LinkedListEntityId
+      get() = getEntityData().next
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().next = value
+        changedProperty.add("next")
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as LinkedListEntityData
-        
-        if (this.myName != other.myName) return false
-        if (this.next != other.next) return false
-        return true
-    }
+      }
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + myName.hashCode()
-        result = 31 * result + next.hashCode()
-        return result
+    override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
+    override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
+  }
+}
+
+class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<LinkedListEntity>(), SoftLinkable {
+  lateinit var myName: String
+  lateinit var next: LinkedListEntityId
+
+  fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+  fun isNextInitialized(): Boolean = ::next.isInitialized
+
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    val result = HashSet<PersistentEntityId<*>>()
+    result.add(next)
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    index.index(this, next)
+  }
+
+  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val removedItem_next = mutablePreviousSet.remove(next)
+    if (!removedItem_next) {
+      index.index(this, next)
     }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+    var changed = false
+    val next_data = if (next == oldLink) {
+      changed = true
+      newLink as LinkedListEntityId
+    }
+    else {
+      null
+    }
+    if (next_data != null) {
+      next = next_data
+    }
+    return changed
+  }
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
+    val modifiable = LinkedListEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
+    }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
+
+  override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
+    val entity = LinkedListEntityImpl()
+    entity._myName = myName
+    entity._next = next
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
+
+  override fun persistentId(): PersistentEntityId<*> {
+    return LinkedListEntityId(myName)
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return LinkedListEntity::class.java
+  }
+
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
+
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as LinkedListEntityData
+
+    if (this.myName != other.myName) return false
+    if (this.entitySource != other.entitySource) return false
+    if (this.next != other.next) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as LinkedListEntityData
+
+    if (this.myName != other.myName) return false
+    if (this.next != other.next) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + myName.hashCode()
+    result = 31 * result + next.hashCode()
+    return result
+  }
 }

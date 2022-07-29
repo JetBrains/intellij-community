@@ -11,9 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
+import org.jetbrains.kotlin.idea.util.ElementKind
+import org.jetbrains.kotlin.idea.util.findElements
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.psi.*
@@ -21,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.SmartList
 
 fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String, @NlsContexts.DialogTitle title: String) {
-    CodeInsightUtils.showErrorHint(project, editor, message, title, null)
+    KotlinSurrounderUtils.showErrorHint(project, editor, message, title, null)
 }
 
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {
@@ -33,7 +35,7 @@ fun selectElementsWithTargetSibling(
     editor: Editor,
     file: KtFile,
     @NlsContexts.DialogTitle title: String,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
     continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
@@ -65,7 +67,7 @@ fun selectElementsWithTargetParent(
     editor: Editor,
     file: KtFile,
     @NlsContexts.DialogTitle title: String,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
     continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
@@ -104,11 +106,11 @@ fun selectElementsWithTargetParent(
         val startOffset = editor.selectionModel.selectionStart
         val endOffset = editor.selectionModel.selectionEnd
 
-        val elements = elementKinds.flatMap { CodeInsightUtils.findElements(file, startOffset, endOffset, it).toList() }
+        val elements = elementKinds.flatMap { findElements(file, startOffset, endOffset, it).toList() }
         if (elements.isEmpty()) {
             return when (elementKinds.singleOrNull()) {
-                CodeInsightUtils.ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
-                CodeInsightUtils.ElementKind.TYPE_ELEMENT -> showErrorHintByKey("cannot.refactor.no.type")
+                ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
+                ElementKind.TYPE_ELEMENT -> showErrorHintByKey("cannot.refactor.no.type")
                 else -> showErrorHint(
                     file.project,
                     editor,
@@ -127,7 +129,7 @@ fun selectElementsWithTargetParent(
                 selectTargetContainer(listOf(expr))
             } else {
                 if (!editor.selectionModel.hasSelection()) {
-                    if (elementKinds.singleOrNull() == CodeInsightUtils.ElementKind.EXPRESSION) {
+                    if (elementKinds.singleOrNull() == ElementKind.EXPRESSION) {
                         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
                         elementAtCaret?.getParentOfTypeAndBranch<KtProperty> { nameIdentifier }?.let {
                             return@selectElement selectTargetContainer(listOf(it))

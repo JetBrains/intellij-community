@@ -24,8 +24,6 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
   override fun runInDispatchThread(): Boolean = true
 
   fun `test watch roots rename artifact content via workspace model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val outputDir = Files.createDirectories(Path.of(FileUtil.getTempDirectory(), "output")).toFile()
     val file = runWriteAction {
@@ -52,8 +50,6 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
   }
 
   fun `test watch roots rename artifact content via bridge`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val file = runWriteAction {
       testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")

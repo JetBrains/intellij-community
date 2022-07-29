@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtElement
 
 object LambdaReceiverInflowBehaviour : KotlinSliceAnalysisMode.Behaviour {

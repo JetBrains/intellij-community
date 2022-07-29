@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -45,7 +45,6 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.actions.UpdateFoldersAction;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -122,13 +121,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
-  public boolean supportsSeveralProjectsInSameFolders() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(); // TODO should be supported!
-  }
-
   public boolean supportModuleGroups() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
@@ -137,10 +132,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public boolean supportsKeepingModulesFromPreviousImport() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
-  public boolean supportsKeepingFoldersFromPreviousImport() {
+  public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
   }
 
@@ -150,7 +145,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public boolean supportsCreateAggregatorOption() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsZeroEventsOnNoProjectChange() {
+    // IDEA-297902 WorkspaceModel#updateProjectModel should not trigger VersionedStorageChange events, if nothing actually changes
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
   }
 
   protected void stopMavenImportManager() {
@@ -169,10 +169,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected String mn(String parent, String moduleName) {
-    if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || !MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) {
-      return moduleName;
+    if (MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject)) {
+      return parent + "." + moduleName;
     }
-    return parent + "." + moduleName;
+    return moduleName;
   }
 
   protected void assertModules(String... expectedNames) {

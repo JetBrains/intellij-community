@@ -125,16 +125,16 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   @RequiresBackgroundThread
-  public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file) {
+  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file) {
     return getRepositoryForFile(file, false);
   }
 
   @CalledInAny
-  public @Nullable Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
+  public @Nullable Repository getRepositoryForFileQuick(@Nullable VirtualFile file) {
     return getRepositoryForFile(file, true);
   }
 
-  public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
+  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
       return getExternalRepositoryForFile(file);
@@ -142,7 +142,7 @@ public final class VcsRepositoryManager implements Disposable {
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
-  public @Nullable Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
+  public @Nullable Repository getRepositoryForFile(@Nullable FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
       return getExternalRepositoryForFile(file);
@@ -150,7 +150,8 @@ public final class VcsRepositoryManager implements Disposable {
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
-  public @Nullable Repository getExternalRepositoryForFile(@NotNull VirtualFile file) {
+  public @Nullable Repository getExternalRepositoryForFile(@Nullable VirtualFile file) {
+    if (file == null) return null;
     Map<VirtualFile, Repository> repositories = getExternalRepositories();
     for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
       if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
@@ -160,7 +161,8 @@ public final class VcsRepositoryManager implements Disposable {
     return null;
   }
 
-  public @Nullable Repository getExternalRepositoryForFile(@NotNull FilePath file) {
+  public @Nullable Repository getExternalRepositoryForFile(@Nullable FilePath file) {
+    if (file == null) return null;
     Map<VirtualFile, Repository> repositories = getExternalRepositories();
     for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
       if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {

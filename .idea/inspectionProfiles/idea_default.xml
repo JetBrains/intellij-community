@@ -1735,7 +1735,7 @@
         <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Suppressed exceptions are ignored" text="try {&#10;  $TryStatement$&#10;} &#10;finally {&#10;  $s1$&#10;  super.tearDown()&#10;  $s2$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="try {&#10;  $TryStatement$&#10;} &#10;catch (e: Throwable) {&#10;  addSuppressedException(e)&#10;}&#10;finally {&#10;  $s1$&#10;  super.tearDown()&#10;  $s2$&#10;}">
+      <replaceConfiguration name="Suppressed exceptions are ignored" text="try {&#10;  $TryStatement$&#10;} &#10;finally {&#10;  $s1$&#10;  super.tearDown()&#10;  $s2$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="try {&#10;  $TryStatement$&#10;} &#10;catch (e: Throwable) {&#10;  addSuppressedException(e)&#10;}&#10;finally {&#10;  $s1$super.tearDown()$s2$&#10;}">
         <constraint name="__context__" script="&quot;org.jetbrains.kotlin.psi.KtTryExpression ts = com.intellij.psi.util.PsiTreeUtil.getParentOfType(__context__, org.jetbrains.kotlin.psi.KtTryExpression.class, false); return ts != null &amp;&amp; ts.catchClauses.size() == 0&quot;" within="" contains="" />
         <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
         <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />

@@ -52,4 +52,26 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                  "a = A(<warning descr=\"Parameter 'x' unfilled\">)</warning>\n" +
                  "b = B(<warning descr=\"Parameter 'x' unfilled\">)</warning>");
   }
+
+  // PY-53671
+  public void testBoundMethodExportedAsTopLevelFunctionImportedWithQualifiedImport() {
+    doMultiFileTest();
+  }
+
+  // PY-53671
+  public void testBoundMethodExportedAsTopLevelFunctionImportedWithFromImport() {
+    doMultiFileTest();
+  }
+
+  // PY-53671
+  public void testStaticMethodExportedAsTopLevelFunctionImportedWithQualifiedImport() {
+    doMultiFileTest();
+  }
+
+  // PY-53671
+  public void testRandomRandint() {
+    doTestByText("import random\n" +
+                 "\n" +
+                 "random.randint(1, 2)");
+  }
 }

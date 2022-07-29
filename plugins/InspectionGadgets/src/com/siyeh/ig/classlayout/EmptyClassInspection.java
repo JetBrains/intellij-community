@@ -121,7 +121,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (lBrace != null && rBrace != null) {
         PsiElement prev = lBrace.getPrevSibling();
         PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
-        Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+        Document document = aClass.getContainingFile().getViewProvider().getDocument();
         if (document == null) return;
         int anonymousStart = start.getTextRange().getStartOffset();
         int rBraceEnd = rBrace.getTextRange().getEndOffset();

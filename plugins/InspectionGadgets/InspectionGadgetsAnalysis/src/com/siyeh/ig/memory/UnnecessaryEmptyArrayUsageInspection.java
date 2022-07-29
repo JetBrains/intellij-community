@@ -45,7 +45,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection impleme
               for (PsiField field : typeClass.getFields()) {
                 PsiModifierList modifiers = field.getModifierList();
                 if (modifiers != null
-                    && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, (e) -> e instanceof PsiClass))
+                    && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, e -> e instanceof PsiClass))
                     && modifiers.hasModifierProperty(PsiModifier.PUBLIC)
                     && field.getType().equals(type)
                     && CollectionUtils.isConstantEmptyArray(field)) {

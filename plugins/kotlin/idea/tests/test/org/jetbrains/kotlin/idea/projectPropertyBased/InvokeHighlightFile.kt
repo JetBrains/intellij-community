@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.propertyBased.ActionOnFile
 import com.intellij.testFramework.propertyBased.RehighlightAllEditors
 import org.jetbrains.jetCheck.ImperativeCommand
-import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 
 class InvokeHighlightFile(file: PsiFile): ActionOnFile(file) {
     override fun performCommand(env: ImperativeCommand.Environment) {

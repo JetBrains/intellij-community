@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.ui.SingleSelectionModel
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
+import javax.swing.ListSelectionModel
 
 internal class GHCloneDialogRepositoryListLoaderImpl(
   private val executorManager: GithubApiRequestExecutorManager
@@ -29,6 +31,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
   private val loadingEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override val listModel = GHCloneDialogRepositoryListModel()
+  override val listSelectionModel = SingleSelectionModel()
 
   private val indicatorsMap = mutableMapOf<GithubAccount, ProgressIndicator>()
 
@@ -58,7 +61,9 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
         indicator.checkCanceled()
         runInEdt {
           indicator.checkCanceled()
-          listModel.addRepositories(account, details, it)
+          preservingSelection(listModel, listSelectionModel) {
+            listModel.addRepositories(account, details, it)
+          }
         }
       }
       GithubApiPagesLoader.loadAll(executor, indicator, repoPagesRequest, pageItemsConsumer)
@@ -74,7 +79,9 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
       indicatorsMap.remove(account)
       loadingEventDispatcher.multicaster.eventOccurred()
     }.errorOnEdt(ModalityState.any()) {
-      listModel.setError(account, it)
+      preservingSelection(listModel, listSelectionModel) {
+        listModel.setError(account, it)
+      }
     }
   }
 
@@ -89,5 +96,22 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
   override fun dispose() {
     indicatorsMap.forEach { (_, indicator) -> indicator.cancel() }
     loadingEventDispatcher.multicaster.eventOccurred()
+  }
+
+  companion object {
+    private fun preservingSelection(listModel: GHCloneDialogRepositoryListModel, selectionModel: ListSelectionModel, action: () -> Unit) {
+      val selection = selectionModel.leadSelectionIndex.let {
+        if (it < 0 || listModel.size == 0) null
+        else listModel.getItemAt(it)
+      }
+      action()
+      if (selection != null) {
+        val (account, item) = selection
+        val newIdx = listModel.indexOf(account, item)
+        if (newIdx >= 0) {
+          selectionModel.setSelectionInterval(newIdx, newIdx)
+        }
+      }
+    }
   }
 }

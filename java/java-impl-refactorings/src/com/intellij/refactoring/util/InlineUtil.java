@@ -109,11 +109,8 @@ public final class InlineUtil implements CommonJavaInlineUtil {
       }
       else if (varType instanceof PsiEllipsisType &&
                ((PsiEllipsisType)varType).getComponentType().equals(exprType)) { //convert vararg to array
-        final PsiExpressionList argumentList = PsiTreeUtil.getParentOfType(expr, PsiExpressionList.class);
-        LOG.assertTrue(argumentList != null);
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + StringUtil.join(Arrays.asList(arguments), PsiElement::getText, ",") + '}';
-        expr.replace(elementFactory.createExpressionFromText(varargsWrapper, argumentList));
+        String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + expr.getText() + '}';
+        expr.replace(elementFactory.createExpressionFromText(varargsWrapper, expr));
       }
       else {
         boolean insertCastWhenUnchecked = !(exprType instanceof PsiClassType && ((PsiClassType)exprType).isRaw() && parent instanceof PsiExpressionList);

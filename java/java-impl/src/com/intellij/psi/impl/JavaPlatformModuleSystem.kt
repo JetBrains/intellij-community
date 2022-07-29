@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls
  * Checks package accessibility according to JLS 7 "Packages and Modules".
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html">JLS 7 "Packages and Modules"</a>
- * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
+ * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")

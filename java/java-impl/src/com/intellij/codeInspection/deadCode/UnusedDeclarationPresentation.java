@@ -270,7 +270,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabledAndVisible()) {
-        final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
+        final RefEntity[] elements = InspectionTree.getSelectedRefElements(e);
         for (RefEntity element : elements) {
           if (!((RefElement) element).isEntry()) {
             return;

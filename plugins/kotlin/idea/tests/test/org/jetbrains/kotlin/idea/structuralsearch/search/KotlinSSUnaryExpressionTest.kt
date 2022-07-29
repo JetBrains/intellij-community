@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSUnaryExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSUnaryExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "unaryExpression"
 
     fun testUnaryPlus() { doTest("+3") }

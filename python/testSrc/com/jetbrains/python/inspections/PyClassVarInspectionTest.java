@@ -162,6 +162,59 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                             "        x: <warning descr=\"'ClassVar' cannot be used in annotations for local variables\">ClassVar</warning> = \"str\""));
   }
 
+  // PY-54540
+  public void testCanNotUseTypeVarInAnnotation() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import ClassVar, TypeVar, Generic, List, Set\n" +
+                                            "\n" +
+                                            "T = TypeVar(\"T\")\n" +
+                                            "\n" +
+                                            "class A(Generic[T]):\n" +
+                                            "    a: ClassVar[<warning descr=\"'ClassVar' parameter cannot include type variables\">T</warning>]\n" +
+                                            "    b: ClassVar[List[Set[<warning descr=\"'ClassVar' parameter cannot include type variables\">T</warning>]]]"));
+  }
+
+  // PY-54540
+  public void testCanNotUseTypeVarInTypeComment() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import ClassVar, TypeVar, Generic, List, Set\n" +
+                                            "\n" +
+                                            "T = TypeVar(\"T\")\n" +
+                                            "\n" +
+                                            "class A(Generic[T]):\n" +
+                                            "    a = None <warning descr=\"'ClassVar' parameter cannot include type variables\"># type: ClassVar[T]</warning>\n" +
+                                            "    b = None <warning descr=\"'ClassVar' parameter cannot include type variables\"># type: ClassVar[List[Set[T]]]</warning>"));
+  }
+
+  // PY-54540
+  public void testCanNotUseTypeVarInTuple() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import ClassVar, TypeVar, Generic, Tuple\n" +
+                                            "\n" +
+                                            "T = TypeVar(\"T\")\n" +
+                                            "\n" +
+                                            "class A(Generic[T]):\n" +
+                                            "    a: ClassVar[Tuple[int, <warning descr=\"'ClassVar' parameter cannot include type variables\">T</warning>]]\n" +
+                                            "    b = None <warning descr=\"'ClassVar' parameter cannot include type variables\"># type: ClassVar[Tuple[int, T]]</warning>"));
+  }
+
+  // PY-54540
+  public void testTypeVarInComplexType() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import ClassVar, TypeVar, Generic\n" +
+                                            "\n" +
+                                            "T1 = TypeVar('T1')\n" +
+                                            "T2 = TypeVar('T2')\n" +
+                                            "T3 = TypeVar('T3')\n" +
+                                            "\n" +
+                                            "class MyType(Generic[T1, T2]):\n" +
+                                            "    pass\n" +
+                                            "\n" +
+                                            "class A:\n" +
+                                            "    a: ClassVar[tuple[MyType[int, <warning descr=\"'ClassVar' parameter cannot include type variables\">T3</warning>], <warning descr=\"'ClassVar' parameter cannot include type variables\">T2</warning>]]\n" +
+                                            "    b = None  <warning descr=\"'ClassVar' parameter cannot include type variables\"># type: ClassVar[tuple[MyType[int, T3], T2]]</warning>"));
+  }
+
   @Override
   protected @NotNull Class<? extends PyInspection> getInspectionClass() {
     return PyClassVarInspection.class;

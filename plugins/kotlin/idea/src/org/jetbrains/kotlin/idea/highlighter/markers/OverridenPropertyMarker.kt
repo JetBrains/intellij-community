@@ -16,7 +16,7 @@ import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.util.AdapterProcessor
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Function
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher

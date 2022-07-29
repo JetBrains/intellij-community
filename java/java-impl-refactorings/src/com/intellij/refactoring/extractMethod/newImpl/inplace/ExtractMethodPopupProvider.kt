@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -47,7 +49,7 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
 
   private fun createPanel(): DialogPanel {
     var hasFocusedElement = false
-    fun CellBuilder<JComponent>.setFocusIfEmpty() {
+    fun Cell<JComponent>.setFocusIfEmpty() {
       if (! hasFocusedElement) {
         hasFocusedElement = true
         focused()
@@ -56,22 +58,32 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
     val panel = panel {
       if (annotate != null) {
         row {
-          checkBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate"), annotate ?: false) { _, checkBox -> annotate = checkBox.isSelected; changeListener.invoke() }
-            .setFocusIfEmpty()
+          checkBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate"))
+            .applyToComponent {
+              isSelected = annotate ?: false
+              addActionListener {
+                annotate = isSelected
+                changeListener.invoke()
+              }
+            }.setFocusIfEmpty()
         }
       }
       if (makeStatic != null) {
         row {
-          checkBox(makeStaticLabel, makeStatic ?: false) { _, checkBox -> makeStatic = checkBox.isSelected; changeListener.invoke() }
-            .setFocusIfEmpty()
+          checkBox(makeStaticLabel)
+            .applyToComponent {
+              isSelected = makeStatic ?: false
+              addActionListener {
+                makeStatic = isSelected
+                changeListener.invoke()
+              }
+            }.setFocusIfEmpty()
         }
       }
       row {
-        cell {
-          link(JavaRefactoringBundle.message("extract.method.link.label.more.options"), null) { showDialogAction(null) }
-            .applyToComponent { isFocusable = true }
-          comment(KeymapUtil.getFirstKeyboardShortcutText(ACTION_EXTRACT_METHOD))
-        }
+        link(JavaRefactoringBundle.message("extract.method.link.label.more.options")) { showDialogAction(null) }
+          .gap(RightGap.SMALL)
+        comment(KeymapUtil.getFirstKeyboardShortcutText(ACTION_EXTRACT_METHOD))
       }
     }
     panel.isFocusCycleRoot = true

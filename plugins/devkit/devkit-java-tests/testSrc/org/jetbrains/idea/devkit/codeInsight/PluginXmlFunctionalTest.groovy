@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.TargetElementUtil
@@ -502,6 +500,15 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testPluginWithModules() {
     doHighlightingTest("pluginWithModules.xml")
+  }
+
+  void testPluginAttributes() {
+    myFixture.addFileToProject("com/intellij/package-info.java",
+                               "package com.intellij;")
+    myFixture.testHighlighting(true,
+                               true,
+                               true,
+                               "pluginAttributes.xml")
   }
 
   void testPluginWith99InUntilBuild() {

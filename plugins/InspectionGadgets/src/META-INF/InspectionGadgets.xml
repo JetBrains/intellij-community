@@ -127,6 +127,10 @@
                      key="pointless.bitwise.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.bitwise.operation.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bitwise.PointlessBitwiseExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="NegativeIntConstantInLongContext" bundle="messages.InspectionGadgetsBundle"
+                     key="negative.int.constant.in.long.context.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bitwise.NegativeIntConstantInLongContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ShiftOutOfRange" bundle="messages.InspectionGadgetsBundle"
                      key="shift.operation.by.inappropriate.constant.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.bitwise.operation.issues" enabledByDefault="true" level="WARNING"
@@ -773,8 +777,8 @@
                      groupKey="group.names.data.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.dataflow.NegativelyNamedBooleanVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReuseOfLocalVariable" bundle="messages.InspectionGadgetsBundle" key="reuse.of.local.variable.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TooBroadScope" bundle="messages.InspectionGadgetsBundle" key="too.broad.scope.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.dataflow.TooBroadScopeInspection"/>
@@ -1355,9 +1359,6 @@
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.ConstantAssertArgumentMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IgnoredJUnitTest" bundle="messages.InspectionGadgetsBundle" key="ignored.junit.test.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.IgnoredJUnitTestInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit3StyleTestMethodInJUnit4Class" bundle="messages.InspectionGadgetsBundle"
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
@@ -1379,10 +1380,6 @@
                      key="multiple.exceptions.declared.on.test.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.MultipleExceptionsDeclaredOnTestMethodInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestCaseWithNonTrivialConstructors" shortName="TestCaseWithConstructor"
-                     bundle="messages.InspectionGadgetsBundle" key="test.case.with.constructor.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.TestCaseWithConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAssertion" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
@@ -1392,10 +1389,6 @@
                      key="test.case.with.no.test.methods.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.TestCaseWithNoTestMethodsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestMethodWithNoAssertions" shortName="TestMethodWithoutAssertion"
-                     bundle="messages.InspectionGadgetsBundle" key="test.method.without.assertion.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.TestMethodWithoutAssertionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseOfObsoleteAssert" bundle="messages.InspectionGadgetsBundle" key="usage.of.obsolete.assert.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.UseOfObsoleteAssertInspection" cleanupTool="true"/>
@@ -2269,6 +2262,10 @@
                      key="literal.as.arg.to.string.equals.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.LiteralAsArgToStringEqualsInspection" cleanupTool="true"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="EscapedSpace" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.use.of.slash.s.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.EscapedSpaceInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MissortedModifiers" bundle="messages.InspectionGadgetsBundle" key="missorted.modifiers.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.MissortedModifiersInspection"/>
@@ -2656,6 +2653,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="messages.InspectionGadgetsBundle" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OnlyOneElementUsed" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.only.one.element.used.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.OnlyOneElementUsedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceOnLiteralHasNoEffect" bundle="messages.InspectionGadgetsBundle" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.replace.on.literal.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.redundancy.ReplaceOnLiteralHasNoEffectInspection"/>

@@ -648,6 +648,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   public static ArrayList<TaskRepository> loadRepositories(@NotNull Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<>();
+    // do not initialize TaskRepositoryType EPs eagerly if we have no settings for any of them
+    if (element.getChildren().isEmpty()) return repositories;
+
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Element o : element.getChildren(repositoryType.getName())) {
         try {

@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Change {
+  public static final Change[] EMPTY_CHANGE_ARRAY = new Change[0];
+
   private int myHash = -1;
 
   public enum Type {

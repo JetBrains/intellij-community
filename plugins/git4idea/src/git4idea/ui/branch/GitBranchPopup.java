@@ -95,8 +95,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @Nullable
   private static GitBranchPopupActions.LocalBranchActions getBranchAction(@NotNull AnAction action) {
-    AnAction resultAction =
-      action instanceof EmptyAction.MyDelegatingActionGroup ? ((EmptyAction.MyDelegatingActionGroup)action).getDelegate() : action;
+    AnAction resultAction = action instanceof ActionGroupWrapper ? ((ActionGroupWrapper)action).getDelegate() : action;
     return tryCast(resultAction, GitBranchPopupActions.LocalBranchActions.class);
   }
 

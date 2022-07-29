@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class LockSupportTest {
   @Rule public final TempDirectory tempDir = new TempDirectory();
 
   @Test(timeout = 30000)
-  public void testUseCanonicalPathLock() throws Exception {
+  public void testUseCanonicalPathLock() {
     assumeTrue("case-insensitive system-only", !SystemInfo.isFileSystemCaseSensitive);
 
     String path1 = tempDir.getRoot().getPath();
@@ -42,10 +43,10 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testLock() throws Exception {
+  public void testLock() {
     SocketLock lock = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
     try {
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY).getKey());
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE).getKey());
     }
     finally {
       lock.dispose();
@@ -69,20 +70,20 @@ public class LockSupportTest {
     }
   }
 
-  private static SocketLock.ActivationStatus createLockAndTryActivate(List<SocketLock> toClose, @NotNull Path dir, String cfg, String sys) throws Exception {
+  private static SocketLock.ActivationStatus createLockAndTryActivate(List<SocketLock> toClose, @NotNull Path dir, String cfg, String sys) {
     SocketLock lock = new SocketLock(dir.resolve(cfg), dir.resolve(sys));
     toClose.add(lock);
     return tryActivate(lock);
   }
 
-  private static SocketLock.ActivationStatus tryActivate(@NotNull SocketLock lock) throws Exception {
-    Map.Entry<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY);
+  private static SocketLock.ActivationStatus tryActivate(@NotNull SocketLock lock) {
+    Map.Entry<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE);
     lock.getServer();
     return result.getKey();
   }
 
   @Test(timeout = 30000)
-  public void testDispose() throws Exception {
+  public void testDispose()  {
     SocketLock lock1 = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
     SocketLock lock2 = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
 

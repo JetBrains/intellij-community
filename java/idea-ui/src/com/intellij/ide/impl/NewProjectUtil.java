@@ -36,8 +36,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +98,9 @@ public final class NewProjectUtil {
       return newProject;
     }
     catch (IOException e) {
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(),
-                                                                JavaUiBundle.message("dialog.title.project.initialization.failed")));
+      AppUIUtil.invokeOnEdt(() -> {
+        Messages.showErrorDialog(e.getMessage(), JavaUiBundle.message("dialog.title.project.initialization.failed"));
+      });
       return null;
     }
   }
@@ -137,7 +138,7 @@ public final class NewProjectUtil {
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     try {
-      Path projectFile = Paths.get(projectFilePath);
+      Path projectFile = Path.of(projectFilePath);
       Path projectDir;
       if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
         projectDir = projectFile.getParent();

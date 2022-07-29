@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
@@ -21,14 +22,11 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -296,18 +294,15 @@ public final class MacrosDialog extends DialogWrapper {
 
   private void addListeners() {
     myMacrosList.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          Item item = myMacrosList.getSelectedValue();
-          if (item == null) {
-            myPreviewTextarea.setText("");
-            setOKActionEnabled(false);
-          }
-          else {
-            myPreviewTextarea.setText(item.getPreview());
-            setOKActionEnabled(true);
-          }
+      e -> {
+        Item item = myMacrosList.getSelectedValue();
+        if (item == null) {
+          myPreviewTextarea.setText("");
+          setOKActionEnabled(false);
+        }
+        else {
+          myPreviewTextarea.setText(item.getPreview());
+          setOKActionEnabled(true);
         }
       }
     );
@@ -341,8 +336,8 @@ public final class MacrosDialog extends DialogWrapper {
 
     private static final Pattern CAMEL_HUMP_START_PATTERN = Pattern.compile("(?<=[\\p{Lower}\\p{Digit}])(?![\\p{Lower}\\p{Digit}])");
 
-    public static final @NotNull Predicate<? super Macro> ALL = m -> true;
-    public static final @NotNull Predicate<? super Macro> NONE = m -> false;
+    public static final @NotNull Predicate<? super Macro> ALL = Predicates.alwaysTrue();
+    public static final @NotNull Predicate<? super Macro> NONE = Predicates.alwaysFalse();
 
     public static final @NotNull Predicate<? super Macro> ANY_PATH =
       m -> nameContains(m, "File") ||

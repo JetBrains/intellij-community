@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.util.Conditions;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -57,13 +59,16 @@ class MixedSearchListModel extends SearchListModel {
       int endIndex = listElements.size() - 1;
       fireIntervalAdded(this, startIndex, endIndex);
 
+      if (myMaxFrozenIndex >= startIndex) myMaxFrozenIndex = startIndex - 1;
+
       // there were items for this contributor before update
       if (startIndex > 0) {
         List<SearchEverywhereFoundElementInfo> lst = myMaxFrozenIndex >= 0
                                                      ? listElements.subList(myMaxFrozenIndex + 1, listElements.size())
                                                      : listElements;
         lst.sort(myElementsComparator);
-        fireContentsChanged(this, 0, endIndex);
+        int begin = myMaxFrozenIndex >= 0 ? myMaxFrozenIndex + 1 : 0;
+        fireContentsChanged(this, begin, endIndex);
       }
     }
   }
@@ -105,7 +110,7 @@ class MixedSearchListModel extends SearchListModel {
       return;
     }
 
-    boolean hasMore = hasMoreContributors.values().stream().anyMatch(val -> val);
+    boolean hasMore = ContainerUtil.exists(hasMoreContributors.values(), Conditions.is(true));
     boolean alreadyHas = isMoreElement(lasItemIndex);
     if (alreadyHas && !hasMore) {
       listElements.remove(lasItemIndex);
@@ -113,11 +118,17 @@ class MixedSearchListModel extends SearchListModel {
     }
 
     if (!alreadyHas && hasMore) {
-      myMaxFrozenIndex = lasItemIndex;
       listElements.add(new SearchEverywhereFoundElementInfo(MORE_ELEMENT, 0, null));
       lasItemIndex += 1;
       fireIntervalAdded(this, lasItemIndex, lasItemIndex);
     }
+  }
+
+  @Override
+  public void freezeElements() {
+    if (listElements.isEmpty()) return;
+    myMaxFrozenIndex = listElements.size() - 1;
+    if (listElements.get(myMaxFrozenIndex) == MORE_ELEMENT) myMaxFrozenIndex--;
   }
 
   @Override

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.idea.completion.canBeUsedWithoutNameInCall
 import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
 import org.jetbrains.kotlin.idea.core.resolveCandidates
@@ -339,18 +340,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
     private fun ValueParameterDescriptor.renderDefaultValue(project: Project): String {
         val expression = OptionalParametersHelper.defaultParameterValueExpression(this, project)
         if (expression != null) {
-            val text = expression.text
-            if (text.length <= 32) {
-                return text
-            }
-
-            if (expression is KtConstantExpression || expression is KtStringTemplateExpression) {
-                if (text.startsWith("\"")) {
-                    return "\"...\""
-                } else if (text.startsWith("\'")) {
-                    return "\'...\'"
-                }
-            }
+            return KotlinParameterInfoBase.getDefaultValueStringRepresentation(expression)
         }
         return "..."
     }

@@ -87,7 +87,6 @@ fun signMacApp(
   notarize: Boolean,
   bundleIdentifier: String,
   appArchiveFile: Path,
-  jreArchiveFile: Path?,
   communityHome: BuildDependenciesCommunityRoot,
   artifactDir: Path,
   dmgImage: Path?,
@@ -104,16 +103,6 @@ fun signMacApp(
         sftp.put(NioFileSource(appArchiveFile, filePermission = regularFileMode), "$remoteDir/${appArchiveFile.fileName}")
       }
 
-    if (jreArchiveFile != null) {
-      tracer.spanBuilder("upload JRE archive")
-        .setAttribute("file", jreArchiveFile.toString())
-        .setAttribute("remoteDir", remoteDir)
-        .setAttribute("host", host)
-        .use {
-          sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
-        }
-    }
-
     val scriptDir = communityHome.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
     tracer.spanBuilder("upload scripts")
       .setAttribute("scriptDir", scriptDir.toString())
@@ -121,7 +110,6 @@ fun signMacApp(
       .setAttribute("host", host)
       .use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
-        @Suppress("SpellCheckingInspection")
         for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py", "codesign.sh")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
@@ -138,7 +126,6 @@ fun signMacApp(
       user,
       password,
       codesignString,
-      jreArchiveFile?.fileName?.toString() ?: "no-jdk",
       if (notarize) "yes" else "no",
       bundleIdentifier,
       publishAppArchive.toString(),
@@ -152,7 +139,6 @@ fun signMacApp(
                 ?.joinToString(separator = " ", postfix = " ") {
                   "${it.first}=${it.second}"
                 } ?: ""
-    @Suppress("SpellCheckingInspection")
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
@@ -177,7 +163,6 @@ fun signMacApp(
       val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
       tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
-        @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
                     commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",

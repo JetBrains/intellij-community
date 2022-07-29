@@ -4,7 +4,6 @@ package git4idea.ift
 import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
@@ -15,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
@@ -41,7 +39,6 @@ import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.ui.LearningUiManager
 import java.awt.Rectangle
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 import kotlin.math.max
 import kotlin.math.min
@@ -96,7 +93,7 @@ object GitLessonsUtil {
       this.usePulsation = usePulsation
     }.componentPart { ui: VcsLogGraphTable ->
       val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
-      val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
+      val startCommitRow = ui.model.createSelection(rowIndexes).cachedMetadata.indexOfFirst(startCommitPredicate)
       if (startCommitRow >= 0) {
         ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
       }
@@ -147,21 +144,6 @@ object GitLessonsUtil {
           if (checkBranch(branchName)) completeStep()
         }
       })
-    }
-  }
-
-  fun TaskContext.gotItStep(position: Balloon.Position,
-                            width: Int,
-                            @Nls text: String,
-                            cornerToPointerDistance: Int = -1,
-                            duplicateMessage: Boolean = true) {
-    val gotIt = CompletableFuture<Boolean>()
-    text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
-      gotIt.complete(true)
-    })
-    addStep(gotIt)
-    test(waitEditorToBeReady = false) {
-      ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
     }
   }
 

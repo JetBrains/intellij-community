@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSTypeReferenceTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTypeReferenceTest : KotlinStructuralSearchTest() {
     fun testAny() { doTest(pattern = "fun '_('_ : '_) { '_* }", highlighting = """
         class Foo { class Int }
         <warning descr="SSR">fun foo1 (bar: Int = 1) { print(bar.hashCode()) }</warning>

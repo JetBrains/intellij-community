@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.TestRoot
 import java.io.File
+import java.nio.file.Files
 import java.util.*
 
 object TestGenerator {
@@ -71,7 +72,7 @@ object TestGenerator {
 
         if (normalizeContent(content) != normalizeContent(oldContent)) {
             if (isUpToDateCheck) error("'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration")
-
+            Files.createDirectories(file.toPath().parent)
             file.writeText(content)
             val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
             println("Updated $path")

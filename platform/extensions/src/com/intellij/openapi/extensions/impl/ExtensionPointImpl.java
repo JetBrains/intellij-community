@@ -44,7 +44,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   // immutable list, never modified inplace, only swapped atomically
   private volatile List<T> cachedExtensions;
-  // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
+  // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.org/browse/JDK-6260652),
   // but instead returns Object[], so, we cannot use toArray() anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   private volatile T @Nullable [] cachedExtensionsAsArray;

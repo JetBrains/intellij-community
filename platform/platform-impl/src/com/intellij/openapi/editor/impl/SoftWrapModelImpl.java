@@ -42,8 +42,8 @@ import java.util.List;
 /**
  * Default {@link SoftWrapModelEx} implementation.
  * <p/>
- * Works as a mix of {@code GoF Facade and Bridge}, i.e. delegates the processing to the target sub-components and provides
- * utility methods built on top of sub-components API.
+ * Works as a mix of {@code GoF Facade and Bridge}, i.e., delegates the processing to the target subcomponents and provides
+ * utility methods built on top of subcomponents API.
  * <p/>
  * Not thread-safe.
  *
@@ -59,9 +59,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private final List<SoftWrapChangeListener> mySoftWrapListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
-   * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).
+   * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc.).
    * We don't want to process them at the same time we get notifications about that because there is a big chance that
-   * we see inconsistent state (e.g. there was a problem with {@link FoldingModel#getCollapsedRegionAtOffset(int)} because that
+   * we see inconsistent state (e.g., there was a problem with {@link FoldingModel#getCollapsedRegionAtOffset(int)} because that
    * method uses caching internally and cached data becomes inconsistent if, for example, the top region is removed).
    * <p/>
    * So, our strategy is to collect information about changed fold regions and process it only when batch folding processing ends.
@@ -82,8 +82,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
-   * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
-   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model
+   * regions etc.). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
+   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g., fold model
    * advances fold region offsets when end-user types before it, hence, fold regions data is inconsistent between the moment
    * when text changes are applied to the document and fold data is actually updated).
    * <p/>
@@ -94,9 +94,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private boolean myBulkUpdateInProgress;
 
   /**
-   * There is a possible case that target document is changed while its editor is inactive (e.g. user opens two editors for classes
+   * There is a possible case that target document is changed while its editor is inactive (e.g., user opens two editors for classes
    * {@code 'Part'} and {@code 'Whole'}; activates editor for the class {@code 'Whole'} and performs 'rename class'
-   * for {@code 'Part'} from it). Soft wraps cache is not recalculated during that because corresponding editor is not shown
+   * for {@code 'Part'} from it). Soft wraps cache is not recalculated during that because corresponding editor is not shown,
    * and we lack information about visible area width. Hence, we will need to recalculate the whole soft wraps cache as soon
    * as target editor becomes visible.
    * <p/>
@@ -146,9 +146,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (project != null && file != null) {
       EditorNotifications.getInstance(project).updateNotifications(file);
     }
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ActivityTracker.getInstance().inc();
-    });
+    ApplicationManager.getApplication().invokeLater(() -> ActivityTracker.getInstance().inc());
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -162,7 +160,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
     if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
-      // Disable checking for files in intermediate states - e.g. for files during refactoring.
+      // Disable checking for files in intermediate states - e.g., for files during refactoring.
       return false;
     }
     int lineWidthLimit = AdvancedSettings.getInt("editor.soft.wrap.force.limit");
@@ -311,7 +309,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       return false;
     }
 
-    // There is a possible case that soft wrap and collapsed folding region share the same offset, i.e. soft wrap is represented
+    // There is a possible case that soft wrap and collapsed folding region share the same offset, i.e., soft wrap is represented
     // before the folding. We need to return 'true' in such situation. Hence, we check if offset just before the soft wrap
     // is collapsed as well.
     return start <= 0 || !foldingModel.isOffsetCollapsed(start - 1);
@@ -345,8 +343,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   /**
-   * Encapsulates preparations for performing document dimension mapping (e.g. visual to logical position) and answers
-   * if soft wraps-aware processing should be used (e.g. there is no need to consider soft wraps if user configured them
+   * Encapsulates preparations for performing document dimension mapping (e.g., visual to logical position) and answers
+   * if soft wraps-aware processing should be used (e.g., there is no need to consider soft wraps if user configured them
    * not to be used).
    */
   public void prepareToMapping() {
@@ -532,7 +530,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if (myEditor.getDocument().isInBulkUpdate() ||
         inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END ||
         (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {

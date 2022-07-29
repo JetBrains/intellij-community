@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -168,8 +170,6 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
-    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
-    List<String> oldEdtActionNames = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
@@ -206,18 +206,16 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     long startActions = System.nanoTime();
     for (String id : actionManager.getActionIds()) {
       AnAction action = actionManager.getAction(id);
-      if (action == null) continue;
+      if (action == null) {
+        LOG.warn("no action for id: " + id);
+        continue;
+      }
       if (action.getClass() == DefaultActionGroup.class) continue;
       if (isDumb && !DumbService.isDumbAware(action)) continue;
-      ActionUpdateThread updateThread = action.getActionUpdateThread();
       String className = action.getClass().getName();
       String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
       String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
-      actionUpdateThreadCounts[updateThread.ordinal()] ++;
-      if (updateThread == ActionUpdateThread.OLD_EDT) {
-        oldEdtActionNames.add(actionName);
-      }
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
       runAndMeasure(results, actionName,
                     () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
@@ -234,13 +232,65 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
+    dumpActionUpdateThreads(nonUniqueClasses);
+  }
+
+  private static void dumpActionUpdateThreads(@NotNull Set<String> nonUniqueClasses) {
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
+    List<String> oldEdtActionNames = new ArrayList<>();
+    for (String id : actionManager.getActionIds()) {
+      AnAction action = actionManager.getAction(id);
+      if (action == null) continue;
+      if (action.getClass() == DefaultActionGroup.class) continue;
+      ActionUpdateThread updateThread = action.getActionUpdateThread();
+      actionUpdateThreadCounts[updateThread.ordinal()]++;
+      if (updateThread == ActionUpdateThread.OLD_EDT) {
+        String className = action.getClass().getName();
+        String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
+        String actionName = className + actionIdIfNeeded;
+        oldEdtActionNames.add(actionName);
+      }
+    }
+    List<String> oldEdtExtensions = new ArrayList<>();
+    ExtensionsAreaImpl extensionArea = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
+    //noinspection TestOnlyProblems
+    extensionArea.processExtensionPoints(ep -> {
+      try {
+        if (ActionUpdateThreadAware.class.isAssignableFrom(ep.getExtensionClass())) {
+          //noinspection unchecked
+          List<ActionUpdateThreadAware> extensions = (List<ActionUpdateThreadAware>)ep.getExtensionList();
+          for (ActionUpdateThreadAware extension : extensions) {
+            ActionUpdateThread updateThread = extension.getActionUpdateThread();
+            if (updateThread == ActionUpdateThread.OLD_EDT) {
+              oldEdtExtensions.add(extension.getClass().getName());
+            }
+          }
+        }
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
+      }
+    });
+
     StringBuilder sb = new StringBuilder();
     sb.append("---- action-update-thread stats ----\n");
     sb.append(StringUtil.join(ActionUpdateThread.values(), t -> actionUpdateThreadCounts[t.ordinal()] + ":" + t.name(), ", "));
-    sb.append("... see the list of registered OLD_EDT actions below:");
-    oldEdtActionNames.sort(String::compareTo);
-    for (String name : oldEdtActionNames) {
-      sb.append("\n").append(name);
+    if (!oldEdtActionNames.isEmpty()) {
+      sb.append("... see the list of registered OLD_EDT actions below:");
+      oldEdtActionNames.sort(String::compareTo);
+      for (String name : oldEdtActionNames) {
+        sb.append("\n").append(name);
+      }
+      sb.append("\n");
+    }
+    if (!oldEdtExtensions.isEmpty()) {
+      sb.append("\n... and ").append(oldEdtExtensions.size()).append(" OLD_EDT extensions:");
+      oldEdtExtensions.sort(String::compareTo);
+      for (String name : oldEdtExtensions) {
+        sb.append("\n").append(name);
+      }
+      sb.append("\n");
     }
     LOG.info(sb.toString());
   }

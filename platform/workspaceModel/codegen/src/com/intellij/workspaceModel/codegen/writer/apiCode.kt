@@ -1,62 +1,52 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
-import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.codegen.classes.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.fields.javaType
-import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.codegen.classes.noDefaultValue
-import com.intellij.workspaceModel.codegen.classes.noOptional
-import com.intellij.workspaceModel.codegen.classes.noRefs
-import com.intellij.workspaceModel.codegen.classes.noPersistentId
-import com.intellij.workspaceModel.codegen.fields.referencedField
 import com.intellij.workspaceModel.codegen.fields.wsCode
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.model.WsEntityInterface
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.deft.Field
-import com.intellij.workspaceModel.codegen.fields.builderApi
+import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.isStandardInterface
+import com.intellij.workspaceModel.codegen.writer.javaName
+import com.intellij.workspaceModel.codegen.writer.type
+import com.intellij.workspaceModel.storage.CodeGeneratorVersions
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
-fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean): String = lines(indent) {
-  if (isEmptyGenBlock) line("//region generated code") else result.append("//region generated code\n")
-  line("//@formatter:off")
-
+fun ObjClass<*>.generateBuilderCode(): String = lines {
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
-  val abstractSupertype = if (base?.abstract == true) base else null
-  val header = when {
-    abstract && abstractSupertype != null -> {
-      "interface Builder<T: $javaFullName>: $javaFullName, ${abstractSupertype.name}.Builder<T>, ${
-        ModifiableWorkspaceEntity::class.fqn
-      }<T>, ObjBuilder<T>"
-    }
-    abstractSupertype != null -> {
-      "interface Builder: $javaFullName, ${abstractSupertype.name}.Builder<$javaFullName>, ${
-        ModifiableWorkspaceEntity::class.fqn
-      }<$javaFullName>, ObjBuilder<$javaFullName>"
-    }
-    abstract -> "interface Builder<T: $javaFullName>: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<T>, ObjBuilder<T>"
-    else -> "interface Builder: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>, ObjBuilder<$javaFullName>"
+  val (typeParameter, typeDeclaration) = 
+    if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
+  val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
+    ", ${it.name}.Builder<$typeParameter>"
   }
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${ModifiableWorkspaceEntity::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
 
   section(header) {
-    list(structure.allFields.noPersistentId()) {
-      if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
+    list(allFields.noPersistentId()) {
+      wsBuilderApi
     }
   }
+}
 
-  line()
-  val builderGeneric = if (abstract) "<$javaFullName>" else ""
+fun ObjClass<*>.generateCompanionObject(): String = lines {
+  val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
     append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
-    val base = base
+    val base = superTypes.filterIsInstance<ObjClass<*>>().firstOrNull()
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
     append(")")
   }
-  val mandatoryFields = structure.allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
+  val mandatoryFields = allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
   if (!mandatoryFields.isEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
+    val fields = (mandatoryFields.noEntitySource() + mandatoryFields.first { it.name == "entitySource" }).joinToString { "${it.name}: ${it.type.javaType}" }
     section(companionObjectHeader) {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
@@ -67,7 +57,8 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
         line("return builder")
       }
     }
-  } else {
+  }
+  else {
     section(companionObjectHeader) {
       section("operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
@@ -76,26 +67,21 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
       }
     }
   }
-  line("//@formatter:on")
-  lineNoNl("//endregion")
 }
 
-fun DefType.generatedExtensionCode(indent: String = "    "): String {
-  val extFields = ktModule.extFields.filter { it.owner is DefType &&
-                                              (this === it.owner || (it.owner.def.formExternalModule &&  it.referencedField.owner === this)) }
-  if (extFields.isEmpty() && abstract) return ""
-  return lines(indent) {
-    line("//region generated code")
-    if (!abstract) {
+
+fun ObjClass<*>.generateExtensionCode(): String? {
+  val fields = module.extensions.filter { it.receiver == this || it.receiver.module != module && it.valueType.isRefType() && it.valueType.getRefType().target == this }
+  if (openness.extendable && fields.isEmpty()) return null
+  
+  return lines {
+    if (!openness.extendable) {
       line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
     }
-    if (extFields.isNotEmpty()) {
-      extFields.sortedWith(compareBy({it.owner.name}, {it.name})).forEach { line(it.wsCode) }
-    }
-    lineNoNl("//endregion")
+    fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }
 }
 
-val Field<*, *>.wsBuilderApi: String
+val ObjProperty<*, *>.wsBuilderApi: String
   get() = "override var $javaName: ${type.javaType}"
 

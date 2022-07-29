@@ -53,14 +53,22 @@ class BuildOptions {
     /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
     const val MAC_DMG_STEP = "mac_dmg"
 
+    /**
+     * Publish .sit file for macOS. If skipped, only .dmg archive will be produced.
+     * If skipped together with [MAC_DMG_STEP], only .zip archive will be produced.
+     *
+     * Note: .sit is required to build patches.
+     */
+    const val MAC_SIT_PUBLICATION_STEP = "mac_sit"
+
     /** Sign macOS distribution.  */
     const val MAC_SIGN_STEP = "mac_sign"
 
     /** Build Linux artifacts.  */
     const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
 
-    /** Build Linux tar.gz artifact without bundled JRE.  */
-    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+    /** Build Linux tar.gz artifact without bundled Runtime.  */
+    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP = "linux_tar_gz_without_jre"
 
     /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
     const val WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
@@ -115,14 +123,14 @@ class BuildOptions {
     const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
     /**
-     * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
+     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
      */
-    const val BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
+    const val BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
 
     /**
-     * Pass 'false' to this system property to skip building .dmg with bundled JRE.
+     * Pass 'false' to this system property to skip building .dmg and .sit with bundled Runtime.
      */
-    const val BUILD_DMG_WITH_BUNDLED_JRE = "intellij.build.dmg.with.bundled.jre"
+    const val BUILD_MAC_ARTIFACTS_WITH_RUNTIME = "intellij.build.dmg.with.bundled.jre"
 
     /**
      * By default, build cleanup output folder before compilation, use this property to change this behaviour.
@@ -143,6 +151,11 @@ class BuildOptions {
      * Enables module structure validation, false by default
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
+
+    /**
+     * Verify whether class files have a forbidden subpaths in them, false by default
+     */
+    const val VALIDATE_CLASSFILE_SUBPATHS_PROPERTY = "intellij.verify.classfile.subpaths"
 
     /**
      * Max attempts of dependencies resolution on fault. "1" means no retries.
@@ -182,9 +195,9 @@ class BuildOptions {
     .filter { s: String -> !s.isBlank() }
     .toHashSet()
 
-  var buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE,
-                                                                      SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
-  var buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true)
+  var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
+                                                                            SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildMacArtifactsWithRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
 
   /**
    * Pass 'true' to this system property to produce .snap packages.
@@ -270,7 +283,7 @@ class BuildOptions {
   val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from gradle.properties will be used.
+   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from dependencies.properties will be used.
    */
   var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
 
@@ -291,6 +304,8 @@ class BuildOptions {
   val hashAlgorithm = "SHA-384"
 
   var validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
+
+  var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
 
   @Internal
   var compressNonBundledPluginArchive = true

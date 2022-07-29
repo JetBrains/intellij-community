@@ -22,6 +22,7 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
+    <extensionPoint name="configurator" interface="org.jetbrains.idea.maven.importing.MavenConfigurator" dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
@@ -215,7 +216,10 @@
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenExtensionCompletionContributor"/>
 
-    <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.dom.references.MavenXmlPropertyPsiReferenceContributor"/>
+
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
+    <psi.referenceContributor language="Properties" implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginParamReferenceContributor"/>
 
@@ -263,7 +267,6 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
-    <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
 
     <registryKey key="maven.linear.import" defaultValue="false"
                  description="linear maven import process"/>
@@ -314,7 +317,7 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationGroup id="Maven" displayType="BALLOON"/>
+    <notificationGroup id="Maven" displayType="BALLOON" bundle="messages.MavenProjectBundle" key="notification.group.maven"/>
     <toolWindowAllowlist id="Maven"/>
     <toolWindowExtractorMode id="Maven" mode="mirror"/>
     <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix" />
@@ -472,11 +475,14 @@
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
 

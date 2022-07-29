@@ -84,7 +84,7 @@ private fun executeCodeInConsole(project: Project,
     val console = existingConsole.executionConsole
     executeInConsole?.accept(console)
     val consoleView = showConsole(project, existingConsole, isDebug)
-    requestFocus(requestFocusToConsole, editor, consoleView)
+    requestFocus(requestFocusToConsole, editor, consoleView, isDebug)
   }
   else {
     if (!executeInStartingConsole.apply(virtualFile)) {
@@ -182,7 +182,7 @@ private fun startNewConsoleInstance(project: Project,
     consoleRunnerFactory.createConsoleRunner(project, null)
   }
   else {
-    consoleRunnerFactory.createConsoleRunnerWithFile(project, null, config)
+    consoleRunnerFactory.createConsoleRunnerWithFile(project, config)
   }
   runner.addConsoleListener { consoleView ->
     if (consoleView is PyCodeExecutor) {
@@ -234,9 +234,18 @@ private fun showConsole(project: Project,
   return null
 }
 
-private fun requestFocus(requestFocusToConsole: Boolean, editor: Editor?, consoleView: PythonConsoleView?) {
+private fun requestFocus(requestFocusToConsole: Boolean, editor: Editor?, consoleView: PythonConsoleView?, isDebug: Boolean) {
   if (requestFocusToConsole) {
-    consoleView?.requestFocus()
+    consoleView?.let {
+      if (isDebug) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+          IdeFocusManager.getGlobalInstance().requestFocus(it.consoleEditor.contentComponent, true)
+        }
+      }
+      else {
+        it.requestFocus()
+      }
+    }
   }
   else {
     if (editor != null) {

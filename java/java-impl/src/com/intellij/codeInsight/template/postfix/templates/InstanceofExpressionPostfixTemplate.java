@@ -81,7 +81,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
         PostfixTemplatesUtils.showErrorHint(project, editor);
         return;
       }
-      range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+      range = rangeMarker.getTextRange();
     }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());

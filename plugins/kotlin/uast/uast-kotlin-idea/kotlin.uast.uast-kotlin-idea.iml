@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.uast" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

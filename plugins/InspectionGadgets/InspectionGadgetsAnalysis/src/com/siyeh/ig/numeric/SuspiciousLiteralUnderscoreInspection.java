@@ -79,7 +79,7 @@ public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
       }
       if (dot > 0 ? digit > 3 : digit != 3) {
         final int offset = length - digit;
-        final boolean completeFractional = (offset == dot + 1);
+        final boolean completeFractional = offset == dot + 1;
         if (!completeFractional) {
           registerErrorAtOffset(expression, offset, digit);
         }

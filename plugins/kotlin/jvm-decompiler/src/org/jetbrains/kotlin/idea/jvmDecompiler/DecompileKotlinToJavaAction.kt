@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.codeInsight.AttachSourcesProvider
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -19,6 +20,8 @@ class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("
 
         KotlinJvmDecompilerFacadeImpl.showDecompiledCode(binaryFile)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         when {

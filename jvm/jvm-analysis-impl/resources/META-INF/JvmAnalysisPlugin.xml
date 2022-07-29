@@ -7,7 +7,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
-    <psi.referenceContributor implementation="com.intellij.codeInspection.test.junit.references.JUnitReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="com.intellij.codeInspection.test.junit.references.JUnitReferenceContributor"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="AssertBetweenInconvertibleTypes"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -18,11 +18,27 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.testonly.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestOnlyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestMethodWithoutAssertion"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.method.without.assertion.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithConstructor"
+                     suppressId="JUnitTestCaseWithNonTrivialConstructors"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.case.with.constructor.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestCaseWithConstructorInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="TestFailedLine"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="MigrateAssertToMatcherAssert"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.migrate.assertion.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.HamcrestAssertionsConverterInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestInProductSource"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -52,6 +68,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.unconstructable.test.case.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="IgnoredJUnitTest"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit.ignored.test.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnitIgnoredTestInspection"/>
     <localInspection language="UAST" enabledByDefault="false" cleanupTool="true" level="WARNING" shortName="AssertEqualsCalledOnArray"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"

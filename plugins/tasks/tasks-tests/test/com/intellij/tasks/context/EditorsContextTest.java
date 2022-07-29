@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -17,14 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EditorsContextTest extends FileEditorManagerTestCase {
   public void testDockableContainer() {
     DockManager dockManager = DockManager.getInstance(getProject());
-    int initial = dockManager.getContainers().size();
     VirtualFile file = getFile("/foo.txt");
-    myManager.openFile(file, /* focusEditor = */ false);
-    assertThat(dockManager.getContainers()).hasSize(initial + 1);
-    myManager.initDockableContentFactory();
+    manager.openFile(file, /* focusEditor = */ false);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
+    manager.initDockableContentFactory();
 
-    myManager.openFileInNewWindow(file);
-    assertThat(dockManager.getContainers()).hasSize(initial + 2);
+    manager.openFileInNewWindow(file);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 2);
 
     Element context = new Element("context");
     WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
@@ -33,7 +32,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     assertThat(EditorFactory.getInstance().getAllEditors()).hasSize(2);
 
     contextManager.clearContext();
-    assertThat(dockManager.getContainers()).hasSize(initial + 1);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
     assertThat(EditorFactory.getInstance().getAllEditors()).isEmpty();
   }
 

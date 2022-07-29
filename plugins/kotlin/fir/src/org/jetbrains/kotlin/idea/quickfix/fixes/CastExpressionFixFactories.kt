@@ -10,23 +10,23 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 object CastExpressionFixFactories {
-    class Input(val typePresentation: String, val typeSourceCode: String) : HLApplicatorInput
+    class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     val applicator = applicator<PsiElement, Input> {
-        familyName(KotlinBundle.message("fix.cast.expression.family"))
+        familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
         applyToWithEditorRequired { psi, input, project, editor ->
             val expressionToInsert = KtPsiFactory(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
@@ -75,7 +75,7 @@ object CastExpressionFixFactories {
         actualType: KtType,
         expectedType: KtType,
         psi: PsiElement,
-    ): List<HLApplicatorTargetWithInput<PsiElement, Input>> {
+    ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         // `null` related issue should not be handled by a cast fix.
         if (isDueToNullability || expectedType is KtClassErrorType) return emptyList()
 

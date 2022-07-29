@@ -11,6 +11,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.CoroutineScope
 
 private class WelcomeWizardHelper : ApplicationInitializedListener {
   init {
@@ -19,7 +20,7 @@ private class WelcomeWizardHelper : ApplicationInitializedListener {
     }
   }
 
-  override fun componentsInitialized() {
+  override suspend fun execute(asyncScope: CoroutineScope) {
     // project View settings
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
       ProjectViewSharedSettings.instance.autoscrollToSource = it

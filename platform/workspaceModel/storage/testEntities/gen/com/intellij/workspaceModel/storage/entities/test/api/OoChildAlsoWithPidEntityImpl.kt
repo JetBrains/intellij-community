@@ -23,196 +23,201 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OoChildAlsoWithPidEntityImpl: OoChildAlsoWithPidEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java, OoChildAlsoWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        
-        val connections = listOf<ConnectionId>(
-            PARENTENTITY_CONNECTION_ID,
-        )
+open class OoChildAlsoWithPidEntityImpl : OoChildAlsoWithPidEntity, WorkspaceEntityBase() {
 
+  companion object {
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
+                                                                                OoChildAlsoWithPidEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
+
+    val connections = listOf<ConnectionId>(
+      PARENTENTITY_CONNECTION_ID,
+    )
+
+  }
+
+  @JvmField
+  var _childProperty: String? = null
+  override val childProperty: String
+    get() = _childProperty!!
+
+  override val parentEntity: OoParentWithPidEntity
+    get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: OoChildAlsoWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildAlsoWithPidEntity>(), OoChildAlsoWithPidEntity.Builder {
+    constructor() : this(OoChildAlsoWithPidEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity OoChildAlsoWithPidEntity is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _childProperty: String? = null
-    override val childProperty: String
-        get() = _childProperty!!
-                        
-    override val parentEntity: OoParentWithPidEntity
-        get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isChildPropertyInitialized()) {
+        error("Field OoChildAlsoWithPidEntity#childProperty should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field OoChildAlsoWithPidEntity#entitySource should be initialized")
+      }
+      if (_diff != null) {
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
+          error("Field OoChildAlsoWithPidEntity#parentEntity should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
+          error("Field OoChildAlsoWithPidEntity#parentEntity should be initialized")
+        }
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: OoChildAlsoWithPidEntityData?): ModifiableWorkspaceEntityBase<OoChildAlsoWithPidEntity>(), OoChildAlsoWithPidEntity.Builder {
-        constructor(): this(OoChildAlsoWithPidEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity OoChildAlsoWithPidEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+
+    override var childProperty: String
+      get() = getEntityData().childProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childProperty = value
+        changedProperty.add("childProperty")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override var parentEntity: OoParentWithPidEntity
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                       PARENTENTITY_CONNECTION_ID)]!! as OoParentWithPidEntity
         }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isChildPropertyInitialized()) {
-                error("Field OoChildAlsoWithPidEntity#childProperty should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field OoChildAlsoWithPidEntity#entitySource should be initialized")
-            }
-            if (_diff != null) {
-                if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
-                    error("Field OoChildAlsoWithPidEntity#parentEntity should be initialized")
-                }
-            }
-            else {
-                if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
-                    error("Field OoChildAlsoWithPidEntity#parentEntity should be initialized")
-                }
-            }
+        else {
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithPidEntity
         }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
         }
-    
-        
-        override var childProperty: String
-            get() = getEntityData().childProperty
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().childProperty = value
-                changedProperty.add("childProperty")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-            
-        override var parentEntity: OoParentWithPidEntity
-            get() {
-                val _diff = diff
-                return if (_diff != null) {
-                    _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithPidEntity
-                } else {
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithPidEntity
-                }
-            }
-            set(value) {
-                checkModificationAllowed()
-                val _diff = diff
-                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    _diff.addEntity(value)
-                }
-                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                    _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                }
-                else {
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
-                }
-                changedProperty.add("parentEntity")
-            }
-        
-        override fun getEntityData(): OoChildAlsoWithPidEntityData = result ?: super.getEntityData() as OoChildAlsoWithPidEntityData
-        override fun getEntityClass(): Class<OoChildAlsoWithPidEntity> = OoChildAlsoWithPidEntity::class.java
-    }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+          _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parentEntity")
+      }
+
+    override fun getEntityData(): OoChildAlsoWithPidEntityData = result ?: super.getEntityData() as OoChildAlsoWithPidEntityData
+    override fun getEntityClass(): Class<OoChildAlsoWithPidEntity> = OoChildAlsoWithPidEntity::class.java
+  }
 }
-    
+
 class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<OoChildAlsoWithPidEntity>() {
-    lateinit var childProperty: String
+  lateinit var childProperty: String
 
-    fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
+  fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
-        val modifiable = OoChildAlsoWithPidEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
+    val modifiable = OoChildAlsoWithPidEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): OoChildAlsoWithPidEntity {
-        val entity = OoChildAlsoWithPidEntityImpl()
-        entity._childProperty = childProperty
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): OoChildAlsoWithPidEntity {
+    val entity = OoChildAlsoWithPidEntityImpl()
+    entity._childProperty = childProperty
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun persistentId(): PersistentEntityId<*> {
-        return OoChildEntityId(childProperty)
-    }
+  override fun persistentId(): PersistentEntityId<*> {
+    return OoChildEntityId(childProperty)
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return OoChildAlsoWithPidEntity::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return OoChildAlsoWithPidEntity::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as OoChildAlsoWithPidEntityData
-        
-        if (this.childProperty != other.childProperty) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as OoChildAlsoWithPidEntityData
-        
-        if (this.childProperty != other.childProperty) return false
-        return true
-    }
+    other as OoChildAlsoWithPidEntityData
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + childProperty.hashCode()
-        return result
-    }
+    if (this.childProperty != other.childProperty) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as OoChildAlsoWithPidEntityData
+
+    if (this.childProperty != other.childProperty) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + childProperty.hashCode()
+    return result
+  }
 }

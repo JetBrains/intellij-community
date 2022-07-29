@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
@@ -486,25 +487,28 @@ public final class PyCallExpressionHelper {
       return true; // unqualified + method = implicit constructor call
     }
     for (PyExpression qualifier : qualifiers) {
-      if (qualifier != null && isQualifiedByInstance(resolved, qualifier, context)) {
-        return true;
+      if (qualifier != null) {
+        ThreeState byInstance = isQualifiedByInstance(resolved, qualifier, context);
+        if (byInstance != ThreeState.UNSURE) {
+          return byInstance.toBoolean();
+        }
       }
     }
-    return false;
+    return true;
   }
 
-  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
-                                               @NotNull PyExpression qualifier,
-                                               @NotNull TypeEvalContext context) {
+  private static @NotNull ThreeState isQualifiedByInstance(@Nullable PyCallable resolved,
+                                                           @NotNull PyExpression qualifier,
+                                                           @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
-      return false;
+      return ThreeState.NO;
     }
     final PyType qualifierType = context.getType(qualifier);
-    if (qualifierType != null) {
-      // TODO: handle UnionType
-      if (qualifierType instanceof PyModuleType) return false; // qualified by module, not instance.
+    // TODO: handle UnionType
+    if (qualifierType instanceof PyModuleType) {
+      return ThreeState.UNSURE;
     }
-    return true; // NOTE. best guess: unknown qualifier is more probably an instance.
+    return ThreeState.YES; // NOTE. best guess: unknown qualifier is more probably an instance.
   }
 
   private static boolean isQualifiedByClass(@Nullable PyCallable resolved,

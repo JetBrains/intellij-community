@@ -21,7 +21,7 @@ class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
   constructor(ginqExpression: GinqExpression, namedRecord: PsiClass) :
     this(emptyList(),
          getTypeMap(ginqExpression),
-         ginqExpression.select.projections.mapNotNull { it.alias?.text },
+         ginqExpression.select?.projections?.mapNotNull { it.alias?.text } ?: emptyList(),
          namedRecord)
 
   private val pseudoFields: Lazy<List<GrField>> = lazyPub {
@@ -72,7 +72,7 @@ private fun getTypeMap(ginqExpression: GinqExpression): Map<String, Lazy<PsiType
     val type = lazyPub { inferDataSourceComponentType(fragment.dataSource.type) ?: GrLiteralClassType.NULL }
     map[name] = type
   }
-  for (projection in ginqExpression.select.projections) {
+  for (projection in ginqExpression.select?.projections ?: emptyList()) {
     // Actually, `projection.aggregatedExpression.text` is a valid key in the absence of `projection.alias`.
     // The problem is that the key in this case is a toString-ed parsed expression produced by the Groovy AST.
     // It is too hard to compute and maintain such representation in a groovy-compatible way, so we'd rather not support it at all.

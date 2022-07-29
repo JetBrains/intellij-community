@@ -139,11 +139,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private PatternContext myPatternContext;
   private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
   private final DocumentListener myRestartHighlightingListener = new DocumentListener() {
-    final Runnable runnable = () -> ReadAction.nonBlocking(() -> addMatchHighlights())
-      .withDocumentsCommitted(getProject())
-      .expireWith(getDisposable())
-      .coalesceBy(this)
-      .submit(AppExecutorUtil.getAppExecutorService());
+    final Runnable runnable = () -> addMatchHighlights();
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
@@ -209,7 +205,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         if (myNewEditor instanceof TextEditor) {
           myEditor = ((TextEditor)myNewEditor).getEditor();
           addMatchHighlights();
-          addRestartHighlightingListenerToCurrentEditor();
         }
         else {
           myEditor = null;
@@ -809,33 +804,40 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void addMatchHighlights() {
-    if (myEditConfigOnly || DumbService.isDumb(getProject())) {
-      // Search hits in the current editor are not shown when dumb.
-      return;
-    }
-    final Project project = getProject();
-    final Editor editor = myEditor;
-    if (editor == null) {
-      return;
-    }
-    final Document document = editor.getDocument();
-    final PsiFile file = ReadAction.nonBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(document)).executeSynchronously();
-    if (file == null) {
-      return;
-    }
-    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    matchOptions.setScope(new LocalSearchScope(file, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()));
-    final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    try {
-      new Matcher(project, matchOptions).findMatches(sink);
-      final List<MatchResult> matches = sink.getMatches();
-      removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, SSRBundle.message("status.bar.text.results.found.in.current.file", matches.size()));
-    }
-    catch (StructuralSearchException e) {
-      reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
-      removeMatchHighlights();
-    }
+    ReadAction.nonBlocking(() -> {
+        if (myEditConfigOnly || DumbService.isDumb(getProject())) {
+          // Search hits in the current editor are not shown when dumb.
+          return null;
+        }
+        final Project project = getProject();
+        final Editor editor = myEditor;
+        if (editor == null) {
+          return null;
+        }
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        if (file == null) {
+          return null;
+        }
+        final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+        matchOptions.setScope(new LocalSearchScope(file, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()));
+        final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+        try {
+          new Matcher(project, matchOptions).findMatches(sink);
+          final List<MatchResult> matches = sink.getMatches();
+          removeMatchHighlights();
+          addMatchHighlights(matches, editor, file, SSRBundle.message("status.bar.text.results.found.in.current.file", matches.size()));
+        }
+        catch (MalformedPatternException | UnsupportedPatternException e) {
+          reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
+          removeMatchHighlights();
+        }
+        return null;
+      })
+      .withDocumentsCommitted(getProject())
+      .expireWith(getDisposable())
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void addMatchHighlights(@NotNull List<? extends MatchResult> matchResults,

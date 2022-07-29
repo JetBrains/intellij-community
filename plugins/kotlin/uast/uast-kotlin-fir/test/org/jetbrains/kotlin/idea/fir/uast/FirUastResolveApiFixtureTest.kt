@@ -14,6 +14,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastResolveApiFixtureTestBase {
     override val isFirUastPlugin: Boolean = true
+    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
@@ -142,6 +143,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
 
+    fun testMapFunctions() {
+        doCheck("MapFunctions", ::checkMapFunctions)
+    }
+
+    fun testListIterator() {
+        doCheck("ListIterator", ::checkListIterator)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
@@ -170,7 +179,23 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
     }
 
+    fun testImplicitReceiverType() {
+        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
+    }
+
     fun testSubstitutedReceiverType() {
         doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
+    }
+
+    fun testCallKindOfSamConstructor() {
+        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
+    }
+
+    fun testArrayAccessOverloads() {
+        doCheck("ArrayAccessOverloads", ::checkArrayAccessOverloads)
+    }
+
+    fun testOperatorOverloads() {
+        doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
 }

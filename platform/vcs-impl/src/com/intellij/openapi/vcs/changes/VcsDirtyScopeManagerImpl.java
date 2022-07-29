@@ -250,6 +250,15 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return calculateInvalidated(dirtBuilder, callback);
   }
 
+  public boolean hasDirtyScopes() {
+    synchronized (LOCK) {
+      if (!myReady) return false;
+      LOG.assertTrue(myDirtInProgress == null);
+
+      return !myDirtBuilder.isEmpty();
+    }
+  }
+
   public void changesProcessed() {
     synchronized (LOCK) {
       myDirtInProgress = null;

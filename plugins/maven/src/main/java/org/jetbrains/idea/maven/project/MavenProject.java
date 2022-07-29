@@ -23,6 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -865,7 +866,7 @@ public class MavenProject {
   public @NotNull Set<String> getSupportedPackagings() {
     Set<String> result = ContainerUtil.newHashSet(
       MavenConstants.TYPE_POM, MavenConstants.TYPE_JAR, "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin");
-    for (MavenImporter each : getSuitableImporters()) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedPackagings(result);
     }
     return result;
@@ -874,7 +875,7 @@ public class MavenProject {
   public Set<String> getDependencyTypesFromImporters(@NotNull SupportedRequestType type) {
     Set<String> res = new HashSet<>();
 
-    for (MavenImporter each : getSuitableImporters()) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedDependencyTypes(res, type);
     }
 
@@ -887,7 +888,7 @@ public class MavenProject {
                                            MavenConstants.SCOPE_RUNTIME,
                                            MavenConstants.SCOPE_TEST,
                                            MavenConstants.SCOPE_SYSTEM);
-    for (MavenImporter each : getSuitableImporters()) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedDependencyScopes(result);
     }
     return result;
@@ -1119,18 +1120,28 @@ public class MavenProject {
     return myState.myRemoteRepositories;
   }
 
+  /**
+   * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public @NotNull List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
   }
 
+  /**
+   * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
-    final List<MavenImporter> importers = getSuitableImporters();
+    final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
     // getSuitableImporters() guarantees that all returned importers require the same module type
     return importers.size() > 0 ? importers.get(0).getModuleType() : StdModuleTypes.JAVA;
   }
 
   public @NotNull Pair<String, String> getClassifierAndExtension(@NotNull MavenArtifact artifact, @NotNull MavenExtraArtifactType type) {
-    for (MavenImporter each : getSuitableImporters()) {
+    for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       Pair<String, String> result = each.getExtraArtifactClassifierAndExtension(artifact, type);
       if (result != null) return result;
     }
@@ -1241,25 +1252,25 @@ public class MavenProject {
     public MavenProjectChanges getChanges(State other) {
       if (myLastReadStamp == 0) return MavenProjectChanges.ALL;
 
-      MavenProjectChanges result = new MavenProjectChanges();
+      MavenProjectChangesBuilder result = new MavenProjectChangesBuilder();
 
-      result.packaging = !Objects.equals(myPackaging, other.myPackaging);
+      result.setHasPackagingChanges(!Objects.equals(myPackaging, other.myPackaging));
 
-      result.output = !Objects.equals(myFinalName, other.myFinalName)
-                      || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
-                      || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
-                      || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory);
+      result.setHasOutputChanges(!Objects.equals(myFinalName, other.myFinalName)
+                                 || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
+                                 || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
+                                 || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory));
 
-      result.sources = !Comparing.equal(mySources, other.mySources)
-                       || !Comparing.equal(myTestSources, other.myTestSources)
-                       || !Comparing.equal(myResources, other.myResources)
-                       || !Comparing.equal(myTestResources, other.myTestResources);
+      result.setHasSourceChanges(!Comparing.equal(mySources, other.mySources)
+                                 || !Comparing.equal(myTestSources, other.myTestSources)
+                                 || !Comparing.equal(myResources, other.myResources)
+                                 || !Comparing.equal(myTestResources, other.myTestResources));
 
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
-      result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-      result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-      result.properties = !Comparing.equal(myProperties, other.myProperties);
+      result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies));
+      result.setHasPluginChanges(repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins));
+      result.setHasPropertyChanges(!Comparing.equal(myProperties, other.myProperties));
       return result;
     }
 

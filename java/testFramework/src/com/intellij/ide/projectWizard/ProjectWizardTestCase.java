@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -76,22 +76,31 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         PlatformTestUtil.forceCloseProjectWithoutSaving(myCreatedProject);
         myCreatedProject = null;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        LanguageLevelProjectExtensionImpl extension =
-          LanguageLevelProjectExtensionImpl.getInstanceImpl(ProjectManager.getInstance().getDefaultProject());
-        extension.resetDefaults();
-        ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          LanguageLevelProjectExtensionImpl extension =
+            LanguageLevelProjectExtensionImpl.getInstanceImpl(ProjectManager.getInstance().getDefaultProject());
+          extension.resetDefaults();
+          ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+          JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+        });
+        SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+        // let vfs update pass
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       });
-      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
-      // let vfs update pass
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
     catch (Throwable e) {
       addSuppressedException(e);
     }
     finally {
-      super.tearDown();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          super.tearDown();
+        }
+        catch (Exception e) {
+          addSuppressedException(e);
+        }
+      });
     }
   }
 

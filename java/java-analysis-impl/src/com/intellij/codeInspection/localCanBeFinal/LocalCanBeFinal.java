@@ -243,10 +243,14 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
     });
 
-    if (body.getParent() instanceof PsiMethod && REPORT_PARAMETERS) {
-      final PsiMethod method = (PsiMethod)body.getParent();
-      if (!(method instanceof SyntheticElement)) { // e.g. JspHolderMethod
-        Collections.addAll(result, method.getParameterList().getParameters());
+    if (body.getParent() instanceof PsiParameterListOwner && REPORT_PARAMETERS) {
+      final PsiParameterListOwner methodOrLambda = (PsiParameterListOwner)body.getParent();
+      if (!(methodOrLambda instanceof SyntheticElement)) { // e.g. JspHolderMethod
+        for (PsiParameter parameter : methodOrLambda.getParameterList().getParameters()) {
+          if (parameter.getTypeElement() != null) {
+            result.add(parameter);
+          }
+        }
       }
     }
 

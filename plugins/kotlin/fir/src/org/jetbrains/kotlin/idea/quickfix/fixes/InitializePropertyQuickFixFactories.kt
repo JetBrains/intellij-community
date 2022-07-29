@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactories
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object InitializePropertyQuickFixFactories {
 
-    data class AddInitializerInput(val initializerText: String?) : HLApplicatorInput
+    data class AddInitializerInput(val initializerText: String?) : KotlinApplicatorInput
 
-    private val addInitializerApplicator: HLApplicator<KtProperty, AddInitializerInput> = applicator {
+    private val addInitializerApplicator: KotlinApplicator<KtProperty, AddInitializerInput> = applicator {
         familyAndActionName(KotlinBundle.lazyMessage("add.initializer"))
 
         applyToWithEditorRequired { property, input, project, editor ->
@@ -46,7 +46,7 @@ object InitializePropertyQuickFixFactories {
 
             buildList {
                 add(
-                    HLQuickFix(
+                    KotlinApplicatorBasedQuickFix(
                         property,
                         AddInitializerInput(property.getReturnKtType().defaultInitializer),
                         addInitializerApplicator

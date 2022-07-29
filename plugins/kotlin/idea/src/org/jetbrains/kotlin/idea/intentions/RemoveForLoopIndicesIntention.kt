@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.editor.fixers.range
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 class RemoveForLoopIndicesInspection : IntentionBasedInspection<KtForExpression>(
     RemoveForLoopIndicesIntention::class,
     KotlinBundle.message("index.is.not.used.in.the.loop.body")
-), CleanupLocalInspectionTool
+)
 
 class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,

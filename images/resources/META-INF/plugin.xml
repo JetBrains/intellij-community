@@ -167,8 +167,6 @@
       <separator/>
       <reference id="Images.SetBackgroundImage"/>
       <separator/>
-      <reference id="AddToFavorites"/>
-      <separator/>
       <reference id="VersionControlsGroup"/>
       <separator/>
       <reference id="Images.EditExternally"/>
@@ -198,8 +196,6 @@
       <separator/>
       <reference id="FindUsages"/>
       <reference id="RefactoringMenu"/>
-      <separator/>
-      <reference id="AddToFavorites"/>
       <separator/>
       <reference id="$Delete"/>
       <separator/>

@@ -53,10 +53,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Objects;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
-import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
-
 public final class WelcomeScreenComponentFactory {
   @NotNull static JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -92,7 +88,7 @@ public final class WelcomeScreenComponentFactory {
     }
 
     JLabel version = new JLabel(appVersion);
-    version.setFont(UIUtil.getLabelFont(SMALL));
+    version.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     version.setForeground(Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
@@ -135,7 +131,7 @@ public final class WelcomeScreenComponentFactory {
                              : ApplicationNamesInfo.getInstance().getFullProductName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
+    appName.setFont(WelcomeScreenUIManager.getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
     String appVersion = IdeBundle.message("welcome.screen.logo.version.label", appInfo.getFullVersion());
 
@@ -144,7 +140,7 @@ public final class WelcomeScreenComponentFactory {
     }
 
     JLabel version = new JLabel(appVersion);
-    version.setFont(getProductFont(16));
+    version.setFont(WelcomeScreenUIManager.getProductFont(16));
     version.setHorizontalAlignment(SwingConstants.CENTER);
     version.setForeground(Gray._128);
 
@@ -163,8 +159,8 @@ public final class WelcomeScreenComponentFactory {
   static JComponent createRecentProjects(Disposable parentDisposable) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new NewRecentProjectPanel(parentDisposable), BorderLayout.CENTER);
-    panel.setBackground(getProjectsBackground());
-    panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insetsRight(1)));
+    panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+    panel.setBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsRight(1)));
     return panel;
   }
 
@@ -256,7 +252,7 @@ public final class WelcomeScreenComponentFactory {
                                      @Nullable Component focusOnLeft) {
     AnAction action = createShowPopupAction(groupId);
     JComponent panel = wrapActionLink(new ActionLink(text, icon, action));
-    installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
+    WelcomeScreenFocusManager.installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
     return panel;
   }
 
@@ -272,7 +268,7 @@ public final class WelcomeScreenComponentFactory {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
-    link.setNormalColor(getLinkNormalColor());
+    link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
     return panel;
@@ -324,7 +320,7 @@ public final class WelcomeScreenComponentFactory {
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
-    String suffix = ProjectFrameHelper.getSuperUserSuffix();
+    String suffix = ProjectFrameHelper.Companion.getSuperUserSuffix();
     if (suffix != null) {
       title += " (" + suffix + ")";
     }

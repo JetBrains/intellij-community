@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 @Suppress("DEPRECATION")
 class ReplaceSizeZeroCheckWithIsEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
     ReplaceSizeZeroCheckWithIsEmptyIntention::class
-), CleanupLocalInspectionTool {
+) {
     override fun inspectionProblemText(element: KtBinaryExpression): String {
         return KotlinBundle.message("inspection.replace.size.zero.check.with.is.empty.display.name")
     }

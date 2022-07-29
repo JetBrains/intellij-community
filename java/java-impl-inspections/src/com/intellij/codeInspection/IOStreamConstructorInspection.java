@@ -198,7 +198,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement + "()");
     }
 
     @Override

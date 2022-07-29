@@ -36,3 +36,7 @@ val PsiElement.kotlinFqName: FqName?
         is KtNamedDeclaration -> element.fqName
         else -> null
     }
+
+fun PsiJavaModule.findRequireDirective(requiredName: String): PsiRequiresStatement? {
+    return requires.find { it.moduleName == requiredName }
+}

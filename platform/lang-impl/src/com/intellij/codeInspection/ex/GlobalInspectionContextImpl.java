@@ -22,6 +22,7 @@ import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,6 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,17 +72,13 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
@@ -245,16 +240,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      String logPath = PathManager.getLogPath();
-      Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("inspectionMetrics.json");
-      try {
-        FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"inspection_execution_time\" : " + elapsed + "\n}");
-      }
-      catch (IOException ex) {
-        LOG.info("Could not create json file " + perfMetrics + " with the performance metrics.");
-      }
-    }
     if (getProject().isDisposed()) return;
 
     InspectionResultsView oldView = myView;
@@ -295,7 +280,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     Tracer tracer = TraceManager.INSTANCE.getTracer("codeInspection");
-    runToolsSpan = tracer.spanBuilder("global_inspection").setNoParent().startSpan();
+    runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (!(progressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
@@ -564,7 +549,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           scope.accept(file -> {
             ProgressManager.checkCanceled();
             if (!forceInspectAllScope &&
-                (ProjectUtil.isProjectOrWorkspaceFile(file) || !ReadAction.compute(() -> fileIndex.isInContent(file)))) return true;
+                (ProjectUtil.isProjectOrWorkspaceFile(file) || !ReadAction.compute(() -> fileIndex.isInContent(file) || ScratchUtil.isScratch(file)))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
               if (project.isDisposed()) throw new ProcessCanceledException();
@@ -644,8 +629,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         NamedScope stateScope = state.getScope(getProject());
         if (stateScope == null) continue;
 
-        AnalysisScope scopeForState = new AnalysisScope(GlobalSearchScopesCore.filterScope(getProject(), stateScope)
-                                                          .intersectWith(initialSearchScope), getProject());
+        SearchScope intersectionScope = ReadAction.compute(() -> 
+                                                             GlobalSearchScopesCore.filterScope(getProject(), stateScope)
+                                                               .intersectWith(initialSearchScope));
+        AnalysisScope scopeForState = new AnalysisScope(intersectionScope, getProject());
         InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
         GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
         InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);

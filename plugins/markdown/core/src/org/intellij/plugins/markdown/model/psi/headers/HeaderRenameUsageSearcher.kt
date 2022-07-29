@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.model.psi.headers
 
+import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -21,8 +22,22 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
     val usages = MarkdownSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
     val selfUsage = MarkdownSymbolUsageSearcher.buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
     val modifiedUsages = usages.mapping { HeaderAnchorModifiableRenameUsage(it.file, it.range) }
-    val modifiedSelfUsage = selfUsage.mapping { PsiModifiableRenameUsage.defaultPsiModifiableRenameUsage(it) }
+    val modifiedSelfUsage = selfUsage.mapping { ModifiableRenameUsageWrapper(it) }
     return listOf(modifiedUsages, modifiedSelfUsage)
+  }
+
+  private class ModifiableRenameUsageWrapper(
+    usage: PsiUsage
+  ): PsiModifiableRenameUsage by PsiModifiableRenameUsage.defaultPsiModifiableRenameUsage(usage) {
+    override val declaration = true
+
+    override val fileUpdater = updater
+
+    private class Updater: ModifiableRenameUsage.FileUpdater by idFileRangeUpdater()
+
+    companion object {
+      private val updater = Updater()
+    }
   }
 
   private class HeaderAnchorModifiableRenameUsage(

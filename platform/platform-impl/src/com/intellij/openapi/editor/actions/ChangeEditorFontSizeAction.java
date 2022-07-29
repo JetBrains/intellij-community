@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -48,6 +49,11 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
       return (EditorImpl)editor;
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

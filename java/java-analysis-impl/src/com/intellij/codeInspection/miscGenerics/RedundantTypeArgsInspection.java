@@ -81,6 +81,12 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                           final List<? super ProblemDescriptor> problems, boolean isOnTheFly) {
     PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return;
+    PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
+    for (PsiTypeElement typeElement : typeArgumentList.getTypeParameterElements()) {
+      if (typeElement.getAnnotations().length > 0) {
+        return;
+      }
+    }
     final JavaResolveResult resolveResult = reference.advancedResolve(false);
 
     final PsiElement element = resolveResult.getElement();
@@ -94,10 +100,10 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       if (typeParameters.length == typeArguments.length &&
           PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
           typeParameters.length == 0) {
-        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor" 
+        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
                                                 : "inspection.redundant.type.problem.descriptor";
-        final ProblemDescriptor descriptor = 
-          inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
+        final ProblemDescriptor descriptor =
+          inspectionManager.createProblemDescriptor(typeArgumentList,
                                                     JavaAnalysisBundle.message(key),
                                                     ourQuickFixAction,
                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
@@ -125,6 +131,11 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             LOG.assertTrue(referenceElement != null, qualifierTypeElement);
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
+            for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
+              if (typeElement.getAnnotations().length > 0) {
+                return;
+              }
+            }
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, JavaAnalysisBundle
               .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             problems.add(descriptor);
@@ -140,7 +151,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         if (resolve == null) return;
         PsiTypeParameter[] typeParameters = resolve instanceof PsiClass ? PsiTypeParameter.EMPTY_ARRAY : ((PsiMethod)resolve).getTypeParameters();
         if (typeParameters.length == 0 ||
-            typeParameters.length == typeArguments.length && 
+            typeParameters.length == typeArguments.length &&
             PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, (PsiMethod)resolve, typeParameters)) {
           String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.method.reference.problem.descriptor"
                                                   : "inspection.redundant.type.problem.descriptor";
@@ -148,7 +159,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             inspectionManager.createProblemDescriptor(parameterList,
                                                       JavaAnalysisBundle.message(key),
                                                       new MyQuickFixAction(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-            problems.add(descriptor);
+          problems.add(descriptor);
         }
       }
     }
@@ -170,7 +181,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(typeArgumentList, PsiMethodReferenceExpression.class);
         PsiTypeElement qualifierType = ref != null ? ref.getQualifierType() : null;
-        if (qualifierType != null && PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
+        if (PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
           PsiClass targetClass = PsiUtil.resolveClassInType(qualifierType.getType());
           if (targetClass != null) {
             new CommentTracker().replaceAndRestoreComments(qualifierType, elementFactory.createReferenceExpression(targetClass));

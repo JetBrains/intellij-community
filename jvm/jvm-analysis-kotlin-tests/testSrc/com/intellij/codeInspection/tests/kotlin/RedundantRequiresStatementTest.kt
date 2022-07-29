@@ -36,5 +36,4 @@ class RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCa
   override fun getTestDataPath(): String {
     return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -432,7 +433,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
-      if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler) {
+      // disabled on macos because of IDEA-252760
+      if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler && !SystemInfo.isMac) {
         contentBuilder.addAction(new AttachDebuggerAction((BaseProcessHandler<?>)processHandler));
       }
     }

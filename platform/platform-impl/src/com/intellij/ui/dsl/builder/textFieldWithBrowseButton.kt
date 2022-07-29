@@ -15,6 +15,14 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextChangedFromUiImpl
 
+/**
+ * Minimal width of text field in chars
+ *
+ * @see COLUMNS_TINY
+ * @see COLUMNS_SHORT
+ * @see COLUMNS_MEDIUM
+ * @see COLUMNS_LARGE
+ */
 fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
   component.textField.columns = columns
   return this
@@ -37,13 +45,13 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, sette
   return bindText(MutableProperty(getter, setter))
 }
 
+fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
+}
+
 fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
   component.text = text
   return this
-}
-
-private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
-  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =

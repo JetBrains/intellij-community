@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.GROOVY
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.NULL
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -29,7 +30,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 11)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 12)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -46,7 +47,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = BoundedStringEventField.lowercase("groovy_sdk_type", "maven", "local")
+    private val groovySourceTypeField = BoundedStringEventField.lowercase("groovy_sdk_type", "maven", "local", NULL)
     private val pluginField = BoundedStringEventField.lowercase("plugin_selected", *NewProjectWizardConstants.Language.ALL)
 
     //events
@@ -182,8 +183,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   object Groovy {
     // @formatter:off
-    fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String?) = groovyLibraryChanged.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with groovyLibrarySource, groovyVersionField with groovyLibraryVersion)
-    fun logGroovyLibraryFinished(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String?) = groovyLibraryFinished.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with groovyLibrarySource, groovyVersionField with groovyLibraryVersion)
+    fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String?, groovyLibraryVersion: String?) = groovyLibraryChanged.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with (groovyLibrarySource ?: NULL), groovyVersionField with groovyLibraryVersion)
+    fun logGroovyLibraryFinished(context: WizardContext, groovyLibrarySource: String?, groovyLibraryVersion: String?) = groovyLibraryFinished.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with (groovyLibrarySource ?: NULL), groovyVersionField with groovyLibraryVersion)
     // @formatter:on
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -131,7 +131,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
   /**
    * This method check if the element, its enclosing class(-es) or its jigsaw module is annotated with PreviewFeature.
    * It doesn't take into account the element's package as per
-   * <a href="https://mail.openjdk.java.net/pipermail/compiler-dev/2021-February/016306.html">the mailing list discussion</a>.
+   * <a href="https://mail.openjdk.org/pipermail/compiler-dev/2021-February/016306.html">the mailing list discussion</a>.
    *
    * @param element a PSI element to check if it belongs to the preview feature API.
    * @return the PreviewFeature annotation that describes the preview feature api the element belongs to or null otherwise

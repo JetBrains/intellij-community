@@ -32,7 +32,7 @@ internal class BrowsableLinkLabel : HyperlinkLabel() {
             if (value.isBrowsableUrl) {
                 isVisible = true
                 setHyperlinkTarget(value)
-                setIcon(null) // We need to reset it every time — calling setHyperlinkTarget() sets it, because reasons
+                icon = null // We need to reset it every time — calling setHyperlinkTarget() sets it, because reasons
             } else {
                 isVisible = false
             }

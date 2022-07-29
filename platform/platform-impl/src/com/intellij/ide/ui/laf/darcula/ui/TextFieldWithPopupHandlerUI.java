@@ -9,10 +9,13 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -452,7 +455,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       g.setClip(clip);
       for (IconHolder holder : icons.values()) {
         if (holder.icon != null) {
-          holder.icon.paintIcon(component, g, holder.bounds.x, holder.bounds.y);
+          if (ExperimentalUI.isNewUI() && holder.hovered && holder.isClickable()) {
+            GraphicsUtil.setupAAPainting(g);
+            int arc = DarculaUIUtil.BUTTON_ARC.get();
+            g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());
+            g.fillRoundRect(holder.bounds.x, holder.bounds.y, holder.bounds.width, holder.bounds.height, arc, arc);
+          }
+          holder.icon.paintIcon(component, g, holder.bounds.x + (holder.bounds.width - holder.icon.getIconWidth()) / 2,
+                                holder.bounds.y + (holder.bounds.height - holder.icon.getIconHeight()) / 2);
         }
       }
     }
@@ -509,7 +519,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     boolean repaint = false;
     IconHolder result = null;
     for (IconHolder holder : icons.values()) {
-      holder.hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      boolean hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      if (ExperimentalUI.isNewUI()) {
+        repaint |= hovered != holder.hovered;
+      }
+      holder.hovered = hovered;
       if (holder.hovered) result = holder;
       Icon icon = holder.extension.getIcon(holder.hovered);
       if (holder.icon != icon) {
@@ -593,8 +607,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     private boolean setIcon(Icon icon) {
       this.icon = icon;
-      int width = icon == null ? 0 : icon.getIconWidth();
-      int height = icon == null ? 0 : icon.getIconHeight();
+      int doubleIconInset = ExperimentalUI.isNewUI() ? JBUI.scale(1) * 2 : 0;
+      int width = icon == null ? 0 : icon.getIconWidth() + doubleIconInset;
+      int height = icon == null ? 0 : icon.getIconHeight() + doubleIconInset;
       if (bounds.width == width && bounds.height == height) return false;
       bounds.width = width;
       bounds.height = height;

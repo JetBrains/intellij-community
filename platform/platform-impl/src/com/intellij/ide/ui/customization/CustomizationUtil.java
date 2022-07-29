@@ -445,8 +445,7 @@ public final class CustomizationUtil {
   @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
     ActionGroup actionGroup = toolbar.getActionGroup();
-    String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
-                                                       ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);
+    String groupID = getGroupID(actionGroup);
     if (groupID == null) {
       return null;
     }
@@ -528,7 +527,19 @@ public final class CustomizationUtil {
   }
 
   @Nullable
-  public static String getGroupName(AnAction action, String groupID) {
+  private static String getGroupID(ActionGroup actionGroup) {
+    AnAction actionForId = actionGroup;
+    if (actionGroup instanceof ActionWithDelegate) {
+      Object delegate = ((ActionWithDelegate<?>)actionGroup).getDelegate();
+      if (delegate instanceof AnAction) {
+        actionForId = (AnAction)delegate;
+      }
+    }
+    return ActionManager.getInstance().getId(actionForId);
+  }
+
+  @Nullable
+  private static String getGroupName(AnAction action, String groupID) {
     String templateText = action.getTemplateText();
     return Strings.isEmpty(templateText) ? CustomActionsSchema.getInstance().getDisplayName(groupID) : templateText;
   }

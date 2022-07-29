@@ -1,0 +1,9 @@
+import testing.KotlinPackageClassUsedFromJava_DataKt;
+
+class KotlinPackageClassUsedFromJava {
+    void test() {
+        <caret>KotlinPackageClassUsedFromJava_DataKt.foo();
+    }
+}
+
+//INFO: <div class="bottom"><icon src="AllIcons.Nodes.Package">&nbsp;<a href="psi_element://testing"><code>testing</code></a></div><div class='definition'><pre>public final class KotlinPackageClassUsedFromJava_DataKt</pre></div><table class='sections'></table>

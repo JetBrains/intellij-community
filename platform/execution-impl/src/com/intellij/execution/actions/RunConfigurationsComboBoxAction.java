@@ -54,8 +54,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return false;
     }
 
-    if (PlatformUtils.isIdeaUltimate()) return true;
-    if (PlatformUtils.isIdeaCommunity()) return true;
+    if (PlatformUtils.isIntelliJ()) return true;
     if (PlatformUtils.isPhpStorm()) return true;
     if (PlatformUtils.isWebStorm()) return true;
     if (PlatformUtils.isRubyMine()) return true;
@@ -83,7 +82,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         presentation.setEnabled(false);
       }
       else {
-        updatePresentation(ExecutionTargetManager.getActiveTarget(project),
+        updatePresentation(getSelectedExecutionTarget(e),
                            getSelectedConfiguration(e),
                            project,
                            presentation,
@@ -96,6 +95,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
+  protected @Nullable ExecutionTarget getSelectedExecutionTarget(AnActionEvent e) {
+    Project project = e.getProject();
+    return project == null ? null : ExecutionTargetManager.getActiveTarget(project);
+  }
 
   protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(AnActionEvent e) {
     Project project = e.getProject();
@@ -208,14 +211,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
 
-    RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
-    if (selected != null) {
-      ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected.getConfiguration())) {
-        allActionsGroup.add(new SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
-      }
-      allActionsGroup.addSeparator();
-    }
+    addTargetGroup(project, allActionsGroup);
 
     allActionsGroup.add(new RunCurrentFileAction());
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
@@ -238,6 +234,17 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       allActionsGroup.addSeparator();
     }
     return allActionsGroup;
+  }
+
+  protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {
+    RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
+    if (selected != null) {
+      ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
+      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected.getConfiguration())) {
+        allActionsGroup.add(new SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
+      }
+      allActionsGroup.addSeparator();
+    }
   }
 
   protected @Nullable AnAction getEditRunConfigurationAction() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -301,13 +301,10 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     RegisteredIndexes registeredIndexes = myFileBasedIndex.getRegisteredIndexes();
     List<ID<?, ?>> contentDependentIndexes;
     if (registeredIndexes == null) {
-      Set<? extends ID<?, ?>> allContentDependentIndexes =
-        FileBasedIndexExtension
-          .EXTENSION_POINT_NAME
-          .extensions()
-          .filter(ex -> ex.dependsOnFileContent())
-          .map(ex -> ex.getName())
-          .collect(Collectors.toSet());
+      Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
+        .filter(ex -> ex.dependsOnFileContent())
+        .map(ex -> ex.getName())
+        .collect(Collectors.toSet());
       contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
     }
     else {
@@ -320,7 +317,10 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   @TestOnly
   public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(timeout, unit);
+      return;
+    }
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     while (System.nanoTime() < deadline) {
       try {

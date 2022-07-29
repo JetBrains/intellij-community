@@ -17,41 +17,39 @@ import java.util.function.BiConsumer
 
 private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom",
-  "intellij.platform.uast.tests",
   "intellij.jsp.base"
 )
 
 private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom.impl",
-  "intellij.platform.testFramework",
   "intellij.tools.testsBootstrap"
 )
 
 private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "" to "11",
-  "lib/idea_rt.jar" to "1.6",
-  "lib/forms_rt.jar" to "1.6",
-  "lib/annotations.jar" to "1.6",
+  "lib/idea_rt.jar" to "1.7",
+  "lib/forms_rt.jar" to "1.7",
+  "lib/annotations.jar" to "1.7",
   // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
   "lib/util.jar!/com/intellij/serialization/" to "1.8",
-  "lib/util_rt.jar" to "1.6",
-  "lib/external-system-rt.jar" to "1.6",
-  "plugins/coverage/lib/coverage_rt.jar" to "1.6",
+  "lib/util_rt.jar" to "1.7",
+  "lib/external-system-rt.jar" to "1.7",
+  "plugins/coverage/lib/coverage_rt.jar" to "1.7",
   "plugins/javaFX/lib/rt/sceneBuilderBridge.jar" to "11",
-  "plugins/junit/lib/junit-rt.jar" to "1.6",
+  "plugins/junit/lib/junit-rt.jar" to "1.7",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.6",
-  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.6",
+  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.7",
+  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.7",
   "plugins/maven/lib/maven-server-api.jar" to "1.8",
   "plugins/maven/lib/maven2-server.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven30-server.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
-  "plugins/maven/lib/artifact-resolver-m2.jar" to "1.6",
-  "plugins/maven/lib/artifact-resolver-m3.jar" to "1.6",
-  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.6",
-  "plugins/xpath/lib/rt/xslt-rt.jar" to "1.6",
-  "plugins/xslt-debugger/lib/xslt-debugger-rt.jar" to "1.6",
+  "plugins/maven/lib/artifact-resolver-m2.jar" to "1.7",
+  "plugins/maven/lib/artifact-resolver-m3.jar" to "1.7",
+  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
+  "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
+  "plugins/xslt-debugger/lib/xslt-debugger-rt.jar" to "1.7",
   "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
 )
 
@@ -112,8 +110,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.completionMlRankingModels",
       "intellij.statsCollector",
       "intellij.sh",
-      "intellij.vcs.changeReminder",
-      "intellij.vcs.refactoring.detector",
       "intellij.markdown",
       "intellij.webp",
       "intellij.grazie",
@@ -133,9 +129,9 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
       "plugins/java/lib/jshell-frontend.jar" to "9",
       "plugins/java/lib/sa-jdwp" to "",  // ignored
-      "plugins/java/lib/rt/debugger-agent.jar" to "1.6",
-      "plugins/Groovy/lib/groovy-rt.jar" to "1.6",
-      "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.6",
+      "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
+      "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
+      "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
     ))
   }
 
@@ -150,7 +146,14 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
           layout.withModule(name)
         }
       }
-      for (moduleName in listOf("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
+      for (moduleName in listOf(
+        "intellij.java.testFramework",
+        "intellij.platform.testFramework.core",
+        "intellij.platform.testFramework.common",
+        "intellij.platform.testFramework.junit5",
+        "intellij.platform.testFramework",
+        "intellij.platform.uast.tests",
+      )) {
         if (!productLayout.productApiModules.contains(moduleName)) {
           layout.withModule(moduleName, "testFramework.jar")
         }
@@ -180,7 +183,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
     productLayout.compatiblePluginsToIgnore = java.util.List.of(
       "intellij.java.plugin",
-      "kotlin.plugin-fir",
     )
     additionalModulesToCompile = java.util.List.of("intellij.tools.jps.build.standalone")
     modulesToCompileTests = java.util.List.of("intellij.platform.jps.build")

@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -39,6 +40,8 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
   protected open fun charset(): Charset = StandardCharsets.UTF_8
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null

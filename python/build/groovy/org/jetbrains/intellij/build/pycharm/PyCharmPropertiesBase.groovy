@@ -15,13 +15,18 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     productLayout.mainJarName = "pycharm.jar"
     productLayout.withAdditionalPlatformJar("testFramework.jar",
                                             "intellij.platform.testFramework.core",
+                                            "intellij.platform.testFramework.common",
+                                            "intellij.platform.testFramework.junit5",
                                             "intellij.platform.testFramework",
                                             "intellij.tools.testsBootstrap",
-                                            "intellij.java.rt")
+                                            "intellij.java.rt",
+                                            "intellij.junit.rt")
 
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = List.of(
       "intellij.java.compiler.antTasks",
+      "intellij.platform.testFramework.common",
+      "intellij.platform.testFramework.junit5",
       "intellij.platform.testFramework"
     )
   }

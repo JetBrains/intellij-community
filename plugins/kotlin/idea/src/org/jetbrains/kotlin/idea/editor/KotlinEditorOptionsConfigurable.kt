@@ -5,7 +5,7 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle.message
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 
 private val editorOptions = KotlinEditorOptions.getInstance()
 

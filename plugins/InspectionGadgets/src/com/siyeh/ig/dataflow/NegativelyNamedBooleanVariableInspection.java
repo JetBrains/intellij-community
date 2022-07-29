@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -67,10 +69,14 @@ public class NegativelyNamedBooleanVariableInspection extends BaseInspection {
       if (!PsiType.BOOLEAN.equals(variable.getType())) {
         return;
       }
+      if (variable instanceof PsiParameter && variable.getParent() instanceof PsiForeachStatement) {
+        return;
+      }
       final String name = variable.getName();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
       final String prefix = codeStyleManager.getPrefixByVariableKind(codeStyleManager.getVariableKind(variable));
       for (final String negativeName : NEGATIVE_NAMES) {
+        assert name != null;
         if (isNegativelyNamed(name, negativeName) || !prefix.isEmpty() && isNegativelyNamed(name, prefix + negativeName)) {
           registerVariableError(variable, variable);
           break;

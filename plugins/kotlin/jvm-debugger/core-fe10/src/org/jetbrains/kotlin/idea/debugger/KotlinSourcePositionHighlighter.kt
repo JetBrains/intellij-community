@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 
 class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
     override fun getHighlightRange(sourcePosition: SourcePosition?): TextRange? {
-        if (sourcePosition is KotlinPositionManager.KotlinSourcePositionWithEntireLineHighlighted ||
-            sourcePosition is KotlinPositionManager.KotlinReentrantSourcePosition) {
+        if (sourcePosition is KotlinSourcePositionWithEntireLineHighlighted ||
+            sourcePosition is KotlinReentrantSourcePosition) {
             return null
         }
         val lambda = sourcePosition?.elementAt?.parent

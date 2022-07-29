@@ -125,9 +125,9 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * Returns the children of the group.
+   * Returns the child actions of the group.
    *
-   * @return An array representing children of this group. All returned children must be not {@code null}.
+   * @see #getActionUpdateThread()
    */
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 

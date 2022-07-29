@@ -2,19 +2,18 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 @Suppress("DEPRECATION")
-class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class), CleanupLocalInspectionTool
+class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class)
 
 class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,

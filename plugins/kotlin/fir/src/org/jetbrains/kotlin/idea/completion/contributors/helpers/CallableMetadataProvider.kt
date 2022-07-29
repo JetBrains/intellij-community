@@ -103,7 +103,7 @@ internal object CallableMetadataProvider {
         }
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
 
-        val expectedExtensionReceiverType = symbol.receiverType?.let { substitutor.substituteOrSelf(it) }
+        val expectedExtensionReceiverType = symbol.receiverType?.let { substitutor.substitute(it) }
         val weightBasedOnExtensionReceiver = expectedExtensionReceiverType?.let { receiverType ->
             // If a symbol expects an extension receiver, then either
             //   * the call site explicitly specifies the extension receiver , or

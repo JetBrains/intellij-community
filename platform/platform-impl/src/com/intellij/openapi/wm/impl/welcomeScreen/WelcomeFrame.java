@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +20,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -27,6 +29,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
@@ -45,7 +48,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
@@ -115,6 +117,18 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       @Override
       public void windowClosing(WindowEvent e) {
         if (ProjectUtilCore.getOpenProjects().length == 0) {
+          boolean isActiveClone = CloneableProjectsService.getInstance().isCloneActive();
+          if (isActiveClone) {
+            int exitCode = Messages.showOkCancelDialog(ApplicationBundle.message("exit.confirm.prompt.tasks"),
+                                                       ApplicationBundle.message("exit.confirm.title"),
+                                                       ApplicationBundle.message("command.exit"),
+                                                       CommonBundle.getCancelButtonText(),
+                                                       Messages.getQuestionIcon());
+            if (exitCode == Messages.CANCEL) {
+              return;
+            }
+          }
+
           ApplicationManager.getApplication().exit();
         }
         else {

@@ -21,6 +21,7 @@ public interface ShTokenTypes extends ShTypes {
   IElementType COMMENT = new ShTokenType("Comment");
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
+  TokenSet literals = TokenSet.create(STRING_CONTENT, RAW_STRING, INT, HEX, OCTAL);
 
   TokenSet HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES = TokenSet.create(
       DO, DONE, ELSE, ESAC, FI, IN, THEN

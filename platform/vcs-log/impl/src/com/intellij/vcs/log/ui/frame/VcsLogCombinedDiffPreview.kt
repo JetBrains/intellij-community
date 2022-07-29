@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.vcs.log.VcsLogBundle
-import java.util.stream.Stream
 
 class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedDiffPreview(browser.viewer, browser) {
 
@@ -23,11 +22,11 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) :
   CombinedDiffPreviewModel(browser.viewer, emptyMap(), browser) {
 
-  override fun getSelectedChanges(): Stream<out ChangeViewDiffRequestProcessor.Wrapper> {
+  override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
   }
 
-  override fun getAllChanges(): Stream<out ChangeViewDiffRequestProcessor.Wrapper> {
+  override fun iterateAllChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
     return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.all(tree))
   }
 }

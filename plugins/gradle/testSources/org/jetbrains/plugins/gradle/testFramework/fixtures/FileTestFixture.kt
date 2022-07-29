@@ -26,6 +26,8 @@ interface FileTestFixture : IdeaTestFixture {
 
   interface Builder {
 
+    fun excludeFiles(vararg relativePath: String)
+
     fun withFile(relativePath: String, content: String)
 
     fun withFiles(action: (VirtualFile) -> Unit)

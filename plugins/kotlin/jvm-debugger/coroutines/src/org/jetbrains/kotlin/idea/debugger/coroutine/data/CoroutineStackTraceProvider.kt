@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.JavaValue
 import com.sun.jdi.ObjectReference
+import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.LocationCache
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCorouti
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.toJavaValue
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isCreationSeparatorFrame
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
 
 class CoroutineStackTraceProvider(private val executionContext: DefaultExecutionContext) {
     private val locationCache = LocationCache(executionContext)

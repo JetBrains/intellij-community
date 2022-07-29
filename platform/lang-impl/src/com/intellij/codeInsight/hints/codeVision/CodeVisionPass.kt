@@ -22,7 +22,6 @@ import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
-import java.util.stream.Collectors
 
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
@@ -89,9 +88,8 @@ class CodeVisionPass(
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val settings = CodeVisionSettings.instance()
-    val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensions()
+    val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }
-      .collect(Collectors.toList())
     collect(progress, editor, myFile, providerIdToLenses, providers)
   }
 

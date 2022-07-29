@@ -2,11 +2,10 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 @Suppress("DEPRECATION")
 class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
     ReplaceSizeCheckWithIsNotEmptyIntention::class
-), CleanupLocalInspectionTool {
+) {
     override fun inspectionProblemText(element: KtBinaryExpression): String {
         return KotlinBundle.message("inspection.replace.size.check.with.is.not.empty.display.name")
     }

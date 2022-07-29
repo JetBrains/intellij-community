@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,9 +58,6 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * @author peter
- */
 public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
@@ -192,11 +190,10 @@ public final class CompilerTester {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    PlatformTestUtil.saveProject(getProject(), false);
+    CompilerTestUtil.saveApplicationSettings();
     EdtTestUtil.runInEdtAndWait(() -> {
-      PlatformTestUtil.saveProject(getProject(), false);
-      CompilerTestUtil.saveApplicationSettings();
-
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
         for (Module module : myModules) {
@@ -290,10 +287,15 @@ public final class CompilerTester {
     }
   }
 
-  public static void enableDebugLogging() {
-    File logDirectory = BuildManager.getBuildLogDirectory();
-    FileUtil.delete(logDirectory);
-    FileUtil.createDirectory(logDirectory);
+  public static void enableDebugLogging()  {
+    Path logDirectory = BuildManager.getBuildLogDirectory().toPath();
+    try {
+      NioFiles.deleteRecursively(logDirectory);
+      Files.createDirectories(logDirectory);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     Properties properties = new Properties();
     try {
       try (InputStream config = LogSetup.readDefaultLogConfig()) {
@@ -301,8 +303,8 @@ public final class CompilerTester {
       }
 
       properties.setProperty("log4j.rootLogger", "debug, file");
-      File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
-      try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
+      Path logFile = logDirectory.resolve(LogSetup.LOG_CONFIG_FILE_NAME);
+      try (OutputStream output = new BufferedOutputStream(Files.newOutputStream(logFile))) {
         properties.store(output, null);
       }
     }
@@ -311,7 +313,7 @@ public final class CompilerTester {
     }
   }
 
-  private static class ErrorReportingCallback implements CompileStatusNotification {
+  private static final class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();

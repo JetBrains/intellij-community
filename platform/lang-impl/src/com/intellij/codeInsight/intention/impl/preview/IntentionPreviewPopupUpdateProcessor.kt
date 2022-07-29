@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ModalityState
@@ -222,6 +223,24 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
       return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.psiFile?.text
+    }
+
+    /**
+     * Returns content of preview:
+     * if it's diff then new content is returned
+     * if it's HTML then text representation is returned
+     */
+    @TestOnly
+    @JvmStatic
+    fun getPreviewContent(project: Project,
+                          action: IntentionAction,
+                          originalFile: PsiFile,
+                          originalEditor: Editor): String {
+      return when(val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
+        is IntentionPreviewDiffResult -> info.psiFile.text
+        is Html -> info.content().toString()
+        else -> ""
+      }
     }
 
     @TestOnly

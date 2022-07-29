@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.usages.impl.rules.UsageType
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 object KotlinUsageTypes {
 

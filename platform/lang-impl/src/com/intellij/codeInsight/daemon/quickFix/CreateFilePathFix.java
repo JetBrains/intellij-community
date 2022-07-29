@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -24,7 +26,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -81,7 +85,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
                                                       ArrayUtilRt.toStringArray(StringUtil.split(newDirectories, "/")));
 
         if (vfsDir == null) {
-          Logger.getInstance(AbstractCreateFileFix.class)
+          Logger.getInstance(CreateFilePathFix.class)
             .warn("Unable to find relative file" + currentDirectory.getVirtualFile().getPath());
           return;
         }
@@ -157,5 +161,13 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     throws IncorrectOperationException {
 
     createFile(project, targetDirectory, myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String extension = StringUtil.substringAfterLast(myNewFileName, ".");
+    Icon icon =
+      extension == null ? AllIcons.FileTypes.Any_type : FileTypeRegistry.getInstance().getFileTypeByExtension(extension).getIcon();
+    return new IntentionPreviewInfo.Html(getDescription(icon));
   }
 }

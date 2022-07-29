@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.UiUtils;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.testFramework.LightVirtualFile;
@@ -12,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public abstract class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent {
 
   private final @Nullable Icon myIcon;
@@ -33,7 +37,9 @@ public abstract class UIComponentVirtualFile extends LightVirtualFile implements
 
     @NotNull JComponent createComponent();
 
-    @Nullable JComponent getPreferredFocusedComponent();
+    default @Nullable JComponent getPreferredFocusedComponent(@NotNull JComponent component) {
+      return UiUtils.getPreferredFocusedComponent(component);
+    }
   }
 
   static class UIComponentVirtualFileIconProvider implements FileIconProvider {

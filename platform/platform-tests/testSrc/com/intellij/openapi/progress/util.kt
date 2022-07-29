@@ -8,6 +8,7 @@ import com.intellij.util.setValue
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
@@ -119,10 +120,10 @@ fun loggedError(canThrow: Semaphore): Throwable {
   }
   try {
     LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable, details: Array<out String>): Boolean {
-        throwable = t
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        throwable = t!!
         gotIt.up()
-        return false
+        return Action.NONE
       }
     }) {
       canThrow.up()

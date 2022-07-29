@@ -1,30 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.classes
 
-import com.intellij.workspaceModel.codegen.InterfaceTraverser
-import com.intellij.workspaceModel.codegen.InterfaceVisitor
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.implFieldName
-import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.javaImplBuilderName
-import com.intellij.workspaceModel.codegen.javaImplName
-import org.jetbrains.deft.Obj
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.deft.ValueType
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
+import com.intellij.workspaceModel.codegen.deft.model.DefType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.sups
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.model.WsEntityWithPersistentId
+import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.TOptional
-import com.intellij.workspaceModel.codegen.deft.ValueType
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
 /**
@@ -32,28 +25,31 @@ import org.jetbrains.kotlin.utils.addToStdlib.popLast
  * - with PersistentId
  */
 
-val ObjType<*, *>.javaDataName
+val ObjClass<*>.javaDataName
   get() = "${name.replace(".", "")}Data"
 
-val ObjType<*, *>.isEntityWithPersistentId: Boolean
-  get() = (this as? DefType)?.def?.kind is WsEntityWithPersistentId
+val ObjClass<*>.isEntityWithPersistentId: Boolean
+  get() = superTypes.any { 
+    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName 
+    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId) 
+  }
 
-fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
+fun ObjClass<*>.implWsDataClassCode(): String {
   val entityDataBaseClass = if (isEntityWithPersistentId) {
     "${WorkspaceEntityData::class.fqn}.WithCalculablePersistentId<$javaFullName>()"
   }
   else {
     "${WorkspaceEntityData::class.fqn}<$javaFullName>()"
   }
-  val hasSoftLinks = hasSoftLinks(simpleTypes)
+  val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
   return lines {
-    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@{
-      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
+    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
+      listNl(allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
 
-      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
+      listNl(allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
-      softLinksCode(this@label, hasSoftLinks, simpleTypes)
+      this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
 
       sectionNl(
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
@@ -71,7 +67,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       // --- createEntity
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         line("val entity = $javaImplName()")
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           if (hasSetter) {
             "entity.$implFieldName = $name"
           } else {
@@ -85,9 +81,9 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       if (isEntityWithPersistentId) {
-        val persistentIdField = structure.allFields.first { it.name == "persistentId" }
-        assert(persistentIdField.hasDefault == Field.Default.plain)
-        val methodBody = persistentIdField.defaultValue!!
+        val persistentIdField = fields.first { it.name == "persistentId" }
+        val valueKind = persistentIdField.valueKind
+        val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
         if (methodBody.contains("return")) {
           if (methodBody.startsWith("{")) {
             line("override fun persistentId(): ${PersistentEntityId::class.fqn}<*> $methodBody \n")
@@ -128,7 +124,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
         lineWrapped("other as $javaDataName")
 
-        list(structure.allFields.noRefs().noPersistentId()) {
+        list(allFields.noRefs().noPersistentId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -142,7 +138,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
         lineWrapped("other as $javaDataName")
 
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -152,7 +148,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       // --- hashCode
       section("override fun hashCode(): Int") {
         line("var result = entitySource.hashCode()")
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           "result = 31 * result + $name.hashCode()"
         }
         line("return result")
@@ -186,7 +182,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel + 1)
     builders.add(sub)
     return true
   }
@@ -230,7 +226,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
     if (type.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     builders.add(sub)
     return true
   }
@@ -302,7 +298,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }
@@ -327,7 +323,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
                              valueType: ValueType<*>): Boolean {
     if (keyType.isRefType() || valueType.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }
@@ -353,7 +349,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
     if (type.isRefType()) return true
 
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    val sub = LinesBuilder(StringBuilder(), builder.indentLevel+1, builder.indentSize)
     linesBuilder.add(sub)
     return true
   }
@@ -396,10 +392,8 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   }
 }
 
-fun List<Field<out Obj, Any?>>.noRefs(): List<Field<out Obj, Any?>> = this.filterNot { it.type.isRefType() }
-fun List<Field<out Obj, Any?>>.noEntitySource() = this.filter { it.name != "entitySource" }
-fun List<Field<out Obj, Any?>>.noPersistentId() = this.filter { it.name != "persistentId" }
-fun List<Field<out Obj, Any?>>.noOptional() = this.filter { it.type !is TOptional<*> }
-fun List<Field<out Obj, Any?>>.noDefaultValue() = this.filter { it.defaultValue == null }
-fun List<Field<out Obj, Any?>>.noId() = this.filter { it.name != "id" }
-fun List<Field<out Obj, Any?>>.noSnapshot() = this.filter { it.name != "snapshot" }
+fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
+fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
+fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
+fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
+fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }

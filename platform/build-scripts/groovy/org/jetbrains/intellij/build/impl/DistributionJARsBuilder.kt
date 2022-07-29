@@ -531,9 +531,7 @@ class DistributionJARsBuilder {
    * Build index which is used to search options in the Settings dialog.
    */
   @JvmOverloads
-  fun buildSearchableOptions(context: BuildContext,
-                             classpathCustomizer: ((MutableSet<String>) -> Unit)? = null,
-                             systemProperties: Map<String, Any> = emptyMap()): Path? {
+  fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, Any> = emptyMap()): Path? {
     val span = Span.current()
     if (context.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
@@ -550,8 +548,7 @@ class DistributionJARsBuilder {
                           tempDir = context.paths.tempDir.resolve("searchableOptions"),
                           ideClasspath = ideClasspath,
                           arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-                          systemProperties = systemProperties,
-                          classpathCustomizer = classpathCustomizer)
+                          systemProperties = systemProperties)
     if (!Files.isDirectory(targetDirectory)) {
       messages.error("Failed to build searchable options index: $targetDirectory does not exist. " +
                      "See log above for error output from traverseUI run.")

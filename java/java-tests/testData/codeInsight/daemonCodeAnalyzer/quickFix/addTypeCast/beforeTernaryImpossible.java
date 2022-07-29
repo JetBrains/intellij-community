@@ -1,4 +1,4 @@
-// "Cast to 'B'" "true"
+// "Cast to 'B'" "true-preview"
 class A {
  void f(B b) {
    B s = <caret>b == null ? this : this;

@@ -8,10 +8,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Open
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtSuperTypeEntry
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.*
 
 class KtScope(val parent: KtScope?, var owner: Any? = null) {
   val ktInterface: KtInterface? get() = owner as? KtInterface
@@ -113,9 +110,7 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
 
     // Code for checking supertype FQN
     //((superType.typeReference?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve() as? KtClass)?.fqName?.toString()
-    val workspaceEntitySuperType = superTypes.find { superType ->
-      superType.text == WorkspaceEntity::class.java.simpleName
-    }
+    val workspaceEntitySuperType = superTypes.find { superType -> superType.isWorkspaceEntity() }
 
     val nameRange = ktClass.identifyingElement!!.textRange
     val src = Src(ktClass.name!!) { ktClass.containingFile.text }
@@ -196,5 +191,12 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
         inner.visitSimpleTypes(result)
       }
     }
+  }
+
+  private fun KtSuperTypeListEntry.isWorkspaceEntity(): Boolean {
+    val resolvedType = typeAsUserType?.referenceExpression?.mainReference?.resolve() ?: return false
+    val ktClass = resolvedType as? KtClass ?: return false
+    if (ktClass.name == WorkspaceEntity::class.java.simpleName) return true
+    return ktClass.superTypeListEntries.any { it.isWorkspaceEntity() }
   }
 }

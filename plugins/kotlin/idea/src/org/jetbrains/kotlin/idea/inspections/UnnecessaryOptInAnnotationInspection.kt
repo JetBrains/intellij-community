@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -60,7 +60,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
-class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
+class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
     /**
      * Get the PSI element to which the given `@OptIn` annotation applies.

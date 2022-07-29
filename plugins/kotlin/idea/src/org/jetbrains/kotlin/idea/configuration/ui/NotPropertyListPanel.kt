@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.configuration.ui
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NonEmptyInputValidator
 import com.intellij.ui.AddEditRemovePanel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.FqNameUnsafe
 
 class NotPropertyListPanel(data: MutableList<FqNameUnsafe>) : AddEditRemovePanel<FqNameUnsafe>(MyTableModel(), data) {

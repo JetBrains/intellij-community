@@ -26,7 +26,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.platform
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -793,11 +792,11 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         kind = KotlinCommonLibraryKind
     )
 
-    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.kotlinStdlib.jarRoot)
+    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
       "kotlin-stdlib-js",
-      KotlinArtifacts.kotlinStdlibJs.jarRoot,
+      TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
       kind = KotlinJavaScriptLibraryKind
     )
 

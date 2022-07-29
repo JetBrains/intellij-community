@@ -54,12 +54,15 @@ class NativeDefinitionsFile(viewProvider: FileViewProvider) : PsiFileBase(viewPr
 
 class NativeDefinitionsLexerAdapter : FlexAdapter(NativeDefinitionsLexer(null as Reader?))
 
+private object NativeDefinitionsTokenSets {
+    val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
+}
+
 class NativeDefinitionsParserDefinition : ParserDefinition {
-    private val COMMENTS = TokenSet.create(NativeDefinitionsTypes.COMMENT)
     private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
 
     override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
-    override fun getCommentTokens(): TokenSet = COMMENTS
+    override fun getCommentTokens(): TokenSet = NativeDefinitionsTokenSets.COMMENTS
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
     override fun getFileNodeType(): IFileElementType = FILE
 

@@ -2,22 +2,17 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
-import org.jetbrains.kotlin.idea.extensions.gradle.GradleVersionProvider
-import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinGradleBuildScriptSupport : GradleBuildScriptSupport {
-    override fun createManipulator(
-        file: PsiFile,
-        preferNewSyntax: Boolean,
-        versionProvider: GradleVersionProvider
-    ): KotlinBuildScriptManipulator? {
+    override fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): KotlinBuildScriptManipulator? {
         if (file !is KtFile) {
             return null
         }
 
-        return KotlinBuildScriptManipulator(file, preferNewSyntax, versionProvider)
+        return KotlinBuildScriptManipulator(file, preferNewSyntax)
     }
 
     override fun createScriptBuilder(file: PsiFile): SettingsScriptBuilder<*>? {

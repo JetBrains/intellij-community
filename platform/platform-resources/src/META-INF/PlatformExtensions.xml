@@ -56,6 +56,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.util.net.ssl.InitialUntrustedCertificateStrategyProvider"
+                        serviceImplementation="com.intellij.util.net.ssl.DefaultInitialUntrustedCertificateStrategyProvider"/>
+
     <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
                         serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl" />
 
@@ -80,6 +83,7 @@
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl"/>
+    <persistentFsConnectionListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyPersistentFsConnectionListener"/>
     <projectCloseHandler implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyProjectCloseHandler"/>
     <vfs.asyncListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyAsyncFileListener"/>
 
@@ -103,7 +107,7 @@
     <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
-                        serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerExImpl"
+                        serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"
                         testServiceImplementation="com.intellij.project.TestProjectManager"/>
 
     <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
@@ -112,7 +116,7 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
-    <startupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
@@ -376,6 +380,8 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
@@ -396,8 +402,6 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.SdkAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.SdkAppearanceServiceImpl"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.roots.impl.DirectoryIndexCollector"/>
-    <directoryIndexAnalyticsReporter implementation="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporterImpl"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.roots.impl.BundledResourceUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.roots.impl.BundledResourcePathValidationRule"/>
 
@@ -512,7 +516,7 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
+    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
@@ -621,9 +625,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager"
-                        serviceImplementation="com.intellij.ui.tabs.layout.TabsLayoutSettingsManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
@@ -843,13 +844,9 @@
     <applicationService serviceInterface="com.intellij.openapi.application.AsyncExecutionService"
                         serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
 
-    <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
-
-    <startupActivity id="openFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
-    <startupActivity implementation="com.intellij.toolWindow.InitToolWindowSetActivity" order="after openFilesActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
@@ -1181,8 +1178,6 @@
 
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
 
-    <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
-
     <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
                  description="Defines storing Run Anything context combobox directories number."/>
 
@@ -1238,6 +1233,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
 
+    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors" isLogByDefault="false"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.clipboard"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle" key="notification.group.startup.task"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE" hideFromSettings="true"/>
@@ -1248,7 +1244,7 @@
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Notification" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
-    <notificationGroup id="System Messages" displayType="BALLOON"/>
+    <notificationGroup id="System Messages" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.messages"/>
     <notificationGroup id="Merge Internal Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle" key="notification.group.shortcut.conflicts"/>
@@ -1311,7 +1307,7 @@
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
-    <postStartupActivity implementation="com.intellij.notification.impl.RemindLaterActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.notification.impl.RemindLaterActivity"/>
 
     <applicationConfigurable id="advanced.settings"
                              key="title.advanced.settings"
@@ -1368,18 +1364,16 @@
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
-                        serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
+                        serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport" preload="true"/>
     <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
                  defaultValue="false"/>
     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
-    <startupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
+    <postStartupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
     <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport" />
-    
-    <postStartupActivity implementation="com.intellij.find.FindSettingsMigration" />
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -6,13 +6,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.Assert
 
 private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-    listOf(KotlinArtifacts.kotlinStdlib), listOf(KotlinArtifacts.kotlinStdlibSources)
+    listOf(TestKotlinArtifacts.kotlinStdlib), listOf(TestKotlinArtifacts.kotlinStdlibSources)
 ) {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         super.configureModule(module, model)

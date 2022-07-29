@@ -1,4 +1,4 @@
-// "Cast to 'float'" "true"
+// "Cast to 'float'" "true-preview"
 class a {
  float f() {
    double d = 4;

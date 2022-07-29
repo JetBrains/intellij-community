@@ -73,7 +73,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
       val macZip = find(macZipDir, "${arch}.zip", context)
       val builtModule = readBuiltinModulesFile(find(directory = macZipDir, suffix = "builtinModules.json", context = context))
       return MacDistributionBuilder(context = context, customizer = context.macDistributionCustomizer!!, ideaProperties = null)
-        .buildAndSignDmgFromZip(macZip, arch, builtModule)
+        .buildAndSignDmgFromZip(macZip, null, arch, builtModule)
     }
     invokeAllSettled(listOfNotNull(createTask(JvmArchitecture.x64, context), createTask(JvmArchitecture.aarch64, context)))
   }
@@ -126,7 +126,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
 
     val projectStructureMapping = DistributionJARsBuilder(builderState).buildJARs(context)
     layoutShared(context)
-    checkClassVersion(context.paths.distAllDir, context)
+    checkClassFiles(context.paths.distAllDir, context)
     if (context.productProperties.buildSourcesArchive) {
       buildSourcesArchive(projectStructureMapping, context)
     }
@@ -153,7 +153,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
                                        destinationDir = targetDirectory.resolve("jbr"),
                                        arch = arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesPatterns(true))
-      context.bundledRuntime.checkExecutablePermissions(distribution = targetDirectory, root = "", os = currentOs)
+      builder.checkExecutablePermissions(targetDirectory, root = "")
     }
     else {
       copyDistFiles(context, targetDirectory)
@@ -198,8 +198,7 @@ private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilder
     runApplicationStarter(context = context,
                           tempDir = context.paths.tempDir.resolve("builtinModules"),
                           ideClasspath = ideClasspath,
-                          arguments = listOf("listBundledPlugins", targetFile.toString()),
-                          classpathCustomizer = context.classpathCustomizer)
+                          arguments = listOf("listBundledPlugins", targetFile.toString()))
     if (Files.notExists(targetFile)) {
       context.messages.error("Failed to build provided modules list: $targetFile doesn\'t exist")
     }
@@ -333,9 +332,9 @@ private fun downloadMissingLibrarySources(
     }
 }
 
-internal class DistributionForOsTaskResult(@JvmField val os: OsFamily,
-                                           @JvmField val arch: JvmArchitecture,
-                                           @JvmField val outDir: Path)
+private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
+                                          @JvmField val arch: JvmArchitecture,
+                                          @JvmField val outDir: Path)
 
 private fun find(directory: Path, suffix: String, context: BuildContext): Path {
   Files.walk(directory).use { stream ->
@@ -368,7 +367,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
     return BuildTaskRunnable("${os.osId} ${arch.name}") {
       val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, context)
       builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
-      DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory)
+      DistributionForOsTaskResult(builder, arch, osAndArchSpecificDistDirectory)
     }
   }
 
@@ -619,7 +618,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
   return compilePlatformAndPluginModules(pluginsToPublish, context)
 }
 
-internal class BuildTaskRunnable(
+private class BuildTaskRunnable(
   @JvmField val stepId: String,
   @JvmField val task: () -> DistributionForOsTaskResult,
 )
@@ -650,7 +649,7 @@ fun buildDistributions(context: BuildContext) {
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-          distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
+          distributionJARsBuilder.buildSearchableOptions(context)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish = pluginsToPublish,
                                                                    compressPluginArchive = true,
                                                                    buildPlatformLibTask = null,
@@ -932,16 +931,10 @@ private fun checkPluginModules(
     pluginLayoutList.none { it.mainModule == mainModuleName }
   }
   if (!unspecifiedLayoutPluginModules.isEmpty()) {
-    if (context.productProperties.productLayout.failOnUnspecifiedPluginLayout) {
-      context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                             "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString()}")
-
-    }
-    else {
-      context.messages.info("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                            "following plugin main modules (referenced from $fieldName). Assuming simple layout. " +
-                            "Modules list: ${unspecifiedLayoutPluginModules.joinToString()}")
-    }
+    context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
+                           "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString(separator = "\n") {
+                             "simplePlugin(\"$it\"),"
+                           }}")
   }
 
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
@@ -1005,7 +998,7 @@ private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -1031,14 +1024,14 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
   val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
-    macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
-    linuxX64DistDir = distDirs.first { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
-    winX64DistDir = distDirs.first { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
+    macX64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
+    macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
+    linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
+    winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
     targetFile = targetFile,
     executableName = executableName,
     productJson = productJson.encodeToByteArray(),
-    macExtraExecutables = context.macDistributionCustomizer!!.extraExecutables,
-    linuxExtraExecutables = context.linuxDistributionCustomizer!!.extraExecutables,
+    executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesPatterns(includeRuntime = false) },
     distFiles = context.getDistFiles(),
     extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
@@ -1047,14 +1040,24 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   checkInArchive(targetFile, "", context)
   context.notifyArtifactBuilt(targetFile)
 
-  checkClassVersion(targetFile, context)
+  checkClassFiles(targetFile, context)
   return targetFile
 }
 
-private fun checkClassVersion(targetFile: Path, context: BuildContext) {
-  val checkerConfig = context.productProperties.versionCheckerConfig
-  if (checkerConfig.isNotEmpty() && !context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
-    checkClassVersions(checkerConfig, targetFile)
+private fun checkClassFiles(targetFile: Path, context: BuildContext) {
+  val versionCheckerConfig =
+    if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) emptyMap()
+    else context.productProperties.versionCheckerConfig
+
+  val forbiddenSubPaths =
+    if (context.options.validateClassFileSubpaths) context.productProperties.forbiddenClassFileSubPaths
+    else emptyList()
+
+  val classFileCheckRequired =
+    (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
+
+  if (classFileCheckRequired) {
+    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile)
   }
 }
 
@@ -1067,7 +1070,7 @@ fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
                                                customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
-    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer!!, ideaProperties)
+    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer ?: return null, ideaProperties)
   }
 }
 
@@ -1085,13 +1088,13 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(macX64DistDir: Path,
+                             macArm64DistDir: Path,
                              linuxX64DistDir: Path,
                              winX64DistDir: Path,
                              targetFile: Path,
                              executableName: String,
                              productJson: ByteArray,
-                             macExtraExecutables: List<String>,
-                             linuxExtraExecutables: List<String>,
+                             executablePatterns: List<String>,
                              distFiles: Collection<Map.Entry<Path, String>>,
                              extraFiles: Map<String, Path>,
                              distAllDir: Path) {
@@ -1162,14 +1165,17 @@ private fun crossPlatformZip(macX64DistDir: Path,
         }
       }
 
-      val extraExecutablesSet = java.util.Set.copyOf(macExtraExecutables + linuxExtraExecutables)
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePath ->
-        if (extraExecutablesSet.contains(relativePath)) {
+      val patterns = executablePatterns.map {
+        FileSystems.getDefault().getPathMatcher("glob:$it")
+      }
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
+        val relativePath = Path.of(relativePathString)
+        if (patterns.any { it.matches(relativePath) }) {
           entry.unixMode = executableFileUnixMode
         }
       }
 
-      val commonFilter: (String) -> Boolean = { relPath ->
+      val commonFilter: (String) -> Boolean = { relPath: String ->
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
@@ -1186,6 +1192,11 @@ private fun crossPlatformZip(macX64DistDir: Path,
       out.dir(macX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         filterFileIfAlreadyInZip(relPath, macX64DistDir.resolve(relPath), zipFiles)
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(macArm64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
       out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->

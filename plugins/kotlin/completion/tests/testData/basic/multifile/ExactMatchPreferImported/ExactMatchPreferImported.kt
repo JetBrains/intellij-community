@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 fun foo(): Any? = TODO<caret>
 
 // WITH_ORDER

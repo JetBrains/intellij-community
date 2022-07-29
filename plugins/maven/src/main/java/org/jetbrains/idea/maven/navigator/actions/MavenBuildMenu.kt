@@ -36,8 +36,8 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
 
   private interface MyDelegatingAction
 
-  private class DelegatingActionGroup internal constructor(action: ActionGroup, private val executor: Executor) :
-    EmptyAction.MyDelegatingActionGroup(action), MyDelegatingAction {
+  private class DelegatingActionGroup(action: ActionGroup, private val executor: Executor) :
+    ActionGroupWrapper(action), MyDelegatingAction {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val children = super.getChildren(e)
@@ -50,8 +50,8 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
     }
   }
 
-  private class DelegatingAction internal constructor(action: AnAction, private val executor: Executor) :
-    EmptyAction.MyDelegatingAction(action), MyDelegatingAction {
+  private class DelegatingAction(action: AnAction, private val executor: Executor) :
+    AnActionWrapper(action), MyDelegatingAction {
 
     override fun actionPerformed(e: AnActionEvent) {
       reportUsage(e, executor)

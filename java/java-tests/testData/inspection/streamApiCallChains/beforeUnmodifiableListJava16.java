@@ -1,4 +1,4 @@
-// "Replace 'collect(toUnmodifiableList())' with 'toList()'" "true"
+// "Replace 'collect(toUnmodifiableList())' with 'toList()'" "true-preview"
 import java.util.List;
 import java.util.stream.*;
 

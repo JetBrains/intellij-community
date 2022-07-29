@@ -169,7 +169,18 @@ public final class HardcodedContracts {
                 StandardMethodContract.fromText("!null,null->false")
               ))
     .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
-    .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract());
+    .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract())
+    .register(anyOf(
+      instanceCall("java.util.Date", "before", "after"),
+      instanceCall("java.time.LocalDate", "isBefore", "isAfter"),
+      instanceCall("java.time.LocalDateTime", "isBefore", "isAfter"),
+      instanceCall("java.time.LocalTime", "isBefore", "isAfter"),
+      instanceCall("java.time.ZonedDateTime", "isBefore", "isAfter"),
+      instanceCall("java.time.Year", "isBefore", "isAfter"),
+      instanceCall("java.time.YearMonth", "isBefore", "isAfter")
+    ), ContractProvider.of(
+      singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
+    ));
 
   private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);

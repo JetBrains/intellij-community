@@ -11,4 +11,7 @@ class SingleFileHeaderRenameTest: HeaderSymbolTest("model/headers/rename/file") 
 
   @Test
   fun `rename header with multiple references`() = renameSymbolTest()
+
+  @Test
+  fun `rename header with single uppercase anchor`() = renameSymbolTest()
 }

@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.performance.tests.utils.runAndMeasure
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertTrue
 
@@ -74,15 +75,15 @@ enum class ProjectOpenAction {
             projectName: String,
             jdk: Sdk
         ): Project {
-            val projectManagerEx = ProjectManagerEx.getInstanceEx()
+            val projectManager = ProjectManagerEx.getInstanceEx()
 
             val project =
-                ProjectManagerEx.getInstanceEx()
+                projectManager
                     .openProject(
-                        Paths.get(projectPath),
-                        OpenProjectTask(projectName = projectName, showWelcomeScreen = false)
+                        Path.of(projectPath),
+                        OpenProjectTask { this.projectName = projectName; showWelcomeScreen = false }
                     )
-                ?: error("project $projectName at $projectPath is not loaded")
+                    ?: error("project $projectName at $projectPath is not loaded")
 
             return openingProject(application, project) {
                 with(project) {
@@ -90,7 +91,7 @@ enum class ProjectOpenAction {
                     setupJdk(jdk)
                 }
 
-                assertTrue(projectManagerEx.isProjectOpened(project), "project $projectName at $projectPath is not opened")
+                assertTrue(projectManager.isProjectOpened(project), "project $projectName at $projectPath is not opened")
             }
         }
     },
@@ -112,10 +113,10 @@ enum class ProjectOpenAction {
                 "Gradle project $projectName at $path is accidentally disposed immediately after import"
             )
 
-                with(project) {
-                    trusted()
-                    setupJdk(jdk)
-                }
+            with(project) {
+                trusted()
+                setupJdk(jdk)
+            }
 
             refreshGradleProject(path, project)
 
@@ -134,9 +135,9 @@ enum class ProjectOpenAction {
 
             // WARNING: [VD] DO NOT SAVE PROJECT AS IT COULD PERSIST WRONG MODULES INFO
 
-//        runInEdtAndWait {
-//            PlatformTestUtil.saveProject(project)
-//        }
+            //        runInEdtAndWait {
+            //            PlatformTestUtil.saveProject(project)
+            //        }
         }
 
         override fun postOpenProject(project: Project, openProject: OpenProject) {
@@ -203,9 +204,7 @@ enum class ProjectOpenAction {
 
             logMessage { "project ${openProject.projectName} is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
-            with(ChangeListManager.getInstance(project) as ChangeListManagerImpl) {
-                waitUntilRefreshed()
-            }
+            (ChangeListManager.getInstance(project) as ChangeListManagerImpl).waitUntilRefreshed()
             project.save()
             return project
         }

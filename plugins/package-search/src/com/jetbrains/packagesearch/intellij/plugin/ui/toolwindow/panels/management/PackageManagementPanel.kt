@@ -158,7 +158,7 @@ internal class PackageManagementPanel(
                 onlyStable = onlyStable,
                 invokeLaterScope = project.lifecycleScope
             )
-        }.flowOn(project.lifecycleScope.dispatcher)
+        }.flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { packageDetailsPanel.display(it) }
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)

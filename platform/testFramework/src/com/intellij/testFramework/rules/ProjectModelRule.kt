@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -173,7 +173,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
   }
 
   fun renameModule(module: Module, newName: String) {
-    val model = runReadAction { moduleManager.modifiableModel }
+    val model = runReadAction { moduleManager.getModifiableModel() }
     model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
   }

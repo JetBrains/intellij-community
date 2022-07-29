@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 
 class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val withSources: Boolean) : KotlinLightProjectDescriptor() {
@@ -20,8 +19,8 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
         }
 
         ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {
-            addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
-            addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+            addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
         }
     }
 

@@ -167,7 +167,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
 
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
-    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1 && !myPanel.isUpdating();
+    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
   }
 
   public boolean isPopupElement() {

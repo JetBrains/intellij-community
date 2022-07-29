@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
@@ -28,7 +29,6 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
-import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -94,9 +94,9 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
-    val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
+    val selection = dataContext.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return null
 
-    val selectedCommits = log.selectedCommits
+    val selectedCommits = selection.commits
     if (selectedCommits.size != 1) return null
 
     val commit = ContainerUtil.getFirstItem(selectedCommits) ?: return null
@@ -244,7 +244,7 @@ object GHPathUtil {
       builder.append(path.toUrl()).append("/tree/").append(branch)
     }
     else {
-      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URLUtil.encodePath(relativePath))
     }
 
     if (editor != null && editor.document.lineCount >= 1) {

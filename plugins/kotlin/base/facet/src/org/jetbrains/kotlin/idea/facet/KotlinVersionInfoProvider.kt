@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.orDefault
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 interface KotlinVersionInfoProvider {
     companion object {
@@ -49,7 +49,7 @@ fun getLibraryVersion(
     platformKind: IdePlatformKind?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
 ): IdeKotlinVersion {
-    val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind.orDefault())
+    val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind)
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
         .minOrNull()
     return getDefaultVersion(module, minVersion, coerceRuntimeLibraryVersionToReleased)
@@ -84,7 +84,7 @@ private fun Iterable<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: B
 fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null
     val targetPlatform = settingsProvider.getInitializedSettings(module).targetPlatform
-    val versions = getRuntimeLibraryVersions(module, null, targetPlatform.orDefault().idePlatformKind)
+    val versions = getRuntimeLibraryVersions(module, null, (targetPlatform ?: JvmPlatforms.defaultJvmPlatform).idePlatformKind)
     return versions.toSet().singleOrNull()
 }
 

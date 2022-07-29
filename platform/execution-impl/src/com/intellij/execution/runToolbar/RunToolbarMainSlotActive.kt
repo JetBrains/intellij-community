@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
@@ -16,21 +16,24 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Font
 import java.beans.PropertyChangeEvent
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
+internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
+                                          RTBarAction {
+
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotActive::class.java)
     val ARROW_DATA = Key<Icon?>("ARROW_DATA")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -40,22 +43,19 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   override fun update(e: AnActionEvent) {
     RunToolbarProcessStartedAction.updatePresentation(e)
 
+    val presentation = e.presentation
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
 
-    val a = JPanel()
-    MigLayout("ins 0, fill, gap 0", "[200]")
-    a.add(JLabel(), "pushx")
-
-    e.presentation.description = e.runToolbarData()?.let {
-      RunToolbarData.prepareDescription(e.presentation.text,
+    presentation.description = e.runToolbarData()?.let {
+      RunToolbarData.prepareDescription(presentation.text,
                                         ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text"))
     }
 
-    e.presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
+    presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
     traceLog(LOG, e)
   }
 
@@ -65,7 +65,7 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
 
   private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
-    private val dragArea = DraggablePane()
+    private val dragArea = RunWidgetResizePane()
 
     private val setting = object : TrimmedMiddleLabel() {
       override fun getFont(): Font {

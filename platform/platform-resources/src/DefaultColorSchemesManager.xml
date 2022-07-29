@@ -24,8 +24,6 @@
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="D0D0D0"/>
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
@@ -44,7 +42,7 @@
       <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="95b2ce"/>
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff"/>
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
+      <option name="DIFF_SEPARATOR_WAVE" value="d0d0d0"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="afd5b5"/>
 
       <option name="MODIFIED_TAB_ICON" value="4083C9"/>
@@ -1324,13 +1322,11 @@
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="393a3c"/>
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="606060" />
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
+      <option name="DIFF_SEPARATOR_WAVE" value="555555"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="4a5f3e"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
@@ -2315,18 +2311,6 @@
         <value>
           <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="TAPESTRY_COMPONENT_PARAMATER">
-        <value>
-          <option name="FOREGROUND" value="d0d0ff" />
-          <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="TAPESTRY_COMPONENT_TAG">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-          <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="TEMPLATE_VARIABLE_ATTRIBUTES">

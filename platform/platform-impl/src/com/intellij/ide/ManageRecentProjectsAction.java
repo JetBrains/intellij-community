@@ -23,6 +23,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,9 +43,10 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
-      disposable, List.of(ProjectCollectors.recentProjectsWithoutOpenedCollector)
+      disposable, List.of(ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project))
     );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
+    TreeUtil.selectFirstNode(recentProjectTree);
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
     searchTextField.setBorder(JBUI.Borders.customLineBottom(WelcomeScreenUIManager.getSeparatorColor()));
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(recentProjectTree, true);

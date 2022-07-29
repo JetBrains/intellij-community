@@ -15,10 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import com.siyeh.ig.psiutils.BreakConverter;
-import com.siyeh.ig.psiutils.CodeBlockSurrounder;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +44,29 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement &&
                                   ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
-      if (otherLabel == labelStatement || (shouldKeepDefault && otherLabel.isDefaultCase())) continue;
-      DeleteSwitchLabelFix.deleteLabel(otherLabel);
+      if (otherLabel == labelStatement) continue;
+      if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
+        DeleteSwitchLabelFix.deleteLabel(otherLabel);
+      }
+      else {
+        deleteLabelsExceptDefault(otherLabel);
+      }
     }
     for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
-      if (labelElement != label) {
+      if (labelElement != label && !(shouldKeepDefault && labelElement instanceof PsiDefaultCaseLabelElement)) {
         new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }
     tryUnwrap(labelStatement, label, block);
+  }
+
+  private static void deleteLabelsExceptDefault(@NotNull PsiSwitchLabelStatementBase label) {
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList != null) {
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        if (labelElement instanceof PsiDefaultCaseLabelElement) continue;
+        new CommentTracker().deleteAndRestoreComments(labelElement);      }
+    }
   }
 
   private static void tryUnwrap(@NotNull PsiSwitchLabelStatementBase labelStatement, @NotNull PsiCaseLabelElement label,

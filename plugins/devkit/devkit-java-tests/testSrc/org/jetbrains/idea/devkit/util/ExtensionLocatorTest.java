@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,9 +43,9 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
     XmlFile xmlFile = assertInstanceOf(psiFile, XmlFile.class);
     IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
-    List<ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
+    List<? extends ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
     assertSize(1, epGroups);
-    List<ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
+    List<? extends ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
     assertSize(2, extensionPoints);
 
     ExtensionPoint namedEp = extensionPoints.get(0);

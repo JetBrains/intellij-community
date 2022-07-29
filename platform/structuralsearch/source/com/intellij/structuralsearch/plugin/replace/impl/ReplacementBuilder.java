@@ -164,9 +164,14 @@ public final class ReplacementBuilder {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
       final List<String> variableNames = ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
       final String name = info.getName();
-      final Script script = ScriptSupport.buildScript(name, StringUtil.unquoteString(constraint), options.getMatchOptions(), null);
-      scriptSupport = new ScriptSupport(myProject, script, name, variableNames);
-      replacementVarsMap.put(info.getName(), scriptSupport);
+      final String scriptText = StringUtil.unquoteString(constraint);
+      try {
+        final Script script = ScriptSupport.buildScript(name, scriptText, options.getMatchOptions());
+        scriptSupport = new ScriptSupport(myProject, script, name, variableNames);
+        replacementVarsMap.put(info.getName(), scriptSupport);
+      } catch (MalformedPatternException e) {
+        return null;
+      }
     }
     return scriptSupport.evaluate(match, null);
   }

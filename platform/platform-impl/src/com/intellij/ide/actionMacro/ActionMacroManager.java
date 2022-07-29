@@ -531,6 +531,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!getInstance().isPlaying());
     }

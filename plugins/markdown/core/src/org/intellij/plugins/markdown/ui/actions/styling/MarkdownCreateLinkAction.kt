@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
@@ -25,6 +22,7 @@ import com.intellij.util.io.exists
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.jetbrains.annotations.Nls
@@ -45,45 +43,41 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     }
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val editor = MarkdownActionUtil.findMarkdownTextEditor(e)
-    val file = e.getData(CommonDataKeys.PSI_FILE)
-
+  override fun isSelected(event: AnActionEvent): Boolean {
+    val editor = MarkdownActionUtil.findMarkdownEditor(event)
+    val file = event.getData(CommonDataKeys.PSI_FILE)
     if (editor == null || file !is MarkdownFile) {
-      e.presentation.isEnabledAndVisible = false
+      event.presentation.isEnabledAndVisible = false
       return false
     }
-    e.presentation.isEnabledAndVisible = true
-
-    val caretsWithLinks = editor.caretModel.allCarets
-      .filter { it.getSelectedLinkElement(file) != null }
-
-    val caretsWithLinksCount = caretsWithLinks.count()
+    event.presentation.isEnabledAndVisible = true
+    val caretSnapshots = SelectionUtil.obtainCaretSnapshots(this, event)
+    val caretsWithLinksCount = caretSnapshots?.count { it.obtainSelectedLinkElement(file) != null } ?: 0
     return when {
-      caretsWithLinksCount == 0 || e.place == ActionPlaces.EDITOR_POPUP -> {
-        e.presentation.isEnabled = !editor.isViewer
-        e.presentation.text = obtainWrapActionName(e.place)
-        e.presentation.description = MarkdownBundle.message(
+      caretsWithLinksCount == 0 || event.place == ActionPlaces.EDITOR_POPUP -> {
+        event.presentation.isEnabled = !editor.isViewer
+        event.presentation.text = obtainWrapActionName(event.place)
+        event.presentation.description = MarkdownBundle.message(
           "action.Markdown.Styling.CreateLink.description")
         false
       }
       caretsWithLinksCount == editor.caretModel.caretCount -> {
-        e.presentation.isEnabled = !editor.isViewer
-        e.presentation.text = unwrapActionName
-        e.presentation.description = MarkdownBundle.message(
+        event.presentation.isEnabled = !editor.isViewer
+        event.presentation.text = unwrapActionName
+        event.presentation.description = MarkdownBundle.message(
           "action.Markdown.Styling.CreateLink.unwrap.description")
         true
       }
       else -> { // some carets are located at links, others are not
-        e.presentation.isEnabled = false
+        event.presentation.isEnabled = false
         false
       }
     }
   }
 
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findMarkdownTextEditor(e) ?: error("Could not find Markdown editor")
-    val file = e.getRequiredData(CommonDataKeys.PSI_FILE)
+  override fun setSelected(event: AnActionEvent, state: Boolean) {
+    val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
+    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
 
     if (state) {
       for (caret in editor.caretModel.allCarets) {
@@ -103,13 +97,17 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     }
   }
 
-  override fun update(e: AnActionEvent) {
-    val originalIcon = e.presentation.icon
-    super.update(e)
-    if (ActionPlaces.isPopupPlace(e.place)) {
+  override fun update(event: AnActionEvent) {
+    val originalIcon = event.presentation.icon
+    super.update(event)
+    if (ActionPlaces.isPopupPlace(event.place)) {
       // Restore original icon, as it will be disabled in popups, and we still want to show in GeneratePopup
-      e.presentation.icon = originalIcon
+      event.presentation.icon = originalIcon
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun wrapSelectionWithLink(caret: Caret, editor: Editor, project: Project) {
@@ -186,16 +184,30 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
       }
   }
 
-  private fun Caret.getSelectedLinkElement(file: PsiFile): PsiElement? {
-    val linkElement = file.elementsAtOffsetUp(selectionStart).asSequence()
-      .find { (element, _) -> element.elementType == MarkdownElementTypes.INLINE_LINK }
-      ?.first
+  companion object {
+    private fun SelectionUtil.CaretSnapshot.obtainSelectedLinkElement(file: PsiFile): PsiElement? {
+      return obtainSelectedLinkElement(file, offset, hasSelection, selectionStart, selectionEnd)
+    }
 
-    return linkElement?.takeIf { element ->
-      if (hasSelection())
-        selectionEnd <= element.endOffset
-      else
-        offset > element.startOffset // caret should be strictly inside
+    private fun Caret.getSelectedLinkElement(file: PsiFile): PsiElement? {
+      return obtainSelectedLinkElement(file, offset, hasSelection(), selectionStart, selectionEnd)
+    }
+
+    private fun obtainSelectedLinkElement(
+      file: PsiFile,
+      offset: Int,
+      hasSelection: Boolean,
+      selectionStart: Int,
+      selectionEnd: Int
+    ): PsiElement? {
+      val elements = file.elementsAtOffsetUp(selectionStart).asSequence()
+      val (element, _) = elements.find { (element, _) -> element.hasType(MarkdownElementTypes.INLINE_LINK) } ?: return null
+      return element.takeIf {
+        when {
+          hasSelection -> selectionEnd <= element.endOffset
+          else -> offset > element.startOffset // caret should be strictly inside
+        }
+      }
     }
   }
 }

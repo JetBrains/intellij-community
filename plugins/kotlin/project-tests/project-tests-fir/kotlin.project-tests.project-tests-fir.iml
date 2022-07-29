@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="module" module-name="kotlin.plugin-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
@@ -25,7 +24,7 @@
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />

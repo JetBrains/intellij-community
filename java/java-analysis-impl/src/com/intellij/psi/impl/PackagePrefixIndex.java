@@ -45,23 +45,13 @@ public class PackagePrefixIndex {
         }
         if (map != null) {
           for (EntityChange<JavaSourceRootEntity> change : event.getChanges(JavaSourceRootEntity.class)) {
-            if (change instanceof EntityChange.Added<?>) {
-              updateMap(((EntityChange.Added<JavaSourceRootEntity>)change).getEntity(), 
-                        event.getStorageAfter(), 
-                        (prefix, module) -> map.putValue(prefix, module));
+            JavaSourceRootEntity oldEntity = change.getOldEntity();
+            if (oldEntity != null) {
+              updateMap(oldEntity, event.getStorageBefore(), (prefix, module) -> map.remove(prefix, module));
             }
-            else if (change instanceof EntityChange.Removed<?>) {
-              updateMap(((EntityChange.Removed<JavaSourceRootEntity>)change).getEntity(), 
-                        event.getStorageBefore(),
-                        (prefix, module) -> map.remove(prefix, module));
-            }
-            else if (change instanceof EntityChange.Replaced<?>) {
-              updateMap(((EntityChange.Replaced<JavaSourceRootEntity>)change).getOldEntity(),
-                        event.getStorageBefore(),
-                        (prefix, module) -> map.remove(prefix, module));
-              updateMap(((EntityChange.Replaced<JavaSourceRootEntity>)change).getNewEntity(),
-                        event.getStorageAfter(),
-                        (prefix, module) -> map.putValue(prefix, module));
+            JavaSourceRootEntity newEntity = change.getNewEntity();
+            if (newEntity != null) {
+              updateMap(newEntity, event.getStorageAfter(), (prefix, module) -> map.putValue(prefix, module));
             }
           }
         }

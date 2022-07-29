@@ -14,8 +14,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
 import org.jetbrains.kotlin.idea.inspections.migration.DEPRECATED_COROUTINES_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.inspections.migration.DeprecatedForKotlinLibInfo

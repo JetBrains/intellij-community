@@ -28,7 +28,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
                                                   @NotNull String libraryNameForDebug) {
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
     if (directoryIndex instanceof DirectoryIndexImpl) {
-      ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ADDITIONAL_LIBRARIES_PROVIDER);
+      ((DirectoryIndexImpl)directoryIndex).reset();
     }
     additionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
@@ -62,7 +62,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
       Collections.singletonList(
         AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
-    new UnindexedFilesUpdater(project, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'").
+    new UnindexedFilesUpdater(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
       queue(project);
   }
 }

@@ -18,8 +18,9 @@ class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
                            private val bucket: String,
                            private val languageName: String,
+                           private val shouldLogElementFeatures: Boolean,
                            private val eventLogger: CompletionEventLogger) : CompletionLogger() {
-  private val stateManager = LookupStateManager()
+  private val stateManager = LookupStateManager(shouldLogElementFeatures)
 
   private val ideVersion by lazy { ApplicationInfo.getInstance().build.asString() }
 
@@ -51,6 +52,7 @@ class CompletionFileLogger(private val installationUID: String,
     event.isAutoPopup = CompletionUtil.getCurrentCompletionParameters()?.isAutoPopup
     event.fillCompletionParameters()
     event.additionalDetails["alphabetical"] = UISettings.getInstance().sortLookupElementsLexicographically.toString()
+    event.additionalDetails["all_features_logged"] = shouldLogElementFeatures.toString()
     if (lookupStorage != null) {
       if (lookupStorage.mlUsed() && CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
         event.additionalDetails["diff"] = "1"

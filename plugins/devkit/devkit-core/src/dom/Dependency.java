@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -18,21 +18,18 @@ import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 @Presentation(icon = "AllIcons.Nodes.Related")
 public interface Dependency extends GenericDomValue<IdeaPlugin> {
 
-  @NotNull
   @Stubbed
-  GenericAttributeValue<Boolean> getOptional();
+  @NotNull GenericAttributeValue<Boolean> getOptional();
 
   /**
    * @see #getResolvedConfigFile()
    */
-  @NotNull
   @Convert(DependencyConfigFileConverter.class)
   @Stubbed
-  GenericAttributeValue<PathReference> getConfigFile();
+  @NotNull GenericAttributeValue<PathReference> getConfigFile();
 
   /**
    * @return {@code null} if {@link #getConfigFile()} not specified or unresolved
    */
-  @Nullable
-  XmlFile getResolvedConfigFile();
+  @Nullable XmlFile getResolvedConfigFile();
 }

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability

@@ -44,10 +44,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.project.ProjectKt;
 import com.intellij.project.TestProjectManager;
@@ -57,13 +55,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -77,7 +74,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -105,7 +101,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
 
-  private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -182,38 +177,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     myOldSdks = new SdkLeakTracker();
   }
 
-  private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand", "CLion", "MobileIDE",
-    null,
-    "AppCode", "SwiftTests",
-    "DataGrip",
-    "Python", "DataSpell", "PyCharmCore",
-    "Ruby",
-    "PhpStorm",
-    "UltimateLangXml", "Idea", "PlatformLangXml"};
-
-  public static void doAutodetectPlatformPrefix() {
-    if (ourPlatformPrefixInitialized) {
-      return;
-    }
-
-    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
-      ourPlatformPrefixInitialized = true;
-      return;
-    }
-
-    for (String candidate : PREFIX_CANDIDATES) {
-      String markerPath = candidate == null ? "idea/ApplicationInfo.xml" : "META-INF/" + candidate + "Plugin.xml";
-      URL resource = HeavyPlatformTestCase.class.getClassLoader().getResource(markerPath);
-      if (resource != null) {
-        if (candidate != null) {
-          setPlatformPrefix(candidate);
-        }
-        break;
-      }
-    }
-  }
-
   @Override
   final @NotNull Path createGlobalTempDirectory() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
@@ -271,7 +234,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                         ApplicationManager.getApplication() == null ||
                                         ApplicationManager.getApplication() instanceof MockApplication);
 
-    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(CodeStyle::getDefaultSettings) : null;
     ourTestCase = this;
     if (myProject != null) {
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
@@ -279,7 +242,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }
 
-    UIUtil.dispatchAllInvocationEvents();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      EDT.dispatchAllInvocationEvents();
+    }
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     myLibraryTableTracker = new LibraryTableTracker();
   }
@@ -299,7 +264,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void setUpProject() throws Exception {
     myProject = doCreateAndOpenProject();
 
-    WriteAction.run(() ->
+    WriteAction.runAndWait(() ->
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
         setUpModule();
         setUpJdk();
@@ -396,23 +361,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
-    if (projectManager != null && projectManager.isDefaultProjectInitialized()) {
-      Project defaultProject = projectManager.getDefaultProject();
-      ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
-    }
-
-    FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
-    if (fileBasedIndex instanceof FileBasedIndexImpl) {
-      ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
-    }
-
-    if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
-      LocalFileSystemBase localFileSystem = (LocalFileSystemBase)LocalFileSystem.getInstance();
-      if (localFileSystem != null) {
-        localFileSystem.cleanupForNextTest();
-      }
-    }
+    TestApplicationKt.cleanupApplicationCaches(app);
   }
 
   private static @NotNull Set<VirtualFile> eternallyLivingFiles() {
@@ -746,11 +695,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-  }
-
-  private static void setPlatformPrefix(@NotNull String prefix) {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
-    ourPlatformPrefixInitialized = true;
   }
 
   @Retention(RetentionPolicy.RUNTIME)

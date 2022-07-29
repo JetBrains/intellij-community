@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.ArrayUtilRt
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.div
 
+@TestApplication
 class EclipseLibrariesModificationsTest {
   @JvmField
   @RegisterExtension
@@ -181,11 +182,5 @@ class EclipseLibrariesModificationsTest {
     }
     loadEditSaveAndCheck(listOf(commonRoot, testRoot), tempDirectory, true, listOf("test" to "test/ws-internals"),
                          ::addLibrary, ::copyClasspathAndEmlFiles, listOf(".classpath", ".eml"))
-  }
-
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val appRule = ApplicationExtension()
   }
 }

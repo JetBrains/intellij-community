@@ -82,7 +82,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         when (candidateFiles.size) {
             0 -> throw AssertionError(
-                ".intention file is not found for " + testDataFile +
+                "${intentionFileName()} file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class."
             )
             1 -> {
@@ -90,7 +90,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
             }
             else -> throw AssertionError(
-                "Several .intention files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
+                "Several ${intentionFileName()} files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
             )
         }
     }

@@ -2,12 +2,13 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleCapability
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
 
 val OriginCapability = ModuleCapability<ModuleOrigin>("MODULE_ORIGIN")
@@ -32,6 +33,8 @@ interface IdeaModuleInfo : ModuleInfo {
         get() = super.capabilities + mapOf(OriginCapability to moduleOrigin)
 
     override fun dependencies(): List<IdeaModuleInfo>
+
+    fun checkValidity() {}
 }
 
 interface LanguageSettingsOwner {
@@ -39,8 +42,4 @@ interface LanguageSettingsOwner {
     val targetPlatformVersion: TargetPlatformVersion
 }
 
-fun Module.checkValidity() {
-    if (isDisposed) {
-        throw AlreadyDisposedException("Module '${name}' is already disposed")
-    }
-}
+fun Project.ideaModules(): Array<out Module> = runReadAction { ModuleManager.getInstance(this).modules }

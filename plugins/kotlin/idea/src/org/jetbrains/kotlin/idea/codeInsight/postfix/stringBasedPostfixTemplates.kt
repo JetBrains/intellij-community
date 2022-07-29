@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -26,32 +27,37 @@ internal abstract class ConstantStringBasedPostfixTemplate(
     name: String,
     desc: String,
     private val template: String,
-    selector: PostfixTemplateExpressionSelector
-) : StringBasedPostfixTemplate(name, desc, selector) {
+    selector: PostfixTemplateExpressionSelector,
+    provider: PostfixTemplateProvider
+) : StringBasedPostfixTemplate(name, desc, selector, provider) {
     override fun getTemplateString(element: PsiElement) = template
 
     override fun getElementToRemove(expr: PsiElement?) = expr
 }
 
-internal abstract class KtWrapWithCallPostfixTemplate(val functionName: String) : ConstantStringBasedPostfixTemplate(
-    functionName,
-    "$functionName(expr)",
-    "$functionName(\$expr$)\$END$",
-    createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression }
-)
+internal abstract class KtWrapWithCallPostfixTemplate(val functionName: String, provider: PostfixTemplateProvider) :
+    ConstantStringBasedPostfixTemplate(
+        functionName,
+        "$functionName(expr)",
+        "$functionName(\$expr$)\$END$",
+        createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression },
+        provider
+    )
 
-internal object KtWrapWithListOfPostfixTemplate : KtWrapWithCallPostfixTemplate("listOf")
-internal object KtWrapWithSetOfPostfixTemplate : KtWrapWithCallPostfixTemplate("setOf")
-internal object KtWrapWithArrayOfPostfixTemplate : KtWrapWithCallPostfixTemplate("arrayOf")
-internal object KtWrapWithSequenceOfPostfixTemplate : KtWrapWithCallPostfixTemplate("sequenceOf")
+internal class KtWrapWithListOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("listOf", provider)
+internal class KtWrapWithSetOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("setOf", provider)
+internal class KtWrapWithArrayOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("arrayOf", provider)
+internal class KtWrapWithSequenceOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("sequenceOf", provider)
 
 internal class KtForEachPostfixTemplate(
-    name: String
+    name: String,
+    provider: PostfixTemplateProvider
 ) : ConstantStringBasedPostfixTemplate(
     name,
     "for (item in expr)",
     "for (\$name$ in \$expr$) {\n    \$END$\n}",
-    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType)
+    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
+    provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
         val name = MacroCallNode(SuggestVariableNameMacro())
@@ -67,61 +73,69 @@ private fun KtExpression.hasIterableType(bindingContext: BindingContext): Boolea
     return detector.isIterable(type)
 }
 
-internal object KtAssertPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtAssertPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "assert",
     "assert(expr) { \"\" }",
     "assert(\$expr$) { \"\$END$\" }",
-    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean)
+    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean),
+    provider
 )
 
-internal object KtParenthesizedPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtParenthesizedPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "par", "(expr)",
     "(\$expr$)\$END$",
-    createExpressionSelector()
+    createExpressionSelector(),
+    provider
 )
 
-internal object KtSoutPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtSoutPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "sout",
     "println(expr)",
     "println(\$expr$)\$END$",
-    createExpressionSelector(statementsOnly = true)
+    createExpressionSelector(statementsOnly = true),
+    provider
 )
 
-internal object KtReturnPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtReturnPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "return",
     "return expr",
     "return \$expr$\$END$",
-    createExpressionSelector(statementsOnly = true)
+    createExpressionSelector(statementsOnly = true),
+    provider
 )
 
-internal object KtWhilePostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtWhilePostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "while",
     "while (expr) {}",
     "while (\$expr$) {\n\$END$\n}",
-    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean)
+    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean),
+    provider
 )
 
-internal object KtSpreadPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtSpreadPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "spread",
     "*expr",
     "*\$expr$\$END$",
-    createExpressionSelector(typePredicate = { KotlinBuiltIns.isArray(it) || KotlinBuiltIns.isPrimitiveArray(it) })
+    createExpressionSelector(typePredicate = { KotlinBuiltIns.isArray(it) || KotlinBuiltIns.isPrimitiveArray(it) }),
+    provider
 )
 
-internal object KtArgumentPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtArgumentPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "arg",
     "functionCall(expr)",
     "\$call$(\$expr$\$END$)",
-    createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression && expression !is KtThrowExpression }
+    createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression && expression !is KtThrowExpression },
+    provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
         template.addVariable("call", "", "", true)
     }
 }
 
-internal object KtWithPostfixTemplate : ConstantStringBasedPostfixTemplate(
+internal class KtWithPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "with",
     "with(expr) {}",
     "with(\$expr$) {\n\$END$\n}",
-    createExpressionSelector()
+    createExpressionSelector(),
+    provider
 )

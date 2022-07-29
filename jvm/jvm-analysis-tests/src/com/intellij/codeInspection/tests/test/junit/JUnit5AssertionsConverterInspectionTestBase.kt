@@ -16,7 +16,7 @@ abstract class JUnit5AssertionsConverterInspectionTestBase : UastInspectionTestB
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       model.addJUnit4Library()
-      model.addHamcrest()
+      model.addHamcrestLibrary()
       model.addJUnit5Library()
     }
   }

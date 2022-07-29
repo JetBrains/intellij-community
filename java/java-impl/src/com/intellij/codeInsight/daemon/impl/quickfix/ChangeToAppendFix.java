@@ -18,39 +18,50 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ChangeToAppendFix implements IntentionAction {
-
+public class ChangeToAppendFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionAction {
+  @SafeFieldForPreview
   private final IElementType myTokenType;
+  @SafeFieldForPreview
   private final PsiType myLhsType;
-  private final PsiAssignmentExpression myAssignmentExpression;
+  @SafeFieldForPreview
   private volatile TypeInfo myTypeInfo;
 
   public ChangeToAppendFix(@NotNull IElementType eqOpSign, @NotNull PsiType lType, @NotNull PsiAssignmentExpression assignmentExpression) {
+    super(assignmentExpression);
     myTokenType = eqOpSign;
     myLhsType = lType;
-    myAssignmentExpression = assignmentExpression;
+  }
+
+  @Override
+  public @Nullable PsiAssignmentExpression getStartElement() {
+    return ObjectUtils.tryCast(super.getStartElement(), PsiAssignmentExpression.class);
   }
 
   @NotNull
   @Override
   public String getText() {
+    PsiAssignmentExpression assignmentExpression = getStartElement();
+    if (assignmentExpression == null) {
+      return getFamilyName();
+    }
     return QuickFixBundle.message("change.to.append.text",
-                                  ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getRExpression(),
+                                  ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getRExpression(),
                                                                            getTypeInfo().myUseStringValueOf,
-                                                                           new StringBuilder(myAssignmentExpression.getLExpression().getText())));
+                                                                           new StringBuilder(assignmentExpression.getLExpression().getText())));
   }
 
   @NotNull
@@ -60,24 +71,25 @@ public class ChangeToAppendFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return JavaTokenType.PLUSEQ == myTokenType &&
-           myAssignmentExpression.isValid() &&
-           BaseIntentionAction.canModify(myAssignmentExpression) &&
-           getTypeInfo().myAppendable;
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return JavaTokenType.PLUSEQ == myTokenType && getTypeInfo().myAppendable;
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiAssignmentExpression assignmentExpression = getStartElement();
+    if (assignmentExpression == null) return;
     final PsiExpression appendExpression =
-      ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
+      ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getLExpression(), assignmentExpression.getRExpression());
     if (appendExpression == null) return;
-    myAssignmentExpression.replace(appendExpression);
+    assignmentExpression.replace(appendExpression);
   }
 
   @NotNull

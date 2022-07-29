@@ -81,7 +81,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
-  protected AbstractEditor getEditor() {
+  protected final AbstractEditor getEditor() {
     return myEditor;
   }
 

@@ -82,7 +82,7 @@ open class TestingOptions {
 
   /**
    * Specifies path to runtime which will be used to run tests.
-   * By default `runtimeBuild` from gradle.properties will be used.
+   * By default `runtimeBuild` from dependencies.properties will be used.
    * If it is missing then tests will run under the same runtime which is used to run the build scripts.
    */
   var customRuntimePath = System.getProperty(TEST_JRE_PROPERTY)

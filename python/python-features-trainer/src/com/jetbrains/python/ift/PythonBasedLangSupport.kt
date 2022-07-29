@@ -45,9 +45,12 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks
+    // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks,
     // and we will configure it individually without any race conditions
-    val openProjectTask = OpenProjectTask(projectToClose = projectToClose, isProjectCreatedWithWizard = true)
+    val openProjectTask = OpenProjectTask {
+      this.projectToClose = projectToClose
+      isProjectCreatedWithWizard = true
+    }
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask, postInitCallback)
   }
 
@@ -132,8 +135,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
 
       dialog.title = PythonLessonsBundle.message("choose.python.sdk.to.start.learning.header")
       if (dialog.showAndGet()) {
-        val selectedSdk = baseSdkField.selectedSdk
-        if (selectedSdk == null) return
+        val selectedSdk = baseSdkField.selectedSdk ?: return
         startCallback(selectedSdk)
       }
     } else {
@@ -160,7 +162,9 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       } else {
         // for Scratch lessons in the non-learning project
         val openCallbackId = LearningUiManager.addCallback {
-          CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART, true, true)
+          CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART,
+                                            forceStartLesson = true,
+                                            forceOpenLearningProject = true)
         }
         showWarning(PythonLessonsBundle.message("no.interpreter.in.user.project", openCallbackId, configureCallbackId)) {
           !isSdkConfigured(project)

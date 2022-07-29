@@ -16,7 +16,7 @@ sealed class LibraryDependencyCandidate {
 
     companion object {
         fun fromLibraryOrNull(project: Project, library: Library): LibraryDependencyCandidate? {
-            val libraryInfos = LibraryInfoCache.getInstance(project).get(library)
+            val libraryInfos = LibraryInfoCache.getInstance(project)[library]
             val libraryInfo = libraryInfos.firstOrNull() ?: return null
             if(libraryInfo is AbstractKlibLibraryInfo) {
                 return KlibLibraryDependencyCandidate(

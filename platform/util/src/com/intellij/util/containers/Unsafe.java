@@ -61,7 +61,7 @@ class Unsafe {
       .bindTo(unsafe);
   }
 
-  static boolean compareAndSwapInt(@NotNull Object object, long offset, int expected, int value) {
+  public static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapInt.invokeExact(object, offset, expected, value);
     }

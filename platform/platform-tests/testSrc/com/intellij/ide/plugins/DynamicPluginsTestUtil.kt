@@ -8,9 +8,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Supplier
 
 @JvmOverloads
 internal fun loadDescriptorInTest(
@@ -21,19 +21,24 @@ internal fun loadDescriptorInTest(
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
 
-  val result = loadDescriptorFromFileOrDir(
-    file = dir,
-    context = DescriptorListLoadingContext(
-      disabledPlugins = disabledPlugins.mapTo(LinkedHashSet()) { PluginId.getId(it) },
-      result = createPluginLoadingResult(),
-    ),
-    pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-    isBundled = isBundled,
-    isEssential = true,
-    isDirectory = Files.isDirectory(dir),
-    useCoreClassLoader = false,
-    isUnitTestMode = true,
-  )
+  val buildNumber = BuildNumber.fromString("2042.42")!!
+  val result = runBlocking {
+    loadDescriptorFromFileOrDir(
+      file = dir,
+      context = DescriptorListLoadingContext(
+        brokenPluginVersions = emptyMap(),
+        productBuildNumber = { buildNumber },
+        disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
+      ),
+      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+      isBundled = isBundled,
+      isEssential = true,
+      isDirectory = Files.isDirectory(dir),
+      useCoreClassLoader = false,
+      isUnitTestMode = true,
+      pool = null,
+    )
+  }
 
   if (result == null) {
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
@@ -45,12 +50,7 @@ internal fun loadDescriptorInTest(
 
 @JvmOverloads
 internal fun createPluginLoadingResult(checkModuleDependencies: Boolean = false): PluginLoadingResult {
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  return PluginLoadingResult(
-    brokenPluginVersions = emptyMap(),
-    productBuildNumber = Supplier { buildNumber },
-    checkModuleDependencies = checkModuleDependencies,
-  )
+  return PluginLoadingResult(checkModuleDependencies = checkModuleDependencies)
 }
 
 @JvmOverloads

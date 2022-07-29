@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -10,6 +11,8 @@ import com.intellij.ui.popup.PopupState
 
 internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.messagePointer("mnemonic.chooser.mnemonic.toggle.action.text")) {
   private val popupState = PopupState.forPopup()
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     val manager = event.bookmarksManager

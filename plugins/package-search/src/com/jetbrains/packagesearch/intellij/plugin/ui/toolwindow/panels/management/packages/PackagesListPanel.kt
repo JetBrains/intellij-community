@@ -1,9 +1,10 @@
-/*******************************************************************************
+/**
+ * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -12,17 +13,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -56,11 +61,17 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
+import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
+import com.jetbrains.packagesearch.intellij.plugin.util.KotlinPluginStatus
+import com.jetbrains.packagesearch.intellij.plugin.util.hasKotlinModules
+import com.jetbrains.packagesearch.intellij.plugin.util.kotlinPluginStatusFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
@@ -71,7 +82,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -86,16 +96,13 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -113,6 +120,7 @@ import javax.swing.JScrollPane
 import javax.swing.JViewport
 import javax.swing.event.DocumentEvent
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -138,10 +146,6 @@ internal class PackagesListPanel(
 
     val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
     val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = packagesTable.selectedPackageStateFlow
-
-    val dataModelStateFlow = selectedPackageStateFlow.mapNotNull { it?.packageModel }
-        .filterIsInstance<PackageModel.Installed>()
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, null)
 
     private val onlyMultiplatformStateFlow = MutableStateFlow(false)
     private val searchQueryStateFlow = MutableStateFlow("")
@@ -236,8 +240,8 @@ internal class PackagesListPanel(
         verticalScrollBar.apply {
             headerPanel.adjustForScrollbar(isVisible, isOpaque)
 
-            // Here we should make sure we set IGNORE_SCROLLBAR_IN_INSETS, but alas it doesn't work with JTables
-            // as of IJ 2020.3 (see JBViewport#updateBorder()). If it did, we could just set:
+            // Here, we should make sure we set IGNORE_SCROLLBAR_IN_INSETS, but alas, it doesn't work with JTables
+            // as of IJ 2022.3 (see JBViewport#updateBorder()). If it did, we could just set:
             // UIUtil.putClientProperty(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
             // Instead, we have to work around the issue, inferring if the scrollbar is "floating" by looking at
             // its isOpaque property — since Swing maps the opacity of scrollbars to whether they're "floating"
@@ -313,8 +317,10 @@ internal class PackagesListPanel(
         ) { viewModel, searchResults, overrides ->
             Triple(viewModel, searchResults, overrides)
         }.mapLatest { (viewModel, searchResults, searchResultsUiStateOverrides) ->
-            val (targetModules, installedPackages, packagesUpdateCandidates,
-                knownRepositoriesInTargetModules) = viewModel
+            val (
+                targetModules, installedPackages, packagesUpdateCandidates,
+                knownRepositoriesInTargetModules
+            ) = viewModel
             val (onlyStable, onlyMultiplatform, searchQuery, apiSearchResults) = searchResults
 
             isLoadingStateFlow.emit(true)
@@ -392,7 +398,7 @@ internal class PackagesListPanel(
             logTrace("PackagesListPanel main flow") { "Total elaboration took $time" }
             result
         }
-            .flowOn(project.lifecycleScope.dispatcher)
+            .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { (targetModules, headerData, packagesTableViewModel) ->
                 val renderingTime = measureTime {
                     updateListEmptyState(targetModules)
@@ -429,8 +435,8 @@ internal class PackagesListPanel(
         project.lookAndFeelFlow.onEach { updateUiOnLafChange() }
             .launchIn(project.lifecycleScope)
 
-        // results may have changed server side. Better clear caches...
-        timer(Duration.minutes(10))
+        // The results may have changed server-side. Better clear caches...
+        timer(10.minutes)
             .onEach {
                 searchPackageModelCache.clear()
                 searchCache.clear()
@@ -443,6 +449,17 @@ internal class PackagesListPanel(
             .distinctUntilChanged()
             .filterNot { it.isBlank() }
             .onEach { PackageSearchEventsLogger.logSearchRequest(it) }
+            .launchIn(project.lifecycleScope)
+
+        combine(
+            ApplicationManager.getApplication().kotlinPluginStatusFlow,
+            FeatureFlags.smartKotlinMultiplatformCheckboxEnabledFlow,
+            project.moduleChangesSignalFlow,
+        ) { kotlinPluginStatus, useSmartCheckbox, _ ->
+            val isKotlinPluginAvailable = kotlinPluginStatus == KotlinPluginStatus.AVAILABLE
+            isKotlinPluginAvailable && (!useSmartCheckbox || project.hasKotlinModules())
+        }
+            .onEach(Dispatchers.EDT) { onlyMultiplatformCheckBox.isVisible = it }
             .launchIn(project.lifecycleScope)
     }
 
@@ -460,8 +477,16 @@ internal class PackagesListPanel(
                     is TargetModules.One -> targetModules.module.projectModule.name
                     is TargetModules.None -> error("No module selected empty state should be handled separately")
                 }
-                listPanel.emptyText.text =
+                listPanel.emptyText.clear()
+                listPanel.emptyText.appendLine(
                     PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
+                )
+                listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.learnMore"),
+                    SimpleTextAttributes.LINK_ATTRIBUTES
+                ) {
+                    BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
+                }
             }
         }
     }

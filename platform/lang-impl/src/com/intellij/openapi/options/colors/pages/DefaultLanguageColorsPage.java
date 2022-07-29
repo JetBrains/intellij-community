@@ -344,7 +344,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       region[0] = foldingModel.addCustomLinesFolding(line, line,
                                                      new CustomFoldRegionRendererWrapper(DocRenderItem.createDemoRenderer(editor), ourKey));
     });
-    return ourKey && region[0] != null ? new TextRange(region[0].getStartOffset(), region[0].getEndOffset()) : null;
+    return ourKey && region[0] != null ? region[0].getTextRange() : null;
   }
 
   @Override

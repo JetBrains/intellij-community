@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDia
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
+import org.jetbrains.kotlin.idea.projectConfiguration.getLibraryDescription
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -27,7 +27,7 @@ class FrameworkLibraryValidatorWithDynamicDescription(
     private val getPlatform: () -> TargetPlatform?
 ) : FrameworkLibraryValidator() {
     private val IdePlatformKind.libraryDescription: CustomLibraryDescription?
-        get() = this.tooling.getLibraryDescription(context.module.project)
+        get() = getLibraryDescription(context.module.project, this)
 
     private fun checkLibraryIsConfigured(platform: IdePlatformKind): Boolean {
         // TODO: propose to configure kotlin-stdlib-common once it's available

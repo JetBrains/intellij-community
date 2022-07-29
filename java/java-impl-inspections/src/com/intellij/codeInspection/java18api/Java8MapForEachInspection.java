@@ -73,7 +73,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         return ReferencesSearch.search(entry).allMatch(entryRef -> {
           PsiMethodCallExpression entryCall =
             ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(entryRef.getElement(), PsiExpression.class));
-          return ENTRY_GETTER.test(entryCall);
+          return ENTRY_GETTER.test(entryCall) && !ExpressionUtils.isVoidContext(entryCall);
         });
       }
 
@@ -164,7 +164,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         if (!expression.isValid()) continue;
         PsiMethodCallExpression entryCall = ExpressionUtils.getCallForQualifier(expression);
         if (ENTRY_GETTER.test(entryCall)) {
-          ct.replace(entryCall, factory.createIdentifier(ParameterCandidate.select(entryCall, key, value).myName));
+          ct.replace(entryCall, ParameterCandidate.select(entryCall, key, value).myName);
         }
       }
       String lambdaBody;

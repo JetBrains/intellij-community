@@ -5,3 +5,4 @@ fun test() {
     val list = mutableListOf(1)<caret>
     list <selection>+=</selection> 2
 }
+// OFFLINE_REPORT: "'+=' on a read-only list creates a new list under the hood"

@@ -25,6 +25,34 @@ internal class GHCloneDialogRepositoryListModel : AbstractListModel<GHRepository
     throw IndexOutOfBoundsException(index)
   }
 
+  fun getItemAt(index: Int): Pair<GithubAccount, GHRepositoryListItem> {
+    var offset = 0
+    for ((account, items) in itemsByAccount) {
+      if (index >= offset + items.size) {
+        offset += items.size
+        continue
+      }
+      return account to items[index - offset]
+    }
+    throw IndexOutOfBoundsException(index)
+  }
+
+  fun indexOf(account: GithubAccount, item: GHRepositoryListItem): Int {
+    if (!itemsByAccount.containsKey(account)) return -1
+    var startOffset = 0
+    for ((_account, items) in itemsByAccount) {
+      if (_account == account) {
+        val idx = items.indexOf(item)
+        if (idx < 0) return -1
+        return startOffset + idx
+      }
+      else {
+        startOffset += items.size
+      }
+    }
+    return -1
+  }
+
   fun clear(account: GithubAccount) {
     repositoriesByAccount.remove(account)
     val (startOffset, endOffset) = findAccountOffsets(account) ?: return

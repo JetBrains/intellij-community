@@ -267,12 +267,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String> = emptyMap(),
                               remoteDebugging: Boolean,
                               context: CompilationContext) {
+    val useKotlinK2 = System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean() ||
+                      System.getProperty("teamcity.buildType.id", "").contains("KotlinK2Tests")
     val mainJpsModule = context.findRequiredModule(mainModule)
     val testRoots = JpsJavaExtensionService.dependencies(mainJpsModule).recursively()
       .withoutSdk()  // if the project requires different SDKs, they all shouldn't be added to the test classpath
       .includedIn(JpsJavaClasspathKind.runtime(true))
       .classes()
       .roots
+      .filterTo(mutableListOf()) { useKotlinK2 || it.name != "kotlin.plugin.k2" }
 
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
@@ -319,8 +322,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     else {
       messages.info("Starting tests from groups \'${testGroups}\' from classpath of module \'${mainModule}\'")
     }
-    val numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]
-    if (numberOfBuckets != null) {
+    val numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]?.toIntOrNull() ?: 1
+    if (numberOfBuckets > 1) {
       messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
     }
     val runtime = runtimeExecutablePath().toString()
@@ -342,7 +345,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                     envVariables = envVariables,
                     bootstrapClasspath = bootstrapClasspath,
                     modulePath = modulePath,
-                    testClasspath = testClasspath)
+                    testClasspath = testClasspath,
+                    numberOfBuckets = numberOfBuckets)
     notifySnapshotBuilt(allJvmArgs)
   }
 
@@ -570,7 +574,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
                               modulePath : List<String>?,
-                              testClasspath: List<String>) {
+                              testClasspath: List<String>,
+                              numberOfBuckets: Int) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
         .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
@@ -599,7 +604,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                         suiteName = options.bootstrapSuite,
                         methodName = null)
       }
-      if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
+      if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR &&
+          // bucket may be empty for run configurations with too few tests due to imperfect tests balancing
+          numberOfBuckets < 2) {
         throw RuntimeException("No tests were found in the configuration")
       }
     }
@@ -643,7 +650,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
 
-    args += if (suiteName == null) "com.intellij.tests.JUnit5AllRunner" else "com.intellij.tests.JUnit5Runner"
+    args += if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
 
     if (suiteName != null) {
       args += suiteName

@@ -344,6 +344,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);

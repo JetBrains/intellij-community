@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.*
@@ -123,10 +124,10 @@ class FindImplicitNothingAction : AnAction() {
                 (isFunctionType && this.getReturnTypeFromFunctionType().isNothingOrNothingFunctionType())
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-        val internalMode = isApplicationInternalMode()
-        e.presentation.isVisible = internalMode
-        e.presentation.isEnabled = internalMode
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 
     private fun selectedKotlinFiles(e: AnActionEvent): Sequence<KtFile> {

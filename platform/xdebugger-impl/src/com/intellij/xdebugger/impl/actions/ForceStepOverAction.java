@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,5 +24,10 @@ public class ForceStepOverAction extends XDebuggerActionBase {
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getForceStepOverHandler();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -26,7 +26,7 @@ class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
     val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
-    val IS_FAVORITE_DATA_KEY = EventFields.Boolean("isFavorite")
+    val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
     val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
 
     internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
@@ -45,7 +45,7 @@ class SearchEverywhereFileFeaturesProvider
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf<EventField<*>>(
-      IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_FAVORITE_DATA_KEY, IS_OPENED_DATA_KEY, RECENT_INDEX_DATA_KEY,
+      IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_BOOKMARK_DATA_KEY, IS_OPENED_DATA_KEY, RECENT_INDEX_DATA_KEY,
       PREDICTION_SCORE_DATA_KEY, IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY,
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY, WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY, WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY,
       WAS_MODIFIED_IN_LAST_DAY_DATA_KEY, WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_TOP_LEVEL_DATA_KEY
@@ -60,7 +60,7 @@ class SearchEverywhereFileFeaturesProvider
     val item = (SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(
-      IS_FAVORITE_DATA_KEY.with(isFavorite(item)),
+      IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
       IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
       IS_EXACT_MATCH_DATA_KEY.with(elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE)
     )
@@ -87,9 +87,9 @@ class SearchEverywhereFileFeaturesProvider
     return data
   }
 
-  private fun isFavorite(item: PsiFileSystemItem): Boolean {
-    val favoritesManager = FavoritesManager.getInstance(item.project)
-    return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
+  private fun isBookmark(item: PsiFileSystemItem): Boolean {
+    val bookmarkManager = BookmarkManager.getInstance(item.project)
+    return ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { bookmarkManager.findFileBookmark(it) } != null }
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {

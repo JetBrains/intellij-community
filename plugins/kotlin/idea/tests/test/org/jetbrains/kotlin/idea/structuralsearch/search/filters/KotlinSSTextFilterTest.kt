@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSTextFilterTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTextFilterTest : KotlinStructuralSearchTest() {
     fun testHierarchyClassName() { doTest("class '_:*[regex(Foo2)]", """
         class X {
             open class Foo

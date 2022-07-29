@@ -9,7 +9,6 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.util.PerformActionUtil
 import training.util.isToStringContains
 import java.awt.Rectangle
 import javax.swing.JEditorPane
@@ -51,11 +50,6 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
         Thread.sleep(500)
         actions(it)
       }
-    }
-
-    // instantly close error description popup after GotoNextError action
-    prepareRuntimeTask {
-      PerformActionUtil.performAction("EditorPopupMenu", editor, project)
     }
 
     task("ShowErrorDescription") {

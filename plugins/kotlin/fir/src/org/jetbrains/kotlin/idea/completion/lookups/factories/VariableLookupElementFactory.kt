@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
@@ -47,7 +48,7 @@ internal class VariableLookupElementFactory {
         substitutor: KtSubstitutor,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {
-        val symbolType = substitutor.substituteOrSelf(symbol.returnType)
+        val symbolType = substitutor.substitute(symbol.returnType)
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = symbolType as KtFunctionalType
@@ -60,11 +61,11 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    substitutor.substituteOrSelf(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
                 }
 
                 val typeText =
-                    substitutor.substituteOrSelf(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
 
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
@@ -132,7 +133,7 @@ private object VariableInsertionHandler : InsertHandler<LookupElement> {
                 )
 
                 context.commitDocument()
-                shortenReferencesForFirCompletion(targetFile, TextRange(context.startOffset, context.tailOffset))
+                shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
             }
 
             is ImportStrategy.DoNothing -> {

@@ -56,7 +56,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         IdeKotlinVersion version = IdeKotlinVersion.get(rawVersion);
 
-        NotificationMessageCollector collector = NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(getProject());
+        NotificationMessageCollector collector = NotificationMessageCollector.create(getProject());
 
         runConfigurator(getModule(), getFile(), configurator, version, collector);
 

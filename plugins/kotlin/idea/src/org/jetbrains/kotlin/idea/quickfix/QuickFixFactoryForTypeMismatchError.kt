@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -56,7 +57,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
         val diagnosticElement = diagnostic.psiElement
         if (diagnosticElement !is KtExpression) {
-            LOG.error("Unexpected element: " + diagnosticElement.text)
+            // INCOMPATIBLE_TYPES may be reported not only on expressions, but also on types.
+            // We ignore such cases here.
+            if (diagnostic.factory != Errors.INCOMPATIBLE_TYPES) {
+                LOG.error("Unexpected element: " + diagnosticElement.text)
+            }
             return emptyList()
         }
 
@@ -105,6 +110,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 expectedType = diagnosticWithParameters.a
                 expressionType = diagnosticWithParameters.b
             }
+            Errors.INCOMPATIBLE_TYPES -> {
+                val diagnosticWithParameters = Errors.INCOMPATIBLE_TYPES.cast(diagnostic)
+                expectedType = diagnosticWithParameters.b
+                expressionType = diagnosticWithParameters.a
+            }
             else -> {
                 LOG.error("Unexpected diagnostic: " + DefaultErrorMessages.render(diagnostic))
                 return emptyList()
@@ -113,6 +123,13 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         if (expressionType == null) {
             LOG.error("No type inferred: " + diagnosticElement.text)
             return emptyList()
+        }
+
+        if (diagnosticElement is KtStringTemplateExpression &&
+            expectedType.isChar() &&
+            ConvertStringToCharLiteralFix.isApplicable(diagnosticElement)
+        ) {
+            actions.add(ConvertStringToCharLiteralFix(diagnosticElement))
         }
 
         if (expressionType.isSignedOrUnsignedNumberType() && expectedType.isSignedOrUnsignedNumberType()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -33,7 +33,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -81,7 +81,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     UsageView usageView = createUsageView(usages);
 
-    LightPlatformTestCase.clearEncodingManagerDocumentQueue();
+    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 

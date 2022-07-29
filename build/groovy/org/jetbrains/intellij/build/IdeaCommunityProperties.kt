@@ -20,6 +20,18 @@ internal fun createCommunityBuildContext(
 }
 
 open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
+  companion object {
+    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = listOf(
+      "intellij.tools.jps.build.standalone",
+      "intellij.platform.debugger.testFramework",
+      "intellij.platform.vcs.testFramework",
+      "intellij.platform.externalSystem.testFramework",
+      "intellij.maven.testFramework",
+      "intellij.tools.ide.starter",
+      "intellij.tools.ide.metricsCollector"
+    )
+  }
+
   init {
     baseFileName = "idea"
     platformPrefix = "Idea"
@@ -30,7 +42,6 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.failOnUnspecifiedPluginLayout = true
     productLayout.productImplementationModules = listOf("intellij.platform.main")
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
@@ -48,12 +59,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     }
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules = listOf(
-      "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework",
-      "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework"
-    )
+    mavenArtifacts.additionalModules += MAVEN_ARTIFACTS_ADDITIONAL_MODULES
     mavenArtifacts.squashedModules += listOf(
       "intellij.platform.util.base",
       "intellij.platform.util.zip",

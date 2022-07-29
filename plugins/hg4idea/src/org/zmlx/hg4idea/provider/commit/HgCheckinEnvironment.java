@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -181,10 +182,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
     // push if needed
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
-      final List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () ->
-                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show()
-      );
+      List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
+        HgRepository selectedRepo = DvcsUtil.guessRepositoryForOperation(myProject, getRepositoryManager(myProject));
+        new VcsPushDialog(myProject, preselectedRepositories, selectedRepo).show();
+      });
     }
 
     return exceptions;

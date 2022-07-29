@@ -2,16 +2,15 @@
 
 package org.jetbrains.kotlin.idea.inspections.conventionNameCalls
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
 import org.jetbrains.kotlin.idea.intentions.isReceiverExpressionWithValue
@@ -22,19 +21,15 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 
-class Foo {
-
-}
-
 class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
-), CleanupLocalInspectionTool {
+) {
     private fun FunctionDescriptor.isExplicitOperator(): Boolean {
         return if (overriddenDescriptors.isEmpty())
             containingDeclaration !is JavaClassDescriptor && isOperator
@@ -42,12 +37,10 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
             overriddenDescriptors.any { it.isExplicitOperator() }
     }
 
-    private val operatorNames = setOf(OperatorNameConventions.GET, OperatorNameConventions.SET)
-
     override fun isApplicable(element: KtDotQualifiedExpression): Boolean {
         val callExpression = element.callExpression ?: return false
         val calleeName = (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName()
-        if (calleeName !in operatorNames) return false
+        if (calleeName != OperatorNameConventions.GET && calleeName != OperatorNameConventions.SET) return false
         if (callExpression.typeArgumentList != null) return false
         val arguments = callExpression.valueArguments
         if (arguments.isEmpty()) return false
@@ -58,7 +51,7 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
         if (!resolvedCall.isReallySuccess()) return false
 
         val target = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
-        if (!target.isValidOperator() || target.name !in operatorNames) return false
+        if (!target.isValidOperator() || target.name !in setOf(OperatorNameConventions.GET, OperatorNameConventions.SET)) return false
 
         if (!element.isReceiverExpressionWithValue()) return false
 

@@ -19,6 +19,7 @@ abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCode
         if (!isFirPlugin()) {
             invalidateLibraryCache(project)
         }
+        checkPluginIsCorrect(isFirPlugin())
     }
 
     override fun tearDown() {

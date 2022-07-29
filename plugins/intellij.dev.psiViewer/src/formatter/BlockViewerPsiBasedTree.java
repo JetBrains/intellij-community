@@ -153,7 +153,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
 
-    treeModel.invalidate();
+    treeModel.invalidateAsync();
   }
 
 

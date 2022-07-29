@@ -17,15 +17,15 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.createArguments
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmJvmPlatform
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmNativePlatform
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.facet.isKpmModule
 import org.jetbrains.kotlin.idea.base.facet.refinesFragmentIds
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -84,7 +84,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                 }
             }
 
-            module.externalCompilerVersion = compilerVersion?.rawVersion
+            ExternalCompilerVersionProvider.set(module, compilerVersion)
         }
 
         private fun configureFacetByFragmentData(

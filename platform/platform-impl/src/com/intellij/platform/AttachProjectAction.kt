@@ -5,6 +5,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -36,6 +37,10 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                          GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

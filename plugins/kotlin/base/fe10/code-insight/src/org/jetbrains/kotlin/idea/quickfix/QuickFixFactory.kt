@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 
 fun QuickFixFactory.asKotlinIntentionActionsFactory(): KotlinIntentionActionsFactory = when (this) {
     is KotlinIntentionActionsFactory -> this

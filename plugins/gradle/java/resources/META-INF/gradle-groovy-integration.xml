@@ -37,6 +37,9 @@
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
 
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
+    <trafficLightRendererContributor implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
+
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
@@ -57,12 +60,24 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.JCenterRepositoryInspection"/>
 
-    <localInspection language="Groovy" groupPath="Gradle" shortName="IncompleteLibrary"
+    <localInspection language="Groovy" groupPath="Gradle" shortName="DependencyNotationArgument"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.incomplete.version.catalog.dependency.accessor"
-                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" level="WARNING"
-                     enabledByDefault="true"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncompleteVersionCatalogDependencyAccessorInspection"/>
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="ConfigurationAvoidance"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
+
 
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>

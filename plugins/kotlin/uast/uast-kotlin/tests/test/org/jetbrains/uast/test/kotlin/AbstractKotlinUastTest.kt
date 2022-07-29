@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
@@ -113,7 +113,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         val appWasNull = ApplicationManager.getApplication() == null
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
-        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.kotlinCompiler)
+        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler)
 
         val parentDisposable = Disposer.newDisposable()
         val kotlinCoreEnvironment =
@@ -177,11 +177,11 @@ val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testD
 
 private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
     val pluginClasspath = listOf(
-        KotlinArtifacts.kotlinScriptingCompiler,
-        KotlinArtifacts.kotlinScriptingCompilerImpl,
-        KotlinArtifacts.kotlinScriptingCommon,
-        KotlinArtifacts.kotlinScriptingJvm
+        TestKotlinArtifacts.kotlinScriptingCompiler,
+        TestKotlinArtifacts.kotlinScriptingCompilerImpl,
+        TestKotlinArtifacts.kotlinScriptingCommon,
+        TestKotlinArtifacts.kotlinScriptingJvm
     )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, null, configuration)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration)
 }

@@ -333,7 +333,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
   }
 
   @Override
-  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction() {
+  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
     return settings -> {
       EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
       editorConfigSettings.ENABLED = false;

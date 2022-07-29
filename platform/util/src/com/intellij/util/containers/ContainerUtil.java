@@ -952,6 +952,10 @@ public final class ContainerUtil {
     return result;
   }
 
+  public static <T> boolean all(T[] array, @NotNull Condition<? super T> condition) {
+    return all(Arrays.asList(array), condition);
+  }
+
   public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
     for (T t : collection) {
       if (!condition.value(t)) {

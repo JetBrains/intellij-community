@@ -13,10 +13,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.toMillis
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashMap
 import kotlin.math.roundToLong
 
-class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener {
+internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener {
   override fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
     ProjectIndexingHistoryFusReporter.reportIndexingStarted(
       projectIndexingHistory.project,

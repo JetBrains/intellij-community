@@ -115,7 +115,7 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getInjectableLanguages() {
-    return getLanguages((lang) -> isInjectableLanguage(lang));
+    return getLanguages(lang -> isInjectableLanguage(lang));
   }
 
   public static boolean isFileLanguage(@NotNull Language language) {
@@ -126,7 +126,7 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getFileLanguages() {
-    return getLanguages((lang) -> isFileLanguage(lang));
+    return getLanguages(lang -> isFileLanguage(lang));
   }
 
   public static @NotNull List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {

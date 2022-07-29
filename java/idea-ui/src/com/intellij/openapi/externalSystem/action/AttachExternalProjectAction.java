@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -19,7 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.ui.UiUtils;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,13 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
-
-/**
- * @author Denis Zhdanov
- */
-public class AttachExternalProjectAction extends DumbAwareAction {
-
+public final class AttachExternalProjectAction extends DumbAwareAction {
   public AttachExternalProjectAction() {
     getTemplatePresentation().setText(JavaUiBundle.messagePointer("action.attach.external.project.text", "External"));
     getTemplatePresentation().setDescription(JavaUiBundle.messagePointer("action.attach.external.project.description", "external"));
@@ -53,6 +48,11 @@ public class AttachExternalProjectAction extends DumbAwareAction {
 
     presentation.setIcon(AllIcons.General.Add);
     presentation.setEnabledAndVisible(externalSystemId != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -79,7 +79,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     if (projectImportProvider == null) {
       return;
     }
-    AddModuleWizard wizard = ImportModuleAction.selectFileAndCreateWizard(
+    AddModuleWizard wizard = ImportModuleAction.Companion.selectFileAndCreateWizard(
       project,
       null,
       getFileChooserDescriptor(manager, project, externalSystemId),
@@ -118,7 +118,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     return virtualFile -> {
       if (!isSelectedFile.test(virtualFile)) {
         String name = externalSystemId.getReadableName();
-        String projectPath = getPresentablePath(virtualFile.getPath());
+        String projectPath = UiUtils.getPresentablePath(virtualFile.getPath());
         String message = virtualFile.isDirectory()
                          ? JavaUiBundle.message("action.attach.external.project.warning.message.directory", projectPath, name)
                          : JavaUiBundle.message("action.attach.external.project.warning.message.file", projectPath, name);

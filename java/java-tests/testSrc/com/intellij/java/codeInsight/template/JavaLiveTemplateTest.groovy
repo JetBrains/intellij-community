@@ -581,10 +581,10 @@ class A {
   void "test save as live template for annotation values"() {
     myFixture.addClass("package foo; public @interface Anno { String value(); }")
     myFixture.configureByText "a.java", 'import foo.*; <selection>@Anno("")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno("")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno("")'
 
     myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno(value="")'
   }
 
   void "test reformat with virtual space"() {

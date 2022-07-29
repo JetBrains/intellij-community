@@ -5,6 +5,7 @@ import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
 import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
@@ -28,18 +29,29 @@ abstract class SchemeManagerFactory {
    * directoryName - like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(@NonNls directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
-    return create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
+    @NonNls directoryName: String,
+    processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+    presentableName: String? = null,
+    directoryPath: Path? = null,
+    settingsCategory: SettingsCategory = SettingsCategory.OTHER
+  ): SchemeManager<SCHEME> {
+    return create(directoryName, processor, presentableName, RoamingType.DEFAULT,
+                  directoryPath = directoryPath, settingsCategory = settingsCategory)
   }
 
-  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
-                                                              processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
-                                                              presentableName: String? = null,
-                                                              roamingType: RoamingType = RoamingType.DEFAULT,
-                                                              schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                              streamProvider: StreamProvider? = null,
-                                                              directoryPath: Path? = null,
-                                                              isAutoSave: Boolean = true): SchemeManager<SCHEME>
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
+    directoryName: String,
+    processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+    presentableName: String? = null,
+    roamingType: RoamingType = RoamingType.DEFAULT,
+    schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+    streamProvider: StreamProvider? = null,
+    directoryPath: Path? = null,
+    isAutoSave: Boolean = true,
+    settingsCategory: SettingsCategory = SettingsCategory.OTHER
+  ): SchemeManager<SCHEME>
+
   open fun dispose(schemeManager: SchemeManager<*>) {
   }
 }

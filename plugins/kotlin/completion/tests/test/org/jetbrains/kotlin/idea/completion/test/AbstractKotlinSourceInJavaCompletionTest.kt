@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.File
@@ -21,9 +20,7 @@ abstract class AbstractKotlinSourceInJavaCompletionTest : KotlinFixtureCompletio
             myFixture.configureFromExistingVirtualFile(vFile)
         }
 
-        LightClassComputationControl.testWithControl(project, FileUtil.loadFile(File(testPath))) {
-            super.doTest(testPath)
-        }
+        super.doTest(testPath)
     }
 
     override fun getProjectDescriptor() = LightCodeInsightFixtureTestCase.JAVA_LATEST

@@ -30,7 +30,7 @@ fun loadClassesSafely(context: ExecutionContext, classes: Collection<ClassToLoad
     } catch (e: EvaluateException) {
         throw e
     } catch (e: Throwable) {
-        LOG.debug("Failed to evaluate expression", e)
+        LOG.debug("Failed to load classes to the debug process", e)
         ClassLoadingResult.Failure(e)
     }
 }

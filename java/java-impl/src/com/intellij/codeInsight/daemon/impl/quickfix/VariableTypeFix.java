@@ -168,7 +168,8 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiVariable variable = (PsiVariable)getStartElement();
-    if (variable.getContainingFile() == file.getOriginalFile()) {
+    PsiFile containingFile = variable.getContainingFile();
+    if (containingFile == file.getOriginalFile()) {
       PsiVariable varCopy = PsiTreeUtil.findSameElementInCopy(variable, file);
       PsiTypeElement typeElement = varCopy.getTypeElement();
       if (typeElement != null) {
@@ -186,6 +187,6 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     String initializer = variable.hasInitializer() ? " = ...;" : ";";
     String origText = modifiersText + oldTypeText + name + initializer;
     String newText = modifiersText + newTypeText + name + initializer;
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, containingFile.getName(), origText, newText);
   }
 }

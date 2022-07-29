@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import kotlin.jvm.functions.Function4
-import org.junit.Assume
 import org.junit.Test
 
 import java.nio.file.Files
@@ -38,17 +37,9 @@ class ArchiveUtilsTest {
   }
 
   @Test
-  void testGnuTar() {
-    Assume.assumeTrue(ArchiveUtils.isGnuTarAvailable())
+  void tarTest() {
     testTarReproducibility { archive, rootDir, paths, buildDateInSeconds ->
-      ArchiveUtils.gnuTarArchive(archive, rootDir, paths, buildDateInSeconds)
-    }
-  }
-
-  @Test
-  void testPortableTar() {
-    testTarReproducibility { archive, rootDir, paths, buildDateInSeconds ->
-      ArchiveUtils.portableTarArchive(archive, rootDir, paths, buildDateInSeconds)
+      ArchiveUtils.tar(archive, rootDir, paths, buildDateInSeconds)
     }
   }
 

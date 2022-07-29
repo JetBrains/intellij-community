@@ -23,6 +23,7 @@ public final class SlowOperations {
   public static final String ACTION_PERFORM = "action.perform";
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
+  public static final String FORCE_ASSERT = "  force assert  ";
   public static final String FAST_TRACK = "  fast track  ";
   public static final String RESET = "  reset  ";
 
@@ -74,10 +75,11 @@ public final class SlowOperations {
     if (isInsideActivity(FAST_TRACK)) {
       throw new ProcessCanceledException();
     }
-    if (isAlwaysAllowed()) {
+    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
+    if (!forceAssert && isAlwaysAllowed()) {
       return;
     }
-    if (!Registry.is("ide.slow.operations.assertion", true)) {
+    if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
     Application application = ApplicationManager.getApplication();

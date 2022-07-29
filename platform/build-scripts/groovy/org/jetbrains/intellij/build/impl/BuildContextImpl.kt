@@ -45,12 +45,11 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
-  override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
-
   override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   init {
+    @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -242,8 +241,9 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       proprietaryBuildTools = proprietaryBuildTools,
       distFiles = ConcurrentLinkedQueue()
     )
-    copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode!!)
-    copy.paths.artifacts = "${paths.artifacts}/${productProperties.productCode}"
+    @Suppress("DEPRECATION") val productCode = productProperties.productCode
+    copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
+    copy.paths.artifacts = "${paths.artifacts}/$productCode"
     copy.compilationContext.prepareForBuild()
     return copy
   }
@@ -273,9 +273,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
-    if (productProperties.toolsJarRequired) {
-      jvmArgs.add("-Didea.jre.check=true")
-    }
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")

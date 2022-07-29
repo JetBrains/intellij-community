@@ -31,16 +31,20 @@ fun runScrambler(scramblerJar: Path,
   val logDir = artifactDir.resolve("scramble-logs")
   val processOutputFile = logDir.resolve("$logSpecifier-process-output.log")
   try {
-    //noinspection SpellCheckingInspection
-    runJavaWithOutputToFile(
-      mainClass = mainClass,
-      args = args,
-      jvmArgs = jvmArgs,
-      classPath = List.of(scramblerJar.toString()),
-      workingDir = workingDir,
-      outputFile = processOutputFile,
-      javaExe = javaExe,
-    )
+    try {
+      runJavaWithOutputToFile(
+        mainClass = mainClass,
+        args = args,
+        jvmArgs = jvmArgs,
+        classPath = List.of(scramblerJar.toString()),
+        workingDir = workingDir,
+        outputFile = processOutputFile,
+        javaExe = javaExe,
+      )
+    }
+    catch (e: Exception) {
+      throw if (e is ProcessRunTimedOut) e else ScramblingException(e)
+    }
 
     if (pluginDir == null) {
       // yes, checked only for a main JAR
@@ -129,3 +133,4 @@ private fun checkClassFilesValidity(jarFile: Path) {
   }
 }
 
+class ScramblingException(cause: Exception) : Exception(cause)

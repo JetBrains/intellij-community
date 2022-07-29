@@ -1222,6 +1222,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/ktij21907.kt");
             }
 
+            @TestMetadata("ktij21963.kt")
+            public void testKtij21963() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
@@ -1537,6 +1542,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
             }
 
+            @TestMetadata("kt51755.kt")
+            public void testKt51755() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/kt51755.kt");
+            }
+
             @TestMetadata("lambdaParameters.kt")
             public void testLambdaParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");
@@ -1654,6 +1664,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("functionBreakpointInCommonCode.kt")
         public void testFunctionBreakpointInCommonCode() throws Exception {
             runTest("testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
+        }
+
+        @TestMetadata("ktij21854.kt")
+        public void testKtij21854() throws Exception {
+            runTest("testData/evaluation/multiplatform/ktij21854.kt");
         }
 
         @TestMetadata("typealiasFromCommonCode.kt")

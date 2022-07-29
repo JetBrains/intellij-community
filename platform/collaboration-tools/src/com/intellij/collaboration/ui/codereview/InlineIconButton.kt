@@ -13,18 +13,32 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.*
 import java.awt.event.*
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
+import kotlin.properties.Delegates.observable
 
-class InlineIconButton(val icon: Icon,
-                       val hoveredIcon: Icon = icon,
-                       val disabledIcon: Icon = IconLoader.getDisabledIcon(icon),
+class InlineIconButton(icon: Icon,
+                       hoveredIcon: Icon? = null,
+                       disabledIcon: Icon? = null,
                        @NlsContexts.Tooltip val tooltip: String? = null,
                        var shortcut: ShortcutSet? = null)
   : JComponent() {
 
-  var actionListener: ActionListener? = null
+  var actionListener: ActionListener? by observable(null) { _, old, new ->
+    firePropertyChange(ACTION_LISTENER_PROPERTY, old, new)
+  }
+  var icon by observable(icon) { _, old, new ->
+    firePropertyChange(ICON_PROPERTY, old, new)
+  }
+  var hoveredIcon by observable(hoveredIcon) { _, old, new ->
+    firePropertyChange(HOVERED_ICON_PROPERTY, old, new)
+  }
+  var disabledIcon by observable(disabledIcon) { _, old, new ->
+    firePropertyChange(DISABLED_ICON_PROPERTY, old, new)
+  }
 
   init {
     setUI(InlineIconButtonUI())
@@ -35,6 +49,7 @@ class InlineIconButton(val icon: Icon,
     private var buttonBehavior: BaseButtonBehavior? = null
     private var tooltipConnector: UiNotifyConnector? = null
     private var spaceKeyListener: KeyListener? = null
+    private var propertyListener: PropertyChangeListener? = null
 
     override fun paint(g: Graphics, c: JComponent) {
       c as InlineIconButton
@@ -71,8 +86,8 @@ class InlineIconButton(val icon: Icon,
     }
 
     private fun getCurrentIcon(c: InlineIconButton): Icon {
-      if (!c.isEnabled) return c.disabledIcon
-      if (buttonBehavior?.isHovered == true || c.hasFocus()) return c.hoveredIcon
+      if (!c.isEnabled) return c.disabledIcon ?: IconLoader.getDisabledIcon(c.icon)
+      if (buttonBehavior?.isHovered == true || c.hasFocus()) return c.hoveredIcon ?: c.icon
       return c.icon
     }
 
@@ -111,6 +126,12 @@ class InlineIconButton(val icon: Icon,
         }
       })
 
+      propertyListener = PropertyChangeListener {
+        c.revalidate()
+        c.repaint()
+      }
+      c.addPropertyChangeListener(propertyListener)
+
       c.isOpaque = false
       c.isFocusable = true
       c.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -124,9 +145,20 @@ class InlineIconButton(val icon: Icon,
       spaceKeyListener?.let {
         c.removeKeyListener(it)
       }
+      propertyListener?.let {
+        c.removePropertyChangeListener(it)
+      }
+      propertyListener = null
       spaceKeyListener = null
       buttonBehavior = null
       HelpTooltip.dispose(c)
     }
+  }
+
+  companion object {
+    val ACTION_LISTENER_PROPERTY = "action_listener"
+    val ICON_PROPERTY = "icon"
+    val HOVERED_ICON_PROPERTY = "hovered_icon"
+    val DISABLED_ICON_PROPERTY = "disabled_icon"
   }
 }

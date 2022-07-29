@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
@@ -6,12 +6,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -109,13 +109,12 @@ open class TemporaryDirectory : ExternalResource() {
       return
     }
 
-    val errors = mutableListOf<Throwable>()
-    for (i in (paths.size - 1) downTo 0) {
-      errors.catchAndStoreExceptions { paths[i].delete() }
+    val error = runAllCatching(paths.asReversed()) {
+      it.delete()
     }
 
     paths.clear()
-    throwIfNotEmpty(errors)
+    error?.let { throw it }
   }
 
   @JvmOverloads

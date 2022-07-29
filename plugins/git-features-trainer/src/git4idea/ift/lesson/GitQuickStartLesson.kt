@@ -28,7 +28,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.gotItStep
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask

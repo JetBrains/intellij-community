@@ -5,9 +5,10 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -27,7 +28,7 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
     KotlinBundle.lazyMessage("add.explicit.type.arguments")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? =
-        if (isApplicableTo(element, element.safeAnalyzeNonSourceRootCode())) element.calleeExpression?.textRange else null
+        if (isApplicableTo(element)) element.calleeExpression?.textRange else null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
 

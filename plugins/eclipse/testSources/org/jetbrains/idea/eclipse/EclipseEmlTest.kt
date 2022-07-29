@@ -4,7 +4,7 @@ package org.jetbrains.idea.eclipse
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.io.copy
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.div
 
+@TestApplication
 class EclipseEmlTest {
   @JvmField
   @RegisterExtension
@@ -42,11 +43,4 @@ class EclipseEmlTest {
     val commonRoot = eclipseTestDataRoot / "common" / "testModuleWithClasspathStorage"
     checkEmlFileGeneration(listOf(testRoot, commonRoot), tempDirectory, listOf("test" to "test/$testName"), edit, updateExpectedDir)
   }
-
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val appRule = ApplicationExtension()
-  }
-
 }

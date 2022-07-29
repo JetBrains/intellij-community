@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package some
 
 fun foo(i: Int) = 1

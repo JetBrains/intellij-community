@@ -12,6 +12,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -61,8 +62,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test rename artifact via model`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("art")
 
     val anotherName = "anotherName"
@@ -79,8 +78,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test add artifact via model 2`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("A")
     addArtifact("A2")
 
@@ -89,8 +86,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test add artifact mix bridge and model`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val workspaceModel = WorkspaceModel.getInstance(project)
 
     // Add via model
@@ -111,8 +106,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test add artifact mix bridge and model rename via model`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val workspaceModel = WorkspaceModel.getInstance(project)
 
     // Add via model
@@ -138,8 +131,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit file copy path via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val file1 = createTempFile("file1.txt", null)
     val file2 = createTempFile("file2.txt", null)
     addArtifact("a", TestPackagingElementBuilder.root(project).file(file1.systemIndependentPath).build())
@@ -159,8 +150,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit file renamed output name via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val file1 = createTempFile("file1.txt", null)
     addArtifact("a", TestPackagingElementBuilder.root(project).file(file1.systemIndependentPath).build())
     runWriteAction {
@@ -179,8 +168,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit directory name via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("a", TestPackagingElementBuilder.root(project).dir("MyDirectory").build())
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -198,8 +185,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit archive name via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("a", TestPackagingElementBuilder.root(project).archive("MyArchive").build())
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -217,8 +202,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit change library via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val library = runWriteAction {
       LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name)
     }
@@ -242,8 +225,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit extracted directory via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("a", TestPackagingElementBuilder.root(project).extractedDir("/test/test", "/path/in/jar").build())
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -261,8 +242,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test edit file copy via model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     addArtifact("a", TestPackagingElementBuilder.root(project).file("/test/test").build())
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -280,8 +259,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test add artifact mix bridge and model rename via model same name`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val workspaceModel = WorkspaceModel.getInstance(project)
 
     // Add via model
@@ -307,8 +284,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test dispose modifiable model`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val workspaceModel = WorkspaceModel.getInstance(project)
 
     // Add via model
@@ -329,8 +304,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test dir with same name`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val element_0 = DirectoryPackagingElement("Name-15")
     val element_1 = DirectoryPackagingElement("Name-15")
     element_0.addFirstChild(element_1)
@@ -361,8 +334,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test another remove`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val element_0 = DirectoryPackagingElement("Name-19")
     val element_1 = DirectoryPackagingElement("Name-11")
     val element_2 = FileCopyPackagingElement("/Name-20", "Name-7")
@@ -423,8 +394,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test custom element`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     PackagingElementType.EP_NAME.point.registerExtension(MyWorkspacePackagingElementType, this.testRootDisposable)
 
     val workspaceModel = WorkspaceModel.getInstance(project)
@@ -442,8 +411,7 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test unknown custom element`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
       val customElement = it.addCustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
@@ -458,8 +426,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test add root via model and get via bridge`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
       val rootElement = it.addArtifactRootElementEntity(listOf(), MySource)
@@ -474,8 +440,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test custom composite package element`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     PackagingElementType.EP_NAME.point.registerExtension(MyCompositeWorkspacePackagingElementType, this.testRootDisposable)
 
     val artifactRoot = ArtifactRootElementImpl()
@@ -505,8 +469,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test custom composite package element with adding new child`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     PackagingElementType.EP_NAME.point.registerExtension(MyCompositeWorkspacePackagingElementType, this.testRootDisposable)
 
     val artifactRoot = ArtifactRootElementImpl()
@@ -542,8 +504,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test complicated packaging elements structure`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     PackagingElementType.EP_NAME.point.registerExtension(MyCompositeWorkspacePackagingElementType, this.testRootDisposable)
 
     val artifactRoot = ArtifactRootElementImpl()
@@ -569,8 +529,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test async artifact initializing`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     repeat(1_000) {
       val rootEntity = runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
@@ -590,8 +548,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test artifacts with exceptions during initialization`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     var exceptionsThrown: List<Int> = emptyList()
     repeat(4) {
       val rootEntity = runWriteAction {
@@ -614,8 +570,6 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test async artifacts requesting`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     // This test checks that simultaneous requesting of artifacts from different threads won't lead to a multiple instances
     //   of the same artifact.
 
@@ -758,8 +712,7 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test invalid artifact`() = runWriteAction {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
       val customElement = it.addCustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +

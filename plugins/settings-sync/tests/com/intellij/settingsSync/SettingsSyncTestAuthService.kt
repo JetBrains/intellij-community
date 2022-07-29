@@ -10,10 +10,10 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
   }
 
   override fun getUserData(): JBAccountInfoService.JBAData? {
-    val id = System.getenv("settings.sync.test.id")
-    val loginName = System.getenv("settings.sync.test.login")
-    val email = System.getenv("settings.sync.test.id")
-    return if (id != null && loginName != null && email != null)
+    val id = System.getenv("SETTINGS_SYNC_TEST_ID")
+    val loginName = "testLogin"
+    val email = "testEmail@example.com"
+    return if (id != null)
       JBAccountInfoService.JBAData(id, loginName, email)
       else null
   }

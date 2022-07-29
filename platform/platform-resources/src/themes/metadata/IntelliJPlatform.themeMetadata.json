@@ -3,6 +3,10 @@
   "fixed": false,
   "ui": [
     {
+      "key": "Banner.warningBackground",
+      "description": "The background of banners (experimental UI only)"
+    },
+    {
       "key": "Bookmark.iconBackground",
       "description": "The background of the default bookmark icon."
     },

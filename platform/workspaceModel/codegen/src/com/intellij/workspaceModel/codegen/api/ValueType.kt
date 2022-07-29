@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.codegen.deft
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import com.intellij.workspaceModel.codegen.deft.Field
 
 sealed class ValueType<V> {
   open fun link(linker: ObjModule) = Unit
@@ -17,11 +16,15 @@ object TInt : PrimitiveType<Int>()
 
 object TString : AtomicType<String>()
 
-class TList<E>(val elementType: ValueType<E>) : ValueType<List<E>>() {
+abstract class TCollection<E, T: Collection<E>>(val elementType: ValueType<E>): ValueType<T>() {
   override fun link(linker: ObjModule) {
     elementType.link(linker)
   }
 }
+
+class TList<E>(elementType: ValueType<E>) : TCollection<E, List<E>>(elementType)
+
+class TSet<E>(elementType: ValueType<E>) : TCollection<E, Set<E>>(elementType)
 
 class TMap<K, V>(val keyType: ValueType<K>, val valueType: ValueType<V>) : ValueType<Map<K, V>>() {
   override fun link(linker: ObjModule) {
@@ -45,7 +48,6 @@ open class TRef<T : Obj>(
 ) : AtomicType<T>() {
   val targetObjTypeId: ObjType.Id = ObjType.Id(targetModuleType)
   lateinit var targetObjType: ObjType<T, *>
-  var oppositeField: Field<*, *>? = null
 
   override fun link(linker: ObjModule) {
     targetObjType = linker.byId[linker.typeIndex(targetObjTypeId.id)] as? ObjType<T, *>
@@ -69,18 +71,6 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
   val allFields: List<Field<out T, Any?>>
     get() = _allFields as List<Field<out T, Any?>>
 
-  val allFieldsByName: Map<String, Field<out T, Any?>>
-    by lazy {
-      val allFieldsByName = mutableMapOf<String, Field<out T, Any?>>()
-      allFields.forEach {
-        allFieldsByName[it.name] = it
-      }
-      allFieldsByName
-    }
-
-
-  var minFieldId: Int = Int.MAX_VALUE
-  var maxFieldId: Int = -1
 
   private val _declaredFields = mutableListOf<Field<T, Any?>>()
   val declaredFields: List<Field<T, Any?>>
@@ -88,7 +78,7 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
 
   val newFields get() = declaredFields.filter { it.base == null }
 
-  val name: String?
+  val name: String
     get() = box.name
 
   override fun link(linker: ObjModule) {
@@ -101,30 +91,10 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
         else _allFields.add(it)
       }
     }
-    _allFields.addAll(_declaredFields.filter { !it.ignored })
-
-    if (allFields.isEmpty()) {
-      minFieldId = 0
-      maxFieldId = 0
-    }
-    else {
-      _allFields.forEach {
-        if (it.id < minFieldId) minFieldId = it.id
-        if (it.id > maxFieldId) maxFieldId = it.id
-      }
-      maxFieldId++
-    }
+    _allFields.addAll(_declaredFields.filter { !it.final })
   }
 
   fun <V> addField(field: Field<T, V>) {
     _declaredFields.add(field as Field<T, Any?>)
-  }
-
-  fun isAssignableTo(other: TStructure<*, *>): Boolean {
-    var p = other
-    while (true) {
-      if (p == this) return true
-      p = p.base ?: return false
-    }
   }
 }

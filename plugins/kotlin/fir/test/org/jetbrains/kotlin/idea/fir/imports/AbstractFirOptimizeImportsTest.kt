@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
     override val runTestInWriteCommand: Boolean = false
+    override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfEnabledByFileDirective(

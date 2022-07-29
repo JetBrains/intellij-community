@@ -21,17 +21,12 @@ class DefType(
   override val packageName: String
     get() = def.file?.pkg?.fqn ?: ""
 
-  val ktModule: KtObjModule get() = module as KtObjModule
-  val subtypes = mutableListOf<DefType>()
-
   init {
     open = def.open
     abstract = def.abstract
     sealed = def.sealed
-    base?.subtypes?.add(this)
   }
 
-  val singleton get() = Object::class in def.annotations
   val utilityType get() = superTypes.any { it.name == EntitySource::class.simpleName } || name in SKIPPED_TYPES
 
   fun verify(diagnostics: Diagnostics) {

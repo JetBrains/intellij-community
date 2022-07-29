@@ -164,30 +164,41 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       myIsToolwindowHorizontal = isToolwindowHorizontal(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow());
       showVariables((PydevConsoleCommunication)communication);
     }
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
-        myCommandQueuePanel.setCommunication(communication);
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
-          .addListener(communication, new CommandQueueListener() {
-            @Override
-            public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                myCommandQueuePanel.removeCommand(command);
-              });
-            }
 
-            @Override
-            public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-              myCommandQueuePanel.addCommand(command);
-            }
-
-            @Override
-            public void removeAll() {
-              myCommandQueuePanel.removeAllCommands();
-            }
-          });
-      }
+    if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
+      myCommandQueuePanel.setCommunication(communication);
     }
+
+    addCommandQueuePanelListener(communication);
+  }
+
+  public void addCommandQueuePanelListener(final ConsoleCommunication communication) {
+    ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+      .addListener(communication, new CommandQueueListener() {
+        @Override
+        public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myCommandQueuePanel.removeCommand(command);
+          });
+        }
+
+        @Override
+        public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+            myCommandQueuePanel.addCommand(command);
+        }
+
+        @Override
+        public void removeAll() {
+            myCommandQueuePanel.removeAllCommands();
+        }
+
+        @Override
+        public void disableConsole() {
+          myCommandQueuePanel.removeAllCommands();
+          isShowQueue = false;
+          restoreQueueWindow(false);
+        }
+      });
   }
 
   /**
@@ -279,7 +290,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   private void executeCodeImpl(@Nullable String code) {
     if (code != null) {
-      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+      if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
         executeInConsole(code);
       }
       else {
@@ -668,7 +679,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+    if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
       ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
       if (communication != null) {
         ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);

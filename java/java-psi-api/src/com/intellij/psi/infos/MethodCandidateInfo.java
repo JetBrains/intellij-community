@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.infos;
 
 import com.intellij.openapi.project.Project;
@@ -164,8 +164,11 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       return level1;
     }, substitutor);
-    @ApplicabilityLevelConstant int level =
-      Objects.requireNonNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+    Integer applicabilityLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable);
+    if (applicabilityLevel == null) {
+      return ApplicabilityLevel.NOT_APPLICABLE;
+    }
+    @ApplicabilityLevelConstant int level = applicabilityLevel;
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -187,7 +190,6 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
         .filter(expression -> expression != null &&
-                              !(expression instanceof PsiFunctionalExpression) &&
                               PsiPolyExpressionUtil.isPolyExpression(expression))
         .toArray(PsiExpression[]::new);
       return ThreadLocalTypes.performWithTypes(expressionTypes -> {

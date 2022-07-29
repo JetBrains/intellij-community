@@ -283,17 +283,12 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
     private static boolean isComputedPropertyExpression(PsiExpression expression) {
       PsiElement parent = expression.getParent();
-      while (true) {
-        if (parent instanceof PsiParenthesizedExpression ||
-            parent instanceof PsiConditionalExpression &&
-            (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
-             expression == ((PsiConditionalExpression)parent).getElseExpression())) {
-          expression = (PsiExpression)parent;
-          parent = expression.getParent();
-        }
-        else {
-          break;
-        }
+      while (parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression &&
+             (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
+              expression == ((PsiConditionalExpression)parent).getElseExpression())) {
+        expression = (PsiExpression)parent;
+        parent = expression.getParent();
       }
       return parent instanceof PsiExpression;
     }

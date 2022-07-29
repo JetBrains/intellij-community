@@ -268,7 +268,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       }
       printEnvironmentDebugInfo()
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
-      val kotlinBinaries = KotlinBinaries(communityHome, options)
+      val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries)
       val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome.communityRoot, messages)
       val context = CompilationContextImpl(model = model,
@@ -313,6 +313,8 @@ private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries): JpsM
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
   if (kotlinBinaries.isCompilerRequired) {
+    kotlinBinaries.loadKotlinJpsPluginToClassPath()
+
     val kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
     System.setProperty("jps.kotlin.home", kotlinCompilerHome.toFile().absolutePath)
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinCompilerHome.toString())

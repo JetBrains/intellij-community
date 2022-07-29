@@ -139,6 +139,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLabels() { doTest(false); }
   public void testUnclosedBlockComment() { doTest(false); }
   public void testUnclosedComment() { doTest(false); }
+  public void testBadUnicodeEscapeInComment() { doTest(false); }
   public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
@@ -408,6 +409,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNotWellFormedExpressionStatementWithoutSemicolon() {
     doTest(false);
   }
+
+  public void testTooManyArrayDimensions() { doTest(false);}
 
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");

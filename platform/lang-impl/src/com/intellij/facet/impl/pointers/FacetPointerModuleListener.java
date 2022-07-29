@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.pointers;
 
 import com.intellij.facet.pointers.FacetPointersManager;
@@ -10,18 +10,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class FacetPointerModuleListener implements ModuleListener {
-
+final class FacetPointerModuleListener implements ModuleListener {
   private final Project myProject;
 
-  public FacetPointerModuleListener(Project project) { myProject = project; }
+  FacetPointerModuleListener(Project project) {
+    myProject = project;
+  }
 
   @Override
-  public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+  public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
     if (manager instanceof FacetPointersManagerImpl) {
-      FacetPointersManagerImpl managerImpl = (FacetPointersManagerImpl)manager;
-      managerImpl.refreshPointers();
+      ((FacetPointersManagerImpl)manager).refreshPointers();
     }
   }
 

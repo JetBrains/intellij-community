@@ -1195,8 +1195,8 @@ public final class ExpressionUtils {
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
 
     if (to instanceof PsiPolyadicExpression && from instanceof PsiPolyadicExpression) {
-      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff(((PsiPolyadicExpression)from),
-                                                                                                ((PsiPolyadicExpression)to));
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff((PsiPolyadicExpression)from,
+                                                                                                (PsiPolyadicExpression)to);
       from = polyadicDiff.first;
       to = polyadicDiff.second;
     }
@@ -1217,7 +1217,7 @@ public final class ExpressionUtils {
     if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
       PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)to).getROperand();
-      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+      if (right != null && eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff) ||
           (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }

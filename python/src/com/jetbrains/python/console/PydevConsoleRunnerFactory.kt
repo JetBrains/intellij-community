@@ -73,8 +73,8 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                                                              consoleParameters.setupScript)
     }
 
-  override fun createConsoleRunnerWithFile(project: Project, contextModule: Module?, config: PythonRunConfiguration): PydevConsoleRunner {
-    val consoleParameters = createConsoleParameters(project, contextModule)
+  override fun createConsoleRunnerWithFile(project: Project, config: PythonRunConfiguration): PydevConsoleRunner {
+    val consoleParameters = createConsoleParameters(project, config.module)
     val sdk = if (config.sdk != null) config.sdk else consoleParameters.sdk
     val workingDir = if (config.workingDirectory != null) config.workingDirectory else consoleParameters.workingDir
     val consoleEnvs = mutableMapOf<String, String>()

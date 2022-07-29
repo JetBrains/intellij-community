@@ -45,8 +45,10 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadUrl: URI = RemoteDevSystemSettings.getClientDownloadUrl().value
-  override val jreDownloadUrl: URI = RemoteDevSystemSettings.getJreDownloadUrl().value
+  override val clientDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+  override val jreDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getJreDownloadUrl().value
   override val clientCachesDir: Path get () {
     val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
     if (downloadDestination.value != null) {

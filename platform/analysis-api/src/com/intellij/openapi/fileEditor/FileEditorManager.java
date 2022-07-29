@@ -175,8 +175,7 @@ public abstract class FileEditorManager {
    * If a separator line is not needed, set the client property to {@code true}:
    * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
    * Otherwise, a separator line will be painted by a
-   * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_ABOVE_COLOR SEPARATOR_ABOVE_COLOR} or
-   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is set.
    * <p>
    * This method allows adding several components above the editor.
    * To change the order of components, the specified component may implement the
@@ -191,8 +190,7 @@ public abstract class FileEditorManager {
    * If a separator line is not needed, set the client property to {@code true}:
    * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
    * Otherwise, a separator line will be painted by a
-   * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_BELOW_COLOR SEPARATOR_BELOW_COLOR} or
-   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is set.
    * <p>
    * This method allows adding several components below the editor.
    * To change the order of components, the specified component may implement the
@@ -271,4 +269,11 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFilePresentation(@NotNull VirtualFile file) { }
+
+  /**
+   * Updates the file color of the editor tabs representing the specified file.
+   *
+   * @param file refreshed file
+   */
+  public void updateFileColor(@NotNull VirtualFile file) { }
 }

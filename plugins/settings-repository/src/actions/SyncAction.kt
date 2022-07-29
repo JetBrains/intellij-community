@@ -1,18 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.actions
 
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.settingsRepository.*
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.SyncType
+import org.jetbrains.settingsRepository.icsManager
+import org.jetbrains.settingsRepository.icsMessage
 
-internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Settings Repository")
+internal val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Settings Repository")
 
-internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
+internal sealed class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
@@ -20,7 +27,7 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
 
     val repositoryManager = icsManager.repositoryManager
     e.presentation.isEnabledAndVisible = (repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()) ||
-      (syncType == SyncType.MERGE && icsManager.readOnlySourcesManager.repositories.isNotEmpty())
+                                         (syncType == SyncType.MERGE && icsManager.readOnlySourcesManager.repositories.isNotEmpty())
   }
 
   override fun actionPerformed(event: AnActionEvent) {

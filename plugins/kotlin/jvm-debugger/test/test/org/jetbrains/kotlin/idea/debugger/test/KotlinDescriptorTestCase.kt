@@ -33,8 +33,8 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -104,20 +104,20 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         registerEvaluatorBackend()
 
-        KotlinDebuggerCaches.LOG_COMPILATIONS = true
+        KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { KotlinDebuggerCaches.LOG_COMPILATIONS = false },
-            ThrowableRunnable { oldValues?.revertValues() },
-            ThrowableRunnable { oldValues = null },
-            ThrowableRunnable { detachLibraries() },
-            ThrowableRunnable { logPropagator?.detach() },
-            ThrowableRunnable { logPropagator = null },
-            ThrowableRunnable { restoreEvaluatorBackend() },
-            ThrowableRunnable { super.tearDown() }
+          ThrowableRunnable { KotlinEvaluator.LOG_COMPILATIONS = false },
+          ThrowableRunnable { oldValues?.revertValues() },
+          ThrowableRunnable { oldValues = null },
+          ThrowableRunnable { detachLibraries() },
+          ThrowableRunnable { logPropagator?.detach() },
+          ThrowableRunnable { logPropagator = null },
+          ThrowableRunnable { restoreEvaluatorBackend() },
+          ThrowableRunnable { super.tearDown() }
         )
     }
 
@@ -334,7 +334,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         return super.createJavaParameters(mainClass).apply {
             ModuleRootManager.getInstance(myModule).orderEntries.asSequence().filterIsInstance<LibraryOrderEntry>()
-            classPath.add(KotlinArtifacts.kotlinStdlib)
+            classPath.add(TestKotlinArtifacts.kotlinStdlib)
             classPath.add(libraryOutputDirectory)
         }
     }
@@ -346,8 +346,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             try {
                 attachLibrary(
                   model, KOTLIN_LIBRARY_NAME,
-                  listOf(KotlinArtifacts.kotlinStdlib, KotlinArtifacts.jetbrainsAnnotations),
-                  listOf(KotlinArtifacts.kotlinStdlibSources)
+                  listOf(TestKotlinArtifacts.kotlinStdlib, TestKotlinArtifacts.jetbrainsAnnotations),
+                  listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources)
                 )
 
                 attachLibrary(model, TEST_LIBRARY_NAME, listOf(libraryOutputDirectory), listOf(librarySrcDirectory))

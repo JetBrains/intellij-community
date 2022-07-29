@@ -14,7 +14,7 @@ class ExtensionParentTest {
   fun `access by extension`() {
     val builder = createEmptyBuilder()
     builder.addEntity(AttachedEntityToParent("xyz", MySource) {
-      ref = MainEntityToParent(MySource, "123")
+      ref = MainEntityToParent("123", MySource)
     })
     val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
     assertEquals("xyz", child.data)
@@ -26,7 +26,7 @@ class ExtensionParentTest {
   @Test
   fun `access by extension without builder`() {
     val entity = AttachedEntityToParent("xyz", MySource) {
-      ref = MainEntityToParent(MySource, "123")
+      ref = MainEntityToParent("123", MySource)
     }
 
     assertEquals("xyz", entity.data)
@@ -38,7 +38,7 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite`() {
     val builder = createEmptyBuilder()
-    builder.addEntity(MainEntityToParent(MySource, "123") {
+    builder.addEntity(MainEntityToParent("123", MySource) {
       this.child = AttachedEntityToParent("xyz", MySource)
     })
     val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
@@ -51,7 +51,7 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite in builder`() {
     val builder = createEmptyBuilder()
-    val entity = MainEntityToParent(MySource, "123") {
+    val entity = MainEntityToParent("123", MySource) {
       this.child = AttachedEntityToParent("xyz", MySource)
     }
     builder.addEntity(entity)
@@ -61,7 +61,7 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite in modification`() {
     val builder = createEmptyBuilder()
-    val entity = MainEntityToParent(MySource, "123") {
+    val entity = MainEntityToParent("123", MySource) {
       this.child = AttachedEntityToParent("xyz", MySource)
     }
     builder.addEntity(entity)
@@ -78,7 +78,7 @@ class ExtensionParentTest {
 
   @Test
   fun `access by extension opposite without builder`() {
-    val entity = MainEntityToParent(MySource, "123") {
+    val entity = MainEntityToParent("123", MySource) {
       this.child = AttachedEntityToParent("xyz", MySource)
     }
 

@@ -14,6 +14,8 @@ import java.nio.file.Paths
 abstract class AbstractFindUsagesWithDisableComponentSearchFirTest : AbstractFindUsagesWithDisableComponentSearchTest() {
     override fun isFirPlugin(): Boolean = true
 
+    override val ignoreLog: Boolean get() = true
+
     override fun tearDown() {
         runAll(
             ThrowableRunnable { project.invalidateCaches() },

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -229,12 +231,15 @@ public final class NewMappings implements Disposable {
   }
 
   private void refreshMainMenu() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
-      if (frame != null && frame.getRootPane() != null) {
-        frame.updateView();
-      }
-    }, myProject.getDisposed());
+    // GitToolbarWidgetFactory handles update in a new UI
+    if (!(SystemInfoRt.isMac && ExperimentalUI.isNewUI())) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
+        if (frame != null && frame.getRootPane() != null) {
+          frame.updateView();
+        }
+      }, myProject.getDisposed());
+    }
   }
 
   /**
@@ -336,7 +341,7 @@ public final class NewMappings implements Disposable {
     try {
       if (vcs == null) return false;
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-      return rootChecker.validateRoot(vcsRoot.getPath());
+      return rootChecker.validateRoot(vcsRoot);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -404,7 +409,7 @@ public final class NewMappings implements Disposable {
                                    @NotNull Map<VirtualFile, Boolean> checkedDirs,
                                    @NotNull VirtualFile file) {
     ProgressManager.checkCanceled();
-    return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key.getPath()));
+    return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key));
   }
 
   private boolean isUnderProject(@NotNull DirectoryIndex directoryIndex, @NotNull VirtualFile f) {

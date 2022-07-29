@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.PluginUpdateStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin

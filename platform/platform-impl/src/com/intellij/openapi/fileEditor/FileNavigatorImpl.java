@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
 import static com.intellij.openapi.fileEditor.OpenFileDescriptor.unfoldCurrentLine;
 
 public class FileNavigatorImpl implements FileNavigator {
+  private final ThreadLocal<Boolean> myIgnoreContextEditor = new ThreadLocal<>();
+
   @Override
   public boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
     VirtualFile file = descriptor.getFile();
@@ -79,6 +83,7 @@ public class FileNavigatorImpl implements FileNavigator {
   }
 
   private boolean navigateInRequestedEditor(@NotNull OpenFileDescriptor descriptor) {
+    if (myIgnoreContextEditor.get() == Boolean.TRUE) return false;
     @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(ctx);
     if (e == null) return false;
@@ -102,5 +107,18 @@ public class FileNavigatorImpl implements FileNavigator {
       }
     }
     return !editors.isEmpty();
+  }
+
+  @ApiStatus.Experimental
+  public boolean navigateIgnoringContextEditor(@NotNull Navigatable navigatable) {
+    if (!navigatable.canNavigate()) return false;
+    myIgnoreContextEditor.set(Boolean.TRUE);
+    try {
+      navigatable.navigate(true);
+    }
+    finally {
+      myIgnoreContextEditor.set(null);
+    }
+    return true;
   }
 }

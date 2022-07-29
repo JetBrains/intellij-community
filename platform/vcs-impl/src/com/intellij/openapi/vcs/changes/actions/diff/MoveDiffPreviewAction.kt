@@ -3,8 +3,9 @@ package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffOpenedInNewWindow
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES
@@ -13,6 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.JBIterable
 
 internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boolean) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   abstract fun isEnabledAndVisible(project: Project, file: VirtualFile): Boolean
 
@@ -39,9 +43,10 @@ private fun AnActionEvent.findDiffPreviewFile(): VirtualFile? {
   if (file is DiffContentVirtualFile) return file
 
   // in case if Find Action executed, the first selected (focused) file will be a possible candidate
-  val selectedFile = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
+  val selectedFile = getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
+  if (selectedFile is DiffContentVirtualFile) return selectedFile
 
-  return if (selectedFile is DiffContentVirtualFile) selectedFile else null
+  return null
 }
 
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {

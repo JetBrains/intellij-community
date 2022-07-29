@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRPropertyReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRPropertyReplaceTest : KotlinStructuralReplaceTest() {
     fun testPropertyValueReplaceExplicitType() {
         doTest(
             searchPattern = "val '_ID : String = '_INIT",

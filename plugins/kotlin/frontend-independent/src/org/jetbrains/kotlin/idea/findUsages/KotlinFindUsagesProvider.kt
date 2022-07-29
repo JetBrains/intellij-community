@@ -7,7 +7,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.lang.java.JavaFindUsagesProvider
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter

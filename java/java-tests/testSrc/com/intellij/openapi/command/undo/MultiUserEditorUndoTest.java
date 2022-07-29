@@ -13,9 +13,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectExImpl;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -292,7 +297,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   }
 
   private static void registerProjectSession(@NotNull ClientId clientId, @NotNull Project project, @NotNull Disposable disposable) {
-    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, (ProjectExImpl)project);
+    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, (ProjectImpl)project);
     registerSession(clientProjectSession, project, disposable);
   }
 
@@ -310,7 +315,10 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
     sessionsManager.registerSession(disposable, session);
     session.registerServices();
-    session.preloadServices();
+    BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+      session.preloadServices(scope);
+      return Unit.INSTANCE;
+    });
   }
 
   @SuppressWarnings("unchecked")

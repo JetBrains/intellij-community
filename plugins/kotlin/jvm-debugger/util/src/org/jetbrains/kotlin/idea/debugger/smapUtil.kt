@@ -4,12 +4,9 @@ package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.org.objectweb.asm.ClassReader
-import org.jetbrains.org.objectweb.asm.ClassVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes
 
 enum class SourceLineKind {
     CALL_LINE,
@@ -35,15 +32,4 @@ fun mapStacktraceLineToSource(
     ) ?: return null
 
     return sourceFile to location.line - 1
-}
-
-fun readDebugInfo(bytes: ByteArray): SMAP? {
-    val cr = ClassReader(bytes)
-    var debugInfo: String? = null
-    cr.accept(object : ClassVisitor(Opcodes.API_VERSION) {
-        override fun visitSource(source: String?, debug: String?) {
-            debugInfo = debug
-        }
-    }, ClassReader.SKIP_FRAMES and ClassReader.SKIP_CODE)
-    return debugInfo?.let(SMAPParser::parseOrNull)
 }

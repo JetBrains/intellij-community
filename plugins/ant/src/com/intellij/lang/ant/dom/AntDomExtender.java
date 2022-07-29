@@ -127,7 +127,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
 
       AbstractIntrospector parentIntrospector = null;
       if (classBasedIntrospector != null) {
-        parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector, coreTaskDefs, coreTypeDefs);
+        parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector, coreTaskDefs, coreTypeDefs, reflected.getRestrictedDefinitions());
       }
       else {
         if (isCustom) {
@@ -424,17 +424,19 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     private final AntIntrospector myIntrospector;
     private final Map<String, Class<?>> myCoreTaskDefs;
     private final Map<String, Class<?>> myCoreTypeDefs;
+    private final Map<String, Collection<Class<?>>> myRestrictedDefinitions;
     private List<String> myNestedElements;
     private Map<String, Class<?>> myNestedElementTypes;
 
     private ClassIntrospectorAdapter(AntIntrospector introspector) {
-      this(introspector, null, null);
+      this(introspector, null, null, null);
     }
 
-    ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class<?>> coreTaskDefs, Map<String, Class<?>> coreTypeDefs) {
+    ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class<?>> coreTaskDefs, Map<String, Class<?>> coreTypeDefs, Map<String, Collection<Class<?>>> restrictedDefinitions) {
       myIntrospector = introspector;
-      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.emptyMap();
-      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.emptyMap();
+      myCoreTaskDefs = coreTaskDefs != null? Collections.unmodifiableMap(coreTaskDefs) : Collections.emptyMap();
+      myCoreTypeDefs = coreTypeDefs != null? Collections.unmodifiableMap(coreTypeDefs) : Collections.emptyMap();
+      myRestrictedDefinitions = restrictedDefinitions != null? Collections.unmodifiableMap(restrictedDefinitions) : Collections.emptyMap();
     }
 
     @Override
@@ -483,16 +485,30 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
       for (String extPoint : extensionPointTypes) {
         processEntries(extPoint, myCoreTaskDefs);
         processEntries(extPoint, myCoreTypeDefs);
+        processRestrictedTypeDefinitions(extPoint);
       }
     }
 
     private void processEntries(String extPoint, Map<String, Class<?>> definitions) {
       for (Map.Entry<String, Class<?>> entry : definitions.entrySet()) {
-        final String elementName = entry.getKey();
         final Class taskClass = entry.getValue();
         if (isAssignableFrom(extPoint, taskClass)) {
+          final String elementName = entry.getKey();
           myNestedElements.add(elementName);
           myNestedElementTypes.put(elementName, taskClass);
+        }
+      }
+    }
+
+    private void processRestrictedTypeDefinitions(String extPoint) {
+      for (Map.Entry<String, Collection<Class<?>>> entry : myRestrictedDefinitions.entrySet()) {
+        for (Class<?> typeClass : entry.getValue()) {
+          final String elementName = entry.getKey();
+          if (!myNestedElementTypes.containsKey(elementName) && isAssignableFrom(extPoint, typeClass)) {
+            myNestedElements.add(elementName);
+            myNestedElementTypes.put(elementName, typeClass);
+            break;
+          }
         }
       }
     }
@@ -566,9 +582,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
           continue;
         }
         final Set<String> set = new HashSet<>();
-        for (Iterator<String> it = context.getNestedElementsIterator();it.hasNext();) {
-          final String name = it.next();
-          set.add(name);
+        for (Iterator<String> it = context.getNestedElementsIterator(); it.hasNext();) {
+          set.add(it.next());
         }
         if (names == null) {
           names = new HashMap<>();

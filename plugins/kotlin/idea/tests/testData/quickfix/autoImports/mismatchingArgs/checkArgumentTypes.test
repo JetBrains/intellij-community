@@ -5,6 +5,7 @@
 // ACTION: Create extension function 'X.foo'
 // ACTION: Create member function 'X.foo'
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+/* IGNORE_FIR */
 
 package main
 
@@ -32,6 +33,7 @@ fun X.foo(p: String) {
 // ACTION: Create extension function 'X.foo'
 // ACTION: Create member function 'X.foo'
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+/* IGNORE_FIR */
 
 package main
 

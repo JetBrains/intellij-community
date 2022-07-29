@@ -393,7 +393,9 @@
     },
 
     "SearchOption": {
-      "selectedBackground": "Blue14"
+      "selectedBackground": "Blue13",
+      "selectedHoveredBackground": "Blue12",
+      "selectedPressedBackground": "Blue12"
     },
 
     "SpeedSearch": {

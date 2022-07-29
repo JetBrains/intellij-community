@@ -441,7 +441,7 @@ public final class CommentTracker {
     boolean hasComment = false;
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       hasComment |= lastChild instanceof PsiComment;
-      if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
+      if (!(lastChild instanceof PsiComment) || !shouldIgnore((PsiComment)lastChild)) {
         suffix.add(markUnchanged(lastChild).copy());
       }
       lastChild = lastChild.getPrevSibling();

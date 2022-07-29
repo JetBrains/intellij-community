@@ -24,7 +24,8 @@ public interface UpdateSession {
 
   @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider);
 
-  @NotNull <T> T compute(@NotNull String operationName,
-                         @NotNull ActionUpdateThread updateThread,
-                         @NotNull Supplier<? extends T> supplier);
+  <T> T compute(@NotNull Object action,
+                @NotNull String operationName,
+                @NotNull ActionUpdateThread updateThread,
+                @NotNull Supplier<? extends T> supplier);
 }

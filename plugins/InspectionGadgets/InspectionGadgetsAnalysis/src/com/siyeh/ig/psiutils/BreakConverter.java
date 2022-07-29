@@ -118,8 +118,8 @@ public class BreakConverter {
       }
     }
     if (nextStatement instanceof PsiSwitchLabelStatement) {
-      return (((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchBlock() == switchStatement &&
-              !ControlFlowUtils.statementMayCompleteNormally(statement));
+      return ((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchBlock() == switchStatement &&
+             !ControlFlowUtils.statementMayCompleteNormally(statement);
     }
     if (nextStatement instanceof PsiBreakStatement) {
       return ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;

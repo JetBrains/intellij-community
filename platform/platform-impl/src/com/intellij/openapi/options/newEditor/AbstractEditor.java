@@ -3,12 +3,14 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class AbstractEditor extends JPanel implements Disposable {
   volatile boolean myDisposed;
 

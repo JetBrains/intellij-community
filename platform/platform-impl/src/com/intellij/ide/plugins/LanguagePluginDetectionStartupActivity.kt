@@ -13,17 +13,17 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.IOException
 import java.util.*
 
 private const val IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_BEFORE"
 
-private class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
-
-  override fun runActivity(project: Project) {
+private class LanguagePluginDetectionStartupActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     val application = ApplicationManagerEx.getApplicationEx()
     if (application == null
         || application.isUnitTestMode
@@ -61,30 +61,52 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
   set(value) = setValue(IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME, value)
 
 @RequiresBackgroundThread
-private fun findLanguagePluginToInstall(): PluginId? = try {
-  val requests = MarketplaceRequests.getInstance()
+private fun findLanguagePluginToInstall(): PluginId? {
+  try {
+    val locale = Locale.getDefault()
+    if (locale == Locale.ENGLISH
+        || locale == Locale.UK
+        || locale == Locale.US
+        || locale == Locale.CANADA) {
+      // no need to visit Marketplace for them
+      return null
+    }
 
-  fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
-    featureType = "com.intellij.locale",
-    implementationName = implementationName,
-  )
+    val requests = MarketplaceRequests.getInstance()
 
-  val locale = Locale.getDefault()
-  val matchedLanguagePlugins = getLanguagePlugins(locale.toLanguageTag())
-    .ifEmpty { getLanguagePlugins(locale.language) }
+    fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
+      featureType = "com.intellij.locale",
+      implementationName = implementationName,
+    )
 
-  requests.searchPlugins(
-    query = "tags=Language%20Pack",
-    count = 10,
-  ).map {
-    it.pluginId
-  }.firstOrNull { pluginId ->
-    matchedLanguagePlugins.any { it.pluginId == pluginId.idString }
-    && !PluginManagerCore.isPluginInstalled(pluginId)
+    val pattern = if (SystemInfoRt.isMac) {
+      if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language)
+          && (Locale.SIMPLIFIED_CHINESE.country.equals(locale.country) || Locale.TAIWAN.country.equals(locale.country)))
+        if (locale.script == "Hans") Locale.SIMPLIFIED_CHINESE.toLanguageTag()
+        else locale.language
+      else locale.language
+    }
+    else {
+      if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language) && Locale.SIMPLIFIED_CHINESE.country.equals(locale.country))
+        Locale.SIMPLIFIED_CHINESE.toLanguageTag()
+      else locale.language
+    }
+
+    val matchedLanguagePlugins = getLanguagePlugins(pattern)
+
+    return requests.searchPlugins(
+      query = "tags=Language%20Pack",
+      count = 10,
+    ).map {
+      it.pluginId
+    }.firstOrNull { pluginId ->
+      matchedLanguagePlugins.any { it.pluginId == pluginId.idString }
+      && !PluginManagerCore.isPluginInstalled(pluginId)
+    }
   }
-}
-catch (e: IOException) {
-  logger<LanguagePluginDetectionStartupActivity>()
-    .info("Failed to detect recommended language plugin: ${e.message}")
-  null
+  catch (e: IOException) {
+    logger<LanguagePluginDetectionStartupActivity>()
+      .info("Failed to detect recommended language plugin: ${e.message}")
+    return null
+  }
 }

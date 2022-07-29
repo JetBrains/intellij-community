@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -20,7 +20,7 @@ final class AttributeBinding extends BasePrimitiveBinding {
 
   @Override
   public @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+    Object value = accessor.read(o);
     if (value == null) {
       return null;
     }
@@ -50,11 +50,11 @@ final class AttributeBinding extends BasePrimitiveBinding {
   }
 
   void set(@NotNull Object host, @NotNull String value) {
-    if (myConverter == null) {
-      XmlSerializerImpl.doSet(host, value, myAccessor, valueClass);
+    if (converter == null) {
+      XmlSerializerImpl.doSet(host, value, accessor, valueClass);
     }
     else {
-      myAccessor.set(host, myConverter.fromString(value));
+      accessor.set(host, converter.fromString(value));
     }
   }
 

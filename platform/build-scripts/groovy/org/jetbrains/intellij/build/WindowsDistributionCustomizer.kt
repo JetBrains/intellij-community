@@ -22,14 +22,17 @@ abstract class WindowsDistributionCustomizer {
   var includeBatchLaunchers = true
 
   /**
-   * If {@code true} a Zip archive containing the installation will be produced
+   * If {@code true} build a zip archive with JetBrains Runtime
    */
-  var buildZipArchive = true
+  var buildZipArchiveWithBundledJre = true
 
   /**
-   * If {@code true} JetBrains RE jre will be added to a zip archive
+   * If {@code true} build a zip archive without JetBrains Runtime
    */
-  var zipArchiveWithBundledJre = true
+  var buildZipArchiveWithoutBundledJre = false
+
+  var zipArchiveWithBundledJreSuffix = ".win"
+  var zipArchiveWithoutBundledJreSuffix = "-no-jbr.win"
 
   /**
    * If {@code true} Windows Installer will associate *.ipr files with the IDE in Registry

@@ -42,11 +42,11 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
+    <orderEntry type="module" module-name="kotlin.base.external-build-system" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.inspections" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
@@ -54,6 +54,11 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.core" />
+    <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.plugin-updater" />
+    <orderEntry type="module" module-name="kotlin.migration" />
+    <orderEntry type="module" module-name="kotlin.inspections-fe10" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
@@ -61,6 +66,7 @@
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.scripting" />
+    <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
@@ -87,10 +93,15 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
   </component>
 </module>

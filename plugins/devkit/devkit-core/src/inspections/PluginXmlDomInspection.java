@@ -84,8 +84,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
-  private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
-
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
@@ -106,6 +104,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     return result;
   });
+
+  private static class Holder {
+    private static final Pattern BASE_LINE_EXTRACTOR = Pattern.compile("(?:\\p{javaLetter}+-)?(\\d+)(?:\\..*)?");
+  }
+
+  private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
 
   @NotNull
   @Override
@@ -791,12 +795,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
-  private static final Pattern BASE_LINE_EXTRACTOR = Pattern.compile("(?:\\p{javaLetter}+-)?(\\d+)(?:\\..*)?");
-  private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
-
   private static boolean isStarSupported(String buildNumber) {
     if (buildNumber == null) return false;
-    Matcher matcher = BASE_LINE_EXTRACTOR.matcher(buildNumber);
+    Matcher matcher = Holder.BASE_LINE_EXTRACTOR.matcher(buildNumber);
     if (matcher.matches()) {
       int branch = Integer.parseInt(matcher.group(1));
       return branch >= FIRST_BRANCH_SUPPORTING_STAR;
@@ -1253,6 +1254,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static class CorrectUntilBuildAttributeFix implements LocalQuickFix {
+    private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
+
     private final String myCorrectValue;
 
     CorrectUntilBuildAttributeFix(String correctValue) {

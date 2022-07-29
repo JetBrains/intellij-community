@@ -29,7 +29,6 @@ import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -136,7 +135,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
         DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT);
         if (projectDataNode != null) {
           DataNode<DependencyAccessorsModel> dependenciesAccessorsModelNode =
-            ExternalSystemApiUtil.find(projectDataNode, CommonGradleProjectResolverExtension.ACCESSORS);
+            ExternalSystemApiUtil.find(projectDataNode, BuildScriptClasspathData.ACCESSORS);
           if (dependenciesAccessorsModelNode != null) {
             DependencyAccessorsModel accessorsModel = dependenciesAccessorsModelNode.getData();
             buildClasspath.addAll(accessorsModel.getSources());

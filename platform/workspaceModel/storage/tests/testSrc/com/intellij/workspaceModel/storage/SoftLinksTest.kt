@@ -119,7 +119,7 @@ class SoftLinksTest {
   fun `change persistent id in list`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addEntity(WithListSoftLinksEntity("xyz", MySource, listOf(NameId("Name"))))
+    builder.addEntity(WithListSoftLinksEntity("xyz", listOf(NameId("Name")), MySource))
 
     builder.modifyEntity(entity) {
       this.myName = "newName"
@@ -157,7 +157,6 @@ class SoftLinksTest {
     builder.addEntity(entity)
     val persistentId = entity.persistentId
     val softLinkEntity = EntityWithSoftLinks(persistentId,
-                                             MySource,
                                              listOf(persistentId),
                                              Container(persistentId),
                                              listOf(Container(persistentId)),
@@ -166,7 +165,8 @@ class SoftLinksTest {
                                              listOf(SealedContainer.SmallContainer(persistentId)),
                                              "Hello",
                                              listOf("Hello"),
-                                             DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(persistentId)
+                                             DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(persistentId),
+                                             MySource
     ) {
       optionalLink = persistentId
       inOptionalContainer = Container(persistentId)

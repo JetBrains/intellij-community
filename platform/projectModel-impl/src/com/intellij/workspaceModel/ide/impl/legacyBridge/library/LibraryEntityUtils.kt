@@ -5,6 +5,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator.getLibraryTableId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -26,4 +27,11 @@ fun LibraryId.findLibraryBridge(snapshot: EntityStorage, project: Project): Libr
     LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(tableId.level, project)?.getLibraryByName(name)
   }
   else snapshot.resolve(this)?.findLibraryBridge(snapshot)
+}
+
+fun findLibraryId(library: Library): LibraryId {
+  return when (library) {
+    is LibraryBridge -> library.libraryId
+    else -> LibraryId(library.name!!, getLibraryTableId(library.table.tableLevel))
+  }
 }

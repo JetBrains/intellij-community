@@ -21,9 +21,8 @@ internal class ModalityStateElement(
 
 @VisibleForTesting
 @Internal
-fun CoroutineContext.contextModality(): ModalityState {
+fun CoroutineContext.contextModality(): ModalityState? {
   return this[ModalityStateElement]?.modalityState
-         ?: ModalityState.any()
 }
 
 @Internal
@@ -33,7 +32,7 @@ suspend fun <X> withModalContext(
   val originalDispatcher = requireNotNull(coroutineContext[ContinuationInterceptor])
   val contextModality = coroutineContext.contextModality()
   if (Dispatchers.EDT === originalDispatcher) {
-    if (contextModality == ModalityState.any()) {
+    if (contextModality == null || contextModality == ModalityState.any()) {
       // Force NON_MODAL, otherwise another modality could be entered concurrently.
       withContext(ModalityState.NON_MODAL.asContextElement()) {
         yield() // Force re-dispatch in the proper modality.
@@ -45,7 +44,12 @@ suspend fun <X> withModalContext(
     }
   }
   else {
-    val enterModalModality = if (contextModality == ModalityState.any()) ModalityState.NON_MODAL else contextModality
+    val enterModalModality = if (contextModality == null || contextModality == ModalityState.any()) {
+      ModalityState.NON_MODAL
+    }
+    else {
+      contextModality
+    }
     withContext(Dispatchers.EDT + enterModalModality.asContextElement()) {
       withModalContextEDT {
         withContext(originalDispatcher, action)

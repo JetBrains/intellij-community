@@ -1,47 +1,46 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ExecutionException;
+public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_11_ANNOTATED;
+  }
 
-public class IntentionPreviewTest extends LightQuickFixTestCase {
   public void testIntentionPreview() {
-    configureFromFileText("Test.java",
+    myFixture.configureByText("Test.java",
                           "class Test {\n" +
                           "  public void test() {\n" +
                           "    int <caret>variable = 2;\n" +
                           "  }\n" +
                           "}");
-    IntentionAction action = findActionWithText("Split into declaration and assignment");
-    assertNotNull(action);
-    String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
+    IntentionAction action = myFixture.findSingleIntention("Split into declaration and assignment");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("class Test {\n" +
                  "  public void test() {\n" +
-                 "    int variable  ;\n" +
+                 "    int variable;\n" +
                  "      variable = 2;\n" +
                  "  }\n" +
                  "}", text);
   }
 
   public void testStaticImportsIntentionPreview() {
-    configureFromFileText("Test.java",
+    myFixture.configureByText("Test.java",
                           "class Computer {\n" +
                           "    void f() {\n" +
                           "      double pi = Ma<caret>th.PI;\n" +
                           "    }\n" +
                           "  }");
-    IntentionAction action = findActionWithText("Add on-demand static import for 'java.lang.Math'");
-    assertNotNull(action);
-    String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
+    IntentionAction action = myFixture.findSingleIntention("Add on-demand static import for 'java.lang.Math'");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("import static java.lang.Math.*;\n" +
                  "\n" +
                  "class Computer {\n" +
@@ -55,16 +54,15 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     // TEMPLATE_STARTED_TOPIC event should not fire for preview editor
     getProject().getMessageBus().connect(getTestRootDisposable())
         .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> fail());
-    configureFromFileText("Test.java",
+    myFixture.configureByText("Test.java",
                           "class Computer {\n" +
                           "    void f() {\n" +
                           "      int i;\n" +
                           "      int j = <caret>i;\n" +
                           "    }\n" +
                           "  }");
-    IntentionAction action = findActionWithText("Initialize variable 'i'");
-    assertNotNull(action);
-    String text = getPreviewText(action);
+    IntentionAction action = myFixture.findSingleIntention("Initialize variable 'i'");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("class Computer {\n" +
                  "    void f() {\n" +
                  "      int i = 0;\n" +
@@ -73,52 +71,118 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "  }", text);
   }
 
+  public void testIntentionPreviewIterate() {
+    myFixture.configureByText("Test.java",
+                          "class Test {\n" +
+                          "    void f(Iterable<String> it) {\n" +
+                          "      <caret>it;\n" +
+                          "    }\n" +
+                          "  }");
+    IntentionAction action = myFixture.findSingleIntention("Iterate over Iterable<String>");
+
+    String text = myFixture.getIntentionPreviewText(action);
+    assertEquals("class Test {\n" +
+                 "    void f(Iterable<String> it) {\n" +
+                 "        for (String s : it) {\n" +
+                 "\n" +
+                 "        }\n" +
+                 "\n" +
+                 "    }\n" +
+                 "  }", text);
+  }
+
   public void testIntentionPreviewInjection() {
-    configureFromFileText("Test.java",
+    myFixture.setCaresAboutInjection(false);
+    myFixture.configureByText("Test.java",
                           "import java.util.regex.Pattern;\n" +
                           "\n" +
                           "class Test {\n" +
                           "  Pattern p = Pattern.compile(\"[\\\"123<caret>1]\");\n" +
                           "}");
-    enableInspectionTool(new DuplicateCharacterInClassInspection());
-    IntentionAction action = findActionWithText("Remove duplicate '1' from character class");
-    assertNotNull(action);
-    String text = getPreviewText(action);
+    myFixture.enableInspections(new DuplicateCharacterInClassInspection());
+    IntentionAction action = myFixture.findSingleIntention("Remove duplicate '1' from character class");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("[\"123]", text);
   }
 
   public void testBindFieldsFromParameters() {
-    configureFromFileText("Test.java",
+    myFixture.configureByText("Test.java",
                           "public    class    Test {\n" +
                           "    Test(int <caret>a, String b) {\n" +
                           "\n" +
                           "    }\n" +
                           "}\n");
-    IntentionAction action = findActionWithText("Bind constructor parameters to fields");
-    assertNotNull(action);
-    String text = getPreviewText(action);
+    IntentionAction action = myFixture.findSingleIntention("Bind constructor parameters to fields");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("public    class    Test {\n" +
                  "    private final int a;\n" +
                  "    private final String b;\n" +
                  "\n" +
                  "    Test(int a, String b) {\n" +
                  "\n" +
-                 "    this.a = a;\n" +
+                 "        this.a = a;\n" +
                  "        this.b = b;\n" +
                  "    }\n" +
                  "}\n", text);
   }
 
+  public void testAddRemoveException() {
+    myFixture.configureByText("Test.java",
+                          "import java.io.IOException;\n" +
+                          "\n" +
+                          "public class A {\n" +
+                          "  String test() {\n" +
+                          "    return \"\";\n" +
+                          "  }\n" +
+                          "}\n" +
+                          "\n" +
+                          "class B extends A {\n" +
+                          "  String test() throws <caret>IOException {\n" +
+                          "    return \"\";\n" +
+                          "  }\n" +
+                          "\n" +
+                          "}");
+    IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test' throws list");
+    assertEquals("import java.io.IOException;\n" +
+                 "\n" +
+                 "public class A {\n" +
+                 "  String test() {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "}\n" +
+                 "\n" +
+                 "class B extends A {\n" +
+                 "  String test() {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "\n" +
+                 "}", myFixture.getIntentionPreviewText(action));
+    action = myFixture.findSingleIntention("Add 'IOException' to 'A.test' throws list");
+    assertEquals("import java.io.IOException;\n" +
+                 "\n" +
+                 "public class A {\n" +
+                 "  String test() throws IOException {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "}\n" +
+                 "\n" +
+                 "class B extends A {\n" +
+                 "  String test() throws IOException {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "\n" +
+                 "}", myFixture.getIntentionPreviewText(action));
+  }
+
   public void testDefineDefaultValues() {
-    configureFromFileText("Test.java",
+    myFixture.configureByText("Test.java",
                           "public class Test {\n" +
                           "    void test(int <caret>a,  String b) {\n" +
                           "\n" +
                           "    }\n" +
                           "}\n");
-    IntentionAction action = findActionWithText("Generate overloaded method with default parameter values");
-    assertNotNull(action);
-    String text = getPreviewText(action);
+    IntentionAction action = myFixture.findSingleIntention("Generate overloaded method with default parameter values");
+    String text = myFixture.getIntentionPreviewText(action);
     assertEquals("public class Test {\n" +
                  "    void test() {\n" +
                  "        test(0, null);\n" +
@@ -131,30 +195,21 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
   }
 
   public void testRenameFile() {
-    configureFromFileText("Test.java", "public class <caret>Best {}");
-    IntentionAction action = findActionWithText("Rename File");
-    assertNotNull(action);
-    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
-    assertTrue(info instanceof IntentionPreviewInfo.Html);
-    HtmlChunk content = ((IntentionPreviewInfo.Html)info).content();
-    assertEquals("<icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java",
-                 content.toString());
-    assertNotNull(((IntentionPreviewInfo.Html)info).icon("file"));
+    myFixture.configureByText("Test.java", "public class <caret>Best {}");
+    IntentionAction action = myFixture.findSingleIntention("Rename File");
+    myFixture.checkIntentionPreviewHtml(action, "<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>");
   }
 
-  @Override
-  protected void setupEditorForInjectedLanguage() {
-    // we want to stay at host editor
+  public void testMoveMemberIntoClass() {
+    myFixture.configureByText("Test.java", "public class Test {} void <caret>method() {}");
+    IntentionAction action = myFixture.findSingleIntention("Move member into class");
+    myFixture.checkIntentionPreviewHtml(action,
+                            "<p><icon src=\"source\"/>&nbsp;method &rarr; <icon src=\"target\"/>&nbsp;Test</p>");
   }
 
-  private String getPreviewText(IntentionAction action) {
-    // Run in background thread to catch accidental write-actions during preview generation
-    try {
-      return ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor()))
-        .submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+  public void testNavigate() {
+    myFixture.configureByText("Test.java", "public class Test {} class <caret>Test {}");
+    IntentionAction action = myFixture.findSingleIntention("Navigate to duplicate class");
+    myFixture.checkIntentionPreviewHtml(action, "<p>&rarr; <icon src=\"icon\"/>&nbsp;Test.java, line #1</p>");
   }
 }

@@ -212,6 +212,14 @@ abstract class ScriptClassRootsUpdater(
 
                         AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
                             project,
+                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies"),
+                            updates.oldSdkRoots,
+                            updates.newSdkRoots,
+                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
+                        )
+
+                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                            project,
                             KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies"),
                             updates.oldRoots,
                             updates.newRoots,
@@ -234,7 +242,6 @@ abstract class ScriptClassRootsUpdater(
                 }
 
                 val scriptClassRootsCache = updates.cache
-                ScriptCacheDependencies(scriptClassRootsCache).save(project)
                 lastSeen = scriptClassRootsCache
             }
         } finally {

@@ -2,28 +2,40 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.util.isGradleAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.isGradleOlderThan
 
 abstract class GradleTestCase : GradleBaseTestCase() {
 
-  fun isGradleAtLeast(version: String): Boolean =
-    gradleFixture.gradleVersion.baseVersion >= GradleVersion.version(version)
+  @get:JvmName("myProject")
+  val project: Project get() = gradleFixture.project
+  val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
+  val projectPath: String get() = projectRoot.path
+  val gradleVersion: GradleVersion get() = gradleFixture.gradleVersion
 
-  fun isGradleOlderThan(version: String): Boolean =
-    gradleFixture.gradleVersion.baseVersion < GradleVersion.version(version)
+  fun isGradleAtLeast(version: String): Boolean = gradleVersion.isGradleAtLeast(version)
+  fun isGradleOlderThan(version: String): Boolean = gradleVersion.isGradleOlderThan(version)
 
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      gradleFixture.fileFixture.root.findOrCreateFile(relativePath)
-        .also { it.text = text }
+      val file = projectRoot.findOrCreateFile(relativePath)
+      file.text = text
+      FileDocumentManager.getInstance().getDocument(file)?.let {
+        PsiDocumentManager.getInstance(project).commitDocument(it)
+      }
+      file
     }
   }
 
   fun getFile(relativePath: String): VirtualFile {
     return runReadAction {
-      gradleFixture.fileFixture.root.getFile(relativePath)
+      projectRoot.getFile(relativePath)
     }
   }
 }

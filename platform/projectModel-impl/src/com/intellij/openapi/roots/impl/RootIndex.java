@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
@@ -25,6 +26,12 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -51,18 +58,15 @@ class RootIndex {
   private final RootFileSupplier myRootSupplier;
   final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
-  private final DirectoryIndexAnalyticsReporter.BuildRequestKind myBuildRequestKind;
 
-  RootIndex(@NotNull Project project, DirectoryIndexAnalyticsReporter.BuildRequestKind buildRequestKind) {
-    this(project, RootFileSupplier.INSTANCE, buildRequestKind);
+  RootIndex(@NotNull Project project) {
+    this(project, RootFileSupplier.INSTANCE);
   }
 
   RootIndex(@NotNull Project project,
-            @NotNull RootFileSupplier rootSupplier,
-            DirectoryIndexAnalyticsReporter.BuildRequestKind buildRequestKind) {
+            @NotNull RootFileSupplier rootSupplier) {
     myProject = project;
     myRootSupplier = rootSupplier;
-    myBuildRequestKind = buildRequestKind;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (project.isDefault()) {
@@ -73,45 +77,34 @@ class RootIndex {
       LOG.assertTrue(((ModuleManagerEx)manager).areModulesLoaded(), "Directory index can only be queried after project initialization");
     }
 
-    DirectoryIndexAnalyticsReporter.ActivityReporter activityReporter = logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart.MAIN);
-    try {
-      final RootInfo info = buildRootInfo(project, activityReporter);
+    final RootInfo info = buildRootInfo(project);
 
-      activityReporter.reportFinalizingPhaseStarted();
-      Set<VirtualFile> allRoots = info.getAllRoots();
-      MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
-      myRootInfos = new HashMap<>(allRoots.size());
-      myHasNonDirectoryRoots = ContainerUtil.exists(allRoots, r -> !r.isDirectory());
-      myPackagePrefixByRoot = new HashMap<>(allRoots.size());
-      List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
-      for (VirtualFile root : allRoots) {
-        List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
-        hierarchies.add(hierarchy);
-        Pair<DirectoryInfo, String> pair = hierarchy != null
-                                           ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
-                                           : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
-        myRootInfos.put(root, pair.first);
-        String packagePrefix = pair.second;
-        rootsByPackagePrefix.putValue(packagePrefix, root);
-        myPackagePrefixByRoot.put(root, packagePrefix);
+    Set<VirtualFile> allRoots = info.getAllRoots();
+    MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
+    myRootInfos = new HashMap<>(allRoots.size());
+    myHasNonDirectoryRoots = ContainerUtil.exists(allRoots, r -> !r.isDirectory());
+    myPackagePrefixByRoot = new HashMap<>(allRoots.size());
+    List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
+    for (VirtualFile root : allRoots) {
+      List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
+      hierarchies.add(hierarchy);
+      Pair<DirectoryInfo, String> pair = hierarchy != null
+                                         ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
+                                         : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
+      myRootInfos.put(root, pair.first);
+      String packagePrefix = pair.second;
+      rootsByPackagePrefix.putValue(packagePrefix, root);
+      myPackagePrefixByRoot.put(root, packagePrefix);
+    }
+    storeContentsBeneathExcluded(allRoots, hierarchies);
+    storeOutsideProjectRootsButHasContentInside();
+
+    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
+      @Override
+      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+        return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
-      storeContentsBeneathExcluded(allRoots, hierarchies);
-      storeOutsideProjectRootsButHasContentInside();
-
-      myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
-        @Override
-        protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-          return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
-        }
-      };
-    }
-    finally {
-      activityReporter.reportFinished();
-    }
-  }
-
-  private DirectoryIndexAnalyticsReporter.ActivityReporter logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart part) {
-    return DirectoryIndexAnalyticsReporter.reportStarted(myProject, myBuildRequestKind, part);
+    };
   }
 
   private void storeOutsideProjectRootsButHasContentInside() {
@@ -189,12 +182,11 @@ class RootIndex {
   }
 
   @NotNull
-  private RootInfo buildRootInfo(@NotNull Project project, DirectoryIndexAnalyticsReporter.ActivityReporter activity) {
+  private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     boolean includeProjectJdk = true;
 
-    activity.reportWorkspacePhaseStarted();
     for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
@@ -265,15 +257,15 @@ class RootIndex {
         }
       }
     }
+
     if (includeProjectJdk) {
-      activity.reportSdkPhaseStarted();
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null) {
-        fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES), myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
+        fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES),
+                                  myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
       }
     }
 
-    activity.reportAdditionalLibrariesPhaseStarted();
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
@@ -308,7 +300,6 @@ class RootIndex {
       }
     }
 
-    activity.reportExclusionPolicyPhaseStarted();
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), myRootSupplier::findFileByUrl);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, project, policy)));
@@ -316,20 +307,9 @@ class RootIndex {
       Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
 
       if (fun != null) {
-        Set<Sdk> sdks = new HashSet<>();
+        Set<Sdk> sdks = collectSdks();
 
-        for (Module m : ModuleManager.getInstance(myProject).getModules()) {
-          Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
-          if (sdk != null) {
-            sdks.add(sdk);
-          }
-        }
-
-        Set<VirtualFile> roots = new HashSet<>();
-
-        for (Sdk sdk: sdks) {
-          roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
-        }
+        Set<VirtualFile> roots = collectSdkClasses(sdks);
 
         for (Sdk sdk: sdks) {
           for (VirtualFile file : fun.fun(sdk)) {
@@ -347,7 +327,110 @@ class RootIndex {
         }
       }
     }
+
+    EntityStorage snapshot = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
+      handleCustomEntities(provider, info, snapshot);
+    }
+
     return info;
+  }
+
+  private <T extends WorkspaceEntity> void handleCustomEntities(@NotNull CustomEntityProjectModelInfoProvider<T> provider,
+                                                                @NotNull RootInfo info,
+                                                                @NotNull EntityStorage snapshot) {
+    Sequence<T> entities = snapshot.entities(provider.getEntityClass());
+
+    for (CustomEntityProjectModelInfoProvider.CustomContentRoot<T> customContentRoot : SequencesKt.asIterable(provider.getContentRoots(entities))) {
+      VirtualFile root = myRootSupplier.correctRoot(customContentRoot.root, customContentRoot.generativeEntity, provider);
+      if (root == null) {
+        continue;
+      }
+      if (!info.contentRootOf.containsKey(root)) {
+        Module module = ModuleEntityUtils.findModule(customContentRoot.parentModule, snapshot);
+        if (module != null) {
+          info.contentRootOf.put(root, module);
+        }
+      }
+    }
+
+    for (LibraryRoots<T> libraryRoots : SequencesKt.asIterable(provider.getLibraryRoots(entities))) {
+      T entity = libraryRoots.generativeEntity;
+      for (VirtualFile root : libraryRoots.sources) {
+        VirtualFile librarySource = myRootSupplier.correctRoot(root, entity, provider);
+        if (librarySource == null) continue;
+
+        info.libraryOrSdkSources.add(librarySource);
+        info.classAndSourceRoots.add(librarySource);
+        info.sourceOfLibraries.putValue(librarySource, entity);
+      }
+
+      for (VirtualFile root : libraryRoots.classes) {
+        VirtualFile libraryClass = myRootSupplier.correctRoot(root, entity, provider);
+        if (libraryClass == null) continue;
+
+        info.libraryOrSdkSources.add(libraryClass);
+        info.classAndSourceRoots.add(libraryClass);
+        info.classOfLibraries.putValue(libraryClass, entity);
+      }
+
+      for (VirtualFile root : libraryRoots.excluded) {
+        VirtualFile libraryExcluded = myRootSupplier.correctRoot(root, entity, provider);
+        if (libraryExcluded == null) continue;
+
+        info.excludedFromLibraries.putValue(libraryExcluded, entity);
+      }
+
+      SyntheticLibrary.ExcludeFileCondition excludeFileCondition = libraryRoots.excludeFileCondition;
+      if (excludeFileCondition != null) {
+        Set<VirtualFile> allRoots = ContainerUtil.union(libraryRoots.sources, libraryRoots.classes);
+        info.customEntitiesExcludeConditions.put(entity, excludeFileCondition.transformToCondition(allRoots));
+      }
+    }
+    for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
+      SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities))) {
+      T entity = excludeStrategy.generativeEntity;
+      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, myRootSupplier::findFileByUrl);
+      info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
+
+      java.util.function.@Nullable Function<Sdk, List<VirtualFile>> fun = excludeStrategy.excludeSdkRootsStrategy;
+
+      if (fun != null) {
+        Set<Sdk> sdks = collectSdks();
+        Set<VirtualFile> roots = collectSdkClasses(sdks);
+
+        for (Sdk sdk : sdks) {
+          for (VirtualFile file : fun.apply(sdk)) {
+            if (!roots.contains(file)) {
+              ContainerUtil.addIfNotNull(info.excludedFromSdkRoots, myRootSupplier.correctRoot(file, sdk, provider));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static Set<VirtualFile> collectSdkClasses(Set<Sdk> sdks) {
+    Set<VirtualFile> roots = new HashSet<>();
+
+    for (Sdk sdk : sdks) {
+      roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+    }
+    return roots;
+  }
+
+  @NotNull
+  private Set<Sdk> collectSdks() {
+    Set<Sdk> sdks = new HashSet<>();
+
+    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
+      Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
+      if (sdk != null) {
+        sdks.add(sdk);
+      }
+    }
+    return sdks;
   }
 
   private static void fillIndexWithLibraryRoots(RootInfo info, Object container, VirtualFile[] sourceRoots, VirtualFile[] classRoots) {
@@ -377,17 +460,9 @@ class RootIndex {
   @NotNull
   private synchronized OrderEntryGraph getOrderEntryGraph() {
     if (myOrderEntryGraph == null) {
-      DirectoryIndexAnalyticsReporter.ActivityReporter activityReporter =
-        logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart.ORDER_ENTRY_GRAPH);
-      try {
-        RootInfo rootInfo = buildRootInfo(myProject, activityReporter);
-        activityReporter.reportFinalizingPhaseStarted();
-        Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
-        myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
-      }
-      finally {
-        activityReporter.reportFinished();
-      }
+      RootInfo rootInfo = buildRootInfo(myProject);
+      Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
+      myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
     }
     return myOrderEntryGraph;
   }
@@ -802,9 +877,13 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
     @NotNull private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull private final Map<VirtualFile, SourceFolder> sourceFolders = new HashMap<>();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries =
+      MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries =
+      MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries =
+      MultiMap.createSet();
+    @NotNull private final Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
     @NotNull private final Set<VirtualFile> excludedFromProject = new HashSet<>();
     @NotNull private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
     @NotNull private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
@@ -891,15 +970,17 @@ class RootIndex {
     @Nullable
     private Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
                                                                                         boolean source) {
-      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = createLibrarySet();
+      Set</*Library|SyntheticLibrary|WorkspaceEntity*/ Object> librariesToIgnore = createLibrarySet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
         if (source && libraryOrSdkSources.contains(root)) {
-          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, sourceOfLibraries, librariesToIgnore);
+          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, sourceOfLibraries, librariesToIgnore,
+                                                                              customEntitiesExcludeConditions);
           if (found != null) return Pair.create(root, found);
         }
         else if (!source && libraryOrSdkClasses.contains(root)) {
-          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, classOfLibraries, librariesToIgnore);
+          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, classOfLibraries, librariesToIgnore,
+                                                                              customEntitiesExcludeConditions);
           if (found != null) return Pair.create(root, found);
         }
       }
@@ -924,12 +1005,13 @@ class RootIndex {
 
     private static List<Condition<? super VirtualFile>> findInLibraryProducers(@NotNull VirtualFile root,
                                                                                @NotNull MultiMap<VirtualFile, Object> libraryRoots,
-                                                                               @NotNull Set<Object> librariesToIgnore) {
+                                                                               @NotNull Set<Object> librariesToIgnore,
+                                                                               @NotNull Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions) {
       if (!libraryRoots.containsKey(root)) {
         return Collections.emptyList();
       }
       Collection<Object> producers = libraryRoots.get(root);
-      Set</*Library|SyntheticLibrary*/ Object> libraries = new HashSet<>(producers.size());
+      Set</*Library|SyntheticLibrary|WorkspaceEntity*/ Object> libraries = new HashSet<>(producers.size());
       List<Condition<? super VirtualFile>> exclusions = new SmartList<>();
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
@@ -938,6 +1020,22 @@ class RootIndex {
           if (exclusion != null) {
             exclusions.add(exclusion);
             if (exclusion.value(root)) {
+              continue;
+            }
+          }
+          Condition<VirtualFile> constantCondition = ((SyntheticLibrary)library).getConstantExcludeConditionAsCondition();
+          if (constantCondition != null) {
+            exclusions.add(constantCondition);
+            if (constantCondition.value(root)) {
+              continue;
+            }
+          }
+        }
+        else if (library instanceof WorkspaceEntity) {
+          Condition<VirtualFile> condition = customEntitiesExcludeConditions.get(library);
+          if (condition != null) {
+            exclusions.add(condition);
+            if (condition.value(root)) {
               continue;
             }
           }

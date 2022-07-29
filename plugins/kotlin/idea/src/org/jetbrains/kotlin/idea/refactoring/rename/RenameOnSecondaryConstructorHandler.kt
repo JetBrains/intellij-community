@@ -11,8 +11,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.psi.*
 
 
@@ -37,7 +37,7 @@ class RenameOnSecondaryConstructorHandler : RenameHandler {
     override fun isRenaming(dataContext: DataContext): Boolean = isAvailableOnDataContext(dataContext)
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-        CodeInsightUtils.showErrorHint(
+        KotlinSurrounderUtils.showErrorHint(
             project,
             editor,
             KotlinBundle.message("text.rename.is.not.applicable.to.secondary.constructors"),

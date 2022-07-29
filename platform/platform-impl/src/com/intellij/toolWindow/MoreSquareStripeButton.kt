@@ -53,7 +53,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
         override fun actionPerformed(e: AnActionEvent) {
           val moreSquareStripeButton = toolWindowToolbar.moreButton
           ToolwindowSwitcher.invokePopup(e.project!!, Comparator.comparing { it.stripeTitle },
-                                         notVisibleOnStripePredicate,
+                                         e.dataContext, notVisibleOnStripePredicate,
                                          RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
         }
 

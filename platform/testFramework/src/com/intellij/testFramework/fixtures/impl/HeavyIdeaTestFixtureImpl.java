@@ -176,7 +176,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() throws Exception {
-    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true).withBeforeOpenCallback(project -> {
+    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
       project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
@@ -185,13 +185,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           }
         }
       });
-      return true;
     });
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     myProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(generateProjectPath(), options));
-
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
     EdtTestUtil.runInEdtAndWait(() -> {
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();

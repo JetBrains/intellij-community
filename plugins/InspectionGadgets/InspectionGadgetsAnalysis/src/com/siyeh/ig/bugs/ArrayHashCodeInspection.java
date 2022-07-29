@@ -39,7 +39,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    switch (((Kind)infos[1])) {
+    switch ((Kind)infos[1]) {
       case ARRAY_HASH_CODE:
         return InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
       case OBJECTS_HASH:
@@ -59,7 +59,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiArrayType type = (PsiArrayType)infos[0];
     final boolean deepHashCode = type.getComponentType() instanceof PsiArrayType;
-    switch (((Kind)infos[1])) {
+    switch ((Kind)infos[1]) {
       case ARRAY_HASH_CODE:
         return new ArrayHashCodeFix(deepHashCode);
       case OBJECTS_HASH:

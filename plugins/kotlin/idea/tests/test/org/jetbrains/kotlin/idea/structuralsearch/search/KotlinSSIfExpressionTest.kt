@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSIfExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSIfExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "ifExpression"
 
     fun testIf() { doTest("if(true) b = true") }

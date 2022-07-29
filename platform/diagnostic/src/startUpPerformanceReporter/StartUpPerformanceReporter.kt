@@ -17,7 +17,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -26,14 +26,15 @@ import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
+class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceService {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -49,7 +50,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "36"
+    internal const val VERSION = "38"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -75,7 +76,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
   override fun getLastReport() = lastReport
 
-  override fun runActivity(project: Project) {
+  override suspend fun run(project: Project) {
     if (ActivityImpl.listener != null) {
       return
     }
@@ -132,7 +133,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   }
 
   override fun reportStatistics(project: Project) {
-    ForkJoinPool.commonPool().execute {
+    project.coroutineScope.launch {
       keepAndLogStats(project.name)
     }
   }
@@ -216,6 +217,12 @@ private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
   if (!classReport.isNullOrBlank()) {
     generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
   }
+
+  for (instantEvent in instantEvents.filter { setOf("splash shown", "splash hidden").contains(it.name) }) {
+    w.publicStatMetrics.put("event:${instantEvent.name}",
+                            TimeUnit.NANOSECONDS.toMillis(instantEvent.start - StartUpMeasurer.getStartTime()).toInt())
+  }
+
   return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 

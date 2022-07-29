@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -22,12 +23,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
@@ -52,7 +53,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-class RecentProjectFilteringTree(
+internal class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>
@@ -61,38 +62,38 @@ class RecentProjectFilteringTree(
   DefaultMutableTreeNode(RootItem(collectors))
 ) {
   init {
-    treeComponent.apply {
-      val projectActionButtonViewModel = ProjectActionButtonViewModel()
-      val filePathChecker = createFilePathChecker()
-      Disposer.register(parentDisposable, filePathChecker)
+    val projectActionButtonViewModel = ProjectActionButtonViewModel()
+    val filePathChecker = createFilePathChecker()
+    Disposer.register(parentDisposable, filePathChecker)
 
-      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
-      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(tree) }
+    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(treeComponent) }
+    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(treeComponent) }
 
-      val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel, filePathChecker::isValid)
-      addMouseListener(mouseListener)
-      addMouseMotionListener(mouseListener)
-      addTreeWillExpandListener(ToggleStateListener())
+    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid)
+    treeComponent.addMouseListener(mouseListener)
+    treeComponent.addMouseMotionListener(mouseListener)
+    treeComponent.addTreeWillExpandListener(ToggleStateListener())
 
-      putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
-      putClientProperty(
-        RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
-        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) }
-      )
+    treeComponent.putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
+    treeComponent.putClientProperty(
+      RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
+      Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }
+    )
 
-      SmartExpander.installOn(this)
-      TreeHoverToSelectionListener().addTo(this)
+    SmartExpander.installOn(treeComponent)
+    TreeHoverToSelectionListener().addTo(treeComponent)
 
-      isRootVisible = false
-      cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
-      rowHeight = 0 // Fix tree renderer size on macOS
-      background = WelcomeScreenUIManager.getProjectsBackground()
-      toggleClickCount = 0
+    treeComponent.isRootVisible = false
+    treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
+    treeComponent.rowHeight = 0 // Fix tree renderer size on macOS
+    treeComponent.background = WelcomeScreenUIManager.getProjectsBackground()
+    treeComponent.toggleClickCount = 0
 
-      setUI(FullRendererComponentTreeUI())
-      setExpandableItemsEnabled(false)
-      UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-    }
+    treeComponent.setUI(FullRendererComponentTreeUI())
+    treeComponent.setExpandableItemsEnabled(false)
+    UIUtil.setCursor(treeComponent, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+
+    searchModel.updateStructure()
   }
 
   fun updateTree() {
@@ -110,13 +111,6 @@ class RecentProjectFilteringTree(
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
   override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
-
-  override fun rebuildTree() {
-    expandGroups()
-    setSelectionOnLastOpenedProject()
-  }
-
-  override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
   override fun installSearchField(): SearchTextField {
     return super.installSearchField().apply {
@@ -158,7 +152,7 @@ class RecentProjectFilteringTree(
     return RecentProjectPanel.FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
 
-  private fun expandGroups() {
+  internal fun expandGroups() {
     for (child in root.children()) {
       val treeNode = child as DefaultMutableTreeNode
       val item = treeNode.userObject
@@ -172,8 +166,8 @@ class RecentProjectFilteringTree(
     }
   }
 
-  private fun setSelectionOnLastOpenedProject() {
-    val recentProjectsManager = RecentProjectsManagerBase.instanceEx
+  internal fun selectLastOpenedProject() {
+    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
 
     val node = TreeUtil.findNode(root, Condition {
@@ -344,10 +338,10 @@ class RecentProjectFilteringTree(
 
     private inner class RecentProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
-        get() = RecentProjectsManagerBase.instanceEx
+        get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel()
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
       private val projectIconLabel = JLabel().apply {
@@ -361,12 +355,12 @@ class RecentProjectFilteringTree(
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
 
       init {
@@ -451,20 +445,20 @@ class RecentProjectFilteringTree(
 
     private inner class CloneableProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
-        get() = RecentProjectsManagerBase.instanceEx
+        get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
       private val projectIconLabel = JLabel().apply {
         border = JBUI.Borders.empty(8, 0, 0, 8)
@@ -485,11 +479,18 @@ class RecentProjectFilteringTree(
       private val projectProgressBar = JProgressBar().apply {
         isOpaque = false
       }
-      private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(8)
-        preferredSize = JBUI.size(preferredSize).withWidth(PROGRESS_BAR_WIDTH)
+      private val projectProgressBarPanel = object : BorderLayoutPanel() {
+        init {
+          isOpaque = false
+          border = JBUI.Borders.empty(8)
+        }
 
+        override fun getPreferredSize(): Dimension {
+          val size = super.getPreferredSize()
+          size.width = PROGRESS_BAR_WIDTH
+          return size
+        }
+      }.apply {
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
       }

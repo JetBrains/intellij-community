@@ -154,7 +154,7 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
+      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).iterateNodes().first();
       GenericChangesBrowserNode node = ObjectUtils.tryCast(selection, GenericChangesBrowserNode.class);
       if (node == null) return;
 

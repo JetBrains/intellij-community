@@ -147,8 +147,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
           RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
           myWorker = worker;
-          worker.scan();
-          myEvents.addAll(worker.getEvents());
+          myEvents.addAll(worker.scan());
 
           if (types != null) {
             String type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";

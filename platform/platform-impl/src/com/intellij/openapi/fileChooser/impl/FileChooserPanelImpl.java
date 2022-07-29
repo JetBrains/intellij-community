@@ -385,12 +385,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @Override
   public @NotNull List<Path> selectedPaths() {
-    return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList
-           ? myList.getSelectedValuesList().stream()
-             .filter(r -> !FsItem.UPLINK.equals(r.name) && r.path != null && r.path.getParent() != null)
-             .map(r -> r.path)
-             .collect(Collectors.toList())
-           : List.of();
+    return myList.getSelectedValuesList().stream()
+      .filter(r -> !FsItem.UPLINK.equals(r.name) && r.path != null && r.path.getParent() != null)
+      .map(r -> r.path)
+      .collect(Collectors.toList());
   }
 
   @Override
@@ -463,7 +461,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(path, k -> {
           try {
-            return FileSystems.newFileSystem(path, null);
+            //noinspection RedundantCast -- Java 17 compatibility
+            return FileSystems.newFileSystem(path, (ClassLoader)null);
           }
           catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -664,7 +663,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
           try {
-            return FileSystems.newFileSystem(archive, null);
+            //noinspection RedundantCast -- Java 17 compatibility
+            return FileSystems.newFileSystem(archive, (ClassLoader)null);
           }
           catch (IOException e) {
             LOG.warn(e);

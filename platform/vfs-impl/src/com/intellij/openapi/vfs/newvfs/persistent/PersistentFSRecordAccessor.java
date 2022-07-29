@@ -6,12 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.BitUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.RECORD_SIZE;
 
 final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
@@ -26,8 +25,11 @@ final class PersistentFSRecordAccessor {
   @NotNull
   private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
   private final PersistentFSConnection myFSConnection;
+
+  private final Object myNewFreeRecordsSync = new Object();
   @NotNull
-  private final IntList myNewFreeRecords = new IntArrayList();
+  private final IntList myNewFreeRecords = IntLists.synchronize(new IntArrayList(), myNewFreeRecordsSync);
+
 
   PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
                              @NotNull PersistentFSAttributeAccessor attributeAccessor,
@@ -68,13 +70,13 @@ final class PersistentFSRecordAccessor {
     long t = System.currentTimeMillis();
 
     final int fileLength = length();
-    assert fileLength % RECORD_SIZE == 0;
-    int recordCount = fileLength / RECORD_SIZE;
+    assert fileLength % PersistentFSRecordsStorage.recordsLength() == 0;
+    int recordCount = fileLength / PersistentFSRecordsStorage.recordsLength();
 
     IntList usedAttributeRecordIds = new IntArrayList();
     IntList validAttributeIds = new IntArrayList();
     for (int id = 2; id < recordCount; id++) {
-      int flags = connection.getRecords().doGetFlags(id);
+      int flags = connection.getRecords().getFlags(id);
       LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
       boolean isFreeRecord = connection.getFreeRecords().contains(id);
       if (BitUtil.isSet(flags, FREE_RECORD_FLAG)) {
@@ -91,7 +93,7 @@ final class PersistentFSRecordAccessor {
   }
 
   boolean isDeleted(int id) throws IOException {
-    return BitUtil.isSet(myFSConnection.getRecords().doGetFlags(id), FREE_RECORD_FLAG) || myNewFreeRecords.contains(id);
+    return BitUtil.isSet(myFSConnection.getRecords().getFlags(id), FREE_RECORD_FLAG) || myNewFreeRecords.contains(id);
   }
 
   private void checkRecordSanity(int id,
@@ -102,7 +104,7 @@ final class PersistentFSRecordAccessor {
     int parentId = connection.getRecords().getParent(id);
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
-      int parentFlags = connection.getRecords().doGetFlags(parentId);
+      int parentFlags = connection.getRecords().getFlags(parentId);
       assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
       assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
@@ -118,7 +120,9 @@ final class PersistentFSRecordAccessor {
   }
 
   @NotNull IntList getNewFreeRecords() {
-    return myNewFreeRecords;
+    synchronized (myNewFreeRecordsSync) {
+      return new IntArrayList(myNewFreeRecords);
+    }
   }
 
   @Nullable
@@ -130,12 +134,9 @@ final class PersistentFSRecordAccessor {
     return (int)myFSConnection.getRecords().length();
   }
 
-
   private int allocateRecord() {
     return myFSConnection.getRecords().allocateRecord();
   }
-
-
 
   private void deleteContentAndAttributes(int id) throws IOException {
     myPersistentFSContentAccessor.deleteContent(id);

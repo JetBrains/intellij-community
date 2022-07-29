@@ -207,13 +207,11 @@ public class MacWinTabsHandler {
       if (callInAppkit) {
         // call only for shown window and only in Appkit
         Foundation.executeOnMainThread(true, false, () -> {
-          if (newFrame != null) {
-            addTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
-          }
-
           for (int i = 0; i < frames.length; i++) {
+            ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
+            addTabObserver(window);
+
             if (visibleAndHeights[i] == null) {
-              ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
               int styleMask = isTransparentTitleBar ? 0 : Foundation.invoke(window, "styleMask").intValue();
               if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
                 visibleAndHeights[i] = 0;
@@ -235,11 +233,11 @@ public class MacWinTabsHandler {
         });
       }
       else {
-        if (newFrame != null) {
-          Foundation.executeOnMainThread(true, false, () -> {
-            addTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
-          });
-        }
+        Foundation.executeOnMainThread(true, false, () -> {
+          for (IdeFrame frame : frames) {
+            addTabObserver(MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frame).getFrame()));
+          }
+        });
 
         if (newIndex != -1) {
           visibleAndHeights[newIndex] = 0;

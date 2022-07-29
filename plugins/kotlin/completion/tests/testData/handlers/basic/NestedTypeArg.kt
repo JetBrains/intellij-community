@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 import java.util.ArrayList
 
 class Pair<T1, T2>

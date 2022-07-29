@@ -23,11 +23,11 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
         val weighingContext = createEmptyWeighingContext(basicContext.fakeKtFile)
 
         scope.getClassifierSymbols(scopeNameFilter)
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .forEach { addClassifierSymbolToCompletion(it, weighingContext, ImportStrategy.DoNothing) }
 
         scope.getCallableSymbols(scopeNameFilter)
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .forEach {
                 addCallableSymbolToCompletion(
                     createEmptyWeighingContext(basicContext.fakeKtFile),

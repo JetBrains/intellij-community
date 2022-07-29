@@ -1,3 +1,11 @@
+## 38
+
+* `classLoading` changed - added `preparedCount` and `loadedCount` metrics on Linux 
+
+## 37
+
+* add `langLoading` extra data with `elementTypeCount` number
+
 ## 36
 * Do not write empty class loading stats for `plugins` (skipped if `loadedClassCount` is equal to `0`).
 

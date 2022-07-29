@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.serviceContainer
@@ -60,23 +60,21 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     return getInstance(componentManager, null)
   }
 
-  fun <T : Any> getInstance(componentManager: ComponentManagerImpl,
-                            keyClass: Class<T>?,
-                            createIfNeeded: Boolean = true,
-                            indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: ComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
     val instance = initializedInstance as T?
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, keyClass, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
+
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+    val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    checkContainerIsActive(componentManager, indicator)
+    return getInstanceUncached(componentManager, keyClass, indicator)
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkContainerIsActive(componentManager, indicator)
-
+  fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
 
@@ -103,17 +101,15 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
 
         val startTime = StartUpMeasurer.getCurrentTime()
         val implementationClass: Class<T>
-        when {
-          keyClass != null && isImplementationEqualsToInterface() -> {
-            implementationClass = keyClass
-            this.implementationClass = keyClass
-          }
-          else -> {
-            @Suppress("UNCHECKED_CAST")
-            implementationClass = getImplementationClass() as Class<T>
-            // check after loading class once again
-            checkContainerIsActive(componentManager, indicator)
-          }
+        if (keyClass != null && isImplementationEqualsToInterface()) {
+          implementationClass = keyClass
+          this.implementationClass = keyClass
+        }
+        else {
+          @Suppress("UNCHECKED_CAST")
+          implementationClass = getImplementationClass() as Class<T>
+          // check after loading class once again
+          checkContainerIsActive(componentManager, indicator)
         }
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)

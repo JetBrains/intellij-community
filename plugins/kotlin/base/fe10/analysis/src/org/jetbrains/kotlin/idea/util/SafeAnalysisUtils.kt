@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
+import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -47,6 +48,7 @@ inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
+@Deprecated("Use 'org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes()' instead")
 fun PsiElement?.isUnderKotlinSourceRootTypes(): Boolean {
     val ktFile = this?.containingFile.safeAs<KtFile>() ?: return false
     val file = ktFile.virtualFile?.takeIf { it !is VirtualFileWindow && it.fileSystem !is NonPhysicalFileSystem } ?: return false

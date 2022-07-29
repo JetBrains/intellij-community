@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -10,11 +10,12 @@ class StartupPerformanceCollector : CounterUsagesCollector() {
   companion object {
     private val LOG: Logger = Logger.getInstance(StartupPerformanceCollector::class.java)
 
-    private val GROUP = EventLogGroup("startup", 3)
+    private val GROUP = EventLogGroup("startup", 4)
 
     private val DURATION = EventFields.Int("duration")
 
     private val SPLASH_SHOWN = GROUP.registerEvent("splashShown", DURATION)
+    private val SPLASH_HIDDEN = GROUP.registerEvent("splashHidden", DURATION)
     private val PROJECT_FRAME_VISIBLE = GROUP.registerEvent("projectFrameVisible", DURATION)
     private val TOTAL_DURATION = GROUP.registerEvent("totalDuration", DURATION)
 
@@ -27,7 +28,8 @@ class StartupPerformanceCollector : CounterUsagesCollector() {
         "bootstrap" -> BOOTSTRAP.log(duration)
         "splash" -> SPLASH.log(duration)
         "app initialization" -> APP_INIT.log(duration)
-        "splashShown" -> SPLASH_SHOWN.log(duration)
+        "event:splash shown" -> SPLASH_SHOWN.log(duration)
+        "event:splash hidden" -> SPLASH_HIDDEN.log(duration)
         "projectFrameVisible" -> PROJECT_FRAME_VISIBLE.log(duration)
         "totalDuration" -> TOTAL_DURATION.log(duration)
         else -> LOG.error("Trying to log unknown startup performance metric ('$eventId'). To record it, register a corresponding event and increment group version.")

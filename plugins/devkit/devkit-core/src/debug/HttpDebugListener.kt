@@ -10,6 +10,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import java.nio.charset.Charset
 
@@ -39,19 +40,22 @@ class HttpDebugListener : HttpRequestHandler() {
     logger.info("Debugger attach request to a test process by port '$port' as '$name'")
 
     for (project in ProjectManager.getInstance().openProjects) {
-      // Looking for a project with active debug session
-      // TODO: Make it in a better way, check unit test configuration is running
-      val executionManager = ExecutionManager.getInstance(project)
-      if (executionManager.getRunningProcesses().any { !it.isProcessTerminated }) {
-        ApplicationManager.getApplication().invokeAndWait {
-          JavaAttachDebuggerProvider.attach("dt_socket", port, name, project) // NON-NLS
+      if (PsiUtil.isIdeaProject(project)) {
+        // Looking for a project with active debug session
+        // TODO: Make it in a better way, check unit test configuration is running
+        val executionManager = ExecutionManager.getInstance(project)
+        if (executionManager.getRunningProcesses().any { !it.isProcessTerminated }) {
+          ApplicationManager.getApplication().invokeAndWait {
+            JavaAttachDebuggerProvider.attach("dt_socket", port, name, project) // NON-NLS
+          }
+          HttpResponseStatus.OK.send(context.channel(), request)
+          return true
         }
-        HttpResponseStatus.OK.send(context.channel(), request)
-        return true
       }
     }
 
-    logger.info("No projects with active test session found")
-    return false
+    logger.info("No IDEA projects with active test session were found")
+    HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
+    return true
   }
 }

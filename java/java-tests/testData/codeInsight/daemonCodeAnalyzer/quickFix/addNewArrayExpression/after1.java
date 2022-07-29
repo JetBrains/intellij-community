@@ -1,4 +1,4 @@
-// "Add 'new int[]'" "true"
+// "Add 'new int[]'" "true-preview"
 class c {
  void f() {
    int[] a;

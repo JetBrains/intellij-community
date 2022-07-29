@@ -92,6 +92,7 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
             Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
 
             Regex("^KtLightMethodForDecompiledDeclaration of .+:.+$") to TAG_METHOD_DECOMPILED,
+            Regex("^UastFakeDeserializedLightMethod of .+$") to TAG_METHOD_DECOMPILED,
             Regex("^PsiMethod:.+$") to TAG_METHOD_DECOMPILED,
 
             Regex("^KtLightField:.+$") to TAG_VARIABLE,

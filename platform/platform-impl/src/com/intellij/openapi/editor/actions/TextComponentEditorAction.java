@@ -30,6 +30,11 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   @Nullable
   protected Editor getEditor(@NotNull final DataContext dataContext) {
     return getEditorFromContext(dataContext, allowSpeedSearch);

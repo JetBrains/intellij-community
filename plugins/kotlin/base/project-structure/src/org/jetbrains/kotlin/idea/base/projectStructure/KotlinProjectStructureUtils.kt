@@ -15,8 +15,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -137,4 +140,34 @@ fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
 fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
     val project = project ?: return null
     return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
+}
+
+fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): Boolean {
+    return IDELanguageSettingsProvider
+        .getLanguageVersionSettings(this, project)
+        .supportsFeature(feature)
+}
+
+@ApiStatus.Internal
+fun IdeaModuleInfo.supportsAdditionalBuiltInsMembers(project: Project): Boolean {
+    return supportsFeature(project, LanguageFeature.AdditionalBuiltInsMembers)
+}
+
+@ApiStatus.Internal
+fun JpsModuleSourceRoot.getMigratedSourceRootTypeWithProperties(): Pair<JpsModuleSourceRootType<JpsElement>, JpsElement>? {
+    val currentRootType = rootType
+
+    @Suppress("UNCHECKED_CAST")
+    val newSourceRootType: JpsModuleSourceRootType<JpsElement> = when (currentRootType) {
+        JavaSourceRootType.SOURCE -> SourceKotlinRootType as JpsModuleSourceRootType<JpsElement>
+        JavaSourceRootType.TEST_SOURCE -> TestSourceKotlinRootType
+        JavaResourceRootType.RESOURCE -> ResourceKotlinRootType
+        JavaResourceRootType.TEST_RESOURCE -> TestResourceKotlinRootType
+        else -> return null
+    } as JpsModuleSourceRootType<JpsElement>
+
+    val properties = getProperties(rootType)?.also { (it as? JpsElementBase<*>)?.setParent(null) }
+        ?: rootType.createDefaultProperties()
+
+    return newSourceRootType to properties
 }

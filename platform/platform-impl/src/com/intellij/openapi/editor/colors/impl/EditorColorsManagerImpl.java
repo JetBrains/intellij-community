@@ -104,7 +104,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @NonInjectable
   public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes = collectAdditionalTextAttributesEPs();
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes));
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes),
+                                                  null, null, SettingsCategory.UI);
     initDefaultSchemes();
     loadBundledSchemes();
     loadSchemesFromThemes();
@@ -649,11 +650,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private static void notifyAboutSolarizedColorSchemeDeprecationIfSet(@Nullable EditorColorsScheme scheme) {
-    Set<String> solarizedColorSchemeNames = Sets.newHashSet("Solarized (dark)",
-                                                            "Solarized (light)",
-                                                            "Solarized Dark",
-                                                            "Solarized Light",
-                                                            "Solarized Dark (Darcula)");
+    Set<String> solarizedColorSchemeNames = Set.of("Solarized (dark)",
+                                                   "Solarized (light)",
+                                                   "Solarized Dark",
+                                                   "Solarized Light",
+                                                   "Solarized Dark (Darcula)");
     if (scheme == null) {
       return;
     }

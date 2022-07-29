@@ -10,8 +10,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -114,7 +114,7 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
     val propertyType = getPropertyType(property)
     var defaultInitializer: String? = null
     if (generateDefaultInitializers && property.isVar) {
-        defaultInitializer = CodeInsightUtils.defaultInitializer(propertyType)
+        defaultInitializer = propertyType.getDefaultInitializer()
     }
     return createProperty(property, propertyType, defaultInitializer)
 }

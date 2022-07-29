@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ import java.util.*;
 
 /**
  * Extension point for customization maven module import process.
- * Main import logic {@link MavenModuleImporter}.
  */
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
@@ -42,10 +42,16 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
+    return getSuitableImporters(p, false);
+  }
+
+  public static List<MavenImporter> getSuitableImporters(MavenProject p, boolean isWorkspaceImport) {
     List<MavenImporter> result = null;
     Set<ModuleType<?>> moduleTypes = null;
 
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
+      if (isWorkspaceImport && importer.isMigratedToConfigurator()) continue;
+
       if (importer.isApplicable(p)) {
         if (result == null) {
           result = new ArrayList<>();
@@ -120,6 +126,9 @@ public abstract class MavenImporter {
     throws MavenProcessCanceledException {
     resolve(project, mavenProject, nativeMavenProject, embedder);
   }
+
+  @ApiStatus.Experimental
+  public boolean isMigratedToConfigurator() { return false; }
 
   /**
    * Import pre process callback.

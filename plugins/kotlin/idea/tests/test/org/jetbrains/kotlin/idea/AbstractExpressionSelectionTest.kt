@@ -2,20 +2,20 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractExpressionSelectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTestExpressionSelection(path: String) {
         myFixture.configureByFile(path)
-        val expectedExpression = KotlinTestUtils.getLastCommentInFile(getFile() as KtFile)
+        val expectedExpression = KotlinTestUtils.getLastCommentInFile(file as KtFile)
 
         try {
-            selectElement(getEditor(), getFile() as KtFile, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+            selectElement(editor, file as KtFile, ElementKind.EXPRESSION) {
                 assertNotNull("Selected expression mustn't be null", it)
                 assertEquals(expectedExpression, it?.text)
             }

@@ -424,6 +424,11 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
       if (framesList != null) {

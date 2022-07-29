@@ -5,8 +5,10 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -77,7 +79,14 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   public void setupIcon(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
     component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
-    component.setIpad(JBUI.insets(0, 10, 0, 0));
+    if (ExperimentalUI.isNewUI()) {
+      component.setIconTextGap(RendererPanelsUtils.getIconTextGap());
+      Insets ipads = component.getIpad();
+      //noinspection UseDPIAwareInsets
+      component.setIpad(new Insets(ipads.top, 0, ipads.bottom, 0));
+    } else {
+      component.setIpad(JBUI.insets(0, 10, 0, 0));
+    }
   }
 
   @Override

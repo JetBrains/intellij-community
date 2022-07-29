@@ -20,16 +20,15 @@ import java.nio.file.Path
 
 class ScriptSdksBuilder(
     val project: Project,
-    private val sdks: MutableMap<SdkId, Sdk?> = mutableMapOf(),
+    internal val sdks: MutableMap<SdkId, Sdk?> = mutableMapOf(),
     private val remove: Sdk? = null
 ) {
     private val defaultSdk by lazy { getScriptDefaultSdk() }
 
     fun build(): ScriptSdks {
+        val nonIndexedSdks = sdks.values.filterNotNullTo(mutableSetOf())
         val nonIndexedClassRoots = mutableSetOf<VirtualFile>()
         val nonIndexedSourceRoots = mutableSetOf<VirtualFile>()
-
-        val nonIndexedSdks = sdks.values.filterNotNullTo(mutableSetOf())
 
         runReadAction {
             for (module in ModuleManager.getInstance(project).modules.filter { !it.isDisposed }) {
@@ -38,9 +37,9 @@ class ScriptSdksBuilder(
                 nonIndexedSdks.remove(ModuleRootManager.getInstance(module).sdk)
             }
 
-            nonIndexedSdks.forEach {
-                nonIndexedClassRoots.addAll(it.rootProvider.getFiles(OrderRootType.CLASSES))
-                nonIndexedSourceRoots.addAll(it.rootProvider.getFiles(OrderRootType.SOURCES))
+            nonIndexedSdks.forEach { sdk ->
+                nonIndexedClassRoots += sdk.rootProvider.getFiles(OrderRootType.CLASSES)
+                nonIndexedSourceRoots += sdk.rootProvider.getFiles(OrderRootType.SOURCES)
             }
         }
 

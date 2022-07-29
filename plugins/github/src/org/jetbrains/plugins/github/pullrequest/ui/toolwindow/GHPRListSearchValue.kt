@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
@@ -17,7 +18,20 @@ internal data class GHPRListSearchValue(override val searchQuery: String? = null
                                         val reviewState: ReviewState? = null,
                                         val author: String? = null,
                                         val label: String? = null) : ReviewListSearchValue {
-  override val isEmpty = searchQuery == null && state == null && assignee == null && reviewState == null && author == null && label == null
+
+  @Transient
+  override val filterCount: Int = calcFilterCount()
+
+  private fun calcFilterCount(): Int {
+    var count = 0
+    if (searchQuery != null) count++
+    if (state != null) count++
+    if (assignee != null) count++
+    if (reviewState != null) count++
+    if (author != null) count++
+    if (label != null) count++
+    return count
+  }
 
   fun toQuery(): GHPRSearchQuery? {
     val terms = mutableListOf<Term<*>>()

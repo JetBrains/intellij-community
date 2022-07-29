@@ -10,8 +10,8 @@ import com.intellij.psi.util.parentOfType
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
@@ -26,10 +26,10 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArgument
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -103,7 +103,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 )
             }
 
-        getAvailableClassifiersFromIndex(indexHelper, scopeNameFilter, visibilityChecker)
+        getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
             .forEach { classifier ->
                 if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
 
@@ -142,7 +142,7 @@ internal class FirWhenWithSubjectConditionContributor(
         allInheritors
             .asSequence()
             .filter { it.classIdIfNonLocal !in handledCasesClassIds }
-            .filter { with(visibilityChecker) { isVisible(it as KtClassifierSymbol) } }
+            .filter {  visibilityChecker.isVisible(it as KtClassifierSymbol) }
             .forEach { inheritor ->
                 val classId = inheritor.classIdIfNonLocal ?: return@forEach
                 addLookupElement(
@@ -210,7 +210,7 @@ internal class FirWhenWithSubjectConditionContributor(
         val allEnumEntrySymbols = classSymbol.getEnumEntries()
         allEnumEntrySymbols
             .filter { it.name !in handledCasesNames }
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .forEach { entry ->
                 addLookupElement(
                     "${classSymbol.name.asString()}.${entry.name.asString()}",
@@ -287,7 +287,7 @@ private object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditio
             )
             commitDocument()
 
-            shortenReferencesForFirCompletion(ktFile, TextRange(startOffset, tailOffset))
+            shortenReferencesInRange(ktFile, TextRange(startOffset, tailOffset))
         }
     }
 }
@@ -296,6 +296,7 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
     return if (prefixNeeded) "is " else ""
 }
 
+@Suppress("AnalysisApiMissingLifetimeControlOnCallable")
 private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : TObjectHashingStrategy<KtNamedClassOrObjectSymbol> {
     override fun equals(p0: KtNamedClassOrObjectSymbol, p1: KtNamedClassOrObjectSymbol): Boolean =
         p0.classIdIfNonLocal == p1.classIdIfNonLocal

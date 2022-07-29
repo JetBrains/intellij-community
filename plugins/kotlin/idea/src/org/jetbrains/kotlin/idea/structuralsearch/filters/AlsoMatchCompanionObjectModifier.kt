@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.structuralsearch.filters
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class AlsoMatchCompanionObjectModifier : OneStateFilter(
     KotlinBundle.lazyMessage("modifier.match.companion.object"),

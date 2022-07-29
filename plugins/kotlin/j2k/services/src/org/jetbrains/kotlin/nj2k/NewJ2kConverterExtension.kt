@@ -6,10 +6,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasAnyKotlinRuntimeInScope
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
-import org.jetbrains.kotlin.idea.configuration.toModuleGroup
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.nj2k.postProcessing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.platform.jvm.isJvm

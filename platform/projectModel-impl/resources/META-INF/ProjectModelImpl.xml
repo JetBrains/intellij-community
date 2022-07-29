@@ -10,8 +10,9 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
-    <extensionPoint name="directoryIndexAnalyticsReporter" interface="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporter"
-                    area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="customEntityProjectModelInfoProvider"
+                    interface="com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
@@ -32,8 +33,6 @@
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
-
-    <projectService serviceImplementation="com.intellij.workspaceModel.ide.WorkspaceModelTopics"/>
 
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
                     serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * 'white space symbols' if necessary.
  *
  * @author Denis Zhdanov
+ * @see WhiteSpaceFormattingStrategyFactory
  */
 public interface WhiteSpaceFormattingStrategy {
 
@@ -58,6 +59,7 @@ public interface WhiteSpaceFormattingStrategy {
    *            {@code false} to indicate that current strategy should be used in composition with default strategy
    *            if any, i.e. particular symbols sequence should be considered as white spaces if any of composed
    *            strategies defines so
+   * @see WhiteSpaceFormattingStrategyFactory#DEFAULT_STRATEGY
    */
   boolean replaceDefaultStrategy();
 

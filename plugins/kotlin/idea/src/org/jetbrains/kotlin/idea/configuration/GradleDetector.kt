@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.idea.base.util.isGradleModule
 
 val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
 
 class GradleDetector : BuildSystemTypeDetector {
     override fun detectBuildSystemType(module: Module): BuildSystemType? {
-        if (module.isGradleModule()) {
+        if (module.isGradleModule) {
             if (FacetManager.getInstance(module).allFacets.any { it.name == "Android" }) {
                 return BuildSystemType.AndroidGradle
             }
@@ -18,8 +18,4 @@ class GradleDetector : BuildSystemTypeDetector {
         }
         return null
     }
-}
-
-fun Module.isGradleModule(): Boolean {
-    return ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
 }

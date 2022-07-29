@@ -9,8 +9,6 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
   val module: ObjModule
     get() = _module.require()
 
-  val fullId get() = Id(id)
-
   data class Id(val id: Int)
 
   val structure: TStructure<T, B> = TStructure(this, base?.structure)

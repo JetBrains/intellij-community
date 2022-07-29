@@ -211,8 +211,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException {
-    return debugger(threadId).loadFrame(threadId, frameId);
+  public XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE group_type) throws PyDebuggerException {
+    return debugger(threadId).loadFrame(threadId, frameId, group_type);
   }
 
   @Override

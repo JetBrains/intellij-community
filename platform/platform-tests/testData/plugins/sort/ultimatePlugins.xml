@@ -804,13 +804,6 @@
     <depends optional="true">com.intellij.modules.java</depends>
     <depends optional="true">-XPathView-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javaee.tapestry/META-INF/plugin.xml">
-    <id>-com-intellij-tapestry-</id>
-    <name>Tapestry</name>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-com-intellij-properties-</depends>
-    <depends optional="true">-com-intellij-css-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.osgi/META-INF/plugin.xml">
     <id>-Osmorc-</id>
     <name>OSGi</name>

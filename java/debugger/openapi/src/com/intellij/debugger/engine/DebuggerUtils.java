@@ -554,12 +554,13 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    return SyntheticTypeComponentProvider.EP_NAME.extensions().noneMatch(provider -> provider.isNotSynthetic(typeComponent)) &&
-           SyntheticTypeComponentProvider.EP_NAME.extensions().anyMatch(provider -> provider.isSynthetic(typeComponent));
+    if (SyntheticTypeComponentProvider.EP_NAME.getExtensionList().stream().anyMatch(provider -> provider.isNotSynthetic(typeComponent))) return false;
+    return SyntheticTypeComponentProvider.EP_NAME.getExtensionList().stream().anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
-    return SimplePropertyGetterProvider.EP_NAME.extensions().anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
+    return SimplePropertyGetterProvider.EP_NAME.getExtensionList().stream()
+      .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
   public static boolean isPrimitiveType(final String typeName) {
@@ -603,7 +604,7 @@ public abstract class DebuggerUtils {
       return true;
     }
 
-    return JavaDebugAware.EP_NAME.extensions().anyMatch(provider -> provider.isBreakpointAware(file));
+    return JavaDebugAware.EP_NAME.getExtensionList().stream().anyMatch(provider -> provider.isBreakpointAware(file));
   }
 
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {

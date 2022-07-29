@@ -4,10 +4,13 @@ package com.intellij.lang.documentation.ide.actions
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 
 internal class ToggleAutoShowAction : ToggleAction(), ActionToIgnore {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project

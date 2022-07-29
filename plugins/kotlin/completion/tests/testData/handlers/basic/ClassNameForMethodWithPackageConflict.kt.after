@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 // WITH_STDLIB
 
 fun buildTemplates() {

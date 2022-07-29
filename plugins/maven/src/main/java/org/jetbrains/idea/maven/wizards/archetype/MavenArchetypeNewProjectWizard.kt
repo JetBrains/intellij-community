@@ -18,12 +18,14 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxWithSpinner
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
@@ -37,6 +39,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.collectionModel
 import com.intellij.openapi.ui.naturalSorted
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -61,6 +64,7 @@ import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JList
 
@@ -92,7 +96,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   private class Step(parent: GitNewProjectWizardStep) : MavenNewProjectWizardStep<GitNewProjectWizardStep>(parent) {
 
-    private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenArchetypeNewProjectWizard", 1)
+    private val backgroundExecutor = AppExecutorUtil.getAppExecutorService();
+
+    @Volatile
+    private var myTask: BackgroundTaskUtil.BackgroundTask<*>? = null
 
     val catalogItemProperty = propertyGraph.property<MavenCatalog>(MavenCatalog.System.Internal)
     val archetypeItemProperty = propertyGraph.property(ArchetypeItem.NONE)
@@ -104,10 +111,12 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     var archetypeVersion by archetypeVersionProperty
     var archetypeDescriptor by archetypeDescriptorProperty
 
+
     private lateinit var catalogComboBox: ComboBox<MavenCatalog>
-    private lateinit var archetypeComboBox: TextCompletionComboBox<ArchetypeItem>
+    private lateinit var archetypeComboBox: TextCompletionComboBoxWithSpinner<ArchetypeItem>
     private lateinit var archetypeVersionComboBox: TextCompletionComboBox<String>
     private lateinit var archetypeDescriptorTable: PropertiesTable
+    private val myTimestamp = AtomicInteger(0)
 
     init {
       catalogItemProperty.afterChange { reloadArchetypes() }
@@ -137,7 +146,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         }.topGap(TopGap.SMALL)
         row {
           layout(RowLayout.LABEL_ALIGNED)
-          archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
+          archetypeComboBox = TextCompletionComboBoxWithSpinner(context.project, ArchetypeConverter())
           label(MavenWizardBundle.message("maven.new.project.wizard.archetype.label"))
             .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
             .applyToComponent { icon = AllIcons.General.ContextHelp }
@@ -213,18 +222,27 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       return null
     }
 
-    private fun <R> Component.executeBackgroundTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
-      BackgroundTaskUtil.execute(backgroundExecutor, context.disposable) {
+    private fun <R> Component.executeBackgroundTask(beforeStart: () -> Unit, onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      val capturedTs = myTimestamp.incrementAndGet();
+
+      beforeStart()
+      myTask?.cancel()
+      myTask = BackgroundTaskUtil.submitTask(backgroundExecutor, context.disposable)
+      {
         val result = onBackgroundThread()
-        invokeLater(ModalityState.stateForComponent(this)) {
-          onUiThread(result)
+        if (capturedTs == myTimestamp.get()) {
+          invokeLater(ModalityState.stateForComponent(this)) {
+            onUiThread(result)
+          }
         }
       }
+      Disposer.register(context.disposable) { myTask?.cancel() };
+
     }
 
-    private fun Component.invokeWhenBackgroundTasksFinished(onUiThread: () -> Unit) {
-      /** [backgroundExecutor] has one worker, so we can schedule NOP task and call callback when it completed. */
-      executeBackgroundTask(onBackgroundThread = /*NOP*/{}, onUiThread = { onUiThread() })
+    private fun <R> Component.executeBackgroundTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
+      executeBackgroundTask({}, onBackgroundThread, onUiThread);
     }
 
     private fun reloadCatalogs() {
@@ -256,6 +274,9 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       archetypeComboBox.collectionModel.removeAll()
       archetypeItem = ArchetypeItem.NONE
       archetypeComboBox.executeBackgroundTask(
+        beforeStart = {
+          archetypeComboBox.spinning = true
+        },
         onBackgroundThread = {
           archetypeManager.getArchetypes(catalogItem)
             .groupBy { ArchetypeItem.Id(it) }
@@ -263,6 +284,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .naturalSorted()
         },
         onUiThread = { archetypes ->
+          archetypeComboBox.spinning = false
           archetypeComboBox.collectionModel.replaceAll(archetypes)
           archetypeItem = ArchetypeItem.NONE
         }
@@ -285,12 +307,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         catalogComboBox.collectionModel.add(catalog)
       }
       catalogItem = catalog ?: MavenCatalog.System.Internal
-      archetypeComboBox.invokeWhenBackgroundTasksFinished {
-        archetypeComboBox.text = "${archetype.groupId}:${archetype.artifactId}"
-        archetypeVersionComboBox.invokeWhenBackgroundTasksFinished {
-          archetypeVersionComboBox.text = archetype.version
-        }
-      }
+      myTimestamp.incrementAndGet()
+      archetypeComboBox.spinning = false
+      archetypeComboBox.text = "${archetype.groupId}:${archetype.artifactId}"
+      archetypeVersionComboBox.text = archetype.version
     }
 
     private fun reloadArchetypeVersions() {

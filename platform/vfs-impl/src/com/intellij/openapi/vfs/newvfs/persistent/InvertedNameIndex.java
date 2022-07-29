@@ -60,7 +60,6 @@ final class InvertedNameIndex {
   static void clear() {
     myRwLock.writeLock().lock();
     try {
-      FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
       ourSingleData.clear();
       ourMultiData.clear();
     }

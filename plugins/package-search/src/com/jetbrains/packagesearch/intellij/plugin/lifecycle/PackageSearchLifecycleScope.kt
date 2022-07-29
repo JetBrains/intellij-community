@@ -20,6 +20,7 @@ package com.jetbrains.packagesearch.intellij.plugin.lifecycle
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -28,13 +29,13 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlin.math.max
 
-@Service(Service.Level.PROJECT)
+@Service(Level.PROJECT)
 internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
     private inline val threadCount
         get() = max(1, 2 * Runtime.getRuntime().availableProcessors() / 3)
 
-    internal val dispatcher =
+    internal val coroutineDispatcher =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
             /* name = */ this::class.simpleName!!,
             /* maxThreads = */ threadCount
@@ -42,10 +43,10 @@ internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
     private val supervisor = SupervisorJob()
 
-    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + dispatcher
+    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + coroutineDispatcher
 
     override fun dispose() {
-        supervisor.invokeOnCompletion { dispatcher.close() }
+        supervisor.invokeOnCompletion { coroutineDispatcher.close() }
         cancel("Disposing ${this::class.simpleName}")
     }
 }

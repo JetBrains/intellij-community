@@ -72,14 +72,14 @@ abstract class LibraryInfo(
     internal val isDisposed
         get() = if (library is LibraryEx) library.isDisposed else false
 
-    fun checkValidity() {
+    override fun checkValidity() {
         if (isDisposed) {
             throw AlreadyDisposedException("Library '${name}' is already disposed")
         }
     }
 
     override fun toString() =
-        "${this::class.simpleName}(libraryName=${library.name}${if (isDisposed) ", libraryRoots=${getLibraryRoots()})" else ""}"
+        "${this::class.simpleName}(libraryName=${library.name}${if (!isDisposed) ", libraryRoots=${getLibraryRoots()}" else " -disposed-"})"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

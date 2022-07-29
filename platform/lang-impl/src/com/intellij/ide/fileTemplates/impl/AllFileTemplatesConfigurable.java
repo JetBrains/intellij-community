@@ -153,7 +153,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     }
     @SuppressWarnings("UnresolvedPropertyKey")
     final String nameTemplate = IdeBundle.message("template.copy.N.of.T");
-    String name = MessageFormat.format(nameTemplate, "", selected.getName());
+
+    String name = FileTemplateBase.isChild(selected) && selected instanceof FileTemplateBase 
+                  ? ((FileTemplateBase)selected).getChildName(selected.getChildren().length)
+                  : MessageFormat.format(nameTemplate, "", selected.getName());
     int i = 0;
     while (names.contains(name)) {
       name = MessageFormat.format(nameTemplate, ++i + " ", selected.getName());

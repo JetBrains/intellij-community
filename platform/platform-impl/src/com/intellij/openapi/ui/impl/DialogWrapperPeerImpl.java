@@ -57,6 +57,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
@@ -379,9 +380,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  public ActionCallback show() {
+  public CompletableFuture<?> show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
-    final ActionCallback result = new ActionCallback();
+    final CompletableFuture<Void> result = new CompletableFuture<Void>();
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
@@ -464,7 +465,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
 
-      myDialog.getFocusManager().doWhenFocusSettlesDown(result.createSetDoneRunnable());
+      myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));
     }
 
     return result;

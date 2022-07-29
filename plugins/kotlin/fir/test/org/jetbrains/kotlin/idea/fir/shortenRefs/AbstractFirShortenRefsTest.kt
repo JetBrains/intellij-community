@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val captureExceptions: Boolean = false
 
+    override fun isFirPlugin(): Boolean = true
+
     override fun doTest(file: KtFile): String? {
         val selectionModel = myFixture.editor.selectionModel
         if (!selectionModel.hasSelection()) error("No selection in input file")

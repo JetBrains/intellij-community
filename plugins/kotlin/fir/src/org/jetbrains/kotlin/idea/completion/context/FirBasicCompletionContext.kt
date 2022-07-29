@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
@@ -24,6 +25,7 @@ internal class FirBasicCompletionContext(
     val project: Project,
     val targetPlatform: TargetPlatform,
     val indexHelper: HLIndexHelper,
+    val symbolFromIndexProvider: KtSymbolFromIndexProvider,
     val lookupElementFactory: KotlinFirLookupElementFactory = KotlinFirLookupElementFactory(),
 ) {
     val visibleScope = KotlinSourceFilterScope.projectFiles(originalKtFile.resolveScope, project)
@@ -45,7 +47,8 @@ internal class FirBasicCompletionContext(
                 fakeKtFile,
                 project,
                 targetPlatform,
-                indexHelper
+                indexHelper,
+                KtSymbolFromIndexProvider(project),
             )
         }
 

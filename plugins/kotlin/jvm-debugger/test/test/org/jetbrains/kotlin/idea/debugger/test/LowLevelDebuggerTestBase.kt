@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.codegen.CodegenTestCase
-import org.jetbrains.kotlin.idea.codegen.GenerationUtils
 import java.io.File
 import java.io.IOException
 import java.net.Socket

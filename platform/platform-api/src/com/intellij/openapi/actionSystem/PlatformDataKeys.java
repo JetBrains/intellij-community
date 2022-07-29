@@ -5,6 +5,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
@@ -27,6 +28,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
   public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");
+  public static final DataKey<FileEditor> LAST_ACTIVE_FILE_EDITOR = DataKey.create("LAST_ACTIVE_FILE_EDITOR");
 
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 

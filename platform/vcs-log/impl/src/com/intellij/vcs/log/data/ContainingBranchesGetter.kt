@@ -2,6 +2,8 @@
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -12,7 +14,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
-import com.intellij.vcs.log.util.StopWatch
 import org.jetbrains.annotations.CalledInAny
 import java.awt.EventQueue
 
@@ -139,16 +140,14 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      val sw = StopWatch.start("get containing branches")
-      return try {
-        getContainingBranches(myProvider, myRoot, myHash)
-      }
-      catch (e: VcsException) {
-        LOG.warn(e)
-        emptyList()
-      }
-      finally {
-        sw.report()
+      TraceManager.getTracer("vcs").spanBuilder("get containing branches").useWithScope {
+        return try {
+          getContainingBranches(myProvider, myRoot, myHash)
+        }
+        catch (e: VcsException) {
+          LOG.warn(e)
+          emptyList()
+        }
       }
     }
 

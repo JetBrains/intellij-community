@@ -152,11 +152,13 @@ public final class VfsData {
     return id & OFFSET_MASK;
   }
 
-  @Nullable @Contract("_,true->!null")
+  @Contract("_,true->!null")
   public Segment getSegment(int id, boolean create) {
     int key = id >>> SEGMENT_BITS;
     Segment segment = mySegments.get(key);
-    if (segment != null || !create) return segment;
+    if (segment != null || !create) {
+      return segment;
+    }
     return mySegments.cacheOrGet(key, new Segment(this));
   }
 

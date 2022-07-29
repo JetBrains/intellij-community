@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -31,7 +33,6 @@ import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.Path
-import com.intellij.ide.RecentProjectsManagerBase.Companion.instanceEx as ProjectIcon
 
 /**
  * @author Konstantin Bulenkov
@@ -106,7 +107,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
 
 class ProjectIconUI(val projectPath: @SystemIndependent String) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
-  val iconLabel = JBLabel(ProjectIcon.getProjectIcon(projectPath, false))
+  val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, false))
   var pathToIcon: VirtualFile? = null
   val removeIcon = createToolbar()
   var iconRemoved = false

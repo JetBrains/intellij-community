@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -9,23 +8,15 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.AdditionalLibraryRootsListener
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -41,10 +32,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings()) {
-      val initialDetectionListener = InitialMappingsDetectionListener()
-      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, initialDetectionListener)
-      busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, initialDetectionListener)
-
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, InitialMappingsDetectionListener())
       queue.queue(InitialFullScan())
     }
   }
@@ -126,39 +114,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class MyWorkspaceModelChangeListener : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-      val removedUrls = mutableSetOf<VirtualFileUrl>()
-      val addedUrls = mutableSetOf<VirtualFileUrl>()
-
-      val changes = event.getChanges(ContentRootEntity::class.java)
-      for (change in changes) {
-        when (change) {
-          is EntityChange.Removed<ContentRootEntity> -> {
-            removedUrls.add(change.entity.url)
-          }
-          is EntityChange.Added<ContentRootEntity> -> {
-            addedUrls.add(change.entity.url)
-          }
-          is EntityChange.Replaced<ContentRootEntity> -> {
-            if (change.oldEntity.url != change.newEntity.url) {
-              removedUrls.add(change.oldEntity.url)
-              addedUrls.add(change.newEntity.url)
-            }
-          }
-        }
-      }
-
-      val fileManager = VirtualFileManager.getInstance()
-      val removed = removedUrls
-        .filter { !addedUrls.contains(it) } // do not process 'modifications' of any kind
-        .mapNotNull { fileManager.findFileByUrl(it.url) }
-        .filter { it.isDirectory }
-      val added = addedUrls
-        .filter { !removedUrls.contains(it) } // do not process 'modifications' of any kind
-        .mapNotNull { fileManager.findFileByUrl(it.url) }
-        .filter { it.isDirectory }
-
+  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
         synchronized(dirtyContentRoots) {
           dirtyContentRoots.addAll(added)
@@ -175,25 +132,16 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class InitialMappingsDetectionListener : ModuleRootListener, AdditionalLibraryRootsListener {
-    override fun rootsChanged(event: ModuleRootEvent) {
-      scheduleRescan()
+  private inner class InitialMappingsDetectionListener : ContentRootChangeListener(skipFileChanges = true) {
+    override fun changed(event: VersionedStorageChange) {
+      if (!vcsManager.needAutodetectMappings()) return
+      super.changed(event)
     }
 
-    override fun libraryRootsChanged(presentableLibraryName: String?,
-                                     oldRoots: MutableCollection<out VirtualFile>,
-                                     newRoots: MutableCollection<out VirtualFile>,
-                                     libraryNameForDebug: String) {
-      scheduleRescan()
-    }
-
-    private fun scheduleRescan() {
-      if (vcsManager.needAutodetectMappings()) {
-        queue.queue(DelayedFullScan())
-      }
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+      queue.queue(DelayedFullScan())
     }
   }
-
 
   internal class MyPostStartUpActivity : StartupActivity.DumbAware {
     init {

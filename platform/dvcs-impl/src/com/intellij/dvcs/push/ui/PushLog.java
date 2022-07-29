@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -50,8 +49,6 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -321,22 +318,16 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     labelPanel.setBackground(RenderingUtil.getBackground(myTree));
     final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.message("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
-    linkLabel.setListener(new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
-        if (linkLabel.isEnabled()) {
-          startSyncEditing();
-        }
+    linkLabel.setListener((aSource, aLinkData) -> {
+      if (linkLabel.isEnabled()) {
+        startSyncEditing();
       }
     }, null);
-    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        Boolean editMode = (Boolean)evt.getNewValue();
-        linkLabel.setEnabled(!editMode);
-        linkLabel.setPaintUnderline(!editMode);
-        linkLabel.repaint();
-      }
+    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, evt -> {
+      Boolean editMode = (Boolean)evt.getNewValue();
+      linkLabel.setEnabled(!editMode);
+      linkLabel.setPaintUnderline(!editMode);
+      linkLabel.repaint();
     });
     labelPanel.add(linkLabel, BorderLayout.EAST);
     return labelPanel;
@@ -455,7 +446,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
   public Object getData(@NotNull String id) {
     if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return collectAllChanges(commitNodes).toArray(new Change[0]);
+      return collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
@@ -498,11 +489,11 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing() && e.getModifiers() == 0 && pressed) {
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing() && e.getModifiersEx() == 0 && pressed) {
       myTree.stopEditing();
       return true;
     }
-    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
+    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && pressed) {
       startSyncEditing();
       return true;
     }
@@ -675,11 +666,11 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
   private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
 
-    private RepositoryWithBranchPanel myValue;
+    private RepositoryWithBranchPanel<?> myValue;
 
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
+      RepositoryWithBranchPanel<?> panel = (RepositoryWithBranchPanel<?>)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
       myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
       return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
@@ -716,7 +707,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     private final ComponentListener myTreeSizeListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        // invalidate, revalidate etc may have no 'size' effects, you need to manually invalidateSizes before.
+        // invalidate, revalidate etc. may have no 'size' effects, you need to manually invalidateSizes before.
         updateSizes();
       }
     };

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.slicer.SliceUsage
 import com.intellij.usages.UsagePresentation
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinSliceDereferenceUsage(
     element: PsiElement,

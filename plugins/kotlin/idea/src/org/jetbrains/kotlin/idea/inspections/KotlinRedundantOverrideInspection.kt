@@ -6,12 +6,12 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
-import org.jetbrains.kotlin.idea.util.hasNonSuppressAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -26,14 +26,16 @@ import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         namedFunctionVisitor(fun(function) {
             val funKeyword = function.funKeyword ?: return
             val modifierList = function.modifierList ?: return
             if (!modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
-            if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
-            if (function.hasNonSuppressAnnotation) return
+            if (Holder.MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
+            if (KotlinPsiHeuristics.hasNonSuppressAnnotations(function)) return
             if (function.containingClass()?.isData() == true) return
 
             val bodyExpression = function.bodyExpression ?: return
@@ -72,7 +74,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             val overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
             if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
             if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
-                if (superCallDescriptor.fqNameSafe in METHODS_OF_ANY) return
+                if (superCallDescriptor.fqNameSafe in Holder.METHODS_OF_ANY) return
                 if (superCallDescriptor.isOverridingMethodOfAny() && !superCallDescriptor.isImplementedInContainingClass()) return
             }
             if (function.isAmbiguouslyDerived(overriddenDescriptors, context)) return
@@ -103,7 +105,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
     }
 
     private fun CallableDescriptor.isOverridingMethodOfAny() =
-        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in METHODS_OF_ANY }
+        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in Holder.METHODS_OF_ANY }
 
     private fun CallableDescriptor.isImplementedInContainingClass() =
         (containingDeclaration as? LazyClassDescriptor)?.declaredCallableMembers.orEmpty().any { it == this }
@@ -136,9 +138,9 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
         }
     }
 
-    companion object {
-        private val MODIFIER_EXCLUDE_OVERRIDE = KtTokens.MODIFIER_KEYWORDS_ARRAY.asList() - KtTokens.OVERRIDE_KEYWORD
-        private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }
+    private object Holder {
+        val MODIFIER_EXCLUDE_OVERRIDE = KtTokens.MODIFIER_KEYWORDS_ARRAY.asList() - KtTokens.OVERRIDE_KEYWORD
+        val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }
     }
 }
 

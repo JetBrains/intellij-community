@@ -11,12 +11,13 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.LOW
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MAJOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.NORMAL
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.ZERO
+import org.jetbrains.kotlin.idea.debugger.base.util.safeArguments
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext

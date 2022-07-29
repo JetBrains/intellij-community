@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
@@ -37,12 +37,12 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildStepsToSkip.addAll(listOf(
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
-    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
+    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
   ))
-  options.buildDmgWithBundledJre = false
-  options.buildDmgWithoutBundledJre = false
+  options.buildMacArtifactsWithRuntime = false
+  options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.useCompiledClassesFromProjectOutput = true
@@ -146,7 +146,7 @@ fun runTestBuild(
       onFinish(buildContext)
     }
     catch (e: Throwable) {
-      if (e !is FileComparisonFailure) {
+      if (e !is FileComparisonData) {
         span.recordException(e)
       }
       span.setStatus(StatusCode.ERROR)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -84,7 +84,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
    *   <li>The current {@link PsiSwitchLabelStatement} is the switch label where it's legal to resolve the passed element.
    *      <p>
    *        Read more about scopes of variables in pattern matching for switch statements in
-   *        <a href="https://openjdk.java.net/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
+   *        <a href="https://openjdk.org/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
    *      </p>
    *   </li>
    * </ol>

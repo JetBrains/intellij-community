@@ -35,7 +35,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
-import com.jetbrains.python.ui.ManualPathEntryDialog
+import com.jetbrains.python.ui.remotePathEditor.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier
 import javax.swing.JComboBox
@@ -94,7 +94,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
                                    title,
                                    PY_SDK_COMBOBOX_TEXT_ACCESSOR,
                                    childComponent,
-                                   Supplier { targetEnvironmentConfiguration })
+                                   Supplier { targetEnvironmentConfiguration },
+                                   true)
         }
         else {
           // The fallback where the path is entered manually

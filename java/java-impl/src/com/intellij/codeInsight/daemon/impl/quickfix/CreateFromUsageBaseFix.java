@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -116,6 +117,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
+    if (IntentionPreviewUtils.isPreviewElement(targetFile)) {
+      Editor editor = IntentionPreviewUtils.getPreviewEditor();
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(textOffset);
+      }
+      return editor;
+    }
     VirtualFile file = targetFile.getVirtualFile();
     if (file == null) {
       file = PsiUtilCore.getVirtualFile(element);

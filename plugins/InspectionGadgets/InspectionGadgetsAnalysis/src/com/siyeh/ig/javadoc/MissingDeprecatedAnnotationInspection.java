@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -107,6 +108,10 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
+      doFix(project, descriptor, false);
+    }
+
+    private static void doFix(Project project, ProblemDescriptor descriptor, boolean inPreview) {
       PsiElement parent = descriptor.getPsiElement().getParent();
       if (!(parent instanceof PsiJavaDocumentedElement)) {
         return;
@@ -116,12 +121,12 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       if (docComment != null) {
         PsiDocTag existingTag = docComment.findTagByName(DEPRECATED_TAG_NAME);
         if (existingTag != null) {
-          moveCaretAfter(existingTag);
+          moveCaretAfter(existingTag, inPreview);
           return;
         }
         PsiDocTag deprecatedTag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + DEPRECATED_TAG_NAME + " TODO: explain");
         PsiElement addedTag = docComment.add(deprecatedTag);
-        moveCaretAfter(addedTag);
+        moveCaretAfter(addedTag, inPreview);
       }
       else {
         @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
@@ -131,13 +136,22 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
         if (addedComment instanceof PsiDocComment) {
           PsiDocTag addedTag = ((PsiDocComment)addedComment).findTagByName(DEPRECATED_TAG_NAME);
           if (addedTag != null) {
-            moveCaretAfter(addedTag);
+            moveCaretAfter(addedTag, inPreview);
           }
         }
       }
     }
 
-    private static void moveCaretAfter(PsiElement newCaretPosition) {
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      doFix(project, previewDescriptor, true);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    private static void moveCaretAfter(PsiElement newCaretPosition, boolean inPreview) {
+      if (inPreview) {
+        return;
+      }
       PsiElement sibling = newCaretPosition.getNextSibling();
       if (sibling instanceof Navigatable) {
         ((Navigatable)sibling).navigate(true);

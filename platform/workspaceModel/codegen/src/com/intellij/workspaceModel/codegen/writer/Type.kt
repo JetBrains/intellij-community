@@ -1,40 +1,21 @@
 package com.intellij.workspaceModel.codegen
 
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.utils.QualifiedName
 import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.deft.TStructure
-import com.intellij.workspaceModel.codegen.deft.Field
+import org.jetbrains.deft.Type
 
 val Type<*, *>.javaFullName
   get() = fqn(packageName, name)
 
-val Type<*, *>.javaSimpleName
-  get() = name.substringAfterLast('.')
+val ObjClass<*>.javaFullName: QualifiedName
+  get() = fqn(module.name, name)
 
-val Type<*, *>.javaBuilderName
+val ObjClass<*>.javaBuilderName
   get() = "$name.Builder"
 
-val Type<*, *>.javaImplName
+val ObjClass<*>.javaImplName
   get() = "${name.replace(".", "")}Impl"
 
-val Type<*, *>.javaImplFqn
-  get() = fqn(packageName, javaImplName)
-
-val Type<*, *>.javaImplBuilderName
+val ObjClass<*>.javaImplBuilderName
   get() = "${javaImplName}.Builder"
-
-val Type<*, *>.javaSuperType
-  get() = if (base == null) "Obj" else base!!.javaSimpleName
-
-val Type<*, *>.javaImplSuperType
-  get() = if (base == null) "ObjImpl" else base!!.javaImplFqn
-
-val TStructure<*, *>.fieldsToStore: List<Field<out Obj, Any?>>
-  get() = newFields.filter { !it.isOverride && it.hasDefault == Field.Default.none }
-
-val TStructure<*, *>.builderFields: List<Field<out Obj, Any?>>
-  get() = allFields.filter { it.hasDefault == Field.Default.none }
-
-val TStructure<*, *>.allNonSystemFields: List<Field<out Obj, Any?>>
-  get() = allFields.filter { it.name != "parent" && it.name != "name" }

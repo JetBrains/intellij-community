@@ -2,19 +2,19 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 
 class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitespace: Boolean = false) :
-    AbstractApplicabilityBasedInspection<KtBlockStringTemplateEntry>(KtBlockStringTemplateEntry::class.java), CleanupLocalInspectionTool {
+    AbstractApplicabilityBasedInspection<KtBlockStringTemplateEntry>(KtBlockStringTemplateEntry::class.java) {
     override fun inspectionText(element: KtBlockStringTemplateEntry): String =
         KotlinBundle.message("redundant.curly.braces.in.string.template")
 

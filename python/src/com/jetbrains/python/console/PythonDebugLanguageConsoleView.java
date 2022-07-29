@@ -35,12 +35,10 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
     super(consoleView, new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode));
 
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      if (consoleView instanceof ConsoleViewImpl) {
-        var console = this.getPydevConsoleView();
-        var action = new ShowCommandQueueAction(console);
-        ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
-      }
+    if (consoleView instanceof ConsoleViewImpl) {
+      var console = this.getPydevConsoleView();
+      var action = new ShowCommandQueueAction(console);
+      ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
     }
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());

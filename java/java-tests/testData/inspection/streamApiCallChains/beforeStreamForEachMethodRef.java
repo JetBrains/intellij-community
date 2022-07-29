@@ -1,4 +1,4 @@
-// "Replace 'stream().forEach()' with 'forEach()' (may change semantics)" "true"
+// "Replace 'stream().forEach()' with 'forEach()' (may change semantics)" "true-preview"
 
 import java.util.Arrays;
 import java.util.Collection;

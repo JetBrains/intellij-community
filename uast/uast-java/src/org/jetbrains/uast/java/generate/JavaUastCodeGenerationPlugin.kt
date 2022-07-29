@@ -2,6 +2,7 @@
 package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
+import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
@@ -14,10 +15,7 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
-import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.elementType
-import com.intellij.psi.util.siblings
+import com.intellij.psi.util.*
 import com.intellij.util.castSafelyTo
 import com.siyeh.ig.psiutils.ParenthesesUtils
 import org.jetbrains.uast.*
@@ -102,6 +100,20 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     val sourceReference = reference.sourcePsi ?: return null
     val styleManager = JavaCodeStyleManager.getInstance(sourceReference.project)
     return styleManager.shortenClassReferences(sourceReference).toUElementOfType()
+  }
+
+  override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
+    val source = reference.sourcePsi ?: return null
+    val (qualifier, selector) = when (source) {
+      is PsiMethodCallExpression -> source.methodExpression.qualifierExpression to source.methodExpression
+      is PsiReferenceExpression -> source.qualifier to source.referenceNameElement
+      else -> return null
+    }
+    if (qualifier == null || selector == null) return null
+    val ptr = SmartPointerManager.createPointer(selector)
+    val qualifierIdentifier = qualifier.childrenOfType<PsiIdentifier>().firstOrNull() ?: return null
+    AddOnDemandStaticImportAction.invoke(source.project, source.containingFile, null, qualifierIdentifier)
+    return ptr.element?.parent.toUElementOfType()
   }
 }
 

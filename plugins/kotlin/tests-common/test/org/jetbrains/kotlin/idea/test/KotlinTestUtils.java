@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
@@ -102,7 +101,7 @@ public class KotlinTestUtils {
             @NotNull TestJdkKind jdkKind
     ) {
         return KotlinCoreEnvironment.createForTests(
-                disposable, newConfiguration(configurationKind, jdkKind, KotlinArtifacts.getJetbrainsAnnotations()),
+                disposable, newConfiguration(configurationKind, jdkKind, TestKotlinArtifacts.getJetbrainsAnnotations()),
                 EnvironmentConfigFiles.JVM_CONFIG_FILES
         );
     }
@@ -301,21 +300,21 @@ public class KotlinTestUtils {
         }
 
         if (configurationKind.getKotlinStdlib()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinStdlib());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinScriptRuntime());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinTest());
-            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.getKotlinCompiler());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinStdlib());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinScriptRuntime());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinTest());
+            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.getKotlinCompiler());
         }
 
         if (configurationKind.getKotlinReflect()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinReflect());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinReflect());
         }
 
         JvmContentRootsKt.addJvmClasspathRoots(configuration, classpath);
 
         configuration.put(
                 CLIConfigurationKeys.INTELLIJ_PLUGIN_ROOT,
-                KotlinArtifacts.getKotlinCompiler().getAbsolutePath()
+                TestKotlinArtifacts.getKotlinCompiler().getAbsolutePath()
         );
 
         setupIdeaStandaloneExecution();

@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -149,6 +150,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     StringBufferReplaceableByStringFix(String type, boolean possibleSideEffect) {
       myType = type;
       myPossibleSideEffect = possibleSideEffect;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      // Quick-fix is stateful, it changes currentLine, so we should avoid returning it
+      return new StringBufferReplaceableByStringFix(myType, myPossibleSideEffect);
     }
 
     @NotNull

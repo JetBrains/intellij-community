@@ -126,6 +126,7 @@ interface CellBuilder<out T : JComponent> {
    */
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
@@ -184,10 +185,13 @@ interface CellBuilder<out T : JComponent> {
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface CheckboxCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun actsAsLabel()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   (this as CheckboxCellBuilder).actsAsLabel()
   return this
@@ -197,10 +201,13 @@ fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBu
   return also { task(component) }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface ScrollPaneCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun noGrowY()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   (this as ScrollPaneCellBuilder).noGrowY()
   return this
@@ -335,6 +342,7 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
@@ -665,6 +673,7 @@ abstract class Cell : BaseBuilder {
     return component(JBScrollPane(component))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun comment(@DetailedDescription text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }

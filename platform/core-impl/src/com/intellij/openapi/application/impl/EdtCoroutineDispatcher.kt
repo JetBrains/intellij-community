@@ -23,6 +23,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     val state = context.contextModality()
+                ?: ModalityState.NON_MODAL // dispatch with NON_MODAL by default
     val runnable = if (state === ModalityState.any()) {
       block
     }

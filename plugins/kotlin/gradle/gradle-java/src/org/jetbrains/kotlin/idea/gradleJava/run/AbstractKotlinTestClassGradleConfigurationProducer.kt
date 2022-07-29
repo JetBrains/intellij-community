@@ -14,8 +14,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -123,6 +126,10 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     ): Boolean {
         if (!context.check()) {
             return false
+        }
+
+        context.location?.psiElement?.parent.safeAs<KtNamedFunction>()?.let {
+            if (KotlinMainFunctionDetector.getInstance().isMain(it)) return false
         }
 
         if (!forceGradleRunner) {

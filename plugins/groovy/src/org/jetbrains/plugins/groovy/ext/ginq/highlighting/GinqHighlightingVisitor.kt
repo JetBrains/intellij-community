@@ -23,11 +23,11 @@ class GinqHighlightingVisitor : GroovyRecursiveElementVisitor() {
     val ginq = element.getStoredGinq()
     if (ginq != null) {
       keywords.addAll(ginq.getQueryFragments().map { it.keyword })
-      keywords.addAll(ginq.select.projections.flatMap { projection ->
+      keywords.addAll(ginq.select?.projections?.flatMap { projection ->
         projection.windows.flatMap { listOfNotNull(it.overKw, it.rowsOrRangeKw, it.partitionKw, it.orderBy?.keyword) }
-      })
+      } ?: emptyList())
       warnings.addAll(getTypecheckingWarnings(ginq))
-      val orderBys = ginq.select.projections.flatMap { it.windows.mapNotNull(GinqWindowFragment::orderBy) } + listOfNotNull(ginq.orderBy)
+      val orderBys = (ginq.select?.projections?.flatMap { it.windows.mapNotNull(GinqWindowFragment::orderBy) } ?: emptyList()) + listOfNotNull(ginq.orderBy)
       softKeywords.addAll(orderBys.flatMap { it.getSoftKeywords() })
     }
     super.visitElement(element)

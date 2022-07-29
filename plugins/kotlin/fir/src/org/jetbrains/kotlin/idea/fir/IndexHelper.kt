@@ -28,24 +28,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 * Move to another module
 */
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
-    fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(hashSetOf()) { it.nameAsName }
-
-    fun getKotlinClasses(
-        nameFilter: (Name) -> Boolean,
-        psiFilter: (element: KtClassOrObject) -> Boolean = { true }
-    ): Collection<KtClassOrObject> {
-        val index = KotlinFullClassNameIndex
-        return index.getAllKeys(project).asSequence()
-            .onEach { ProgressManager.checkCanceled() }
-            .filter { fqName -> nameFilter(getShortName(fqName)) }
-            .flatMap { fqName -> index[fqName, project, scope] }
-            .filter(psiFilter)
-            .toList()
-    }
-
     fun getTopLevelCallables(nameFilter: (Name) -> Boolean): Collection<KtCallableDeclaration> {
         fun sequenceOfElements(index: StringStubIndexExtension<out KtCallableDeclaration>): Sequence<KtCallableDeclaration> =
             index.getAllKeys(project).asSequence()
@@ -58,22 +40,6 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex)
 
         return (functions + properties).toList()
-    }
-
-    fun getKotlinCallablesByName(name: Name): Collection<KtCallableDeclaration> {
-        val functions: Sequence<KtCallableDeclaration> =
-            KotlinFunctionShortNameIndex.get(name.asString(), project, scope).asSequence()
-
-        val properties: Sequence<KtNamedDeclaration> =
-            KotlinPropertyShortNameIndex.get(name.asString(), project, scope).asSequence()
-
-        return (functions + properties)
-            .filterIsInstance<KtCallableDeclaration>()
-            .toList()
-    }
-
-    fun getKotlinClassesByName(name: Name): Collection<KtClassOrObject> {
-        return KotlinClassShortNameIndex.get(name.asString(), project, scope)
     }
 
     fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {
@@ -103,33 +69,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         return out
     }
 
-    fun getJavaClasses(nameFilter: (Name) -> Boolean): Collection<PsiClass> {
-        val names = mutableSetOf<String>()
-        AllClassesSearchExecutor.processClassNames(project, scope) { name ->
-            if (nameFilter(Name.identifier(name))) {
-                names.add(name)
-            }
-            true
-        }
-        val result = mutableListOf<PsiClass>()
-        AllClassesSearchExecutor.processClassesByNames(project, scope, names) { psiClass ->
-            // Skip Kotlin classes
-            if (psiClass is KtLightClass ||
-                psiClass.isSyntheticKotlinClass() ||
-                psiClass.kotlinFqName?.isJavaClassNotToBeUsedInKotlin() == true
-            )
-                return@processClassesByNames true
-
-            result.add(psiClass)
-            true
-        }
-        return result
-    }
-
     companion object {
-        private fun CallableId.asStringForIndexes(): String =
-            (if (packageName.isRoot) callableName.asString() else toString()).replace('/', '.')
-
         private fun FqName.asStringForIndexes(): String =
             asString().replace('/', '.')
 

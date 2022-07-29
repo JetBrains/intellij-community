@@ -7,6 +7,9 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
@@ -25,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
@@ -53,10 +57,11 @@ internal fun KtAnalysisSession.toPsiClass(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
-    typeOwnerKind: TypeOwnerKind
+    typeOwnerKind: TypeOwnerKind,
+    boxed: Boolean = true,
 ): PsiClass? {
     (context as? KtClass)?.toLightClass()?.let { return it }
-    return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed = true))
+    return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed))
 }
 
 internal fun KtAnalysisSession.toPsiMethod(
@@ -87,10 +92,25 @@ internal fun KtAnalysisSession.toPsiMethod(
                 return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
             }
 
-            if (psi.isLocal)
+            if (psi.isLocal) {
                 handleLocalOrSynthetic(psi)
-            else
-                psi.getRepresentativeLightMethod() ?: handleLocalOrSynthetic(psi)
+            } else {
+                psi.getRepresentativeLightMethod()
+                    ?: handleLocalOrSynthetic(psi)
+                    ?: run {
+                        psi.containingClass()?.getClassId()?.let { classId ->
+                            toPsiClass(
+                                buildClassType(classId),
+                                source = null,
+                                context,
+                                TypeOwnerKind.DECLARATION,
+                                boxed = false
+                            )?.let {
+                                UastFakeDeserializedLightMethod(psi, it)
+                            }
+                        }
+                    }
+            }
         }
         else -> psi.getRepresentativeLightMethod()
     }
@@ -141,6 +161,29 @@ internal fun KtAnalysisSession.toPsiType(
         KtTypeMappingMode.DEFAULT_UAST,
         isAnnotationMethod = false
     ) ?: UastErrorType
+}
+
+internal fun KtAnalysisSession.isExtension(
+    ktCall: KtCallableMemberCall<*, *>
+): Boolean {
+    return ktCall.symbol.isExtension
+}
+
+internal fun KtAnalysisSession.receiverType(
+    ktCall: KtCallableMemberCall<*, *>,
+    source: UElement,
+    context: KtElement,
+): PsiType? {
+    var ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
+    if (ktType == null) {
+        ktType =
+            if (isExtension(ktCall))
+                ktCall.partiallyAppliedSymbol.extensionReceiver?.type
+            else
+                ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
+    }
+    if (ktType == null || ktType is KtClassErrorType) return null
+    return toPsiType(ktType, source, context, context.typeOwnerKind, boxed = true)
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {

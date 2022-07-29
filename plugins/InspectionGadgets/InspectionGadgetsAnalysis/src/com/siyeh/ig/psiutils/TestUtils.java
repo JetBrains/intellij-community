@@ -115,6 +115,11 @@ public final class TestUtils {
     return TestFrameworks.getInstance().isTestMethod(method);
   }
 
+  public static boolean isTestClass(@Nullable PsiClass psiClass) {
+    if (psiClass == null) return false;
+    return TestFrameworks.getInstance().isTestClass(psiClass);
+  }
+
   /**
    * @param frameworks to check matching with {@link TestFramework#getName}
    */

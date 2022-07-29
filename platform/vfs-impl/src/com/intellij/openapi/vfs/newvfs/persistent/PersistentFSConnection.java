@@ -17,6 +17,7 @@ import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import com.intellij.util.io.storage.Storage;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class PersistentFSConnection {
@@ -60,7 +62,7 @@ final class PersistentFSConnection {
   /**
    * accessed under {@link #r}/{@link #w}
    */
-  private boolean myCorrupted;
+  private final AtomicBoolean myCorrupted = new AtomicBoolean();
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
@@ -137,7 +139,9 @@ final class PersistentFSConnection {
 
   @NotNull
   IntList getFreeRecords() {
-    return myFreeRecords;
+    synchronized (myFreeRecords) {
+      return new IntArrayList(myFreeRecords);
+    }
   }
 
   long getTimestamp() throws IOException {
@@ -175,7 +179,7 @@ final class PersistentFSConnection {
     return myRecords.getGlobalModCount();
   }
 
-  int incGlobalModCount() throws IOException {
+  public int incGlobalModCount() throws IOException {
     incLocalModCount();
     return myRecords.incGlobalModCount();
   }
@@ -189,7 +193,6 @@ final class PersistentFSConnection {
 
   void incLocalModCount() throws IOException {
     markDirty();
-    //noinspection NonAtomicOperationOnVolatileField
     myLocalModificationCount.incrementAndGet();
   }
 
@@ -212,10 +215,13 @@ final class PersistentFSConnection {
   // must not be run under write lock to avoid other clients wait for read lock
   private void flush() {
     if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
-      FSRecords.readAndHandleErrors(() -> {
+      try {
         doForce();
-        return null;
-      });
+      }
+      catch (IOException e) {
+        handleError(e);
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -273,13 +279,11 @@ final class PersistentFSConnection {
     }
   }
 
-  // either called from FlushingDaemon thread under read lock, or from handleError under write lock
   void markClean() throws IOException {
-    assert FSRecords.lock.isWriteLocked() || FSRecords.lock.getReadHoldCount() != 0;
+    // no synchronization, it's ok to have race here
     if (myDirty) {
       myDirty = false;
-      // writing here under read lock is safe because no-one else read or write at this offset (except at startup)
-      myRecords.setConnectionStatus(myCorrupted
+      myRecords.setConnectionStatus(myCorrupted.get()
                                     ? PersistentFSHeaders.CORRUPTED_MAGIC
                                     : PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
@@ -292,20 +296,15 @@ final class PersistentFSConnection {
 
   @Contract("_->fail")
   void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    assert FSRecords.lock.getReadHoldCount() == 0;
-
     // No need to forcibly mark VFS corrupted if it is already shut down
     try {
-      FSRecords.write(() -> {
-        if (!myCorrupted) {
-          createBrokenMarkerFile(e);
-          myCorrupted = true;
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-            showCorruptionNotification();
-          }
-          doForce();
+      if (myCorrupted.compareAndSet(false, true)) {
+        createBrokenMarkerFile(e);
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          showCorruptionNotification();
         }
-      });
+        doForce();
+      }
     }
     catch (IOException ioException) {
       LOG.error(ioException);

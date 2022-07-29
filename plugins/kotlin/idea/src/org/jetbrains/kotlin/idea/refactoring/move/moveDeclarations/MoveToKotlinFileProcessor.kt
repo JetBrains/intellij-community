@@ -13,7 +13,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 
 class MoveToKotlinFileProcessor @JvmOverloads constructor(

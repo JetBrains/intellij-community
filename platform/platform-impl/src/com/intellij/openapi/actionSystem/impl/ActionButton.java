@@ -38,6 +38,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
+  private static final Logger LOG = Logger.getInstance(ActionButton.class);
+
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
   @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
@@ -72,15 +74,20 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Insets myInsets;
 
   public ActionButton(@NotNull AnAction action,
-                      Presentation presentation,
-                      String place,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
                       @NotNull Dimension minimumSize) {
+    boolean isTemplatePresentation = presentation == action.getTemplatePresentation();
+    if (isTemplatePresentation) {
+      LOG.warn(new Throwable("Template presentations must not be used directly"));
+    }
     setMinimumButtonSize(minimumSize);
     setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
     myAction = action;
-    myPresentation = presentation;
+    myPresentation = presentation != null && !isTemplatePresentation ?
+                     presentation : action.getTemplatePresentation().clone();
     myPlace = place;
     // Button should be focusable if screen reader is active
     setFocusable(ScreenReader.isActive());

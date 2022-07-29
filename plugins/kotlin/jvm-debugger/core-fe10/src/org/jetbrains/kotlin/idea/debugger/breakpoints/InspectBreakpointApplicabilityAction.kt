@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -9,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.TextAnnotationGutterProvider
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorFontType
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.debugger.breakpoints.BreakpointChecker.BreakpointType
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -46,6 +47,8 @@ class InspectBreakpointApplicabilityAction : AnAction() {
         override fun getBgColor(line: Int, editor: Editor?): Color? = null
         override fun gutterClosed() {}
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isVisible = isApplicationInternalMode()

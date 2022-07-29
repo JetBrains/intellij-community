@@ -39,8 +39,8 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.inspections" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="kotlin.base.klib" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" />
@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

@@ -20,23 +20,24 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -184,9 +185,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     is KotlinWhenConditionAnchor -> {
                         val condition = anchor.condition
                         if (!shouldSuppressWhenCondition(cv, condition)) {
-                            val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
-                            else "inspection.message.when.condition.always.false"
-                            holder.registerProblem(condition, KotlinBundle.message(key))
+                            val message = KotlinBundle.message("inspection.message.when.condition.always.false")
+                            if (cv == ConstantValue.FALSE) {
+                                holder.registerProblem(condition, message)
+                            } else if (cv == ConstantValue.TRUE) {
+                                condition.siblings(forward = true, withSelf = false)
+                                    .filterIsInstance<KtWhenCondition>()
+                                    .forEach { cond -> holder.registerProblem(cond, message) }
+                                val nextEntry = condition.parent as? KtWhenEntry ?: return@forEach
+                                nextEntry.siblings(forward = true, withSelf = false)
+                                    .filterIsInstance<KtWhenEntry>()
+                                    .filterNot { entry -> entry.isElse }
+                                    .flatMap { entry -> entry.conditions.asSequence() }
+                                    .forEach { cond -> holder.registerProblem(cond, message) }
+                            }
                         }
                     }
                     is KotlinForVisitedAnchor -> {

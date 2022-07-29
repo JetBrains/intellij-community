@@ -4,6 +4,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,11 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
       return;
     }
     super.update(e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull

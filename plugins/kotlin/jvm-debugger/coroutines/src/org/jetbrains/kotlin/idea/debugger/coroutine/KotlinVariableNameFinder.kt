@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.NoDataException
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
+import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
     @RequiresReadLock
     fun findVisibleVariableNames(location: Location): List<String> {
-        val sourcePosition = location.safeSourcePosition(debugProcess) ?: return emptyList()
+        val sourcePosition = KotlinPositionManager(debugProcess).safeGetSourcePosition(location) ?: return emptyList()
         ProgressManager.checkCanceled()
         return sourcePosition.elementAt.findVisibleVariableNames()
     }
@@ -151,11 +151,4 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         val parentFunction = parentOfType<KtFunction>() ?: return false
         return InlineUtil.isInlinedArgument(parentFunction, bindingContext, false)
     }
-
-    private fun Location.safeSourcePosition(debugProcess: DebugProcessImpl) =
-        try {
-            KotlinPositionManager(debugProcess).getSourcePosition(this)
-        } catch (ex: NoDataException) {
-            null
-        }
 }

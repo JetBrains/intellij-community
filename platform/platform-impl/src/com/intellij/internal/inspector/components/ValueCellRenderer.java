@@ -335,24 +335,19 @@ final class ValueCellRenderer implements TableCellRenderer {
   @Nullable
   public static Map<Object, Object> parseClientProperties(@NotNull Object value) {
     Object table = ReflectionUtil.getField(value.getClass(), value, Object.class, "table");
-    if (table == null) return null;
-    try {
-      if (table instanceof Map) {
-        //noinspection unchecked
-        return (Map<Object, Object>)table;
-      }
-
-      if (table instanceof Object[]) {
-        Object[] arr = (Object[])table;
-        Map<Object, Object> properties = new HashMap<>();
-        for (int i = 0; i < arr.length; i += 2) {
-          if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-          properties.put(arr[i], arr[i + 1]);
-        }
-        return properties;
-      }
+    if (table instanceof Map) {
+      //noinspection unchecked
+      return (Map<Object, Object>)table;
     }
-    catch (Exception ignored) {
+
+    if (table instanceof Object[]) {
+      Object[] arr = (Object[])table;
+      Map<Object, Object> properties = new HashMap<>();
+      for (int i = 0; i < arr.length; i += 2) {
+        if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+        properties.put(arr[i], arr[i + 1]);
+      }
+      return properties;
     }
     return null;
   }

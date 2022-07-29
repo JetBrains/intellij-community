@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -93,13 +95,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   override fun attachToolWindow(toolWindow: ToolWindow) {
     toolWindows.add(toolWindow)
-    initContentManager(toolWindow.contentManager)
+    initContentManager(toolWindow)
   }
 
-  private fun initContentManager(contentManager: ContentManager) {
-    val listener = ContentProvidersListener()
+  private fun initContentManager(toolWindow: ToolWindow) {
+    val contentManager = toolWindow.contentManager
+    val listener = ContentProvidersListener(toolWindow)
     contentManager.addContentManagerListener(listener)
     Disposer.register(this, Disposable { contentManager.removeContentManagerListener(listener) })
+    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener)
 
     val contents = addedContents.filter { it.resolveContentManager() === contentManager }
     contents.forEach {
@@ -183,9 +187,18 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     IJSwingUtilities.updateComponentTreeUI(content.component)
   }
 
-  private inner class ContentProvidersListener : ContentManagerListener {
+  private inner class ContentProvidersListener(val toolWindow: ToolWindow) : ContentManagerListener, ToolWindowManagerListener {
+    override fun stateChanged(toolWindowManager: ToolWindowManager) {
+      if (toolWindow.isVisible) {
+        val content = toolWindow.contentManager.selectedContent ?: return
+        initLazyContent(content)
+      }
+    }
+
     override fun selectionChanged(event: ContentManagerEvent) {
-      initLazyContent(event.content)
+      if (toolWindow.isVisible) {
+        initLazyContent(event.content)
+      }
     }
   }
 
@@ -224,8 +237,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     @JvmField
     internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
 
+    /**
+     * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.
+     */
     @JvmField
-    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("IS_IN_COMMIT_TOOLWINDOW_KEY")
+    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("ChangesViewContentManager.IS_IN_COMMIT_TOOLWINDOW_KEY")
+
+    @JvmField
+    val CONTENT_TAB_NAME_KEY = DataKey.create<@NonNls String>("ChangesViewContentManager.CONTENT_TAB_KEY")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ChangesViewContentI>()

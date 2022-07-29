@@ -39,11 +39,25 @@ interface ResourceProvider {
     override fun loadResource(resourceName: String): Resource? = null
   }
 
+  private class AggregatingResourceProvider(private val providers: Array<out ResourceProvider>): ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return providers.any { it.canProvide(resourceName) }
+    }
+
+    override fun loadResource(resourceName: String): Resource? {
+      return providers.firstNotNullOfOrNull { it.loadResource(resourceName) }
+    }
+  }
+
   companion object {
     /**
      * Shared instance of [DefaultResourceProvider].
      */
     val default: ResourceProvider = DefaultResourceProvider()
+
+    fun aggregating(vararg providers: ResourceProvider): ResourceProvider {
+      return AggregatingResourceProvider(providers)
+    }
 
     /**
      * Load resource using [cls]'s [ClassLoader].

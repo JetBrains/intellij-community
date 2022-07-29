@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -59,12 +59,12 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
       .map(key -> REGISTRY.metric(REGISTRY_KEY.with(key.getKey())))
       .collect(Collectors.toSet());
 
-    final Set<MetricEvent> experiments = Experiments.EP_NAME.extensions()
+    final Set<MetricEvent> experiments = Experiments.EP_NAME.getExtensionList().stream()
       .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
       .map(f -> EXPERIMENT.metric(REGISTRY_KEY.with(f.id)))
       .collect(Collectors.toSet());
 
-    final Set<MetricEvent> advancedSettings = AdvancedSettingBean.EP_NAME.extensions()
+    final Set<MetricEvent> advancedSettings = AdvancedSettingBean.EP_NAME.getExtensionList().stream()
       .filter(f -> ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).isNonDefault(f.id))
       .map(f -> ADVANCED_SETTING.metric(REGISTRY_KEY.with(f.id)))
       .collect(Collectors.toSet());

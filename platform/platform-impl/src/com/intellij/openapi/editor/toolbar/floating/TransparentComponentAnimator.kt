@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
 
 @Suppress("SameParameterValue")
 @ApiStatus.Internal
@@ -44,8 +45,16 @@ class TransparentComponentAnimator(
     startTimerIfNeeded()
   }
 
+  internal fun hideImmediately() {
+    updateState { State.Invisible }
+  }
+
   private fun updateState() {
-    val state = state.updateAndGet(::nextState)
+    updateState(::nextState)
+  }
+
+  private fun updateState(nextState: UnaryOperator<State>) {
+    val state = state.updateAndGet(nextState)
     if (state is State.Invisible ||
         state is State.Visible && !component.autoHideable) {
       stopTimerIfNeeded()

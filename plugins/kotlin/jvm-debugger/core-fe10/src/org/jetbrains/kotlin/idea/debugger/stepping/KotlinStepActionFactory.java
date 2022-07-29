@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
 
 public class KotlinStepActionFactory {
     private final static Logger LOG = Logger.getInstance(KotlinStepActionFactory.class);

@@ -6,9 +6,11 @@ package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.idea.KotlinFileType
 
@@ -27,6 +29,10 @@ fun Project.allScope(): GlobalSearchScope = GlobalSearchScope.allScope(this)
 fun Project.projectScope(): GlobalSearchScope = GlobalSearchScope.projectScope(this)
 
 fun PsiFile.fileScope(): GlobalSearchScope = GlobalSearchScope.fileScope(this)
+
+fun PsiElement.useScope(): SearchScope = PsiSearchHelper.getInstance(project).getUseScope(this)
+
+fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
 
 fun Project.everythingScopeExcludeFileTypes(vararg fileTypes: FileType): GlobalSearchScope {
     return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.everythingScope(this), *fileTypes).not()

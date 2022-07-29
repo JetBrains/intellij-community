@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRShortenFqNamesTest : KotlinSSRReplaceTest() {
+class KotlinSSRShortenFqNamesTest : KotlinStructuralReplaceTest() {
     fun testPropertyTypeShortenFQReplacement() {
         doTest(
             searchPattern = "var '_ID : '_TYPE",

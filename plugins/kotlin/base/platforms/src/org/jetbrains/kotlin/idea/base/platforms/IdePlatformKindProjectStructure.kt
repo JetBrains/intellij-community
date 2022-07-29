@@ -45,7 +45,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
                 getLibraryJarVersion(library, PathUtil.KOTLIN_RUNTIME_JAR_PATTERN)
             }
             is JsIdePlatformKind -> { library ->
-                JsStdlibDetectionUtil.getJavaScriptLibraryStdVersion(library, project)
+                KotlinJavaScriptStdlibDetectorFacility.getStdlibVersion(project, library)
             }
             is NativeIdePlatformKind -> { _ -> null }
             else -> error("Unsupported platform kind: $platformKind")

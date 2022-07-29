@@ -26,7 +26,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.DocumentUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -43,6 +43,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.ImportPath
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     class ImportData(val unusedImports: List<KtImportDirective>, val optimizerData: OptimizedImportsBuilder.InputData)

@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSTargetedTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTargetedTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "targeted"
 
     fun testTargetAnyField() {

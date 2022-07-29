@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 import java.io.IOException;
 import java.util.function.Supplier;
 

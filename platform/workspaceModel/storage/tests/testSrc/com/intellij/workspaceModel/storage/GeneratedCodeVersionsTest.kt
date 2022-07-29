@@ -39,7 +39,7 @@ class GeneratedCodeVersionsTest {
     }
     catch (e: AssertionError) {
       assertTrue("API" in e.message!!)
-      assertTrue("'-10'" in e.message!!)
+      assertTrue("'1000000'" in e.message!!)
       return
     }
     fail("No exception thrown")
@@ -47,15 +47,15 @@ class GeneratedCodeVersionsTest {
 
   @Test
   fun `test api builder impl code`() {
-    CodeGeneratorVersions.API_VERSION = -10
+    CodeGeneratorVersions.API_VERSION = 1000000
     val emptyBuilder = createEmptyBuilder()
     try {
       emptyBuilder.addEntity(SuperSimpleEntity {})
     }
     catch (e: AssertionError) {
       assertContains(e.message!!, "API")
-      assertContains(e.message!!, "'-10'")
-      assertContains(e.message!!, "'-11'")
+      assertContains(e.message!!, "'1000000'")
+      assertContains(e.message!!, "'1000001'")
       return
     }
     fail("No exception thrown")
@@ -71,7 +71,7 @@ class GeneratedCodeVersionsTest {
     }
     catch (e: AssertionError) {
       assertContains(e.message!!, "IMPL")
-      assertContains(e.message!!, "'-12'")
+      assertContains(e.message!!, "'1000002'")
       return
     }
     fail("No exception thrown")
@@ -81,7 +81,7 @@ class GeneratedCodeVersionsTest {
 interface SuperSimpleEntity : WorkspaceEntity {
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(-10)
+  @GeneratedCodeApiVersion(1000000)
   interface Builder: SuperSimpleEntity, ModifiableWorkspaceEntity<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
   }
 
@@ -99,8 +99,8 @@ interface SuperSimpleEntity : WorkspaceEntity {
 
 
 
-@GeneratedCodeApiVersion(-11)
-@GeneratedCodeImplVersion(-12)
+@GeneratedCodeApiVersion(1000001)
+@GeneratedCodeImplVersion(1000002)
 open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 

@@ -2,12 +2,12 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import kotlinx.coroutines.launch
 
-class MavenDependencyCollector : DependencyCollector {
+internal class MavenDependencyCollector : DependencyCollector {
   override fun collectDependencies(project: Project): List<String> {
     val result = mutableSetOf<String>()
     for (mavenProject in MavenProjectsManager.getInstance(project).projects) {
@@ -19,9 +19,9 @@ class MavenDependencyCollector : DependencyCollector {
   }
 }
 
-class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
+internal class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
   override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
-    ApplicationManager.getApplication().executeOnPooledThread {
+    project.coroutineScope.launch {
       PluginAdvertiserService.getInstance().rescanDependencies(project)
     }
   }

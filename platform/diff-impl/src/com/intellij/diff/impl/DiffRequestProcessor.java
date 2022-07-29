@@ -28,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -708,7 +709,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
   }
 
-  private class ShowInExternalToolActionGroup extends ActionGroup {
+  private class ShowInExternalToolActionGroup extends ActionGroup implements DumbAware {
     private ShowInExternalToolActionGroup() {
       ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
     }
@@ -720,17 +721,19 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
       if (!ExternalDiffTool.isEnabled()) {
-        e.getPresentation().setEnabledAndVisible(false);
+        presentation.setEnabledAndVisible(false);
         return;
       }
 
       List<ShowInExternalToolAction> actions = getShowActions();
 
-      e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
-      e.getPresentation().setPerformGroup(actions.size() == 1);
-      e.getPresentation().setPopupGroup(true);
-      e.getPresentation().setVisible(true);
+      presentation.setEnabled(ExternalDiffTool.canShow(myActiveRequest));
+      presentation.setPerformGroup(actions.size() == 1);
+      presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, presentation.isPerformGroup());
+      presentation.setPopupGroup(true);
+      presentation.setVisible(true);
     }
 
     @Override
@@ -1006,7 +1009,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(contentPanel.getWidth() / 2, next ? contentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
 
-    if (editor == null) {
+    if (editor == null || editor.isDisposed()) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       final HintHint hintHint = createNotifyHint(contentPanel, point, next);
       hint.show(contentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);

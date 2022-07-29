@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
@@ -15,6 +16,8 @@ import com.intellij.util.lang.JavaVersion
  * @author Konstantin Bulenkov
  */
 class EnableMetalRenderingAction: ToggleAction(), DumbAware {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     super.update(e)

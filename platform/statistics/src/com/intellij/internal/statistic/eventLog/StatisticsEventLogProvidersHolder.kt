@@ -8,13 +8,11 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
-import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
-class StatisticsEventLogProvidersHolder {
+internal class StatisticsEventLogProvidersHolder {
   private val eventLoggerProviders: AtomicReference<Map<String, StatisticsEventLoggerProvider>> =
     AtomicReference(calculateEventLogProvider())
 
@@ -36,21 +34,20 @@ class StatisticsEventLogProvidersHolder {
     return getAllEventLogProviders().associateBy { it.recorderId }
   }
 
-  private fun getAllEventLogProviders(): List<StatisticsEventLoggerProvider> {
+  private fun getAllEventLogProviders(): Sequence<StatisticsEventLoggerProvider> {
     val providers = EP_NAME.extensionsIfPointIsRegistered
     if (providers.isEmpty()) {
-      return emptyList()
+      return emptySequence()
     }
     val isJetBrainsProduct = isJetBrainsProduct()
-    return ContainerUtil.filter(providers) { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }.distinctBy { it.recorderId }
+    return providers.asSequence()
+      .filter { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }
+      .distinctBy { it.recorderId }
   }
 
   private fun isJetBrainsProduct(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
-    if (appInfo == null || StringUtil.isEmpty(appInfo.shortCompanyName)) {
-      return true
-    }
-    return PlatformUtils.isJetBrainsProduct()
+    return if (appInfo == null || appInfo.shortCompanyName.isNullOrEmpty()) true else PlatformUtils.isJetBrainsProduct()
   }
 
   private fun isProviderApplicable(isJetBrainsProduct: Boolean, recorderId: String, extension: StatisticsEventLoggerProvider): Boolean {

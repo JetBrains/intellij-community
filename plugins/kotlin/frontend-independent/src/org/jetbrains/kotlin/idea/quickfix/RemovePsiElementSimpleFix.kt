@@ -10,9 +10,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.isExplicitTypeReferenceNeededForTypeInference
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
+import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -72,22 +75,12 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
 
             val removePropertyFix = object : RemovePsiElementSimpleFix(ktProperty, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
                 override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-                    removeProperty(element as? KtProperty ?: return)
+                    val property = element as? KtProperty ?: return
+                    removeProperty(property)
                 }
             }
 
             return listOf(removePropertyFix)
-        }
-
-        fun removeProperty(ktProperty: KtProperty) {
-            val initializer = ktProperty.initializer
-            if (initializer != null && initializer !is KtConstantExpression) {
-                val commentSaver = CommentSaver(ktProperty)
-                val replaced = ktProperty.replace(initializer)
-                commentSaver.restore(replaced)
-            } else {
-                ktProperty.delete()
-            }
         }
     }
 }

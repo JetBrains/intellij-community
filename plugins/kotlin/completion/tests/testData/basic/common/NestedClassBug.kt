@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 package ppp
 
 class Base(p: Base.N<caret>) {

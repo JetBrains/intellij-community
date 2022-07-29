@@ -957,7 +957,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), exprType)) {
+                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isTotalForType(element, exprType)) {
               needToCreateDefault = true;
               break;
             }
@@ -1817,7 +1817,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     else {
       addUsedVariables(array, aClass);
     }
-    
+
     for (PsiVariable var : array) {
       ProgressManager.checkCanceled();
       generateReadInstruction(var);

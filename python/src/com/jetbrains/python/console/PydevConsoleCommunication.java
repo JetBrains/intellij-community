@@ -31,6 +31,7 @@ import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
@@ -555,18 +556,32 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Nullable
   @Override
   public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
+      return parseVars(frame, null, this);
+    });
+  }
+
+  @Override
+  public XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(groupType.ordinal());
+      XValueChildrenList values = parseVars(frame, null, this);
+      PyDebugValue.getAsyncValues(null, this, values);
+      return values;
+    });
+
+  }
+
+  private <T> XValueChildrenList loadFrame(Callable<T> task) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      return executeBackgroundTask(
-        () -> {
-          List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
-          return parseVars(frame, null, this);
-        },
+      return (XValueChildrenList) executeBackgroundTask(
+        task,
         true,
         createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
         "Error in loadFrame():"
       );
-    }
-    else {
+    } else {
       return new XValueChildrenList();
     }
   }
@@ -848,7 +863,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     @Override
     public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
-      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+      if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
         // notify the CommandQueue service that the command has been completed without exceptions
         // and it must be removed from the queue
         // or clear queue if exception occurred

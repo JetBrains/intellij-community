@@ -4,7 +4,6 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +47,6 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     scrollOffset = layout.getScrollOffset();
   }
 
-  @Deprecated
   @Override
   public int getRowCount() {
     return 1;

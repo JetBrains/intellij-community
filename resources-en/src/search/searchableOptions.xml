@@ -11643,11 +11643,6 @@
     <option name="tag" path="ActionManager" hit="Tag to Documentation Navigation" />
     <option name="to" path="ActionManager" hit="Tag to Documentation Navigation" />
     <option name="tag" path="ActionManager" hit="Tag..." />
-    <option name="tapestry" path="ActionManager" hit="Tapestry" />
-    <option name="class" path="ActionManager" hit="Tapestry Class" />
-    <option name="tapestry" path="ActionManager" hit="Tapestry Class" />
-    <option name="tapestry" path="ActionManager" hit="Tapestry Template" />
-    <option name="template" path="ActionManager" hit="Tapestry Template" />
     <option name="tasks" path="ActionManager" hit="Tasks" />
     <option name="contexts" path="ActionManager" hit="Tasks &amp; Contexts" />
     <option name="tasks" path="ActionManager" hit="Tasks &amp; Contexts" />
@@ -16508,31 +16503,6 @@
     <option name="fuzzy" hit="Fuzzy match - mismatched" />
     <option name="match" hit="Fuzzy match - mismatched" />
     <option name="mismatched" hit="Fuzzy match - mismatched" />
-  </configurable>
-  <configurable id="reference.settingsdialog.IDE.editor.colors.Tapestry" configurable_name="Tapestry">
-    <option name="tapestry" hit="Tapestry" />
-    <option name="bad" hit="Bad character" />
-    <option name="character" hit="Bad character" />
-    <option name="component" hit="Component parameter" />
-    <option name="parameter" hit="Component parameter" />
-    <option name="component" hit="Component tag" />
-    <option name="tag" hit="Component tag" />
-    <option name="background" hit="EL background" />
-    <option name="el" hit="EL background" />
-    <option name="bounds" hit="EL bounds" />
-    <option name="el" hit="EL bounds" />
-    <option name="brackets" hit="EL brackets" />
-    <option name="el" hit="EL brackets" />
-    <option name="dot" hit="EL dot" />
-    <option name="el" hit="EL dot" />
-    <option name="el" hit="EL identifier" />
-    <option name="identifier" hit="EL identifier" />
-    <option name="el" hit="EL number" />
-    <option name="number" hit="EL number" />
-    <option name="el" hit="EL parenths" />
-    <option name="parenths" hit="EL parenths" />
-    <option name="el" hit="EL string" />
-    <option name="string" hit="EL string" />
   </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.TypeScript" configurable_name="TypeScript">
     <option name="typescript" hit="TypeScript" />

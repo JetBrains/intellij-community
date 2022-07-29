@@ -463,7 +463,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
     """.trimIndent())
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    val intention = myFixture.findSingleIntention("Create File two-column.txt")
+    val intention = myFixture.findSingleIntention("Create file two-column.txt")
     assertNotNull(intention)
     myFixture.launchAction(intention)
     assertNotNull(myFixture.findFileInTempDir("two-column.txt"))
@@ -825,7 +825,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     """.trimIndent(), """
       class Test {
           companion object {
-              @kotlin.jvm.JvmField
+              @JvmField
               @org.junit.experimental.theories.DataPoint
               val f1: Any? = null
           }
@@ -841,7 +841,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     """.trimIndent(), """
       class Test {
           companion object {
-              @kotlin.jvm.JvmField
+              @JvmField
               @org.junit.experimental.theories.DataPoint
               val f1: Any? = null
           }
@@ -981,7 +981,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent(), """
       class PrivateRule {
-        @kotlin.jvm.JvmField
+        @JvmField
         @org.junit.Rule
         var x = 0
       }
@@ -1003,7 +1003,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
 
       object PrivateClassRule {
-          @kotlin.jvm.JvmField
+          @JvmField
           @org.junit.ClassRule
           var x = SomeTestRule()
       }

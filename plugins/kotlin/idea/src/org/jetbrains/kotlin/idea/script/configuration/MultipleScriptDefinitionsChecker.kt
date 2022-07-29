@@ -17,7 +17,7 @@ import com.intellij.ui.EditorNotificationProvider.*
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings

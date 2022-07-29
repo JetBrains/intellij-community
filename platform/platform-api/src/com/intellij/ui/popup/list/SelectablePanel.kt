@@ -50,11 +50,22 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   var selectionArcCorners = SelectionArcCorners.ALL
   var selectionColor: Color? = null
   var selectionInsets: Insets = JBUI.emptyInsets()
+  var preferredHeight: Int? = null
+    set(value) {
+      field = value
+      invalidate()
+    }
 
   init {
     if (background != null) {
       this.background = background
     }
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val result = super.getPreferredSize()
+
+    return if (preferredHeight == null) result else Dimension(result.width, preferredHeight!!)
   }
 
   override fun paintComponent(g: Graphics) {

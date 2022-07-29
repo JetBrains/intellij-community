@@ -95,7 +95,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  var id: EntityId = 0
+  var id: EntityId = invalidEntityId
 
   lateinit var snapshot: EntityStorage
 

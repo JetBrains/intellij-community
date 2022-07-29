@@ -5,9 +5,9 @@ import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
+import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -81,7 +81,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    DisabledPluginsState.setIgnoreDisabledPlugins(true);
+    PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 

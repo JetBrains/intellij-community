@@ -177,4 +177,8 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  public void testDateContracts() {
+    checkHighlighting();
+  }
+
 }

@@ -3,13 +3,18 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorSettingsUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -33,15 +38,37 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
-  private HighlightPopup myPopup = null;
+  public static final Map<TextAttributesKey, Supplier<@Nls String>> ATTRIBUTES_CUSTOM_NAMES = new HashMap<>();
 
+  static {
+    ATTRIBUTES_CUSTOM_NAMES.put(CodeInsightColors.INFORMATION_ATTRIBUTES,
+                                InspectionsBundle.messagePointer("inspection.no.highlighting"));
+    ATTRIBUTES_CUSTOM_NAMES.put(CodeInsightColors.CONSIDERATION_ATTRIBUTES,
+                                InspectionsBundle.messagePointer("inspection.choose.highlighting"));
+  }
+
+  private HighlightPopup myPopup = null;
+  private final SeverityRegistrar mySeverityRegistrar;
+
+  public HighlightingChooser(@NotNull SeverityRegistrar severityRegistrar) {
+    mySeverityRegistrar = severityRegistrar;
+  }
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
   public void setChosen(@NotNull TextAttributesKey key) {
+    if (ATTRIBUTES_CUSTOM_NAMES.containsKey(key)) {
+      getTemplatePresentation().setText(ATTRIBUTES_CUSTOM_NAMES.get(key));
+      return;
+    }
+
     final var attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
@@ -65,9 +92,18 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   @Override
   protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
     final DefaultActionGroup group = new DefaultActionGroup();
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     for (Pair<TextAttributesKey, @Nls String> pair : ColorSettingsUtil.getErrorTextAttributes()) {
-      group.add(new HighlightAction(stripColorOptionCategory(pair.second), pair.first, this::onKeyChosen));
+      group.add(new HighlightAction(stripColorOptionCategory(pair.second), pair.first, scheme.getAttributes(pair.first), this::onKeyChosen));
+    }
+
+    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    for (HighlightSeverity severity : mySeverityRegistrar.getAllSeverities()) {
+      final var highlightInfoType = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      if (standardSeverities.contains(highlightInfoType)) continue;
+      final TextAttributesKey attributes = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      group.add(new HighlightAction(severity.getDisplayName(), attributes, mySeverityRegistrar.getTextAttributesBySeverity(severity), this::onKeyChosen));
     }
 
     group.addSeparator();
@@ -113,11 +149,13 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
 class HighlightAction extends DumbAwareAction {
   private final TextAttributesKey myEditorAttributesKey;
+  private final TextAttributes myTextAttributes;
   private final Consumer<? super TextAttributesKey> myActionPerformed;
 
-  HighlightAction(@Nls String name, TextAttributesKey attributes, Consumer<? super TextAttributesKey> actionPerformed) {
+  HighlightAction(@Nls String name, TextAttributesKey textAttributesKey, TextAttributes textAttributes, Consumer<? super TextAttributesKey> actionPerformed) {
     super(name);
-    myEditorAttributesKey = attributes;
+    myEditorAttributesKey = textAttributesKey;
+    myTextAttributes = textAttributes;
     myActionPerformed = actionPerformed;
   }
 
@@ -128,6 +166,10 @@ class HighlightAction extends DumbAwareAction {
 
   public TextAttributesKey getEditorAttributesKey() {
     return myEditorAttributesKey;
+  }
+
+  TextAttributes getTextAttributes() {
+    return myTextAttributes;
   }
 }
 
@@ -153,14 +195,11 @@ class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.Acti
 
   private final RendererComponent myTextComponent = new SimpleRendererComponent(null, null, true);
   private final JPanel myTextPanel = new NonOpaquePanel();
-  private final GroupHeaderSeparator mySeparator = new GroupHeaderSeparator(JBUI.emptyInsets());
   private final JPanel mySeparatorPanel = new NonOpaquePanel();
   private final JBLabel myLabel = new JBLabel();
-  private final EditorColorsScheme myColorsScheme;
 
   HighlightElementRenderer() {
     myTextComponent.getEditor().getContentComponent().setOpaque(false);
-    myColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     myTextPanel.add(myTextComponent);
     myTextPanel.setBorder(
       new CompoundBorder(new EmptyBorder(JBUI.CurrentTheme.ActionsList.cellPadding()),
@@ -168,7 +207,8 @@ class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.Acti
     );
 
     final var opaquePanel = new OpaquePanel(new BorderLayout(), JBUI.CurrentTheme.Popup.BACKGROUND);
-    opaquePanel.add(mySeparator);
+    final GroupHeaderSeparator separator = new GroupHeaderSeparator(JBUI.emptyInsets());
+    opaquePanel.add(separator);
     mySeparatorPanel.add(opaquePanel, BorderLayout.NORTH);
     myLabel.setBorder(
       new CompoundBorder(new EmptyBorder(JBUI.CurrentTheme.ActionsList.cellPadding()),
@@ -185,8 +225,8 @@ class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.Acti
     if (value != null) {
       final var action = value.getAction();
       if (action instanceof HighlightAction) {
-        final var highlightAction = (HighlightAction)action;
-        final var attributes = myColorsScheme.getAttributes(highlightAction.getEditorAttributesKey());
+        final HighlightAction highlightAction = (HighlightAction)action;
+        final TextAttributes attributes = highlightAction.getTextAttributes();
         myTextComponent.setText(action.getTemplateText(), attributes, false);
         myTextComponent.setSize(myTextComponent.getPreferredSize());
         return myTextPanel;

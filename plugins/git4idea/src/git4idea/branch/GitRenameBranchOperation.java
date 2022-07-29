@@ -15,10 +15,12 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vcs.BranchRenameListener;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -40,11 +42,11 @@ class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull @NlsSafe private final String myNewName;
 
   GitRenameBranchOperation(@NotNull Project project,
-                                  @NotNull Git git,
-                                  @NotNull GitBranchUiHandler uiHandler,
-                                  @NotNull @NlsSafe String currentName,
-                                  @NotNull @NlsSafe String newName,
-                                  @NotNull List<? extends GitRepository> repositories) {
+                           @NotNull Git git,
+                           @NotNull GitBranchUiHandler uiHandler,
+                           @NotNull @NlsSafe String currentName,
+                           @NotNull @NlsSafe String newName,
+                           @NotNull List<? extends GitRepository> repositories) {
     super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
     myNewName = newName;
@@ -58,6 +60,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
       GitCommandResult result = myGit.renameBranch(repository, myCurrentName, myNewName);
       if (result.success()) {
         repository.update();
+        notifyBranchNameChanged(repository, myCurrentName, myNewName);
         markSuccessful(repository);
       }
       else {
@@ -70,13 +73,17 @@ class GitRenameBranchOperation extends GitBranchOperation {
 
   @Override
   protected void rollback() {
-    GitCompoundResult result = new GitCompoundResult(myProject);
+    GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      result.append(repository, myGit.renameBranch(repository, myNewName, myCurrentName));
-      repository.update();
+      GitCommandResult result = myGit.renameBranch(repository, myNewName, myCurrentName);
+      if (result.success()) {
+        repository.update();
+        notifyBranchNameChanged(repository, myNewName, myCurrentName);
+      }
+      compoundResult.append(repository, result);
     }
-    if (result.totalSuccess()) {
+    if (compoundResult.totalSuccess()) {
       myNotifier.notifySuccess(BRANCH_RENAME_ROLLBACK_SUCCESS,
                                GitBundle.message("git.rename.branch.rollback.successful"),
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
@@ -84,9 +91,17 @@ class GitRenameBranchOperation extends GitBranchOperation {
     else {
       myNotifier.notifyError(BRANCH_RENAME_ROLLBACK_FAILED,
                              GitBundle.message("git.rename.branch.rollback.failed"),
-                             result.getErrorOutputWithReposIndication(),
+                             compoundResult.getErrorOutputWithReposIndication(),
                              true);
     }
+  }
+
+  protected final void notifyBranchNameChanged(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED)
+        .branchNameChanged(repository.getRoot(), oldName, newName);
+    });
   }
 
   @NotNull

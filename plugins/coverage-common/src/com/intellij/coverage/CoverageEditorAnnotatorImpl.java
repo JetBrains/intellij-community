@@ -430,7 +430,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
                 for (int line = lineNumber; line <= lastLineNumber; line++) {
                   final int oldLineNumber = newToOldLineMapping.get(line);
                   final LineData lineData = executableLines.get(oldLineNumber);
-                  if (lineData != null) {
+                  if (lineData != null && oldLineNumber < editorBean.getDocument().getLineCount()) {
                     RangeHighlighter rangeHighlighter =
                       createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
                                              classNames.get(oldLineNumber), oldLineNumber, line, suite,
@@ -593,6 +593,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     executableLines.put(updatedLineNumber, null);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editorBean.isDisposed()) return;
+      if (lineNumber >= editorBean.getDocument().getLineCount()) return;
       final RangeHighlighter highlighter =
         createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
                                updatedLineNumber, coverageSuite, null, editorBean);

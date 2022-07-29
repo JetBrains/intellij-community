@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
@@ -34,7 +34,7 @@ internal class LayoutData(
   var dragInsertPosition: Int = 0,
 )
 
-internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(layoutManager) {
+internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager) : JPanel(layoutManager) {
   companion object {
     const val DROP_DISTANCE_SENSITIVITY = 200
 
@@ -62,7 +62,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     }
   }
 
-  private var dragButton: JComponent? = null
+  private var dragButton: StripeButtonManager? = null
   protected var dropRectangle: Rectangle = Rectangle(-1, -1)
   protected val drawRectangle = Rectangle()
   private var dragButtonImage: JComponent? = null
@@ -73,6 +73,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
 
   abstract val isNewStripes: Boolean
   abstract val anchor: ToolWindowAnchor
+  open val split: Boolean = false
 
   private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor) }
 
@@ -105,7 +106,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
   }
 
   fun resetDrop() {
-    (dragButton as? SquareStripeButton)?.resetDrop()
+    (dragButton?.getComponent() as? SquareStripeButton)?.resetDrop()
 
     dragButton = null
     dragButtonImage = null
@@ -115,20 +116,24 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     repaint()
   }
 
-  fun processDropButton(button: JComponent, buttonImage: JComponent, screenPoint: Point) {
+  fun processDropButton(button: StripeButtonManager, buttonImage: JComponent, devicePoint: DevicePoint) {
     if (!isDroppingButton()) {
-      buttonImage.paint(createDragImage(button).graphics)
-
       dragButton = button
       dragButtonImage = buttonImage
       computedPreferredSize = null
     }
 
-    val dropPoint = screenPoint.location.also {
+    val dropPoint = devicePoint.getLocationOnScreen(this).location.also {
       SwingUtilities.convertPointFromScreen(it, this)
-      it.y = max(it.y, 0)
+      // If the major axis of the drop point is not within the bounds of a stripe, the drop highlight isn't drawn. This isn't a problem for
+      // the old UI (x is always valid for full width horizontal stripe, etc.), but it is for the new UI's TOP and BOTTOM stripes, which are
+      // treated as vertical, and are not full height. Coerce the drop point to be within the stripe's bounds' major axis. Take into account
+      // hidden and empty stripes. (And remember that height is the number of pixels, so 0 <= y < h)
+      if (isNewStripes) {
+        it.y = if (height > 0) it.y.coerceIn(0, height - 1) else max(it.y, 0)
+      }
     }
-    dropRectangle = if (isNewStripes) Rectangle(dropPoint, button.preferredSize) else Rectangle(dropPoint, buttonImage.size)
+    dropRectangle = if (isNewStripes) Rectangle(dropPoint, button.getComponent().preferredSize) else Rectangle(dropPoint, buttonImage.size)
 
     revalidate()
     repaint()
@@ -160,12 +165,13 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     }
 
     isFinishingDrop = true
-    dragButton?.let(::getToolWindowFor)?.let {
+    dragButton?.toolWindow?.let {
       var order = lastLayoutData.dragInsertPosition
       if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
         order++
       }
-      manager.setSideToolAndAnchor(it.id, anchor, order, !isNewStripes && lastLayoutData.dragToSide)
+      val isSplit = if (isNewStripes) split else lastLayoutData.dragToSide
+      manager.setSideToolAndAnchor(it.id, paneId, anchor, order, isSplit)
     }
     manager.invokeLater { resetDrop() }
   }
@@ -181,9 +187,9 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
   }
 
   open fun isHorizontal() : Boolean = false
-  open fun containsPoint(screenPoint: Point): Boolean = Rectangle(locationOnScreen, size).contains(screenPoint)
-
-  protected abstract fun getToolWindowFor(component: JComponent): ToolWindowImpl?
+  open fun containsPoint(screenPoint: Point): Boolean {
+    return isShowing && Rectangle(locationOnScreen, size).contains(screenPoint)
+  }
 
   protected fun recomputeBounds(setBounds: Boolean, toFitWith: Dimension?, noDrop: Boolean): LayoutData {
     val horizontalOffset = height
@@ -194,10 +200,10 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     }
 
     val dragButton = dragButton
-    val processDrop = dragButton != null && !noDrop &&
-                      containsPoint(dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) })
+    val p = dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
+    val processDrop = dragButton != null && !noDrop && containsPoint(p)
     if (!isNewStripes && dragButton != null) {
-      data.shouldSwapCoordinates = anchor.isHorizontal != getToolWindowFor(dragButton)?.anchor?.isHorizontal
+      data.shouldSwapCoordinates = anchor.isHorizontal != dragButton.toolWindow.anchor.isHorizontal
     }
     data.fitSize = toFitWith ?: JBUI.emptySize()
 
@@ -239,7 +245,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
       val insertOrder = windowInfo.order
       val isSplit = windowInfo.isSplit
 
-      if (!sidesStarted && isSplit) {
+      if (!sidesStarted && isSplit && !isNewStripes) {
         if (processDrop && !data.dragTargetChosen) {
           tryDroppingOnGap(data, gap, insertOrder)
         }
@@ -280,7 +286,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
       tryDroppingOnGap(data, gap, -1)
     }
 
-    dragButton?.let {
+    dragButton?.getComponent()?.let {
       val dragSize = it.preferredSize
       if (data.shouldSwapCoordinates) {
         swap(dragSize)
@@ -356,7 +362,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     drawRectangle.x = data.eachX
     drawRectangle.y = data.eachY
     if (isNewStripes) {
-      dragButton?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
+      dragButton?.getComponent()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
     }
     else {
       dragButtonImage?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }

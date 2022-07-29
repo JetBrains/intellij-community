@@ -11,9 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -21,6 +23,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final Project myProject;
@@ -65,8 +68,15 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
   }
 
-  protected void configFacets(List<MavenModuleImporter> importers, List<MavenProjectsProcessorTask> postTasks) {
-    if (!importers.isEmpty()) {
+  protected void configFacets(List<MavenLegacyModuleImporter> importers,
+                              List<MavenProjectsProcessorTask> postTasks,
+                              boolean isWorkspaceImport) {
+    List<MavenLegacyModuleImporter> toRun =
+      ContainerUtil.filter(importers, it -> !it.isModuleDisposed()
+                                            && !it.isAggregatorMainTestModule()
+                                            && it.initFacetsImporters(isWorkspaceImport));
+
+    if (!toRun.isEmpty()) {
       IdeModifiableModelsProvider provider;
       if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
         provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
@@ -76,12 +86,17 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       }
 
       try {
-        List<MavenModuleImporter> toRun = ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
+        Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.CountAndTime> counters = new HashMap<>();
 
-        toRun.forEach(importer -> importer.setModifiableModelsProvider(provider));
-        toRun.forEach(importer -> importer.preConfigFacets());
-        toRun.forEach(importer -> importer.configFacets(postTasks));
-        toRun.forEach(importer -> importer.postConfigFacets());
+        toRun.forEach(importer -> importer.prepareForFacets(provider));
+        toRun.forEach(importer -> importer.preConfigFacets(counters));
+        toRun.forEach(importer -> importer.configFacets(postTasks, counters));
+        toRun.forEach(importer -> importer.postConfigFacets(counters));
+
+        for (Map.Entry<Class<? extends MavenImporter>, MavenLegacyModuleImporter.CountAndTime> each : counters.entrySet()) {
+          MavenImportCollector.IMPORTER_RUN.log(myProject, each.getKey(), each.getValue().count,
+                                                TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
+        }
       }
       finally {
         MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
@@ -93,7 +108,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     }
   }
 
-  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Set<MavenProject> projectsToRefresh) {
+  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Iterable<MavenProject> projectsToRefresh) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
@@ -102,14 +117,11 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
 
-    List<MavenArtifact> artifacts = new ArrayList<>();
-    for (MavenProject each : projectsToRefresh) {
-      artifacts.addAll(each.getDependencies());
-    }
-
-    final Set<File> files = new HashSet<>();
-    for (MavenArtifact each : artifacts) {
-      if (MavenArtifactUtilKt.resolved(each)) files.add(each.getFile());
+    Set<File> files = FileCollectionFactory.createCanonicalFileSet();
+    for (MavenProject project : projectsToRefresh) {
+      for (MavenArtifact dependency : project.getDependencies()) {
+        if (MavenArtifactUtilKt.resolved(dependency)) files.add(dependency.getFile());
+      }
     }
 
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
@@ -120,10 +132,10 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     }
   }
 
-  protected void removeOutdatedCompilerConfigSettings() {
+  protected static void removeOutdatedCompilerConfigSettings(Project project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(project, JavacConfiguration.class);
     String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
     options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
     javacOptions.ADDITIONAL_OPTIONS_STRING = options;

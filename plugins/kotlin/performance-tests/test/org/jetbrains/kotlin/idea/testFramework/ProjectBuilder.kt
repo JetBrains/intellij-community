@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.testFramework
 
@@ -19,7 +19,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
@@ -262,7 +262,7 @@ class ModuleDescription(val moduleName: String) {
         val moduleVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(modulePath) ?: error("unable to find ${modulePath}")
         runWriteAction {
             val moduleManager = ModuleManager.getInstance(project)
-            val module = with(moduleManager.modifiableModel) {
+            val module = with(moduleManager.getModifiableModel()) {
                 val imlPath = modulePath.resolve("$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
                 val module = newModule(imlPath, ModuleTypeId.JAVA_MODULE)
                 PsiTestUtil.addSourceRoot(module, moduleVirtualFile.findFileByRelativePath(src) ?: error("no '$src' in $this"))
@@ -314,7 +314,7 @@ class SpecialLibraryDescription(name: String, private val library: SpecialLibrar
         when(library) {
             SpecialLibrary.KOTLIN_STDLIB ->
                 ConfigLibraryUtil.addLibrary(module, name) {
-                    addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+                    addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
                 }
         }
     }

@@ -15,7 +15,6 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.asCustomSourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
@@ -204,7 +203,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
     assertEquals("erlang-include", sourceRoot.rootType)
-    assertNull(sourceRoot.asCustomSourceRoot())
+    assertNull(sourceRoot.customSourceRootProperties)
   }
 
   fun `test load facets`() {

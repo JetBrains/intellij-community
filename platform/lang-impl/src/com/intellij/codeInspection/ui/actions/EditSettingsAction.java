@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -53,7 +53,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       builder.removeAllActions();
       builder.addOkAction();
       if (view.isRerunAvailable()) {
-        builder.addActionDescriptor(new DialogBuilder.DialogActionDescriptor(InspectionsBundle.message("inspection.action.rerun"), 'R') {
+        builder.addActionDescriptor(new DialogBuilder.DialogActionDescriptor(InspectionsBundle.message("inspection.action.rerun"), -1) {
           @Override
           protected Action createAction(DialogWrapper dialogWrapper) {
             return new AbstractAction() {

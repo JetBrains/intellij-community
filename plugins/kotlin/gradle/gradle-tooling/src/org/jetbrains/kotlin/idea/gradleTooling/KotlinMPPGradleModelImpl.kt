@@ -144,6 +144,16 @@ data class KotlinNativeCompilationExtensionsImpl(
     constructor(extensions: KotlinNativeCompilationExtensions) : this(extensions.konanTarget)
 }
 
+data class KotlinCompilationCoordinatesImpl(
+    override val targetName: String,
+    override val compilationName: String
+) : KotlinCompilationCoordinates {
+    constructor(coordinates: KotlinCompilationCoordinates) : this(
+        targetName = coordinates.targetName,
+        compilationName = coordinates.compilationName
+    )
+}
+
 @Suppress("DEPRECATION_ERROR")
 data class KotlinCompilationImpl(
     override val name: String,
@@ -157,7 +167,8 @@ data class KotlinCompilationImpl(
     override val dependencyClasspath: Array<String>,
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
-    override val nativeExtensions: KotlinNativeCompilationExtensions?
+    override val nativeExtensions: KotlinNativeCompilationExtensions?,
+    override val associateCompilations: Set<KotlinCompilationCoordinates>
 ) : KotlinCompilation {
 
     // create deep copy
@@ -171,7 +182,8 @@ data class KotlinCompilationImpl(
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
         cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
-        nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
+        nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
+        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -200,6 +212,12 @@ data class KotlinCompilationImpl(
                 }
             }
 
+        private fun cloneCompilationCoordinatesWithCaching(
+            coordinates: Set<KotlinCompilationCoordinates>,
+            cloningCache: MutableMap<Any, Any>
+        ): Set<KotlinCompilationCoordinates> = coordinates.map { initial ->
+            cloningCache.getOrPut(initial) { KotlinCompilationCoordinatesImpl(initial) } as KotlinCompilationCoordinates
+        }.toSet()
     }
 }
 
@@ -227,7 +245,7 @@ data class KotlinTargetImpl(
         KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
         target.compilations.map { initialCompilation ->
             (cloningCache[initialCompilation] as? KotlinCompilation)
-                ?: KotlinCompilationImpl(initialCompilation as KotlinCompilationImpl, cloningCache).also {
+                ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
                     cloningCache[initialCompilation] = it
                 }
         }.toList(),
@@ -271,7 +289,6 @@ data class KotlinNativeMainRunTaskImpl(
 data class ExtraFeaturesImpl(
     override val coroutinesState: String?,
     override val isHMPPEnabled: Boolean,
-    override val isNativeDependencyPropagationEnabled: Boolean
 ) : ExtraFeatures
 
 data class KotlinMPPGradleModelImpl(
@@ -296,7 +313,6 @@ data class KotlinMPPGradleModelImpl(
         extraFeatures = ExtraFeaturesImpl(
             mppModel.extraFeatures.coroutinesState,
             mppModel.extraFeatures.isHMPPEnabled,
-            mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),

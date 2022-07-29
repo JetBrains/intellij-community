@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
@@ -23,6 +24,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -31,13 +33,13 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -218,32 +220,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   private static LocalQuickFix createQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
-    final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
-    final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
-    final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
-
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getName() {
-        return SSRBundle.message("SSRInspection.replace.with", replacementInfo.getReplacement());
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (element != null) {
-          replacer.replace(replacementInfo);
-        }
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        //noinspection DialogTitleCapitalization
-        return SSRBundle.message("SSRInspection.family.name");
-      }
-    };
+    return new StructuralQuickFix(project, matchResult, configuration.getReplaceOptions());
   }
 
   @NotNull
@@ -296,11 +273,49 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
+  private static class StructuralQuickFix implements LocalQuickFix {
+    private final ReplacementInfo myReplacementInfo;
+    private final Replacer myReplacer;
+    private final ReplaceOptions myReplaceOptions;
+
+    StructuralQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull ReplaceOptions replaceOptions) {
+      myReplaceOptions = replaceOptions;
+      myReplacer = new Replacer(project, replaceOptions);
+      myReplacementInfo = myReplacer.buildReplacement(matchResult);
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return SSRBundle.message("SSRInspection.replace.with", myReplacementInfo.getReplacement());
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element != null) {
+        myReplacer.replace(myReplacementInfo);
+      }
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new StructuralQuickFix(target.getProject(), new MatchResultForPreview(myReplacementInfo.getMatchResult(), target), myReplaceOptions);
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      //noinspection DialogTitleCapitalization
+      return SSRBundle.message("SSRInspection.family.name");
+    }
+  }
+
   private final class InspectionResultSink extends DefaultMatchResultSink {
     private Configuration myConfiguration;
     private ProblemsHolder myHolder;
 
-    private final Set<SmartPsiPointer> duplicates = new HashSet<>();
+    private final Set<SmartPsiElementPointer<?>> duplicates = new HashSet<>();
 
     InspectionResultSink() {}
 

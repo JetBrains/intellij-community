@@ -16,7 +16,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="kotlin.plugin" />
+    <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.project-model" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
@@ -26,15 +26,20 @@
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.jvm" />
-    <orderEntry type="module" module-name="kotlin.groovy" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
+    <orderEntry type="module" module-name="kotlin.migration" />
+    <orderEntry type="module" module-name="kotlin.inspections" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
@@ -48,5 +53,7 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
   </component>
 </module>

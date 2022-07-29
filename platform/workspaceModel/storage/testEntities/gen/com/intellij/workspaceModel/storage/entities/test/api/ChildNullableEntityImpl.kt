@@ -21,192 +21,197 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildNullableEntityImpl: ChildNullableEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java, ChildNullableEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        
-        val connections = listOf<ConnectionId>(
-            PARENTENTITY_CONNECTION_ID,
-        )
+open class ChildNullableEntityImpl : ChildNullableEntity, WorkspaceEntityBase() {
 
+  companion object {
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java,
+                                                                                ChildNullableEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
+
+    val connections = listOf<ConnectionId>(
+      PARENTENTITY_CONNECTION_ID,
+    )
+
+  }
+
+  @JvmField
+  var _childData: String? = null
+  override val childData: String
+    get() = _childData!!
+
+  override val parentEntity: ParentNullableEntity
+    get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: ChildNullableEntityData?) : ModifiableWorkspaceEntityBase<ChildNullableEntity>(), ChildNullableEntity.Builder {
+    constructor() : this(ChildNullableEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity ChildNullableEntity is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _childData: String? = null
-    override val childData: String
-        get() = _childData!!
-                        
-    override val parentEntity: ParentNullableEntity
-        get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isChildDataInitialized()) {
+        error("Field ChildNullableEntity#childData should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field ChildNullableEntity#entitySource should be initialized")
+      }
+      if (_diff != null) {
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
+          error("Field ChildNullableEntity#parentEntity should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
+          error("Field ChildNullableEntity#parentEntity should be initialized")
+        }
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: ChildNullableEntityData?): ModifiableWorkspaceEntityBase<ChildNullableEntity>(), ChildNullableEntity.Builder {
-        constructor(): this(ChildNullableEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity ChildNullableEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+
+    override var childData: String
+      get() = getEntityData().childData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childData = value
+        changedProperty.add("childData")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override var parentEntity: ParentNullableEntity
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                       PARENTENTITY_CONNECTION_ID)]!! as ParentNullableEntity
         }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isChildDataInitialized()) {
-                error("Field ChildNullableEntity#childData should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field ChildNullableEntity#entitySource should be initialized")
-            }
-            if (_diff != null) {
-                if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
-                    error("Field ChildNullableEntity#parentEntity should be initialized")
-                }
-            }
-            else {
-                if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
-                    error("Field ChildNullableEntity#parentEntity should be initialized")
-                }
-            }
+        else {
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentNullableEntity
         }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
         }
-    
-        
-        override var childData: String
-            get() = getEntityData().childData
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().childData = value
-                changedProperty.add("childData")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-            
-        override var parentEntity: ParentNullableEntity
-            get() {
-                val _diff = diff
-                return if (_diff != null) {
-                    _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentNullableEntity
-                } else {
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentNullableEntity
-                }
-            }
-            set(value) {
-                checkModificationAllowed()
-                val _diff = diff
-                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    _diff.addEntity(value)
-                }
-                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                    _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                }
-                else {
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
-                }
-                changedProperty.add("parentEntity")
-            }
-        
-        override fun getEntityData(): ChildNullableEntityData = result ?: super.getEntityData() as ChildNullableEntityData
-        override fun getEntityClass(): Class<ChildNullableEntity> = ChildNullableEntity::class.java
-    }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+          _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parentEntity")
+      }
+
+    override fun getEntityData(): ChildNullableEntityData = result ?: super.getEntityData() as ChildNullableEntityData
+    override fun getEntityClass(): Class<ChildNullableEntity> = ChildNullableEntity::class.java
+  }
 }
-    
+
 class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
-    lateinit var childData: String
+  lateinit var childData: String
 
-    fun isChildDataInitialized(): Boolean = ::childData.isInitialized
+  fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildNullableEntity> {
-        val modifiable = ChildNullableEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildNullableEntity> {
+    val modifiable = ChildNullableEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): ChildNullableEntity {
-        val entity = ChildNullableEntityImpl()
-        entity._childData = childData
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): ChildNullableEntity {
+    val entity = ChildNullableEntityImpl()
+    entity._childData = childData
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return ChildNullableEntity::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ChildNullableEntity::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ChildNullableEntityData
-        
-        if (this.childData != other.childData) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ChildNullableEntityData
-        
-        if (this.childData != other.childData) return false
-        return true
-    }
+    other as ChildNullableEntityData
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + childData.hashCode()
-        return result
-    }
+    if (this.childData != other.childData) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ChildNullableEntityData
+
+    if (this.childData != other.childData) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + childData.hashCode()
+    return result
+  }
 }

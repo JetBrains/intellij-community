@@ -17,31 +17,30 @@ interface ParentNullableEntity : WorkspaceEntity {
   @Child
   val child: ChildNullableEntity?
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ParentNullableEntity, ModifiableWorkspaceEntity<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
-      override var parentData: String
-      override var entitySource: EntitySource
-      override var child: ChildNullableEntity?
+  interface Builder : ParentNullableEntity, ModifiableWorkspaceEntity<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
+    override var parentData: String
+    override var entitySource: EntitySource
+    override var child: ChildNullableEntity?
   }
-  
-  companion object: Type<ParentNullableEntity, Builder>() {
-      operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentNullableEntity {
-          val builder = builder()
-          builder.parentData = parentData
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ParentNullableEntity, Builder>() {
+    operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentNullableEntity {
+      val builder = builder()
+      builder.parentData = parentData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(ParentNullableEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(
+  ParentNullableEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ChildNullableEntity : WorkspaceEntity {
@@ -49,29 +48,28 @@ interface ChildNullableEntity : WorkspaceEntity {
 
   val parentEntity: ParentNullableEntity
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ChildNullableEntity, ModifiableWorkspaceEntity<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
-      override var childData: String
-      override var entitySource: EntitySource
-      override var parentEntity: ParentNullableEntity
+  interface Builder : ChildNullableEntity, ModifiableWorkspaceEntity<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
+    override var childData: String
+    override var entitySource: EntitySource
+    override var parentEntity: ParentNullableEntity
   }
-  
-  companion object: Type<ChildNullableEntity, Builder>() {
-      operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildNullableEntity {
-          val builder = builder()
-          builder.childData = childData
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ChildNullableEntity, Builder>() {
+    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildNullableEntity {
+      val builder = builder()
+      builder.childData = childData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(ChildNullableEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(
+  ChildNullableEntity.Builder::class.java, entity, modification)
 //endregion

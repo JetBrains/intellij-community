@@ -16,6 +16,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
@@ -23,12 +25,15 @@ import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toGroovyRepositorySnippet
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.scope
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.*
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
@@ -177,7 +182,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
     override fun getDependencies(sdk: Sdk?): List<String> {
-        return listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.standaloneCompilerVersion))
+        return listOf(getJvmStdlibArtifactId(sdk, KotlinPluginLayout.standaloneCompilerVersion))
     }
 
     override fun addSupport(

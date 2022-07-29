@@ -16,18 +16,24 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
-internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
-                             context: BuildContext,
-                             customizer: MacDistributionCustomizer,
-                             macHostProperties: MacHostProperties?,
-                             macZip: Path,
-                             jreArchivePath: Path?,
-                             suffix: String,
-                             notarize: Boolean) {
+internal val BuildContext.publishSitArchive get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
+
+internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
+                                                    context: BuildContext,
+                                                    customizer: MacDistributionCustomizer,
+                                                    macHostProperties: MacHostProperties?,
+                                                    macZip: Path,
+                                                    isRuntimeBundled: Boolean,
+                                                    suffix: String,
+                                                    notarize: Boolean) {
+  require(macZip.exists()) {
+    "Missing $macZip"
+  }
   var javaExePath: String? = null
-  if (jreArchivePath != null) {
-    javaExePath = "../${getJbrTopDir(jreArchivePath)}/Contents/Home/bin/java"
+  if (isRuntimeBundled) {
+    javaExePath = "../jbr/Contents/Home/bin/java"
   }
 
   val productJson = generateMacProductJson(builtinModule, context, javaExePath)
@@ -35,22 +41,19 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
   val installationDirectories = ArrayList<Path>()
   val installationArchives = ArrayList<Pair<Path, String>>(2)
   installationArchives.add(Pair(macZip, zipRoot))
-  if (jreArchivePath != null) {
-    installationArchives.add(Pair(jreArchivePath, ""))
-  }
   validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
 
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  val sitFile = (if (customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
+  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
 
   prepareMacZip(macZip, sitFile, productJson, zipRoot)
 
   val sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
-  if ((!sign || macHostProperties?.host == null) && SystemInfoRt.isMac) {
-    buildLocally(sitFile, targetName, jreArchivePath, sign, notarize, customizer, context)
-  }
-  else if (!sign) {
+  if (!sign) {
     Span.current().addEvent("build step '${BuildOptions.MAC_SIGN_STEP}' is disabled")
+  }
+  if (!sign || macHostProperties?.host == null && SystemInfoRt.isMac) {
+    buildLocally(sitFile, targetName, sign, notarize, customizer, context)
   }
   else if (macHostProperties?.host == null ||
            macHostProperties.userName == null ||
@@ -60,16 +63,16 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                                 "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
   }
   else {
-    buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
+    buildAndSignWithMacBuilderHost(sitFile, macHostProperties, notarize, customizer, context)
   }
 
-  if (jreArchivePath != null && Files.exists(sitFile)) {
-    context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
+  require(Files.exists(sitFile)) {
+    "$sitFile wasn't created"
   }
+  checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
 }
 
 private fun buildAndSignWithMacBuilderHost(sitFile: Path,
-                                           jreArchivePath: Path?,
                                            macHostProperties: MacHostProperties,
                                            notarize: Boolean,
                                            customizer: MacDistributionCustomizer,
@@ -80,7 +83,7 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
   else {
     Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath)
   }
-  val jetSignClient = context.proprietaryBuildTools.signTool?.commandLineClient(context)
+  val jetSignClient = context.proprietaryBuildTools.signTool?.commandLineClient(context, OsFamily.MACOS, macHostProperties.architecture)
   check(jetSignClient != null) {
     "JetSign client is missing, cannot proceed with signing"
   }
@@ -91,53 +94,50 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
     codesignString = macHostProperties.codesignString!!,
     fullBuildNumber = context.fullBuildNumber,
     notarize = notarize, bundleIdentifier = customizer.bundleIdentifier,
-    appArchiveFile = sitFile, jreArchiveFile = jreArchivePath,
-    communityHome = context.paths.communityHomeDir,
+    appArchiveFile = sitFile, communityHome = context.paths.communityHomeDir,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
-    publishAppArchive = customizer.publishArchive,
+    publishAppArchive = context.publishSitArchive,
     jetSignClient = jetSignClient
   )
 }
 
 private fun buildLocally(sitFile: Path,
                          targetName: String,
-                         jreArchivePath: Path?,
                          sign: Boolean,
                          notarize: Boolean,
                          customizer: MacDistributionCustomizer,
                          context: BuildContext) {
   val tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
-  if (jreArchivePath != null || sign) {
-    spanBuilder("bundle JBR and sign sit locally")
-      .setAttribute("jreArchive", jreArchivePath.toString())
-      .setAttribute("sitFile", sitFile.toString()).useWithScope {
-        Files.createDirectories(tempDir)
-        bundleRuntimeAndSignSitLocally(sitFile, tempDir, jreArchivePath, notarize, customizer, context)
-      }
-  }
-  if (customizer.publishArchive) {
+  spanBuilder("bundle JBR and sign sit locally")
+    .setAttribute("sitFile", sitFile.toString()).useWithScope {
+      Files.createDirectories(tempDir)
+      signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
+    }
+  if (context.publishSitArchive) {
     context.notifyArtifactBuilt(sitFile)
   }
   context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP) {
-    buildDmgLocally(tempDir, targetName, customizer, context)
+    if (SystemInfoRt.isMac) {
+      buildDmgLocally(tempDir, targetName, customizer, context)
+    }
+    else {
+      Span.current().addEvent("DMG can be built only on macOS")
+    }
   }
 
   NioFiles.deleteRecursively(tempDir)
 }
 
-private fun bundleRuntimeAndSignSitLocally(sourceFile: Path,
-                                           tempDir: Path,
-                                           jreArchivePath: Path?,
-                                           notarize: Boolean,
-                                           customizer: MacDistributionCustomizer,
-                                           context: BuildContext) {
+private fun signSitLocally(sourceFile: Path,
+                           tempDir: Path,
+                           sign: Boolean,
+                           notarize: Boolean,
+                           customizer: MacDistributionCustomizer,
+                           context: BuildContext) {
   val targetFile = tempDir.resolve(sourceFile.fileName)
   Files.copy(sourceFile, targetFile)
-  if (jreArchivePath != null) {
-    Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
-  }
 
   val scripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
   Files.walk(scripts).use { stream ->
@@ -158,12 +158,13 @@ private fun bundleRuntimeAndSignSitLocally(sourceFile: Path,
       // this host credentials, not required for signing via JetSign
       "",
       "",
-      context.proprietaryBuildTools.macHostProperties?.codesignString ?: "",
-      (jreArchivePath?.fileName?.toString() ?: "no-jdk"),
+      context.proprietaryBuildTools.macHostProperties?.codesignString?.takeIf { sign } ?: "",
       if (notarize) "yes" else "no",
       customizer.bundleIdentifier,
-      customizer.publishArchive.toString(), // compress-input
-      context.proprietaryBuildTools.signTool?.commandLineClient(context)?.toString() ?: "null"
+      context.publishSitArchive.toString(), // compress-input
+      context.proprietaryBuildTools.signTool?.takeIf { sign }
+        ?.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+        ?.toString() ?: "null"
     ),
     workingDir = tempDir,
     timeoutMillis = TimeUnit.HOURS.toMillis(3)

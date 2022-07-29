@@ -16,6 +16,7 @@ import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*

@@ -239,6 +239,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   public void setPointerColor(Color pointerColor) {
     myPointerColor = pointerColor;
+    myLayeredPane.revalidate();
+    myLayeredPane.repaint();
   }
 
   private final long myFadeoutTime;

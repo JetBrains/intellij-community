@@ -13,10 +13,15 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
 import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.CheckBox
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
+import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
+import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
 import org.jetbrains.kotlin.psi.*
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = MyVisitor(holder)
@@ -46,7 +51,7 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             visit(expression.toUnified() ?: return)
         }
 
-        private fun visit(current: UnifiedBinaryExpression) {
+        private fun visit(current: Holder.UnifiedBinaryExpression) {
             val notParenthesizedParent =
                 generateSequence(current.expression.parent) { it.parent }.firstOrNull { it !is KtParenthesizedExpression }?.toUnified()
             if (notParenthesizedParent != null) {
@@ -115,18 +120,18 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         }
     }
 
-    companion object {
+    private object Holder {
         /**
          * [org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence]
          */
-        private data class UnifiedBinaryExpression(
+        data class UnifiedBinaryExpression(
             val left: KtElement,
             val expression: KtExpression,
             val operation: KtSimpleNameExpression,
             val right: KtElement
         )
 
-        private fun PsiElement.toUnified(): UnifiedBinaryExpression? {
+        fun PsiElement.toUnified(): UnifiedBinaryExpression? {
             return when (this) {
                 is KtBinaryExpression -> {
                     if (operationToken in KtTokens.ALL_ASSIGNMENTS) {
@@ -150,18 +155,18 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             }
         }
 
-        private suspend fun SequenceScope<UnifiedBinaryExpression>.visit(node: UnifiedBinaryExpression) {
+        suspend fun SequenceScope<UnifiedBinaryExpression>.visit(node: UnifiedBinaryExpression) {
             node.left.toUnified()?.let { visit(it) }
             node.right.toUnified()?.let { visit(it) }
             yield(node)
         }
 
-        private fun UnifiedBinaryExpression.dfs() = sequence { visit(this@dfs) }
+        fun UnifiedBinaryExpression.dfs() = sequence { visit(this@dfs) }
 
-        private fun KtExpression.flattenParentheses(): KtExpression? =
+        fun KtExpression.flattenParentheses(): KtExpression? =
             generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
-        private val childToUnclearPrecedenceParentsMapping = listOf(
+        val childToUnclearPrecedenceParentsMapping = listOf(
             Precedence.ELVIS to listOf(Precedence.EQUALITY, Precedence.COMPARISON, Precedence.IN_OR_IS),
             Precedence.SIMPLE_NAME to listOf(Precedence.ELVIS),
             Precedence.ADDITIVE to listOf(Precedence.ELVIS),
@@ -170,7 +175,7 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             value.forEach { check(key < it) }
         }.map { item -> Pair(item.first, item.second.flatMap { it.operations.types.toList() }) }
 
-        private fun isRecommendedToPutParentheses(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
+        fun isRecommendedToPutParentheses(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
             val parent = unifiedBinaryExpression.expression.parent?.toUnified() ?: return false
 
             return childToUnclearPrecedenceParentsMapping.any { mappingItem ->
@@ -179,7 +184,7 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             }
         }
 
-        private fun doNeedToPutParentheses(unified: UnifiedBinaryExpression, reportEvenObviousCases: Boolean): Boolean {
+        fun doNeedToPutParentheses(unified: UnifiedBinaryExpression, reportEvenObviousCases: Boolean): Boolean {
             if (isRecommendedToPutParentheses(unified)) {
                 return true
             }

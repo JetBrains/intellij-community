@@ -19,14 +19,13 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
 
-  //@ParameterizedTest
-  //@AllGradleVersionsSource
-  fun `_test find usages of property`(gradleVersion: GradleVersion) {
-    // todo: check why it is failing
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test find usages of property`(gradleVersion: GradleVersion) {
     test(gradleVersion, PROPERTIES_FIXTURE) {
       runInEdtAndWait {
         val buildscript = findOrCreateFile("build.gradle", "foo")
-        val child = gradleFixture.fileFixture.root.findChild("gradle.properties")
+        val child = projectRoot.findChild("gradle.properties")
         assertNotNull(child, "Expected not-null child")
         val prop = (PsiUtilCore.getPsiFile(codeInsightFixture.project, child!!) as PropertiesFile).findPropertyByKey("foo")
         assertNotNull(prop, "Expected not-null prop")

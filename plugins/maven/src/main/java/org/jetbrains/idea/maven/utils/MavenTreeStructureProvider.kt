@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.SmartList
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToTreeStructureEnabled
+import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isLegacyImportToTreeStructureEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
@@ -43,7 +43,7 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
 
           }
         }
-        if (isImportToTreeStructureEnabled(project) && child is PsiDirectoryNode && parent is PsiDirectoryNode) {
+        if (isLegacyImportToTreeStructureEnabled(project) && child is PsiDirectoryNode && parent is PsiDirectoryNode) {
           childToAdd = getMavenModuleNode(project, child, settings) ?: child
         }
         modifiedChildren.add(childToAdd)

@@ -2,6 +2,7 @@ package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
@@ -57,6 +58,21 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     checkResult(after)
   }
 
+  protected fun JavaCodeInsightTestFixture.testAllQuickfixes(
+    lang: ULanguage,
+    before: String,
+    after: String,
+    vararg hints: String = emptyArray(),
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", before)
+    myFixture.getAllQuickFixes()
+      .filterIsInstance(QuickFixWrapper::class.java)
+      .filter {(hints.isEmpty() || hints.contains(it.fix.familyName)) }
+      .forEach { myFixture.launchAction(it) }
+    checkResult(after)
+  }
+
   protected fun JavaCodeInsightTestFixture.testQuickFix(file: String, hint: String = InspectionsBundle.message(
     "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
   )) {
@@ -94,6 +110,9 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   override fun tearDown() {
     try {
       myFixture.disableInspections(inspection)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()

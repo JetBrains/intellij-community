@@ -437,6 +437,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       e.getPresentation().setVisible(visible);
       e.getPresentation().setEnabled(visible && control.getComponent().getTable().getSelectedRowCount() == 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static class RemoveAction extends AnAction {
@@ -464,6 +469,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         enabled = false;
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

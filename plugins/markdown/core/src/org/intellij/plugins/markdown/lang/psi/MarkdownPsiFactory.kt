@@ -27,6 +27,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.TABLE -> MarkdownTable(node)
       MarkdownElementTypes.TABLE_ROW, MarkdownElementTypes.TABLE_HEADER -> MarkdownTableRow(node)
       MarkdownElementTypes.TABLE_CELL -> MarkdownTableCell(node)
+      MarkdownElementTypes.AUTOLINK -> MarkdownCompositeAutoLink(node)
       else -> when {
         elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)

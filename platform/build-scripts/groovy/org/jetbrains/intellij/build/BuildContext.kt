@@ -43,11 +43,6 @@ interface BuildContext: CompilationContext {
   var bootClassPathJarNames: PersistentList<String>
 
   /**
-   * Allows customizing classpath for buildSearchableOptions and builtinModules
-   */
-  var classpathCustomizer: (MutableSet<String>) -> Unit
-
-  /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
   var builtinModule: BuiltinModulesFileData?

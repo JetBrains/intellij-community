@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
-
+public final class LightEditFileEditorManagerImpl extends FileEditorManagerExImpl {
   LightEditFileEditorManagerImpl(@NotNull Project project) {
     super(project);
   }
@@ -139,8 +138,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
 
   @Override
   public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-    return ContainerUtil.map(LightEditService.getInstance().getEditorManager()
-                                             .getEditors(file), editorInfo -> editorInfo.getFileEditor())
-                        .toArray(FileEditor.EMPTY_ARRAY);
+    return ContainerUtil.map(LightEditService.getInstance().getEditorManager().getEditors(file), LightEditorInfo::getFileEditor)
+      .toArray(FileEditor.EMPTY_ARRAY);
   }
 }

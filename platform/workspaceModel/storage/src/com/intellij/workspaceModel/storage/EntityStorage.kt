@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.annotations.Open
+import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -79,11 +79,18 @@ import kotlin.reflect.KProperty1
  * ```
  */
 
-@Open interface WorkspaceEntity : Obj {
+@Abstract
+interface WorkspaceEntity : Obj {
   val entitySource: EntitySource
 
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>
   fun getEntityInterface(): Class<out WorkspaceEntity>
+
+  companion object {
+    inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
+      return WorkspaceEntityExtensionDelegate()
+    }
+  }
 }
 
 /**
@@ -92,6 +99,7 @@ import kotlin.reflect.KProperty1
  *
  * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
  */
+@Abstract
 interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
   override var entitySource: EntitySource
 }
@@ -128,6 +136,8 @@ interface DummyParentEntitySource : EntitySource
 /**
  * Base interface for entities which may need to find all entities referring to them.
  */
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
+@Abstract
 interface ReferableWorkspaceEntity : WorkspaceEntity {
   /**
    * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
@@ -135,6 +145,8 @@ interface ReferableWorkspaceEntity : WorkspaceEntity {
   fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
+@Abstract
 interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
   fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
 }
@@ -142,14 +154,17 @@ interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
 /**
  * Returns all entities of type [R] which [property] refers to this entity.
  */
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
   return referrers(R::class.java, property.name)
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
   return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
   return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
 }
@@ -183,7 +198,8 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   override fun toString(): String
 }
 
-@Open interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
+@Abstract
+interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
   val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
 }
 
@@ -259,7 +275,27 @@ fun EntityStorage.toBuilder(): MutableEntityStorage {
 }
 
 sealed class EntityChange<T : WorkspaceEntity> {
-  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Replaced<T : WorkspaceEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
+  /**
+   * Returns the entity which was removed or replaced in the change.
+   */
+  abstract val oldEntity: T?
+
+  /**
+   * Returns the entity which was added or used as a replacement in the change.
+   */
+  abstract val newEntity: T?
+  
+  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T?
+      get() = null
+    override val newEntity: T
+      get() = entity
+  }
+  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T
+      get() = entity
+    override val newEntity: T?
+      get() = null
+  }
+  data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }

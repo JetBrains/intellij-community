@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.coroutines
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
 import org.jetbrains.kotlin.idea.inspections.collections.SimplifyCallChainFix
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

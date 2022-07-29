@@ -11,3 +11,4 @@ public class Bar {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG

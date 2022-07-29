@@ -25,7 +25,9 @@ class ScriptClassRootsBuilder(
         builder.classes.toMutableSet(),
         builder.sources.toMutableSet(),
         builder.scripts.toMutableMap()
-    )
+    ) {
+        sdks.sdks.putAll(builder.sdks.sdks)
+    }
 
     fun build(): ScriptClassRootsCache =
         ScriptClassRootsCache(
@@ -81,6 +83,10 @@ class ScriptClassRootsBuilder(
 
     fun addTemplateClassesRoots(classesRoots: Collection<String>) {
         classes.addAll(classesRoots)
+    }
+
+    fun addSources(sourcesRoots: Collection<String>) {
+        sources.addAll(sourcesRoots)
     }
 
     @Deprecated("Don't use, used only from DefaultScriptingSupport for saving to storage")

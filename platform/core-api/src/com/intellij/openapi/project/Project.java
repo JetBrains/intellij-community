@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 /**
@@ -115,4 +116,8 @@ public interface Project extends ComponentManager, AreaInstance {
   default boolean isDefault() {
     return false;
   }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  CoroutineScope getCoroutineScope();
 }

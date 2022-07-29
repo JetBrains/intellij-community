@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -17,146 +18,147 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListEntityImpl: ListEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        
-        
-        val connections = listOf<ConnectionId>(
-        )
+open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
+  companion object {
+
+
+    val connections = listOf<ConnectionId>(
+    )
+
+  }
+
+  @JvmField
+  var _data: List<String>? = null
+  override val data: List<String>
+    get() = _data!!
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
+    constructor() : this(ListEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity ListEntity is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _data: List<String>? = null
-    override val data: List<String>
-        get() = _data!!
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isDataInitialized()) {
+        error("Field ListEntity#data should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field ListEntity#entitySource should be initialized")
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: ListEntityData?): ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
-        constructor(): this(ListEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity ListEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isDataInitialized()) {
-                error("Field ListEntity#data should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field ListEntity#entitySource should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var data: List<String>
-            get() = getEntityData().data
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().data = value
-                
-                changedProperty.add("data")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-        
-        override fun getEntityData(): ListEntityData = result ?: super.getEntityData() as ListEntityData
-        override fun getEntityClass(): Class<ListEntity> = ListEntity::class.java
-    }
+
+    override var data: List<String>
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+
+        changedProperty.add("data")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override fun getEntityData(): ListEntityData = result ?: super.getEntityData() as ListEntityData
+    override fun getEntityClass(): Class<ListEntity> = ListEntity::class.java
+  }
 }
-    
+
 class ListEntityData : WorkspaceEntityData<ListEntity>() {
-    lateinit var data: List<String>
+  lateinit var data: List<String>
 
-    fun isDataInitialized(): Boolean = ::data.isInitialized
+  fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListEntity> {
-        val modifiable = ListEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListEntity> {
+    val modifiable = ListEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): ListEntity {
-        val entity = ListEntityImpl()
-        entity._data = data
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): ListEntity {
+    val entity = ListEntityImpl()
+    entity._data = data
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return ListEntity::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ListEntity::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ListEntityData
-        
-        if (this.data != other.data) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ListEntityData
-        
-        if (this.data != other.data) return false
-        return true
-    }
+    other as ListEntityData
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + data.hashCode()
-        return result
-    }
+    if (this.data != other.data) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ListEntityData
+
+    if (this.data != other.data) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
+  }
 }

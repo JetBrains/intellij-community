@@ -1008,7 +1008,7 @@ public abstract class InplaceRefactoring {
       TextRange range = templateState.getCurrentVariableRange();
       final int currentOffset = myEditor.getCaretModel().getOffset();
       if (range == null && myRenameOffset != null) {
-        range = new TextRange(myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset());
+        range = myRenameOffset.getTextRange();
       }
       myBeforeRevert =
         range != null && range.getEndOffset() >= currentOffset && range.getStartOffset() <= currentOffset

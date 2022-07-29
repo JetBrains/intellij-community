@@ -18,6 +18,8 @@ import java.io.File
 abstract class AbstractIdeKotlinAnnotationsResolverTest : KotlinLightCodeInsightFixtureTestCase() {
     private val expectedAnnotationsDirective: String = "// ANNOTATION:"
 
+    override fun isFirPlugin(): Boolean = true
+
     private val annotationsResolver: KotlinAnnotationsResolver
         get() = project.service<KotlinAnnotationsResolverFactory>().createAnnotationResolver(GlobalSearchScope.projectScope(project))
 

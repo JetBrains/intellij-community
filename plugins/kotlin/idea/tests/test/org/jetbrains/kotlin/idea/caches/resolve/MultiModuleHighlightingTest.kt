@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -36,8 +36,8 @@ import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.ANNOTATION_OPTION
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.PLUGIN_ID
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -174,7 +174,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
 
-            assertEquals(0, tracker.sdkResolversComputed.size)
+            assertEquals(1, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
             tracker.moduleResolversComputed.clear()
@@ -182,7 +182,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
                 (PsiModificationTracker.getInstance(myProject) as PsiModificationTrackerImpl).incOutOfCodeBlockModificationCounter()
             }
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
-            assertEquals(0, tracker.sdkResolversComputed.size)
+            assertEquals(2, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
         }
     }
@@ -216,12 +216,12 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testSamWithReceiverExtension() {
         val module1 = module("m1").setupKotlinFacet {
             settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}=anno.A")
+                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.A")
         }
 
         val module2 = module("m2").setupKotlinFacet {
             settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}=anno.B")
+                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.B")
         }
 
 
@@ -235,7 +235,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         val jarForCompositeLibrary = KotlinCompilerStandalone(
             sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart"))
         ).compile()
-        val stdlibJarForCompositeLibrary = KotlinArtifacts.kotlinStdlib
+        val stdlibJarForCompositeLibrary = TestKotlinArtifacts.kotlinStdlib
         val jarForSourceDependentLibrary = KotlinCompilerStandalone(
             sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary"))
         ).compile()

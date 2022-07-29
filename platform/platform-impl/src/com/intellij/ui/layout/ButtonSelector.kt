@@ -78,7 +78,7 @@ class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
 private class ButtonSelector(
   action: ButtonSelectorAction<*>,
   presentation: Presentation,
-  place: String?,
+  place: String,
   minimumSize: Dimension,
   private val config: DialogPanelConfig
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {

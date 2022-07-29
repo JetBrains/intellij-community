@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -23,7 +24,8 @@ import javax.swing.UIManager
  */
 internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
   companion object {
-    val ICON_PADDING = JBUI.insets(5)
+    val ICON_PADDING: Insets
+      get() = JBUI.insets(5)
   }
 
   override fun paintBackground(g: Graphics, component: JComponent, state: Int) {

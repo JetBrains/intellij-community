@@ -98,7 +98,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
 
   public final int hashCode() {
     int result;
-    result = (myOption != null ? myOption.hashCode() : 0);
+    result = myOption != null ? myOption.hashCode() : 0;
     result = 31 * result + (myHit != null ? myHit.hashCode() : 0);
     result = 31 * result + (myPath != null ? myPath.hashCode() : 0);
     result = 31 * result + (myConfigurableId != null ? myConfigurableId.hashCode() : 0);

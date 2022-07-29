@@ -75,8 +75,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-  @NotNull
-  public static NotificationSettings getSettings(@NotNull String groupId) {
+  public static @NotNull NotificationSettings getSettings(@NotNull String groupId) {
     NotificationSettings settings;
     NotificationsConfigurationImpl impl = getInstanceImpl();
     synchronized (impl) {
@@ -132,8 +131,13 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
-  public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
-    changeSettings(new NotificationSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud));
+  public @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId) {
+    return getSettings(groupId).getDisplayType();
+  }
+
+  @Override
+  public void changeSettings(@NotNull String groupId, @NotNull NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
+    changeSettings(new NotificationSettings(groupId, displayType, shouldLog, shouldReadAloud));
   }
 
   public synchronized void changeSettings(NotificationSettings settings) {

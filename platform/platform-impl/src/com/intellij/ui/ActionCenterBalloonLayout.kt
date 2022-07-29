@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.DataManager
@@ -18,7 +18,6 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.util.*
 import javax.swing.JLayeredPane
@@ -29,12 +28,12 @@ import javax.swing.SwingConstants
 /**
  * @author Alexander Lobas
  */
-class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
-  private val myCollapsedData = HashMap<Balloon, CollapseInfo>()
+internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
+  private val collapsedData = HashMap<Balloon, CollapseInfo>()
 
   override fun dispose() {
     super.dispose()
-    myCollapsedData.clear()
+    collapsedData.clear()
   }
 
   override fun add(newBalloon: Balloon, layoutData: Any?) {
@@ -143,16 +142,16 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
   }
 
   private fun doCollapseForBalloons(oldBalloon: Balloon, newBalloon: Balloon, newLayoutData: BalloonLayoutData): CollapseInfo {
-    val info = myCollapsedData[oldBalloon]
+    val info = collapsedData[oldBalloon]
     if (info == null) {
       remove(oldBalloon)
       return createCollapsedData(newBalloon, newLayoutData)
     }
 
-    myCollapsedData.remove(oldBalloon)
+    collapsedData.remove(oldBalloon)
     remove(oldBalloon)
 
-    myCollapsedData[newBalloon] = info
+    collapsedData[newBalloon] = info
 
     return info
   }
@@ -162,13 +161,13 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     else "notifications.collapse.balloon.title.suggestion"
 
     val newCollapseInfo = CollapseInfo(titleEnd)
-    myCollapsedData[balloon] = newCollapseInfo
+    collapsedData[balloon] = newCollapseInfo
 
     return newCollapseInfo
   }
 
   override fun remove(balloon: Balloon, hide: Boolean) {
-    myCollapsedData.remove(balloon)?.hide()
+    collapsedData.remove(balloon)?.hide()
     super.remove(balloon, hide)
   }
 
@@ -178,13 +177,13 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     super.calculateSize()
 
     for (balloon in myBalloons) {
-      myCollapsedData[balloon]?.calculateSize()
+      collapsedData[balloon]?.calculateSize()
     }
   }
 
   override fun getSize(balloon: Balloon): Dimension {
     val size = super.getSize(balloon)
-    val info = myCollapsedData[balloon]
+    val info = collapsedData[balloon]
     if (info != null) {
       size.height += info.height
     }
@@ -196,7 +195,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
-      val info = myCollapsedData[balloon]
+      val info = collapsedData[balloon]
       if (info != null) {
         info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight, bounds.width, info.fullHeight))
         y -= info.height
@@ -293,9 +292,11 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     }
 
     fun calculateSize() {
-      val insets = (balloon as BalloonImpl).shadowBorderInsets
-      fullHeight = balloon.preferredSize.height
-      height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      if (balloon is BalloonImpl) {
+        val insets = balloon.shadowBorderInsets
+        fullHeight = balloon.preferredSize.height
+        height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      }
     }
   }
 }

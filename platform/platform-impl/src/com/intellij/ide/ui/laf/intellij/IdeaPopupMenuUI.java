@@ -80,7 +80,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfoRt.isMac && Registry.is("popup.menu.roundBorder.enabled", false);
+    return SystemInfoRt.isMac && Registry.is("popup.menu.roundBorder.enabled", true);
   }
 
   public static boolean hideEmptyIcon(Component c) {

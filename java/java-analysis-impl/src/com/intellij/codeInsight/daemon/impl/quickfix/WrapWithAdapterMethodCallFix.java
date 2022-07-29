@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -223,10 +224,10 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 inType -> PsiType.LONG.equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
                 outType -> PsiType.INT.equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),
     new Wrapper("java.util.Collections.singleton({0})",
-                inType -> true,
+                Predicates.alwaysTrue(),
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
     new Wrapper("java.util.Collections.singletonList({0})",
-                inType -> true,
+                Predicates.alwaysTrue(),
                 outType -> PsiTypesUtil.classNameEquals(outType, CommonClassNames.JAVA_UTIL_LIST)),
     new Wrapper("java.util.Arrays.stream({0})",
                 inType -> inType instanceof PsiArrayType,

@@ -30,7 +30,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
-    plugin("intellij.webp"){
+    plugin("intellij.webp") {
       withResource("lib/libwebp/linux", "lib/libwebp/linux")
       withResource("lib/libwebp/mac", "lib/libwebp/mac")
       withResource("lib/libwebp/win", "lib/libwebp/win")
@@ -52,7 +52,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
-    plugin("intellij.vcs.svn"){
+    plugin("intellij.vcs.svn") {
       withProjectLibrary("sqlite")
     },
     plugin("intellij.xpath") {
@@ -104,7 +104,7 @@ final class CommunityRepositoryModules {
         "maven-dependency-tree-1.2.jar",
         "mercury-artifact-1.0-alpha-6.jar",
         "nexus-indexer-1.2.3.jar"
-      ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
+      ].each { withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib") }
       doNotCopyModuleLibrariesAutomatically([
         "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
         "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
@@ -240,14 +240,17 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.configurationScript"),
     simplePlugin("intellij.yaml"),
     simplePlugin("intellij.repository.search"),
+    simplePlugin("intellij.color.scheme.github"),
+    simplePlugin("intellij.color.scheme.monokai"),
+    simplePlugin("intellij.color.scheme.twilight"),
+    simplePlugin("intellij.color.scheme.warmNeon"),
+    simplePlugin("intellij.reStructuredText"),
     simplePlugin("intellij.maven.model"),
     simplePlugin("intellij.vcs.hg"),
     simplePlugin("intellij.vcs.github"),
     simplePlugin("intellij.java.i18n"),
     simplePlugin("intellij.java.debugger.streams"),
     simplePlugin("intellij.sh"),
-    simplePlugin("intellij.vcs.changeReminder"),
-    simplePlugin("intellij.vcs.refactoring.detector"),
     plugin("intellij.featuresTrainer") {
       withProjectLibrary("assertJ")
       withProjectLibrary("assertj-swing")
@@ -259,7 +262,13 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
-    simplePlugin("kotlin.plugin-fir"),
+    plugin("intellij.platform.testFramework.ui") {
+      withModuleLibrary("intellij.remoterobot.ide.launcher", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.remote.fixtures", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.remote.robot", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.robot.server", mainModule, "")
+      withProjectLibrary("okhttp")
+    },
   )
 
   public final static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = List.of(
@@ -350,7 +359,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
 
       // android-kotlin.jar
-      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar") // <= ADDED
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
 
@@ -622,7 +630,6 @@ final class CommunityRepositoryModules {
       // here go some differences from original Android Studio layout
 
       //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
-      withProjectLibrary("kotlin-gradle-plugin-model")
       withProjectLibrary("HdrHistogram")
 
       for (Map.Entry<String, String> entry in additionalModulesToJars.entrySet()) {

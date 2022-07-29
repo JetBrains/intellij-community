@@ -83,6 +83,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SLOW_DATA_PROVIDERS;
 
 /**
@@ -335,7 +336,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     doSelectModuleOrGroup(moduleGroup, requestFocus);
   }
 
-  public TreePath[] getSelectionPaths() {
+  public TreePath @Nullable [] getSelectionPaths() {
     return myTree == null ? null : myTree.getSelectionPaths();
   }
 
@@ -365,8 +366,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
            : ArrayUtil.toObjectArray(ContainerUtil.map(singlePath.getPath(), TreeUtil::getUserObject));
   }
 
-  @NotNull
-  protected <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
+  /** @deprecated Use {@link #getSelectionPaths()} */
+  @Deprecated(forRemoval = true)
+  protected @NotNull <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       return Collections.emptyList();
@@ -392,6 +394,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(@NotNull String dataId) {
+    if (PROJECT.is(dataId)) {
+      return myProject;
+    }
+
     Object[] selectedUserObjects = getSelectedUserObjects();
 
     if (SLOW_DATA_PROVIDERS.is(dataId)) {
@@ -430,33 +436,33 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull
   public abstract SelectInTarget createSelectInTarget();
 
-  public final TreePath getSelectedPath() {
+  /** @see TreeUtil#getLastUserObject */
+  public final @Nullable TreePath getSelectedPath() {
     return TreeUtil.getSelectedPathIfOne(myTree);
   }
 
-  public final NodeDescriptor getSelectedDescriptor() {
+  /** @deprecated Use {@link #getSelectedPath} */
+  @Deprecated(forRemoval = true)
+  public final @Nullable NodeDescriptor getSelectedDescriptor() {
     return TreeUtil.getLastUserObject(NodeDescriptor.class, getSelectedPath());
   }
 
-  /**
-   * @see TreeUtil#getUserObject(Object)
-   * @deprecated AbstractProjectViewPane#getSelectedPath
-   */
-  @Deprecated
+  /** @deprecated Use {@link #getSelectedPath} */
+  @Deprecated(forRemoval = true)
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
+  /** @deprecated Use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)} */
+  @Deprecated(forRemoval = true)
   public final Object getSelectedElement() {
     final Object[] elements = getSelectedElements();
     return elements.length == 1 ? elements[0] : null;
   }
 
-  /**
-   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)}
-   */
-  @Deprecated
+  /** @deprecated Use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)} */
+  @Deprecated(forRemoval = true)
   public final PsiElement @NotNull [] getSelectedPSIElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
@@ -467,11 +473,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @SuppressWarnings("unchecked")
   private @Nullable Iterable<DataProvider> slowProviders(@Nullable Object @NotNull [] selectedUserObjects) {
+    //noinspection unchecked
     Iterable<DataProvider> structureProviders = (Iterable<DataProvider>)getFromTreeStructure(
-      selectedUserObjects, SLOW_DATA_PROVIDERS.getName()
-    );
+      selectedUserObjects, SLOW_DATA_PROVIDERS.getName());
     DataProvider selectionProvider = selectionProvider(selectedUserObjects);
     if (structureProviders != null && selectionProvider != null) {
       return ContainerUtil.nullize(ContainerUtil.flattenIterables(List.of(structureProviders, List.of(selectionProvider))));
@@ -493,21 +498,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       return null;
     }
     Object[] singleSelectedPathUserObjects = getSingleSelectedPathUserObjects();
-    return dataId -> getDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
+    return dataId -> getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
   }
 
   @RequiresReadLock(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
-  private @Nullable Object getDataFromSelection(
-    @Nullable Object @NotNull [] selectedUserObjects,
-    @Nullable Object @Nullable [] singleSelectedPathUserObjects,
-    @NotNull String dataId
-  ) {
+  protected @Nullable Object getSlowDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects,
+                                                      @Nullable Object @Nullable [] singleSelectedPathUserObjects,
+                                                      @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length == 1 ? elements[0] : null;
     }
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length > 0 ? elements : null;
     }
@@ -642,10 +645,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
-  /**
-   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getSelectedValues(Object[])}
-   */
-  @Deprecated
+  /** @deprecated use {@link #getSelectedUserObjects()} and {@link #getSelectedValues(Object[])} */
+  @Deprecated(forRemoval = true)
   public final Object @NotNull [] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
@@ -1079,7 +1080,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (paths == null) return null;
 
       List<Trinity<@Nls String, Icon, @Nullable VirtualFile>> toRender = new ArrayList<>();
-      for (TreePath path : getSelectionPaths()) {
+      for (TreePath path : paths) {
         Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
         toRender.add(Trinity.create(iconAndText.second, iconAndText.first,
                                     PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));

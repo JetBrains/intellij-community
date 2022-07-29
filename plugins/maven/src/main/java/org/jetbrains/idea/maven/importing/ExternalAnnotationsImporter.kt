@@ -10,43 +10,77 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
-class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
+class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+                                    MavenConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
   override fun processChangedModulesOnly(): Boolean = false
 
+  override fun isMigratedToConfigurator(): Boolean = true
+
+  override fun afterModelApplied(context: MavenConfigurator.AppliedModelContext) {
+    if (!shouldRun(context.project)) return
+    val projectsWithChanges = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
+
+    if (projectsWithChanges.none()) return
+
+    val libraryNameMap = context.importedEntities(LibraryEntity::class.java)
+      .mapNotNull { it.findLibraryBridge(context.storage) }
+      .associateBy { it.name }
+
+    doConfigure(context.project, projectsWithChanges) { libraryName -> libraryNameMap[libraryName] }
+  }
+
   override fun postProcess(module: Module,
                            mavenProject: MavenProject,
                            changes: MavenProjectChanges,
                            modifiableModelsProvider: IdeModifiableModelsProvider) {
-
-    val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
-    if (resolvers.isEmpty()) {
-      return
+    if (!shouldRun(module.project)) return
+    doConfigure(module.project, sequenceOf(mavenProject)) { libraryName ->
+      modifiableModelsProvider.getLibraryByName(libraryName)
     }
+  }
 
-    val project = module.project
-    val librariesMap = mutableMapOf<MavenArtifact, Library>()
-
+  private fun shouldRun(project: Project): Boolean {
     if (!shouldImportExternalAnnotations(project)) {
-      return
+      return false
     }
 
-    mavenProject.dependencies.forEach {
-      val library = modifiableModelsProvider.getLibraryByName(it.libraryName)
-      if (library != null) {
-        librariesMap[it] = library
-      }
+    val resolvers = getResolvers()
+    if (resolvers.isEmpty()) {
+      return false
     }
 
-    val toProcess = librariesMap.filterKeys { myProcessedLibraries.add(it) }
+    return true
+  }
+
+  private fun getResolvers(): MutableList<ExternalAnnotationsArtifactsResolver> =
+    ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
+
+  private fun doConfigure(project: Project, mavenProjects: Sequence<MavenProject>, libraryFinder: (libraryName: String) -> Library?) {
+    val toProcess = mutableMapOf<MavenArtifact, Library>()
+
+    mavenProjects.forEach { eachMavenProject ->
+      eachMavenProject.dependencies.asSequence()
+        .filter { !myProcessedLibraries.contains(it) }
+        .forEach {
+          val library = libraryFinder.invoke(it.libraryName)
+          if (library != null) {
+            toProcess[it] = library
+            myProcessedLibraries.add(it)
+          }
+        }
+    }
+
     if (toProcess.isEmpty()) {
       return
     }
@@ -56,6 +90,8 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
 
     val locationsToSkip = mutableSetOf<AnnotationsLocation>()
     runBackgroundableTask(TasksBundle.message("maven.tasks.external.annotations.resolving.title"), project) { indicator ->
+      val resolvers = getResolvers()
+
       indicator.isIndeterminate = false
       toProcess.forEach { (mavenArtifact, library) ->
         if (indicator.isCanceled) {

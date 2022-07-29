@@ -3,7 +3,6 @@ package com.intellij.warmup
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 
 /**
  * Allows to add a custom 'Project is built/compiled' event for warmup mode.
@@ -29,5 +28,5 @@ interface ProjectBuildWarmupSupport {
    * Start custom build process and return a future which is completed only when a custom build is finished
    * @param rebuild indicates if rebuild should be done instead of ordinary build
    */
-  fun buildProject(rebuild: Boolean = false): CompletableFuture<Unit>
+  suspend fun buildProject(rebuild: Boolean = false)
 }

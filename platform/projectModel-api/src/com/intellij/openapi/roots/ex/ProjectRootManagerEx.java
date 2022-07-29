@@ -21,12 +21,19 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
    * Invokes runnable surrounded by beforeRootsChange()/rootsChanged() callbacks
    * <p>
    * With {@code !fileTypes && fireEvents} indexes always make a full rescan.
-   * Consider invoking {@link #makeRootsChange(Runnable, RootsChangeRescanningInfo)} with proper {@link RootsChangeRescanningInfo}
-   * to limit the scope of rescanning. It may be configured with {@link com.intellij.util.indexing.BuildableRootsChangeRescanningInfo}
+   * <p>
+   * @deprecated Use {@link ProjectRootManagerEx#makeRootsChange(Runnable, RootsChangeRescanningInfo)} when {@code fireEvents == true},
+   * else just {@code runnable.run()}
+   * <p>
+   * {@link RootsChangeRescanningInfo} allows to limit the scope of rescanning. It may be configured
+   * with {@link com.intellij.util.indexing.BuildableRootsChangeRescanningInfo}
    */
+  @Deprecated
   public abstract void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents);
 
   public abstract void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes);
+
+  public abstract @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes);
 
   public abstract void markRootsForRefresh();
 

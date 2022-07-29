@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.TargetBackend
@@ -72,7 +72,7 @@ abstract class AbstractDecompiledTextBaseTest(
 
     private fun getCompilationClasspath(directivesText: String): List<File> =
         if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "STDLIB_JDK_8")) {
-            listOf(KotlinArtifacts.kotlinStdlibJdk8)
+            listOf(TestKotlinArtifacts.kotlinStdlibJdk8)
         } else {
             emptyList()
         }

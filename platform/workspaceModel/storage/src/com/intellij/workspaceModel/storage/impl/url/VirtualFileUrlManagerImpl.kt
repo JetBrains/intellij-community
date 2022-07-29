@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.url
 
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
@@ -21,6 +21,11 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   override fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return getEmptyUrl()
     return add(url)
+  }
+
+  override fun fromUrlSegments(urls: List<String>): VirtualFileUrl {
+    if (urls.isEmpty()) return getEmptyUrl()
+    return addSegments(null, urls)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
@@ -77,10 +82,14 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
+  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
+    return addSegments(parentNode, segments)
+  }
+
+  private fun addSegments(parentNode: FilePathNode?, segments: List<String>): VirtualFileUrl {
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {

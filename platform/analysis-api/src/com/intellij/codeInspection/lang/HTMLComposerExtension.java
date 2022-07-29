@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.HTMLComposer;
@@ -8,12 +8,18 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * An extension to output HTML (see {@link HTMLComposer}).
  */
 public interface HTMLComposerExtension<T> {
   Key<T> getID();
   Language getLanguage();
+  default Collection<Language> getLanguages() {
+    return Collections.singletonList(getLanguage());
+  }
 
   /**
    * Appends HTML corresponding to the {@link RefEntity} short name.

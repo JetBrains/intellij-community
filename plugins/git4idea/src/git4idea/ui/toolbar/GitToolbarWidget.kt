@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -23,7 +22,6 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -49,7 +47,8 @@ internal class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Dispos
   override fun getPosition(): Position = Position.Left
 }
 
-private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget) : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
+private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget)
+  : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
   private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   private var repository: GitRepository? = null
@@ -58,7 +57,7 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
   private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
   init {
-    repository = guessCurrentRepo(project)
+    repository = GitBranchUtil.guessWidgetRepository(project)
     updateWidget()
   }
 
@@ -87,14 +86,15 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     updateIcons()
   }
 
-  private fun GitRepository.calcText() : String = cutText(GitBranchUtil.getBranchNameOrRev(this))
+  private fun GitRepository.calcText(): String = cutText(GitBranchUtil.getBranchNameOrRev(this))
 
-  private fun GitRepository.calcTooltip() : String {
+  private fun GitRepository.calcTooltip(): String {
     if (state == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached")
     }
 
-    var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), GitBranchUtil.getBranchNameOrRev(this))
+    var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(),
+                                     GitBranchUtil.getBranchNameOrRev(this))
     if (!GitUtil.justOneGitRepository(project)) {
       message += "\n"
       message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
@@ -112,11 +112,6 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     } ?: emptyList()
 
     widget.rightIcons = icons
-  }
-
-  private fun guessCurrentRepo(project: Project): GitRepository? {
-    val settings = GitVcsSettings.getInstance(project)
-    return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), settings.recentRootPath)
   }
 }
 

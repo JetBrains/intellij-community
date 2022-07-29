@@ -106,6 +106,8 @@ interface ScriptConfigurationManager {
     fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope
     fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile>
     fun getAllScriptDependenciesSources(): Collection<VirtualFile>
+    fun getAllScriptsSdkDependenciesClassFiles(): Collection<VirtualFile>
+    fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile>
 
     companion object {
         fun getServiceIfCreated(project: Project): ScriptConfigurationManager? = project.serviceIfCreated()

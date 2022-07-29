@@ -21,14 +21,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ExpandableItemsHandler
-import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.Delegates
 import org.jetbrains.annotations.NonNls
-import java.util.stream.Stream
 import javax.swing.JComponent
 import javax.swing.JTree.TREE_MODEL_PROPERTY
-import kotlin.streams.toList
 
 @JvmField
 internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabTitle String>("combined_diff_preview_tab_name")
@@ -42,7 +39,7 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
                                    parentDisposable: Disposable) :
   EditorTabPreviewBase(tree.project, parentDisposable) {
 
-  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, false, parentDisposable)
+  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, true, parentDisposable)
 
   override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(tree.id) }
 
@@ -80,7 +77,7 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
     tree.addPropertyChangeListener(TREE_MODEL_PROPERTY) {
       if (model.ourDisposable.isDisposed) return@addPropertyChangeListener
 
-      val changes = model.getSelectedOrAllChangesStream().toList()
+      val changes = model.iterateSelectedOrAllChanges().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)
         model.reset(prepareCombinedDiffModelRequests(project, changes))
@@ -123,25 +120,25 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
     }
   }
 
-companion object {
-  @JvmStatic
-  fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {
-    return changes
-      .asSequence()
-      .mapNotNull { wrapper ->
-        wrapper.createProducer(project)
-          ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
-      }.toMap()
+  companion object {
+    @JvmStatic
+    fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {
+      return changes
+        .asSequence()
+        .mapNotNull { wrapper ->
+          wrapper.createProducer(project)
+            ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
+        }.toMap()
+    }
   }
-}
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer> {
     return ListSelection.create(requests.values.toList(), selected?.createProducer(project))
   }
 
-  abstract fun getAllChanges(): Stream<out Wrapper>
+  abstract fun iterateAllChanges(): Iterable<Wrapper>
 
-  protected abstract fun getSelectedChanges(): Stream<out Wrapper>
+  protected abstract fun iterateSelectedChanges(): Iterable<Wrapper>
 
   protected open fun showAllChangesForEmptySelection(): Boolean {
     return true
@@ -154,7 +151,7 @@ companion object {
   override fun refresh(fromModelRefresh: Boolean) {
     if (ourDisposable.isDisposed) return
 
-    val selectedChanges = getSelectedOrAllChangesStream().toList()
+    val selectedChanges = iterateSelectedOrAllChanges().toList()
 
     val selectedChange = selected?.let { prevSelected -> selectedChanges.find { it == prevSelected } }
 
@@ -162,7 +159,7 @@ companion object {
         context.isWindowFocused &&
         context.isFocusedInWindow) {
       // Do not automatically switch focused viewer
-      if (selectedChanges.size == 1 && getAllChanges().anyMatch { it: Wrapper -> selected == it }) {
+      if (selectedChanges.size == 1 && iterateAllChanges().any { it: Wrapper -> selected == it }) {
         selected?.run(::selectChangeInTree) // Restore selection if necessary
       }
       return
@@ -179,8 +176,8 @@ companion object {
     selected = newSelected
   }
 
-  internal fun getSelectedOrAllChangesStream(): Stream<out Wrapper> {
-    return if (getSelectedChanges().isEmpty() && showAllChangesForEmptySelection()) getAllChanges() else getSelectedChanges()
+  internal fun iterateSelectedOrAllChanges(): Iterable<Wrapper> {
+    return if (iterateSelectedChanges().none() && showAllChangesForEmptySelection()) iterateAllChanges() else iterateSelectedChanges()
   }
 
   private fun scrollToChange(change: Wrapper) {

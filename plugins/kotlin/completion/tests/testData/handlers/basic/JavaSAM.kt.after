@@ -1,7 +1,5 @@
 import java.util.concurrent.Callable
 
-// FIR_IDENTICAL
-// FIR_COMPARISON
 fun f() {
     Callable<caret>
 }

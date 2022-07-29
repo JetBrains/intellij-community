@@ -520,7 +520,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       protected TextRange getOccurrenceRange(PsiExpression occurrence) {
         RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
         if (rangeMarker != null) {
-          return new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+          return rangeMarker.getTextRange();
         }
         return occurrence.getTextRange();
       }

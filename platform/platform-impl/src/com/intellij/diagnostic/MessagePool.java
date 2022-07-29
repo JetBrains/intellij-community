@@ -52,7 +52,7 @@ public final class MessagePool {
     }
   }
 
-  public State getState() {
+  public @NotNull State getState() {
     if (myErrors.isEmpty()) return State.NoErrors;
     for (AbstractMessage message: myErrors) {
       if (!message.isRead()) return State.UnreadErrors;

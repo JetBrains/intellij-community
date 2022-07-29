@@ -71,7 +71,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     for (UClass innerClass : innerClasses) {
       final PsiElement psi = innerClass.getSourcePsi();
       if (psi != null) {
-        final RefClass refInnerClass = (RefClass)manager.getReference(psi);
+        final RefElement refInnerClass = manager.getReference(psi);
         if (refInnerClass !=  null) {
           addChild(refInnerClass);
           if (!innerClass.isStatic()) utilityClass = false;
@@ -121,17 +121,17 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     boolean memberSeen = false;
     for (UField uField : uFields) {
-      final RefField field = ObjectUtils.tryCast(getRefManager().getReference(uField.getSourcePsi()), RefField.class);
+      final RefField field = ObjectUtils.tryCast(manager.getReference(uField.getSourcePsi()), RefField.class);
       if (field != null) {
         memberSeen = true;
         addChild(field);
         if (!uField.isStatic() || uField instanceof UEnumConstant) utilityClass = false;
       }
     }
-    RefMethod varargConstructor = null;
+    RefMethodImpl varargConstructor = null;
     boolean constructorSeen = false;
     for (UMethod uMethod : uMethods) {
-      RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
+      RefMethodImpl refMethod = ObjectUtils.tryCast(manager.getReference(uMethod.getSourcePsi()), RefMethodImpl.class);
 
       if (refMethod != null) {
         addChild(refMethod);
@@ -143,7 +143,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
           }
 
           if (parameters.isEmpty()) {
-            setDefaultConstructor((RefMethodImpl)refMethod);
+            setDefaultConstructor(refMethod);
           }
           else if (parameters.size() == 1) {
             PsiElement parameterPsi = parameters.get(0).getJavaPsi();
@@ -169,7 +169,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     synchronized (this) {
       if (varargConstructor != null && myDefaultConstructor == null) {
-        setDefaultConstructor((RefMethodImpl)varargConstructor);
+        setDefaultConstructor(varargConstructor);
       }
     }
 
@@ -284,14 +284,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
 
-      UField[] uFields = uClass.getFields();
-      for (UField uField : uFields) {
-        final UExpression initializer = uField.getUastInitializer();
-        if (initializer != null) {
-          refUtil.addReferencesTo(uClass, this, initializer);
-        }
-      }
-
       final RefMethodImpl defaultConstructor = (RefMethodImpl)getDefaultConstructor();
       if (defaultConstructor != null) {
         for (RefClass superClass : getBaseClasses()) {
@@ -308,12 +300,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       UMethod[] uMethods = uClass.getMethods();
       for (UMethod uMethod : uMethods) {
         if (uMethod.getSourcePsi() == classSourcePsi) {
+          // Kotlin implicit constructor
           refUtil.addReferencesTo(uClass, this, uMethod.getUastBody());
         }
       }
       refUtil.addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
-
-      getRefManager().fireBuildReferences(this);
     }
   }
 
@@ -321,7 +312,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public void accept(final @NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitClass(this));
-    } else {
+    }
+    else {
       super.accept(visitor);
     }
   }
@@ -333,7 +325,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myBases instanceof Set ? (Set<RefClass>)myBases : Collections.singleton((RefClass)myBases);
   }
 
-  private synchronized void addBaseClass(RefClass refClass){
+  private synchronized void addBaseClass(RefClass refClass) {
     if (myBases == null) {
       myBases = refClass;
     }
@@ -405,7 +397,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   void addTypeReference(RefJavaElement from) {
     if (from != null) {
       synchronized (this) {
-        if (myInTypeReferences == null){
+        if (myInTypeReferences == null) {
           myInTypeReferences = new HashSet<>(1);
         }
         myInTypeReferences.add(from);
@@ -461,7 +453,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
 
   static @Nullable RefClass classFromExternalName(RefManager manager, String externalName) {
-    return (RefClass) manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
+    return (RefClass)manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
   @Override
@@ -559,7 +551,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   synchronized void addOutTypeReference(RefClass refClass) {
-    if (myOutTypeReferences == null){
+    if (myOutTypeReferences == null) {
       myOutTypeReferences = new HashSet<>();
     }
     myOutTypeReferences.add(refClass);

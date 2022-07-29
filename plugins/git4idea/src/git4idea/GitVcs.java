@@ -206,19 +206,18 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    myDisposable = Disposer.newDisposable();
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    BackgroundTaskUtil.executeOnPooledThread(myDisposable, ()
+    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    if (myVFSListener == null) {
-      myVFSListener = GitVFSListener.createInstance(this);
-    }
+    myVFSListener = GitVFSListener.createInstance(this, disposable);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitAnnotationsListener.registerListener(myProject, myDisposable);
-    GitAdvancedSettingsListener.registerListener(myProject, myDisposable);
+    GitAnnotationsListener.registerListener(myProject, disposable);
+    GitAdvancedSettingsListener.registerListener(myProject, disposable);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -226,10 +225,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void deactivate() {
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
+    myVFSListener = null;
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
@@ -314,12 +310,6 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean fileListenerIsSynchronous() {
     return false;
-  }
-
-  @Override
-  @RequiresEdt
-  public void enableIntegration() {
-    enableIntegration(null);
   }
 
   @Override

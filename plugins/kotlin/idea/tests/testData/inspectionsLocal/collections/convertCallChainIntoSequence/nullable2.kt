@@ -1,4 +1,3 @@
-// IGNORE_FE10_BINDING_BY_FIR
 // WITH_STDLIB
 
 fun test(list: List<Int>?): List<Int>? {

@@ -19,8 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentLi
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyAnnotationArgumentValue
 
 class AddAnnotationValueIntention : Intention() {
-  companion object {
-    private val myPredicate: PsiElementPredicate
+  private object Holder {
+    val myPredicate: PsiElementPredicate
 
     init {
       val singleArgumentCondition = object : PatternCondition<GrAnnotationArgumentList>("with single argument") {
@@ -33,7 +33,7 @@ class AddAnnotationValueIntention : Intention() {
     }
   }
 
-  override fun getElementPredicate(): PsiElementPredicate = myPredicate
+  override fun getElementPredicate(): PsiElementPredicate = Holder.myPredicate
 
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val value = element as? GrAnnotationMemberValue ?: return

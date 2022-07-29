@@ -19,7 +19,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
@@ -118,20 +119,28 @@ open class PyAddCondaEnvPanel(
   }
 
   protected open fun layoutComponents() {
-    layout = BorderLayout()
-
     val formPanel = panel {
-      row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.interpreter")) { interpreterCombobox() }
+      row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.interpreter")) {
+        cell(interpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+      }
       val rowsForCreatingNewCondaEnv = listOf(
-        row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.location")) { pathField() },
-        row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.python.version")) { languageLevelsField() },
-        row(label = PyBundle.message("python.sdk.conda.path")) { condaPathField() }
+        row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.location")) {
+          cell(pathField).horizontalAlign(HorizontalAlign.FILL)
+        },
+        row(label = PyBundle.message("sdk.create.venv.conda.dialog.label.python.version")) {
+          cell(languageLevelsField)
+        },
+        row(label = PyBundle.message("python.sdk.conda.path")) {
+          cell(condaPathField).horizontalAlign(HorizontalAlign.FILL)
+        }
       )
-      row() { makeSharedField() }
+      row {
+        cell(makeSharedField)
+      }
 
       fun updateComponentsVisibility() {
         rowsForCreatingNewCondaEnv.forEach { row ->
-          row.visible = interpreterCombobox.selectedItem is NewPySdkComboBoxItem
+          row.visible(interpreterCombobox.selectedItem is NewPySdkComboBoxItem)
         }
       }
 

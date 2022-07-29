@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.keymap.Keymap
@@ -37,11 +36,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private val REGULAR = SimpleAttributeSet()
   private val BOLD = SimpleAttributeSet()
   private val SHORTCUT = SimpleAttributeSet()
+  private val SHORTCUT_SEPARATOR = SimpleAttributeSet()
   private val ROBOTO = SimpleAttributeSet()
   private val CODE = SimpleAttributeSet()
   private val LINK = SimpleAttributeSet()
 
-  private var codeFontSize = UISettings.getInstance().fontSize.toInt()
+  private var codeFontSize = UISettings.getInstance().plainFont.size
 
   private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
   private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
@@ -49,6 +49,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   private val textColor: Color = if (panelMode) UISettings.getInstance().defaultTextColor else UISettings.getInstance().tooltipTextColor
   private val codeForegroundColor: Color = if (panelMode) UISettings.getInstance().codeForegroundColor else UISettings.getInstance().tooltipTextColor
+  private val shortcutTextColor = if (panelMode) UISettings.getInstance().shortcutTextColor else UISettings.getInstance().tooltipShortcutTextColor
 
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
@@ -154,7 +155,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun initStyleConstants() {
-    val fontSize = UISettings.getInstance().fontSize.toInt()
+    val fontSize = UISettings.getInstance().plainFont.size
 
     StyleConstants.setForeground(INACTIVE, UISettings.getInstance().inactiveColor)
 
@@ -168,6 +169,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontFamily(SHORTCUT, fontFamily)
     StyleConstants.setFontSize(SHORTCUT, fontSize)
     StyleConstants.setBold(SHORTCUT, true)
+
+    StyleConstants.setFontFamily(SHORTCUT_SEPARATOR, fontFamily)
+    StyleConstants.setFontSize(SHORTCUT_SEPARATOR, fontSize)
 
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
@@ -188,7 +192,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
     StyleConstants.setForeground(REGULAR, textColor)
     StyleConstants.setForeground(BOLD, textColor)
-    StyleConstants.setForeground(SHORTCUT, UISettings.getInstance().shortcutTextColor)
+    StyleConstants.setForeground(SHORTCUT, shortcutTextColor)
+    StyleConstants.setForeground(SHORTCUT_SEPARATOR, UISettings.getInstance().shortcutSeparatorColor)
     StyleConstants.setForeground(LINK, UISettings.getInstance().lessonLinkColor)
     StyleConstants.setForeground(CODE, codeForegroundColor)
   }
@@ -241,6 +246,21 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     insertOffset += text.length
   }
 
+  private fun insertIconWithFixedHeight(iconIdx: String, state: MessageState, getFixedHeight: (Icon) -> Int) {
+    val original = LearningUiManager.iconMap[iconIdx] ?: error("Not found icon with index: $iconIdx")
+    val icon = if (state == MessageState.INACTIVE) getInactiveIcon(original) else original
+    insertIcon(object : Icon {
+      override fun getIconWidth() = icon.iconWidth
+
+      override fun getIconHeight() = getFixedHeight(icon)
+
+      override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+        icon.paintIcon(c, g, x, y)
+      }
+    })
+    insertOffset++
+  }
+
   fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
     val lessonMessage = LessonMessage(messageParts,
                                       properties.state,
@@ -273,6 +293,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   fun redrawMessages() {
     initStyleConstants()
     ranges.clear()
+    highlighter.removeAllHighlights()
     text = ""
     insertOffset = 0
     var previous: LessonMessage? = null
@@ -303,13 +324,43 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
         when (part.type) {
           MessagePart.MessageType.TEXT_REGULAR -> insertText(part.text, REGULAR)
           MessagePart.MessageType.TEXT_BOLD -> insertText(part.text, BOLD)
-          MessagePart.MessageType.SHORTCUT -> appendShortcut(part)?.let { ranges.add(it) }
-          MessagePart.MessageType.CODE -> insertText(part.text, CODE)
+          MessagePart.MessageType.SHORTCUT -> {
+            val start = insertOffset
+            appendShortcut(part)?.let { ranges.add(it) }
+            val end = insertOffset
+            highlighter.addHighlight(start, end) { g, _, _, _, _ ->
+              val bg = if (panelMode) UISettings.getInstance().shortcutBackgroundColor else UISettings.getInstance().tooltipShortcutBackgroundColor
+              val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
+              for (p in part.splitMe()) {
+                drawRectangleAroundText(p.startOffset, p.endOffset, g as Graphics2D, needColor, fill = true)
+              }
+            }
+          }
+          MessagePart.MessageType.CODE -> {
+            val start = insertOffset
+            insertText(part.text, CODE)
+            val end = insertOffset
+            highlighter.addHighlight(start, end) { g, _, _, _, _ ->
+              val needColor = UISettings.getInstance().codeBorderColor
+              drawRectangleAroundText(start, end, g, needColor, fill = !panelMode)
+            }
+          }
           MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
-          MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
+          MessagePart.MessageType.ICON_IDX -> {
+            insertIconWithFixedHeight(part.text, lessonMessage.state) {
+              // substitute fake height to place icon little lower
+              getFontMetrics(this@LessonMessagePane.font).ascent
+            }
+          }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
-          MessagePart.MessageType.ILLUSTRATION -> addPlaceholderForIllustration(part)
+          MessagePart.MessageType.ILLUSTRATION -> {
+            insertIconWithFixedHeight(part.text, lessonMessage.state) { icon ->
+              // reduce the icon height by the line height, because otherwise there will be extra space below the icon
+              icon.iconHeight - getFontMetrics(this@LessonMessagePane.font).height
+            }
+            paragraphStyle = INTERNAL_PARAGRAPH_STYLE
+          }
           MessagePart.MessageType.LINE_BREAK -> {
             insertText("\n", REGULAR)
             paragraphStyle = INTERNAL_PARAGRAPH_STYLE
@@ -323,32 +374,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       }
       previous = lessonMessage
     }
-  }
-
-  private fun addPlaceholderForIllustration(part: MessagePart) {
-    val illustration = LearningUiManager.iconMap[part.text]
-    if (illustration == null) {
-      thisLogger().error("No illustration for ${part.text}")
-    }
-    else {
-      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.getInstance().illustrationAbove
-      val illustrationStyle = SimpleAttributeSet()
-      StyleConstants.setSpaceAbove(illustrationStyle, spaceAbove.toFloat())
-      setCommonParagraphAttributes(illustrationStyle)
-      paragraphStyle = illustrationStyle
-    }
-    insertText(" ", REGULAR)
-  }
-
-  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height + UISettings.getInstance().illustrationBelow
-
-  private fun addPlaceholderForIcon(icon: Icon) {
-    var placeholder = " "
-    while (this.getFontMetrics(this.font).stringWidth(placeholder) <= icon.iconWidth) {
-      placeholder += " "
-    }
-    placeholder += " "
-    insertText(placeholder, REGULAR)
   }
 
   fun passPreviousMessages() {
@@ -383,7 +408,21 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun appendShortcut(messagePart: MessagePart): RangeData? {
-    val range = appendClickableRange(messagePart.text, SHORTCUT)
+    val split = messagePart.split
+    val range = if (split != null) {
+      var start = 0
+      val startRange = insertOffset
+      for (part in split) {
+        appendClickableRange(messagePart.text.substring(start, part.first), SHORTCUT_SEPARATOR)
+        appendClickableRange(messagePart.text.substring(part.first, part.last + 1), SHORTCUT)
+        start = part.last + 1
+      }
+      appendClickableRange(messagePart.text.substring(start), SHORTCUT_SEPARATOR)
+      startRange .. insertOffset
+    } else {
+      appendClickableRange(messagePart.text, SHORTCUT)
+    }
+
     val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
     return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
@@ -395,6 +434,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {
+    if (clickable.isEmpty()) return insertOffset .. insertOffset
     val startLink = insertOffset
     insertText(clickable, attributeSet)
     val endLink = insertOffset
@@ -404,7 +444,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   override fun paintComponent(g: Graphics) {
     adjustCodeFontSize(g)
     try {
-      paintMessages(g)
+      highlightActiveMessage(g)
     }
     catch (e: BadLocationException) {
       LOG.warn(e)
@@ -537,54 +577,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   @Throws(BadLocationException::class)
-  private fun paintMessages(g: Graphics) {
+  private fun highlightActiveMessage(g: Graphics) {
     val g2d = g as Graphics2D
-    for (lessonMessage in allLessonMessages()) {
-      val myMessages = lessonMessage.messageParts
-      for (myMessage in myMessages) {
-        when (myMessage.type) {
-          MessagePart.MessageType.SHORTCUT -> {
-            val bg = UISettings.getInstance().shortcutBackgroundColor
-            val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-
-            for (part in myMessage.splitMe()) {
-              drawRectangleAroundText(part, g2d, needColor) { r2d ->
-                g2d.fill(r2d)
-              }
-            }
-          }
-          MessagePart.MessageType.CODE -> {
-            val needColor = UISettings.getInstance().codeBorderColor
-            drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
-              if (panelMode) {
-                g2d.draw(r2d)
-              }
-              else {
-                g2d.fill(r2d)
-              }
-            }
-          }
-          MessagePart.MessageType.ICON_IDX -> {
-            val rect = modelToView2D(myMessage.startOffset)
-            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
-            if (inactiveMessages.contains(lessonMessage)) {
-              icon = getInactiveIcon(icon)
-            }
-            icon.paintIcon(this, g2d, (rect.x + JBUIScale.scale(1f)).toInt(), rect.y.toInt())
-          }
-          MessagePart.MessageType.ILLUSTRATION -> {
-            val x = modelToView2D(myMessage.startOffset).x.toInt()
-            val y = modelToView2D(myMessage.endOffset - 1).y.toInt()
-            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
-            if (inactiveMessages.contains(lessonMessage)) {
-              icon = getInactiveIcon(icon)
-            }
-            icon.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
-          }
-          else -> {}
-        }
-      }
-    }
     val lastActiveMessage = activeMessages.lastOrNull()
     val firstActiveMessage = firstActiveMessage()
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
@@ -601,12 +595,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
                                                        .takeIf { it != -1 && it < activeMessages.size - 1 }
                                                        ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
 
-  private fun drawRectangleAroundText(myMessage: MessagePart,
-                                      g2d: Graphics2D,
+  private fun drawRectangleAroundText(startOffset: Int,
+                                      endOffset: Int,
+                                      g: Graphics,
                                       needColor: Color,
-                                      draw: (r2d: RoundRectangle2D) -> Unit) {
-    val startOffset = myMessage.startOffset
-    val endOffset = myMessage.endOffset
+                                      fill: Boolean) {
+    val g2d = g as Graphics2D
     val rectangleStart = modelToView2D(startOffset)
     val rectangleEnd = modelToView2D(endOffset)
     val color = g2d.color
@@ -618,7 +612,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     val r2d = RoundRectangle2D.Double(rectangleStart.x - 2 * indent, rectangleStart.y - indent + JBUIScale.scale(shift),
                                       rectangleEnd.x - rectangleStart.x + 4 * indent, (fontSize + 2 * indent).toDouble(),
                                       arc.toDouble(), arc.toDouble())
-    draw(r2d)
+
+    if (fill) g2d.fill(r2d) else g2d.draw(r2d)
     g2d.color = color
   }
 

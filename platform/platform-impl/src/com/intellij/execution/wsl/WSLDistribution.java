@@ -616,8 +616,15 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
     if (Registry.is("wsl.obtain.windows.host.ip.alternatively", true)) {
       InetAddress wslAddr = getWslIpAddress();
+      // Connect to any port on WSL IP. The destination endpoint is not needed to be reachable as no real connection is established.
+      // This transfers the socket into "connected" state including setting the local endpoint according to the system's routing table.
+      // Works on Windows and Linux.
       try (DatagramSocket datagramSocket = new DatagramSocket()) {
-        datagramSocket.connect(wslAddr, 0);
+        // Any port in range [1, 0xFFFF] can be used. Port=0 is forbidden: https://datatracker.ietf.org/doc/html/rfc8085
+        // "A UDP receiver SHOULD NOT bind to port zero".
+        // Java asserts "port != 0" since v15 (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8240533).
+        int anyPort = 1;
+        datagramSocket.connect(wslAddr, anyPort);
         return datagramSocket.getLocalAddress().getHostAddress();
       }
       catch (Exception e) {

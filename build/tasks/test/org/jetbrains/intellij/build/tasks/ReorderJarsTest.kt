@@ -12,6 +12,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.tracer
 import org.junit.jupiter.api.Test
@@ -46,7 +47,7 @@ class ReorderJarsTest {
     Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
 
     val archiveFile = fs.root.resolve("archive.jar")
-    zip(archiveFile, mapOf(rootDir to ""), compress = false, addDirEntries = true)
+    zip(archiveFile, mapOf(rootDir to ""), compress = false, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
 
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
     ImmutableZipFile.load(archiveFile).use { zipFile ->

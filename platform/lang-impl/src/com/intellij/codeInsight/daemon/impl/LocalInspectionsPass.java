@@ -160,7 +160,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
      if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
       attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), myFile);
     }
-    TextAttributes attributes = attributesKey == null || editorColorsScheme == null
+    TextAttributes attributes = attributesKey == null || editorColorsScheme == null || severity.getName().equals(attributesKey.getExternalName())
                                 ? severityRegistrar.getTextAttributesBySeverity(severity)
                                 : editorColorsScheme.getAttributes(attributesKey);
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
@@ -446,7 +446,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
-    InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+
+    if (LOG.isDebugEnabled()) {
+      // this triggers heavy class loading of all inspections, do not run if DEBUG not enabled
+      InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    }
+
     List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();

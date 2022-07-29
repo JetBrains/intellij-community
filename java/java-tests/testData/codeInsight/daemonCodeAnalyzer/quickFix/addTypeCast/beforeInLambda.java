@@ -1,4 +1,4 @@
-// "Cast to 'int'" "true"
+// "Cast to 'int'" "true-preview"
 import java.util.*;
 import java.util.function.*;
 

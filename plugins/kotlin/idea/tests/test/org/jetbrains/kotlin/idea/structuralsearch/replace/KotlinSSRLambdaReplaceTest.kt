@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRLambdaReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRLambdaReplaceTest : KotlinStructuralReplaceTest() {
     fun testLambdaCountFilterParam() {
         doTest(
             searchPattern = "{ '_PARAM* -> '_EXPR* }",

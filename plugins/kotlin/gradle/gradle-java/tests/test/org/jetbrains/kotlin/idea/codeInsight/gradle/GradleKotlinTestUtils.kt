@@ -3,52 +3,22 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.kotlin.tooling.core.isSnapshot
+import org.jetbrains.kotlin.tooling.core.isStable
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
+import java.io.File
 
 object GradleKotlinTestUtils {
 
-    @Deprecated("Use KotlinToolingVersion instead", level = DeprecationLevel.ERROR)
-    data class KotlinVersion(
-        val major: Int,
-        val minor: Int,
-        val patch: Int,
-        val classifier: String? = null
-    ) {
+    fun listRepositories(useKts: Boolean, gradleVersion: String, kotlinVersion: String? = null) =
+        listRepositories(useKts, GradleVersion.version(gradleVersion), kotlinVersion?.let(::KotlinToolingVersion))
 
-        val maturity: KotlinVersionMaturity = when {
-            isStable -> KotlinVersionMaturity.STABLE
-            isRC -> KotlinVersionMaturity.RC
-            isBeta -> KotlinVersionMaturity.BETA
-            isAlpha -> KotlinVersionMaturity.ALPHA
-            isMilestone -> KotlinVersionMaturity.MILESTONE
-            isSnapshot -> KotlinVersionMaturity.SNAPSHOT
-            isDev -> KotlinVersionMaturity.DEV
-            isWildcard -> KotlinVersionMaturity.WILDCARD
-            else -> throw IllegalArgumentException("Can't infer maturity of KotlinVersion $this")
-        }
-
-        override fun toString(): String {
-            return "$major.$minor.$patch" + if (classifier != null) "-$classifier" else ""
-        }
-    }
-
-    object TestedKotlinGradlePluginVersions {
-        val V_1_4_32 = KotlinToolingVersion(1, 4, 32, null)
-        val V_1_5_32 = KotlinToolingVersion(1, 5, 32, null)
-        val V_1_6_21 = KotlinToolingVersion(1, 6, 21, null)
-        val LAST_SNAPSHOT = KotlinToolingVersion(1, 7, 255, "SNAPSHOT")
-
-        val ALL_PUBLIC = listOf(
-            V_1_4_32,
-            V_1_5_32,
-            V_1_6_21,
-        )
-    }
-
-    fun listRepositories(useKts: Boolean, gradleVersion: String): String {
+    fun listRepositories(useKts: Boolean, gradleVersion: GradleVersion, kotlinVersion: KotlinToolingVersion? = null): String {
+        if (useKts && kotlinVersion != null)
+            return listKtsRepositoriesOptimized(gradleVersion, kotlinVersion)
 
         fun gradleVersionMatches(version: String): Boolean =
-            VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
+            VersionMatcher(gradleVersion).isVersionMatch(version, true)
 
         fun MutableList<String>.addUrl(url: String) {
             this += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
@@ -56,15 +26,54 @@ object GradleKotlinTestUtils {
 
         val repositories = mutableListOf<String>()
 
-        repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
         repositories.add("mavenLocal()")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 
         if (!gradleVersionMatches("7.0+")) {
             repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")
         }
         return repositories.joinToString("\n")
     }
+
+    private fun listKtsRepositoriesOptimized(gradleVersion: GradleVersion, kotlinVersion: KotlinToolingVersion): String {
+        val repositories = mutableListOf<String>()
+        operator fun String.unaryPlus() = repositories.add(this)
+
+        if (kotlinVersion.isSnapshot) {
+            +"mavenLocal()"
+        }
+
+        if (!kotlinVersion.isStable) {
+            if (localKotlinGradlePluginExists(kotlinVersion)) {
+                +"mavenLocal()"
+            } else +"""
+                maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") {
+                    content {
+                        includeVersionByRegex(".*jetbrains.*", ".*", "$kotlinVersion")
+                    }
+                }
+            """.trimIndent()
+        }
+
+        +"""maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")"""
+        +"""maven("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")"""
+        +"""maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")"""
+
+        if (!VersionMatcher(gradleVersion).isVersionMatch("7.0+", true)) {
+            +"""maven("https://cache-redirector.jetbrains.com/jcenter/")"""
+        }
+
+        return repositories.joinToString("\n")
+    }
+}
+
+private fun localKotlinGradlePluginExists(kotlinGradlePluginVersion: KotlinToolingVersion): Boolean {
+    val localKotlinGradlePlugin = File(System.getProperty("user.home"))
+        .resolve(".m2/repository")
+        .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/$kotlinGradlePluginVersion")
+
+    return localKotlinGradlePlugin.exists()
 }

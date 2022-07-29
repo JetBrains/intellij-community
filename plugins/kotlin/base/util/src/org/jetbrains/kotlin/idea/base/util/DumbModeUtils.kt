@@ -9,6 +9,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
+val Project.isInDumbMode: Boolean
+    @ApiStatus.Internal get() = DumbService.getInstance(this).isDumb
+
 @ApiStatus.Internal
 fun <T> Project.runReadActionInSmartMode(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) return action()

@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsP
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1LocalInspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -286,6 +288,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
+
     testGroup("idea/tests") {
         testClass<AbstractAdditionalResolveDescriptorRendererTest> {
             model("resolve/additionalLazyResolve")
@@ -315,11 +318,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJavaAgainstKotlinSourceCheckerTest> {
-            model("kotlinAndJavaChecker/javaAgainstKotlin")
-            model("kotlinAndJavaChecker/javaWithKotlin")
-        }
-
-        testClass<AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest> {
             model("kotlinAndJavaChecker/javaAgainstKotlin")
             model("kotlinAndJavaChecker/javaWithKotlin")
         }
@@ -727,12 +725,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLineMarkersTest> {
-            model("codeInsight/lineMarker")
+            model("codeInsight/lineMarker", pattern = Patterns.forRegex("^(\\w+)\\.(kt|kts)$"))
         }
 
         testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -1233,13 +1231,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("refIndex/tests") {
+    testGroup("compiler-reference-index/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
             model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
         }
     }
 
-    testGroup("refIndex/tests", testDataPath = "../../idea/tests/testData") {
+    testGroup("compiler-reference-index/tests", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
             model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
             model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
@@ -1343,6 +1341,19 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceCompletionCharFilterTest> {
             model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("code-insight/intentions-shared/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractSharedK1IntentionTest> {
+            model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
+        }
+    }
+
+    testGroup("code-insight/inspections-shared/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractSharedK1LocalInspectionTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("inspectionsLocal", pattern = pattern)
         }
     }
 }

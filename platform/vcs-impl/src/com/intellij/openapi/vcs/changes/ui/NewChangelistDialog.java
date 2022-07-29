@@ -3,16 +3,16 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 
 public class NewChangelistDialog extends DialogWrapper {
 
-  private NewEditChangelistPanel myPanel;
-  private JPanel myTopPanel;
-  private JLabel myErrorLabel;
+  private NewEditChangelistPanel myPanel ;
   private final Project myProject;
 
   public NewChangelistDialog(Project project) {
@@ -20,8 +20,9 @@ public class NewChangelistDialog extends DialogWrapper {
     myProject = project;
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
 
+    createUIComponents();
     myPanel.init(null);
-
+    setSize(JBUI.scale(500), JBUI.scale(230));
     init();
   }
 
@@ -33,7 +34,7 @@ public class NewChangelistDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myTopPanel;
+    return myPanel;
   }
 
   public String getName() {
@@ -65,9 +66,9 @@ public class NewChangelistDialog extends DialogWrapper {
   private void createUIComponents() {
     myPanel = new NewEditChangelistPanel(myProject) {
       @Override
-      protected void nameChanged(String errorMessage) {
+      protected void nameChanged(@NlsContexts.DialogMessage String errorMessage) {
         setOKActionEnabled(errorMessage == null);
-        myErrorLabel.setText(errorMessage == null ? " " : errorMessage);
+        setErrorText(errorMessage, myPanel);
       }
     };
   }

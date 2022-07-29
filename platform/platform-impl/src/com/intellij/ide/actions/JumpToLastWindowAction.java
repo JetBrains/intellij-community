@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,5 +39,10 @@ public final class JumpToLastWindowAction extends AnAction implements DumbAware 
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
     String id = manager.getLastActiveToolWindowId();
     presentation.setEnabled(id != null && manager.getToolWindow(id).isAvailable());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

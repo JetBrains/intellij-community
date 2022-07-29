@@ -192,8 +192,16 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
 
   @PublishedApi
   internal fun build(): RegisterToolWindowTask {
-    val result = RegisterToolWindowTask(id, anchor, null, sideTool, canCloseContent, true, shouldBeAvailable, contentFactory, icon,
-                                        stripeTitle)
+    val result = RegisterToolWindowTask(id = id,
+                                        anchor = anchor,
+                                        component = null,
+                                        sideTool = sideTool,
+                                        canCloseContent = canCloseContent,
+                                        canWorkInDumbMode = true,
+                                        shouldBeAvailable = shouldBeAvailable,
+                                        contentFactory = contentFactory,
+                                        icon = icon,
+                                        stripeTitle = stripeTitle)
 
     result.hideOnEmptyContent = hideOnEmptyContent
     return result

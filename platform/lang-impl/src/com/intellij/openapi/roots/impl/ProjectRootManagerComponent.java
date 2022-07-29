@@ -2,9 +2,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.configurationStore.BatchUpdateListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -67,6 +67,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final static ExtensionPointName<WatchedRootsProvider> WATCHED_ROOTS_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
 
+  private boolean isStartupActivityPerformed;
+
   private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
@@ -119,7 +121,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
 
-    StartupManager.getInstance(myProject).registerStartupActivity(() -> myStartupActivityPerformed = true);
+    StartupManager.getInstance(myProject).registerStartupActivity(() -> isStartupActivityPerformed = true);
 
     connection.subscribe(BatchUpdateListener.TOPIC, new BatchUpdateListener() {
       @Override
@@ -135,7 +137,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
     Runnable rootsExtensionPointListener = () -> ApplicationManager.getApplication().invokeLater(() ->
-      WriteAction.run(() -> makeRootsChange(EmptyRunnable.getInstance(), false, true))
+      WriteAction.run(() -> makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN))
     );
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
@@ -172,7 +174,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ROOT_MODEL);
+        ((DirectoryIndexImpl)directoryIndex).reset();
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
     }
@@ -187,7 +189,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ROOT_MODEL);
+        ((DirectoryIndexImpl)directoryIndex).reset();
       }
       ThreeState isFromWorkspaceOnly = ThreeState.UNSURE;
       for (RootsChangeRescanningInfo info : indexingInfos) {
@@ -209,7 +211,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       isFiringEvent = false;
     }
 
-    synchronizeRoots(indexingInfos);
+    if (isStartupActivityPerformed) {
+      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
+    }
     addRootsToWatch();
   }
 
@@ -292,11 +296,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         recursivePaths.add(extractLocalPath(url));
       }
     }
-  }
-
-  private void synchronizeRoots(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
-    if (!myStartupActivityPerformed) return;
-    EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
   }
 
   @Override

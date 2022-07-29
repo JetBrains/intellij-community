@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand

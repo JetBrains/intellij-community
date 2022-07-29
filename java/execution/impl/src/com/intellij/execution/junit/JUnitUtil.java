@@ -231,7 +231,7 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit3TestClass(final PsiClass clazz) {
-    return isTestCaseInheritor(clazz);
+    return PsiClassUtil.isRunnableClass(clazz, true, false) && isTestCaseInheritor(clazz);
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
@@ -340,10 +340,10 @@ public final class JUnitUtil {
   }
 
   public static boolean hasPackageWithDirectories(JavaPsiFacade facade, String packageQName, GlobalSearchScope globalSearchScope) {
-    return ReadAction.compute(() -> {
+    return ReadAction.nonBlocking(() -> {
       PsiPackage aPackage = facade.findPackage(packageQName);
       return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
-    });
+    }).executeSynchronously();
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {

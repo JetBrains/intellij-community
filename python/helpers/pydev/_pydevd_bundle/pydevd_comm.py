@@ -1435,10 +1435,11 @@ class InternalChangeVariable(InternalThreadCommand):
 #=======================================================================================================================
 class InternalGetFrame(InternalThreadCommand):
     """ gets the value of a variable """
-    def __init__(self, seq, thread_id, frame_id):
+    def __init__(self, seq, thread_id, frame_id, group_type):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
+        self.group_type = group_type
 
     def do_it(self, dbg):
         """ Converts request into python variable """
@@ -1447,7 +1448,7 @@ class InternalGetFrame(InternalThreadCommand):
             if frame is not None:
                 hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
-                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns, dbg.get_user_type_renderers())
+                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, self.group_type, hidden_ns, dbg.get_user_type_renderers())
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)

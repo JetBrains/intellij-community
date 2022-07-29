@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.services.ServiceViewActionUtils;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -16,18 +17,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RemoveRunConfigurationTypeAction extends DumbAwareAction {
+final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Set<ConfigurationType> types = getTargetTypes(e);
-    if (types.isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
+    boolean isEnabled = e.getProject() != null && !types.isEmpty();
 
     Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(true);
-    presentation.setText(ExecutionBundle.messagePointer("run.dashboard.remove.run.configuration.type.action.name", types.size()));
+    presentation.setEnabledAndVisible(isEnabled);
+    if (isEnabled) {
+      presentation.setText(ExecutionBundle.messagePointer("run.dashboard.remove.run.configuration.type.action.name", types.size()));
+    }
   }
 
   @Override

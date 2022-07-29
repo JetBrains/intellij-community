@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinIcons;
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility;
+import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 
 import javax.swing.*;
@@ -31,7 +33,7 @@ public class JavaRuntimePresentationProvider extends LibraryPresentationProvider
     @Nullable
     @Override
     public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
-        IdeKotlinVersion version = JavaRuntimeDetectionUtil.getJavaRuntimeVersion(classesRoots);
+        IdeKotlinVersion version = KotlinJvmStdlibDetectorFacility.INSTANCE.getStdlibVersion(classesRoots);
         return version == null ? null : new LibraryVersionProperties(version.getArtifactVersion());
     }
 }

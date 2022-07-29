@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.testing.js
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationDataProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.KotlinJSRunConfigurationDataProvider
 import org.jetbrains.kotlin.idea.gradleJava.run.AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.isJs

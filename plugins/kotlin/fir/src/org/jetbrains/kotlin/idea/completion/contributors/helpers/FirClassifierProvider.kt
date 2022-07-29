@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
-import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,25 +22,16 @@ internal object FirClassifierProvider {
         yieldAll(
             originalKtFile.getScopeContextForPosition(position).scopes
                 .getClassifierSymbols(scopeNameFilter)
-                .filter { with(visibilityChecker) { isVisible(it) } }
+                .filter { visibilityChecker.isVisible(it) }
         )
     }
 
     fun KtAnalysisSession.getAvailableClassifiersFromIndex(
-        indexHelper: HLIndexHelper,
+        symbolProvider: KtSymbolFromIndexProvider,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> = sequence {
-        yieldAll(
-            indexHelper.getKotlinClasses(scopeNameFilter, psiFilter = { it !is KtEnumEntry }).asSequence()
-                .map { it.getSymbol() as KtClassifierSymbol }
-                .filter { with(visibilityChecker) { isVisible(it) } }
-        )
-
-        yieldAll(
-            indexHelper.getJavaClasses(scopeNameFilter).asSequence()
-                .mapNotNull { it.classIdIfNonLocal?.getCorrespondingToplevelClassOrObjectSymbol() }
-                .filter { with(visibilityChecker) { isVisible(it) } }
-        )
-    }
+    ): Sequence<KtClassifierSymbol> =
+        (symbolProvider.getKotlinClassesByNameFilter(scopeNameFilter, psiFilter = { it !is KtEnumEntry }) +
+                symbolProvider.getJavaClassesByNameFilter(scopeNameFilter))
+            .filter { visibilityChecker.isVisible(it as KtSymbolWithVisibility) }
 }

@@ -1,7 +1,7 @@
-// "Convert '1e-9d' to float" "true"
+// "Cast argument to 'float'" "true-preview"
 class Test {
   void bar() {
-    foo(1e-9f);
+    foo(1e-9F);
   }
   void foo(float f){}
 }

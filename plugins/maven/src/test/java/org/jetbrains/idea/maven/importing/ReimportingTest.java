@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -257,7 +256,6 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                                            "<version>1</version>");
 
     importProjects(m1, m2);
-    assertModules("m1", "m2");
     ModuleOrderEntry dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
     assertNotNull(dep);
     assertFalse(dep.isProductionOnTestDependency());
@@ -383,10 +381,6 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     createModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"));
     importProject();
     assertModules("project", "m1", "m2");
-    StoreUtilKt.runInAllowSaveMode(true, () -> {
-      myProject.save();
-      return Unit.INSTANCE;
-    });
   }
 
   @NotNull

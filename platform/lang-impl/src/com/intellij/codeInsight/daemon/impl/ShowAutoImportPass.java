@@ -186,7 +186,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // really can't run highlighting from within EDT
       // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      throw new IllegalStateException("Must not be run from within EDT"); //return Collections.emptyList();
+      throw new IllegalStateException("Must not be run from within EDT");
     }
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);

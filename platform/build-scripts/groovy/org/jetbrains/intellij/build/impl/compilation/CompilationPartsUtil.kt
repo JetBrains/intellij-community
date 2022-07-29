@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.httpClient
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
 import java.math.BigInteger
@@ -91,7 +92,7 @@ private fun createBufferPool(): DirectFixedSizeByteBufferPool {
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-private fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackAndUploadItem> {
+fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -148,7 +149,14 @@ private fun packCompilationResult(context: CompilationContext, zipDir: Path): Li
       ForkJoinTask.adapt(Callable {
         spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).use {
           // we compress the whole file using ZSTD
-          zip(targetFile = item.archive, dirs = mapOf(item.output to ""), compress = false, overwrite = true)
+          zip(
+            targetFile = item.archive,
+            dirs = mapOf(item.output to ""),
+            compress = false,
+            overwrite = true,
+            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
+            addDirEntriesMode = addDirEntriesMode
+          )
         }
         spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {
           item.hash = computeHash(item.archive)
@@ -478,7 +486,7 @@ private fun computeHash(file: Path): String {
 // we cannot change file extension or prefix, so, add suffix
 internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "-z"
 
-internal data class PackAndUploadItem(
+data class PackAndUploadItem(
   val output: Path,
   val name: String,
   val archive: Path,

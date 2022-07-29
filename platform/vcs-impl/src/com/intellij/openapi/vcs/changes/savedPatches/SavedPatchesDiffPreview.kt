@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import java.beans.PropertyChangeListener
-import java.util.stream.Stream
 import javax.swing.JTree
 
 class SavedPatchesDiffPreview(project: Project,
@@ -45,11 +44,11 @@ class SavedPatchesDiffPreview(project: Project,
     }
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> {
+  override fun iterateSelectedChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.selected(tree))
   }
 
-  override fun getAllChanges(): Stream<Wrapper> {
+  override fun iterateAllChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.all(tree))
   }
 
@@ -57,8 +56,9 @@ class SavedPatchesDiffPreview(project: Project,
     ChangesBrowserBase.selectObjectWithTag(tree, change.userObject, change.tag)
   }
 
-  private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).map { MyChangeWrapper(it) }
+  private fun wrap(treeModelData: VcsTreeModelData): Iterable<Wrapper> {
+    return treeModelData.iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+      .map { MyChangeWrapper(it) }
   }
 
   private inner class MyChangeWrapper(private val change: SavedPatchesProvider.ChangeObject) : Wrapper(), PresentableChange by change {

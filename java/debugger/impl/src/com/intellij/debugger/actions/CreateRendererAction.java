@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableBase;
@@ -29,6 +30,11 @@ public class CreateRendererAction extends AnAction {
     if (values.size() != 1) {
       e.getPresentation().setEnabledAndVisible(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

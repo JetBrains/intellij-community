@@ -39,20 +39,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-fun KtContainerNode.description(): String? {
-    when (node.elementType) {
-        KtNodeTypes.THEN -> return "if"
-        KtNodeTypes.ELSE -> return "else"
-        KtNodeTypes.BODY -> {
-            when (parent) {
-                is KtWhileExpression -> return "while"
-                is KtDoWhileExpression -> return "do...while"
-                is KtForExpression -> return "for"
-            }
-        }
-    }
-    return null
-}
+
 
 fun KtCallExpression.isMethodCall(fqMethodName: String): Boolean {
     val resolvedCall = this.resolveToCall() ?: return false

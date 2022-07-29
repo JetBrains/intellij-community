@@ -23,6 +23,16 @@ final class ThinScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
+  void paintThumb(Graphics2D g, JComponent c) {
+    if (isOpaque(c)) {
+      paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque());
+    }
+    else if (myAnimationBehavior.getThumbFrame() > 0) {
+      paint(myThumb, g, c, false);
+    }
+  }
+
+  @Override
   protected @NotNull Insets getInsets(boolean small) {
     return JBUI.emptyInsets();
   }

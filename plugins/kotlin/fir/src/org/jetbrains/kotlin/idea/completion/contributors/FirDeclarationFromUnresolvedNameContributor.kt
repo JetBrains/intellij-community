@@ -97,7 +97,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                 receiver != null -> false
                 refExprParent is KtUserType -> true
                 refExprParent is KtCallExpression -> symbol.classKind == KtClassKind.CLASS
-                else -> !(symbol.classKind != KtClassKind.OBJECT && symbol.classKind != KtClassKind.ENUM_ENTRY)
+                else -> symbol.classKind == KtClassKind.OBJECT
             }
             else -> false
         }

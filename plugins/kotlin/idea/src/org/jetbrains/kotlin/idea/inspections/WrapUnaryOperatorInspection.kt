@@ -10,15 +10,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 
-    val numberTypes = listOf(KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT)
+    private object Holder {
+        val numberTypes: List<IElementType> = listOf(KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT)
+    }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return prefixExpressionVisitor { expression ->
@@ -27,7 +31,7 @@ class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
                 if (baseExpression is KtDotQualifiedExpression) {
                     val receiverExpression = baseExpression.receiverExpression
                     if (receiverExpression is KtConstantExpression &&
-                        receiverExpression.node.elementType in numberTypes
+                        receiverExpression.node.elementType in Holder.numberTypes
                     ) {
                         holder.registerProblem(
                             expression,

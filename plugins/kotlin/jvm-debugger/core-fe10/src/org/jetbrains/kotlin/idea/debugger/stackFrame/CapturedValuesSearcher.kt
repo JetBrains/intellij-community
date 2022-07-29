@@ -8,7 +8,7 @@ import com.sun.jdi.Field
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.idea.debugger.safeFields
+import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
 import java.util.*
 
 private sealed class PendingValue {

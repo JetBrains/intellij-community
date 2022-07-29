@@ -68,7 +68,7 @@ import java.util.function.Consumer;
 public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
   private final Maven2ServerConsoleWrapper myConsoleWrapper;
-  private volatile MavenServerProgressIndicator myCurrentIndicator;
+  private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
   private Maven2ServerEmbedderImpl(MavenEmbedder impl, Maven2ServerConsoleWrapper consoleWrapper) {
     myImpl = impl;
@@ -630,7 +630,6 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   }
 
 
-  @NotNull
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
                                                                            boolean failOnUnresolvedDependency,
@@ -646,7 +645,18 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
       myImpl.setUserProperties(userProperties);
 
-      return null;
+      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
+      myConsoleWrapper.setWrappee(myCurrentIndicator);
+
+      try {
+        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
+
+      myImpl.setUserProperties(userProperties);
+      return myCurrentIndicator;
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -690,7 +700,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     MavenServerUtil.checkToken(token);
   }
 
-  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
+  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicatorWrapper indicator) {
     myConsoleWrapper.setWrappee(console);
     myCurrentIndicator = indicator;
 

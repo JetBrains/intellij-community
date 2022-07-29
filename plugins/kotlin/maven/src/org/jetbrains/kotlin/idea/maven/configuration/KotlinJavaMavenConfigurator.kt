@@ -8,13 +8,13 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
 import org.jetbrains.kotlin.idea.configuration.hasKotlinJvmRuntimeInScope
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
-import org.jetbrains.kotlin.idea.versions.getDefaultJvmTarget
-import org.jetbrains.kotlin.idea.versions.getStdlibArtifactId
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
@@ -26,8 +26,9 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
     override fun isRelevantGoal(goalName: String) =
         goalName == PomFile.KotlinGoals.Compile
 
-    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String =
-        getStdlibArtifactId(ModuleRootManager.getInstance(module).sdk, version)
+    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String {
+        return getJvmStdlibArtifactId(ModuleRootManager.getInstance(module).sdk, version)
+    }
 
     override fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module) {
         createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.Compile, PomFile.KotlinGoals.Compile, module, false)

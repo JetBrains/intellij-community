@@ -120,7 +120,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       });
     }
 
-    return descriptors.toArray(new HierarchyNodeDescriptor[0]);
+    return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
   private Collection<PsiClass> getSubclasses(PsiClass psiClass) {

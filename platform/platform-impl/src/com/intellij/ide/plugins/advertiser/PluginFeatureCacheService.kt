@@ -20,11 +20,6 @@ class PluginFeatureCacheService : SerializablePersistentStateComponent<PluginFea
     fun getInstance(): PluginFeatureCacheService = service()
   }
 
-  override fun getStateModificationCount(): Long {
-    val state = state
-    return (state.extensions?.modificationCount ?: 0) + (state.dependencies?.modificationCount ?: 0)
-  }
-
   @Serializable
   data class MyState(
     val extensions: PluginFeatureMap? = null,
@@ -34,12 +29,16 @@ class PluginFeatureCacheService : SerializablePersistentStateComponent<PluginFea
   var extensions: PluginFeatureMap?
     get() = state.extensions
     set(value) {
-      loadState(MyState(value, state.dependencies))
+      updateState {
+        MyState(value, it.dependencies)
+      }
     }
 
   var dependencies: PluginFeatureMap?
     get() = state.dependencies
     set(value) {
-      loadState(MyState(state.extensions, value))
+      updateState {
+        MyState(it.extensions, value)
+      }
     }
 }

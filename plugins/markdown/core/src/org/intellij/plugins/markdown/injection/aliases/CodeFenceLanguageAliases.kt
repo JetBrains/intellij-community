@@ -38,15 +38,10 @@ internal object CodeFenceLanguageAliases {
     Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh"))
   )
 
-  /**
-   * Get possible IntelliJ Language ID for [alias].
-   *
-   * @return possible Language ID if any or [alias]
-   */
-  fun findId(alias: String): String {
-    val lower = StringUtil.toLowerCase(alias)
-    val id = aliases.singleOrNull { lower == it.main || lower in it.aliases }?.id
-    return id ?: alias
+  fun findRegisteredEntry(value: String): String? {
+    val lower = value.lowercase()
+    val entry = aliases.singleOrNull { lower == it.main || lower in it.aliases }
+    return entry?.id
   }
 
   /**

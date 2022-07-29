@@ -291,7 +291,8 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                            @NotNull PsiExpression expression,
                                            @NotNull PsiVariable exprVariable) {
     String lambdaExpr = getExpressionReplacingReferences(expression, varName, exprVariable);
-    String parameter = type == null ? varName : "(" + type.getCanonicalText() + " " + varName + ")";
+    String parameter =
+      type == null ? varName : "(" + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText() + " " + varName + ")";
     return methodName + "(" + parameter + "->" + lambdaExpr + ")";
   }
 

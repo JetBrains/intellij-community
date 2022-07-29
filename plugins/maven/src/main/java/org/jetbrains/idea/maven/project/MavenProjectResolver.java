@@ -69,7 +69,7 @@ public class MavenProjectResolver {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjects) {
           mavenProject.setConfigFileError(null);
-          for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
+          for (MavenImporter mavenImporter : MavenImporter.getSuitableImporters(mavenProject)) {
             mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
           }
         }
@@ -156,7 +156,7 @@ public class MavenProjectResolver {
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
       mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
-        for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
+        for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
         }
       }

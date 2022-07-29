@@ -46,6 +46,9 @@ class HeaderAnchorSymbolResolveTest: BasePlatformTestCase() {
   fun `reference to header in other file without extension is resolved`() = doTest("header-near-main")
 
   @Test
+  fun `reference with uppercase part is resolved`() = doTest("own-header")
+
+  @Test
   fun `special gfm case`() = doTest("get-method")
 
   @Test

@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSCallableReferenceTest : KotlinSSResourceInspectionTest() {
+class KotlinSSCallableReferenceTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "callableReference"
 
     fun testCallableReference() { doTest("::'_") }

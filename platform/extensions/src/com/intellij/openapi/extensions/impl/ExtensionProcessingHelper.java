@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,6 +35,9 @@ public final class ExtensionProcessingHelper {
         extensionConsumer.accept(t);
       }
       catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (CancellationException e) {
         throw e;
       }
       catch (Throwable e) {

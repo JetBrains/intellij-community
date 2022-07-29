@@ -17,9 +17,9 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.safeAllLineLocations
-import org.jetbrains.kotlin.idea.debugger.safeMethod
-import org.jetbrains.kotlin.idea.debugger.safeThisObject
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 class KotlinLambdaAsyncMethodFilter(

@@ -244,20 +244,29 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     inlaysChanged()
   }
 
+  private data class NotebookCellDataProvider(
+    val editor: EditorImpl,
+    val component: JComponent,
+    val interval: NotebookCellLines.Interval,
+  ) : DataProvider {
+    override fun getData(key: String): Any? =
+      when (key) {
+        NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> interval
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
+        PlatformDataKeys.EDITOR.name -> editor
+        else -> null
+      }
+  }
+
   private fun rememberController(controller: NotebookCellInlayController, interval: NotebookCellLines.Interval) {
     val inlay = controller.inlay
     inlay.renderer.castSafelyTo<JComponent>()?.let { component ->
-      DataManager.registerDataProvider(
-        component,
-        DataProvider { key ->
-          when (key) {
-            NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> interval
-            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
-            PlatformDataKeys.EDITOR.name -> editor
-            else -> null
-          }
-        },
-      )
+      val oldProvider = DataManager.getDataProvider(component)
+      if (oldProvider != null && oldProvider !is NotebookCellDataProvider) {
+        LOG.error("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. Old provider: $oldProvider")
+      }
+      DataManager.removeDataProvider(component)
+      DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component, interval))
     }
     if (inlays.put(inlay, controller) !== controller) {
       val disposable = Disposable {

@@ -92,8 +92,11 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES =
-    Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE,
+                                                          PORT_LOCK_FILE,
+                                                          TOKEN_FILE,
+                                                          USER_WEB_TOKEN,
+                                                          BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   private ConfigImportHelper() { }
 
@@ -731,14 +734,14 @@ public final class ConfigImportHelper {
     }
   }
 
-  static class ConfigImportOptions {
+  static final class ConfigImportOptions {
     final Logger log;
     boolean headless;
     @Nullable ConfigImportSettings importSettings;
-    BuildNumber compatibleBuildNumber = null;
-    MarketplacePluginDownloadService downloadService = null;
+    BuildNumber compatibleBuildNumber;
+    MarketplacePluginDownloadService downloadService;
     Path bundledPluginPath = null;
-    Map<PluginId, Set<String>> brokenPluginVersions = null;
+    @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
 
     ConfigImportOptions(Logger log) {
       this.log = log;
@@ -833,13 +836,24 @@ public final class ConfigImportHelper {
 
     List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = new HashMap<>();
 
     if (Files.isDirectory(oldPluginsDir)) {
       try {
-        collectNonBundledPluginsUpdates(oldPluginsDir,
-                                        pluginsToMigrate,
-                                        pluginsToDownload,
-                                        options);
+        Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
+        PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
+                                                                            options.bundledPluginPath,
+                                                                            brokenPluginVersions,
+                                                                            options.compatibleBuildNumber);
+
+        pluginIdMap.putAll(result.getIdMap());
+        partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
+          Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
+          return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
+        });
+
+        pluginIdMap.putAll(result.getIncompleteIdMap());
+        partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
       }
       catch (ExecutionException | InterruptedException e) {
         log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
@@ -855,7 +869,8 @@ public final class ConfigImportHelper {
       options.importSettings.processPluginsToMigrate(newConfigDir,
                                                      oldConfigDir,
                                                      pluginsToMigrate,
-                                                     pluginsToDownload);
+                                                     pluginsToDownload,
+                                                     pluginIdMap);
     }
 
     pluginsToMigrate.removeIf(hasPendingUpdate);
@@ -872,31 +887,16 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void collectNonBundledPluginsUpdates(@NotNull Path oldPluginsDir,
-                                                      @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                                      @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
-                                                      @NotNull ConfigImportOptions options)
-    throws ExecutionException, InterruptedException {
-    PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
-                                                                        options.bundledPluginPath,
-                                                                        options.brokenPluginVersions,
-                                                                        options.compatibleBuildNumber);
-
-    for (IdeaPluginDescriptorImpl descriptor : result.idMap.values()) {
+  private static void partitionNonBundled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                          @NotNull List<IdeaPluginDescriptor> firstAccumulator,
+                                          @NotNull List<IdeaPluginDescriptor> secondAccumulator,
+                                          @NotNull Predicate<? super IdeaPluginDescriptor> predicate) {
+    for (IdeaPluginDescriptor descriptor : descriptors) {
       if (descriptor.isBundled()) {
         continue;
       }
 
-      boolean isBroken = result.isBroken(descriptor.getPluginId());
-      (isBroken ? pluginsToDownload : pluginsToMigrate).add(descriptor);
-    }
-
-    for (IdeaPluginDescriptorImpl descriptor : result.incompletePlugins.values()) {
-      if (descriptor.isBundled()) {
-        continue;
-      }
-
-      pluginsToDownload.add(descriptor);
+      (predicate.test(descriptor) ? firstAccumulator : secondAccumulator).add(descriptor);
     }
   }
 
@@ -1020,16 +1020,19 @@ public final class ConfigImportHelper {
 
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
-    return brokenPluginVersions != null ?
-           brokenPluginVersions.get(descriptor.getPluginId()).contains(descriptor.getVersion()) :
-           PluginManagerCore.isBrokenPlugin(descriptor);
+    if (brokenPluginVersions == null) {
+      return PluginManagerCore.isBrokenPlugin(descriptor);
+    }
+    Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
+    return versions != null && versions.contains(descriptor.getVersion());
   }
 
   private static boolean isEmptyDirectory(Path newPluginsDir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(newPluginsDir)) {
       for (Path path : stream) {
-        boolean hidden =
-          SystemInfo.isWindows ? Files.readAttributes(path, DosFileAttributes.class).isHidden() : path.getFileName().startsWith(".");
+        boolean hidden = SystemInfoRt.isWindows
+                         ? Files.readAttributes(path, DosFileAttributes.class).isHidden()
+                         : path.getFileName().startsWith(".");
         if (!hidden) {
           return false;
         }

@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
@@ -27,6 +24,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegistere
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.reference.SoftReference
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
@@ -58,6 +56,7 @@ private val LOG = logger<ToolWindowPane>()
  */
 class ToolWindowPane internal constructor(frame: JFrame,
                                           parentDisposable: Disposable,
+                                          val paneId: String,
                                           @field:JvmField internal val buttonManager: ToolWindowButtonManager) : JBLayeredPane(), UISettingsListener {
   companion object {
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
@@ -73,8 +72,9 @@ class ToolWindowPane internal constructor(frame: JFrame,
   }
 
   private var isLookAndFeelUpdated = false
-  private val frame: JFrame
   private var state = ToolWindowPaneState()
+
+  internal val frame: JFrame
 
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
@@ -94,6 +94,8 @@ class ToolWindowPane internal constructor(frame: JFrame,
   init {
     isOpaque = false
     this.frame = frame
+
+    name = paneId
 
     // splitters
     verticalSplitter = ThreeComponentsSplitter(true, parentDisposable)
@@ -138,6 +140,11 @@ class ToolWindowPane internal constructor(frame: JFrame,
     }
     val app = ApplicationManager.getApplication()
     app.messageBus.connect(parentDisposable).subscribe(LafManagerListener.TOPIC, LafManagerListener { isLookAndFeelUpdated = true })
+
+    if (frame is IdeFrame && frame.project != null) {
+      val toolWindowManagerImpl = ToolWindowManager.getInstance(frame.project!!) as ToolWindowManagerImpl
+      toolWindowManagerImpl.addToolWindowPane(this, parentDisposable)
+    }
   }
 
   private fun updateInnerMinSize(value: RegistryValue) {
@@ -163,7 +170,7 @@ class ToolWindowPane internal constructor(frame: JFrame,
     if (info.isDocked) {
       val side = !info.isSplit
       val anchor = info.anchor
-      val sideInfo = manager.getDockedInfoAt(anchor, side)
+      val sideInfo = manager.getDockedInfoAt(paneId, anchor, side)
       if (sideInfo == null) {
         setComponent(decorator, anchor, normalizeWeight(info.weight))
         if (!dirtyMode) {
@@ -191,7 +198,7 @@ class ToolWindowPane internal constructor(frame: JFrame,
     }
     else if (component != null && component.isShowing) {
       val anchor = info.anchor
-      val sideInfo = manager.getDockedInfoAt(anchor, !info.isSplit)
+      val sideInfo = manager.getDockedInfoAt(paneId, anchor, !info.isSplit)
       if (sideInfo == null) {
         setComponent(null, anchor, 0f)
       }
@@ -277,8 +284,8 @@ class ToolWindowPane internal constructor(frame: JFrame,
   val isBottomSideToolWindowsVisible: Boolean
     get() = getComponentAt(ToolWindowAnchor.BOTTOM) != null
 
-  internal fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe): AbstractDroppableStripe? {
-    return buttonManager.getStripeFor(screenPoint, preferred, this)
+  internal fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe): AbstractDroppableStripe? {
+    return buttonManager.getStripeFor(devicePoint, preferred, this)
   }
 
   fun stretchWidth(window: ToolWindow, value: Int) {
@@ -516,7 +523,7 @@ class ToolWindowPane internal constructor(frame: JFrame,
     // if all components are hidden for anchor we should find the second component to put in a splitter
     // otherwise we add empty splitter
     if (c == null) {
-      val toolWindows = manager.getToolWindowsOn(anchor, info.id!!)
+      val toolWindows = manager.getToolWindowsOn(paneId, anchor, info.id!!)
       toolWindows.removeIf { window: ToolWindowEx? -> window == null || window.isSplitMode == info.isSplit || !window.isVisible }
       if (!toolWindows.isEmpty()) {
         c = (toolWindows[0] as ToolWindowImpl).decoratorComponent

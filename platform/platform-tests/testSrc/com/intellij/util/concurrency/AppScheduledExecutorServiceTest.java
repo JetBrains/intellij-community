@@ -3,8 +3,9 @@ package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class AppScheduledExecutorServiceTest extends LightPlatformTestCase {
+public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsTestCase {
   private static final class LogInfo {
     private final int runnable;
     private final Thread currentThread;
@@ -115,58 +116,33 @@ public class AppScheduledExecutorServiceTest extends LightPlatformTestCase {
   }
 
   public void testMustNotBeAbleToShutdown() {
-    try {
-      service.shutdown();
-      fail();
-    }
-    catch (Exception ignored) {
-    }
-    try {
-      service.shutdownNow();
-      fail();
-    }
-    catch (Exception ignored) {
-    }
+    checkCriticalMethodsThrow(service);
   }
 
   public void testMustNotBeAbleToShutdownGlobalPool() {
     ExecutorService service = AppExecutorUtil.getAppExecutorService();
-    try {
-      service.shutdown();
-      fail();
-    }
-    catch (Exception ignored) {
-    }
-    try {
-      service.shutdownNow();
-      fail();
-    }
-    catch (Exception ignored) {
-    }
-    try {
-      ((ThreadPoolExecutor)service).setThreadFactory(Thread::new);
-      fail();
-    }
-    catch (Exception ignored) {
-    }
-    try {
-      ((ThreadPoolExecutor)service).setCorePoolSize(0);
-      fail();
-    }
-    catch (Exception ignored) {
+    checkCriticalMethodsThrow(service);
+  }
+
+  private static void checkCriticalMethodsThrow(ExecutorService service) {
+    UsefulTestCase.assertThrows(IncorrectOperationException.class, "You must not call this method on the global app pool", () -> service.shutdown());
+    UsefulTestCase.assertThrows(IncorrectOperationException.class, "You must not call this method on the global app pool", () -> service.shutdownNow());
+    if (service instanceof ThreadPoolExecutor) {
+      UsefulTestCase.assertThrows(IncorrectOperationException.class, "You must not call this method on the global app pool", () -> ((ThreadPoolExecutor)service).setThreadFactory(Thread::new));
+      UsefulTestCase.assertThrows(IncorrectOperationException.class, "You must not call this method on the global app pool", () -> ((ThreadPoolExecutor)service).setCorePoolSize(0));
     }
   }
-  
+
   public void testExceptionsFromScheduledTasksAreReported() {
     checkExceptionIsReported(
-      action -> AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(action, 1, 1, TimeUnit.MILLISECONDS)
+      action -> service.scheduleWithFixedDelay(action, 1, 1, TimeUnit.MILLISECONDS)
     );
     checkExceptionIsReported(
-      action -> AppExecutorUtil.getAppScheduledExecutorService().schedule(action, 1, TimeUnit.MILLISECONDS)
+      action -> service.schedule(action, 1, TimeUnit.MILLISECONDS)
     );
   }
 
-  private static void checkExceptionIsReported(Function<Runnable, ScheduledFuture<?>> runner) {
+  private static void checkExceptionIsReported(Function<? super Runnable, ? extends ScheduledFuture<?>> runner) {
     Runnable fail = () -> {
       throw new RuntimeException("failed");
     };
@@ -184,8 +160,9 @@ public class AppScheduledExecutorServiceTest extends LightPlatformTestCase {
 
     service.setNewThreadListener((thread, runnable) -> {
       Runnable firstTask = ReflectionUtil.getField(runnable.getClass(), runnable, Runnable.class, "firstTask");
-      System.err.println("Unexpected new thread created: " + thread + "; for first task "+firstTask+"; thread dump:\n" + ThreadDumper.dumpThreadsToString());
-      fail();
+      String msg = "Unexpected new thread created: " + thread + "; for first task "+firstTask+"; thread dump:\n" + ThreadDumper.dumpThreadsToString();
+      System.err.println(msg);
+      fail(msg);
     });
 
     long submitted = System.currentTimeMillis();
@@ -310,7 +287,7 @@ public class AppScheduledExecutorServiceTest extends LightPlatformTestCase {
       // wait till all tasks transferred to backend
       if (System.currentTimeMillis() > start + 20000) throw new AssertionError("Not transferred after 20 seconds");
     }
-    List<SchedulingWrapper.MyScheduledFutureTask> queuedTasks = new ArrayList<>(service.delayQueue);
+    List<SchedulingWrapper.MyScheduledFutureTask<?>> queuedTasks = new ArrayList<>(service.delayQueue);
     if (!queuedTasks.isEmpty()) {
       String s = ContainerUtil.map(queuedTasks, BoundedTaskExecutor::info).toString();
       fail("Queued tasks left: "+s + ";\n"+queuedTasks);

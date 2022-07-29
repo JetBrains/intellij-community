@@ -164,7 +164,7 @@ public abstract class PsiFragment {
     final int fEnd = f.getEndOffset();
 
     return
-      Comparing.equal(f.getFile(), getFile()) && (start <= fStart && end >= fEnd);
+      Comparing.equal(f.getFile(), getFile()) && start <= fStart && end >= fEnd;
   }
 
   public abstract boolean isEqual(PsiElement[] elements, int discardCost);
@@ -207,7 +207,7 @@ public abstract class PsiFragment {
     if (o == this) return true;
     if (!(o instanceof PsiFragment)) return false;
 
-    PsiFragment other = ((PsiFragment)o);
+    PsiFragment other = (PsiFragment)o;
 
     return other.getStartOffset() == getStartOffset() &&
            other.getEndOffset() == getEndOffset() &&

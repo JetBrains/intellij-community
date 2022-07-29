@@ -8,5 +8,5 @@ import java.nio.file.Path
  */
 interface SignTool {
   fun signFiles(files: List<Path>, context: BuildContext, options: Map<String, String>)
-  fun commandLineClient(context: BuildContext): Path?
+  fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
 }

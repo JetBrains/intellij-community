@@ -84,7 +84,6 @@
 
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="Java.BuildMenu">
@@ -166,7 +165,6 @@
     <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
       <add-to-group group-id="ScopeViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
     </action>
 
@@ -229,8 +227,6 @@
       <reference ref="ShowPackageDepsGroup"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -280,6 +276,8 @@
       <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>       
       <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/> 
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
+      <action id="GenerateTestDataPathMethods" class="com.intellij.testIntegration.GenerateTestDataPathMethodAction"/>
+      <action id="GenerateTestDataPathFiles" class="com.intellij.testIntegration.GenerateTestDataPathFileAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
@@ -463,7 +461,6 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <reference ref="Debugger.PopFrame"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -616,10 +613,6 @@
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
-
-    <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
-      <add-to-group group-id="FileChooserToolbar" anchor="last"/>
-    </action>
 
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>

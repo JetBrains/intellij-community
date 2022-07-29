@@ -24,8 +24,10 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.breakpoints.dialog.AddFieldBreakpointDialog
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile
@@ -37,9 +39,10 @@ import javax.swing.JComponent
 class KotlinFieldBreakpointType :
     JavaBreakpointType<KotlinPropertyBreakpointProperties>,
     XLineBreakpointType<KotlinPropertyBreakpointProperties>(
-        "kotlin-field", KotlinDebuggerCoreBundle.message("field.watchpoint.tab.title")
+        "kotlin-field", KotlinDebuggerCoreBundle.message("property.watchpoint.tab.title")
     ),
-    KotlinBreakpointType {
+    KotlinBreakpointType
+{
     override fun createJavaBreakpoint(
         project: Project,
         breakpoint: XBreakpoint<KotlinPropertyBreakpointProperties>
@@ -76,7 +79,7 @@ class KotlinFieldBreakpointType :
 
                 val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))
                 if (psiClass !is KtLightClass) {
-                    reportError(project, KotlinDebuggerCoreBundle.message("couldn.t.find.0.class", className))
+                    reportError(project, KotlinDebuggerCoreBundle.message("property.watchpoint.error.couldnt.find.0.class", className))
                     return false
                 }
 

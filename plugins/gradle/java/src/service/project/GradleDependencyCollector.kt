@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -11,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDependencyCollector : DependencyCollector {
@@ -36,7 +36,7 @@ class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() 
   override fun onEnd(id: ExternalSystemTaskId) {
     if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
       id.findProject()?.let {
-        ApplicationManager.getApplication().executeOnPooledThread {
+        it.coroutineScope.launch {
           PluginAdvertiserService.getInstance().rescanDependencies(it)
         }
       }

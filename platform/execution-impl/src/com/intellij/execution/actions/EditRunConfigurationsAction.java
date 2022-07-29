@@ -32,7 +32,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     presentation.setEnabled(project == null || !DumbService.isDumb(project) ||
-                            ConfigurationType.CONFIGURATION_TYPE_EP.extensions().anyMatch(ConfigurationTypeUtil::isEditableInDumbMode));
+                            ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList().stream().anyMatch(ConfigurationTypeUtil::isEditableInDumbMode));
     if (ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX.equals(e.getPlace())) {
       presentation.setText(ExecutionBundle.messagePointer("edit.configuration.action"));
       presentation.setDescription(presentation.getText());

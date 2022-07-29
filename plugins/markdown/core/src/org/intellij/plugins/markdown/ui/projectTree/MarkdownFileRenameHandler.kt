@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandlerFactory
 import com.intellij.refactoring.rename.RenameHandler
-import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 internal class MarkdownFileRenameHandler: RenameHandler {
@@ -18,7 +18,7 @@ internal class MarkdownFileRenameHandler: RenameHandler {
   }
 
   override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-    val mdFile = elements.find { it.containingFile.virtualFile.extension == MarkdownFileType.INSTANCE.defaultExtension } ?: return
+    val mdFile = elements.find { it.containingFile.virtualFile.hasMarkdownType() } ?: return
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, arrayOf(mdFile), dataContext)
   }
 

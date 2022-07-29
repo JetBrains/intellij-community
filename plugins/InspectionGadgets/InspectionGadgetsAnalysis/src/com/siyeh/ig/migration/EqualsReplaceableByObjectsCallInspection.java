@@ -190,7 +190,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
      * @return true if the pattern is matched
      */
     private boolean registerProblem(@NotNull PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
-      if ((rightOperand instanceof PsiMethodCallExpression)) {
+      if (rightOperand instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)rightOperand;
         final NullCheck nullCheck = NullCheck.create(expression.getLOperand());
         if (nullCheck != null && nullCheck.isEqual != equal) {
@@ -363,7 +363,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
       final Negated n = Negated.create(maybeEqualsCheckExpression);
       if (n != null && n.expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = ((PsiMethodCallExpression)n.expression);
+        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)n.expression;
         if (HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodExpression().getReferenceName())) {
           final PsiExpression argument = getArgumentExpression(callExpression);
           final PsiExpression qualifier = getQualifierExpression(callExpression);

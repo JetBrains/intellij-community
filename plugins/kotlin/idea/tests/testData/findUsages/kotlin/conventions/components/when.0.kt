@@ -26,3 +26,5 @@ fun when2(o: Any) {
         }
     }
 }
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

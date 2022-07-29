@@ -2,12 +2,11 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
@@ -24,7 +23,7 @@ class PublicApiImplicitTypeInspection(
         val forPrivate = inspection.reportPrivate
         ExplicitApiDeclarationChecker.returnTypeRequired(element, callableMemberDescriptor, shouldCheckForPublic, forInternal, forPrivate)
     }
-), CleanupLocalInspectionTool {
+) {
 
     override val problemText: String
         get() {

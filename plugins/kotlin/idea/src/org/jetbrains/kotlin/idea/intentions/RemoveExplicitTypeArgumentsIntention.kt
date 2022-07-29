@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
@@ -10,18 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
@@ -34,8 +31,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
 @Suppress("DEPRECATION")
-class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class),
-                                              CleanupLocalInspectionTool {
+class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class) {
 
     override fun additionalFixes(element: KtTypeArgumentList): List<LocalQuickFix>? {
         val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return null
@@ -161,5 +157,15 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
     override fun isApplicableTo(element: KtTypeArgumentList): Boolean = isApplicableTo(element, approximateFlexible = false)
 
-    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) = element.delete()
+    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) {
+        val prevCallExpression = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtCallExpression
+        val isBetweenLambdaArguments = prevCallExpression?.lambdaArguments?.isNotEmpty() == true &&
+                element.getNextSiblingIgnoringWhitespaceAndComments() is KtLambdaArgument
+
+        element.delete()
+
+        if (isBetweenLambdaArguments) {
+            prevCallExpression?.replace(KtPsiFactory(element).createExpressionByPattern("($0)", prevCallExpression))
+        }
+    }
 }

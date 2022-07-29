@@ -18,10 +18,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -386,11 +383,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
                           boolean modal) {
-    codeCleanup(scope, profile, commandName, postRunnable, modal, __ -> true);
+    codeCleanup(scope, profile, commandName, postRunnable, modal, Predicates.alwaysTrue());
   }
 
   public static void cleanupElements(@NotNull Project project, @Nullable Runnable runnable, PsiElement @NotNull ... scope) {
-    cleanupElements(project, runnable, descriptor -> true, scope);
+    cleanupElements(project, runnable, Predicates.alwaysTrue(), scope);
   }
 
   public static void cleanupElements(@NotNull Project project, @Nullable Runnable runnable, Predicate<? super ProblemDescriptor> shouldApplyFix, PsiElement @NotNull ... scope) {
@@ -406,7 +403,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public static void cleanupElements(@NotNull Project project,
                                      @Nullable Runnable runnable,
                                      List<? extends SmartPsiElementPointer<PsiElement>> elements) {
-    cleanupElements(project, runnable, elements, descriptor -> true);
+    cleanupElements(project, runnable, elements, Predicates.alwaysTrue());
   }
 
   private static void cleanupElements(@NotNull Project project,

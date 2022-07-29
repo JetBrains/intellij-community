@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
@@ -164,8 +163,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is StdlibDependency -> {
                     when {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
-                        platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinStdlib)
-                        platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
+                        platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
+                        platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -176,8 +175,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 }
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
-                    platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinTestJunit)
-                    platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
+                    platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
+                    platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
                 }
             }
         }

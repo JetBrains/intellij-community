@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -12,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.ui.HighlightingChooser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -21,23 +17,22 @@ import java.util.List;
 public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
 
   private final List<Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
-  private final @Nullable TextAttributesKey informationKey;
 
   public static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
 
 
-  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> editorAttributesKey, @NotNull Project project) {
+  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
     super(editorAttributesKey.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
     myEditorAttributesKey = editorAttributesKey;
-    informationKey = SeverityRegistrar.getSeverityRegistrar(project)
-      .getHighlightInfoTypeBySeverity(HighlightSeverity.INFORMATION)
-      .getAttributesKey();
   }
 
   @Override
   protected @Nls String getTextFor(@NotNull TextAttributesKey value) {
+    if (HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.containsKey(value)) {
+      return HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.get(value).get();
+    }
+
     String text = value.getExternalName();
-    if (value.equals(informationKey)) return "";
     for (Pair<TextAttributesKey, @Nls String> pair: myEditorAttributesKey) {
       if (value == pair.first) {
         text = pair.second;

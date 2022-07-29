@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,6 +36,8 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -484,6 +487,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
+    private Span mySpan;
+    private Scope myScope;
 
     IndexingRequest(@NotNull VirtualFile root,
                     @NotNull VcsLogIndexer.PathsEncoder encoder,
@@ -508,6 +513,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
+      mySpan = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("indexing").startSpan();
+      myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
       LOG.info("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
@@ -574,6 +581,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
+      mySpan.setAttribute("numberOfCommits", myNewIndexedCommits.get());
+      mySpan.setAttribute("rootName", myRoot.getName());
       if (myFull) {
         LOG.info(formattedTime +
                  " for indexing " +
@@ -582,6 +591,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       else {
         int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
+        mySpan.setAttribute("totalCommits", myCommits.size());
+        mySpan.setAttribute("commitsLeft", leftCommits);
 
         LOG.info(formattedTime +
                  " for indexing " +
@@ -589,6 +600,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                  " new commits out of " +
                  myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
+      mySpan.end();
+      myScope.close();
     }
 
     private void scheduleReindex() {
@@ -638,6 +651,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       int limit = myIndexingLimit.get(myRoot).get();
       boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
       if (isOvertime || (myBigRepositoriesList.isBig(myRoot) && !indicator.isCanceled())) {
+        mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         if (isOvertime) {
           myBigRepositoriesList.addRepository(myRoot);

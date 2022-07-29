@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSFunctionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSFunctionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "function"
 
     fun testFun() { doTest(pattern = "fun a() { '_* }", highlighting = """

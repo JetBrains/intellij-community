@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSBinaryWithTypeRHSExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSBinaryWithTypeRHSExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "binaryWithTypeRHSExpression"
 
     fun testAs() { doTest("'_ as '_") }

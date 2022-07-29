@@ -100,99 +100,169 @@ public final class JavaPsiPatternUtil {
     return null;
   }
 
+  @Contract(value = "null -> null", pure = true)
+  @Nullable
+  public static PsiPrimaryPattern getTypedPattern(@Nullable PsiCaseLabelElement element) {
+    if (element instanceof PsiGuardedPattern) {
+      return getTypedPattern(((PsiGuardedPattern)element).getPrimaryPattern());
+    }
+    else if (element instanceof PsiPatternGuard) {
+      return getTypedPattern(((PsiPatternGuard)element).getPattern());
+    }
+    else if (element instanceof PsiParenthesizedPattern) {
+      return getTypedPattern(((PsiParenthesizedPattern)element).getPattern());
+    }
+    else if (element instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)element);
+    }
+    else if (element instanceof PsiTypeTestPattern) {
+      return ((PsiTypeTestPattern)element);
+    }
+    else {
+      return null;
+    }
+  }
+
   /**
    * @param pattern
    * @return type of variable in pattern, or null if pattern is incomplete
    */
   @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static PsiType getPatternType(@Nullable PsiPattern pattern) {
+  public static PsiType getPatternType(@Nullable PsiCaseLabelElement pattern) {
+    PsiTypeElement typeElement = getPatternTypeElement(pattern);
+    if (typeElement == null) return null;
+    return typeElement.getType();
+  }
+
+  public static @Nullable PsiTypeElement getPatternTypeElement(@Nullable PsiCaseLabelElement pattern) {
     if (pattern == null) return null;
     if (pattern instanceof PsiGuardedPattern) {
-      return getPatternType(((PsiGuardedPattern)pattern).getPrimaryPattern());
+      return getPatternTypeElement(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    else if (pattern instanceof PsiPatternGuard) {
+      return getPatternTypeElement(((PsiPatternGuard)pattern).getPattern());
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return getPatternType(((PsiParenthesizedPattern)pattern).getPattern());
+      return getPatternTypeElement(((PsiParenthesizedPattern)pattern).getPattern());
+    }
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getTypeElement();
     }
     else if (pattern instanceof PsiTypeTestPattern) {
-      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
-      if (checkType != null) return checkType.getType();
+      return ((PsiTypeTestPattern)pattern).getCheckType();
     }
     return null;
   }
 
-  /**
-   * 14.30.3 Pattern Totality and Dominance
-   */
   @Contract(value = "null, _ -> false", pure = true)
-  public static boolean isTotalForType(@Nullable PsiPattern pattern, @NotNull PsiType type) {
+  public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type) {
+    return isTotalForType(pattern, type, true);
+  }
+
+  public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean checkComponents) {
     if (pattern == null) return false;
+    if (pattern instanceof PsiPatternGuard) {
+      PsiPatternGuard guarded = (PsiPatternGuard)pattern;
+      Object constVal = evaluateConstant(guarded.getGuardingExpression());
+      return isTotalForType(guarded.getPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
+    }
     if (pattern instanceof PsiGuardedPattern) {
       PsiGuardedPattern guarded = (PsiGuardedPattern)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isTotalForType(guarded.getPrimaryPattern(), type) && Boolean.TRUE.equals(constVal);
+      return isTotalForType(guarded.getPrimaryPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type);
+      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, checkComponents);
+    }
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      if (!dominates(getPatternType(pattern), type)) return false;
+      if (checkComponents) {
+        PsiPattern[] patternComponents = ((PsiDeconstructionPattern)pattern).getDeconstructionList().getDeconstructionComponents();
+        PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        if (selectorClass == null) return false;
+        PsiRecordComponent[] recordComponents = selectorClass.getRecordComponents();
+        if (patternComponents.length != recordComponents.length) return false;
+        for (int i = 0; i < patternComponents.length; i++) {
+          PsiPattern patternComponent = patternComponents[i];
+          PsiType componentType = recordComponents[i].getType();
+          if (!isTotalForType(patternComponent, componentType, true)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
     else if (pattern instanceof PsiTypeTestPattern) {
-      type = TypeConversionUtil.erasure(type);
-      PsiType baseType = TypeConversionUtil.erasure(getPatternType(pattern));
-      if (type instanceof PsiArrayType || baseType instanceof PsiArrayType) {
-        return baseType != null && TypeConversionUtil.isAssignable(baseType, type);
-      }
-      PsiClass typeClass = PsiTypesUtil.getPsiClass(type);
-      PsiClass baseTypeClass = PsiTypesUtil.getPsiClass(baseType);
-      return typeClass != null && baseTypeClass != null && InheritanceUtil.isInheritorOrSelf(typeClass, baseTypeClass, true);
+      return dominates(getPatternType(pattern), type);
     }
     return false;
+  }
+
+  public static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
+    if (who == null || overWhom == null) return false;
+    if (who.getCanonicalText().equals(overWhom.getCanonicalText())) return true;
+    overWhom = TypeConversionUtil.erasure(overWhom);
+    PsiType baseType = TypeConversionUtil.erasure(who);
+    if (overWhom instanceof PsiArrayType || baseType instanceof PsiArrayType) {
+      return baseType != null && TypeConversionUtil.isAssignable(baseType, overWhom);
+    }
+    PsiClass typeClass = PsiTypesUtil.getPsiClass(overWhom);
+    PsiClass baseTypeClass = PsiTypesUtil.getPsiClass(baseType);
+    return typeClass != null && baseTypeClass != null && InheritanceUtil.isInheritorOrSelf(typeClass, baseTypeClass, true);
   }
 
   /**
    * 14.30.3 Pattern Totality and Dominance
    */
   @Contract(value = "null, _ -> false", pure = true)
-  public static boolean dominates(@Nullable PsiPattern who, @NotNull PsiPattern overWhom) {
+  public static boolean dominates(@Nullable PsiCaseLabelElement who, @NotNull PsiCaseLabelElement overWhom) {
     if (who == null) return false;
-    if (overWhom instanceof PsiGuardedPattern) {
-      if (who instanceof PsiTypeTestPattern) {
-        PsiType whoType = getPatternType(who);
-        PsiType overWhomType = getPatternType(overWhom);
-        if (whoType != null && overWhomType != null && whoType.equalsToText(overWhomType.getCanonicalText())) {
-          return true;
-        }
-      }
-      else if (who instanceof PsiParenthesizedPattern) {
-        return dominates(((PsiParenthesizedPattern)who).getPattern(), overWhom);
-      }
-      else if (who instanceof PsiGuardedPattern) {
-        boolean dominates = dominates(((PsiGuardedPattern)who).getPrimaryPattern(), overWhom);
-        if (!dominates) return false;
-        Object constVal = evaluateConstant(((PsiGuardedPattern)who).getGuardingExpression());
-        return Boolean.TRUE.equals(constVal);
-      }
-      else {
-        return false;
-      }
-      return dominates(who, ((PsiGuardedPattern)overWhom).getPrimaryPattern());
+    PsiType overWhomType = getPatternType(overWhom);
+    if (overWhomType == null || !isTotalForType(who, overWhomType, false)) {
+      return false;
     }
-    else if (overWhom instanceof PsiParenthesizedPattern) {
-      PsiPattern pattern = ((PsiParenthesizedPattern)overWhom).getPattern();
-      if (pattern == null) return false;
-      return dominates(who, pattern);
+    PsiDeconstructionPattern whoDeconstruction = findDeconstructionPattern(who);
+    if (whoDeconstruction != null) {
+      PsiDeconstructionPattern overWhomDeconstruction = findDeconstructionPattern(overWhom);
+      return dominatesComponents(whoDeconstruction, overWhomDeconstruction);
     }
-    else if (overWhom instanceof PsiTypeTestPattern) {
-      PsiType overWhomType = getPatternType(overWhom);
-      return overWhomType != null && isTotalForType(who, overWhomType);
+    return true;
+  }
+
+  private static boolean dominatesComponents(@NotNull PsiDeconstructionPattern who, @Nullable PsiDeconstructionPattern overWhom) {
+    if (overWhom == null) return false;
+    PsiPattern[] whoComponents = who.getDeconstructionList().getDeconstructionComponents();
+    PsiPattern[] overWhomComponents = overWhom.getDeconstructionList().getDeconstructionComponents();
+    if (whoComponents.length != overWhomComponents.length) return false;
+    for (int i = 0; i < whoComponents.length; i++) {
+      PsiPattern whoComponent = whoComponents[i];
+      PsiPattern overWhomComponent = overWhomComponents[i];
+      if (!dominates(whoComponent, overWhomComponent)) return false;
     }
-    return false;
+    return true;
+  }
+
+  public static @Nullable PsiDeconstructionPattern findDeconstructionPattern(@Nullable PsiCaseLabelElement element) {
+    if (element instanceof PsiParenthesizedPattern) {
+      return findDeconstructionPattern(((PsiParenthesizedPattern)element).getPattern());
+    }
+    else if (element instanceof PsiPatternGuard) {
+      return findDeconstructionPattern(((PsiPatternGuard)element).getPattern());
+    }
+    else if (element instanceof PsiDeconstructionPattern) {
+      return (PsiDeconstructionPattern)element;
+    }
+    else {
+      return null;
+    }
   }
 
   /**
    * 14.11.1 Switch Blocks
    */
   @Contract(value = "_,null -> false", pure = true)
-  public static boolean dominates(@NotNull PsiPattern who, @Nullable PsiType overWhom) {
+  public static boolean dominates(@NotNull PsiCaseLabelElement who, @Nullable PsiType overWhom) {
     if (overWhom == null) return false;
     PsiType whoType = TypeConversionUtil.erasure(getPatternType(who));
     if (whoType == null) return false;
@@ -241,7 +311,7 @@ public final class JavaPsiPatternUtil {
   }
 
   @Nullable
-  private static Object evaluateConstant(@Nullable PsiExpression expression) {
+  public static Object evaluateConstant(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     return JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper()
       .computeConstantExpression(expression, false);

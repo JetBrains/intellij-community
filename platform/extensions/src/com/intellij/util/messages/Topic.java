@@ -154,7 +154,7 @@ public class Topic<L> {
     TO_DIRECT_CHILDREN,
 
     /**
-     * No broadcasting is performed for the
+     * No broadcasting is performed.
      */
     NONE,
 

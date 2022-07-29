@@ -193,6 +193,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @ApiStatus.Internal
   public void setCaseSensitivityFlag(@NotNull FileAttributes.CaseSensitivity sensitivity) {
+    if (sensitivity == FileAttributes.CaseSensitivity.UNKNOWN) {
+      throw new IllegalArgumentException("invalid argument for "+this+": "+sensitivity);
+    }
     VfsData vfsData = getVfsData();
     VfsData.Segment segment = vfsData.getSegment(getId(), false);
     int newFlags = (sensitivity == FileAttributes.CaseSensitivity.UNKNOWN ? 0 : VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED) |
@@ -200,7 +203,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
   }
 
-  // removes forward/back slashes from start/end and return trimmed name or null if there are slashes in the middle or it's empty
+  // removes forward/backslashes from start/end and return trimmed name or null if there are slashes in the middle, or it's empty
   private static String deSlash(@NotNull String name) {
     int startTrimmed = -1;
     int endTrimmed = -1;
@@ -319,6 +322,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
       resortChildren();
     }
+    else if (getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
+      // cache case sensitivity anyway even when we failed to read it from the disk, to avoid freezes trying to re-read it constantly
+      setCaseSensitivityFlag(getFileSystem().isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+    }
   }
 
   private void resortChildren() {
@@ -433,11 +440,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                         " children: " + StringUtil.first(children.toString(), 300, true));
             }
             if (!isCaseSensitive) {
-              // Sometimes file system rules for case insensitive comparison differ from Java rules.
-              // E.g. on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
+              // Sometimes file system rules for case-insensitive comparison differ from Java rules.
+              // E.g., on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
               // can coexist while the uppercase for \u1E9B is \u1E60. It's probably because the lower case of
               // \u1E60 is \u1E61 (small S with dot), not \u1E9B. If we encounter such a case,
-              // we fallback to case-sensitive comparison, at least to establish some order between these names.
+              // we fall back to case-sensitive comparison, at least to establish some order between these names.
               cmp = compareNames(name1, name2, true);
             }
           }

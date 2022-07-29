@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
-import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -25,10 +23,7 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
@@ -45,26 +40,24 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public List<CommitId> getSelectedCommits() {
-    return myUi.getTable().getModel().getCommitIds(myUi.getTable().getSelectedRows());
+    return myUi.getTable().getSelection().getCommits();
   }
 
   @NotNull
   @Override
   public List<VcsCommitMetadata> getSelectedShortDetails() {
-    return myUi.getTable().getModel().getCommitMetadata(myUi.getTable().getSelectedRows());
+    return myUi.getTable().getSelection().getCachedMetadata();
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    return myUi.getTable().getModel().getFullDetails(myUi.getTable().getSelectedRows());
+    return myUi.getTable().getSelection().getCachedFullDetails();
   }
 
   @Override
   public void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer) {
-    List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myLogData.getCommitDetailsGetter().loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer,
-                                                       EmptyConsumer.getInstance(), null);
+    getTable().getSelection().requestFullDetails(consumer);
   }
 
   @Nullable

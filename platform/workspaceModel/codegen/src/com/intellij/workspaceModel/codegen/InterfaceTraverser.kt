@@ -27,7 +27,7 @@ class InterfaceTraverser(
       is TBoolean -> return visitor.visitBoolean(varName)
       is TInt -> return visitor.visitInt(varName)
       is TString -> return visitor.visitString(varName)
-      is TList<*> -> {
+      is TCollection<*, *> -> {
         val itemVarName = "_$varName"
         val shouldProcessList = visitor.visitListStart(varName, itemVarName, type.elementType)
         if (!shouldProcessList) return false

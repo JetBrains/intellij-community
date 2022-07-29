@@ -23,6 +23,8 @@ sealed class TargetModules(
     open val isMixedBuildSystems: Boolean
 ) : Collection<ModuleModel> by modules {
 
+    val id by lazy { map { it.projectModule.projectDir.absolutePath }.hashCode() }
+
     fun declaredScopes(project: Project): List<PackageScope> =
         modules.flatMap { it.projectModule.moduleType.userDefinedScopes(project) }
             .map { rawScope -> PackageScope.from(rawScope) }

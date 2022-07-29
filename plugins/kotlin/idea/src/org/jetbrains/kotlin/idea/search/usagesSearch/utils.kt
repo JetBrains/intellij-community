@@ -236,13 +236,13 @@ private fun PsiElement.resolveTargetToDescriptor(isDestructionDeclarationSearch:
 
 private fun containsTypeOrDerivedInside(declaration: KtDeclaration, typeToSearch: FuzzyType): Boolean {
 
-    fun KotlinType.containsTypeOrDerivedInside(type: FuzzyType): Boolean {
-        return type.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside(type) }
+    fun KotlinType.containsTypeOrDerivedInside(): Boolean {
+        return typeToSearch.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside() }
     }
 
     val descriptor = declaration.resolveToDescriptorIfAny() as? CallableDescriptor
     val type = descriptor?.returnType
-    return type != null && type.containsTypeOrDerivedInside(typeToSearch)
+    return type != null && type.containsTypeOrDerivedInside()
 }
 
 private fun FuzzyType.toPsiClass(project: Project): PsiClass? {

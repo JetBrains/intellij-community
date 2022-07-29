@@ -12,8 +12,13 @@ import java.io.File
 import java.lang.reflect.Type
 import kotlin.system.exitProcess
 
+private const val outputFileParameter = "--outputFile="
+private const val pluginsFileParameter = "--pluginsFile="
+private const val pluginIdParameter = "--pluginId="
+
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
-  override fun getCommandName(): String = "buildEventsScheme"
+  override val commandName: String
+    get() = "buildEventsScheme"
 
   override fun main(args: List<String>) {
     var outputFile: String? = null
@@ -70,12 +75,6 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       println("Enabled plugins:")
       println(text)
     }
-  }
-
-  companion object {
-    private const val outputFileParameter = "--outputFile="
-    private const val pluginsFileParameter = "--pluginsFile="
-    private const val pluginIdParameter = "--pluginId="
   }
 
   object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {

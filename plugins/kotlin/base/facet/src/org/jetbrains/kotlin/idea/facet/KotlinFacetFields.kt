@@ -41,6 +41,7 @@ internal val commonFields = KotlinFacetFields(
     hiddenFields = listOf(
         CommonCompilerArguments::pluginClasspaths.name,
         CommonCompilerArguments::pluginOptions.name,
+        CommonCompilerArguments::pluginConfigurations.name,
         CommonCompilerArguments::multiPlatform.name
     )
 )

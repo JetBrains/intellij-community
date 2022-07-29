@@ -170,10 +170,11 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                           public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
                                             return myProject == project ? Collections.singletonList(
                                               new JavaSyntheticLibrary(
+                                                "test",
                                                 ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
                                                 ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
-                                                ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
-                                                null)
+                                                ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir)
+                                              )
                                             ) : Collections.emptyList();
                                           }
                                         }), getTestRootDisposable());

@@ -27,7 +27,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -48,6 +47,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +74,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Actions.RefactoringBulb;
+    return EmptyIcon.ICON_16;
   }
 
   @Override
@@ -93,6 +93,10 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     }
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) {
+      return false;
+    }
+    if (containingClass.isAnnotationType()) {
+      // Method with parameters in annotation is a compilation error; there's no sense to create overload
       return false;
     }
     setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",

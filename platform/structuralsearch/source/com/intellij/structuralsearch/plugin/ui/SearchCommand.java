@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
@@ -148,7 +149,7 @@ public class SearchCommand {
       myProcessPresentation.setShowNotFoundMessage(false);
       @SuppressWarnings("InstanceofCatchParameter") String content =
         e instanceof StructuralSearchScriptException
-        ? SSRBundle.message("search.script.problem", e.getCause())
+        ? SSRBundle.message("search.script.problem", e.getCause().toString().replace(ScriptSupport.UUID, ""))
         : SSRBundle.message("search.template.problem", e.getMessage());
       NotificationGroupManager.getInstance()
         .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)

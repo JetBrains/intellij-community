@@ -15,14 +15,24 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RefactoringQuickFix;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.encapsulateFields.*;
+import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix implements RefactoringQuickFix {
 
@@ -62,5 +72,104 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
   @Override
   public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    EncapsulateOnPreviewProcessor processor = getProcessor(project, previewDescriptor);
+    if (processor == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    processor.performRefactoring();
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  private @Nullable EncapsulateOnPreviewProcessor getProcessor(Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiField field = ObjectUtils.tryCast(getElementToRefactor(previewDescriptor.getPsiElement()), PsiField.class);
+    if (field == null || field.getContainingClass() == null) {
+      return null;
+    }
+    FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(field, GenerateMembersUtil.suggestGetterName(field),
+                                                              GenerateMembersUtil.suggestSetterName(field),
+                                                              GenerateMembersUtil.generateGetterPrototype(field),
+                                                              GenerateMembersUtil.generateSetterPrototype(field));
+    return new EncapsulateOnPreviewProcessor(project, fieldDescriptor);
+  }
+
+  static class EncapsulateOnPreviewProcessor extends EncapsulateFieldsProcessor {
+    private final FieldDescriptor myFieldDescriptor;
+
+    EncapsulateOnPreviewProcessor(Project project, FieldDescriptor fieldDescriptor) {
+      super(project, new EncapsulateOnPreviewDescriptor(fieldDescriptor));
+      myFieldDescriptor = fieldDescriptor;
+    }
+
+    public void performRefactoring() {
+      performRefactoring(findUsages());
+    }
+
+    @Override
+    public UsageInfo @NotNull [] findUsages() {
+      ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
+      for (PsiReference reference : findReferences(myFieldDescriptor.getField())) {
+        checkReference(reference, myFieldDescriptor, array);
+      }
+      UsageInfo[] usageInfos = array.toArray(UsageInfo.EMPTY_ARRAY);
+      return UsageViewUtil.removeDuplicatedUsages(usageInfos);
+    }
+
+    @NotNull
+    private static Iterable<PsiReference> findReferences(PsiField field) {
+      return SyntaxTraverser.psiTraverser(field.getContainingFile()).filter(PsiReference.class).filter(ref -> ref.isReferenceTo(field));
+    }
+  }
+
+  static class EncapsulateOnPreviewDescriptor implements EncapsulateFieldsDescriptor {
+
+    private final FieldDescriptor myFieldDescriptor;
+
+    EncapsulateOnPreviewDescriptor(FieldDescriptor fieldDescriptor) {
+      myFieldDescriptor = fieldDescriptor;
+    }
+
+    @Override
+    public FieldDescriptor[] getSelectedFields() {
+      return new FieldDescriptor[]{myFieldDescriptor};
+    }
+
+    @Override
+    public boolean isToEncapsulateGet() {
+      return true;
+    }
+
+    @Override
+    public boolean isToEncapsulateSet() {
+      return true;
+    }
+
+    @Override
+    public boolean isToUseAccessorsWhenAccessible() {
+      return true;
+    }
+
+    @Override
+    public String getFieldsVisibility() {
+      return PsiModifier.PRIVATE;
+    }
+
+    @Override
+    public String getAccessorsVisibility() {
+      return PsiModifier.PUBLIC;
+    }
+
+    @Override
+    public int getJavadocPolicy() {
+      return DocCommentPolicy.MOVE;
+    }
+
+    @Override
+    public PsiClass getTargetClass() {
+      return myFieldDescriptor.getField().getContainingClass();
+    }
   }
 }

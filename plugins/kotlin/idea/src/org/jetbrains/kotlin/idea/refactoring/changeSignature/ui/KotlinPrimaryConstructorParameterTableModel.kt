@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.ComboBoxTableRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 import com.intellij.util.ui.ColumnInfo
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo

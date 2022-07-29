@@ -340,9 +340,6 @@
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true" description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.create.namespace.package.action" defaultValue="false" description="Possibility to create namespace packages from New | Python Package"/>
 
-    <!-- CommandQueueForPythonConsoleService -->
-    <registryKey key="python.console.CommandQueue" defaultValue="true" restartRequired="true" description="Use CommandQueue in PythonConsole"/>
-
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -422,6 +419,7 @@
     <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="python.sdk.pipenv.pip.file.watcher"/>
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="sdk.has.been.configured.notification.name"/>
     <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="python.sdk.poetry.pip.file.watcher"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="PythonIcons.Python.PythonPackages"
@@ -511,6 +509,10 @@
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
+                    interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
                     dynamic="true"/>
   </extensionPoints>
 

@@ -66,8 +66,11 @@ internal open class FirCallableCompletionContributor(
         val expectedType = nameExpression.getExpectedType()
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
-        val extensionChecker = ExtensionApplicabilityChecker {
-            it.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver)
+        val extensionChecker = object : ExtensionApplicabilityChecker {
+            context(KtAnalysisSession)
+            override fun isApplicable(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
+                return symbol.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver)
+            }
         }
 
         val receiver = explicitReceiver
@@ -95,7 +98,8 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
-        val (implicitScopes, implicitReceivers) = implicitScopesContext
+        val implicitScopes = implicitScopesContext.scopes
+        val implicitReceivers = implicitScopesContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
         val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
@@ -117,7 +121,7 @@ internal open class FirCallableCompletionContributor(
         //   Number.foo -> (this as Number).foo
         //   String.foo -> this@test.foo
         //
-         availableNonExtensions
+        availableNonExtensions
             // skip shadowed variable or properties
             .distinctBy {
                 when (it) {
@@ -141,8 +145,9 @@ internal open class FirCallableCompletionContributor(
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
             topLevelCallables.asSequence()
                 .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
+                .filter { it.canBeAnalysed() }
                 .map { it.getSymbol() as KtCallableSymbol }
-                .filter { it !in extensionMembers && with(visibilityChecker) { isVisible(it) } }
+                .filter { it !in extensionMembers && visibilityChecker.isVisible(it) }
                 .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
         }
 
@@ -199,7 +204,7 @@ internal open class FirCallableCompletionContributor(
         packageSymbol.getPackageScope()
             .getCallableSymbols(scopeNameFilter)
             .filterNot { it.isExtension }
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .forEach { callable ->
                 addCallableSymbolToCompletion(context, callable, getOptions(callable))
@@ -239,7 +244,7 @@ internal open class FirCallableCompletionContributor(
         context: WeighingContext,
         explicitReceiverTypeHint: KtType? = null
     ) {
-        val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope() ?: return
+        val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
 
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
@@ -290,10 +295,11 @@ internal open class FirCallableCompletionContributor(
 
         return topLevelExtensions.asSequence()
             .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
+            .filter { it.canBeAnalysed() }
             .map { it.getSymbol() as KtCallableSymbol }
             .filter { filter(it) }
-            .filter { with(visibilityChecker) { isVisible(it) } }
-            .filter { with(extensionChecker) { isApplicable(it).isApplicable } }
+            .filter { visibilityChecker.isVisible(it) }
+            .filter { extensionChecker.isApplicable(it).isApplicable }
     }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
@@ -303,17 +309,17 @@ internal open class FirCallableCompletionContributor(
     ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult>> =
         scope.getCallableSymbols(scopeNameFilter)
             .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
-            .filter { with(visibilityChecker) { isVisible(it) } }
+            .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .mapNotNull { callable ->
-                val applicabilityResult = with(hasSuitableExtensionReceiver) { isApplicable(callable) }
+                val applicabilityResult = hasSuitableExtensionReceiver.isApplicable(callable)
                 if (applicabilityResult.isApplicable) {
                     callable to applicabilityResult
                 } else null
             }
 
     private fun KtAnalysisSession.findAllNamesOfTypes(implicitReceiversTypes: List<KtType>) =
-        implicitReceiversTypes.flatMapTo(hashSetOf()) { with(typeNamesProvider) { findAllNames(it) } }
+        implicitReceiversTypes.flatMapTo(hashSetOf()) { typeNamesProvider.findAllNames(it) }
 }
 
 internal class FirCallableReferenceCompletionContributor(
@@ -345,12 +351,13 @@ internal class FirCallableReferenceCompletionContributor(
             is KtNamedClassOrObjectSymbol -> {
                 resolved.getMemberScope()
                     .getCallableSymbols(scopeNameFilter)
-                    .filter { with(visibilityChecker) { isVisible(it) } }
+                    .filter { visibilityChecker.isVisible(it) }
                     .forEach { symbol ->
                         addCallableSymbolToCompletion(context.withoutExpectedType(), symbol, getOptions(symbol))
                     }
 
             }
+
             else -> {
                 collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
             }
@@ -386,7 +393,8 @@ internal class FirInfixCallableCompletionContributor(
 }
 
 private class TypeNamesProvider(private val indexHelper: HLIndexHelper) {
-    fun KtAnalysisSession.findAllNames(type: KtType): Set<String> {
+    context(KtAnalysisSession)
+    fun findAllNames(type: KtType): Set<String> {
         if (type !is KtNonErrorClassType) return emptySet()
 
         val typeName = type.classId.shortClassName.let {

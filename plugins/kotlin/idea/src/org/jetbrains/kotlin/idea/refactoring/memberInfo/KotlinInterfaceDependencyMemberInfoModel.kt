@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.ifEmpty

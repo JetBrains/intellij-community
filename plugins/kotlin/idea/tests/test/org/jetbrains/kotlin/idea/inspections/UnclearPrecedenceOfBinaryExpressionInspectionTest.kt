@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsightFixtureTestCase() {

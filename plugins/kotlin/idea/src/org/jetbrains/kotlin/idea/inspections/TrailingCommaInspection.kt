@@ -16,7 +16,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
@@ -38,7 +39,7 @@ import kotlin.properties.Delegates
 class TrailingCommaInspection(
     @JvmField
     var addCommaWarning: Boolean = false
-) : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+) : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : TrailingCommaVisitor() {
         override val recursively: Boolean = false
         private var useTrailingComma by Delegates.notNull<Boolean>()

@@ -12,6 +12,7 @@ import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -25,6 +26,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.preview.DescriptorPreview
+import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
@@ -42,6 +44,10 @@ import java.awt.event.FocusListener
 
 class BookmarksView(val project: Project, showToolbar: Boolean?)
   : Disposable, DataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
+
+  companion object {
+    val BOOKMARKS_VIEW: DataKey<BookmarksView> = DataKey.create("BOOKMARKS_VIEW")
+  }
 
   val isPopup = showToolbar == null
 
@@ -87,10 +93,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun dispose() = preview.close()
 
   override fun getData(dataId: String): Any? = when {
+    BOOKMARKS_VIEW.`is`(dataId) -> this
     LangDataKeys.IDE_VIEW.`is`(dataId) -> ideView
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.`is`(dataId) -> SpeedSearchSupply.getSupply(tree)?.enteredPrefix
     PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.asVirtualFile
     PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedFiles?.toTypedArray()
     else -> null
@@ -139,7 +147,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     override fun isSelected() = isEnabled && state.groupLineBookmarks
     override fun setSelected(selected: Boolean) {
       state.groupLineBookmarks = selected
-      model.invalidate()
+      model.invalidateAsync()
     }
   }
   val autoScrollFromSource = object : Option {
@@ -230,49 +238,49 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupAdded(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupRemoved(group: BookmarkGroup) {
-        model.invalidate() //TODO: node removed
+        model.invalidateAsync() //TODO: node removed
       }
 
       override fun groupRenamed(group: BookmarkGroup) {
-        model.invalidate() //TODO: node updated
+        model.invalidateAsync() //TODO: node updated
       }
 
       override fun bookmarksSorted(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node inserted
+        model.invalidateAsync() //TODO: child node inserted
       }
 
       override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node removed
+        model.invalidateAsync() //TODO: child node removed
       }
 
       override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated
+        model.invalidateAsync() //TODO: child node updated
       }
 
       override fun bookmarkTypeChanged(bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated for every group
+        model.invalidateAsync() //TODO: child node updated for every group
       }
 
       override fun defaultGroupChanged(oldGroup: BookmarkGroup?, newGroup: BookmarkGroup?) {
-        model.invalidate() //TODO: node updated or node moved?
+        model.invalidateAsync() //TODO: node updated or node moved?
       }
 
       override fun structureChanged(node: Any?) {
         when (node) {
-          null -> model.invalidate()
-          else -> model.invalidate(node, true)
+          null -> model.invalidateAsync()
+          else -> model.invalidateAsync(node, true)
         }
       }
     })

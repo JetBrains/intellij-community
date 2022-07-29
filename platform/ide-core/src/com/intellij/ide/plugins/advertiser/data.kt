@@ -6,11 +6,8 @@ package com.intellij.ide.plugins.advertiser
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import java.util.concurrent.TimeUnit
 
 @Serializable
 data class PluginData(
@@ -44,42 +41,14 @@ data class FeaturePluginData(
   val pluginData: PluginData = PluginData()
 )
 
-private fun convertMap(map: Map<String, MutableSet<PluginData>>): MutableMap<String, PluginDataSet> {
-  val result = HashMap<String, PluginDataSet>()
-  for (entry in map.entries) {
-    result.put(entry.key, PluginDataSet(entry.value))
-  }
-  return result
-}
-
 @Serializable
-data class PluginDataSet(val dataSet: MutableSet<PluginData> = HashSet())
+data class PluginDataSet(val dataSet: Set<PluginData> = emptySet())
 
 @Serializable
 data class PluginFeatureMap(
-  val featureMap: MutableMap<String, PluginDataSet> = HashMap(),
-  var lastUpdateTime: Long = 0L
-) : ModificationTracker {
-  @Transient
-  private var modificationCount = 0L
-
-  constructor(map: Map<String, MutableSet<PluginData>>) : this(convertMap(map))
-
-  fun update(newFeatureMap: Map<String, Set<PluginData>>) {
-    // this also removes extension features that are no longer present in the marketplace
-    featureMap.clear()
-
-    for ((id, plugins) in newFeatureMap) {
-      featureMap.computeIfAbsent(id) { PluginDataSet() }.dataSet.addAll(plugins)
-    }
-    lastUpdateTime = System.currentTimeMillis()
-    modificationCount++
-  }
-
-  val outdated: Boolean
-    get() = System.currentTimeMillis() - lastUpdateTime > TimeUnit.DAYS.toMillis(1L)
+  val featureMap: Map<String, PluginDataSet> = emptyMap(),
+  val lastUpdateTime: Long = 0L,
+) {
 
   fun get(implementationName: String): Set<PluginData> = featureMap.get(implementationName)?.dataSet ?: emptySet()
-
-  override fun getModificationCount(): Long = modificationCount
 }

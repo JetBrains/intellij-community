@@ -13,28 +13,28 @@ import com.intellij.workspaceModel.codegen.allRefsFields
 import com.intellij.workspaceModel.codegen.fields.implWsEntityFieldCode
 import com.intellij.workspaceModel.codegen.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.TStructure
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.utils.lines
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.ObjBuilder
+import com.intellij.workspaceModel.codegen.writer.allFields
 
-fun ObjType<*, *>.implWsEntityCode(): String {
+fun ObjClass<*>.implWsEntityCode(): String {
   return """
+package ${module.name}    
+
 @${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})
 @${GeneratedCodeImplVersion::class.fqn}(${CodeGeneratorVersions.IMPL_VERSION})
-${if (abstract) "abstract" else "open"} class $javaImplName: $javaFullName, ${WorkspaceEntityBase::class.fqn}() {
+${if (openness.instantiatable) "open" else "abstract"} class $javaImplName: $javaFullName, ${WorkspaceEntityBase::class.fqn}() {
     ${
     """
     companion object {
-        ${structure.allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
+        ${allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
         
-${getLinksOfConnectionIds(structure)}
+${getLinksOfConnectionIds(this)}
     }"""
   }
         
-    ${structure.allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
+    ${allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
     
     override fun connectionIdList(): List<${ConnectionId::class.fqn}> {
         return connections
@@ -45,10 +45,10 @@ ${getLinksOfConnectionIds(structure)}
     """.trimIndent()
 }
 
-private fun getLinksOfConnectionIds(structure: TStructure<out Obj, out ObjBuilder<*>>): String {
-  return lines("        ") {
+private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
+  return lines(2) {
     line("val connections = listOf<${ConnectionId::class.fqn}>(")
-    structure.allRefsFields.forEach {
+    type.allRefsFields.forEach {
       line("    " + it.refsConnectionId + ",")
     }
     line(")")

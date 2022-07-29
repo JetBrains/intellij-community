@@ -35,4 +35,5 @@ object NewProjectWizardConstants {
   }
 
   const val OTHER = "other"
+  const val NULL = "null"
 }

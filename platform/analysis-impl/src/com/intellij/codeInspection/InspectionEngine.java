@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
@@ -113,7 +114,7 @@ public final class InspectionEngine {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, Predicates.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
@@ -121,7 +122,7 @@ public final class InspectionEngine {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      List<Pair<PsiFile, PsiElement>> injectedFiles = new ArrayList<>();
+      Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiLanguageInjectionHost) {
           List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
@@ -133,7 +134,7 @@ public final class InspectionEngine {
           }
         }
       }
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, pair -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), indicator, pair -> {
         PsiFile injectedFile = pair.getFirst();
         PsiElement host = pair.getSecond();
         List<PsiElement> injectedElements = new ArrayList<>();

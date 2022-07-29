@@ -137,6 +137,21 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testDoRootChangesOnProjectReimportWhenNothingChanges() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertRootsChanged(1);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertRootsChanged(supportsZeroEventsOnNoProjectChange() ? 0 : 1);
+  }
+
+  @Test
   public void testResolvingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -372,6 +387,9 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   private void assertRootsChanged(@SuppressWarnings("SameParameterValue") int count) {
     assertEquals(count, rootsChangedCount);
     assertEquals(rootsChangedCount, beforeRootsChangedCount);
+
+    rootsChangedCount = 0;
+    beforeRootsChangedCount = 0;
   }
 
   private static class NameSettingMavenImporter extends MavenImporter {

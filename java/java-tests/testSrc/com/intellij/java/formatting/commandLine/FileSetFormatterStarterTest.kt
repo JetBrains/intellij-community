@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.formatting.commandLine
 
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
@@ -10,12 +10,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.LightPlatformTestCase
 import java.io.File
 
-
 class FileSetFormatterStarterTest : LightPlatformTestCase() {
-
   private inline fun <reified T : Exception> expectExceptionsOnArgs(vararg args: String) {
     try {
-      createFormatter(args.toList().toTypedArray()).use {
+      createFormatter(args.toList()).use {
         fail("Missing expected exception ${T::class}")
       }
     }
@@ -36,7 +34,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
                                                                              "really_hope_noone_adds_file_with_this_name_in_future", "src")
 
   fun testDefaultArgs() {
-    createFormatter(arrayOf("format", ".")).use { processor ->
+    createFormatter(listOf("format", ".")).use { processor ->
       assertInstanceOf(processor, FileSetFormatter::class.java)
       assertFalse(processor.isRecursive)
       assertEmpty(processor.getFileMasks())
@@ -47,7 +45,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
   }
 
   fun testNonDefaultArgs() {
-    createFormatter(arrayOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", "..")).use { processor ->
+    createFormatter(listOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", "..")).use { processor ->
       assertInstanceOf(processor, FileSetFormatValidator::class.java)
       assertTrue(processor.isRecursive)
 
@@ -62,7 +60,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
   }
 
   fun testNonDefaultArgs2() {
-    createFormatter(arrayOf("format", "-d", "-allowDefaults", ".")).use { processor ->
+    createFormatter(listOf("format", "-d", "-allowDefaults", ".")).use { processor ->
       assertInstanceOf(processor, FileSetFormatValidator::class.java)
       assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.defaultCodeStyle)
     }

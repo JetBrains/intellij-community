@@ -29,12 +29,13 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.platforms.*
-import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
-import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -43,11 +44,10 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNa
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
-import org.jetbrains.kotlin.idea.roots.findAll
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -106,7 +106,7 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
 
             val moduleNode = ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
             val kotlinFacet = configureFacetByGradleModule(ideModule, modelsProvider, moduleNode, sourceSetNode) ?: continue
-            val currentModuleCompilerVersion = ideModule.externalCompilerVersion?.let(IdeKotlinVersion.Companion::opt)
+            val currentModuleCompilerVersion = ExternalCompilerVersionProvider.get(ideModule)
             if (currentModuleCompilerVersion != null) {
                 maxCompilerVersion = maxOf(maxCompilerVersion ?: currentModuleCompilerVersion, currentModuleCompilerVersion)
             }

@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
-import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
-import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
-import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -21,7 +19,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
+        fun KtAnalysisSession.getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
                     return when ((functionSymbol as KtFunctionSymbol).name) {
@@ -30,6 +28,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
                         else -> error("Expected get or set operator but resolved to unexpected symbol {functionSymbol.render()}")
                     }
                 is KtInvokeFunctionReference -> return IMPLICIT_INVOKE
+                is KtConstructorDelegationReference -> return null
             }
 
             return when {

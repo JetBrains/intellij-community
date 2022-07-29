@@ -2,14 +2,21 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.ProjectTopics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.util.concurrentMapOf
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.ArrayDeque
@@ -34,28 +41,82 @@ interface SdkInfoCache {
     }
 }
 
-internal class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
+internal class SdkInfoCacheImpl(project: Project) :
+    SdkInfoCache,
+    LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, true),
+    ProjectJdkTable.Listener,
+    ModuleRootListener,
+    OutdatedLibraryInfoListener,
+    WorkspaceModelChangeListener {
+
     @JvmInline
     value class SdkDependency(val sdk: SdkInfo?)
 
-    private val cache: MutableMap<ModuleInfo, SdkDependency>
-        get() = project.cacheInvalidatingOnRootModifications { concurrentMapOf() }
-
-    override fun findOrGetCachedSdk(moduleInfo: ModuleInfo): SdkInfo? {
-        // get an operate on the fixed instance of a cache to avoid case of roots modification in the middle of lookup
-        val instance = cache
-
-        if (!instance.containsKey(moduleInfo)) {
-            findSdk(instance, moduleInfo)
-        }
-
-        return instance[moduleInfo]?.sdk
+    override fun subscribe() {
+        val connection = project.messageBus.connect(this)
+        connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+        connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
     }
 
-    private fun findSdk(cache: MutableMap<ModuleInfo, SdkDependency>, moduleInfo: ModuleInfo) {
-        moduleInfo.safeAs<SdkDependency>()?.let {
-            cache[moduleInfo] = it
-            return
+    override fun changed(event: VersionedStorageChange) {
+        event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        invalidateEntries(
+            { k, _ ->
+                k !is LibraryInfo && k !is SdkInfo
+            },
+            validityCondition = null
+        )
+    }
+
+    override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+        useCache { instance ->
+            libraryInfos.forEach { instance.remove(it) }
+        }
+    }
+
+    override fun jdkRemoved(jdk: Sdk) {
+        useCache { instance ->
+            val iterator = instance.entries.iterator()
+            while (iterator.hasNext()) {
+                val (key, value) = iterator.next()
+                if (key.safeAs<SdkInfo>()?.sdk == jdk || value.sdk?.sdk == jdk) {
+                    iterator.remove()
+                }
+            }
+        }
+    }
+
+    override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+        jdkRemoved(jdk)
+    }
+
+    override fun rootsChanged(event: ModuleRootEvent) {
+        // SDK could be changed (esp in tests) out of message bus subscription
+        val sdks = project.allSdks()
+        useCache { instance ->
+            val iterator = instance.entries.iterator()
+            while (iterator.hasNext()) {
+                val (key, value) = iterator.next()
+                if (key.safeAs<SdkInfo>()?.sdk?.let { it !in sdks } == true || value.sdk?.sdk?.let { it !in sdks } == true) {
+                    iterator.remove()
+                }
+            }
+        }
+    }
+
+    override fun checkKeyValidity(key: ModuleInfo) {
+        key.safeAs<IdeaModuleInfo>()?.checkValidity()
+    }
+
+    override fun findOrGetCachedSdk(moduleInfo: ModuleInfo): SdkInfo? = get(moduleInfo).sdk
+
+    override fun calculate(cache: MutableMap<ModuleInfo, SdkDependency>, key: ModuleInfo): SdkDependency {
+        key.safeAs<SdkInfo>()?.let {
+            val sdkDependency = SdkDependency(it)
+            cache[key] = sdkDependency
+            return sdkDependency
         }
 
         val libraryDependenciesCache = LibraryDependenciesCache.getInstance(this.project)
@@ -65,7 +126,7 @@ internal class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
         // it depends on a number of libs, that could be > 10k for a huge monorepos
         val graphs = ArrayDeque<List<ModuleInfo>>().also {
             // initial graph item
-            it.add(listOf(moduleInfo))
+            it.add(listOf(key))
         }
 
         val (path, sdkInfo) = run {
@@ -91,11 +152,11 @@ internal class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
                 val dependencies = run deps@{
                     if (last is LibraryInfo) {
                         // use a special case for LibraryInfo to reuse values from a library dependencies cache
-                        val (libraries, sdks) = libraryDependenciesCache.getLibrariesAndSdksUsedWith(last)
-                        sdks.firstOrNull()?.let {
+                        val libraryDependencies = libraryDependenciesCache.getLibraryDependencies(last)
+                        libraryDependencies.sdk.firstOrNull()?.let {
                             return@run graph to SdkDependency(it)
                         }
-                        libraries
+                        libraryDependencies.libraries
                     } else {
                         last.dependencies()
                             .also { dependencies ->
@@ -131,6 +192,8 @@ internal class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
         }
         // mark all visited modules (apart from found path) as dead ends
         visitedModuleInfos.forEach { info -> cache[info] = noSdkDependency }
+
+        return cache[key] ?: noSdkDependency
     }
 
     companion object {

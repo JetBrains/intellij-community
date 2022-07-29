@@ -8,7 +8,7 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.project.Project
 import com.intellij.ui.layout.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
 class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelProvider {

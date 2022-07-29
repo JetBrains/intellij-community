@@ -11,16 +11,14 @@ import com.intellij.openapi.project.Project;
  * {@link #initComponent()}, {@link #moduleAdded()} methods will be called for each module even if user doesn't use
  * any feature of your plugin. Also, plugins declaring module components do not support dynamic loading.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface ModuleComponent extends BaseComponent {
   /**
-   * Invoked when the project corresponding to this component instance is opened.<p>
-   * Note that components may be created for even unopened projects and this method can be never
-   * invoked for a particular component instance (for example for default project).
-   *
-   * @deprecated Please use {@link com.intellij.openapi.project.ProjectManager#TOPIC} ({@link com.intellij.openapi.project.ProjectManagerListener#projectOpened(Project)} (Project, Module)})
+   * @deprecated Do not use.
+   * <a href=" https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
+   * maybe an alternative.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void projectOpened() {
   }
 
@@ -31,7 +29,7 @@ public interface ModuleComponent extends BaseComponent {
    *
    * @deprecated Please use {@link com.intellij.openapi.project.ProjectManager#TOPIC} ({@link com.intellij.openapi.project.ProjectManagerListener#projectClosed(Project)} (Project, Module)})
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void projectClosed() {
   }
 
@@ -41,7 +39,7 @@ public interface ModuleComponent extends BaseComponent {
    *
    * @deprecated Consider to use {@link com.intellij.ProjectTopics#MODULES} ({@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)})
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void moduleAdded() {
   }
 }

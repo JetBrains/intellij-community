@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,6 +33,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -80,6 +83,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getA
  */
 public final class GroovyCompletionUtil {
 
+  private static volatile boolean isSlowCompletionEnabled = true;
+
   private GroovyCompletionUtil() {
   }
 
@@ -98,6 +103,17 @@ public final class GroovyCompletionUtil {
       }
     }
     return statement != null;
+  }
+
+  @TestOnly
+  public static void disableSlowCompletionElements(Disposable disposable) {
+    boolean previousValue = isSlowCompletionEnabled;
+    isSlowCompletionEnabled = false;
+    Disposer.register(disposable, () -> isSlowCompletionEnabled = previousValue);
+  }
+
+  static boolean isSlowCompletionEnabled() {
+    return isSlowCompletionEnabled;
   }
 
   @Nullable

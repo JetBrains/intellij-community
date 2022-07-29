@@ -3,6 +3,7 @@ package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
@@ -28,10 +30,7 @@ import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,9 +44,9 @@ public final class GitBranchUtil {
   private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
 
   // The name that specifies that git is on specific commit rather then on some branch ({@value})
- private static final String NO_BRANCH_NAME = "(no branch)"; //NON-NLS
+  private static final String NO_BRANCH_NAME = "(no branch)"; //NON-NLS
 
-  private GitBranchUtil() {}
+  private GitBranchUtil() { }
 
   /**
    * Returns the tracking information about the given branch in the given repository,
@@ -139,7 +138,8 @@ public final class GitBranchUtil {
       GitBranch currentBranch = repository.getCurrentBranch();
       assert currentBranch != null;
       return currentBranch.getName();
-    } else {
+    }
+    else {
       String currentRevision = repository.getCurrentRevision();
       return currentRevision != null ? currentRevision.substring(0, 7) : "";
     }
@@ -208,42 +208,36 @@ public final class GitBranchUtil {
   }
 
   /**
-   * Guesses the Git root on which a Git action is to be invoked.
-   * <ol>
-   *   <li>
-   *     Returns the root for the selected file. Selected file is determined by {@link DvcsUtil#getSelectedFile(Project)}.
-   *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
-   *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
-   *     but there is at least one git root,  continues guessing, otherwise
-   *     {@code null} will be returned - the file is definitely determined, but it is not under Git and no git roots exists in project.
-   *   </li>
-   *   <li>
-   *     Takes all Git roots registered in the Project. If there is only one, it is returned.
-   *   </li>
-   *   <li>
-   *     If there are several Git roots,
-   *   </li>
-   * </ol>
-   *
-   * <p>
-   *   NB: This method has to be accessed from the <b>read action</b>, because it may query
-   *   {@link com.intellij.openapi.fileEditor.FileEditorManager#getSelectedTextEditor()}.
-   * </p>
-   * @param project current project
-   * @return Git root that may be considered as "current".
-   *         {@code null} is returned if a file not under Git was explicitly selected, if there are no Git roots in the project,
-   *         or if the current Git root couldn't be determined.
+   * @deprecated Prefer {@link #guessWidgetRepository(Project)} or {@link #guessRepositoryForOperation(Project, DataContext)}.
    */
   @Nullable
+  @Deprecated
+  @RequiresEdt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
 
+  /**
+   * @deprecated Prefer {@link #guessRepositoryForOperation(Project, DataContext)}.
+   */
   @Nullable
+  @Deprecated
+  @CalledInAny
   public static GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), file,
                                            GitVcsSettings.getInstance(project).getRecentRootPath());
+  }
+
+  @Nullable
+  public static GitRepository guessRepositoryForOperation(@NotNull Project project, @NotNull DataContext dataContext) {
+    return DvcsUtil.guessRepositoryForOperation(project, GitUtil.getRepositoryManager(project), dataContext);
+  }
+
+  @Nullable
+  public static GitRepository guessWidgetRepository(@NotNull Project project) {
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath());
   }
 
   @NotNull
@@ -295,8 +289,8 @@ public final class GitBranchUtil {
   @NotNull
   public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<? extends T> branches) {
     return branches.stream()
-                   .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
-                   .collect(Collectors.toList());
+      .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -319,7 +313,8 @@ public final class GitBranchUtil {
     if (remoteWanted && localWanted) {
       handler.addParameters("-a");
       remoteOnly = false;
-    } else if (remoteWanted) {
+    }
+    else if (remoteWanted) {
       handler.addParameters("-r");
       remoteOnly = true;
     }
@@ -360,17 +355,20 @@ public final class GitBranchUtil {
     final String[] split = output.split("\n");
     for (String b : split) {
       b = b.substring(2).trim();
-      if (b.equals(NO_BRANCH_NAME)) { continue; }
+      if (b.equals(NO_BRANCH_NAME)) {
+        continue;
+      }
 
       String remotePrefix = null;
       if (b.startsWith("remotes/")) { //NON-NLS
         remotePrefix = "remotes/"; //NON-NLS
-      } else if (b.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+      }
+      else if (b.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
         remotePrefix = GitBranch.REFS_REMOTES_PREFIX;
       }
       boolean isRemote = remotePrefix != null || remoteOnly;
       if (isRemote) {
-        if (! remoteOnly) {
+        if (!remoteOnly) {
           b = b.substring(remotePrefix.length());
         }
         final int idx = b.indexOf("HEAD ->"); //NON-NLS

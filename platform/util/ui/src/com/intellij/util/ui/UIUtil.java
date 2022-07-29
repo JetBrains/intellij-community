@@ -819,6 +819,10 @@ public final class UIUtil {
     return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
   }
 
+  public static @NotNull Color getLabelSuccessForeground() {
+    return JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661);
+  }
+
   public static @NotNull Color getErrorForeground() {
     return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
   }
@@ -1599,7 +1603,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    EDT.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
@@ -2142,7 +2146,7 @@ public final class UIUtil {
    * @param runnable a runnable to invoke
    */
   public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {

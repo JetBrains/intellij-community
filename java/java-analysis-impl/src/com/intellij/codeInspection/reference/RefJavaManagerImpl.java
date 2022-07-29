@@ -46,7 +46,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
                   }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
-  public static final String JAVAX_SERVLET_SERVLET = "javax.servlet.Servlet";
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
@@ -192,7 +191,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public String getServletQName() {
-    return JAVAX_SERVLET_SERVLET;
+    return "javax.servlet.Servlet";
   }
 
   @Override

@@ -328,7 +328,7 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-    if (System.getProperty("idea.ignore.disabled.plugins") == null) {
+    if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
@@ -685,8 +685,14 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    runCatching { DisabledPluginsState.savePluginsList(disabledToUpdate, Path.of(PathManager.getConfigPath(), DISABLED_UPDATE)) }
-      .onFailure { LOG.error(it) }
+    runCatching {
+      PluginManagerCore.writePluginIdsToFile(
+        /* path = */ PathManager.getConfigDir().resolve(DISABLED_UPDATE),
+        /* pluginIds = */ disabledToUpdate,
+      )
+    }.onFailure {
+      LOG.error(it)
+    }
   }
 
   @JvmStatic

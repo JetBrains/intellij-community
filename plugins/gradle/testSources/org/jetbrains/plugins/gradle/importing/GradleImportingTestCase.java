@@ -55,7 +55,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatriciesKt;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -214,7 +214,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
     JavaVersion javaRuntimeVersion = JavaVersion.current();
-    if (GradleJvmSupportMatriciesKt.isSupported(gradleVersion, javaRuntimeVersion)) {
+    if (GradleJvmSupportMatrices.isSupported(gradleVersion, javaRuntimeVersion)) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
@@ -224,12 +224,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       if (JdkUtil.checkForJdk(path)) {
         JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
         if (jdkVersionInfo == null) continue;
-        if (GradleJvmSupportMatriciesKt.isSupported(gradleVersion, jdkVersionInfo.version)) {
+        if (GradleJvmSupportMatrices.isSupported(gradleVersion, jdkVersionInfo.version)) {
           return path;
         }
       }
     }
-    fail("Cannot find JDK for Gradle, checked paths: " + paths);
+    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() + ", checked paths: " + paths);
     return null;
   }
 

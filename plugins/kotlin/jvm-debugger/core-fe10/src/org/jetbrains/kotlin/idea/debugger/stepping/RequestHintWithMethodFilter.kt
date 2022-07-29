@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.kotlin.idea.debugger.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import java.lang.reflect.Field
 
 internal class RequestHintWithMethodFilter(

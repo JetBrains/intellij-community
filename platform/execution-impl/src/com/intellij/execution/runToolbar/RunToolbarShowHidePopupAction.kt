@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -17,16 +14,18 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-class RunToolbarShowHidePopupAction : AnAction(
-  ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.popup.text")), CustomComponentAction, DumbAware, RTBarAction {
+internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.popup.text")),
+                                               CustomComponentAction,
+                                               DumbAware,
+                                               RTBarAction {
 
-  override fun actionPerformed(e: AnActionEvent) {
-
-  }
+  override fun actionPerformed(e: AnActionEvent) {}
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
     return state == RunToolbarMainSlotState.CONFIGURATION
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.arrowIcon()?.let {
@@ -56,7 +55,7 @@ class RunToolbarShowHidePopupAction : AnAction(
       }
     }.apply {
       isOpaque = false
-      add(DraggablePane(), "pos 0 0")
+      add(RunWidgetResizePane(), "pos 0 0")
       add(extraSlotsActionButton, "grow")
     }
   }

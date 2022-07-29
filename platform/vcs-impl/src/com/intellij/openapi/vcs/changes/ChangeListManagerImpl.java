@@ -87,7 +87,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   @Topic.ProjectLevel
-  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
+    new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
 
   private final Project myProject;
   private final ChangesViewI myChangesViewManager;
@@ -135,7 +136,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
-    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately);
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately, this::hasNothingToUpdate);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
@@ -290,21 +291,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     VcsConfirmationDialog dialog =
       new VcsConfirmationDialog(project, VcsBundle.message("dialog.title.remove.empty.changelist"), VcsBundle.message("button.remove"),
                                 CommonBundle.getCancelButtonText(), new VcsShowConfirmationOption() {
-      @Override
-      public Value getValue() {
-        return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
-      }
+        @Override
+        public Value getValue() {
+          return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+        }
 
-      @Override
-      public void setValue(Value value) {
-        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
-      }
+        @Override
+        public void setValue(Value value) {
+          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+        }
 
-      @Override
-      public boolean isPersistent() {
-        return true;
-      }
-    }, XmlStringUtil.wrapInHtml(question), VcsBundle.message("checkbox.remember.my.choice"));
+        @Override
+        public boolean isPersistent() {
+          return true;
+        }
+      }, XmlStringUtil.wrapInHtml(question), VcsBundle.message("checkbox.remember.my.choice"));
     return dialog.showAndGet();
   }
 
@@ -446,6 +447,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
+  }
+
+  /**
+   * @return true if {@link #updateImmediately()} can be skipped.
+   */
+  private boolean hasNothingToUpdate() {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (!vcsManager.hasActiveVcss()) return true;
+
+    VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
+    return !dirtyScopeManager.hasDirtyScopes();
   }
 
   /**
@@ -735,7 +747,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
-  public static boolean isUnder(final Change change, final VcsDirtyScope scope) {
+  public static boolean isUnder(@NotNull Change change, @NotNull VcsDirtyScope scope) {
     final ContentRevision before = change.getBeforeRevision();
     final ContentRevision after = change.getAfterRevision();
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
@@ -1347,12 +1359,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
       IProjectStore store = ProjectKt.getStateStore(project);
-      return (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
-             || StringsKt.equals(filePath.getPath(), FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()), !SystemInfo.isFileSystemCaseSensitive)
-             || isShelfDirOrInsideIt(filePath, project);
+      if (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION)) {
+        return true; // *.iws
+      }
+
+      if (StringsKt.equals(filePath.getPath(),
+                           FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()),
+                           !SystemInfo.isFileSystemCaseSensitive)) {
+        return true; // workspace.xml
+      }
+
+      if (isShelfDirOrInsideIt(filePath, project)) {
+        return true; // .idea/shelf
+      }
+
+      return false;
     }
 
-    private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project){
+    private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project) {
       String shelfPath = ShelveChangesManager.getShelfPath(project);
       return FileUtil.isAncestor(shelfPath, filePath.getPath(), false);
     }
@@ -1405,7 +1429,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       while (!semaphore.waitFor(100)) {
         UIUtil.dispatchAllInvocationEvents();
       }
-    } else {
+    }
+    else {
       semaphore.waitFor();
     }
   }

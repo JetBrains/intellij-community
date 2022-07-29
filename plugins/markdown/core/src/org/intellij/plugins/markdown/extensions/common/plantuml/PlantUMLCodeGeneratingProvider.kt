@@ -27,11 +27,11 @@ class PlantUMLCodeGeneratingProvider(
     get() = dowloadableFiles
 
   override fun isApplicable(language: String): Boolean {
-    return isEnabled && isAvailable && (language == "puml" || language == "plantuml")
+    return isEnabled && isAvailable && language.lowercase() in extensions
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val key = getUniqueFile(language, raw, "png").toFile()
+    val key = getUniqueFile(language.lowercase(), raw, "png").toFile()
     cacheDiagram(key, raw)
     collector?.addAliveCachedFile(this, key)
     return "<img src=\"${key.toURI()}\"/>"
@@ -83,6 +83,8 @@ class PlantUMLCodeGeneratingProvider(
     const val jarFilename = "plantuml.jar"
     private val ownFiles = listOf(jarFilename)
     private val dowloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
+
+    private val extensions = setOf("puml", "plantuml")
 
     private fun storeDiagram(source: String, file: File) {
       try {

@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.*
@@ -7,12 +8,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.stream.Collectors
 import kotlin.io.path.div
 
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
-  private const val TIMESTAMP = "timestamp"
+  private const val INFO = "info.json"
 
   private val LOG = logger<SettingsSnapshotZipSerializer>()
 
@@ -20,8 +22,7 @@ internal object SettingsSnapshotZipSerializer {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     Compressor.Zip(file)
       .use { zip ->
-        val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshot.metaInfo.dateCreated)
-        zip.addFile("$METAINFO/$TIMESTAMP", formattedDate.toByteArray())
+        zip.addFile("$METAINFO/$INFO", serializeMetaInfo(snapshot.metaInfo))
 
         for (fileState in snapshot.fileStates) {
           val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
@@ -43,13 +44,27 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSnapshot(metaInfo, fileStates)
   }
 
+  private fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
+    val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshotMetaInfo.dateCreated)
+    val metaInfo = MetaInfo().apply {
+      date = formattedDate
+      applicationId = snapshotMetaInfo.appInfo?.applicationId.toString()
+      userName = snapshotMetaInfo.appInfo?.userName.toString()
+      hostName = snapshotMetaInfo.appInfo?.hostName.toString()
+      configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
+    }
+    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(metaInfo)
+  }
+
   private fun parseMetaInfo(path: Path): SettingsSnapshot.MetaInfo {
     try {
-      val timestampFile = path / TIMESTAMP
-      if (timestampFile.exists()) {
-        val timestamp = timestampFile.readText()
-        val date = DateTimeFormatter.ISO_INSTANT.parse(timestamp, Instant::from)
-        return SettingsSnapshot.MetaInfo(date)
+      val infoFile = path / INFO
+      if (infoFile.exists()) {
+        val metaInfo = ObjectMapper().readValue(infoFile.readText(), MetaInfo::class.java)
+        val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
+        val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
+                                               metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
+        return SettingsSnapshot.MetaInfo(date, appInfo)
       }
       else {
         LOG.warn("Timestamp file doesn't exist")
@@ -58,6 +73,14 @@ internal object SettingsSnapshotZipSerializer {
     catch (e: Throwable) {
       LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP", e)
     }
-    return SettingsSnapshot.MetaInfo(Instant.now())
+    return SettingsSnapshot.MetaInfo(Instant.now(), appInfo = null)
+  }
+
+  private class MetaInfo {
+    lateinit var date: String
+    lateinit var applicationId: String
+    var userName: String = ""
+    var hostName: String = ""
+    var configFolder: String = ""
   }
 }

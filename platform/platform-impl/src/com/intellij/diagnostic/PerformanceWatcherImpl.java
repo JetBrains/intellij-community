@@ -268,7 +268,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   private static long ageInDays(File file) {
-    return TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS);
+    return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - file.lastModified());
   }
 
   private void cancelThread() {

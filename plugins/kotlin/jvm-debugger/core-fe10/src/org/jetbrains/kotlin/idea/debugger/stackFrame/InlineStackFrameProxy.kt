@@ -5,8 +5,8 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.idea.debugger.safeStackFrame
-import org.jetbrains.kotlin.idea.debugger.safeThreadProxy
+import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
 
 class InlineStackFrameProxyImpl(
     private val location: Location?,

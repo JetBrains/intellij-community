@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
@@ -24,9 +24,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EDT
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
@@ -107,7 +107,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         runWriteAction {
             wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
         }
-        val modulesModel = model ?: ModuleManager.getInstance(project).modifiableModel
+        val modulesModel = model ?: ModuleManager.getInstance(project).getModifiableModel()
         val success = wizard.apply(
             services = buildList {
                 +IdeaServices.createScopeDependent(project)

@@ -11,10 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
@@ -89,7 +89,7 @@ class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackage
                     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
 
                     if (!FqNameUnsafe(name).hasIdentifiersOnly()) {
-                        CodeInsightUtils.showErrorHint(
+                        KotlinSurrounderUtils.showErrorHint(
                             project,
                             editor,
                             KotlinBundle.message("text.0.is.not.valid.package.name", name),

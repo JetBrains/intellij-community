@@ -248,7 +248,8 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <action id="Git.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+    <action id="Git.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch"
+            use-shortcut-of="Git.Branches">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 

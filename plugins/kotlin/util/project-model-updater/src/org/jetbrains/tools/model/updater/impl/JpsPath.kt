@@ -2,16 +2,16 @@ package org.jetbrains.tools.model.updater.impl
 
 sealed class JpsPath(private val root: String) {
     class ProjectDir(path: String, isCommunity: Boolean) : JpsPath("\$PROJECT_DIR\$") {
-        override val path = if (isCommunity || path.startsWith("..")) path else "community/$path"
+        override val relativePath = if (isCommunity || path.startsWith("..")) path else "community/$path"
     }
 
     class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath("\$MAVEN_REPOSITORY\$") {
-        override val path = mavenId.toJarPath(classifier)
+        override val relativePath = mavenId.toJarPath(classifier)
     }
 
-    protected abstract val path: String
+    abstract val relativePath: String
 
-    override fun toString() = "$root/$path"
+    override fun toString() = "$root/$relativePath"
 }
 
 sealed class JpsUrl(val path: JpsPath) {

@@ -15,6 +15,7 @@ object OpenSourceCommunityInstallersBuildTarget {
       // just remove out/ directory for clean build
       incrementalCompilation = true
       useCompiledClassesFromProjectOutput = false
+      buildStepsToSkip += BuildOptions.MAC_SIGN_STEP
     }
 
     val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options)

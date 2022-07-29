@@ -16,9 +16,7 @@ import javax.swing.tree.DefaultTreeModel
  * @author Konstantin Bulenkov
  */
 abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightEditCompatible {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   companion object {
     @JvmStatic
@@ -34,8 +32,7 @@ abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightE
       return null
     }
 
-    @JvmStatic
-    fun getSelectedItem(event: AnActionEvent): RecentProjectTreeItem? {
+    internal fun getSelectedItem(event: AnActionEvent): RecentProjectTreeItem? {
       val tree = getTree(event)
       val node = tree?.selectionPath?.lastPathComponent.castSafelyTo<DefaultMutableTreeNode>()
                  ?: return null

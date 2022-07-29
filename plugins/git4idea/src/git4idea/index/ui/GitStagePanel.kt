@@ -71,7 +71,6 @@ import java.awt.BorderLayout
 import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
-import java.util.stream.Collectors
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
@@ -111,7 +110,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
-    commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitPanel.commitActionsPanel.createActions().forEach { it.registerCustomShortcutSet(this, this) }
     commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
     commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
@@ -370,10 +369,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): List<Any> {
       return treeModelData
-        .rawNodesStream()
+        .iterateRawNodes()
         .filter { node -> isIncludable(node) }
         .map { node -> node.userObject }
-        .collect(Collectors.toList())
+        .toList()
     }
 
     override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {

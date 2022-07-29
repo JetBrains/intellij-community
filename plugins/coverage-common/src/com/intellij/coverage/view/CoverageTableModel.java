@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageEngine;
@@ -41,7 +42,7 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
   }
 
   public void reset() {
-    myStructureModel.invalidate();
+    myStructureModel.invalidateAsync();
   }
 
   public void makeVisible(CoverageListNode node, Consumer<? super TreePath> onSuccess) {

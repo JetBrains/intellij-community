@@ -6,9 +6,8 @@ package org.jetbrains.kotlin.idea.fir.low.level.api
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -55,7 +54,7 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
         // from compiled PSI-elements (e.g. caretResolutionTarget) is not yet supported
         resolveWithClearCaches(ktFile) { resolveState ->
             val firSymbol = caretResolutionTarget.resolveToFirSymbol(resolveState, FirResolvePhase.TYPES)
-            val renderedDeclaration = firSymbol.fir.render(FirRenderer.RenderMode.WithResolvePhases)
+            val renderedDeclaration = FirRenderer.withResolvePhase().renderElementAsString(firSymbol.fir)
             KotlinTestUtils.assertEqualsToFile(expectedFile, renderedDeclaration)
         }
     }

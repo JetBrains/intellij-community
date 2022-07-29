@@ -67,8 +67,7 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
     if (!isEnabled(myProject)) return;
 
     if (settings.getType().equals(getType())) {
-      ApplicationManager.getApplication().invokeLater(() -> checkRunDashboardAvailability(),
-                                                      o -> Disposer.isDisposed(this));
+      ApplicationManager.getApplication().invokeLater(this::checkRunDashboardAvailability, o -> Disposer.isDisposed(this));
     }
   }
 

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 /**
  * A List which is optimised for the sizes of 0 and 1,
  * in which cases it would not allocate array at all.
- *
+ * <p>
  * The tradeoff is the following: this list is slower than {@link ArrayList} but occupies less memory in case of 0 or 1 elements.
  * Please use it only if your code contains many near-empty lists outside the very hot loops.
  */
@@ -28,7 +28,8 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     int size = elements.size();
     if (size == 1) {
       //noinspection unchecked
-      E element = elements instanceof RandomAccess ? ((List<? extends E>)elements).get(0) : elements.iterator().next();
+      E element = elements instanceof List && elements instanceof RandomAccess ?
+                  ((List<? extends E>)elements).get(0) : elements.iterator().next();
       add(element);
     }
     else if (size > 0) {
@@ -175,19 +176,21 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
         oldValue = asElement();
         myElem = null;
         break;
-      case 2:
+      case 2: {
         E[] array = asArray();
         oldValue = array[index];
         myElem = array[1 - index];
         break;
-      default:
-        array = asArray();
+      }
+      default: {
+        E[] array = asArray();
         oldValue = array[index];
         int numMoved = size - index - 1;
         if (numMoved > 0) {
           System.arraycopy(array, index + 1, array, index, numMoved);
         }
         array[size - 1] = null;
+      }
     }
     mySize--;
     modCount++;

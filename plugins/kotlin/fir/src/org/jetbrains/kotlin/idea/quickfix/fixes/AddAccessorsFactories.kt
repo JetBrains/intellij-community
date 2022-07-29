@@ -2,27 +2,29 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoriesFromIntentionActions
-import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterAndSetterIntention
-import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterIntention
-import org.jetbrains.kotlin.idea.fir.intentions.HLAddSetterIntention
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
 import org.jetbrains.kotlin.psi.KtProperty
 
 object AddAccessorsFactories {
     val addAccessorsToUninitializedProperty =
-        diagnosticFixFactoriesFromIntentionActions(
+        diagnosticFixFactories(
             KtFirDiagnostic.MustBeInitialized::class,
             KtFirDiagnostic.MustBeInitializedOrBeAbstract::class
         ) { diagnostic ->
             val property: KtProperty = diagnostic.psi
             val addGetter = property.getter == null
             val addSetter = property.isVar && property.setter == null
-            when {
-                addGetter && addSetter -> listOf(HLAddGetterAndSetterIntention())
-                addGetter -> listOf(HLAddGetterIntention())
-                addSetter -> listOf(HLAddSetterIntention())
-                else -> emptyList()
-            }
+            if (!addGetter && !addSetter) return@diagnosticFixFactories emptyList()
+            listOf(
+                KotlinApplicatorBasedQuickFix(
+                    property,
+                    KotlinApplicatorInput.Empty,
+                    AddAccessorApplicator.applicator(addGetter, addSetter),
+                )
+            )
         }
 }

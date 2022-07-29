@@ -207,12 +207,6 @@ public interface IdeActions {
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
   String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
 
-  String GROUP_FAVORITES_VIEW_POPUP = "FavoritesViewPopupMenu";
-  String ADD_TO_FAVORITES = "AddToFavorites";
-  String ADD_NEW_FAVORITES_LIST = "AddNewFavoritesList";
-  String REMOVE_FAVORITES_LIST = "RemoveFavoritesList";
-  String REMOVE_ALL_FAVORITES_LISTS_BUT_THIS = "RemoveAllFavoritesListsButThis";
-
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
   String GROUP_J2EE_VIEW_POPUP = "J2EEViewPopupMenu";

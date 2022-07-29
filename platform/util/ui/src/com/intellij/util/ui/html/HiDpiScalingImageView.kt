@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import com.intellij.icons.AllIcons
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
@@ -10,6 +11,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.image.BufferedImage
+import javax.swing.Icon
 import javax.swing.text.Element
 import javax.swing.text.html.ImageView
 
@@ -26,6 +28,8 @@ class HiDpiScalingImageView(elem: Element) : ImageView(elem) {
   override fun getMinimumSpan(axis: Int): Float = super.getMinimumSpan(axis) / sysScale
 
   override fun getPreferredSpan(axis: Int): Float = super.getPreferredSpan(axis) / sysScale
+
+  override fun getLoadingImageIcon(): Icon = AllIcons.Process.Step_passive
 
   override fun paint(g: Graphics, a: Shape) {
     val scaleContext = scaleContext

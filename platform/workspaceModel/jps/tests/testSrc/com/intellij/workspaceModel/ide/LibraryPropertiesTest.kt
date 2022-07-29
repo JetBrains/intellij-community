@@ -82,7 +82,7 @@ class LibraryPropertiesTest {
     val elementAsString = "<properties data=\"$propertyData\" />"
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
       val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
       moduleModel.commit()
       module

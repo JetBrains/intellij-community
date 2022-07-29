@@ -49,7 +49,6 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
@@ -77,10 +76,10 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
-                                         boolean showCheckboxes,
-                                         boolean highlightProblems,
-                                         boolean enableUnversioned,
-                                         boolean enablePartialCommit) {
+                                  boolean showCheckboxes,
+                                  boolean highlightProblems,
+                                  boolean enableUnversioned,
+                                  boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
@@ -124,7 +123,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   protected JComponent createHeaderPanel() {
     return JBUI.Panels.simplePanel(myChangeListChooser)
-                      .withBorder(JBUI.Borders.emptyLeft(6));
+      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull
@@ -377,11 +376,11 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
-    Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
-      .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
-    if (node.isEmpty()) return false;
+    ChangesBrowserUnversionedFilesNode unversionedFilesNode = treeModelData.iterateNodes()
+      .filter(ChangesBrowserUnversionedFilesNode.class)
+      .first();
+    if (unversionedFilesNode == null) return false;
 
-    ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();
   }
 

@@ -49,6 +49,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -278,24 +279,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
   }
 
-  private class DelegateAction(val string: Supplier<@Nls String>, val delegate: AnAction) : AnAction() {
-    override fun isDumbAware() = delegate.isDumbAware
-
-    init {
-      shortcutSet = delegate.shortcutSet
-    }
+  private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
 
     override fun update(e: AnActionEvent) {
-      delegate.update(e)
+      super.update(e)
       e.presentation.text = string.get()
-    }
-
-    override fun beforeActionPerformedUpdate(e: AnActionEvent) {
-      delegate.beforeActionPerformedUpdate(e)
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      delegate.actionPerformed(e)
     }
   }
 
@@ -555,7 +543,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
     return prefSize?.apply {
       width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = 26
+      height = JBUIScale.scale(26)
       /**
        * If combined view is enabled the button should not draw a separate line
        * and reserve a place if dropdown is not enabled. Therefore, add only a half
@@ -635,7 +623,19 @@ private class RunDropDownButtonUI : BasicButtonUI() {
         paintArrow(c, g2d, popupBounds)
       }
 
+      val fg = ColorUtil.toHtmlColor(JBColor.namedColor("RunWidget.iconColor", b.foreground))
+      val map: Map<String, String> = mapOf("#ffffff" to fg, "white" to fg)
+      val alpha = HashMap<String, Int>(map.size)
+      map.values.forEach { alpha[it] = 255 }
+      SVGLoader.setContextColorPatcher(object : SVGLoader.SvgElementColorPatcherProvider {
+        override fun forPath(path: String?): SVGLoader.SvgElementColorPatcher? {
+          return SVGLoader.newPatcher(digest = null, map, alpha)
+        }
+      })
+      SVGLoader.isColorRedefinitionContext = true
       paintIcon(g2d, c, iconRect)
+      SVGLoader.isColorRedefinitionContext = false
+      SVGLoader.setContextColorPatcher(null)
       paintText(g2d, c, textRect, text)
     }
     finally {

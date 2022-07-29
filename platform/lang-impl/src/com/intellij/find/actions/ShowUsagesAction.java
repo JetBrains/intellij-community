@@ -20,6 +20,7 @@ import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -52,7 +53,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -79,8 +79,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -93,6 +91,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -146,27 +146,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int weight2 = o2 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o2 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
       if (weight1 != weight2) return weight1 - weight2;
 
-      if (o1 instanceof Comparable && o2 instanceof Comparable) {
-        //noinspection unchecked,rawtypes
-        return ((Comparable)o1).compareTo(o2);
-      }
-
-      VirtualFile v1 = UsageListCellRenderer.getVirtualFile(o1);
-      VirtualFile v2 = UsageListCellRenderer.getVirtualFile(o2);
-      String name1 = v1 == null ? null : v1.getName();
-      String name2 = v2 == null ? null : v2.getName();
-      int i = Comparing.compare(name1, name2);
-      if (i != 0) return i;
-      if (Comparing.equal(v1, v2)) {
-        FileEditorLocation loc1 = o1.getLocation();
-        FileEditorLocation loc2 = o2.getLocation();
-        return Comparing.compare(loc1, loc2);
-      }
-      else {
-        String path1 = v1 == null ? null : v1.getPath();
-        String path2 = v2 == null ? null : v2.getPath();
-        return Comparing.compare(path1, path2);
-      }
+      return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
     }
   }
 
@@ -590,8 +570,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         long current = System.nanoTime();
         UsageViewStatisticsCollector.logSearchFinished(project,
            actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(), usages.size(),
-           TimeUnit.MILLISECONDS.convert(current - firstUsageAddedTS.get(), TimeUnit.NANOSECONDS),
-           TimeUnit.MILLISECONDS.convert(current - searchStarted, TimeUnit.NANOSECONDS),
+           TimeUnit.NANOSECONDS.toMillis(current - firstUsageAddedTS.get()),
+           TimeUnit.NANOSECONDS.toMillis(current - searchStarted),
            tooManyResults.get(),
            CodeNavigateSource.ShowUsagesPopup);
       },
@@ -880,7 +860,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       Runnable updatePreviewRunnable = () -> {
         if (popupRef.get().isDisposed()) return;
         int[] selectedRows = table.getSelectedRows();
-        final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+        final List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
         String file = null;
         for (int row : selectedRows) {
           Object value = table.getModel().getValueAt(row, 0);
@@ -898,10 +878,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
 
         String selectedFile = file;
-        Promises.collectResults(selectedUsagePromises).onSuccess(data -> {
-          final List<UsageInfo> selectedUsages = new SmartList<>();
-          for (UsageInfo[] usageInfos : data) {
-            Collections.addAll(selectedUsages, usageInfos);
+        CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
+          final List<UsageInfo> selectedUsages = new ArrayList<>(selectedUsagePromises.size());
+          for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
+            try {
+              UsageInfo[] usageInfos = f.get();
+              Collections.addAll(selectedUsages, usageInfos);
+            }
+            catch (InterruptedException | ExecutionException e) {
+              throw new RuntimeException(e);
+            }
           }
 
           usagePreviewPanel.updateLayout(selectedUsages);
@@ -1106,10 +1092,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (!(usage instanceof UsageInfo2UsageAdapter)) return -1;
     PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
     if (element == null) return -1;
+    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+    if (injectionManager.isInjectedFragment(element.getContainingFile())) {
+      return injectionManager.injectedToHost(element, element.getTextRange().getStartOffset());
+    }
     return element.getTextRange().getStartOffset();
   }
 
-  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
+  static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
     Editor editor = getEditorFor(visibleUsage);
     if (editor == null) return false;
     int offset = getUsageOffset(visibleUsage);

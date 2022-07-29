@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.find.TextSearchService;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -16,7 +15,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class TrigramTextSearchService implements TextSearchService {
+public final class TrigramTextSearchService implements TextSearchService {
   @Override
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
                                                         Processor<? super VirtualFile> processor,
@@ -42,6 +41,6 @@ public class TrigramTextSearchService implements TextSearchService {
 
   @ApiStatus.Internal
   public static boolean useIndexingSearchExtensions() {
-    return Registry.is("find.use.indexing.searcher.extensions");
+    return Boolean.parseBoolean(System.getProperty("find.use.indexing.searcher.extensions", "true"));
   }
 }

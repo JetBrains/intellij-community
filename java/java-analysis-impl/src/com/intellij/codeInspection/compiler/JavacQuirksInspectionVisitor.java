@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -332,6 +333,20 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiElement element = previewDescriptor.getPsiElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
+          if (withArgs == null) return IntentionPreviewInfo.EMPTY;
+          CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs));
+        }
+      }
+      return IntentionPreviewInfo.DIFF;
     }
   }
 }

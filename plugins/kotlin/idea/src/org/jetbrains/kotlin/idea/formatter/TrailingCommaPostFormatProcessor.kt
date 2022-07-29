@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.findInvalidCommas
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.lineBreakIsMissing
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespace
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer

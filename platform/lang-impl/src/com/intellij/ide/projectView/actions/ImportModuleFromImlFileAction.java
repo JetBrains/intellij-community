@@ -4,10 +4,7 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -42,8 +39,14 @@ public class ImportModuleFromImlFileAction extends AnAction {
     }
     catch (Exception ex) {
       LOG.info(ex);
-      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()),
+                               CommonBundle.getErrorTitle());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

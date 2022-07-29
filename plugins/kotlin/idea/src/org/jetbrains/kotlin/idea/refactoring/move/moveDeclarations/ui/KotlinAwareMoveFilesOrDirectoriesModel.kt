@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isInKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.refactoring.move.getOrCreateDirectory
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinAwareMoveFilesOrDirectoriesProcessor

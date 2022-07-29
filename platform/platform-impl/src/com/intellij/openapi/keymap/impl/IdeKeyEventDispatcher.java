@@ -144,13 +144,6 @@ public final class IdeKeyEventDispatcher {
       myIgnoreNextKeyTypedEvent = false;
     }
 
-    if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && focusOwner instanceof JComponent) {
-      SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)focusOwner);
-      if (supply != null && supply.isPopupActive()) {
-        return false;
-      }
-    }
-
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (id == KeyEvent.KEY_PRESSED) {
@@ -178,6 +171,15 @@ public final class IdeKeyEventDispatcher {
       return false;
     }
 
+    if (getState() == KeyState.STATE_INIT && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getModifiersEx() == 0 &&
+        (e.getKeyCode() == KeyEvent.VK_BACK_SPACE ||
+         e.getKeyCode() == KeyEvent.VK_SPACE ||
+         Character.isLetterOrDigit(e.getKeyChar()))) {
+      SpeedSearchSupply supply = focusOwner instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)focusOwner) : null;
+      if (supply != null) {
+        return false;
+      }
+    }
     if (getState() == KeyState.STATE_INIT && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED &&
         focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (id == KeyEvent.KEY_PRESSED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {

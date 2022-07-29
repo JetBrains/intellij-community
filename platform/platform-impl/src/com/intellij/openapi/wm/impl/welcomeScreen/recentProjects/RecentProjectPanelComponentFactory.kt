@@ -26,16 +26,19 @@ internal object RecentProjectPanelComponentFactory {
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
+      expandGroups()
     }
 
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
-      subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, RecentProjectsChange { filteringTree.updateTree() })
+      subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+        override fun change() {
+          filteringTree.updateTree()
+        }
+      })
       subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
           filteringTree.updateTree()
-          
-          val cloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects()
-          WelcomeScreenCloneCollector.cloneAdded(cloneableProjects.size)
+          WelcomeScreenCloneCollector.cloneAdded(CloneableProjectsService.getInstance().cloneCount())
         }
 
         override fun onCloneRemoved() {

@@ -48,7 +48,7 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection im
     comboBox.setSelectedIndex(myConstantShouldGoLeft ? 0 : 1);
     comboBox.addItemListener(e -> {
       if (e.getStateChange() == ItemEvent.SELECTED) {
-        myConstantShouldGoLeft = (e.getItem() == left);
+        myConstantShouldGoLeft = e.getItem() == left;
       }
     });
     final InspectionOptionsPanel panel = new InspectionOptionsPanel(this);

@@ -687,6 +687,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInferenceInPrivateOrLocalClass() { doTest(); }
   public void testArraysCopyOf() { doTest(); }
   public void testArrayNegativeSize() { doTest(); }
+  public void testArrayWriteFlush() { doTest(); }
   public void testPresizedList() { doTest(); }
   public void testCollectionToArray() { doTest(); }
   public void testStringToCharArray() { doTest(); }

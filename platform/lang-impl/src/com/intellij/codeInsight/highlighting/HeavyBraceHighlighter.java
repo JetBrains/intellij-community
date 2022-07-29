@@ -60,7 +60,7 @@ public abstract class HeavyBraceHighlighter {
   public static Pair<TextRange, TextRange> match(@NotNull PsiFile file, int offset) {
     if (!file.isValid()) return null;
 
-    return EP_NAME.extensions()
+    return EP_NAME.getExtensionList().stream()
       .filter((ext) -> ext.isAvailable(file, offset))
       .map((ext) -> ext.matchBrace(file, offset))
       .filter(Objects::nonNull)

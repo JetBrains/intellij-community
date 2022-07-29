@@ -30,15 +30,17 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
-import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
+import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 
 abstract class KotlinMavenConfigurator
 protected constructor(
@@ -105,7 +107,7 @@ protected constructor(
         if (!dialog.isOK) return
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val collector = createConfigureKotlinNotificationCollector(project)
+            val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
@@ -256,7 +258,7 @@ protected constructor(
     ) {
         val sinceVersion = feature.sinceApiVersion
 
-        val messageTitle = ChangeGeneralLanguageFeatureSupportFix.getFixText(feature, state)
+        val messageTitle = AbstractChangeFeatureSupportLevelFix.getFixText(state, feature.presentableName)
         if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,

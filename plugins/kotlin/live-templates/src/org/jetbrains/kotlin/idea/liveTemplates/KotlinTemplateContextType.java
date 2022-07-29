@@ -17,7 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlighter;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -82,7 +82,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Generic extends KotlinTemplateContextType {
         public Generic() {
-            super("KOTLIN", KotlinBundle.message("configuration.name.kotlin"), EverywhereContextType.class);
+            super("KOTLIN", KotlinBundle.message("template.context.type.generic"), EverywhereContextType.class);
         }
 
         @Override
@@ -98,7 +98,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class TopLevel extends KotlinTemplateContextType {
         public TopLevel() {
-            super("KOTLIN_TOPLEVEL", KotlinBundle.message("top.level"), Generic.class);
+            super("KOTLIN_TOPLEVEL", KotlinBundle.message("template.context.type.top.level"), Generic.class);
         }
 
         @Override

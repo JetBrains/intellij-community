@@ -34,7 +34,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 public class NewFolderAction extends FileChooserAction implements LightEditCompatible {
-  public NewFolderAction() { }
+  @SuppressWarnings("unused")
+  private NewFolderAction() { }
 
   public NewFolderAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);

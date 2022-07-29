@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 suspend fun foo() {
     corou<caret>
 }

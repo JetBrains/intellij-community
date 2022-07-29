@@ -53,7 +53,7 @@ public class Notification {
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
 
   private static final Logger LOG = Logger.getInstance(Notification.class);
-  private static final DataKey<Notification> KEY = DataKey.create("Notification");
+  public static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final @NotNull String id;
 
@@ -68,7 +68,7 @@ public class Notification {
   private @Nullable NotificationListener myListener;
   private @Nullable @LinkLabel String myDropDownText;
   private @Nullable List<@NotNull AnAction> myActions;
-  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
+  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_LEFTMOST;
   private @Nullable AnAction myContextHelpAction;
   private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;

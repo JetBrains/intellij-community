@@ -601,6 +601,16 @@ public final class GroovyCompletionData {
         return true;
       }
     }
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling() instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling();
+      if (tryStatement == null) return false;
+      if (tryStatement.getFinallyClause() == null) {
+        return true;
+      }
+    }
 
     if (context != null &&
         (context.getParent() instanceof GrReferenceExpression) &&

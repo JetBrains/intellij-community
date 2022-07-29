@@ -547,7 +547,7 @@ public final class MavenProjectsTree {
         writeUnlock();
       }
       MavenId oldParentId = mavenProject.getParentId();
-      changes = changes.mergedWith(mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
+      changes = MavenProjectChangesBuilder.merged(changes, mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
 
       writeLock();
       try {
@@ -1330,9 +1330,11 @@ public final class MavenProjectsTree {
     public final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new LinkedHashMap<>();
     public final Set<MavenProject> deletedProjects = new LinkedHashSet<>();
 
-    public void update(MavenProject project, MavenProjectChanges changes) {
+    public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
+      updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
+        previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
+      );
     }
 
     public void deleted(MavenProject project) {

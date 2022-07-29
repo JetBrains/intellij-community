@@ -17,10 +17,12 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IJSwingUtilities;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.jetbrains.annotations.NotNull;
@@ -255,6 +257,17 @@ public final class PyConsoleUtil {
         printAction.actionPerformed(createActionEvent(e, consoleView));
       }
     };
+  }
+
+  public static boolean isCommandQueueEnabled(Project project) {
+    return PyConsoleOptions.getInstance(project).isCommandQueueEnabled();
+  }
+
+  public static boolean isCommandQueueEmpty(@Nullable ConsoleCommunication communication) {
+    if (communication != null) {
+      return ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).isEmpty(communication);
+    }
+    return true;
   }
 }
 

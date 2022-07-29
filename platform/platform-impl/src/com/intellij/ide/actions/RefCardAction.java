@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -7,19 +7,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class RefCardAction extends DumbAwareAction {
-  private static final @NonNls String REF_CARD_PATH =
-    PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
+  private final NullableLazyValue<Path> myRefCardPath = NullableLazyValue.volatileLazyNullable(() -> {
+    var file = Path.of(PathManager.getHomePath() + "/help/ReferenceCard" + (SystemInfo.isMac ? "ForMac" : "") + ".pdf");
+    return DiskQueryRelay.compute(() -> Files.exists(file) ? file : null);
+  });
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -27,34 +28,26 @@ public class RefCardAction extends DumbAwareAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(myRefCardPath.getValue() != null || getKeymapUrl() != null);
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    File file = getRefCardFile();
-    if (file.isFile()) {
+    var file = myRefCardPath.getValue();
+    if (file != null) {
       BrowserUtil.browse(file);
     }
     else {
-      String webUrl = getKeymapUrl();
-      if (webUrl != null) {
-        BrowserUtil.browse(webUrl);
+      var url = getKeymapUrl();
+      if (url != null) {
+        BrowserUtil.browse(url);
       }
     }
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isRefCardAvailable());
-  }
-
-  private static boolean isRefCardAvailable() {
-    return getRefCardFile().exists() || getKeymapUrl() != null;
-  }
-
-  private static String getKeymapUrl() {
-    final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+  private static @Nullable String getKeymapUrl() {
+    var appInfo = ApplicationInfoEx.getInstanceEx();
     return SystemInfo.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
-  }
-
-  private static @NotNull File getRefCardFile() {
-    return new File(FileUtil.toSystemDependentName(REF_CARD_PATH));
   }
 }

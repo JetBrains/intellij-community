@@ -20,7 +20,7 @@ public class MigrationGroup extends ActionGroup {
     for (MigrationMap map: manager.getMigrationsMap().getMaps()) {
       availableMigrations.add(new AnAction(map.getName()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
            manager.showMigrationDialog(map);
         }
       });

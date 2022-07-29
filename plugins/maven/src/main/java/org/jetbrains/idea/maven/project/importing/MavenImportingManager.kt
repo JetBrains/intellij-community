@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.build.SyncViewManager
@@ -27,7 +27,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
@@ -205,7 +204,7 @@ class MavenImportingManager(val project: Project) {
 
       if (readMavenFiles.wrapperData != null) {
         try {
-          readMavenFiles = flow.setupMavenWrapper(readMavenFiles, indicator)
+          readMavenFiles = flow.setupMavenWrapper(readMavenFiles)
           readMavenFiles.initialContext.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
         }
         catch (e: Throwable) {

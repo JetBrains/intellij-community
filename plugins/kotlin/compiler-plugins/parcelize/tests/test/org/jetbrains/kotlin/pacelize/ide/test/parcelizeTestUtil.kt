@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.pacelize.ide.test
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
 import java.io.File
@@ -15,10 +15,10 @@ fun addParcelizeLibraries(module: Module) {
         addRoot(File(PathManager.getCommunityHomePath(), "android/android/testData/android.jar"), OrderRootType.CLASSES)
     }
     ConfigLibraryUtil.addLibrary(module, "parcelizeRuntime") {
-        addRoot(KotlinArtifacts.parcelizeRuntime, OrderRootType.CLASSES)
+        addRoot(TestKotlinArtifacts.parcelizeRuntime, OrderRootType.CLASSES)
     }
     ConfigLibraryUtil.addLibrary(module, "androidExtensionsRuntime") {
-        addRoot(KotlinArtifacts.androidExtensionsRuntime, OrderRootType.CLASSES)
+        addRoot(TestKotlinArtifacts.androidExtensionsRuntime, OrderRootType.CLASSES)
     }
 
 }

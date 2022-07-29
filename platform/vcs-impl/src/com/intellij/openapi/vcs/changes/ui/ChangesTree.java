@@ -59,7 +59,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
@@ -219,7 +218,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                @NotNull @NonNls String propertyName,
                                                @NonNls List<String> defaultGroupingKeys) {
     groupingSupport.setGroupingKeysOrSkip(
-      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName), defaultGroupingKeys)));
+      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName),
+                                            defaultGroupingKeys)));
     groupingSupport.addPropertyChangeListener(e -> {
       PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
 
@@ -671,10 +671,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   protected List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
     return treeModelData
-      .nodesStream()
+      .iterateNodes()
       .filter(node -> isIncludable(node))
-      .map(node -> node.getUserObject())
-      .collect(toList());
+      .map(node -> (Object)node.getUserObject())
+      .toList();
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {

@@ -38,7 +38,8 @@ class BookmarkUsagesCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
 
-    val bookmarkManager = BookmarkManager.getInstance(project)
+    // no BookmarkManager for JettBrains Client
+    val bookmarkManager = BookmarkManager.getInstance(project) ?: return result
     val bookmarks = bookmarkManager.allBookmarks
 
     result += bookmarksTotal.metric(bookmarks.size)

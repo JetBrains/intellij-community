@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +43,7 @@ public class RemoveUsageAction extends AnAction {
   private static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (usages.length == 0) return;
-    Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
+    Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
 
     usageView.removeUsagesBulk(Arrays.asList(usages));
@@ -52,8 +53,12 @@ public class RemoveUsageAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static Usage @NotNull [] getUsages(AnActionEvent context) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     UsageView usageView = context.getData(UsageView.USAGE_VIEW_KEY);
     if (usageView == null) return Usage.EMPTY_ARRAY;
     Usage[] usages = context.getData(UsageView.USAGES_KEY);

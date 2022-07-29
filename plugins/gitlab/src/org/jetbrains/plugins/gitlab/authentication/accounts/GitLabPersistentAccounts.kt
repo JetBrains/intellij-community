@@ -5,25 +5,21 @@ import com.intellij.collaboration.auth.AccountsRepository
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.util.SimpleModificationTracker
 import kotlinx.serialization.Serializable
 
 @State(name = "GitLabAccounts", storages = [Storage(value = "gitlab.xml")], reportStatistic = false)
-internal class GitLabPersistentAccounts
-  : AccountsRepository<GitLabAccount>,
-    SerializablePersistentStateComponent<GitLabPersistentAccounts.GitLabAccountsState>(GitLabAccountsState()) {
+internal class GitLabPersistentAccounts : AccountsRepository<GitLabAccount>,
+                                          SerializablePersistentStateComponent<GitLabPersistentAccounts.GitLabAccountsState>(
+                                            GitLabAccountsState()) {
 
   @Serializable
-  data class GitLabAccountsState(var accounts: Set<GitLabAccount> = setOf())
-
-  private val tracker = SimpleModificationTracker()
+  data class GitLabAccountsState(val accounts: Set<GitLabAccount> = emptySet())
 
   override var accounts: Set<GitLabAccount>
     get() = state.accounts.toSet()
     set(value) {
-      state.accounts = value.toSet()
-      tracker.incModificationCount()
+      updateState {
+        GitLabAccountsState(value.toSet())
+      }
     }
-
-  override fun getStateModificationCount(): Long = tracker.modificationCount
 }

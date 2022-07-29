@@ -26,8 +26,8 @@ class Git(dir: Path) {
     return execute("git", "status", "--short", "--untracked-files=no", "--ignored=no")
   }
 
-  fun listFilesUnderVersionControl(): List<String> {
-    return execute("git", "ls-tree", "-r", "HEAD", "--name-only")
+  fun listFilesUnderVersionControl(refSpec: String = "HEAD"): List<String> {
+    return execute("git", "ls-tree", "-r", refSpec, "--name-only")
   }
 
   fun currentCommitShortHash(): String {

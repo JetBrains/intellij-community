@@ -7,12 +7,14 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.nio.file.Paths
 
 abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest() {
     override fun isFirPlugin(): Boolean = true
+
+    override val ignoreLog: Boolean
+        get() = true
 
     override fun tearDown() {
         runAll(

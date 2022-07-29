@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.project
 
 import com.intellij.ide.GeneralSettings
@@ -72,7 +72,7 @@ object ProjectUtils {
       else {
         val path = langSupport.getLearningProjectPath(dest).toAbsolutePath().toString()
         LangManager.getInstance().setLearningProjectPath(langSupport, path)
-        openOrImportLearningProject(dest, OpenProjectTask(projectToClose = projectToClose), langSupport, postInitCallback)
+        openOrImportLearningProject(dest, OpenProjectTask { this.projectToClose = projectToClose }, langSupport, postInitCallback)
       }
     }
   }
@@ -168,6 +168,9 @@ object ProjectUtils {
       NOTIFICATIONS_SILENT_MODE.set(it, true)
     })
     invokeLater {
+      // Set it every time when project opens to ensure that it will be trusted in case of restoring default settings
+      TrustedPaths.getInstance().setProjectPathTrusted(contentRoot, true)
+
       val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
       if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
         GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
@@ -205,7 +208,6 @@ object ProjectUtils {
     }
     val path = langSupport.getLearningProjectPath(targetDirectory)
     LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
-    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
     return targetDirectory
   }
 
@@ -277,10 +279,8 @@ object ProjectUtils {
     } ?: error("Failed to find content entry for file: ${sourcesRoot.name}")
 
     contentEntry.addSourceFolder(sourcesRoot, false)
-    runWriteAction {
-      rootsModel.commit()
-      project.save()
-    }
+    runWriteAction(rootsModel::commit)
+    project.save()
   }
 
   fun closeAllEditorsInProject(project: Project) {

@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.command.CommandEvent
@@ -58,13 +59,14 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -81,12 +83,10 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
-import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -103,9 +103,10 @@ import java.lang.annotation.Retention
 import java.util.*
 import javax.swing.Icon
 import kotlin.math.min
-import org.jetbrains.kotlin.idea.core.util.getLineCount as newGetLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 
 const val CHECK_SUPER_METHODS_YES_NO_DIALOG = "CHECK_SUPER_METHODS_YES_NO_DIALOG"
 
@@ -307,8 +308,8 @@ class SelectionAwareScopeHighlighter(val editor: Editor) {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineStartOffset() instead",
-    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineStartOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineStartOffset() instead",
+    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineStartOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineStartOffset(line: Int): Int? {
@@ -327,8 +328,8 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineEndOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
+    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineEndOffset(line: Int): Int? {
@@ -336,11 +337,9 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.GeneralPsiElementUtilsKt.getLineNumber instead",)
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
-    val document = containingFile.viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(containingFile)
-    val index = if (start) this.startOffset else this.endOffset
-    if (index > (document?.textLength ?: 0)) return 0
-    return document?.getLineNumber(index) ?: 0
+   return _getLineNumber(start)
 }
 
 class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {
@@ -982,30 +981,39 @@ fun checkSuperMethods(
     return askUserForMethodsToSearch(declarationDescriptor, overriddenElementsToDescriptor)
 }
 
-private fun getSuperDescriptors(declaration: KtDeclaration, ignore: Collection<PsiElement>?) = underModalProgress(
-    declaration.project,
-    KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
-) {
-    val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
+private fun getSuperDescriptors(
+    declaration: KtDeclaration,
+    ignore: Collection<PsiElement>?
+): Pair<CallableDescriptor, Map<PsiElement, CallableDescriptor>> {
+    val progressTitle = KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
+    return ActionUtil.underModalProgress(declaration.project, progressTitle) {
+        val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
 
-    if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
-
-    val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
-    for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
-        declarationDescriptor
-    )) {
-        val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-            declaration.project,
-            overriddenDescriptor
-        ) ?: continue
-        if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
-            overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
+        if (declarationDescriptor is LocalVariableDescriptor) {
+            return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
         }
+
+        val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
+        for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(declarationDescriptor)) {
+            val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                declaration.project,
+                overriddenDescriptor
+            ) ?: continue
+            if (overriddenDeclaration is KtNamedFunction
+                || overriddenDeclaration is KtProperty
+                || overriddenDeclaration is PsiMethod
+                || overriddenDeclaration is KtParameter
+            ) {
+                overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
+            }
+        }
+
+        if (ignore != null) {
+            overriddenElementsToDescriptor.keys.removeAll(ignore)
+        }
+
+        return@underModalProgress (declarationDescriptor to overriddenElementsToDescriptor)
     }
-    if (ignore != null) {
-        overriddenElementsToDescriptor.keys.removeAll(ignore)
-    }
-    (declarationDescriptor to overriddenElementsToDescriptor)
 }
 
 fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
@@ -1117,8 +1125,8 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.core.util.getLineCount"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
+    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
     DeprecationLevel.ERROR
 )
 fun PsiElement.getLineCount(): Int {

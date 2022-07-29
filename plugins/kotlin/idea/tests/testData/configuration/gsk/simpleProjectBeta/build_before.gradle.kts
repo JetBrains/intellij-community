@@ -16,4 +16,4 @@ dependencies {
     testCompile("junit:junit:4.12")
 }
 
-// VERSION: 1.6.20-Beta2-123
+// VERSION: 1.6.20-Beta2-release-123

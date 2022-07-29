@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -101,6 +101,9 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testDiamondsUncheckedWarning() { doTest();}
   public void testWrongNumberOfArguments() { doTest();}
+  public void testNestedClassArgConstructor() {
+    doTest();
+  }
 
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);

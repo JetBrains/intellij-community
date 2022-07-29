@@ -6,6 +6,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.function.BiPredicate
@@ -40,7 +41,7 @@ class FileSet(private val root: Path) {
         AttributeKey.stringKey("destination"), destination.toString(),
       ))
       Files.createDirectories(destination.parent)
-      Files.copy(path, destination, StandardCopyOption.COPY_ATTRIBUTES)
+      Files.copy(path, destination, StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     }
   }
 

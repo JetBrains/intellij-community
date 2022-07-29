@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 import dependency.*
 import java.util.*
 

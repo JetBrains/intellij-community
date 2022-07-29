@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.PsiClassType
@@ -19,7 +19,7 @@ class GradleActionDelegatesToProvider : GrDelegatesToProvider {
     val argumentMapping = result.candidate?.argumentMapping ?: return null
     val type = argumentMapping.expectedType(ExpressionArgument(expression)) as? PsiClassType ?: return null
     val clazz = type.resolve() ?: return null
-    if (clazz.qualifiedName != "org.gradle.api.Action") {
+    if (clazz.qualifiedName != "org.gradle.api.Action" && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
       return null
     }
     val substitutedType = result.substitutor.substitute(type) as? PsiClassType ?: return null

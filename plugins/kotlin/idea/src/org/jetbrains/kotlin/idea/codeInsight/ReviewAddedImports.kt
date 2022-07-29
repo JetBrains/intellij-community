@@ -15,7 +15,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name

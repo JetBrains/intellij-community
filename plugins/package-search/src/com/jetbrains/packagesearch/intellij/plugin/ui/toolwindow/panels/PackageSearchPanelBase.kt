@@ -24,15 +24,15 @@ import javax.swing.JComponent
 
 internal abstract class PackageSearchPanelBase(@Nls val title: String) : DataProvider {
 
-    val content: JComponent by lazy { build() }
+    internal val content: JComponent by lazy { build() }
 
-    val toolbar: JComponent? by lazy { buildToolbar() }
+    internal val toolbar: JComponent? by lazy { buildToolbar() }
 
-    val topToolbar: JComponent? by lazy { buildTopToolbar() }
+    internal val topToolbar: JComponent? by lazy { buildTopToolbar() }
 
-    val gearActions: ActionGroup? by lazy { buildGearActions() }
+    internal val gearActions: ActionGroup? by lazy { buildGearActions() }
 
-    val titleActions: Array<AnAction>? by lazy { buildTitleActions() }
+    internal val titleActions: Array<AnAction>? by lazy { buildTitleActions() }
 
     protected abstract fun build(): JComponent
     protected open fun buildToolbar(): JComponent? = null

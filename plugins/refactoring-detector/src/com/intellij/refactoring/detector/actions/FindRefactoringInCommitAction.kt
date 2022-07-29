@@ -23,9 +23,9 @@ import org.jetbrains.research.kotlinrminer.ide.Refactoring
 class FindRefactoringInCommitAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val log = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
 
-    e.presentation.isEnabledAndVisible = e.project != null && log != null && log.selectedCommits.isNotEmpty()
+    e.presentation.isEnabledAndVisible = e.project != null && log != null && log.commits.isNotEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

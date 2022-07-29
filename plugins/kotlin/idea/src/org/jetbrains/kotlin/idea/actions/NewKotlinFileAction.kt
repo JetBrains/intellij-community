@@ -11,9 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
@@ -27,13 +25,14 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
-import org.jetbrains.kotlin.idea.configuration.toModuleGroup
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -281,13 +280,4 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             }
         }
     }
-}
-
-abstract class NewKotlinFileHook {
-    companion object {
-        val EP_NAME: ExtensionPointName<NewKotlinFileHook> =
-            ExtensionPointName.create<NewKotlinFileHook>("org.jetbrains.kotlin.newFileHook")
-    }
-
-    abstract fun postProcess(createdElement: KtFile, module: Module)
 }

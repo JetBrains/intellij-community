@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -528,6 +530,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitComment(comment);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkShebangComment(comment));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
+    if (!myHolder.hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(comment, myHolder);
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(comment);
   }
 
@@ -571,6 +574,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDocComment(@NotNull PsiDocComment comment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
+    if (!myHolder.hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(comment, myHolder);
   }
 
   @Override
@@ -823,7 +827,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInstanceOfApplicable(expression));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkInstanceOfApplicable(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_16)) {
       myHolder.add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
@@ -865,6 +869,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
     }
 
+    if (!myHolder.hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(expression, myHolder);
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
     }
@@ -1751,6 +1756,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVarTypeApplicability(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type, myLanguageLevel));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkWildcardUsage(type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkArrayType(type));
     if (!myHolder.hasErrorResults()) type.accept(myPreviewFeatureVisitor);
   }
 
@@ -1903,13 +1909,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
     super.visitParenthesizedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(pattern)) {
+      String message = JavaErrorBundle.message("guarded.patterns.unavailable");
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getNode()).descriptionAndTooltip(message).create());
+    }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    }
   }
 
   @Override
   public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
     super.visitGuardedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(pattern)) {
+      String message = JavaErrorBundle.message("guarded.patterns.unavailable");
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getNode()).descriptionAndTooltip(message).create());
+    }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    }
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = pattern.getGuardingExpression();
     if (guardingExpr == null) return;
@@ -1919,6 +1937,44 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
                                                JavaHighlightUtil.formatType(guardingExpr.getType()));
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
+    }
+  }
+
+  @Override
+  public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+    super.visitPatternGuard(guard);
+    myHolder.add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  }
+
+  @Override
+  public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
+    super.visitDeconstructionPattern(deconstructionPattern);
+    myHolder.add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  }
+
+  @Override
+  public void visitDeconstructionList(@NotNull PsiDeconstructionList deconstructionList) {
+    super.visitDeconstructionList(deconstructionList);
+    // We are checking the case when the pattern looks similar to method call in switch and want to show user-friendly message that here
+    // only constant expressions are expected.
+    // it is required to do it in deconstruction list because unresolved reference won't let any parents show any highlighting,
+    // so we need element which is not parent
+    PsiElement parent = deconstructionList.getParent();
+    PsiDeconstructionPattern pattern = tryCast(parent, PsiDeconstructionPattern.class);
+    if (pattern == null) return;
+    PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCaseLabelElementList)) return;
+    PsiTypeElement typeElement = pattern.getTypeElement();
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
+    if (ref == null) return;
+    if (ref.multiResolve(true).length == 0) {
+      PsiElementFactory elementFactory = PsiElementFactory.getInstance(myFile.getProject());
+      PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
+      PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
+      if (call == null) return;
+      if (call.getMethodExpression().resolve() != null) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getTextRange()).descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")).create());
+      }
     }
   }
 

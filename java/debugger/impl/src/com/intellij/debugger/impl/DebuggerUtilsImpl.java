@@ -227,8 +227,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static void logError(Throwable e) {
-    if (e instanceof VMDisconnectedException) {
-      throw (VMDisconnectedException)e;
+    if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
+      throw (RuntimeException)e;
     }
     LOG.error(e);
   }

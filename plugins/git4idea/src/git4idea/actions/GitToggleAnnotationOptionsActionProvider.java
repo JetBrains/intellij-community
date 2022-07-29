@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -61,7 +61,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
+      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text.show"),
             VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
     }
 
@@ -75,6 +75,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       if (mySettings != null) {
         mySettings.set(CommonUiProperties.PREFER_COMMIT_DATE, state);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

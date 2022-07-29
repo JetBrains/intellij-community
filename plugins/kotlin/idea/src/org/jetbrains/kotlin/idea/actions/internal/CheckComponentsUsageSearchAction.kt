@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -102,14 +103,10 @@ class CheckComponentsUsageSearchAction : AnAction() {
         }
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-        if (!isApplicationInternalMode()) {
-            e.presentation.isVisible = false
-            e.presentation.isEnabled = false
-        } else {
-            e.presentation.isVisible = true
-            e.presentation.isEnabled = true
-        }
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 
     private fun selectedKotlinFiles(e: AnActionEvent): Sequence<KtFile> {

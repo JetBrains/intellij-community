@@ -293,8 +293,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody()));
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
-
-    getRefManager().fireBuildReferences(this);
   }
 
   private void collectUncaughtExceptions(@NotNull PsiMethod method) {

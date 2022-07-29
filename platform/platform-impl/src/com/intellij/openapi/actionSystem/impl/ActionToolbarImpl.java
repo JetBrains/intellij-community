@@ -426,6 +426,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       customComponent.putClientProperty(CustomComponentAction.ACTION_KEY, action);
+      ((CustomComponentAction)action).updateCustomComponent(customComponent, presentation);
     }
     tweakActionComponentUI(customComponent);
 
@@ -1206,10 +1207,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void updateActionsImpl(boolean forced) {
     if (forced) myForcedUpdateRequested = true;
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(myPresentationFactory, dataContext, myPlace, false, true);
-    if (Utils.isAsyncDataContext(dataContext)) {
+    if (Utils.isAsyncDataContext(dataContext) && !isUnitTestMode) {
       CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
       myLastUpdate = null;
       if (lastUpdate != null) lastUpdate.cancel();
@@ -1285,11 +1287,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (forced || canUpdateActions(newVisibleActions)) {
       myForcedUpdateRequested = false;
       myCachedImage = null;
-      boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
+      boolean fullReset = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
       boolean skipSizeAdjustments = mySkipWindowAdjustments;
-      Component compForSize = skipSizeAdjustments ? null : guessBestParentForSizeAdjustment();
+      Component compForSize = guessBestParentForSizeAdjustment();
       Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
       removeAll();
@@ -1301,30 +1303,20 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (!skipSizeAdjustments) {
         Dimension availSize = compForSize.getSize();
         Dimension newSize = compForSize.getPreferredSize();
-        adjustContainerWindowSize(shouldRebuildUI, availSize, oldSize, newSize);
+        adjustContainerWindowSize(fullReset, availSize, oldSize, newSize);
       }
 
-      if (shouldRebuildUI) {
-        revalidate();
-      }
-      else {
-        Container parent = getParent();
-        if (parent != null) {
-          parent.invalidate();
-          parent.validate();
-        }
-      }
-
-      repaint();
+      compForSize.revalidate();
+      compForSize.repaint();
     }
   }
 
-  private void adjustContainerWindowSize(boolean shouldRebuildUI,
+  private void adjustContainerWindowSize(boolean fullReset,
                                          @NotNull Dimension availSize,
                                          @NotNull Dimension oldSize,
                                          @NotNull Dimension newSize) {
     Dimension delta = new Dimension(newSize.width - oldSize.width, newSize.height - oldSize.height);
-    if (!shouldRebuildUI) {
+    if (!fullReset) {
       if (myOrientation == SwingConstants.HORIZONTAL) delta.width = 0;
       if (myOrientation == SwingConstants.VERTICAL) delta.height = 0;
     }

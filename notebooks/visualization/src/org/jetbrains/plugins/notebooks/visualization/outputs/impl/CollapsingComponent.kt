@@ -32,7 +32,7 @@ internal class CollapsingComponent(
   private val resizeController by lazy {
     ResizeController(this, editor) { _, dy ->
       if (customHeight < 0) {
-        customHeight = mainComponent.preferredSize.height
+        customHeight = height - insets.run { top + bottom }
       }
       customHeight += dy
       mainComponent.revalidate()
@@ -82,6 +82,8 @@ internal class CollapsingComponent(
   val stubComponent: JComponent get() = getComponent(1) as JComponent
 
   val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
+
+  val hasBeenManuallyResized: Boolean get() = customHeight != -1
 
   fun resetCustomHeight() {
     customHeight = -1

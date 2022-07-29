@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -591,6 +592,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
+    if (Registry.is("ide.content.manager.listeners.order.fix")) {
+      myDispatcher.getListeners().add(l);
+      return;
+    }
     myDispatcher.getListeners().add(0, l);
   }
 

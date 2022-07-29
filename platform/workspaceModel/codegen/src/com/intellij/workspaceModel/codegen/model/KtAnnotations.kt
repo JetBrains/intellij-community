@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.model
 
-import com.intellij.workspaceModel.deft.api.annotations.Ignore
+import com.intellij.workspaceModel.deft.api.annotations.Default
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Open
 import kotlin.reflect.KClass
@@ -20,7 +20,7 @@ class KtAnnotations {
       when (it.name.text) {
         Open::class.java.simpleName -> result.open = true
         Abstract::class.java.simpleName -> result.abstract = true
-        Ignore::class.java.simpleName -> result.ignored = true
+        Default::class.java.simpleName -> result.default = true
       }
     }
     result
@@ -37,7 +37,7 @@ class KtAnnotations {
     var abstract: Boolean = false,
     var sealed: Boolean = false,
     var relation: Boolean = false,
-    var ignored: Boolean = false,
+    var default: Boolean = false,
   )
 }
 

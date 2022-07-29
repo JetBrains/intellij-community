@@ -133,7 +133,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                                 requirementsList, unsatisfied.size());
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
 
-            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.extensions()
+            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.getExtensionList().stream()
               .map(ext -> ext.createInstallPackagesQuickFix(module))
               .filter(fix -> fix != null)
               .findFirst();

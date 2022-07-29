@@ -158,7 +158,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     }
   }
 
-  private void updateStyle(Style style) {
+  protected void updateStyle(Style style) {
     if (myScrollBar != null) {
       myScrollBar.setOpaque(style != Style.Overlay);
       myScrollBar.revalidate();
@@ -228,7 +228,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private enum Style {
+  protected enum Style {
     Legacy, Overlay;
 
     private static final Native<Style> CURRENT = new Native<>() {

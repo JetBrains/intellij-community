@@ -22,8 +22,10 @@ class UnresolvedHeaderReferenceInspection: LocalInspectionTool() {
   }
 
   private fun checkReference(element: PsiElement, holder: ProblemsHolder) {
-    val references = MarkdownPsiSymbolReference.findSymbolReferences(element).filter { it.resolveReference().isEmpty() }
-    for (reference in references) {
+    val references = MarkdownPsiSymbolReference.findSymbolReferences(element)
+    val targetReferences = references.filterIsInstance<HeaderAnchorLinkDestinationReference>()
+    val unresolvedReferences = targetReferences.filter { it.resolveReference().isEmpty() }
+    for (reference in unresolvedReferences) {
       val text = reference.rangeInElement.substring(reference.element.text)
       holder.registerProblem(
         element,

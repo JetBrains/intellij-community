@@ -422,13 +422,9 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
-                  ?: return@compute emptyList()
-      model.repositories.repositories.map {
-        UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
-      }
-    }
+    val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)  ?: return emptyList()
+    return model.repositories.repositories
+      .map { UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "") }
   }
 
 }

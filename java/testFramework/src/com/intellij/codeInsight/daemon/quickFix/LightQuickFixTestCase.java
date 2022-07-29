@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -23,11 +26,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
   @NonNls protected static final String BEFORE_PREFIX = "before";
   @NonNls protected static final String AFTER_PREFIX = "after";
+  @NonNls protected static final String PREVIEW_PREFIX = "preview";
 
   private static QuickFixTestCase myWrapper;
 
@@ -86,7 +93,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
       String text = action.getText();
-      quickFix.invoke(action);
+      if (actionHint.shouldCheckPreview()) {
+        String previewFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + PREVIEW_PREFIX + testName;
+        quickFix.checkPreviewAndInvoke(action, previewFilePath);
+      } else {
+        quickFix.invoke(action);
+      }
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       if (!quickFix.shouldBeAvailableAfterExecution()) {
@@ -272,6 +284,27 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       @Override
       public void invoke(@NotNull IntentionAction action) {
         LightQuickFixTestCase.this.invoke(action);
+      }
+
+      @Override
+      public void checkPreviewAndInvoke(@NotNull IntentionAction action, String previewFilePath) {
+        // Run in background thread to catch accidental write-actions during preview generation
+        String previewContent;
+        try {
+          previewContent = ReadAction.nonBlocking(
+              () -> IntentionPreviewPopupUpdateProcessor.getPreviewContent(getProject(), action, getFile(), getEditor()))
+            .submit(AppExecutorUtil.getAppExecutorService()).get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+        LightQuickFixTestCase.this.invoke(action);
+        Path path = Path.of(getTestDataPath(), previewFilePath);
+        if (Files.exists(path)) {
+          assertSameLinesWithFile(path.toString(), previewContent);
+        } else {
+          assertEquals(getFile().getText(), previewContent);
+        }
       }
 
       @NotNull

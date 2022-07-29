@@ -21,18 +21,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.IntSupplier;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
 final class PersistentFSTreeAccessor {
-  private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  private static final FileAttribute CHILDREN_ATTR = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  private static final int ROOT_RECORD_ID = 1;
 
   @NotNull
   private final PersistentFSAttributeAccessor myAttributeAccessor;
   private final PersistentFSConnection myFSConnection;
   private final @Nullable FsRootDataLoader myFsRootDataLoader;
-  private static final int ROOT_RECORD_ID = 1;
+  private final Lock myRootsAccessLock = new ReentrantLock();
 
   PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor, @NotNull PersistentFSConnection connection) {
     myAttributeAccessor = attributeAccessor;
@@ -44,7 +46,7 @@ final class PersistentFSTreeAccessor {
 
   void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     myFSConnection.markDirty();
-    try (DataOutputStream record = myAttributeAccessor.writeAttribute(parentId, ourChildrenAttr)) {
+    try (DataOutputStream record = myAttributeAccessor.writeAttribute(parentId, CHILDREN_ATTR)) {
       DataInputOutputUtil.writeINT(record, toSave.children.size());
 
       int prevId = parentId;
@@ -72,7 +74,7 @@ final class PersistentFSTreeAccessor {
   ListResult doLoadChildren(int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
 
-    try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, ourChildrenAttr)) {
+    try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
       int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
       List<ChildInfo> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);
       int prevId = parentId;
@@ -88,11 +90,11 @@ final class PersistentFSTreeAccessor {
   }
 
   boolean wereChildrenAccessed(int id) throws IOException {
-    return myAttributeAccessor.hasAttributePage(id, ourChildrenAttr);
+    return myAttributeAccessor.hasAttributePage(id, CHILDREN_ATTR);
   }
 
   int @NotNull [] listRoots() throws IOException {
-    try (DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
+    try (DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
       final int count = DataInputOutputUtil.readINT(input);
       int[] result = ArrayUtil.newIntArray(count);
@@ -106,7 +108,7 @@ final class PersistentFSTreeAccessor {
   }
 
   int @NotNull [] listIds(int id) throws IOException {
-    try (final DataInputStream input = myAttributeAccessor.readAttribute(id, ourChildrenAttr)) {
+    try (final DataInputStream input = myAttributeAccessor.readAttribute(id, CHILDREN_ATTR)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
       final int count = DataInputOutputUtil.readINT(input);
       final int[] result = ArrayUtil.newIntArray(count);
@@ -119,67 +121,85 @@ final class PersistentFSTreeAccessor {
   }
 
   boolean mayHaveChildren(int id) throws IOException {
-    try (final DataInputStream input = myAttributeAccessor.readAttribute(id, ourChildrenAttr)) {
+    try (final DataInputStream input = myAttributeAccessor.readAttribute(id, CHILDREN_ATTR)) {
       if (input == null) return true;
       final int count = DataInputOutputUtil.readINT(input);
       return count != 0;
     }
   }
 
-  int findOrCreateRootRecord(@NotNull String rootUrl, @NotNull IntSupplier newRecord) throws IOException {
-    PersistentFSConnection connection = myFSConnection;
+  int findOrCreateRootRecord(@NotNull String rootUrl) throws IOException {
+    myRootsAccessLock.lock();
+    try {
+      PersistentFSConnection connection = myFSConnection;
 
-    int root = connection.getNames().tryEnumerate(rootUrl);
+      int root = connection.getNames().tryEnumerate(rootUrl);
 
-    int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
-    int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
-    try (final DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-      if (input != null) {
-        final int count = DataInputOutputUtil.readINT(input);
-        names = ArrayUtil.newIntArray(count);
-        ids = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        int prevNameId = 0;
+      int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
+      int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
+      try (final DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
+        if (input != null) {
+          final int count = DataInputOutputUtil.readINT(input);
+          names = ArrayUtil.newIntArray(count);
+          ids = ArrayUtil.newIntArray(count);
+          int prevId = 0;
+          int prevNameId = 0;
 
-        for (int i = 0; i < count; i++) {
-          final int name = DataInputOutputUtil.readINT(input) + prevNameId;
-          final int id = DataInputOutputUtil.readINT(input) + prevId;
-          if (name == root) {
-            return id;
+          for (int i = 0; i < count; i++) {
+            final int name = DataInputOutputUtil.readINT(input) + prevNameId;
+            final int id = DataInputOutputUtil.readINT(input) + prevId;
+            if (name == root) {
+              return id;
+            }
+
+            prevNameId = names[i] = name;
+            prevId = ids[i] = id;
           }
-
-          prevNameId = names[i] = name;
-          prevId = ids[i] = id;
         }
       }
+
+      connection.markDirty();
+      root = connection.getNames().enumerate(rootUrl);
+
+      int id;
+      try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
+        id = FSRecords.createRecord();
+
+        int index = Arrays.binarySearch(ids, id);
+        ids = ArrayUtil.insert(ids, -index - 1, id);
+        names = ArrayUtil.insert(names, -index - 1, root);
+
+        saveNameIdSequenceWithDeltas(names, ids, output);
+      }
+
+      return id;
     }
-
-    connection.markDirty();
-    root = connection.getNames().enumerate(rootUrl);
-
-    int id;
-    try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-      id = newRecord.getAsInt();
-
-      int index = Arrays.binarySearch(ids, id);
-      ids = ArrayUtil.insert(ids, -index - 1, id);
-      names = ArrayUtil.insert(names, -index - 1, root);
-
-      saveNameIdSequenceWithDeltas(names, ids, output);
+    finally {
+      myRootsAccessLock.unlock();
     }
-
-    return id;
   }
 
   void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
     if (myFsRootDataLoader != null) {
-      myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(), id, path, fs);
+      myRootsAccessLock.lock();
+      try {
+        myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(), id, path, fs);
+      }
+      finally {
+        myRootsAccessLock.unlock();
+      }
     }
   }
 
   void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
     if (myFsRootDataLoader != null) {
-      myFsRootDataLoader.loadRootData(getRootsStoragePath(), id, path, fs);
+      myRootsAccessLock.lock();
+      try {
+        myFsRootDataLoader.loadRootData(getRootsStoragePath(), id, path, fs);
+      }
+      finally {
+        myRootsAccessLock.unlock();
+      }
     }
   }
 
@@ -190,38 +210,44 @@ final class PersistentFSTreeAccessor {
   }
 
   void deleteRootRecord(int fileId) throws IOException {
-    myFSConnection.markDirty();
+    myRootsAccessLock.lock();
+    try {
+      myFSConnection.markDirty();
 
-    if (myFsRootDataLoader != null) {
-      myFsRootDataLoader.deleteRootRecord(getRootsStoragePath(), fileId);
-    }
+      if (myFsRootDataLoader != null) {
+        myFsRootDataLoader.deleteRootRecord(getRootsStoragePath(), fileId);
+      }
 
-    int[] names;
-    int[] ids;
-    try (final DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-      assert input != null;
-      int count = DataInputOutputUtil.readINT(input);
+      int[] names;
+      int[] ids;
+      try (final DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
+        assert input != null;
+        int count = DataInputOutputUtil.readINT(input);
 
-      names = ArrayUtil.newIntArray(count);
-      ids = ArrayUtil.newIntArray(count);
-      int prevId = 0;
-      int prevNameId = 0;
-      for (int i = 0; i < count; i++) {
-        names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
-        ids[i] = DataInputOutputUtil.readINT(input) + prevId;
-        prevId = ids[i];
-        prevNameId = names[i];
+        names = ArrayUtil.newIntArray(count);
+        ids = ArrayUtil.newIntArray(count);
+        int prevId = 0;
+        int prevNameId = 0;
+        for (int i = 0; i < count; i++) {
+          names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
+          ids[i] = DataInputOutputUtil.readINT(input) + prevId;
+          prevId = ids[i];
+          prevNameId = names[i];
+        }
+      }
+
+      final int index = ArrayUtil.find(ids, fileId);
+      assert index >= 0;
+
+      names = ArrayUtil.remove(names, index);
+      ids = ArrayUtil.remove(ids, index);
+
+      try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
+        saveNameIdSequenceWithDeltas(names, ids, output);
       }
     }
-
-    final int index = ArrayUtil.find(ids, fileId);
-    assert index >= 0;
-
-    names = ArrayUtil.remove(names, index);
-    ids = ArrayUtil.remove(ids, index);
-
-    try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-      saveNameIdSequenceWithDeltas(names, ids, output);
+    finally {
+      myRootsAccessLock.unlock();
     }
   }
 
@@ -230,7 +256,7 @@ final class PersistentFSTreeAccessor {
       myFsRootDataLoader.ensureLoaded(getRootsStoragePath());
     }
 
-    myFSConnection.getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
+    myFSConnection.getAttributeId(CHILDREN_ATTR.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 
   private static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {

@@ -47,7 +47,7 @@ internal class FunctionCallHighlightingVisitor(
         super.visitCallExpression(expression)
     }
 
-    private fun getTextAttributesForCall(call: KtCall): TextAttributesKey? {
+    private fun KtAnalysisSession.getTextAttributesForCall(call: KtCall): TextAttributesKey? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {
             is KtConstructorSymbol -> Colors.CONSTRUCTOR_CALL

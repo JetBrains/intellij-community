@@ -24,8 +24,6 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -33,6 +31,7 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Konstantin Bulenkov
@@ -70,8 +69,8 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     tweakUIDefaults(settings, inPresentation);
 
-    Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
-    callback.onProcessed(o -> {
+    CompletableFuture<?> callback = project == null ? CompletableFuture.completedFuture(null) : tweakFrameFullScreen(project, inPresentation);
+    callback.whenComplete((o, throwable) -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       if (layoutStored) {
@@ -80,11 +79,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     });
   }
 
-  @NotNull
-  private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
+  private static CompletableFuture<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
-      return Promises.resolvedPromise();
+      return CompletableFuture.completedFuture(null);
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -96,7 +94,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
       final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
       return frame.toggleFullScreen("true".equalsIgnoreCase(value));
     }
-    return Promises.resolvedPromise();
+    return CompletableFuture.completedFuture(null);
   }
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {

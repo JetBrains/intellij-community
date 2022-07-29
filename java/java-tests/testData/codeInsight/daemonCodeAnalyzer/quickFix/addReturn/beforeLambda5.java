@@ -1,8 +1,8 @@
-// "Add 'return' statement" "true"
+// "Add 'return' statement" "true-preview"
 class C {
     void foo() {
         bar(() -> {
-            Math.max(1, 2) //comment
+            Math.max(1, 2)//comment
         <caret>});
     }
 

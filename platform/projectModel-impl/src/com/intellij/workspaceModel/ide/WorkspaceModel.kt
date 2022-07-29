@@ -68,9 +68,6 @@ interface WorkspaceModel {
   fun replaceProjectModel(replacement: StorageReplacement): Boolean
 
   companion object {
-    val enabledForArtifacts: Boolean
-      get() = Registry.`is`("ide.new.project.model.artifacts")
-
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }

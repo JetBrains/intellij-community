@@ -5,7 +5,6 @@ package com.intellij.history.integration.ui.actions;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +18,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     VirtualFile f = Objects.requireNonNull(getFile(e));
-    VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(e));
+    VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(this, e));
 
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
@@ -31,18 +30,13 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    VcsSelection selection = VcsSelectionUtil.getSelection(e);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, e);
     if (selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else if (!e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
       e.getPresentation().setText(selection.getActionName());
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.OLD_EDT;
   }
 
   @Override

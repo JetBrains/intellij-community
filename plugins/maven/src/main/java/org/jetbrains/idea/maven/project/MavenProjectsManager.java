@@ -54,13 +54,15 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
-import org.jetbrains.idea.maven.importing.*;
+import org.jetbrains.idea.maven.importing.MavenImportStats;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
+import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.project.importing.FilesList;
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
@@ -581,9 +583,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void projectClosed() {
     initLock.lock();
     try {
-      if (!isInitialized.getAndSet(false)) return;
+      if (!isInitialized.getAndSet(false)) {
+        return;
+      }
 
-      Disposer.dispose(myImportingQueue);
+      if (myImportingQueue != null) {
+        Disposer.dispose(myImportingQueue);
+      }
 
       myWatcher.stop();
 
@@ -734,8 +740,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenProject findProject(@NotNull Module module) {
     MavenProject mavenProject = getMavenProject(module);
     String moduleName = module.getName();
-    if (mavenProject == null && MavenModelUtil.isMainOrTestSubmodule(moduleName)) {
-      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenModelUtil.getParentModuleName(moduleName));
+    if (mavenProject == null && MavenImportUtil.isMainOrTestSubmodule(moduleName)) {
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenImportUtil.getParentModuleName(moduleName));
       mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
     }
     return mavenProject;
@@ -1228,8 +1234,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
     synchronized (myImportingDataLock) {
       for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
-        myProjectsToImport.put(each.first, changes);
+        myProjectsToImport.compute(each.first, (__, previousChanges) ->
+          previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
+        );
       }
     }
   }
@@ -1342,7 +1349,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      MavenFoldersImporter.updateProjectFolders(myProject, true);
+      MavenProjectImporter.tryUpdateTargetFolders(myProject);
       VirtualFileManager.getInstance().asyncRefresh(null);
     });
   }

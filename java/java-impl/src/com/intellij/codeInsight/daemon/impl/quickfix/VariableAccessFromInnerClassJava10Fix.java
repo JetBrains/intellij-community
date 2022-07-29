@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +44,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
     myContext = context;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new VariableAccessFromInnerClassJava10Fix(PsiTreeUtil.findSameElementInCopy(myContext, target));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

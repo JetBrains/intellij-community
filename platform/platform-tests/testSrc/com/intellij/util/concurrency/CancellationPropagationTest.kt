@@ -13,10 +13,8 @@ import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UncaughtExceptionsExtension
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -25,7 +23,11 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.lang.reflect.Method
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -35,18 +37,25 @@ import kotlin.coroutines.coroutineContext
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
  */
+@TestApplication
 class CancellationPropagationTest {
 
   companion object {
 
     @RegisterExtension
     @JvmField
-    val applicationExtension = ApplicationExtension()
+    internal val propagationExtension: InvocationInterceptor = object : InvocationInterceptor {
 
-    @RegisterExtension
-    @JvmField
-    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
-
+      override fun interceptTestMethod(
+        invocation: InvocationInterceptor.Invocation<Void>,
+        invocationContext: ReflectiveInvocationContext<Method>,
+        extensionContext: ExtensionContext,
+      ) {
+        Propagation.runWithCancellationPropagationEnabled {
+          invocation.proceed()
+        }
+      }
+    }
   }
 
   private val service = AppExecutorUtil.getAppExecutorService()
@@ -60,7 +69,7 @@ class CancellationPropagationTest {
    * ```
    */
   @Test
-  fun `executeOnPooledThread(Runnable)`(): Unit = timeoutPropagateRunBlocking {
+  fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
     }
@@ -77,7 +86,7 @@ class CancellationPropagationTest {
    * ```
    */
   @Test
-  fun `executeOnPooledThread(Callable)`(): Unit = timeoutPropagateRunBlocking {
+  fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
@@ -97,7 +106,7 @@ class CancellationPropagationTest {
    * ```
    */
   @Test
-  fun invokeLater(): Unit = timeoutPropagateRunBlocking {
+  fun invokeLater(): Unit = timeoutRunBlocking {
     val application = ApplicationManager.getApplication()
     doTest {
       application.invokeLater(it.runnable())
@@ -115,25 +124,24 @@ class CancellationPropagationTest {
   }
 
   @Test
-  fun `cancelled invokeLater is not executed`(): Unit = timeoutPropagateRunBlocking {
+  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
     launch {
-        replaceThreadContext(coroutineContext).use {
-          ApplicationManager.getApplication().withModality {
-            val runnable = Runnable {
-              fail()
-            }
-            ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
-            assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
-            this@launch.cancel()
+      replaceThreadContext(coroutineContext).use {
+        ApplicationManager.getApplication().withModality {
+          val runnable = Runnable {
+            fail()
           }
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
+          assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
+          this@launch.cancel()
         }
       }
-    .join()
+    }.join()
     pumpEDT()
   }
 
   @Test
-  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutPropagateRunBlocking {
+  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
     replaceThreadContext(coroutineContext).use {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
@@ -149,41 +157,54 @@ class CancellationPropagationTest {
   }
 
   @Test
-  fun appExecutorService(): Unit = timeoutPropagateRunBlocking {
+  fun edtExecutorService(): Unit = timeoutRunBlocking {
+    val service = EdtExecutorService.getInstance()
+    doExecutorServiceTest(service)
+    doTest {
+      service.execute(it, ModalityState.any())
+    }
+    doTest {
+      service.execute(it, ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+    }
+    doTest {
+      service.submit(it, ModalityState.any())
+    }
+    doTest {
+      service.submit(it.callable(), ModalityState.any())
+    }
+  }
+
+  @Test
+  fun appExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(service)
     doTestInvokeAnyCancelsRunningCallables(service)
   }
 
-  fun timeoutPropagateRunBlocking(action: suspend CoroutineScope.() -> Unit) {
-    Propagation.runTestWithPropagationEnabled {
-      timeoutRunBlocking(action)
-    }
-  }
   @Test
-  fun appScheduledExecutorService(): Unit = timeoutPropagateRunBlocking {
+  fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
     doScheduledExecutorServiceTest(scheduledService)
     doTestInvokeAnyCancelsRunningCallables(scheduledService)
   }
 
   @Test
-  fun boundedApplicationPoolExecutor(): Unit = timeoutPropagateRunBlocking {
+  fun boundedApplicationPoolExecutor(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
   @Test
-  fun boundedApplicationPoolExecutor2(): Unit = timeoutPropagateRunBlocking {
+  fun boundedApplicationPoolExecutor2(): Unit = timeoutRunBlocking {
     val bounded2 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-2", 2)
     doExecutorServiceTest(bounded2)
     doTestInvokeAnyCancelsRunningCallables(bounded2)
   }
 
   @Test
-  fun boundedScheduledExecutorService(): Unit = timeoutPropagateRunBlocking {
+  fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
   }
 
   @Test
-  fun boundedScheduledExecutorService2(): Unit = timeoutPropagateRunBlocking {
+  fun boundedScheduledExecutorService2(): Unit = timeoutRunBlocking {
     val bounded2 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-2", 2)
     doScheduledExecutorServiceTest(bounded2)
     doTestInvokeAnyCancelsRunningCallables(bounded2)
@@ -191,15 +212,13 @@ class CancellationPropagationTest {
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
     replaceThreadContext(coroutineContext).use {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        Propagation.runTestWithPropagationEnabled {
-          val parentJob = checkNotNull(Cancellation.currentJob())
-          submit { // switch to another thread
-            val result: Result<Unit> = runCatching {
-              assertCurrentJobIsChildOf(parentJob)
-            }
-            continuation.resumeWith(result)
+      suspendCancellableCoroutine { continuation ->
+        val parentJob = checkNotNull(Cancellation.currentJob())
+        submit { // switch to another thread
+          val result: Result<Unit> = runCatching {
+            assertCurrentJobIsChildOf(parentJob)
           }
+          continuation.resumeWith(result)
         }
       }
     }
@@ -285,25 +304,23 @@ class CancellationPropagationTest {
 
   private suspend fun doTestJobIsCancelledByFuture(submit: (() -> Unit) -> Future<*>) {
     return suspendCancellableCoroutine { continuation ->
-      Propagation.runTestWithPropagationEnabled {
-        val started = Semaphore(1)
-        val cancelled = Semaphore(1)
-        val future = submit {
-          val result: Result<Unit> = runCatching {
-            started.up()
-            cancelled.timeoutWaitUp()
-            assertThrows<JobCanceledException> {
-              Cancellation.checkCancelled()
-            }
+      val started = Semaphore(1)
+      val cancelled = Semaphore(1)
+      val future = submit {
+        val result: Result<Unit> = runCatching {
+          started.up()
+          cancelled.timeoutWaitUp()
+          assertThrows<JobCanceledException> {
+            Cancellation.checkCancelled()
           }
-          continuation.resumeWith(result)
         }
-        started.timeoutWaitUp()
-        future.cancel(false)
-        cancelled.up()
-        assertThrows<CancellationException> {
-          future.timeoutGet()
-        }
+        continuation.resumeWith(result)
+      }
+      started.timeoutWaitUp()
+      future.cancel(false)
+      cancelled.up()
+      assertThrows<CancellationException> {
+        future.timeoutGet()
       }
     }
   }
@@ -404,21 +421,19 @@ class CancellationPropagationTest {
 
   @Test
   fun `child is cancelled by parent job`() {
-    Propagation.runTestWithPropagationEnabled {
-      var childFuture by AtomicReference<Future<*>>()
-      val lock = Semaphore(2)
-      val rootJob = withRootJob {
-        childFuture = service.submit {
-          lock.up()
-          neverEndingStory()
-        }
+    var childFuture by AtomicReference<Future<*>>()
+    val lock = Semaphore(2)
+    val rootJob = withRootJob {
+      childFuture = service.submit {
         lock.up()
+        neverEndingStory()
       }
-      lock.timeoutWaitUp()
-      rootJob.cancel()
-      waitAssertCompletedWithCancellation(childFuture)
-      rootJob.timeoutJoinBlocking()
+      lock.up()
     }
+    lock.timeoutWaitUp()
+    rootJob.cancel()
+    waitAssertCompletedWithCancellation(childFuture)
+    rootJob.timeoutJoinBlocking()
   }
 
   @Test
@@ -453,36 +468,34 @@ class CancellationPropagationTest {
 
   @Test
   fun `failed child fails parent`() {
-    Propagation.runTestWithPropagationEnabled {
-      class E : Throwable()
+    class E : Throwable()
 
-      var childFuture1 by AtomicReference<Future<*>>()
-      var childFuture2 by AtomicReference<Future<*>>()
-      val childFuture1CanThrow = Semaphore(1)
-      val childFuture2CanFinish = Semaphore(1)
+    var childFuture1 by AtomicReference<Future<*>>()
+    var childFuture2 by AtomicReference<Future<*>>()
+    val childFuture1CanThrow = Semaphore(1)
+    val childFuture2CanFinish = Semaphore(1)
 
-      val lock = Semaphore(3)
-      val rootJob = withRootJob {
-        childFuture1 = service.submit {
-          lock.up()
-          childFuture1CanThrow.timeoutWaitUp()
-          throw E()
-        }
-        childFuture2 = service.submit {
-          lock.up()
-          childFuture2CanFinish.timeoutWaitUp()
-          Cancellation.checkCancelled()
-        }
+    val lock = Semaphore(3)
+    val rootJob = withRootJob {
+      childFuture1 = service.submit {
         lock.up()
+        childFuture1CanThrow.timeoutWaitUp()
+        throw E()
       }
-      lock.timeoutWaitUp()
-
-      childFuture1CanThrow.up()
-      waitAssertCompletedWith(childFuture1, E::class)
-      childFuture2CanFinish.up()
-      waitAssertCompletedWithCancellation(childFuture2)
-      waitAssertCancelled(rootJob)
+      childFuture2 = service.submit {
+        lock.up()
+        childFuture2CanFinish.timeoutWaitUp()
+        Cancellation.checkCancelled()
+      }
+      lock.up()
     }
+    lock.timeoutWaitUp()
+
+    childFuture1CanThrow.up()
+    waitAssertCompletedWith(childFuture1, E::class)
+    childFuture2CanFinish.up()
+    waitAssertCompletedWithCancellation(childFuture2)
+    waitAssertCancelled(rootJob)
   }
 
   @Test

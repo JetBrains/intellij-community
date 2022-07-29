@@ -432,26 +432,14 @@ public class EquivalenceChecker {
     return Match.exact(equivalentDeclarations(statement1.findContinuedStatement(), statement2.findContinuedStatement()));
   }
 
-  private static boolean isDefaultCase(@NotNull PsiSwitchLabelStatementBase statement) {
-    return statement.isDefaultCase() || hasOnlyDefaultCaseLabelElement(statement);
-  }
-
-  private static boolean hasOnlyDefaultCaseLabelElement(@NotNull PsiSwitchLabelStatementBase statement) {
-    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    if (labelElementList.getElementCount() != 1) return false;
-    return labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement;
-  }
-
   protected Match switchLabelStatementsMatch(@NotNull PsiSwitchLabelStatementBase statement1,
                                              @NotNull PsiSwitchLabelStatementBase statement2) {
-    if (isDefaultCase(statement1) != isDefaultCase(statement2)) {
+    boolean hasOnlyDefaultCase = SwitchUtils.hasOnlyDefaultCase(statement1);
+    if (hasOnlyDefaultCase != SwitchUtils.hasOnlyDefaultCase(statement2)) {
       return EXACT_MISMATCH;
     }
-    final PsiCaseLabelElementList labelElementList1 =
-      hasOnlyDefaultCaseLabelElement(statement1) ? null : statement1.getCaseLabelElementList();
-    final PsiCaseLabelElementList labelElementList2 =
-      hasOnlyDefaultCaseLabelElement(statement2) ? null : statement2.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList1 = hasOnlyDefaultCase ? null : statement1.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList2 = hasOnlyDefaultCase ? null : statement2.getCaseLabelElementList();
     if ((labelElementList1 == null || labelElementList2 == null) && labelElementList1 != labelElementList2) {
       return EXACT_MISMATCH;
     }
@@ -832,8 +820,8 @@ public class EquivalenceChecker {
     }
     Match match = expressionsMatch(qualifier1, qualifier2);
     if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
-        !((GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
-                                           referenceExpression1.getManager())) instanceof PsiArrayType)) {
+        !(GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
+                                          referenceExpression1.getManager()) instanceof PsiArrayType)) {
       // access to the member (length or clone()) of incompatible arrays
       return EXACT_MISMATCH;
     }

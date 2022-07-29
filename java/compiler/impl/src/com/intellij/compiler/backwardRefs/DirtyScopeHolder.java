@@ -38,7 +38,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import kotlin.collections.ArraysKt;
@@ -100,15 +99,15 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
-          Module m = extractModuleEntityChange(change, event.getStorageBefore(), event.getStorageAfter(), true);
-          if (m != null) {
-            addToDirtyModules(m);
+          ModuleEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
           }
         }
         for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
-          Module m = extractModuleFromContentRoots(change, event.getStorageBefore(), event.getStorageAfter(), true);
-          if (m != null) {
-            addToDirtyModules(m);
+          ContentRootEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
           }
         }
       }
@@ -116,65 +115,17 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       @Override
       public void changed(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
-          Module m = extractModuleEntityChange(change, event.getStorageBefore(), event.getStorageAfter(), false);
-          if (m != null) {
-            addToDirtyModules(m);
+          ModuleEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
           }
         }
         for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
-          Module m = extractModuleFromContentRoots(change, event.getStorageBefore(), event.getStorageAfter(), false);
-          if (m != null) {
-            addToDirtyModules(m);
+          ContentRootEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
           }
         }
-      }
-
-      private @Nullable Module extractModuleFromContentRoots(@NotNull EntityChange<ContentRootEntity> change,
-                                                             @NotNull EntityStorage storageBefore,
-                                                             @NotNull EntityStorage storageAfter,
-                                                             boolean before) {
-        if (change instanceof EntityChange.Replaced<?>) {
-          return before
-                 ? extractModule(((EntityChange.Replaced<ContentRootEntity>)change).getOldEntity(), storageBefore)
-                 : extractModule(((EntityChange.Replaced<ContentRootEntity>)change).getNewEntity(), storageAfter);
-        }
-        else if (change instanceof EntityChange.Added<?>) {
-          if (before) return null;
-          return extractModule(((EntityChange.Added<ContentRootEntity>)change).getEntity(), storageAfter);
-        }
-        else if (change instanceof EntityChange.Removed<?>) {
-          if (!before) return null;
-          return extractModule(((EntityChange.Removed<ContentRootEntity>)change).getEntity(), storageBefore);
-        }
-        throw new AssertionError();
-      }
-
-      private @Nullable Module extractModuleEntityChange(@NotNull EntityChange<ModuleEntity> change,
-                                                         @NotNull EntityStorage storageBefore,
-                                                         @NotNull EntityStorage storageAfter,
-                                                         boolean before) {
-        if (change instanceof EntityChange.Replaced<?>) {
-          return before
-                 ? extractModule(((EntityChange.Replaced<ModuleEntity>)change).getOldEntity(), storageBefore)
-                 : extractModule(((EntityChange.Replaced<ModuleEntity>)change).getNewEntity(), storageAfter);
-        }
-        else if (change instanceof EntityChange.Added<?>) {
-          if (before) return null;
-          return extractModule(((EntityChange.Added<ModuleEntity>)change).getEntity(), storageAfter);
-        }
-        else if (change instanceof EntityChange.Removed<?>) {
-          if (!before) return null;
-          return extractModule(((EntityChange.Removed<ModuleEntity>)change).getEntity(), storageBefore);
-        }
-        throw new AssertionError();
-      }
-
-      private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull EntityStorage storage) {
-        return ModuleEntityUtils.findModule(entity, storage);
-      }
-
-      private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull EntityStorage storage) {
-        return extractModule(entity.getModule(), storage);
       }
     });
   }
@@ -383,7 +334,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void addToDirtyModules(@NotNull Module module) {
+  private void addToDirtyModules(@Nullable Module module) {
+    if (module == null) return;
     synchronized (myLock) {
       if (myCompilationPhase) {
         myChangedModulesDuringCompilation.add(module);

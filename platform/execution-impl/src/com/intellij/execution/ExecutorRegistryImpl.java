@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,7 +144,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
-    if (RunToolbarProcess.isAvailable()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 
@@ -789,7 +790,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (builder == null) {
           return;
         }
-        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+
+        RunToolbarData rtData = dataContext.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY);
+        if(rtData != null) {
+          ExecutionTarget target = rtData.getExecutionTarget();
+          builder = target == null ?  builder.activeTarget() : builder.target(target);
+        }
+        else {
+          builder = builder.activeTarget();
+        }
+
+        ExecutionEnvironment environment = builder.dataContext(dataContext).build();
         if(environmentCustomization != null) environmentCustomization.accept(environment);
         ExecutionManager.getInstance(project).restartRunProfile(environment);
       }

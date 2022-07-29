@@ -98,7 +98,8 @@ public class LineStatusMarkerDrawUtil {
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
                                        int framingBorder) {
     Color borderColor = getGutterBorderColor(editor);
-    Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
+    EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+    Color gutterBackgroundColor = gutter.getBackground();
 
     IntPair area = getGutterArea(editor);
     final int x = area.first;
@@ -122,7 +123,12 @@ public class LineStatusMarkerDrawUtil {
         int start = change.y1;
         int end = change.y2;
         Color gutterColor = getGutterColor(change.type, editor);
-        paintRect(g, gutterColor, null, x, start, endX, end);
+        int line = gutter.getHoveredFreeMarkersLine();
+        if (line != -1 && editor.xyToLogicalPosition(new Point(x, start)).line <= line && line < editor.xyToLogicalPosition(new Point(x, end)).line) {
+          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+        } else {
+          paintRect(g, gutterColor, null, x, start, endX, end);
+        }
       }
     }
 
@@ -191,6 +197,7 @@ public class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
+      x += 2; //IDEA-286352
       return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
     }
     int endX = gutter.getWhitespaceSeparatorOffset();

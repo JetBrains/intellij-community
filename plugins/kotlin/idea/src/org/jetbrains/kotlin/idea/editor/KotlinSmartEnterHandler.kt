@@ -29,6 +29,7 @@ class KotlinSmartEnterHandler : SmartEnterProcessorWithFixers() {
 
             KotlinWhenSubjectCaretFixer(),
             KotlinMissingWhenBodyFixer(),
+            KotlinMissingWhenEntryBodyFixer(),
 
             KotlinDoWhileFixer(),
 

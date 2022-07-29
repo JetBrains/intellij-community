@@ -33,7 +33,7 @@ public class PagedFileStorage implements Forceable {
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
   public static final int MB = 1024 * 1024;
-  public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
+  public static final int BUFFER_SIZE = FilePageCache.PAGE_SIZE;
 
   @NotNull
   private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
@@ -55,6 +55,7 @@ public class PagedFileStorage implements Forceable {
   private final Object myInputStreamLock = new Object();
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
+  private volatile boolean myFillBuffersWithZeros;
 
   private volatile boolean isDirty;
   private volatile long mySize = -1;
@@ -113,6 +114,14 @@ public class PagedFileStorage implements Forceable {
 
   public boolean isNativeBytesOrder() {
     return myNativeBytesOrder;
+  }
+
+  public void setFillBuffersWithZeros(boolean fillBuffersWithZeros) {
+    myFillBuffersWithZeros = fillBuffersWithZeros;
+  }
+
+  public boolean isFillBuffersWithZeros() {
+    return myFillBuffersWithZeros;
   }
 
   public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer) throws IOException {

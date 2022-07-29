@@ -65,7 +65,6 @@ public final class XFramesView extends XDebugView {
   private Rectangle myVisibleRect;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
-  private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated;
   private boolean myRefresh;
@@ -194,10 +193,10 @@ public final class XFramesView extends XDebugView {
       }
     };
 
-    myToolbar = createToolbar();
+    ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();
-    myToolbar.setOpaque(false);
-    ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(myToolbar);
+    toolbar.setOpaque(false);
+    ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(toolbar);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());

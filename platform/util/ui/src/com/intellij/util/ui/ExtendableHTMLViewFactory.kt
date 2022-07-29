@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.HiDpiScalingImageView
@@ -82,6 +83,14 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
     fun icons(existingIconsProvider: (key: String) -> Icon?): Extension = IconsExtension(existingIconsProvider)
 
     /**
+     * Render icons provided by [htmlChunk]
+     *
+     * Syntax is `<icon src='KEY'>`
+     */
+    @JvmStatic
+    fun icons(htmlChunk: HtmlChunk): Extension = IconsExtension { htmlChunk.findIcon(it) }
+
+    /**
      * Render icons from IJ icon classes
      *
      * Syntax is `<icon src='FQN_FOR_ICON'>`
@@ -98,7 +107,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
     val BASE64_IMAGES: Extension = Base64ImagesExtension()
 
     /**
-     * Wrap words that are too long, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
+     * Wrap words that are too long, for example: A_TEST_TABLE_SINGLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
      */
     @JvmField
     val WORD_WRAP: Extension = WordWrapExtension()
@@ -288,7 +297,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
         override fun modelToView(pos: Int, a: Shape, b: Bias): Shape? {
           val p0 = startOffset
           val p1 = endOffset
-          if (pos >= p0 && pos <= p1) {
+          if (pos in p0..p1) {
             val r = a.bounds
             if (pos == p1) {
               r.x += r.width

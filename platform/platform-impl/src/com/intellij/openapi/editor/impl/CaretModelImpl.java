@@ -579,7 +579,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onAdded(@NotNull Inlay inlay) {
+  public void onAdded(@NotNull Inlay<?> inlay) {
     if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (placement == Inlay.Placement.INLINE) {
@@ -594,7 +594,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onRemoved(@NotNull Inlay inlay) {
+  public void onRemoved(@NotNull Inlay<?> inlay) {
     if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (myEditor.getDocument().isInEventsHandling()) {
@@ -614,7 +614,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if (myEditor.getDocument().isInBulkUpdate() ||
         myEditor.getInlayModel().isInBatchMode() ||
         (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {

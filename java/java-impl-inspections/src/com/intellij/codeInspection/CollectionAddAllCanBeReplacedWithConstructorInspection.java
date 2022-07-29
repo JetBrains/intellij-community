@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
@@ -232,6 +233,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       myMethodCallExpression = smartPointerManager.createSmartPsiElementPointer(expression);
       myNewExpression = smartPointerManager.createSmartPsiElementPointer(newExpression);
       this.methodName = methodName;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiMethodCallExpression call = myMethodCallExpression.getElement();
+      PsiNewExpression newExpression = myNewExpression.getElement();
+      if (call == null || newExpression == null) return null;
+      return new ReplaceAddAllWithConstructorFix(PsiTreeUtil.findSameElementInCopy(newExpression, target),
+                                                 PsiTreeUtil.findSameElementInCopy(call, target),
+                                                 methodName);
     }
 
     @Nls

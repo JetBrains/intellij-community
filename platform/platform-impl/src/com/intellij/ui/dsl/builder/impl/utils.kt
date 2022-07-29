@@ -31,11 +31,6 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Internal
 internal enum class DslComponentPropertyInternal {
   /**
-   * Removes standard bottom gap from label
-   */
-  LABEL_NO_BOTTOM_GAP,
-
-  /**
    * A mark that component is a cell label, see [Cell.label]
    *
    * Value: true
@@ -89,13 +84,21 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
   var customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
 
   if (customVisualPaddings == null) {
+    // todo Move into components implementation
     // Patch visual paddings for known components
     customVisualPaddings = when (component) {
       is RawCommandLineEditor -> component.editorField.insets.toGaps()
       is SearchTextField -> component.textEditor.insets.toGaps()
       is JScrollPane -> Gaps.EMPTY
       is ComponentWithBrowseButton<*> -> component.childComponent.insets.toGaps()
-      else -> null
+      else -> {
+        if (component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) != null) {
+          Gaps.EMPTY
+        }
+        else {
+          null
+        }
+      }
     }
   }
 
@@ -109,7 +112,7 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
   val top = getDefaultVerticalGap(component, spacing)
   var bottom = top
-  if (component is JLabel && component.getClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP) == true) {
+  if (component.getClientProperty(DslComponentProperty.NO_BOTTOM_GAP) == true) {
     bottom = 0
   }
   return Gaps(top = top, left = left, bottom = bottom, right = right)

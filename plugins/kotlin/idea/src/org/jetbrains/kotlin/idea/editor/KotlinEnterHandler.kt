@@ -16,7 +16,8 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceBefore
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -59,8 +60,8 @@ class KotlinEnterHandler : EnterHandlerDelegateAdapter() {
         if (elementAt is PsiWhiteSpace && elementAt.textContains('\n')) return EnterHandlerDelegate.Result.Continue
 
         // Indent for LBRACE can be removed after fixing IDEA-124917
-        val elementBefore = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, caretOffset)
-        val elementAfter = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceBefore(file, caretOffset)
+        val elementBefore = getElementAtOffsetIgnoreWhitespaceAfter(file, caretOffset)
+        val elementAfter = getElementAtOffsetIgnoreWhitespaceBefore(file, caretOffset)
 
         val isAfterLBraceOrArrow = elementBefore != null && elementBefore.node!!.elementType in FORCE_INDENT_IN_LAMBDA_AFTER
         val isBeforeRBrace = elementAfter != null && elementAfter.node!!.elementType == KtTokens.RBRACE

@@ -59,7 +59,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public RemoteConnectionCredentialsWrapper connectionCredentials() {
+  public @NotNull RemoteConnectionCredentialsWrapper connectionCredentials() {
     return myRemoteConnectionCredentialsWrapper;
   }
 

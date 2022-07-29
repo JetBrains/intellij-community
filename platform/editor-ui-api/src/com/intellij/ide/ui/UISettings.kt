@@ -23,7 +23,6 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -148,12 +147,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   val cycleScrolling: Boolean
     get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
-
-  var selectedTabsLayoutInfoId: @NonNls String?
-    get() = state.selectedTabsLayoutInfoId
-    set(value) {
-      state.selectedTabsLayoutInfoId = value
-    }
 
   val scrollTabLayoutInEditor: Boolean
     get() = state.scrollTabLayoutInEditor

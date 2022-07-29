@@ -5,17 +5,14 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 
 @OptIn(Frontend10ApiUsage::class)
-internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
+internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
         val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
@@ -34,16 +31,11 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
         is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo, this)
         is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo, this)
         is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo, this)
-        else -> TODO("Unsupported module info ${moduleInfo::class} $moduleInfo")
+        else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo, this)
     }
 
     override fun getKtBinaryModules(): Collection<KtBinaryModule> {
         TODO("This is a temporary function used for Android LINT, and should not be called in the IDE")
-    }
-
-    override fun getStdlibWithBuiltinsModule(module: KtModule): KtLibraryModule? {
-        val stdlibLibraryInfo = module.moduleInfo.findJvmStdlibAcrossDependencies() ?: return null
-        return getKtModuleByModuleInfo(stdlibLibraryInfo) as KtLibraryModule
     }
 
     companion object {

@@ -351,7 +351,9 @@ public class TestCaseLoader {
   }
 
   public static boolean shouldIncludePerformanceTestCase(String className) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
+    if (isIncludingPerformanceTestsRun()) return true;
+    boolean isPerformanceTest = isPerformanceTest(null, className);
+    return isPerformanceTestsRun() == isPerformanceTest;
   }
 
   static boolean isPerformanceTest(String methodName, String className) {

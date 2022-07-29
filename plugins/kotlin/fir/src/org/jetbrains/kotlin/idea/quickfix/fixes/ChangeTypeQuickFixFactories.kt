@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
-import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 object ChangeTypeQuickFixFactories {
     val applicator = applicator<KtCallableDeclaration, Input> {
-        familyName(CallableReturnTypeUpdaterApplicator.applicator.getFamilyName())
+        familyName(CallableReturnTypeUpdaterApplicator.applicator::getFamilyName)
 
         actionName { declaration, (targetType, type) ->
             val presentation = getPresentation(targetType, declaration)
@@ -95,7 +95,7 @@ object ChangeTypeQuickFixFactories {
     data class Input(
         val targetType: TargetType,
         val typeInfo: CallableReturnTypeUpdaterApplicator.TypeInfo
-    ) : HLApplicatorInput {
+    ) : KotlinApplicatorInput {
         override fun isValidFor(psi: PsiElement): Boolean = typeInfo.isValidFor(psi)
     }
 
@@ -129,7 +129,7 @@ object ChangeTypeQuickFixFactories {
                     diagnostic.psi
                 )
                     ?: return@diagnosticFixFactory emptyList()
-            buildList<HLApplicatorTargetWithInput<KtCallableDeclaration, Input>> {
+            buildList<KotlinApplicatorTargetWithInput<KtCallableDeclaration, Input>> {
                 add(entryWithWrongType withInput Input(TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
                 val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.classSymbol as? KtSymbolWithMembers ?: return@buildList
                 val componentFunction = classSymbol.getMemberScope()
@@ -154,7 +154,7 @@ object ChangeTypeQuickFixFactories {
     private fun <PSI : KtCallableDeclaration> KtAnalysisSession.createChangeCurrentDeclarationQuickFix(
         callable: KtCallableSymbol,
         declaration: PSI
-    ): HLApplicatorTargetWithInput<PSI, Input>? {
+    ): KotlinApplicatorTargetWithInput<PSI, Input>? {
         val lowerSuperType = findLowerBoundOfOverriddenCallablesReturnTypes(callable) ?: return null
         val changeToTypeInfo = createTypeInfo(lowerSuperType)
         return declaration withInput Input(TargetType.CURRENT_DECLARATION, changeToTypeInfo)
@@ -162,7 +162,7 @@ object ChangeTypeQuickFixFactories {
 
     private fun KtAnalysisSession.createChangeOverriddenFunctionQuickFix(
         callable: KtCallableSymbol
-    ): HLApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
+    ): KotlinApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
         val type = callable.returnType
         val singleNonMatchingOverriddenFunction = findSingleNonMatchingOverriddenFunction(callable, type) ?: return null
         val singleMatchingOverriddenFunctionPsi = singleNonMatchingOverriddenFunction.psiSafe<KtCallableDeclaration>() ?: return null

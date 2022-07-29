@@ -10,18 +10,31 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.function.Supplier;
 
+/**
+ * Environment type provides access to its filesystem for services like {@link com.intellij.openapi.ui.TextFieldWithBrowseButton}
+ * So you can browse (possibily remote) target.
+ */
 public interface BrowsableTargetEnvironmentType {
 
+  /**
+   * @param textComponentAccessor where path should be set. See {@link TextComponentAccessor#TEXT_FIELD_WHOLE_TEXT}
+   * @param component             text field component
+   * @param configurationSupplier returns environment configuration
+   * @param noLocalFs             some targets (WSL is the only known for now) may provide access to the local filesystem.
+   *                              True means you do not need it
+   * @return Action listener should be installed on "browse" button you want to show target FS browser.
+   */
   @NotNull <T extends Component> ActionListener createBrowser(@NotNull Project project,
                                                               @NlsContexts.DialogTitle String title,
                                                               @NotNull TextComponentAccessor<T> textComponentAccessor,
                                                               @NotNull T component,
-                                                              @NotNull Supplier<? extends TargetEnvironmentConfiguration> configurationSupplier);
+                                                              @NotNull Supplier<? extends TargetEnvironmentConfiguration> configurationSupplier,
+                                                              boolean noLocalFs);
 
   /**
    * When configurable contains both connection parameters and components using them (text fields with browsing in this case),
    * those components need to have current connection settings available, not the last applied to with [Configurable.apply].
-   *
+   * <p>
    * This interface displays ability and provides API to get connection settings, which are shown in UI. See IDEA-255466.
    */
   interface ConfigurableCurrentConfigurationProvider {

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codegen;
 
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.jetbrains.kotlin.utils.StringsKt;
@@ -40,9 +40,9 @@ public class CodegenTestUtil {
             @NotNull File outDirectory
     ) {
         List<String> classpath = new ArrayList<>();
-        classpath.add(KotlinArtifacts.getKotlinStdlib().getPath());
-        classpath.add(KotlinArtifacts.getKotlinReflect().getPath());
-        classpath.add(KotlinArtifacts.getJetbrainsAnnotations().getPath());
+        classpath.add(TestKotlinArtifacts.getKotlinStdlib().getPath());
+        classpath.add(TestKotlinArtifacts.getKotlinReflect().getPath());
+        classpath.add(TestKotlinArtifacts.getJetbrainsAnnotations().getPath());
         classpath.addAll(additionalClasspath);
 
         List<String> options = new ArrayList<>(Arrays.asList(

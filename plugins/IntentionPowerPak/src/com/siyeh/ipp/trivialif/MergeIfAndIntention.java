@@ -48,9 +48,9 @@ public class MergeIfAndIntention extends Intention {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) return;
-    final PsiStatement parentThenBranch = parentStatement.getThenBranch();
-    final PsiIfStatement childStatement = (PsiIfStatement)ControlFlowUtils.stripBraces(parentThenBranch);
-    if (childStatement == null) return;
+    final PsiStatement parentThenBranch = ControlFlowUtils.stripBraces(parentStatement.getThenBranch());
+    if (!(parentThenBranch instanceof PsiIfStatement)) return;
+    final PsiIfStatement childStatement = (PsiIfStatement)parentThenBranch;
     final PsiExpression childCondition = childStatement.getCondition();
     if (childCondition == null) return;
     final PsiStatement childThenBranch = childStatement.getThenBranch();

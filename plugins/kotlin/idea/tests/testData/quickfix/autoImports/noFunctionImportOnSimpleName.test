@@ -21,3 +21,5 @@ package bar
 
 fun foobar() {
 }
+
+/* IGNORE_FIR */

@@ -200,7 +200,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   /**
    * Pairs of rectangles and integer constants from {@link com.jetbrains.CustomWindowDecoration} describing type of the spot
    */
-  abstract fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>>
+  abstract fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>>
 
   private fun setActive(value: Boolean) {
     myActive = value

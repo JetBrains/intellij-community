@@ -28,6 +28,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.addPreferredFocusedComponent
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
@@ -432,6 +433,8 @@ class DependencyAnalyzerViewImpl(
           setContent(ScrollPaneFactory.createScrollPane(usagesTree, true))
         }
       })
+    }.also {
+      it.addPreferredFocusedComponent(dataFilterField)
     }
   }
 

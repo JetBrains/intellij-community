@@ -15,6 +15,7 @@ import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -496,8 +497,7 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python.sdk.poetry.pip.file.watcher"),
-                                                        NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher")
 
 private val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)

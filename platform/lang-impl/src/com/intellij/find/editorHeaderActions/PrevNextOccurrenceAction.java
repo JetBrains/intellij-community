@@ -3,10 +3,7 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +18,11 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
   public PrevNextOccurrenceAction(@NotNull String templateActionId, boolean search) {
     mySearch = search;
     ActionUtil.copyFrom(this, templateActionId);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

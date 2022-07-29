@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
 import java.lang.annotation.*
 
 @Retention(<caret>

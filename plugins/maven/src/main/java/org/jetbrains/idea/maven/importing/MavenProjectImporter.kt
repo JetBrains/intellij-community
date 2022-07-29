@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
-import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspace
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 
@@ -56,11 +56,11 @@ interface MavenProjectImporter {
                                importingSettings: MavenImportingSettings,
                                dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
-        return MavenProjectImporterToWorkspace(projectsTree, projectsToImportWithChanges,
-                                               importingSettings, modelsProvider, project)
+        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
+                                        importingSettings, modelsProvider, project)
       }
 
-      if (isImportToTreeStructureEnabled(project)) {
+      if (isLegacyImportToTreeStructureEnabled(project)) {
         return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
                                               modelsProvider, importingSettings)
       }
@@ -70,12 +70,23 @@ interface MavenProjectImporter {
     }
 
     @JvmStatic
+    fun tryUpdateTargetFolders(project: Project) {
+      if (isImportToWorkspaceModelEnabled()) {
+        WorkspaceProjectImporter.tryUpdateTargetFolders(project)
+      }
+      else {
+        MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
+      }
+    }
+
+    @JvmStatic
     fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
 
     @JvmStatic
-    fun isImportToTreeStructureEnabled(project: Project?): Boolean {
-      if (project == null) return true
-      if (MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) return true
+    fun isLegacyImportToTreeStructureEnabled(project: Project?): Boolean {
+      if (isImportToWorkspaceModelEnabled()) return false
+      if ("true" == System.getProperty("maven.import.use.tree.import")) return true
+      if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
     }
   }

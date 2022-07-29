@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -70,6 +71,7 @@ import java.util.*;
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
+import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
@@ -116,7 +118,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new LinkedHashSet<>();
 
-  @Nullable private Selection mySelection = null;
+  @Nullable private SelectionSnapshot mySelectionSnapshot = null;
 
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
@@ -157,7 +159,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     addMouseMotionListener(myMouseAdapter);
     addMouseListener(myMouseAdapter);
 
-    getSelectionModel().addListSelectionListener(e -> mySelection = null);
+    getSelectionModel().addListSelectionListener(e -> mySelectionSnapshot = null);
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
@@ -169,6 +171,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Override
   public void dispose() {
+  }
+
+  public @NotNull VcsLogCommitSelection getSelection() {
+    return getModel().createSelection(getSelectedRows());
   }
 
   private void initColumnModel() {
@@ -194,7 +200,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     boolean filtersChanged = !getModel().getVisiblePack().getFilters().equals(visiblePack.getFilters());
 
-    Selection previousSelection = getSelection();
+    SelectionSnapshot previousSelection = getSelectionSnapshot();
     getModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
 
@@ -531,6 +537,25 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         }
         return sb.toString();
       })
+      .ifEq(VCS_LOG_COMMIT_SELECTION).thenGet(() -> {
+        return getSelection();
+      })
+      .ifEq(VcsDataKeys.VCS_REVISION_NUMBER).thenGet(() -> {
+        List<CommitId> hashes = getSelection().getCommits();
+        if (hashes.isEmpty()) return null;
+        return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(getFirstItem(hashes)).getHash());
+      })
+      .ifEq(VcsDataKeys.VCS_REVISION_NUMBERS).thenGet(() -> {
+        List<CommitId> hashes = getSelection().getCommits();
+        if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        return ContainerUtil.map(hashes,
+                                 commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+      })
+      .ifEq(VcsDataKeys.VCS_COMMIT_SUBJECTS).thenGet(() -> {
+        List<VcsCommitMetadata> metadata = getSelection().getCachedMetadata();
+        if (metadata.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        return ContainerUtil.map2Array(metadata, String.class, data -> data.getSubject());
+      })
       .orNull();
   }
 
@@ -660,7 +685,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           model.fireTableChanged(evt);
         }
       }
-      mySelection = null;
+      mySelectionSnapshot = null;
     });
   }
 
@@ -680,9 +705,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @NotNull
-  public Selection getSelection() {
-    if (mySelection == null) mySelection = new Selection(this);
-    return mySelection;
+  SelectionSnapshot getSelectionSnapshot() {
+    if (mySelectionSnapshot == null) mySelectionSnapshot = new SelectionSnapshot(this);
+    return mySelectionSnapshot;
   }
 
   public void handleAnswer(@NotNull GraphAnswer<Integer> answer) {

@@ -138,7 +138,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now()), setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
 
     updateChecker.scheduleUpdateFromServer()
 
@@ -172,7 +172,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now()), setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
     //remoteCommunicator.offline = false
 
     updateChecker.scheduleUpdateFromServer() // merge will happen here

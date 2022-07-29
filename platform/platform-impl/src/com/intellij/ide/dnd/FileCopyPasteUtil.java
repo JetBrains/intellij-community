@@ -62,7 +62,7 @@ public final class FileCopyPasteUtil {
   }
 
   public static boolean isFileListFlavorAvailable(@NotNull DnDEvent event) {
-    return ContainerUtil.or(FLAVORS, f -> event.isDataFlavorSupported(f));
+    return ContainerUtil.or(FLAVORS, event::isDataFlavorSupported);
   }
 
   public static boolean isFileListFlavorAvailable(DataFlavor @NotNull [] transferFlavors) {
@@ -72,7 +72,7 @@ public final class FileCopyPasteUtil {
 
   public static @Nullable List<File> getFileList(@NotNull Transferable transferable) {
     var files = getFiles(transferable);
-    return files != null ? ContainerUtil.map(files, it -> it.toFile()) : null;
+    return files != null ? ContainerUtil.map(files, Path::toFile) : null;
   }
 
   public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) {

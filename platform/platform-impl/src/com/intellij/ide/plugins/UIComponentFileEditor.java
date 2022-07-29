@@ -35,7 +35,8 @@ public class UIComponentFileEditor extends UserDataHolderBase implements FileEdi
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    return myUi.getPreferredFocusedComponent();
+    assert myComponent != null;
+    return myUi.getPreferredFocusedComponent(myComponent);
   }
 
   @Override

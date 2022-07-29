@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -33,7 +30,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
-      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).findAny().isPresent
+      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).any()
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
@@ -109,6 +106,10 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       }
     }
     e.presentation.text = description
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

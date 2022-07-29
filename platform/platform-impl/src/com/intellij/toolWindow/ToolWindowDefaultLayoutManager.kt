@@ -8,9 +8,8 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.DesktopLayout
-import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
 import java.awt.Rectangle
@@ -88,6 +87,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
     id = it.id!!,
     order = it.order,
 
+    paneId = it.safeToolWindowPaneId,
     anchor = when(it.anchor) {
       ToolWindowAnchor.TOP -> ToolWindowDescriptor.ToolWindowAnchor.TOP
       ToolWindowAnchor.LEFT -> ToolWindowDescriptor.ToolWindowAnchor.LEFT
@@ -125,6 +125,7 @@ private fun convertDescriptorListToLayout(list: List<ToolWindowDescriptor>): Des
       id = it.id
       order = it.order
 
+      toolWindowPaneId = it.paneId
       anchor = when (it.anchor) {
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> ToolWindowAnchor.TOP
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> ToolWindowAnchor.LEFT

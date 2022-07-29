@@ -7,9 +7,7 @@ Reports <a href="https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLock
   When using Java 1.4 or earlier, double-checked locking doesn't work even with <code>volatile</code> fields.
   Read the article linked above for the detailed explanation of the problem.
 </p>
-<p>
-  Example of an incorrect double-checked locking:
-</p>
+<p>Example of incorrect double-checked locking:</p>
 <pre><code>
   class Foo {
     private Helper helper = null;

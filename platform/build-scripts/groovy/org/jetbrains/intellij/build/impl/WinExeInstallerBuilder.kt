@@ -63,7 +63,7 @@ internal fun buildNsisInstaller(winDistPath: Path,
                                 additionalDirectoryToInclude: Path,
                                 suffix: String,
                                 customizer: WindowsDistributionCustomizer,
-                                jreDir: Path?,
+                                jreDir: Path,
                                 context: BuildContext): Path? {
   if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
     context.messages.warning("Windows installer can be built only under Windows or Linux")
@@ -78,11 +78,6 @@ internal fun buildNsisInstaller(winDistPath: Path,
   //noinspection SpellCheckingInspection
   val nsiConfDir = box.resolve("nsiconf")
   Files.createDirectories(nsiConfDir)
-
-  val bundleJre = jreDir != null
-  if (!bundleJre) {
-    context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
-  }
 
   copyDir(context.paths.communityHomeDir.communityRoot.resolve("build/conf/nsis"), nsiConfDir)
 
@@ -99,11 +94,7 @@ internal fun buildNsisInstaller(winDistPath: Path,
   generator.addDirectory(context.paths.distAllDir.toString())
   generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
   generator.addDirectory(additionalDirectoryToInclude.toString())
-
-  if (bundleJre) {
-    generator.addDirectory(jreDir.toString())
-  }
-
+  generator.addDirectory(jreDir.toString())
   generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh").toFile())
   generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
 

@@ -13,7 +13,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -188,7 +190,14 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   @Override
-  public @Nullable Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return Collections.<DataProvider>singletonList(slowId -> getSlowData(slowId, selected));
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<AbstractTreeNode<?>> selected) {
     if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       AbstractTreeNode<?> single = JBIterable.from(selected).single();
       if (single instanceof MyRootNode) {

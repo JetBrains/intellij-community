@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl.Companion.assertListenersReleased
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl.Companion.cleanupListeners
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BareTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.runAll
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 

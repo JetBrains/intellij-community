@@ -6,11 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.performance.tests.utils.BuildDataProvider
 import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.initApp
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.initSdk
 import org.jetbrains.kotlin.idea.project.test.base.actions.ActionExecutionResultError
 import org.jetbrains.kotlin.idea.project.test.base.actions.ProjectAction
 import org.jetbrains.kotlin.idea.project.test.base.actions.executors.ActionExecutorFactory
@@ -19,10 +23,6 @@ import org.jetbrains.kotlin.idea.project.test.base.actions.executors.ProjectActi
 import org.jetbrains.kotlin.idea.project.test.base.elastic.EsMetricUploader
 import org.jetbrains.kotlin.idea.project.test.base.elastic.credentialsByEnvVariables
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsData
-import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
-import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
-import org.jetbrains.kotlin.idea.performance.tests.utils.project.initApp
-import org.jetbrains.kotlin.idea.performance.tests.utils.project.initSdk
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 abstract class AbstractProjectBasedTest : UsefulTestCase() {

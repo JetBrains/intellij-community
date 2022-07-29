@@ -117,6 +117,10 @@ while true; do
   elif [ "$status" = "success" ]; then
     log "Notarization succeeded"
     ec=0
+  elif [ "$status" = "upload failed" ]; then
+    log "Notarization upload failed"
+    ec=4
+    break
   else
     if [ "$status" != "in progress" ]; then
       log "Unknown notarization status, waiting more, altool output:"

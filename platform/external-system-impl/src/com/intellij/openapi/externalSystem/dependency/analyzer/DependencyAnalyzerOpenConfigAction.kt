@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -24,6 +25,8 @@ abstract class DependencyAnalyzerOpenConfigAction(val systemId: ProjectSystemId)
       systemId == e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID) &&
       getConfigFile(e) != null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   init {
     templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.open.action.name", systemId.readableName)

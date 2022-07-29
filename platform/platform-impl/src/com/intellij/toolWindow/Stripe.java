@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -34,8 +33,9 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})
   private final int anchor;
 
-  Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
-    super(new GridBagLayout());
+  Stripe(@NotNull String paneId,
+         @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
+    super(paneId, new GridBagLayout());
 
     setOpaque(true);
     this.anchor = anchor;
@@ -53,11 +53,6 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
       computedPreferredSize = getButtons().isEmpty() ? JBUI.emptySize() : recomputeBounds(false, null, false).size;
     }
     return computedPreferredSize;
-  }
-
-  @Override
-  protected ToolWindowImpl getToolWindowFor(@NotNull JComponent component) {
-    return ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
   }
 
   @Override

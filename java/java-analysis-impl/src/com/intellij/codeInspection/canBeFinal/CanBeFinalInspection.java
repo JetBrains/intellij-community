@@ -195,6 +195,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
+    @SafeFieldForPreview
     private final RefManager myManager;
 
     AcceptSuggested(final RefManager manager) {

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 val x = AccessDeniedExc<caret>
 
 // INVOCATION_COUNT: 2

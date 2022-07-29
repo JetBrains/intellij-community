@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
@@ -1306,7 +1306,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return file;
   }
 
-  public void testDaemonIgnoresFrameDeactivation() {
+  // todo - StoreUtil.saveDocumentsAndProjectsAndApp cannot save in EDT. If it is called in EDT,
+  //  in this case, task is done under a modal progress, so, no idea how to fix the test, except executing it not in EDT (as it should be)
+  public void _testDaemonIgnoresFrameDeactivation() {
     // return default value to avoid unnecessary save
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
@@ -2717,8 +2719,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
     ensureEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+  }
+  public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately1() {
+    ensureEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+  }
+  public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately2() {
+    ensureEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+  }
+  public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately3() {
+    ensureEnoughParallelism();
     // also check in the opposite order in case the order of annotators is important
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
@@ -2839,7 +2850,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private static void ensureEnoughParallelism() {
-    if (ForkJoinPool.commonPool().getParallelism() <= 2) {
+    if (ForkJoinPool.commonPool().getParallelism() <= 3) {
       throw new AssumptionViolatedException("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
     }
   }
@@ -2855,12 +2866,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final AtomicBoolean inspected = new AtomicBoolean();
 
   public static class MySlowAnnotator extends MyRecordingAnnotator {
-
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiFile) {
-        assertFalse("For this moment file has not to process injected fragments", injectedAnnotated.get());
-        assertFalse("For this moment file has not to run inspections", inspected.get());
+        String dump = ThreadDumper.dumpThreadsToString();
+        assertFalse("At this moment (while the annotations are still running), the file must not have any of its injected fragments processed. threads:\n" + dump, injectedAnnotated.get());
+        assertFalse("At this moment (while the annotations are still running), the file must not have any of its inspections run. threads:\n"+ dump, inspected.get());
         annotated.set(true);
         iDidIt();
       }
@@ -2868,7 +2879,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static class MyInjectedSlowAnnotator extends MyRecordingAnnotator {
-
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       assertTrue("File already has to be annotated", annotated.get());
@@ -2903,6 +2913,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         };
       }
     });
+    annotated.set(false);
+    injectedAnnotated.set(false);
+    inspected.set(false);
     try {
       myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
 
@@ -2925,6 +2938,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     finally {
       myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
+      annotated.set(false);
+      injectedAnnotated.set(false);
+      inspected.set(false);
     }
   }
 

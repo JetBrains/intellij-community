@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -11,6 +11,22 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
                                               private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
                                               val isNotifyUser: Boolean,
                                               @JvmField val disabledDependency: PluginId? = null) {
+  companion object {
+    internal val DISABLED = Supplier { "" }
+
+    private fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
+      val builder = StringBuilder()
+      builder.append("The ").append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
+      builder.append(pluginPathToUserString(descriptor.pluginPath))
+      val version = descriptor.version
+      if (version != null && !descriptor.isBundled && version != PluginManagerCore.getBuildNumber().asString()) {
+        builder.append(", version=").append(version)
+      }
+      builder.append(") plugin ").append(message)
+      return builder.toString()
+    }
+  }
+
   internal constructor(plugin: IdeaPluginDescriptor,
                        detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
                        shortMessageSupplier: Supplier<@NlsContexts.Label String>) :
@@ -23,6 +39,9 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
   val detailedMessage: String
     get() = detailedMessageSupplier!!.get()
 
+  internal val isDisabledError: Boolean
+    get() = shortMessageSupplier === DISABLED
+
   override fun toString() = internalMessage
 
   val internalMessage: @NonNls String
@@ -31,18 +50,4 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
   @get:NlsContexts.Label
   val shortMessage: String
     get() = shortMessageSupplier.get()
-
-  companion object {
-    fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
-      val builder = StringBuilder()
-      builder.append("The ").append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
-      builder.append(pluginPathToUserString(descriptor.pluginPath))
-      val version = descriptor.version
-      if (version != null && !descriptor.isBundled && version != PluginManagerCore.getBuildNumber().asString()) {
-        builder.append(", version=").append(version)
-      }
-      builder.append(") plugin ").append(message)
-      return builder.toString()
-    }
-  }
 }

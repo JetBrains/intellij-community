@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
@@ -86,6 +88,14 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         val sourcePsi = reference.sourcePsi ?: return null
         if (sourcePsi !is KtElement) return null
         return ShortenReferences.DEFAULT.process(sourcePsi).toUElementOfType()
+    }
+
+    override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
+        val ktQualifiedExpression = reference.sourcePsi?.castSafelyTo<KtDotQualifiedExpression>() ?: return null
+        val selector = ktQualifiedExpression.selectorExpression ?: return null
+        val ptr = SmartPointerManager.createPointer(selector)
+        ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
+        return ptr.element?.toUElementOfType()
     }
 }
 

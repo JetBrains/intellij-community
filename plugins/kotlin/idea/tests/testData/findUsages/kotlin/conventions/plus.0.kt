@@ -21,3 +21,6 @@ fun test(array: Array<A>) {
     val (a1, a2) = array
     a1 + 1
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

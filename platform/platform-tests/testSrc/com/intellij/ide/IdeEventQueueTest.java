@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -161,7 +161,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getInstance().execute(()->throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
     checkMyExceptionThrownImmediately();
   }
 

@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +60,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   private static final Map<String, String> additionalIdToName = new ConcurrentHashMap<>();
 
+  /**
+   * Contain action id binding to some icon reference. It can be one of the following:
+   * <ul>
+   *   <li>id of the other action that uses some icon</li>
+   *   <li>path to the SVG or PNG file of the icon</li>
+   *   <li>URL of the SVG or PNG icon</li>
+   * </ul>
+   */
   private final Map<String, String> iconCustomizations = new HashMap<>();
+
   private final Map<String, @Nls String> idToName = new LinkedHashMap<>();
   private final Map<String, ActionGroup> idToActionGroup = new HashMap<>();
   private final Set<String> extGroupIds = new HashSet<>();
@@ -72,7 +81,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   public CustomActionsSchema() {
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
-    if (ToolbarSettings.getInstance().isEnabled()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin());
     }
@@ -82,9 +91,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
     idToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getProjectViewPopup());
     idToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionsTreeUtil.getScopeViewPopupMenu());
-    idToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFavoritesPopup());
-    idToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCommanderPopup());
-    idToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EEPopup());
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
     idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar());
 
@@ -406,6 +412,10 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return path == null ? "" : path;
   }
 
+  Map<String, String> getIconCustomizations() {
+    return Collections.unmodifiableMap(iconCustomizations);
+  }
+
   private void writeIcons(Element parent) {
     for (String actionId : iconCustomizations.keySet()) {
       Element action = new Element(ELEMENT_ACTION);
@@ -438,21 +448,17 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     Icon icon = null;
     String iconPath = iconCustomizations.get(actionId);
     if (iconPath != null) {
-      File f;
       AnAction reuseFrom = actionManager.getAction(iconPath);
       if (reuseFrom != null) {
         icon = reuseFrom.getTemplatePresentation().getIcon();
       }
-      else if ((f = new File(FileUtil.toSystemDependentName(iconPath))).exists()) {
-        Image image = null;
+      else {
         try {
-          image = ImageLoader.loadCustomIcon(f);
+          icon = loadCustomIcon(iconPath);
         }
         catch (IOException e) {
           LOG.info(e.getMessage());
         }
-        if (image != null)
-          icon = new JBImageIcon(image);
       }
     }
     Presentation presentation = anAction.getTemplatePresentation();
@@ -466,6 +472,21 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     presentation.setIcon(icon);
     presentation.setDisabledIcon(icon != null ? IconLoader.getDisabledIcon(icon) : null);
     anAction.setDefaultIcon(iconPath == null);
+  }
+
+  /**
+   * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
+   * @throws IOException
+   */
+  @ApiStatus.Internal
+  public static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
+    String independentPath = FileUtil.toSystemIndependentName(path);
+    String urlString = independentPath.startsWith("file:") || independentPath.startsWith("jar:")
+                       ? independentPath
+                       : "file:" + independentPath;
+    URL url = new URL(null, urlString);
+    Image image = ImageLoader.loadCustomIcon(url);
+    return image != null ? new JBImageIcon(image) : null;
   }
 
   private static final class ActionUrlComparator implements Comparator<ActionUrl> {

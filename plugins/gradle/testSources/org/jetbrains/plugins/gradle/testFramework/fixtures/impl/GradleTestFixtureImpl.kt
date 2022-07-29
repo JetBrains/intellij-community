@@ -7,7 +7,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
@@ -16,15 +17,20 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
+import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
+import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
@@ -54,8 +60,9 @@ internal class GradleTestFixtureImpl private constructor(
     GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion),
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
+      excludeFiles(".gradle", "build")
       withFiles { generateWrapper(it, gradleVersion) }
-      withFiles { createProjectCaches(it) }
+      withFiles { runBlocking { createProjectCaches(it) } }
     }
   )
 
@@ -68,14 +75,14 @@ internal class GradleTestFixtureImpl private constructor(
     installTaskExecutionWatcher()
     installProjectReloadWatcher()
 
-    _project = openProject(fileFixture.root)
+    _project = runBlocking { openProjectAsync(fileFixture.root) }
   }
 
   override fun tearDown() {
     runAll(
       { fileFixture.root.refreshAndWait() },
       { projectOperations.waitForOperation() },
-      { project.closeProject() },
+      { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }
@@ -138,12 +145,14 @@ internal class GradleTestFixtureImpl private constructor(
       }
     }
 
-    private fun createProjectCaches(projectRoot: VirtualFile) {
-      val project = openProjectAndWait(projectRoot)
-      runAll(
-        { projectRoot.refreshAndWait() },
-        { project.closeProject(save = true) }
-      )
+    private suspend fun createProjectCaches(projectRoot: VirtualFile) {
+      val project = openProjectAsyncAndWait(projectRoot)
+      try {
+        projectRoot.refreshAndWait()
+      }
+      finally {
+        project.closeProjectAsync(save = true)
+      }
     }
   }
 }

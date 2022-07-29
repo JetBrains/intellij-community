@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Predicates.alwaysTrue;
+
 
 public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
@@ -46,7 +48,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
     PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
-    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, __->true);
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, alwaysTrue());
   }
 
   @Nullable
@@ -105,6 +107,6 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(body, body);
     PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
-    return new HighlightExceptionsHandler(editor, file, target, types, body, null, __->true);
+    return new HighlightExceptionsHandler(editor, file, target, types, body, null, alwaysTrue());
   }
 }

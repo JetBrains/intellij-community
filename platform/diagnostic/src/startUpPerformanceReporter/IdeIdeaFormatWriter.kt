@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -73,6 +74,10 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
       writer.writeNumberField("count", stats.getValue("resourceRequests"))
     }
+    writer.obj("langLoading") {
+      val allTypes = IElementType.enumerate(IElementType.TRUE)
+      writer.writeNumberField("elementTypeCount", allTypes.size)
+    }
 
     writeServiceStats(writer)
     writeIcons(writer)
@@ -115,7 +120,6 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       when (val itemName = item.name) {
         "splash initialization" -> {
           publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
-          publicStatMetrics["splashShown"] = TimeUnit.NANOSECONDS.toMillis(item.end - StartUpMeasurer.getStartTime()).toInt()
         }
         "bootstrap", "app initialization" -> {
           publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()

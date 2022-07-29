@@ -79,7 +79,7 @@ final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     renderer.append(JavaCompilerBundle.message("test.discovery.show.affected.tests"), new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
-      Change[] changes = changeList.getChanges().toArray(new Change[0]);
+      Change[] changes = changeList.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
       ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);
     });
   }
@@ -100,7 +100,7 @@ final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
         .map(list -> {
           Collection<Change> changes = list.getChanges();
 
-          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, changes.toArray(new Change[0]));
+          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
           List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
           if (methods.length == 0 && paths.isEmpty()) return null;
 

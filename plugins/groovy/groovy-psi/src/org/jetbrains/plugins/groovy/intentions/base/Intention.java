@@ -10,6 +10,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LazyKt;
+import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -19,17 +21,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
-
 public abstract class Intention implements IntentionAction {
   @SafeFieldForPreview
-  private final PsiElementPredicate predicate;
+  private final Lazy<PsiElementPredicate> predicate = LazyKt.lazyPub(this::getElementPredicate);
 
-  /**
-   * @noinspection AbstractMethodCallInConstructor
-   */
   protected Intention() {
     super();
-    predicate = getElementPredicate();
   }
 
   @Override
@@ -46,7 +43,6 @@ public abstract class Intention implements IntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
@@ -81,7 +77,7 @@ public abstract class Intention implements IntentionAction {
         TextRange selectionRange = new TextRange(start, end);
         PsiElement element = PsiImplUtil.findElementInRange(file, start, end, PsiElement.class);
         while (element != null && element.getTextRange() != null && selectionRange.contains(element.getTextRange())) {
-          if (predicate.satisfiedBy(element)) return element;
+          if (predicate.getValue().satisfiedBy(element)) return element;
           element = element.getParent();
         }
       }
@@ -90,14 +86,14 @@ public abstract class Intention implements IntentionAction {
     final int position = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(position);
     while (element != null) {
-      if (predicate.satisfiedBy(element)) return element;
+      if (predicate.getValue().satisfiedBy(element)) return element;
       if (isStopElement(element)) break;
       element = element.getParent();
     }
 
     element = file.findElementAt(position - 1);
     while (element != null) {
-      if (predicate.satisfiedBy(element)) return element;
+      if (predicate.getValue().satisfiedBy(element)) return element;
       if (isStopElement(element)) return null;
       element = element.getParent();
     }

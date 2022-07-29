@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.codeInliner.ClassUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -41,12 +41,14 @@ import org.jetbrains.kotlin.psi.psiUtil.isCallee
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
+import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForTypeAliasObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.*
+import org.jetbrains.kotlin.util.constructors
+import org.jetbrains.kotlin.util.mapAll
 
 //TODO: different replacements for property accessors
 
@@ -88,7 +90,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             contextElement: KtReferenceExpression?,
             replaceInWholeProject: Boolean
         ): ReplaceWithData? {
-            val annotation = descriptor.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
+            val annotation = descriptor.unwrapTypealiasIfNeeded().annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
             val replaceWithValue = annotation.getAnnotationValue(Deprecated::replaceWith) ?: return null
             val pattern = replaceWithValue.getStringValue(ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
             val imports = replaceWithValue.getArrayValue(ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
@@ -199,7 +201,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             val bindingContext = resolutionFacade.analyze(element, BodyResolveMode.PARTIAL)
             val resolvedCall = element.getResolvedCall(bindingContext)
             var target = resolvedCall?.resultingDescriptor?.takeIf { it.isInvokeOperator }
-                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()
+                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()?.unwrapTypealiasIfNeeded()
                 ?: return null
 
             var replacePatternFromSymbol =
@@ -273,6 +275,9 @@ abstract class DeprecatedSymbolUsageFixBase(
                 else -> return null
             }
         }
+
+        private fun DeclarationDescriptor.unwrapTypealiasIfNeeded(): DeclarationDescriptor =
+            if (this is FakeCallableDescriptorForTypeAliasObject) typeAliasDescriptor else this
 
         private fun usedConstructorsWithOwnReplaceWith(
             project: Project,

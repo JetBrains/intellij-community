@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.util.textRangeIn
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.synthetic.isResolvedWithSamConversions
 
 class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
     KtCallExpression::class.java
-), CleanupLocalInspectionTool {
+) {
     override fun isApplicable(element: KtCallExpression): Boolean {
         val calleeExpression = element.calleeExpression ?: return false
         if (calleeExpression.text != "forEach") return false

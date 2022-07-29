@@ -22,7 +22,7 @@ open class WsEntityInterface : KtInterfaceKind() {
                           keepUnknownFields: Boolean) {
     field.toMemberField(scope, type, diagnostics, keepUnknownFields)
     if (fieldNumber == 0) {
-      val entitySource = Field(type, field.id, "entitySource", TBlob<Any>("EntitySource"))
+      val entitySource = Field(type, "entitySource", TBlob<Any>("com.intellij.workspaceModel.storage.EntitySource"))
       entitySource.exDef = field
       entitySource.open = field.open
       if (field.expr) {
@@ -45,7 +45,7 @@ open class WsEntityInterface : KtInterfaceKind() {
       TBlob<Any>(ktType.classifier)
     else {
       diagnostics.add(ktType.classifierRange, "Unsupported type: $ktType. " +
-                                              "Supported: String, Int, Boolean, List, Map, Serializable, Enum, Data and Sealed classes, subtypes of Obj")
+                                              "Supported: String, Int, Boolean, List, Set, Map, Serializable, Enum, Data and Sealed classes, subtypes of Obj")
       null
     }
   }

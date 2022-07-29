@@ -18,11 +18,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.NonNls
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -127,7 +127,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
         // load state only if there are existing files
         val componentStoreLoadingEnabled = project.getUserData(IProjectStore.COMPONENT_STORE_LOADING_ENABLED)
-        if (if (componentStoreLoadingEnabled == null) !file.exists() else !componentStoreLoadingEnabled) {
+        if (if (componentStoreLoadingEnabled == null) !Files.exists(file) else !componentStoreLoadingEnabled) {
           loadPolicy = StateLoadPolicy.NOT_LOAD
         }
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, workspacePath))
@@ -144,14 +144,15 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
       if (isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !file.exists()
+        isOptimiseTestLoadSpeed = !Files.exists(file)
 
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, dotIdea.resolve("product-workspace.xml")))
       }
     }
 
     val presentableUrl = (if (dotIdea == null) file else projectBasePath)
-    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
+    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "")
+        .toString().lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
     macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
 
     storageManager.setMacros(macros)

@@ -32,23 +32,19 @@ final class FilePageCache {
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
-  private static final int LOWER_LIMIT;
-  private static final int UPPER_LIMIT;
-  static final int BUFFER_SIZE;
+  private static final int CACHE_SIZE;
+  static final int ALLOCATOR_SIZE;
+  static final int PAGE_SIZE;
 
   static {
     final int lower = 100;
     final int upper = CpuArch.is32Bit() ? 200 : 500;
 
-    BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
-    final long max = maxDirectMemory() - 2L * BUFFER_SIZE;
-    LOWER_LIMIT = (int)Math.min(lower * PagedFileStorage.MB, max);
-    UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
-
-    LOG.info("lower=" + (LOWER_LIMIT / PagedFileStorage.MB) +
-             "; upper=" + (UPPER_LIMIT / PagedFileStorage.MB) +
-             "; buffer=" + (BUFFER_SIZE / PagedFileStorage.MB) +
-             "; max=" + (max / PagedFileStorage.MB));
+    PAGE_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
+    final long max = maxDirectMemory() - 2L * PAGE_SIZE;
+    int lowerLimit = (int)Math.min(lower * PagedFileStorage.MB, max);
+    CACHE_SIZE = (int)Math.min(Math.max(lowerLimit, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
+    ALLOCATOR_SIZE = (int)Math.min(100 * PagedFileStorage.MB, Math.max(0, max - CACHE_SIZE - 300 * PagedFileStorage.MB));
   }
 
   void assertUnderSegmentAllocationLock() {
@@ -177,7 +173,7 @@ final class FilePageCache {
   private long myDisposalMs;
 
   FilePageCache() {
-    mySizeLimit = UPPER_LIMIT;
+    mySizeLimit = CACHE_SIZE;
 
     // super hot-spot, it's very essential to use specialized collection here
     mySegments = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, true) {

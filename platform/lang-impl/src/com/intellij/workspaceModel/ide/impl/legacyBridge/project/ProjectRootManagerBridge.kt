@@ -25,11 +25,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import java.util.function.Supplier
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import java.util.function.Supplier
 
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
@@ -53,14 +51,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
           // Roots changed event should be fired for the global libraries linked with module
           val moduleChanges = event.getChanges(ModuleEntity::class.java)
           for (change in moduleChanges) {
-            when (change) {
-              is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
-              is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
-              is EntityChange.Replaced -> {
-                removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
-                addTrackedLibraryAndJdkFromEntity(change.newEntity)
-              }
-            }
+            change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
+            change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
           }
         }
       })

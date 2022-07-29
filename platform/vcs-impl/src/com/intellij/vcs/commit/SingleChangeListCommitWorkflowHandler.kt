@@ -86,7 +86,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
-    super.isExecutorEnabled(executor) && (!isCommitEmpty() || !executor.areChangesRequired())
+    super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =
     getCommitMessage().isNotEmpty() ||
@@ -97,7 +97,9 @@ class SingleChangeListCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
+  override fun addUnversionedFiles(): Boolean {
+    return addUnversionedFiles(getChangeList(), ui.getInclusionModel())
+  }
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

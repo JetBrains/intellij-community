@@ -66,6 +66,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
+
 @SuppressWarnings("ALL")
 public abstract class KtUsefulTestCase extends TestCase {
     public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
@@ -259,15 +261,6 @@ public abstract class KtUsefulTestCase extends TestCase {
                 }
             }
         }
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private static void cleanupSwingDataStructures() throws Exception {
-        Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
-        Map<?, ?> componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
-        componentKeyStrokeMap.clear();
-        Map<?, ?> containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
-        containerMap.clear();
     }
 
     static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {

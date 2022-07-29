@@ -217,7 +217,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "</build>");
     resolveFoldersAndImport();
 
-    if (supportsKeepingFoldersFromPreviousImport()) {
+    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
       assertSources("project", "src2", "src1");
     }
     else {
@@ -1247,8 +1247,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testCustomPomFileNameCustomContentRoots() throws Exception {
-    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
-
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
@@ -1275,8 +1273,13 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       "  <testSourceDirectory>tests</testSourceDirectory>" +
       "</build>"));
 
-    new File(myProjectRoot.getPath(), "m1/sources/resources").mkdirs();
-    new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
+    createProjectSubDirs("m1/src/main/java",
+                         "m1/src/main/resources",
+                         "m1/src/test/java",
+                         "m1/src/test/resources",
+
+                         "m1/sources/resources",
+                         "m1/tests");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1288,16 +1291,34 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "  <module>m1/custom.xml</module>" +
                   "</modules>");
 
-    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
+    String m1_pom_module = mn("project", "m1-pom");
+    String m1_custom_module = mn("project", "m1-custom");
+    assertModules("project", m1_pom_module, m1_custom_module);
 
-    assertContentRoots(mn("project", "m1-pom"), getProjectPath() + "/m1");
-    assertContentRoots(mn("project", "m1-custom"), getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
+    String m1_pom_root = getProjectPath() + "/m1";
+    assertContentRoots(m1_pom_module, m1_pom_root);
+    assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java");
+    assertContentRootResources(m1_pom_module, m1_pom_root, "src/main/resources");
+    assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java");
+    assertContentRootTestResources(m1_pom_module, m1_pom_root, "src/test/resources");
+
+    String m1_custom_sources_root = getProjectPath() + "/m1/sources";
+    String m1_custom_tests_root = getProjectPath() + "/m1/tests";
+    String m1_standard_test_resources = getProjectPath() + "/m1/src/test/resources";
+    assertContentRoots(m1_custom_module,
+                       m1_custom_sources_root,
+                       m1_custom_tests_root,
+                       // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
+                       // but I'm testing the behavior as is in order to preserve it in the new Workspace import
+                       m1_standard_test_resources);
+    assertContentRootSources(m1_custom_module, m1_custom_sources_root, "");
+    assertContentRootResources(m1_custom_module, m1_custom_sources_root);
+    assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "");
+    assertContentRootTestResources(m1_custom_module, m1_standard_test_resources, "");
   }
 
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
-    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
-
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
@@ -1539,9 +1560,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     testAssertions.accept(true);
     importProject();
-    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
     resolveFoldersAndImport();
-    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
   }
 
   @Test

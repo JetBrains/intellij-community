@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -70,7 +70,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       String getLaunchCommandLine(RemoteConnection connection) {
         String commandLine = JDK5to8.getLaunchCommandLine(connection);
         if (connection.isUseSockets() && !connection.isServerMode()) {
-          commandLine = commandLine.replace(connection.getApplicationAddress(), "*:" + connection.getApplicationAddress());
+          String address = connection.getApplicationAddress();
+          commandLine = commandLine.replace("address=" + address, "address=*:" + address);
         }
         return commandLine;
       }

@@ -43,6 +43,13 @@ final public class BuildDependenciesDownloader {
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
+  // increment on semantic changes in extract code to invalidate all current caches
+  private static final int EXTRACT_CODE_VERSION = 3;
+
+  // increment on semantic changes in download code to invalidate all current caches
+  // e.g. when some issues in extraction code were fixed
+  private static final int DOWNLOAD_CODE_VERSION = 1;
+
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
    */
@@ -66,7 +73,7 @@ final public class BuildDependenciesDownloader {
   }
 
   public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("gradle.properties");
+    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
     return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
   }
 
@@ -127,7 +134,7 @@ final public class BuildDependenciesDownloader {
     String uriString = uri.toString();
     try {
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
-      String fileName = hashString(uriString).substring(0, 10) + "-" + lastNameFromUri;
+      String fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri;
       Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
 
       downloadFile(uri, targetFile);
@@ -168,16 +175,13 @@ final public class BuildDependenciesDownloader {
 
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
     throws IOException {
-    // Increment this number to force all clients to extract content again
-    // e.g. when some issues in extraction code were fixed
-    int codeVersion = 2;
 
     long numberOfTopLevelEntries;
     try (Stream<Path> stream = Files.list(targetDirectory)) {
       numberOfTopLevelEntries = stream.count();
     }
 
-    return (codeVersion + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
+    return (EXTRACT_CODE_VERSION + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
             "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
             "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
   }

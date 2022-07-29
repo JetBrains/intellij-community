@@ -1,73 +1,32 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
 
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.StartUpMeasurer.Activities
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
-// Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
-internal fun registerComponents(project: ProjectImpl) {
-  var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
-  //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  project.registerComponents()
-
-  activity = activity?.endAndStart("projectComponentRegistered")
-  runOnlyCorePluginExtensions(
-    ProjectServiceContainerCustomizer.getEp()) {
-    it.serviceRegistered(project)
-  }
-  activity?.end()
+internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
+  val id = descriptor.pluginId
+  return id == PluginManagerCore.CORE_ID ||
+         // K/N Platform Deps is a repackaged Java plugin
+         id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
-private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.DEFAULT)
-}
-
-internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
-  ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
-    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-        // K/N Platform Deps is a repackaged Java plugin
-        pluginDescriptor.pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-    }
-
-    try {
-      executor(handler)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: PluginException) {
-      logger<ProjectImpl>().error(e)
-    }
-    catch (e: Throwable) {
-      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
-    }
-  }
-}
-
-/**
- * Usage requires IJ Platform team approval (including plugin into white-list).
- */
-@ApiStatus.Internal
+@TestOnly
 interface ProjectServiceContainerCustomizer {
   companion object {
-    @JvmStatic
-    fun getEp() = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-      .getExtensionPoint<ProjectServiceContainerCustomizer>("com.intellij.projectServiceContainerCustomizer")
+    @TestOnly
+    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
+      return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+        .getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
+    }
   }
 
   /**
@@ -86,5 +45,5 @@ interface ProjectServiceContainerInitializedListener {
    * Invoked after implementation classes for project's components were determined (and loaded),
    * but before components are instantiated.
    */
-  fun serviceCreated(project: Project)
+  suspend fun serviceCreated(project: Project)
 }

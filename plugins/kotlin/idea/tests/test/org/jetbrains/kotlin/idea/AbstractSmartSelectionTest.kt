@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
 import org.jetbrains.kotlin.idea.refactoring.getSmartSelectSuggestions
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -13,8 +13,8 @@ abstract class AbstractSmartSelectionTest : KotlinLightCodeInsightFixtureTestCas
     fun doTestSmartSelection(path: String) {
         myFixture.configureByFile(path)
 
-        val expectedResultText = KotlinTestUtils.getLastCommentInFile(getFile() as KtFile)
-        val elements = getSmartSelectSuggestions(getFile(), getEditor().caretModel.offset, CodeInsightUtils.ElementKind.EXPRESSION)
+        val expectedResultText = KotlinTestUtils.getLastCommentInFile(file as KtFile)
+        val elements = getSmartSelectSuggestions(file, editor.caretModel.offset, ElementKind.EXPRESSION)
         assertEquals(expectedResultText, elements.joinToString(separator = "\n", transform = ::getExpressionShortText))
     }
 }

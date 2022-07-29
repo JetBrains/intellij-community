@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
 package Tests
 
 import java.util.*

@@ -7,10 +7,7 @@ import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -63,8 +60,16 @@ class EvaluateCompletionHereAction : AnAction() {
     return parent
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.getData(CommonDataKeys.CARET) != null
-    e.presentation.isVisible = e.place == ActionPlaces.ACTION_SEARCH || !ApplicationInfo.getInstance().build.isSnapshot
+    val presentation = e.presentation
+    if (e.project != null) {
+      presentation.isEnabled = e.getData(CommonDataKeys.CARET) != null
+      presentation.isVisible = e.place == ActionPlaces.ACTION_SEARCH || !ApplicationInfo.getInstance().build.isSnapshot
+    }
+    else {
+      presentation.isEnabledAndVisible = false
+    }
   }
 }

@@ -197,6 +197,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override var subRowIndent: Int = -1
 
   internal val isLabeledIncludingSubRows: Boolean
@@ -577,6 +578,7 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(component, forComponent, viewComponent)
     return this
@@ -642,10 +644,12 @@ private class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun actsAsLabel() {
     builder.updateComponentConstraints(viewComponent) { spanX = 1 }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun noGrowY() {
     builder.updateComponentConstraints(viewComponent) {
       growY(0.0f)
@@ -653,6 +657,7 @@ private class CellBuilderImpl<T : JComponent>(
     }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   override fun sizeGroup(name: String): CellBuilderImpl<T> {
     builder.updateComponentConstraints(viewComponent) {
       sizeGroup(name)
@@ -660,6 +665,7 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)

@@ -38,6 +38,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -47,11 +48,15 @@ import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
@@ -108,17 +113,15 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
         EditorTracker.getInstance(project)
 
-        if (!isFirPlugin) {
-            invalidateLibraryCache(project)
-        }
+        invalidateLibraryCache(project)
     }
 
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         if (captureExceptions) {
             LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-                override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+                override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
                     exceptions.addIfNotNull(t)
-                    return super.processError(category, message, t, details)
+                    return super.processError(category, message, details, t)
                 }
             }) {
                 super.runBare(testRunnable)
@@ -131,8 +134,8 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() },
+            { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
+            { super.tearDown() },
         )
 
         if (exceptions.isNotEmpty()) {

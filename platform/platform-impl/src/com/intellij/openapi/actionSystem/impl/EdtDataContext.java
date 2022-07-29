@@ -108,8 +108,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     Object answer = getDataInner(dataId, cacheable);
     if (answer == null) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
-        Object o = getDataInner(id, cacheable);
-        return o == EXPLICIT_NULL ? null : o;
+        return getDataInner(id, cacheable);
       });
       if (cacheable) {
         myCachedData.put(dataId, answer == null ? EXPLICIT_NULL : answer);

@@ -20,9 +20,10 @@ import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
+import com.sun.jdi.ArrayType
 import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
-import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
@@ -112,6 +113,8 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
 
         if (valueDescriptor.isMapEntryDescriptor) {
             return MAP_ENTRY_TEST_LABEL
+        } else if (valueDescriptor.isArrayDescriptor) {
+            return ARRAY_TEST_LABEL
         }
 
         val semaphore = Semaphore()
@@ -228,3 +231,13 @@ private const val MAP_ENTRY_TEST_LABEL = "map_entry_tests_label"
 
 private val ValueDescriptorImpl.isMapEntryDescriptor
     get() = DebuggerUtils.instanceOf(type, "java.util.Map.Entry")
+
+/**
+ * Rendering of array types is performed by com.intellij.debugger.ui.tree.render.ArrayRenderer.
+ * To render an array correctly, it has to fetch all of its values. After that the renderer
+ * asynchronously updates the array representation, which results in flaky tests.
+ */
+private const val ARRAY_TEST_LABEL = "array_tests_label"
+
+private val ValueDescriptorImpl.isArrayDescriptor
+    get() = type is ArrayType

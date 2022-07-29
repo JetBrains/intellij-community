@@ -25,7 +25,6 @@ internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
-    CommitAuthorTracker by ui,
     CommitAuthorListener,
     ProjectManagerListener {
 
@@ -58,13 +57,12 @@ internal class ChangesViewCommitWorkflowHandler(
 
   init {
     Disposer.register(this, inclusionModel)
-    Disposer.register(ui, this)
+    Disposer.register(this, ui)
 
     workflow.addListener(this, this)
     workflow.addCommitListener(GitCommitStateCleaner(), this)
 
-    addCommitAuthorListener(this, this)
-
+    ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
@@ -142,7 +140,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     if (!isActive || force) {
       inclusionModel.clearInclusion()
-      ui.includeIntoCommit(items)
+      inclusionModel.addInclusion(items)
 
       knownActiveChanges = if (!isActive) activeChanges else emptyList()
     }
@@ -152,10 +150,10 @@ internal class ChangesViewCommitWorkflowHandler(
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges
-      ui.includeIntoCommit(newChanges)
+      inclusionModel.addInclusion(newChanges)
 
       // include all active changes if nothing is included
-      if (inclusionModel.isInclusionEmpty()) ui.includeIntoCommit(activeChanges)
+      if (inclusionModel.isInclusionEmpty()) inclusionModel.addInclusion(activeChanges)
     }
   }
 
@@ -176,7 +174,7 @@ internal class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
   fun deactivate(isRestoreState: Boolean) = fireActivityStateChanged { ui.deactivate(isRestoreState) }
 
-  fun addActivityListener(listener: ActivityListener, parent: Disposable) = activityEventDispatcher.addListener(listener, parent)
+  fun addActivityListener(listener: ActivityListener) = activityEventDispatcher.addListener(listener)
 
   private fun <T> fireActivityStateChanged(block: () -> T): T {
     val oldValue = isActive
@@ -199,22 +197,22 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun changeListDataChanged() {
-    commitAuthor = currentChangeList?.author
-    commitAuthorDate = currentChangeList?.authorDate
+    ui.commitAuthor = currentChangeList?.author
+    ui.commitAuthorDate = currentChangeList?.authorDate
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    if (commitAuthor == changeList.author) return
+    if (ui.commitAuthor == changeList.author) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
   }
 
   override fun commitAuthorDateChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    if (commitAuthorDate == changeList.authorDate) return
+    if (ui.commitAuthorDate == changeList.authorDate) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
   }
 
   override fun inclusionChanged() {
@@ -248,7 +246,10 @@ internal class ChangesViewCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getAffectedChangeList(getIncludedChanges()))
+  override fun addUnversionedFiles(): Boolean {
+    val changeList = workflow.getAffectedChangeList(getIncludedChanges())
+    return addUnversionedFiles(changeList, inclusionModel)
+  }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
 

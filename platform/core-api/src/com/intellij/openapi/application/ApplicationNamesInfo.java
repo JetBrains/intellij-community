@@ -53,8 +53,8 @@ public final class ApplicationNamesInfo {
       }
     }
     else {
-      // Gateway started from other IntelliJ Based IDE case
-      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX)) {
+      // Gateway started from other IntelliJ Based IDE case, same for Qodana
+      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || prefix.equals(PlatformUtils.QODANA_PREFIX)) {
         String customAppInfo = System.getProperty("idea.application.info.value");
         if (customAppInfo != null) {
           try {

@@ -176,4 +176,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts 1 {@code PsiMethod}, that will be inverted
    */
   public abstract RefactoringActionHandler createInvertBooleanHandler();
+
+  public abstract RefactoringActionHandler createIntentionPreviewIntroduceVariableHandler();
 }

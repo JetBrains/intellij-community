@@ -8,6 +8,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -198,7 +199,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public void fireBuildReferences(RefElement refElement) {
+  private void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
@@ -427,9 +428,12 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void buildReferences(RefElement element) {
+    if (element.areReferencesBuilt()) return;
+    ((RefElementImpl)element).setReferencesBuilt(true);
     executeTask(() -> {
       element.initializeIfNeeded();
       element.buildReferences();
+      fireBuildReferences(element);
     });
   }
 
@@ -757,9 +761,9 @@ public class RefManagerImpl extends RefManager {
     return getFromRefTableOrCache(element, factory, null);
   }
 
-  private @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
-                                                                    @NotNull NullableFactory<? extends T> factory,
-                                                                    @Nullable Consumer<? super T> whenCached) {
+  public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
+                                                                   @NotNull NullableFactory<? extends T> factory,
+                                                                   @Nullable Consumer<? super T> whenCached) {
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
     T result = (T)myRefTable.get(psiAnchor);
@@ -814,7 +818,8 @@ public class RefManagerImpl extends RefManager {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
-    return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
+    return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
+           (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
   @Override

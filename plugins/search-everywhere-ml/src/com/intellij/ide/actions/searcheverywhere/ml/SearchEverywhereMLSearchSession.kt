@@ -12,6 +12,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTrack
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
@@ -114,5 +115,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {
-  val features: List<EventPair<*>> = SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+  val features: List<EventPair<*>> by lazy {
+    SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+  }
+
+  init {
+    NonUrgentExecutor.getInstance().execute {
+      features  // We don't care about the value, we just want the features to be computed
+    }
+  }
 }

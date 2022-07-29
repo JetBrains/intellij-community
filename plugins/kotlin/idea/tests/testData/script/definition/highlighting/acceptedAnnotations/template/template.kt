@@ -16,7 +16,7 @@ class TestDependenciesResolver : DependenciesResolver {
         val annoFQN = Anno::class.qualifiedName!!
         assert(scriptContents.annotations.single().annotationClass.qualifiedName == annoFQN)
         return ScriptDependencies(
-                classpath = listOf(environment["template-classes"] as File),
+                classpath = environment["template-classes"] as List<File>,
                 imports = listOf(annoFQN)
         ).asSuccess()
     }

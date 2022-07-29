@@ -185,7 +185,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> remover.consume(createdEntities));
     }
 
-    DumbService.getInstance(getProject()).queueTask(new UnindexedFilesUpdater(getProject(), iterators, getTestName(false)));
+    DumbService.getInstance(getProject()).queueTask(new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)));
   }
 
 

@@ -4,13 +4,13 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.psi.PsiClassOwner
-import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.junit5.RunInEdt
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-@RunsInEdt
+@RunInEdt
 class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase5() {
   @BeforeEach
   internal fun setUp() {

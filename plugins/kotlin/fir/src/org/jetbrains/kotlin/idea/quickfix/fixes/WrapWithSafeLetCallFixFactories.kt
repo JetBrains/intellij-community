@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -27,7 +27,7 @@ object WrapWithSafeLetCallFixFactories {
         val nullableExpressionPointer: SmartPsiElementPointer<KtExpression>,
         val suggestedVariableName: String,
         val isImplicitInvokeCallToMemberProperty: Boolean,
-    ) : HLApplicatorInput
+    ) : KotlinApplicatorInput
 
     private val LOG = Logger.getInstance(this::class.java)
 
@@ -58,7 +58,7 @@ object WrapWithSafeLetCallFixFactories {
      *  `isImplicitInvokeCallToMemberProperty` controls the behavior when hoisting up the nullable expression. It should be set to true
      *  if the call is to a invocable member property.
      */
-    val applicator: HLApplicator<KtExpression, Input> = applicator {
+    val applicator: KotlinApplicator<KtExpression, Input> = applicator {
         familyAndActionName(KotlinBundle.lazyMessage("wrap.with.let.call"))
         applyTo { targetExpression, input ->
             val nullableExpression = input.nullableExpressionPointer.element ?: return@applyTo
@@ -176,7 +176,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun KtAnalysisSession.createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
-    ): List<HLQuickFix<KtExpression, Input>> {
+    ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
         val surroundingExpression = nullableExpression?.surroundingExpression
         if (
             surroundingExpression == null ||
@@ -201,7 +201,7 @@ object WrapWithSafeLetCallFixFactories {
         isImplicitInvokeCallToMemberProperty: Boolean = false,
         surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
             ?: nullableExpression?.surroundingExpression
-    ): List<HLQuickFix<KtExpression, Input>> {
+    ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
         val existingNames =
             nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).scopes.getPossibleCallableNames()
@@ -211,7 +211,7 @@ object WrapWithSafeLetCallFixFactories {
         val candidateNames = listOfNotNull("it", getDeclaredParameterNameForArgument(nullableExpression))
         val suggestedName = FirKotlinNameSuggester.suggestNameByMultipleNames(candidateNames) { it !in existingNames }
         return listOf(
-            HLQuickFix(
+            KotlinApplicatorBasedQuickFix(
                 surroundingExpression,
                 Input(nullableExpression.createSmartPointer(), suggestedName, isImplicitInvokeCallToMemberProperty),
                 applicator
