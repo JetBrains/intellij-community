@@ -33,8 +33,13 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Expands action group for a warm-up as less intrusive as possible:
+ * in an "idle" listener, on a UI-only data-context, with a dedicated action-place.
+ */
 public final class PopupMenuPreloader implements Runnable, HierarchyListener {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
+  private static final String PRELOADER_PLACE_SUFFIX = "(preload)";
 
   private static int ourEditorContextMenuPreloadCount;
 
@@ -83,7 +88,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     myPopupHandlerRef = popupHandler == null ? null : new WeakReference<>(popupHandler);
 
     myGroupSupplier = groupSupplier;
-    myPlace = actionPlace;
+    myPlace = actionPlace + PRELOADER_PLACE_SUFFIX;
     component.addHierarchyListener(this);
   }
 
