@@ -2,16 +2,21 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Queue;
 
 public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   private final @NotNull ManagingFS myManagingFS;
@@ -55,7 +60,19 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
 
   @Override
   public int[] listAllChildIds(int id) {
-    return VfsImplUtil.loadAllChildIds(id);
+    IntSet result = new IntOpenHashSet();
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.add(id);
+    while (!queue.isEmpty()) {
+      int recordId = queue.poll();
+      if (result.add(recordId)) {
+        ProgressManager.checkCanceled();
+        for (int childId : FSRecords.listIds(recordId)) {
+          queue.add(childId);
+        }
+      }
+    }
+    return result.toIntArray();
   }
 
   @Override
