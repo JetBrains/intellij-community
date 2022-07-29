@@ -12,6 +12,10 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * The minimal entity which is needed for documentation actions.
+ *
+ * To provide [DocumentationTarget] implement and register:
+ * - by a target [symbol][com.intellij.model.Symbol] - [SymbolDocumentationTargetProvider][com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider] (or see other options in `SymbolDocumentationTargetProvider` docs);
+ * - by a target [element][com.intellij.psi.PsiElement] - [PsiDocumentationTargetProvider][com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider].
  */
 @Experimental
 @OverrideOnly
