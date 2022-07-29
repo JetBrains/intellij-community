@@ -180,8 +180,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
-    new RefreshSessionImpl(async, event).launch();
+  public void processEvents(boolean async, @NotNull List<? extends @NotNull VFileEvent> events) {
+    new RefreshSessionImpl(async, events).launch();
   }
 
   @Override

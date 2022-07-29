@@ -61,9 +61,9 @@ final class RefreshSessionImpl extends RefreshSession {
     myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
-  RefreshSessionImpl(boolean async, VFileEvent event) {
+  RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
     this(async, false, null, ModalityState.defaultModalityState());
-    myEvents.add(event);
+    myEvents.addAll(events);
   }
 
   @Override

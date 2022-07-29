@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
@@ -107,8 +108,11 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  @ApiStatus.Internal
-  public abstract void processEvents(@NotNull List<? extends @NotNull VFileEvent> events);
+  /** @deprecated bypasses async listeners and is too low-level in general; avoid */
+  @Deprecated(forRemoval = true)
+  public void processEvents(@NotNull List<? extends @NotNull VFileEvent> events) {
+    RefreshQueue.getInstance().processEvents(false, events);
+  }
 
   public static @NotNull NewVirtualFileSystem replaceWithNativeFS(final @NotNull NewVirtualFileSystem fs) {
     if (SystemInfo.isWindows &&
