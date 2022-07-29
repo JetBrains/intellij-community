@@ -13,7 +13,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class IntentionPreviewIntroduceVariableHandler extends IntroduceVariableHandler {
+public class IntroduceVariableOnPreviewHandler extends IntroduceVariableHandler {
   public static final Key<Boolean> INTENTION_PREVIEW_INTRODUCER = Key.create("INTENTION_PREVIEW_INTRODUCER");
 
   @Override

@@ -74,7 +74,8 @@ public class IntroduceVariableFix extends RefactoringInspectionGadgetsFix {
     if (expression == null) {
       return IntentionPreviewInfo.EMPTY;
     }
-    JavaRefactoringActionHandlerFactory.getInstance().createIntentionPreviewIntroduceVariableHandler().invoke(project, new PsiElement[]{expression}, null);
+    JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableOnPreviewHandler()
+      .invoke(project, new PsiElement[]{expression}, null);
     return IntentionPreviewInfo.DIFF;
   }
 }
