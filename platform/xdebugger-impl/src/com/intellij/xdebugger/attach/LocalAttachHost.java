@@ -55,4 +55,9 @@ public class LocalAttachHost extends EnvironmentAwareHost {
   public String getFileSystemHostId() {
     return "";
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof LocalAttachHost;
+  }
 }
