@@ -47,8 +47,8 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
 
   protected abstract fun S.withQuery(query: String?): S
 
-  protected fun <T> MutableStateFlow<S>.partialState(getter: (S) -> T, updater: S.(T?) -> S): MutableStateFlow<T?> {
-    val partialState = MutableStateFlow<T?>(null)
+  protected fun <T> MutableStateFlow<S>.partialState(getter: (S) -> T, updater: S.(T) -> S): MutableStateFlow<T> {
+    val partialState = MutableStateFlow(getter(value))
     scope.launch {
       collectLatest { value ->
         partialState.update { getter(value) }
