@@ -17,7 +17,9 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -37,7 +39,6 @@ internal abstract class KtModuleByModuleInfoBase(
     open val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
 
-    val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
     val platform: TargetPlatform get() = ideaModuleInfo.platform
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
 
@@ -67,6 +68,8 @@ internal class KtSourceModuleByModuleInfo(
 
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.dependencies(provider)
+
+    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
@@ -118,16 +121,14 @@ internal class KtLibraryModuleByModuleInfo(
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
-    override val directRegularDependencies: List<KtModule> get() = emptyList()
-    override val directRefinementDependencies: List<KtModule> get() = emptyList()
-    override val directFriendDependencies: List<KtModule> get() = emptyList()
-
     override val librarySources: KtLibrarySourceModule
         get() = moduleInfo.sourcesModuleInfo.let { provider.getKtModuleByModuleInfo(it) as KtLibrarySourceModule }
 
     override fun getBinaryRoots(): Collection<Path> {
         return moduleInfo.getLibraryRoots().map(Paths::get)
     }
+
+    override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
     override val project: Project get() = moduleInfo.project
 }
@@ -139,9 +140,7 @@ internal class SdkKtModuleByModuleInfo(
     override val sdkName: String
         get() = moduleInfo.sdk.name
 
-    override val directRegularDependencies: List<KtModule> get() = emptyList()
-    override val directRefinementDependencies: List<KtModule> get() = emptyList()
-    override val directFriendDependencies: List<KtModule> get() = emptyList()
+    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
     override fun getBinaryRoots(): Collection<Path> {
         return moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
@@ -159,9 +158,17 @@ internal class KtLibrarySourceModuleByModuleInfo(
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
-    override val directRegularDependencies: List<KtModule> get() = emptyList()
-    override val directRefinementDependencies: List<KtModule> get() = emptyList()
-    override val directFriendDependencies: List<KtModule> get() = emptyList()
+    override val directRegularDependencies: List<KtModule>
+        get() = binaryLibrary.directRegularDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+
+    override val directFriendDependencies: List<KtModule>
+        get() = binaryLibrary.directFriendDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+
+    override val directRefinementDependencies: List<KtModule>
+        get() = binaryLibrary.directRefinementDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+
+    override val contentScope: GlobalSearchScope
+        get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
 
     override val binaryLibrary: KtLibraryModule
         get() = provider.getKtModuleByModuleInfo(moduleInfo.binariesModuleInfo) as KtLibraryModule
@@ -171,11 +178,13 @@ internal class KtLibrarySourceModuleByModuleInfo(
 
 
 internal class NotUnderContentRootModuleByModuleInfo(
-    moduleInfo: IdeaModuleInfo,
+    private val moduleInfo: IdeaModuleInfo,
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
     override val moduleDescription: String
         get() = "Non under content root module"
+
+    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 }
 
 
