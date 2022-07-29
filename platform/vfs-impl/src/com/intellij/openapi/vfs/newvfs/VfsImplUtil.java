@@ -184,7 +184,7 @@ public final class VfsImplUtil {
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
     VFileContentChangeEvent event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
-    RefreshQueue.getInstance().processSingleEvent(false, event);
+    RefreshQueue.getInstance().processEvents(false, List.of(event));
   }
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);

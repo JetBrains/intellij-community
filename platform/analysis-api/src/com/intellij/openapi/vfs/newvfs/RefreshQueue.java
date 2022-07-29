@@ -52,11 +52,6 @@ public abstract class RefreshQueue {
   }
 
   @ApiStatus.Internal
-  public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
-    processEvents(async, List.of(event));
-  }
-
-  @ApiStatus.Internal
   public abstract void processEvents(boolean async, @NotNull List<? extends @NotNull VFileEvent> events);
 
   public abstract void cancelSession(long id);

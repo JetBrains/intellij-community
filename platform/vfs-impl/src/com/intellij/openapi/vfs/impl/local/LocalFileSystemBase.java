@@ -415,7 +415,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           // we need to update case sensitivity
           VFilePropertyChangeEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEvent(parent, actualSensitivity);
           if (event != null) {
-            RefreshQueue.getInstance().processSingleEvent(false, event);
+            RefreshQueue.getInstance().processEvents(false, List.of(event));
           }
         }
       }

@@ -356,5 +356,4 @@ public class VfsUtilPerformanceTest {
       .map(v->new VFileDeleteEvent(this, v, false))
       .forEach(events::add);
   }
-
 }
