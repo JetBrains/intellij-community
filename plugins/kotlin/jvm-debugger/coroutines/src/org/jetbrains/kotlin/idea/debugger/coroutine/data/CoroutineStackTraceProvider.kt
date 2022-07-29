@@ -13,6 +13,10 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.isCreationSeparatorFram
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 
 class CoroutineStackTraceProvider(private val executionContext: DefaultExecutionContext) {
+    companion object {
+        val METHOD_PREFIXES_TO_SKIP = arrayOf("getStackTrace", "enhanceStackTraceWithThreadDump")
+    }
+
     private val locationCache = LocationCache(executionContext)
     private val debugMetadata: DebugMetadata? = DebugMetadata.instance(executionContext)
 
@@ -25,6 +29,9 @@ class CoroutineStackTraceProvider(private val executionContext: DefaultExecution
         return executionContext.debugProcess.invokeInManagerThread {
             val frames = mirror.enhancedStackTraceProvider
                 .getStackTrace()
+                ?.dropWhile { frame ->
+                    METHOD_PREFIXES_TO_SKIP.any { frame.methodName.contains(it) }
+                }
                 ?.map { it.stackTraceElement() }
                 ?: return@invokeInManagerThread null
 
