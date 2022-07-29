@@ -98,6 +98,13 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ModuleGroupPathEntity
+      this.entitySource = dataSource.entitySource
+      this.path = dataSource.path.toMutableList()
+    }
+
 
     override var module: ModuleEntity
       get() {

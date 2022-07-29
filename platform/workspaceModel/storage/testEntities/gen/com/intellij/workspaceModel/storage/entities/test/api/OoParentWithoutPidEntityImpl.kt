@@ -85,6 +85,13 @@ open class OoParentWithoutPidEntityImpl : OoParentWithoutPidEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as OoParentWithoutPidEntity
+      this.parentProperty = dataSource.parentProperty
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentProperty: String
       get() = getEntityData().parentProperty

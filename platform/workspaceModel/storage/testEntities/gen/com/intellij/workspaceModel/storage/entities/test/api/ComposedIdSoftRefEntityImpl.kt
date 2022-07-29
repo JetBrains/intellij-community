@@ -88,6 +88,14 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ComposedIdSoftRefEntity
+      this.myName = dataSource.myName
+      this.entitySource = dataSource.entitySource
+      this.link = dataSource.link
+    }
+
 
     override var myName: String
       get() = getEntityData().myName

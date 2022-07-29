@@ -125,6 +125,16 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FacetEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.facetType = dataSource.facetType
+      this.configurationXmlTag = dataSource.configurationXmlTag
+      this.moduleId = dataSource.moduleId
+    }
+
 
     override var name: String
       get() = getEntityData().name

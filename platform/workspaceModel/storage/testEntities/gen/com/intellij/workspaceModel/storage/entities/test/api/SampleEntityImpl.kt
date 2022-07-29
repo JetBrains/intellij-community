@@ -134,6 +134,19 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SampleEntity
+      this.booleanProperty = dataSource.booleanProperty
+      this.entitySource = dataSource.entitySource
+      this.stringProperty = dataSource.stringProperty
+      this.stringListProperty = dataSource.stringListProperty.toMutableList()
+      this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
+      this.fileProperty = dataSource.fileProperty
+      this.nullableData = dataSource.nullableData
+      this.randomUUID = dataSource.randomUUID
+    }
+
 
     override var booleanProperty: Boolean
       get() = getEntityData().booleanProperty

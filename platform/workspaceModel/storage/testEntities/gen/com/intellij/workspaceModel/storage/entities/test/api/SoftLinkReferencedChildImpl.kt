@@ -89,6 +89,12 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SoftLinkReferencedChild
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: EntityWithSoftLinks
       get() {

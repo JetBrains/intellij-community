@@ -69,6 +69,13 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as AssertConsistencyEntity
+      this.passCheck = dataSource.passCheck
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var passCheck: Boolean
       get() = getEntityData().passCheck

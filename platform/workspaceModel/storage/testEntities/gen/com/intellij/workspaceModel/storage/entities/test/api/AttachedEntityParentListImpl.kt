@@ -75,6 +75,13 @@ open class AttachedEntityParentListImpl : AttachedEntityParentList, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as AttachedEntityParentList
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var data: String
       get() = getEntityData().data

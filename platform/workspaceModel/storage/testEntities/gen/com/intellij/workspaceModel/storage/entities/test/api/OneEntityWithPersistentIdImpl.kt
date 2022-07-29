@@ -79,6 +79,13 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as OneEntityWithPersistentId
+      this.myName = dataSource.myName
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var myName: String
       get() = getEntityData().myName

@@ -76,6 +76,13 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ParentWithNullsOppositeMultiple
+      this.parentData = dataSource.parentData
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentData: String
       get() = getEntityData().parentData

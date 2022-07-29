@@ -73,6 +73,13 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SecondSampleEntity
+      this.intProperty = dataSource.intProperty
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var intProperty: Int
       get() = getEntityData().intProperty

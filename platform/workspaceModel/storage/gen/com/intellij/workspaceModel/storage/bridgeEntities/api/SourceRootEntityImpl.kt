@@ -152,6 +152,14 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SourceRootEntity
+      this.entitySource = dataSource.entitySource
+      this.url = dataSource.url
+      this.rootType = dataSource.rootType
+    }
+
 
     override var contentRoot: ContentRootEntity
       get() {

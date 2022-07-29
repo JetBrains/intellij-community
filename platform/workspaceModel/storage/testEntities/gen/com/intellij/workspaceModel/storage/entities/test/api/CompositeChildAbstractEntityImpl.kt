@@ -117,6 +117,12 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as CompositeChildAbstractEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentInList: CompositeAbstractEntity
       get() {

@@ -102,6 +102,14 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ModuleCustomImlDataEntity
+      this.entitySource = dataSource.entitySource
+      this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
+      this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+    }
+
 
     override var module: ModuleEntity
       get() {

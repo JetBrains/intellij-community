@@ -189,6 +189,25 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as EntityWithSoftLinks
+      this.link = dataSource.link
+      this.entitySource = dataSource.entitySource
+      this.manyLinks = dataSource.manyLinks.toMutableList()
+      this.optionalLink = dataSource.optionalLink
+      this.inContainer = dataSource.inContainer
+      this.inOptionalContainer = dataSource.inOptionalContainer
+      this.inContainerList = dataSource.inContainerList.toMutableList()
+      this.deepContainer = dataSource.deepContainer.toMutableList()
+      this.sealedContainer = dataSource.sealedContainer
+      this.listSealedContainer = dataSource.listSealedContainer.toMutableList()
+      this.justProperty = dataSource.justProperty
+      this.justNullableProperty = dataSource.justNullableProperty
+      this.justListProperty = dataSource.justListProperty.toMutableList()
+      this.deepSealedClass = dataSource.deepSealedClass
+    }
+
 
     override var link: OnePersistentId
       get() = getEntityData().link

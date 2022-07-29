@@ -125,6 +125,19 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ExternalSystemModuleOptionsEntity
+      this.entitySource = dataSource.entitySource
+      this.externalSystem = dataSource.externalSystem
+      this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      this.linkedProjectPath = dataSource.linkedProjectPath
+      this.linkedProjectId = dataSource.linkedProjectId
+      this.rootProjectPath = dataSource.rootProjectPath
+      this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      this.externalSystemModuleType = dataSource.externalSystemModuleType
+    }
+
 
     override var module: ModuleEntity
       get() {

@@ -8,7 +8,9 @@ import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -61,6 +63,26 @@ ${
       line()
       section("override fun connectionIdList(): List<${ConnectionId::class.fqn}>") { 
         line("return connections")
+      }
+      
+      line()
+      lineComment("Relabeling code, move information from dataSource to this builder")
+      section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn})") {
+        line("dataSource as $javaFullName")
+        list(allFields.noPersistentId().noRefs()) { lineBuilder, field ->
+          var type = field.type
+          var qm = ""
+          if (type is ValueType.Optional<*>) {
+            qm = "?"
+            type = type.type
+          }
+          when (type) {
+            is ValueType.List<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
+            is ValueType.Set<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
+            is ValueType.Map<*, *> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
+            else -> lineBuilder.line("this.${field.name} = dataSource.${field.name}")
+          }
+        }
       }
 
       if (name == LibraryEntity::class.simpleName) {

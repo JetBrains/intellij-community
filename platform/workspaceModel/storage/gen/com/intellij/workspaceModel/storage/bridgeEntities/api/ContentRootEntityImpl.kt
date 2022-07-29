@@ -143,6 +143,15 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ContentRootEntity
+      this.entitySource = dataSource.entitySource
+      this.url = dataSource.url
+      this.excludedUrls = dataSource.excludedUrls.toMutableList()
+      this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
+    }
+
 
     override var module: ModuleEntity
       get() {

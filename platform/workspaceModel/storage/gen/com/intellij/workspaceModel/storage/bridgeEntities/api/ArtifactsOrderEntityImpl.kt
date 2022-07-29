@@ -79,6 +79,13 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ArtifactsOrderEntity
+      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
+      this.entitySource = dataSource.entitySource
+    }
+
 
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
 

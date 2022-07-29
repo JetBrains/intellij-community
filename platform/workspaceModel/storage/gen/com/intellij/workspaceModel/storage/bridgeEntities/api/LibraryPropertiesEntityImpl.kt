@@ -103,6 +103,14 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as LibraryPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.libraryType = dataSource.libraryType
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+    }
+
 
     override var library: LibraryEntity
       get() {

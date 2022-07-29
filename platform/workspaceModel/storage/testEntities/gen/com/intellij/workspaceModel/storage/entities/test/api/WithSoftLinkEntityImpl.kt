@@ -80,6 +80,13 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as WithSoftLinkEntity
+      this.link = dataSource.link
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var link: NameId
       get() = getEntityData().link

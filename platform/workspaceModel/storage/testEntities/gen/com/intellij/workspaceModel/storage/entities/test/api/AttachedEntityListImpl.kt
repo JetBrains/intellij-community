@@ -83,6 +83,13 @@ open class AttachedEntityListImpl : AttachedEntityList, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as AttachedEntityList
+      this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
+    }
+
 
     override var ref: MainEntityList?
       get() {

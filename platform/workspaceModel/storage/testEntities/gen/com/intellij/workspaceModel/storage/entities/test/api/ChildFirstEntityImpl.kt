@@ -103,6 +103,14 @@ open class ChildFirstEntityImpl : ChildFirstEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildFirstEntity
+      this.commonData = dataSource.commonData
+      this.firstData = dataSource.firstData
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var commonData: String
       get() = getEntityData().commonData

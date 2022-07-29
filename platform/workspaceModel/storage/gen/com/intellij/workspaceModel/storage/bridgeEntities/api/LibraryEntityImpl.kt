@@ -133,6 +133,16 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as LibraryEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.tableId = dataSource.tableId
+      this.roots = dataSource.roots.toMutableList()
+      this.excludedRoots = dataSource.excludedRoots.toMutableList()
+    }
+
     private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
       val jarDirectories = mutableSetOf<VirtualFileUrl>()
       val libraryRootList = libraryRoots.map {

@@ -80,6 +80,15 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as DefaultValueEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.isGenerated = dataSource.isGenerated
+      this.anotherName = dataSource.anotherName
+    }
+
 
     override var name: String
       get() = getEntityData().name

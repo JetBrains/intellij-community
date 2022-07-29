@@ -103,6 +103,14 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildSingleSecondEntity
+      this.commonData = dataSource.commonData
+      this.secondData = dataSource.secondData
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var commonData: String
       get() = getEntityData().commonData

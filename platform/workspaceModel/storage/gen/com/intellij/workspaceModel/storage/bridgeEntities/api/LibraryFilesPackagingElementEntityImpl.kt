@@ -88,6 +88,13 @@ open class LibraryFilesPackagingElementEntityImpl : LibraryFilesPackagingElement
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as LibraryFilesPackagingElementEntity
+      this.library = dataSource.library
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

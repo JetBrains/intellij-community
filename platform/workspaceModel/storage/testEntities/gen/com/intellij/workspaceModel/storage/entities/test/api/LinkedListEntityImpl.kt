@@ -86,6 +86,14 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as LinkedListEntity
+      this.myName = dataSource.myName
+      this.entitySource = dataSource.entitySource
+      this.next = dataSource.next
+    }
+
 
     override var myName: String
       get() = getEntityData().myName

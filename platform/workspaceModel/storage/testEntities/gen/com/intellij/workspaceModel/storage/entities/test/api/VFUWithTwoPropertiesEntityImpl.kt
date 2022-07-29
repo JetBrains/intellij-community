@@ -97,6 +97,15 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as VFUWithTwoPropertiesEntity
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+      this.fileProperty = dataSource.fileProperty
+      this.secondFileProperty = dataSource.secondFileProperty
+    }
+
 
     override var data: String
       get() = getEntityData().data

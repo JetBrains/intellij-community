@@ -144,6 +144,16 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ArtifactEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.artifactType = dataSource.artifactType
+      this.includeInProjectBuild = dataSource.includeInProjectBuild
+      this.outputUrl = dataSource.outputUrl
+    }
+
 
     override var name: String
       get() = getEntityData().name

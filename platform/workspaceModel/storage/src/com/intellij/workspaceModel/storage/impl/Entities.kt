@@ -499,6 +499,15 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
       (entity as WorkspaceEntityBase).id, virtualFileUrls)
   }
+
+  /**
+   * For generated entities
+   * Pull information from [dataSource] and puts into the current builder.
+   * Only non-reference fields are moved!
+   */
+  open fun relabel(dataSource: WorkspaceEntity) {
+    throw NotImplementedError()
+  }
 }
 
 interface SoftLinkable {

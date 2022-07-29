@@ -99,6 +99,13 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SdkEntity
+      this.entitySource = dataSource.entitySource
+      this.homeUrl = dataSource.homeUrl
+    }
+
 
     override var library: LibraryEntity
       get() {

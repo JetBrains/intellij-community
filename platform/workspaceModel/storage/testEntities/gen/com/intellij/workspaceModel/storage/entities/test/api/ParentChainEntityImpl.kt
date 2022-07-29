@@ -86,6 +86,12 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ParentChainEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var root: CompositeAbstractEntity
       get() {

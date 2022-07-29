@@ -73,6 +73,13 @@ open class OptionalStringEntityImpl : OptionalStringEntity, WorkspaceEntityBase(
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as OptionalStringEntity
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var data: String?
       get() = getEntityData().data

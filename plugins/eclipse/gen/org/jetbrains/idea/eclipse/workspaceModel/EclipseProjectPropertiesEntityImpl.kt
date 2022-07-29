@@ -136,6 +136,19 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as EclipseProjectPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.variablePaths = dataSource.variablePaths.toMutableMap()
+      this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
+      this.unknownCons = dataSource.unknownCons.toMutableList()
+      this.knownCons = dataSource.knownCons.toMutableList()
+      this.forceConfigureJdk = dataSource.forceConfigureJdk
+      this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
+      this.srcPlace = dataSource.srcPlace.toMutableMap()
+    }
+
 
     override var module: ModuleEntity
       get() {

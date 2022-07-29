@@ -102,6 +102,14 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as NamedEntity
+      this.myName = dataSource.myName
+      this.entitySource = dataSource.entitySource
+      this.additionalProperty = dataSource.additionalProperty
+    }
+
 
     override var myName: String
       get() = getEntityData().myName

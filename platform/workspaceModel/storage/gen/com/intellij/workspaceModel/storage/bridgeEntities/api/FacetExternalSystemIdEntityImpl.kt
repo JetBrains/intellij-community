@@ -96,6 +96,13 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FacetExternalSystemIdEntity
+      this.externalSystemId = dataSource.externalSystemId
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var externalSystemId: String
       get() = getEntityData().externalSystemId

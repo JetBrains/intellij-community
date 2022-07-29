@@ -110,6 +110,12 @@ open class ArtifactRootElementEntityImpl : ArtifactRootElementEntity, WorkspaceE
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ArtifactRootElementEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

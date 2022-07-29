@@ -87,6 +87,12 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ParentSingleAbEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var child: ChildSingleAbstractBaseEntity
       get() {

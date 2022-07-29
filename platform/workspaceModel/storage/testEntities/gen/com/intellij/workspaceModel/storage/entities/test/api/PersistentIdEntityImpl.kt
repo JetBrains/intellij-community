@@ -80,6 +80,13 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as PersistentIdEntity
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var data: String
       get() = getEntityData().data

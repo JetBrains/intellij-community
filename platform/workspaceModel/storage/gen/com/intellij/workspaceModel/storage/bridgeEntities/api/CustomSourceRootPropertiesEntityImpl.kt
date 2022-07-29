@@ -97,6 +97,13 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as CustomSourceRootPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+    }
+
 
     override var sourceRoot: SourceRootEntity
       get() {

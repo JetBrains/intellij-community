@@ -77,6 +77,12 @@ open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as OoChildWithNullableParentEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: OoParentEntity?
       get() {

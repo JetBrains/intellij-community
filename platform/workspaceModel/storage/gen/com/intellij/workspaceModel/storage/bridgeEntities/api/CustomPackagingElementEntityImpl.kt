@@ -126,6 +126,14 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as CustomPackagingElementEntity
+      this.typeId = dataSource.typeId
+      this.entitySource = dataSource.entitySource
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

@@ -97,6 +97,13 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FacetsOrderEntity
+      this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
+      this.entitySource = dataSource.entitySource
+    }
+
 
     private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
 

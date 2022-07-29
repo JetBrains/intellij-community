@@ -101,6 +101,16 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as VFUEntity2
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+      this.filePath = dataSource.filePath
+      this.directoryPath = dataSource.directoryPath
+      this.notNullRoots = dataSource.notNullRoots.toMutableList()
+    }
+
 
     override var data: String
       get() = getEntityData().data

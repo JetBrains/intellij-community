@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -24,186 +25,198 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildWpidSampleEntityImpl: ChildWpidSampleEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithPersistentIdEntity::class.java, ChildWpidSampleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
-        
-        val connections = listOf<ConnectionId>(
-            PARENTENTITY_CONNECTION_ID,
-        )
+open class ChildWpidSampleEntityImpl : ChildWpidSampleEntity, WorkspaceEntityBase() {
 
+  companion object {
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithPersistentIdEntity::class.java,
+                                                                                ChildWpidSampleEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+
+    val connections = listOf<ConnectionId>(
+      PARENTENTITY_CONNECTION_ID,
+    )
+
+  }
+
+  @JvmField
+  var _data: String? = null
+  override val data: String
+    get() = _data!!
+
+  override val parentEntity: SampleWithPersistentIdEntity?
+    get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: ChildWpidSampleEntityData?) : ModifiableWorkspaceEntityBase<ChildWpidSampleEntity>(), ChildWpidSampleEntity.Builder {
+    constructor() : this(ChildWpidSampleEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity ChildWpidSampleEntity is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _data: String? = null
-    override val data: String
-        get() = _data!!
-                        
-    override val parentEntity: SampleWithPersistentIdEntity?
-        get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isDataInitialized()) {
+        error("Field ChildWpidSampleEntity#data should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field ChildWpidSampleEntity#entitySource should be initialized")
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: ChildWpidSampleEntityData?): ModifiableWorkspaceEntityBase<ChildWpidSampleEntity>(), ChildWpidSampleEntity.Builder {
-        constructor(): this(ChildWpidSampleEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity ChildWpidSampleEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isDataInitialized()) {
-                error("Field ChildWpidSampleEntity#data should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field ChildWpidSampleEntity#entitySource should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var data: String
-            get() = getEntityData().data
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().data = value
-                changedProperty.add("data")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-            
-        override var parentEntity: SampleWithPersistentIdEntity?
-            get() {
-                val _diff = diff
-                return if (_diff != null) {
-                    _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SampleWithPersistentIdEntity
-                } else {
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SampleWithPersistentIdEntity
-                }
-            }
-            set(value) {
-                checkModificationAllowed()
-                val _diff = diff
-                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    // Setting backref of the list
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    _diff.addEntity(value)
-                }
-                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                    _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                }
-                else {
-                    // Setting backref of the list
-                    if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-                    }
-                    // else you're attaching a new entity to an existing entity that is not modifiable
-                    
-                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
-                }
-                changedProperty.add("parentEntity")
-            }
-        
-        override fun getEntityData(): ChildWpidSampleEntityData = result ?: super.getEntityData() as ChildWpidSampleEntityData
-        override fun getEntityClass(): Class<ChildWpidSampleEntity> = ChildWpidSampleEntity::class.java
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildWpidSampleEntity
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
     }
+
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override var parentEntity: SampleWithPersistentIdEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                        PARENTENTITY_CONNECTION_ID)] as? SampleWithPersistentIdEntity
+        }
+        else {
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SampleWithPersistentIdEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+          // Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+          _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+          // Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parentEntity")
+      }
+
+    override fun getEntityData(): ChildWpidSampleEntityData = result ?: super.getEntityData() as ChildWpidSampleEntityData
+    override fun getEntityClass(): Class<ChildWpidSampleEntity> = ChildWpidSampleEntity::class.java
+  }
 }
-    
+
 class ChildWpidSampleEntityData : WorkspaceEntityData<ChildWpidSampleEntity>() {
-    lateinit var data: String
+  lateinit var data: String
 
-    fun isDataInitialized(): Boolean = ::data.isInitialized
+  fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWpidSampleEntity> {
-        val modifiable = ChildWpidSampleEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWpidSampleEntity> {
+    val modifiable = ChildWpidSampleEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): ChildWpidSampleEntity {
-        val entity = ChildWpidSampleEntityImpl()
-        entity._data = data
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): ChildWpidSampleEntity {
+    val entity = ChildWpidSampleEntityImpl()
+    entity._data = data
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return ChildWpidSampleEntity::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ChildWpidSampleEntity::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ChildWpidSampleEntityData
-        
-        if (this.data != other.data) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as ChildWpidSampleEntityData
-        
-        if (this.data != other.data) return false
-        return true
-    }
+    other as ChildWpidSampleEntityData
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + data.hashCode()
-        return result
-    }
+    if (this.data != other.data) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ChildWpidSampleEntityData
+
+    if (this.data != other.data) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
+  }
 }

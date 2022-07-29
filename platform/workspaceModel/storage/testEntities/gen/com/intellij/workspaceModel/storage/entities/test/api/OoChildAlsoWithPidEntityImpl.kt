@@ -96,6 +96,13 @@ open class OoChildAlsoWithPidEntityImpl : OoChildAlsoWithPidEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as OoChildAlsoWithPidEntity
+      this.childProperty = dataSource.childProperty
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var childProperty: String
       get() = getEntityData().childProperty

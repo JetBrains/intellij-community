@@ -70,6 +70,13 @@ open class BooleanEntityImpl : BooleanEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as BooleanEntity
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var data: Boolean
       get() = getEntityData().data

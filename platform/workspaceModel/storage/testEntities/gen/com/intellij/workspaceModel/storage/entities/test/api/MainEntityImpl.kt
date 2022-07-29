@@ -75,6 +75,13 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as MainEntity
+      this.x = dataSource.x
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var x: String
       get() = getEntityData().x

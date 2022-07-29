@@ -161,6 +161,15 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ModuleEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.type = dataSource.type
+      this.dependencies = dataSource.dependencies.toMutableList()
+    }
+
 
     override var name: String
       get() = getEntityData().name

@@ -93,6 +93,14 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FileCopyPackagingElementEntity
+      this.filePath = dataSource.filePath
+      this.renamedOutputFileName = dataSource.renamedOutputFileName
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

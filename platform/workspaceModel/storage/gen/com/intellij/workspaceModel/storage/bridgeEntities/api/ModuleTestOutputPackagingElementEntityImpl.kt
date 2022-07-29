@@ -88,6 +88,13 @@ open class ModuleTestOutputPackagingElementEntityImpl : ModuleTestOutputPackagin
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ModuleTestOutputPackagingElementEntity
+      this.module = dataSource.module
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

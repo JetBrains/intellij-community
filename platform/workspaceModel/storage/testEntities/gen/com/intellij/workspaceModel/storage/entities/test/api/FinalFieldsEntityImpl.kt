@@ -81,6 +81,15 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FinalFieldsEntity
+      this.descriptor = dataSource.descriptor
+      this.entitySource = dataSource.entitySource
+      this.description = dataSource.description
+      this.anotherVersion = dataSource.anotherVersion
+    }
+
 
     override var descriptor: AnotherDataClass
       get() = getEntityData().descriptor

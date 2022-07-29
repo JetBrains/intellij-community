@@ -108,6 +108,17 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as JavaModuleSettingsEntity
+      this.entitySource = dataSource.entitySource
+      this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
+      this.excludeOutput = dataSource.excludeOutput
+      this.compilerOutput = dataSource.compilerOutput
+      this.compilerOutputForTests = dataSource.compilerOutputForTests
+      this.languageLevelId = dataSource.languageLevelId
+    }
+
 
     override var module: ModuleEntity
       get() {

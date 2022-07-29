@@ -99,6 +99,13 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SourceRootOrderEntity
+      this.entitySource = dataSource.entitySource
+      this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
+    }
+
 
     override var contentRootEntity: ContentRootEntity
       get() {

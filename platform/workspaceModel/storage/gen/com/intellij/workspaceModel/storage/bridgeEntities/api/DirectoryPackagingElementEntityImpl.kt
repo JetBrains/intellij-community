@@ -118,6 +118,13 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as DirectoryPackagingElementEntity
+      this.directoryName = dataSource.directoryName
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {

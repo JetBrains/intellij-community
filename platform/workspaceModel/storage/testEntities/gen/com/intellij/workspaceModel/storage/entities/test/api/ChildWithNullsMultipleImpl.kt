@@ -77,6 +77,13 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildWithNullsMultiple
+      this.childData = dataSource.childData
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var childData: String
       get() = getEntityData().childData

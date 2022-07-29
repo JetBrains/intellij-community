@@ -98,6 +98,14 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as JavaResourceRootEntity
+      this.entitySource = dataSource.entitySource
+      this.generated = dataSource.generated
+      this.relativeOutputPath = dataSource.relativeOutputPath
+    }
+
 
     override var sourceRoot: SourceRootEntity
       get() {

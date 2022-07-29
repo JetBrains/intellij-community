@@ -83,6 +83,13 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as MainEntityToParent
+      this.entitySource = dataSource.entitySource
+      this.x = dataSource.x
+    }
+
 
     override var child: AttachedEntityToParent?
       get() {

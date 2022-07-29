@@ -93,6 +93,13 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildSubSubEntity
+      this.entitySource = dataSource.entitySource
+      this.childData = dataSource.childData
+    }
+
 
     override var parentEntity: ChildSubEntity
       get() {

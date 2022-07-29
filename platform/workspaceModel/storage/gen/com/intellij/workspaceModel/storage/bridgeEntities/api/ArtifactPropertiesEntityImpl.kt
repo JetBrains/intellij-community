@@ -103,6 +103,14 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ArtifactPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.providerType = dataSource.providerType
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+    }
+
 
     override var artifact: ArtifactEntity
       get() {

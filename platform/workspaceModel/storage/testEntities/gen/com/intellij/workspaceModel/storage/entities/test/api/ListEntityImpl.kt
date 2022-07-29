@@ -77,6 +77,13 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ListEntity
+      this.data = dataSource.data.toMutableList()
+      this.entitySource = dataSource.entitySource
+    }
+
 
     private val dataUpdater: (value: List<String>) -> Unit = { value ->
 

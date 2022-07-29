@@ -97,6 +97,12 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as LeftEntity
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositeBaseEntity?
       get() {

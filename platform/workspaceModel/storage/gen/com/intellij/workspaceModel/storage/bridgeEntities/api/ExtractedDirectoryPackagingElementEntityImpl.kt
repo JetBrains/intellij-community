@@ -96,6 +96,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ExtractedDirectoryPackagingElementEntity
+      this.filePath = dataSource.filePath
+      this.pathInArchive = dataSource.pathInArchive
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
