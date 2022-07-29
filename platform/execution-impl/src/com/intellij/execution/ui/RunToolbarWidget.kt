@@ -20,6 +20,7 @@ import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -35,10 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
@@ -230,13 +228,16 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
-      actions.add(DefaultActionGroup(conf.shortenName(), true).apply {
+      val inlineActions = mutableListOf<AnAction>()
+      inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
+      inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+
+      actions.add(ActionGroupWithInlineActions(conf.shortenName(), true, inlineActions).apply {
         templatePresentation.icon = conf.configuration.icon
         if (conf.isRunning(project)) {
           templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
         }
-        add(RunToolbarWidgetRunAction(runExecutor) { conf })
-        add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+
         if (profilerExecutor != null) {
           add(profilerExecutor.createExecutorActionGroup { conf })
         }
@@ -267,7 +268,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true,
       ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    ).apply { setShowSubmenuOnHover(true) }
+    )
   }
 
   private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
@@ -285,6 +286,10 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       super.update(e)
       e.presentation.text = string.get()
     }
+  }
+
+  private class ActionGroupWithInlineActions(@NlsActions.ActionText name: String, popup: Boolean, private val actions: List<AnAction>) : DefaultActionGroup(name, popup), InlineActionsHolder {
+    override fun getInlineActions(): List<AnAction> = actions
   }
 
   companion object {
