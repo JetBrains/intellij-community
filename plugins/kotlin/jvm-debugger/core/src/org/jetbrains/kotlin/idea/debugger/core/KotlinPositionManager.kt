@@ -15,7 +15,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ProjectRootManager
@@ -49,8 +49,6 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
-import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
-import org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionWithEntireLineHighlighted
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
@@ -72,7 +70,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.*
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
-    private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()
+    private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
         KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)
@@ -108,7 +106,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = stackFrameInterceptor.createStackFrame(frameProxy, debugProcess, location)
+        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, debugProcess, location)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }
