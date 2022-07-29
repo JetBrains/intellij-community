@@ -13,7 +13,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,7 +27,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class VirtualFileDeleteProvider implements DeleteProvider, DumbAware {
+public final class VirtualFileDeleteProvider implements DeleteProvider{
   private static final Logger LOG = Logger.getInstance(VirtualFileDeleteProvider.class);
 
   @Override
