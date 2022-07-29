@@ -243,4 +243,82 @@ class GridLayoutTest {
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
   }
+
+  /**
+   * Check IDEA-298908 Internal error happens when there are resizable Column/Row and some components are hidden
+   */
+  @Test
+  fun testIdea298908_resizableColumn() {
+    val nonResizeableIndex = 3
+    val panel = JPanel(GridLayout())
+    val builder = RowsGridBuilder(panel)
+    val labels = mutableListOf<JLabel>()
+    for (i in 0..4) {
+      val label = JLabel("Label1")
+      labels.add(label)
+      builder.cell(label, horizontalAlign = HorizontalAlign.FILL, resizableColumn = i != nonResizeableIndex)
+    }
+
+    testIdea298908(panel, labels, true, nonResizeableIndex)
+  }
+
+  /**
+   * Check IDEA-298908 Internal error happens when there are resizable Column/Row and some components are hidden
+   */
+  @Test
+  fun testIdea298908_resizableRow() {
+    val nonResizeableIndex = 2
+    val panel = JPanel(GridLayout())
+    val builder = RowsGridBuilder(panel)
+    val labels = mutableListOf<JLabel>()
+    for (i in 0..4) {
+      val label = JLabel("Label1")
+      labels.add(label)
+      builder
+        .row(resizable = i != nonResizeableIndex)
+        .cell(label, verticalAlign = VerticalAlign.FILL)
+    }
+
+    testIdea298908(panel, labels, false, nonResizeableIndex)
+  }
+
+  /**
+   * Try every two cells invisible
+   */
+  private fun testIdea298908(panel: JPanel, labels: List<JLabel>, horizontal: Boolean, nonResizeableIndex: Int) {
+    val size = 600
+
+    for (i in 0..labels.size - 2) {
+      for (j in i + 1 until labels.size) {
+        for ((index, label) in labels.withIndex()) {
+          label.isVisible = index != i && index != j
+        }
+
+        doLayout(panel, size, size)
+
+        val resizableSize = if (i == nonResizeableIndex || j == nonResizeableIndex) {
+          size / 3
+        }
+        else {
+          val preferredSize = if (horizontal) labels[nonResizeableIndex].preferredSize.width else labels[nonResizeableIndex].preferredSize.height
+          (size - preferredSize) / 2
+        }
+
+        var expectedCoord = 0
+        for ((index, label) in labels.withIndex()) {
+          if (label.isVisible) {
+            assertEquals(expectedCoord, if (horizontal) label.x else label.y)
+            if (index == nonResizeableIndex) {
+              expectedCoord += if (horizontal) label.preferredSize.width else label.preferredSize.height
+            }
+            else {
+              expectedCoord += resizableSize
+            }
+          }
+        }
+
+        assertEquals(expectedCoord, size)
+      }
+    }
+  }
 }
