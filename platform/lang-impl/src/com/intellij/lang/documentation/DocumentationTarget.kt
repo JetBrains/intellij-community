@@ -12,13 +12,16 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * The minimal entity which is needed for documentation actions.
- *
- * The entity is valid within a read action, [createPointer] must be used to access the entity between different read actions.
  */
 @Experimental
 @OverrideOnly
 interface DocumentationTarget {
 
+  /**
+   * The current instance is valid within a single read action.
+   * This function must be used to access the entity between different read actions.
+   * See [Pointer] docs for an example.
+   */
   @RequiresReadLock
   @RequiresBackgroundThread
   fun createPointer(): Pointer<out DocumentationTarget>
