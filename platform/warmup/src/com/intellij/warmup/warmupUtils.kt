@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
-import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
@@ -11,10 +10,8 @@ import kotlinx.coroutines.time.delay
 import java.time.Duration
 import kotlin.system.exitProcess
 
-suspend fun waitIndexInitialization() {
-  val deferred = (FileBasedIndex.getInstance() as FileBasedIndexEx).untilIndicesAreInitialized()
-                 ?: throw ServiceNotReadyException()
-  deferred.join()
+fun waitIndexInitialization() {
+  (FileBasedIndex.getInstance() as FileBasedIndexEx).waitUntilIndicesAreInitialized()
 }
 
 suspend fun waitUntilProgressTasksAreFinishedOrFail() {

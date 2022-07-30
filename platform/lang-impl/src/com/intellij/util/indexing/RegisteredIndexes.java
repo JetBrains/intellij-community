@@ -9,8 +9,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
-import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -27,7 +25,8 @@ public final class RegisteredIndexes {
   private final FileDocumentManager myFileDocumentManager;
   @NotNull
   private final FileBasedIndexImpl myFileBasedIndex;
-  private final Deferred<IndexConfiguration> myStateFuture;
+  @NotNull
+  private final Future<IndexConfiguration> myStateFuture;
 
   private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<>();
 
@@ -50,7 +49,7 @@ public final class RegisteredIndexes {
                     @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
-    myStateFuture = IndexDataInitializer.Companion.submitGenesisTaskAsync(new FileBasedIndexDataInitialization(fileBasedIndex, this));
+    myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
 
     if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
@@ -74,8 +73,12 @@ public final class RegisteredIndexes {
   IndexConfiguration getConfigurationState() {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
-      state = FutureKt.asCompletableFuture(myStateFuture).join();
-      myState = state;
+      try {
+        myState = state = myStateFuture.get();
+      }
+      catch (Throwable t) {
+        throw new RuntimeException(t);
+      }
     }
     return state;
   }
@@ -86,11 +89,7 @@ public final class RegisteredIndexes {
   }
 
   void waitUntilIndicesAreInitialized() {
-    await(FutureKt.asCompletableFuture(myStateFuture));
-  }
-
-  Deferred<IndexConfiguration> getStateFuture() {
-    return myStateFuture;
+    await(myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -138,7 +137,7 @@ public final class RegisteredIndexes {
   }
 
   boolean areIndexesReady() {
-    return myStateFuture.isCompleted() && myAllIndicesInitializedFuture != null && myAllIndicesInitializedFuture.isDone();
+    return myStateFuture.isDone() && myAllIndicesInitializedFuture != null && myAllIndicesInitializedFuture.isDone();
   }
 
   boolean isExtensionsDataLoaded() {

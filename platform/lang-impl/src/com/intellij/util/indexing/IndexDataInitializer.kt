@@ -10,19 +10,19 @@ import kotlinx.coroutines.future.asCompletableFuture
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
-abstract class IndexDataInitializer<T> {
-  suspend fun execute(): T {
+abstract class IndexDataInitializer<T> : Callable<T?> {
+  override fun call(): T? {
     val log = Logger.getInstance(javaClass.name)
     val started = Instant.now()
-    try {
+    return try {
       val tasks = prepareTasks()
       runParallelTasks(tasks)
       val result = finish()
       val message = getInitializationFinishedMessage(result)
       log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
-      return result
+      result
     }
     catch (t: Throwable) {
       log.error("Index data initialization failed", t)
@@ -37,18 +37,16 @@ abstract class IndexDataInitializer<T> {
   protected abstract fun prepareTasks(): Collection<ThrowableRunnable<*>>
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private suspend fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>) {
+  private fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>) {
     if (tasks.isEmpty()) {
       return
     }
 
     if (ourDoParallelIndicesInitialization) {
-      coroutineScope {
-        withContext(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads())) {
-          for (task in tasks) {
-            launch {
-              executeTask(task)
-            }
+      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads())) {
+        for (task in tasks) {
+          launch {
+            executeTask(task)
           }
         }
       }
@@ -89,17 +87,8 @@ abstract class IndexDataInitializer<T> {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
     @JvmStatic
-    fun <T> submitGenesisTask(action: Callable<T>): CompletableFuture<T> {
+    fun <T> submitGenesisTask(action: Callable<T>): Future<T> {
       return scope.async { action.call() }.asCompletableFuture()
-    }
-
-    fun <T> submitGenesisTaskAsync(action: IndexDataInitializer<T>): Deferred<T> {
-      return scope.async {
-        // otherwise, Dispatchers.IO.limitedParallelism(1) will be inherited and used
-        withContext(Dispatchers.Default) {
-          action.execute()
-        }
-      }
     }
   }
 }
