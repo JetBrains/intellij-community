@@ -18,6 +18,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,10 +126,13 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
       int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
-      if (myRetries > retries) dispose(-1);
+      if (myRetries > retries) {
+        UIUtil.invokeLaterIfNeeded(() -> dispose(-1));
+      }
     });
   }
 
+  @RequiresEdt
   private void dispose(long millis) {
     if (myDisposed) return;
     myDisposed = true;
