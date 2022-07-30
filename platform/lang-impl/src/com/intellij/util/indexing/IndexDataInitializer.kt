@@ -94,7 +94,12 @@ abstract class IndexDataInitializer<T> {
     }
 
     fun <T> submitGenesisTaskAsync(action: IndexDataInitializer<T>): Deferred<T> {
-      return scope.async { action.execute() }
+      return scope.async {
+        // otherwise, Dispatchers.IO.limitedParallelism(1) will be inherited and used
+        withContext(Dispatchers.Default) {
+          action.execute()
+        }
+      }
     }
   }
 }
