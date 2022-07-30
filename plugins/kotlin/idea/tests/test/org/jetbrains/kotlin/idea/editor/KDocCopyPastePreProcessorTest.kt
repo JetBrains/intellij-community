@@ -101,7 +101,6 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
     )
 
-    // Works like in Java.
     fun testPasteTextWithLeadingEmptyLines() = doTypeTest(
         """
             
@@ -116,10 +115,30 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
-             *
+             * Hello
+             * World
+             */
+        """.trimIndent()
+    )
+
+    fun testPasteTextWithLeadingAndTrailingEmptyLines() = doTypeTest(
+        """
+            
             
             Hello
             World
+            
+            
+        """.trimIndent(),
+        """
+            /**
+             * <caret>
+             */
+        """.trimIndent(),
+        """
+            /**
+             * Hello
+             * World
              */
         """.trimIndent()
     )

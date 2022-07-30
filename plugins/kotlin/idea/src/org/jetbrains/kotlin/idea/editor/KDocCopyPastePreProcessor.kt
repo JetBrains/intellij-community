@@ -19,8 +19,6 @@ class KDocCopyPastePreProcessor : CopyPastePreProcessor {
         if (file !is KtFile) return text
 
         val offset = editor.selectionModel.selectionStart
-        if (DocumentUtil.isAtLineEnd(offset, editor.document) && text.startsWith("\n")) return text
-
         val element = file.findElementAt(offset)
         element?.parentOfType<KDoc>() ?: return text
 
@@ -31,6 +29,6 @@ class KDocCopyPastePreProcessor : CopyPastePreProcessor {
         if (firstNonWsLineOffset >= offset || chars[firstNonWsLineOffset] != '*') return text
 
         val lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + 1) + " "
-        return text.trimEnd('\n').replace("\n", lineStartReplacement)
+        return text.trim('\n').replace("\n", lineStartReplacement)
     }
 }
