@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<StateStorage>>>("CHANGED_FILES_KEY")
@@ -71,50 +72,15 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
         continue
       }
 
-      val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
-      val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
-      if ((changedSchemes.isNullOrEmpty()) && (changedStorages.isNullOrEmpty())
-          && !mayHaveAdditionalConfigurations(project)) {
-        continue
-      }
+      coroutineContext.ensureActive()
 
-      val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
-      withContext(Dispatchers.EDT) {
-        publisher.onBatchUpdateStarted()
-      }
       try {
-        // reload schemes first because project file can refer to scheme (e.g. inspection profile)
-        if (changedSchemes != null) {
-          withContext(Dispatchers.EDT) {
-            for ((tracker, files) in changedSchemes) {
-              runCatching {
-                @Suppress("UNCHECKED_CAST")
-                (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
-              }.getOrLogException(LOG)
-            }
-          }
-        }
-
-        if (changedStorages != null) {
-          withContext(Dispatchers.EDT) {
-            for ((store, storages) in changedStorages) {
-              if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
-                continue
-              }
-
-              if (reloadStore(storages, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
-                projectsToReload.add(project)
-              }
-            }
-          }
-        }
-
-        JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
+        project.coroutineScope.launch {
+          applyProjectChanges(project, projectsToReload)
+        }.join()
       }
-      finally {
-        withContext(Dispatchers.EDT) {
-          publisher.onBatchUpdateFinished()
-        }
+      catch (e: CancellationException) {
+        // ignore - project is disposed
       }
     }
 
@@ -123,6 +89,54 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
         for (project in projectsToReload) {
           doReloadProject(project)
         }
+      }
+    }
+  }
+
+  private suspend fun applyProjectChanges(project: Project, projectsToReload: LinkedHashSet<Project>) {
+    val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
+    val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
+    if ((changedSchemes.isNullOrEmpty()) && (changedStorages.isNullOrEmpty())
+        && !mayHaveAdditionalConfigurations(project)) {
+      return
+    }
+
+    val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+    withContext(Dispatchers.EDT) {
+      publisher.onBatchUpdateStarted()
+    }
+    try {
+      // reload schemes first because project file can refer to scheme (e.g. inspection profile)
+      if (changedSchemes != null) {
+        withContext(Dispatchers.EDT) {
+          for ((tracker, files) in changedSchemes) {
+            runCatching {
+              @Suppress("UNCHECKED_CAST")
+              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+            }.getOrLogException(LOG)
+          }
+        }
+      }
+
+      if (changedStorages != null) {
+        withContext(Dispatchers.EDT) {
+          for ((store, storages) in changedStorages) {
+            if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
+              continue
+            }
+
+            if (reloadStore(storages, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
+              projectsToReload.add(project)
+            }
+          }
+        }
+      }
+
+      JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        publisher.onBatchUpdateFinished()
       }
     }
   }
