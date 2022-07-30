@@ -1,114 +1,97 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+package com.intellij.openapi.application
 
-import com.intellij.ide.CliResult;
-import com.intellij.idea.SocketLock;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Future;
+import com.intellij.ide.CliResult
+import com.intellij.idea.SocketLock
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.future.asDeferred
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import kotlin.system.exitProcess
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class ApplicationStarterBase implements ApplicationStarter {
-  private final int[] myArgsCount;
+abstract class ApplicationStarterBase protected constructor(private vararg val argsCount: Int) : ApplicationStarter {
+  override val isHeadless: Boolean
+    get() = false
 
-  protected ApplicationStarterBase(int... possibleArgumentsCount) {
-    myArgsCount = possibleArgumentsCount;
+  companion object {
+    @JvmStatic
+    protected fun saveAll() {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      ApplicationManager.getApplication().saveSettings()
+    }
+
+    @JvmStatic
+    protected fun saveIfNeeded(file: VirtualFile?) {
+      if (file == null) return
+      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+    }
   }
 
-  @Override
-  public boolean isHeadless() {
-    return false;
-  }
+  override fun canProcessExternalCommandLine(): Boolean = true
 
-  @Override
-  public boolean canProcessExternalCommandLine() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
+  override suspend fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): CliResult {
     if (!checkArguments(args)) {
-      String title = ApplicationBundle.message("app.command.exec.error.title", getCommandName());
-      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(getUsageMessage(), title, Messages.getInformationIcon()));
-      return CliResult.error(1, getUsageMessage());
+      val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
+      ApplicationManager.getApplication().invokeLater { Messages.showMessageDialog(usageMessage, title, Messages.getInformationIcon()) }
+      return CliResult(1, usageMessage)
     }
     try {
-      return processCommand(args, currentDirectory);
+      return processCommand(args, currentDirectory).asDeferred().await()
     }
-    catch (Exception e) {
-      String title = ApplicationBundle.message("app.command.exec.error.title", getCommandName());
-      String message = ApplicationBundle.message("app.command.exec.error", getCommandName(), e.getMessage());
-      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(message, title, Messages.getErrorIcon()));
-      return CliResult.error(1, message);
+    catch (e: Exception) {
+      val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
+      val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
+      ApplicationManager.getApplication().invokeLater { Messages.showMessageDialog(message, title, Messages.getErrorIcon()) }
+      return CliResult(1, message)
     }
   }
 
-  protected static void saveAll() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    ApplicationManager.getApplication().saveSettings();
+  protected open fun checkArguments(args: List<String>): Boolean {
+    return Arrays.binarySearch(argsCount, args.size - 1) != -1 && commandName == args[0]
   }
 
-  protected static void saveIfNeeded(@Nullable VirtualFile file) {
-    if (file == null) return;
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null) FileDocumentManager.getInstance().saveDocument(document);
-  }
+  abstract val usageMessage: @NlsContexts.DialogMessage String?
 
-  protected boolean checkArguments(@NotNull List<String> args) {
-    return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
-  }
+  @Throws(Exception::class)
+  protected abstract fun processCommand(args: List<String>, currentDirectory: String?): CompletableFuture<CliResult>
 
-  @NlsContexts.DialogMessage
-  public abstract String getUsageMessage();
-
-  @NotNull
-  protected abstract Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception;
-
-  @Override
-  public void premain(@NotNull List<String> args) {
+  override fun premain(args: List<String>) {
     if (!checkArguments(args)) {
-      System.err.println(getUsageMessage());
-      System.exit(1);
+      System.err.println(usageMessage)
+      exitProcess(1)
     }
   }
 
-  @Override
-  public void main(@NotNull List<String> args) {
+  override fun main(args: List<String>) {
     try {
-      int exitCode;
-      try {
-        String currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
-        Future<CliResult> commandFuture = processCommand(args, currentDirectory);
-        CliResult result = commandFuture.get();
+      val exitCode: Int = try {
+        val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+        val commandFuture = processCommand(args, currentDirectory)
+        val result = commandFuture.get()
         if (result.message != null) {
-          System.out.println(result.message);
+          println(result.message)
         }
-        exitCode = result.exitCode;
+        result.exitCode
       }
       finally {
-        ApplicationManager.getApplication().invokeAndWait(ApplicationStarterBase::saveAll);
+        ApplicationManager.getApplication().invokeAndWait { saveAll() }
       }
-      System.exit(exitCode);
+      exitProcess(exitCode)
     }
-    catch (Exception e) {
-      e.printStackTrace();
-      System.exit(1);
+    catch (e: Exception) {
+      e.printStackTrace()
+      exitProcess(1)
     }
-    catch (Throwable t) {
-      t.printStackTrace();
-      System.exit(2);
+    catch (t: Throwable) {
+      t.printStackTrace()
+      exitProcess(2)
     }
   }
 }

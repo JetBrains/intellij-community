@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * @author gregsh
@@ -51,8 +50,8 @@ final class IdeScriptStarter extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull List<String> args,
-                                             @Nullable String currentDirectory) throws Exception {
+  protected CompletableFuture<CliResult> processCommand(@NotNull List<String> args,
+                                                        @Nullable String currentDirectory) throws Exception {
     List<Path> filePaths = ContainerUtil.map(args.subList(1, args.size()), Paths::get);
     Project project = guessProject();
     CompletableFuture<CliResult> future = new CompletableFuture<>();

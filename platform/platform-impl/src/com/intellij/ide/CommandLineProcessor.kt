@@ -45,13 +45,12 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
   private const val OPTION_WAIT = "--wait"
   @JvmField
-  val OK_FUTURE: Future<CliResult> = CompletableFuture.completedFuture(CliResult.OK)
+  val OK_FUTURE: CompletableFuture<CliResult> = CompletableFuture.completedFuture(CliResult.OK)
 
   @ApiStatus.Internal
   const val SCHEME_INTERNAL = "!!!internal!!!"
@@ -260,7 +259,8 @@ object CommandLineProcessor {
     LOG.info("Processing command with $starter")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
-      return CommandLineProcessorResult(project = null, future = starter.processExternalCommandLineAsync(args, currentDirectory))
+      val result = starter.processExternalCommandLineAsync(args, currentDirectory)
+      return CommandLineProcessorResult(project = null, result = result)
     }
 
     val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) {
@@ -270,7 +270,8 @@ object CommandLineProcessor {
       ModalityState.defaultModalityState()
     }
     return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-      CommandLineProcessorResult(project = null, future = starter.processExternalCommandLineAsync(args, currentDirectory))
+      val result = starter.processExternalCommandLineAsync(args, currentDirectory)
+      CommandLineProcessorResult(project = null, result = result)
     }
   }
 

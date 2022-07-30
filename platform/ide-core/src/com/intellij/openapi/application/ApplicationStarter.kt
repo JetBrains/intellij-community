@@ -6,8 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.Future
-import kotlin.time.Duration
 
 @Internal
 @Experimental
@@ -99,7 +97,7 @@ interface ApplicationStarter {
   /** @see .canProcessExternalCommandLine
    */
   @JvmDefault
-  fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): Future<CliResult> {
+  suspend fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): CliResult {
     throw UnsupportedOperationException("Class " + javaClass.name + " must implement `processExternalCommandLineAsync()`")
   }
 }
