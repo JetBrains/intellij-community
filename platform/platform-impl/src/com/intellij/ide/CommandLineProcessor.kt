@@ -13,13 +13,13 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.CommandLineArgs
+import com.intellij.idea.findStarter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
@@ -237,12 +237,8 @@ object CommandLineProcessor {
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CommandLineProcessorResult? {
     val command = args.first()
 
-    val app = ApplicationManager.getApplication()
-    val extensionArea = app.extensionArea as ExtensionsAreaImpl
-    val adapter = extensionArea.getExtensionPoint<ApplicationStarter>(ApplicationStarter.EP_NAME.name)
-      .sortedAdapters.firstOrNull { it.orderId == command } ?: return null
-    val starter: ApplicationStarter = try {
-      adapter.createInstance(app) ?: return null
+    val starter = try {
+      findStarter(command) ?: return null
     }
     catch (e: CancellationException) {
       throw e
@@ -256,6 +252,7 @@ object CommandLineProcessor {
       return createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
                                            ApplicationNamesInfo.getInstance().productName))
     }
+
     LOG.info("Processing command with $starter")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {

@@ -40,7 +40,7 @@ final class IdeScriptStarter extends ApplicationStarterBase {
   @Override
   public String getUsageMessage() {
     String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    return LangBundle.message("ide.script.starter.usage", scriptName, getCommandName());
+    return LangBundle.message("ide.script.starter.usage", scriptName, "ideScript");
   }
 
   @Override

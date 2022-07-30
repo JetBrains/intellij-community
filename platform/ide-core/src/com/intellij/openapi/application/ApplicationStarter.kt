@@ -13,6 +13,7 @@ abstract class ModernApplicationStarter : ApplicationStarter {
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
   final override fun main(args: List<String>) {
     throw UnsupportedOperationException("Use start(args)")
@@ -53,9 +54,8 @@ interface ApplicationStarter {
   /**
    * Command-line switch to start with this runner.
    * For example, return `"inspect"` if you'd like to start an app with `"idea.exe inspect ..."` command.
-   *
-   * @return command-line selector.
    */
+  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   val commandName: String?
 
   /**

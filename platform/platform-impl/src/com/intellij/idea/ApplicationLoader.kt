@@ -89,7 +89,7 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafDeferred: Deferre
 
   val args = processProgramArguments(rawArgs)
   val deferredStarter = initAppActivity.runChild("app starter creation") {
-    findAppStarterAsync(args)
+    createAppStarterAsync(args)
   }
 
   launch {
@@ -228,7 +228,8 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
   }
 }
 
-private fun CoroutineScope.findAppStarterAsync(args: List<String>): Deferred<ApplicationStarter> {
+// `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
+private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<ApplicationStarter> {
   val first = args.firstOrNull()
   // first argument maybe a project path
   if (first == null) {
@@ -238,21 +239,9 @@ private fun CoroutineScope.findAppStarterAsync(args: List<String>): Deferred<App
     return async { createDefaultAppStarter() }
   }
 
-  var starter: ApplicationStarter? = null
-  val point = ApplicationStarter.EP_NAME.point as ExtensionPointImpl<ApplicationStarter>
-  for (adapter in point.sortedAdapters) {
-    if (adapter.orderId == first) {
-      starter = adapter.createInstance(point.componentManager)
-    }
-  }
-
-  if (starter == null) {
-    // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-    starter = point.firstOrNull { it == null || it.commandName == first } ?: createDefaultAppStarter()
-  }
-
+  val starter = findStarter(first) ?: createDefaultAppStarter()
   if (Main.isHeadless() && !starter.isHeadless) {
-    val commandName = starter.commandName
+    @Suppress("DEPRECATION") val commandName = starter.commandName
     val message = IdeBundle.message(
       "application.cannot.start.in.a.headless.mode",
       when {
@@ -346,7 +335,17 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
   return result
 }
 
-fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
+fun findStarter(key: String): ApplicationStarter? {
+  val point = ApplicationStarter.EP_NAME.point as ExtensionPointImpl<ApplicationStarter>
+  var result: ApplicationStarter? = point.sortedAdapters.firstOrNull { it.orderId == key }  ?.createInstance(point.componentManager)
+  if (result == null) {
+    result = point.firstOrNull {
+      @Suppress("DEPRECATION")
+      it?.commandName == key
+    }
+  }
+  return result
+}
 
 fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
