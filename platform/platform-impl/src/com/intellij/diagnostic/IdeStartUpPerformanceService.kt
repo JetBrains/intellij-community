@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 
 private class IdeStartUpPerformanceService : StartUpPerformanceReporter() {
   override fun addActivityListener(project: Project) {
-    if (perfFilePath != null) {
+    if (perfFilePath == null) {
       super.addActivityListener(project)
       return
     }
@@ -19,6 +19,5 @@ private class IdeStartUpPerformanceService : StartUpPerformanceReporter() {
         logStats(projectName)
       }
     })
-    return
   }
 }

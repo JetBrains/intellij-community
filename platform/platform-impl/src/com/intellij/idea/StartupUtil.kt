@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
 
 package com.intellij.idea
 
+import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
@@ -16,6 +18,7 @@ import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.SocketLock.ActivationStatus
@@ -25,12 +28,15 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.win32.IdeaWin32
+import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.CoreIconManager
 import com.intellij.ui.IconManager
@@ -166,9 +172,10 @@ fun start(isHeadless: Boolean,
     activity = activity.endAndStart("LaF init scheduling")
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
-    val initUiJob = async(asyncDispatcher) { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = this) }
+    val mainScope = this@runBlocking
+    val initUiJob = async(asyncDispatcher) { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = mainScope) }
 
-    Main.mainScope = this
+    Main.mainScope = mainScope
 
     activity = activity.endAndStart("console logger configuration")
     configureJavaUtilLogging()
@@ -212,12 +219,19 @@ fun start(isHeadless: Boolean,
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = Java11ShimImpl()
     if (!configImportNeeded) {
-      PluginManagerCore.scheduleDescriptorLoading(this, async(Dispatchers.IO) {
+      PluginManagerCore.scheduleDescriptorLoading(mainScope, async(Dispatchers.IO) {
         // ZipFilePoolImpl uses Guava for Striped lock - load in parallel
         val result = ZipFilePoolImpl()
         ZipFilePool.POOL = result
         result
       })
+    }
+
+    val setBaseLafDeferred = async(asyncDispatcher) { setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob, initUiJob, mainScope) }
+    if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
+      launchAndMeasure("coroutine debug probes init") {
+        enableCoroutineDump()
+      }
     }
 
     launch(asyncDispatcher) {
@@ -231,24 +245,35 @@ fun start(isHeadless: Boolean,
         launch {
           initUiJob.join()
 
-          val subActivity = StartUpMeasurer.startActivity("mac app init")
-          MacOSApplicationProvider.initApplication(log)
-          subActivity.end()
+          runActivity("mac app init") {
+            MacOSApplicationProvider.initApplication(log)
+          }
         }
       }
       withContext(Dispatchers.IO) {
         logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
       }
+
+      val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+      if (isInternal) {
+        runActivity("assert on missed keys enabling") {
+          BundleBase.assertOnMissedKeys(true)
+        }
+      }
+      runActivity("disposer debug mode enabling if needed") {
+        if (isInternal || Disposer.isDebugDisposerOn()) {
+          Disposer.setDebugMode(true)
+        }
+      }
+
+      appInfoDeferred.join()
+      runActivity("opentelemetry configuration") {
+        TraceManager.init()
+      }
     }
 
     shellEnvLoadFuture = async(Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
-    }
-
-    if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
-      launchAndMeasure("coroutine debug probes init") {
-        enableCoroutineDump()
-      }
     }
 
     if (!configImportNeeded) {
@@ -261,20 +286,48 @@ fun start(isHeadless: Boolean,
     val appStarter = appStarterFuture.await()
     mainClassLoadingWaitingActivity.end()
 
+    // we must wait for UI before creating application - EDT thread is required
+    val baseLaf = runActivity("prepare ui waiting") {
+      initUiJob.await() as LookAndFeel
+    }
+
     if (!isHeadless && configImportNeeded) {
       importConfig(args = argsAsList,
                    log = log,
                    appStarter = appStarter,
                    agreementShown = showEuaIfNeededJob,
-                   initUiFuture = initUiJob)
+                   baseLaf = baseLaf,
+                   mainScope = mainScope)
     }
 
-    appStarter.start(argsAsList, async {
-      showEuaIfNeededJob.join()
-      initUiJob.await()
-    })
+    appStarter.start(argsAsList, setBaseLafDeferred)
 
     awaitCancellation()
+  }
+}
+
+private suspend fun setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob: Deferred<Boolean>,
+                                                initUiJob: Deferred<Any>,
+                                                mainScope: CoroutineScope) {
+  showEuaIfNeededJob.join()
+  val baseLaF = initUiJob.await() as LookAndFeel
+  runActivity("base laf passing") {
+    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+  }
+
+  if (!Main.isHeadless()) {
+    mainScope.launchAndMeasure("html style patching", SwingDispatcher) {
+      // patch html styles
+      val uiDefaults = UIManager.getDefaults()
+      // create a separate copy for each case
+      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+    }
+
+    mainScope.launch(SwingDispatcher) {
+      WeakFocusStackManager.getInstance()
+    }
   }
 }
 
@@ -395,7 +448,8 @@ private suspend fun importConfig(args: List<String>,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  agreementShown: Deferred<Boolean>,
-                                 initUiFuture: Deferred<Any>) {
+                                 baseLaf: Any,
+                                 mainScope: CoroutineScope) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -408,7 +462,6 @@ private suspend fun importConfig(args: List<String>,
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
   val veryFirstStartOnThisComputer = agreementShown.await()
-  val baseLaf = initUiFuture.await()
   withContext(SwingDispatcher) {
     setLafToShowPreAppStartUpDialogIfNeeded(baseLaf)
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
@@ -416,11 +469,11 @@ private suspend fun importConfig(args: List<String>,
   appStarter.importFinished(newConfigDir)
   activity.end()
   if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
-    PluginManagerCore.scheduleDescriptorLoading(Main.mainScope!!)
+    PluginManagerCore.scheduleDescriptorLoading(mainScope)
   }
 }
 
-fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
+private fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
   if (DarculaLaf.setPreInitializedBaseLaf((baseLaF as LookAndFeel))) {
     UIManager.setLookAndFeel(IntelliJLaf())
   }
@@ -482,7 +535,7 @@ and thus will effectively disable auto shutdown behavior for this application.
     activity.end()
     patchSystem(isHeadless)
     if (!isHeadless) {
-      mainScope.launch {
+      mainScope.launch(Dispatchers.Default) {
         updateFrameClassAndWindowIcon()
       }
       mainScope.launch(Dispatchers.IO) {

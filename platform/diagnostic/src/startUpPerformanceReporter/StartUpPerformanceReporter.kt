@@ -12,10 +12,8 @@ import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
@@ -61,7 +59,57 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
     }
 
     fun logStats(projectName: String) {
-      doLogStats(projectName, perfFilePath)
+      logAndClearStats(projectName, perfFilePath)
+    }
+
+    private class ActivityListener(
+      private val projectName: String,
+      private val manager: StartUpPerformanceReporter,
+    ) : Consumer<ActivityImpl> {
+      @Volatile
+      private var projectOpenedActivitiesPassed = false
+
+      // not all activities are performed always, so, we wait only activities that were started
+      @Volatile
+      private var editorRestoringTillPaint = true
+
+      override fun accept(activity: ActivityImpl) {
+        if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
+          return
+        }
+
+        if (activity.end == 0L) {
+          if (activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
+            editorRestoringTillPaint = false
+          }
+        }
+        else {
+          when (activity.name) {
+            Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
+              projectOpenedActivitiesPassed = true
+              if (editorRestoringTillPaint) {
+                completed()
+              }
+            }
+            Activities.EDITOR_RESTORING_TILL_PAINT -> {
+              editorRestoringTillPaint = true
+              if (projectOpenedActivitiesPassed) {
+                completed()
+              }
+            }
+          }
+        }
+      }
+
+      private fun completed() {
+        ActivityImpl.listener = null
+
+        StartUpMeasurer.stopPluginCostMeasurement()
+        // don't report statistic from here if we want to measure project import duration
+        if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
+          manager.keepAndLogStats(projectName)
+        }
+      }
     }
   }
 
@@ -72,60 +120,8 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
   override fun getLastReport() = lastReport
 
   override fun addActivityListener(project: Project) {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-
     if (ActivityImpl.listener == null) {
-      ActivityImpl.listener = ActivityListener(project.name)
-    }
-  }
-
-  private inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
-    @Volatile
-    private var projectOpenedActivitiesPassed = false
-
-    // not all activities are performed always, so, we wait only activities that were started
-    @Volatile
-    private var editorRestoringTillPaint = true
-
-    override fun accept(activity: ActivityImpl) {
-      if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
-        return
-      }
-
-      if (activity.end == 0L) {
-        if (activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
-          editorRestoringTillPaint = false
-        }
-      }
-      else {
-        when (activity.name) {
-          Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
-            projectOpenedActivitiesPassed = true
-            if (editorRestoringTillPaint) {
-              completed()
-            }
-          }
-          Activities.EDITOR_RESTORING_TILL_PAINT -> {
-            editorRestoringTillPaint = true
-            if (projectOpenedActivitiesPassed) {
-              completed()
-            }
-          }
-        }
-      }
-    }
-
-    private fun completed() {
-      ActivityImpl.listener = null
-
-      StartUpMeasurer.stopPluginCostMeasurement()
-      // don't report statistic from here if we want to measure project import duration
-      if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
-        keepAndLogStats(projectName)
-      }
+      ActivityImpl.listener = ActivityListener(project.name, this)
     }
   }
 
@@ -137,14 +133,14 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
 
   @Synchronized
   private fun keepAndLogStats(projectName: String) {
-    val params = doLogStats(projectName, perfFilePath)
+    val params = logAndClearStats(projectName, perfFilePath)
     pluginCostMap = params.pluginCostMap
     lastReport = params.lastReport
     lastMetrics = params.lastMetrics
   }
 }
 
-private fun doLogStats(projectName: String, perfFilePath: String?): StartUpPerformanceReporterValues {
+private fun logAndClearStats(projectName: String, perfFilePath: String?): StartUpPerformanceReporterValues {
   val instantEvents = mutableListOf<ActivityImpl>()
   // write activity category in the same order as first reported
   val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()

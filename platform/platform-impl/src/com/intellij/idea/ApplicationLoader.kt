@@ -4,18 +4,14 @@
 @file:Suppress("ReplacePutWithAssignment")
 package com.intellij.idea
 
-import com.intellij.BundleBase
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
-import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.html.GlobalStyleSheetHolder
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -29,11 +25,9 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
@@ -57,8 +51,6 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
-import javax.swing.LookAndFeel
-import javax.swing.UIManager
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
@@ -75,153 +67,103 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
+suspend fun doInitApplication(rawArgs: List<String>, setBaseLafDeferred: Deferred<Any>): Unit = coroutineScope {
   val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
-  val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
-  val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+  val app = initAppActivity.runChild("app instantiation") {
+    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+    ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+  }
+  val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
+    PluginManagerCore.getInitPluginFuture().await()
+  }
+  initAppActivity.runChild("app component registration") {
+    app.registerComponents(modules = pluginSet.getEnabledModules(),
+                           app = app,
+                           precomputedExtensionModel = null,
+                           listenerCallbacks = null)
+  }
+
+  withContext(Dispatchers.IO) {
+    initConfigurationStore(app)
+  }
+
+  val args = processProgramArguments(rawArgs)
+  val deferredStarter = initAppActivity.runChild("app starter creation") {
+    findAppStarterAsync(args)
+  }
+
+  launch {
+    // ensure that base laf is set before initialization of LafManagerImpl
+    runActivity("base laf waiting") {
+      setBaseLafDeferred.join()
+    }
+
+    withContext(SwingDispatcher) {
+      runActivity("laf initialization") {
+        // don't wait for result - we just need to trigger initialization if not yet created
+        app.getServiceAsync(LafManager::class.java)
+      }
+    }
+  }
+
+  val appInitializedListeners = coroutineScope {
+    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
+
+    launch {
+      initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
+        val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
+        withContext(SwingDispatcher) {
+          placeOnEventQueueActivity.end()
+          loadComponentInEdtTask()
+        }
+      }
+      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+    }
+
+    runActivity("app init listener preload") {
+      getAppInitializedListeners(app)
+    }
+  }
+
+  val asyncScope = app.coroutineScope
   coroutineScope {
-    if (isInternal) {
-      launch {
-        initAppActivity.runChild("assert on missed keys enabling") {
-          BundleBase.assertOnMissedKeys(true)
-        }
+    initAppActivity.runChild("app initialized callback") {
+      callAppInitialized(appInitializedListeners, asyncScope)
+    }
+
+    // doesn't block app start-up
+    asyncScope.runPostAppInitTasks(app)
+  }
+
+  initAppActivity.end()
+
+  launch {
+    addActivateAndWindowsCliListeners()
+  }
+
+  val starter = deferredStarter.await()
+  if (starter.requiredModality != ApplicationStarter.NOT_IN_EDT) {
+    ApplicationManager.getApplication().invokeLater {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(args)
       }
     }
-    launch {
-      initAppActivity.runChild("disposer debug mode enabling if needed") {
-        if (isInternal || Disposer.isDebugDisposerOn()) {
-          Disposer.setDebugMode(true)
-        }
+    ZipFilePool.POOL = null
+    return@coroutineScope
+  }
+
+  asyncScope.launch {
+    if (starter is ModernApplicationStarter) {
+      starter.start(args)
+    }
+    else {
+      // todo https://youtrack.jetbrains.com/issue/IDEA-298594
+      CompletableFuture.runAsync {
+        starter.main(args)
       }
     }
-    launch {
-      initAppActivity.runChild("opentelemetry configuration") {
-        TraceManager.init()
-      }
-    }
-
-    val baseLaf = prepareUiFuture.await()
-    prepareUiFutureWaitActivity.end()
-    val setBaseLafFuture = launch {
-      initAppActivity.runChild("base laf passing") {
-        DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
-      }
-    }
-
-    if (!Main.isHeadless()) {
-      launch(SwingDispatcher) {
-        val patchingActivity = StartUpMeasurer.startActivity("html style patching")
-        // patch html styles
-        val uiDefaults = UIManager.getDefaults()
-        // create a separate copy for each case
-        uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
-        uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
-
-        patchingActivity.end()
-      }
-
-      launch(SwingDispatcher) {
-        WeakFocusStackManager.getInstance()
-      }
-    }
-
-    val app = initAppActivity.runChild("app instantiation") {
-      ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-    }
-    val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
-      PluginManagerCore.getInitPluginFuture().await()
-    }
-    initAppActivity.runChild("app component registration") {
-      app.registerComponents(modules = pluginSet.getEnabledModules(),
-                             app = app,
-                             precomputedExtensionModel = null,
-                             listenerCallbacks = null)
-    }
-
-    withContext(Dispatchers.IO) {
-      initConfigurationStore(app)
-    }
-
-    launch {
-      // ensure that base laf is set before initialization of LafManagerImpl
-      runActivity("base laf waiting") {
-        setBaseLafFuture.join()
-      }
-
-      withContext(SwingDispatcher) {
-        runActivity("laf initialization") {
-          // don't wait for result - we just need to trigger initialization if not yet created
-          app.getServiceAsync(LafManager::class.java)
-        }
-      }
-    }
-
-    val args = processProgramArguments(rawArgs)
-    val deferredStarter = async {
-      initAppActivity.runChild("app starter creation") {
-        findAppStarter(args)
-      }
-    }
-
-    val appInitializedListeners = coroutineScope {
-      app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
-
-      launch {
-        initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
-          val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
-          withContext(SwingDispatcher) {
-            placeOnEventQueueActivity.end()
-            loadComponentInEdtTask()
-          }
-        }
-        StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
-      }
-
-      runActivity("app init listener preload") {
-        getAppInitializedListeners(app)
-      }
-    }
-
-    val asyncScope = app.coroutineScope
-    coroutineScope {
-      initAppActivity.runChild("app initialized callback") {
-        callAppInitialized(appInitializedListeners, asyncScope)
-      }
-
-      // doesn't block app start-up
-      asyncScope.runPostAppInitTasks(app)
-    }
-
-    initAppActivity.end()
-
-    launch {
-      addActivateAndWindowsCliListeners()
-    }
-
-    val starter = deferredStarter.await()
-    if (starter.requiredModality != ApplicationStarter.NOT_IN_EDT) {
-      ApplicationManager.getApplication().invokeLater {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          starter.main(args)
-        }
-      }
-      ZipFilePool.POOL = null
-      return@coroutineScope
-    }
-
-    asyncScope.launch {
-      if (starter is ModernApplicationStarter) {
-        starter.start(args)
-      }
-      else {
-        // todo https://youtrack.jetbrains.com/issue/IDEA-298594
-        CompletableFuture.runAsync {
-          starter.main(args)
-        }
-      }
-      // no need to use pool once started
-      ZipFilePool.POOL = null
-    }
+    // no need to use pool once started
+    ZipFilePool.POOL = null
   }
 }
 
@@ -286,14 +228,14 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
   }
 }
 
-private fun findAppStarter(args: List<String>): ApplicationStarter {
+private fun CoroutineScope.findAppStarterAsync(args: List<String>): Deferred<ApplicationStarter> {
   val first = args.firstOrNull()
   // first argument maybe a project path
   if (first == null) {
-    return IdeStarter()
+    return async { IdeStarter() }
   }
   else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(first)) {
-    return createDefaultAppStarter()
+    return async { createDefaultAppStarter() }
   }
 
   var starter: ApplicationStarter? = null
@@ -327,8 +269,9 @@ private fun findAppStarter(args: List<String>): ApplicationStarter {
     exitProcess(Main.NO_GRAPHICS)
   }
 
+  // must be executed before container creation
   starter.premain(args)
-  return starter
+  return CompletableDeferred(value = starter)
 }
 
 private fun createDefaultAppStarter(): ApplicationStarter {
