@@ -44,6 +44,8 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -349,8 +351,9 @@ private fun addActivateAndWindowsCliListeners() {
   addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-    val result = runBlocking { handleExternalCommand(args, currentDirectory) }
-    result.future
+    ApplicationManager.getApplication().coroutineScope.async {
+      handleExternalCommand(args, currentDirectory).future.asDeferred().await()
+    }.asCompletableFuture()
   }
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
@@ -372,28 +375,28 @@ private fun addActivateAndWindowsCliListeners() {
 
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
-    CommandLineProcessor.processProtocolCommand(args[0])
-    CommandLineProcessorResult(null, CommandLineProcessor.OK_FUTURE)
+    CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
   }
   else {
     CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
   }
+
+  // not a part of handleExternalCommand invocation - invokeLater
   ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
-    if (result.hasError) {
-      result.showErrorIfFailed()
+    if (result.showErrorIfFailed()) {
+      return@launch
+    }
+
+    val windowManager = WindowManager.getInstance()
+    if (result.project == null) {
+      windowManager.findVisibleFrame()?.let { frame ->
+        frame.toFront()
+        DialogEarthquakeShaker.shake(frame)
+      }
     }
     else {
-      val windowManager = WindowManager.getInstance()
-      if (result.project == null) {
-        windowManager.findVisibleFrame()?.let { frame ->
-          frame.toFront()
-          DialogEarthquakeShaker.shake(frame)
-        }
-      }
-      else {
-        windowManager.getIdeFrame(result.project)?.let {
-          AppIcon.getInstance().requestFocus(it)
-        }
+      windowManager.getIdeFrame(result.project)?.let {
+        AppIcon.getInstance().requestFocus(it)
       }
     }
   }

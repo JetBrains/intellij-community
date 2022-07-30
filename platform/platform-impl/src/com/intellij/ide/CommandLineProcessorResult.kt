@@ -6,10 +6,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 @ApiStatus.Internal
-data class CommandLineProcessorResult(val project: Project?, val future: Future<CliResult>) {
+data class CommandLineProcessorResult(val project: Project?, val future: CompletableFuture<CliResult>) {
   constructor(project: Project?, result: CliResult) : this(project, CompletableFuture.completedFuture(result))
 
   companion object {
@@ -19,11 +18,11 @@ data class CommandLineProcessorResult(val project: Project?, val future: Future<
   }
 
   val hasError: Boolean
-    get() = future.isDone && future.get().exitCode == 1
+    get() = future.isDone && future.join().exitCode == 1
 
   fun showErrorIfFailed(): Boolean {
     if (hasError) {
-      Messages.showErrorDialog(future.get().message, IdeBundle.message("dialog.title.cannot.execute.command"))
+      Messages.showErrorDialog(future.join().message, IdeBundle.message("dialog.title.cannot.execute.command"))
       return true
     }
     return false

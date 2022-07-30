@@ -239,8 +239,8 @@ object CommandLineProcessor {
 
     val app = ApplicationManager.getApplication()
     val extensionArea = app.extensionArea as ExtensionsAreaImpl
-    val adapter = extensionArea.getExtensionPoint<ApplicationStarter>(ApplicationStarter.EP_NAME.name).sortedAdapters.firstOrNull { it.orderId == command }
-                  ?: return null
+    val adapter = extensionArea.getExtensionPoint<ApplicationStarter>(ApplicationStarter.EP_NAME.name)
+      .sortedAdapters.firstOrNull { it.orderId == command } ?: return null
     val starter: ApplicationStarter = try {
       adapter.createInstance(app) ?: return null
     }
@@ -259,7 +259,7 @@ object CommandLineProcessor {
     LOG.info("Processing command with $starter")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
-      val result = starter.processExternalCommandLineAsync(args, currentDirectory)
+      val result = starter.processExternalCommandLine(args, currentDirectory)
       return CommandLineProcessorResult(project = null, result = result)
     }
 
@@ -270,7 +270,7 @@ object CommandLineProcessor {
       ModalityState.defaultModalityState()
     }
     return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-      val result = starter.processExternalCommandLineAsync(args, currentDirectory)
+      val result = starter.processExternalCommandLine(args, currentDirectory)
       CommandLineProcessorResult(project = null, result = result)
     }
   }
@@ -322,8 +322,7 @@ object CommandLineProcessor {
       if (StringUtilRt.isQuotedString(arg)) {
         arg = StringUtilRt.unquoteString(arg)
       }
-      val file = parseFilePath(arg, currentDirectory)
-                 ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
+      val file = parseFilePath(arg, currentDirectory) ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
       projectAndCallback = openFileOrProject(file = file,
                                              line = line,
                                              column = column,
@@ -339,18 +338,17 @@ object CommandLineProcessor {
       i++
     }
 
-    if (projectAndCallback != null) {
-      return projectAndCallback
+    projectAndCallback?.let {
+      return it
     }
 
     if (shouldWait) {
       return CommandLineProcessorResult(
         project = null,
-        future = CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+        result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
       )
     }
-
-    if (lightEditMode) {
+    else if (lightEditMode) {
       LightEditService.getInstance().showEditorWindow()
       return CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
     }

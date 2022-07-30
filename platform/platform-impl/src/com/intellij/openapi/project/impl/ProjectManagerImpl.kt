@@ -10,7 +10,6 @@ import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
@@ -625,9 +624,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return doOpenAsync(options, projectStoreBaseDir, activity)
   }
 
-  private suspend fun doOpenAsync(options: OpenProjectTask,
-                                  projectStoreBaseDir: Path,
-                                  activity: Activity): Project? {
+  private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path, activity: Activity): Project? {
     val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       ProjectFrameAllocator(options)
     }

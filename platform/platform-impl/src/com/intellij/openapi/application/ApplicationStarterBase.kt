@@ -36,7 +36,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
 
   override fun canProcessExternalCommandLine(): Boolean = true
 
-  override suspend fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): CliResult {
+  override suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
     if (!checkArguments(args)) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       ApplicationManager.getApplication().invokeLater { Messages.showMessageDialog(usageMessage, title, Messages.getInformationIcon()) }
