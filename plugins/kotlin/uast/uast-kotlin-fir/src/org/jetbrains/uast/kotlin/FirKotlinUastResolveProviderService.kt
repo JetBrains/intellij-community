@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -137,9 +138,32 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         parent: UElement,
         includeExplicitParameters: Boolean
     ): List<KotlinUParameter> {
-        // TODO receiver parameter, dispatch parameter like in org.jetbrains.uast.kotlin.KotlinUastResolveProviderService.getImplicitParameters
         analyzeForUast(ktLambdaExpression) {
-            return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
+            val valueParameters = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
+            if (includeExplicitParameters && valueParameters.isEmpty()) {
+                val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
+                val lambdaImplicitReceiverType = expectedType?.typeArguments?.get(0)?.type?.asPsiType(
+                    ktLambdaExpression,
+                    KtTypeMappingMode.DEFAULT_UAST,
+                    isAnnotationMethod = false
+                ) ?: UastErrorType
+                return listOf(
+                    KotlinUParameter(
+                        UastKotlinPsiParameterBase(
+                            name = LAMBDA_THIS_PARAMETER_NAME,
+                            type = lambdaImplicitReceiverType,
+                            parent = ktLambdaExpression,
+                            ktOrigin = ktLambdaExpression,
+                            language = ktLambdaExpression.language,
+                            isVarArgs = false,
+                            ktDefaultValue = null
+                        ),
+                        sourcePsi = null,
+                        parent
+                    )
+                )
+            }
+            return valueParameters.map { p ->
                 val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
                     KtTypeMappingMode.DEFAULT_UAST,
