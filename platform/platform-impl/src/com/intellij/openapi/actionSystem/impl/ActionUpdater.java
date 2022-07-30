@@ -46,6 +46,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -192,6 +193,7 @@ final class ActionUpdater {
   private <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
     myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
+    AtomicReference<FList<Throwable>> edtTracesRef = new AtomicReference<>();
     long start0 = System.nanoTime();
     Supplier<? extends T> supplier = () -> {
       {
@@ -218,6 +220,7 @@ final class ActionUpdater {
       finally {
         ourInEDTActionOperationStack = prevStack;
         myCurEDTPerformMillis = TimeoutUtil.getDurationMillis(start);
+        edtTracesRef.set(ActionUpdateEdtExecutor.ourEDTExecTraces.get());
       }
     };
     try {
@@ -228,7 +231,11 @@ final class ActionUpdater {
         LOG.warn(myCurEDTWaitMillis + " ms to grab EDT for " + operationName);
       }
       if (myCurEDTPerformMillis > 200) {
-        LOG.error(elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX);
+        Throwable throwable = new Throwable(elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX);
+        for (Throwable trace : Objects.requireNonNullElse(edtTracesRef.get(), FList.<Throwable>emptyList())) {
+          throwable.addSuppressed(trace);
+        }
+        LOG.error(throwable);
       }
       myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
     }
