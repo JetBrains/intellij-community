@@ -195,11 +195,11 @@ enum class HintType(
                 }
                 else -> return emptyList()
             }
-            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
-            val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset)
-            return listOf(
-                InlayInfoDetails(leftInfo, listOf(TextInlayInfoDetail(leftText, smallText = false))),
-                InlayInfoDetails(rightInfo, listOf(TextInlayInfoDetail(rightText, smallText = false)))
+            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset).takeUnless { leftText.isEmpty() }
+            val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset).takeUnless { rightText.isEmpty() }
+            return listOfNotNull(
+                leftInfo?.let { InlayInfoDetails(it, listOf(TextInlayInfoDetail(leftText, smallText = false))) },
+                rightInfo?.let { InlayInfoDetails(it, listOf(TextInlayInfoDetail(rightText, smallText = false))) }
             )
         }
     };

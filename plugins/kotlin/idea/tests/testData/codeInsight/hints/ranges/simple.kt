@@ -1,5 +1,5 @@
 val range = 0<# ≤ #>..<# ≤ #>10
-val rangeUntil = 0<# ≤ #>..<<# < #>10
+val rangeUntil = 0<# ≤ #>..<10
 
 val errorRange = 4downTo 0
 
@@ -22,10 +22,10 @@ fun foo() {
     for (index in 0.0<# ≤ #> .. <# ≤ #>100.0) {}
     for (index in 0f<# ≤ #> .. <# ≤ #>100f) {}
 
-    for (index in 0<# ≤ #> ..< <# < #>100) {}
-    for (index in 'a'<# ≤ #> ..< <# < #>'z') {}
-    for (index in 0.0<# ≤ #> ..< <# < #>100.0) {}
-    for (index in 0f<# ≤ #> ..< <# < #>100f) {}
+    for (index in 0<# ≤ #> ..< 100) {}
+    for (index in 'a'<# ≤ #> ..< 'z') {}
+    for (index in 0.0<# ≤ #> ..< 100.0) {}
+    for (index in 0f<# ≤ #> ..< 100f) {}
 
     for (index in 0.rangeUntil(100)) {}
     for (index in 'a'.rangeUntil('z')) {}
@@ -50,7 +50,7 @@ fun foo() {
 
         for (i in left.rangeTo(right)) {}
         for (i in left<# ≤ #> .. <# ≤ #>right) {}
-        for (i in left<# ≤ #> ..< <# < #>right) {}
+        for (i in left<# ≤ #> ..< right) {}
         for (i in left<# ≤ #> until <# < #>right) {}
         for (index in right<# ≥ #> downTo <# ≥ #>left) {}
         for (index in left.rangeUntil(right)) {}
