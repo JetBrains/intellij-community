@@ -36,7 +36,7 @@ public class MissingActionUpdateThread extends DevKitJvmInspection {
               (isAnAction = AnAction.class.getName().equals(className))) {
             break;
           }
-          for (JvmMethod method : clazz.getMethods()) {
+          for (JvmMethod method : c.getMethods()) {
             String name = method.getName();
             if ("getActionUpdateThread".equals(name) && method.getParameters().length == 0) {
               return null;
