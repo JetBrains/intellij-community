@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 interface StoreReloadManager {
   companion object {
@@ -26,9 +25,6 @@ interface StoreReloadManager {
 
   @ApiStatus.Internal
   fun scheduleProcessingChangedFiles()
-
-  @TestOnly
-  suspend fun flushChangedProjectFileAlarm()
 
   fun saveChangedProjectFile(file: VirtualFile, project: Project)
 

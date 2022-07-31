@@ -208,20 +208,26 @@ fun getPerOsSettingsStorageFolderName(): String {
  */
 @CalledInAny
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  StoreReloadManager.getInstance().reloadChangedStorageFiles()
+  val storeReloadManager = StoreReloadManager.getInstance()
+  storeReloadManager.reloadChangedStorageFiles()
+  storeReloadManager.blockReloadingProjectOnExternalChanges()
+  try {
+    val start = System.currentTimeMillis()
+    saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
+    if (onlyProject == null) {
+      saveAllProjects(forceSavingAllSettings)
+    }
+    else {
+      saveSettings(onlyProject, forceSavingAllSettings = true)
+    }
 
-  val start = System.currentTimeMillis()
-  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
-  if (onlyProject == null) {
-    saveAllProjects(forceSavingAllSettings)
+    val duration = System.currentTimeMillis() - start
+    if (duration > 1000 || LOG.isDebugEnabled) {
+      LOG.info("saveProjectsAndApp took $duration ms")
+    }
   }
-  else {
-    saveSettings(onlyProject, forceSavingAllSettings = true)
-  }
-
-  val duration = System.currentTimeMillis() - start
-  if (duration > 1000 || LOG.isDebugEnabled) {
-    LOG.info("saveProjectsAndApp took $duration ms")
+  finally {
+    storeReloadManager.unblockReloadingProjectOnExternalChanges()
   }
 }
 

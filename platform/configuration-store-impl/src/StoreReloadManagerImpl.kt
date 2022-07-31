@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<StateStorage>>>("CHANGED_FILES_KEY")
@@ -50,7 +50,6 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
 
   private val changedFilesRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
 
   @OptIn(FlowPreview::class)
   private val job = ApplicationManager.getApplication().coroutineScope.launch {
@@ -67,25 +66,16 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
 
     val projectsToReload = LinkedHashSet<Project>()
-    for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
-      if (project.isDisposed || !project.isInitialized) {
-        continue
+    withContext(Dispatchers.EDT) {
+      for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return@withContext)) {
+        if (project.isDisposed || !project.isInitialized) {
+          continue
+        }
+
+        applyProjectChanges(project, projectsToReload)
       }
 
-      coroutineContext.ensureActive()
-
-      try {
-        project.coroutineScope.launch {
-          applyProjectChanges(project, projectsToReload)
-        }.join()
-      }
-      catch (e: CancellationException) {
-        // ignore - project is disposed
-      }
-    }
-
-    if (projectsToReload.isNotEmpty()) {
-      withContext(Dispatchers.EDT) {
+      if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
           doReloadProject(project)
         }
@@ -93,6 +83,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
   }
 
+  @RequiresEdt
   private suspend fun applyProjectChanges(project: Project, projectsToReload: LinkedHashSet<Project>) {
     val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
     val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
@@ -102,32 +93,26 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
 
     val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
-    withContext(Dispatchers.EDT) {
-      publisher.onBatchUpdateStarted()
-    }
+    publisher.onBatchUpdateStarted()
     try {
       // reload schemes first because project file can refer to scheme (e.g. inspection profile)
       if (changedSchemes != null) {
-        withContext(Dispatchers.EDT) {
-          for ((tracker, files) in changedSchemes) {
-            runCatching {
-              @Suppress("UNCHECKED_CAST")
-              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
-            }.getOrLogException(LOG)
-          }
+        for ((tracker, files) in changedSchemes) {
+          runCatching {
+            @Suppress("UNCHECKED_CAST")
+            (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+          }.getOrLogException(LOG)
         }
       }
 
       if (changedStorages != null) {
-        withContext(Dispatchers.EDT) {
-          for ((store, storages) in changedStorages) {
-            if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
-              continue
-            }
+        for ((store, storages) in changedStorages) {
+          if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
+            continue
+          }
 
-            if (reloadStore(storages, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
-              projectsToReload.add(project)
-            }
+          if (reloadStore(storages, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
+            projectsToReload.add(project)
           }
         }
       }
@@ -135,9 +120,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
     }
     finally {
-      withContext(Dispatchers.EDT) {
-        publisher.onBatchUpdateFinished()
-      }
+      publisher.onBatchUpdateFinished()
     }
   }
 
@@ -192,14 +175,8 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }
 
   /**
-   * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
+   * Internal use only. Force reload changed project files.
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun flushChangedProjectFileAlarm() {
-    changedFilesRequests.resetReplayCache()
-    doReload()
-  }
-
   @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun reloadChangedStorageFiles() {
     changedFilesRequests.resetReplayCache()
