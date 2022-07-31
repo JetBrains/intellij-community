@@ -69,6 +69,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
@@ -744,8 +745,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
     CommandLineProcess commandLineProcess;
-    if (Registry.get("python.use.targets.api").asBoolean()) {
+    boolean isUseTargetsAPI = Registry.is("python.use.targets.api");
+    if (isUseTargetsAPI) {
       commandLineProcess = createProcessUsingTargetsAPI(sdk);
+    }
+    else if (PyRunnerUtil.isTargetBased(sdk)) {
+      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
     }
     else {
       commandLineProcess = createProcess(sdk);
