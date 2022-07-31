@@ -100,7 +100,7 @@ private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 private var socketLock: SocketLock? = null
 
 // checked - using Deferred type doesn't lead to loading this class on StartupUtil init
-internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
+internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
@@ -227,7 +227,7 @@ fun start(isHeadless: Boolean,
       })
     }
 
-    val setBaseLafDeferred = async(asyncDispatcher) { setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob, initUiJob, mainScope) }
+    val setBaseLafJob = launch(asyncDispatcher) { setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob, initUiJob, mainScope) }
     if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
       launchAndMeasure("coroutine debug probes init") {
         enableCoroutineDump()
@@ -265,15 +265,17 @@ fun start(isHeadless: Boolean,
           Disposer.setDebugMode(true)
         }
       }
+    }
 
+    shellEnvDeferred = async(Dispatchers.IO) {
+      EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
+    }
+
+    val telemetryInitJob = launch(asyncDispatcher) {
       appInfoDeferred.join()
       runActivity("opentelemetry configuration") {
         TraceManager.init()
       }
-    }
-
-    shellEnvLoadFuture = async(Dispatchers.IO) {
-      EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
     }
 
     if (!configImportNeeded) {
@@ -300,7 +302,7 @@ fun start(isHeadless: Boolean,
                    mainScope = mainScope)
     }
 
-    appStarter.start(argsAsList, setBaseLafDeferred)
+    appStarter.start(argsAsList, setBaseLafJob, telemetryInitJob)
 
     awaitCancellation()
   }
@@ -965,7 +967,7 @@ fun canonicalPath(path: String): Path {
 
 interface AppStarter {
   /* called from IDE init thread */
-  suspend fun start(args: List<String>, prepareUiFuture: Deferred<Any>)
+  suspend fun start(args: List<String>, setBaseLafJob: Job, telemetryInitJob: Job)
 
   /* called from IDE init thread */
   fun beforeImportConfigs() {}

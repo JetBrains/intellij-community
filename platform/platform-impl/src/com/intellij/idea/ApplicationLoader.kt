@@ -56,9 +56,9 @@ import kotlin.system.exitProcess
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
+fun initApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job) {
   val job = Main.mainScope.launch(Dispatchers.Default) {
-    doInitApplication(rawArgs, prepareUiFuture)
+    doInitApplication(rawArgs, setBaseLafJob, telemetryInitJob)
   }
 
   // block the thread
@@ -67,7 +67,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, setBaseLafDeferred: Deferred<Any>): Unit = coroutineScope {
+suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job): Unit = coroutineScope {
   val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
   val app = initAppActivity.runChild("app instantiation") {
     val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -76,6 +76,11 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafDeferred: Deferre
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
+
+  initAppActivity.runChild("telemetry waiting") {
+    telemetryInitJob.join()
+  }
+
   initAppActivity.runChild("app component registration") {
     app.registerComponents(modules = pluginSet.getEnabledModules(),
                            app = app,
@@ -95,7 +100,7 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafDeferred: Deferre
   launch {
     // ensure that base laf is set before initialization of LafManagerImpl
     runActivity("base laf waiting") {
-      setBaseLafDeferred.join()
+      setBaseLafJob.join()
     }
 
     withContext(SwingDispatcher) {
