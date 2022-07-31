@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
+import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
@@ -76,8 +77,13 @@ internal class KotlinNativeABICompatibilityCheckerService(private val project: P
 
         backgroundJob.set(
             nonBlocking<List<Notification>> {
-                val librariesToNotify = getLibrariesToNotifyAbout()
-                prepareNotifications(librariesToNotify)
+                if (project.containsKotlinFile()) {
+                    val librariesToNotify = getLibrariesToNotifyAbout()
+                    prepareNotifications(librariesToNotify)
+                } else {
+                    // do not scan libraries in projects without Kotlin files
+                    emptyList()
+                }
             }
                 .finishOnUiThread(ModalityState.defaultModalityState()) { notifications ->
                     notifications.forEach {
