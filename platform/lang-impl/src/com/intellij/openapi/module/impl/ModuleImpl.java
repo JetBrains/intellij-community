@@ -106,12 +106,6 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    // Component loading progress is not reported for module, because at this stage minimal reporting unit it is the module itself.
-    // Stage "Loading modules" progress reported for each loaded module and module component count doesn't matter.
-  }
-
-  @Override
   public final boolean isDisposed() {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     //noinspection TestOnlyProblems

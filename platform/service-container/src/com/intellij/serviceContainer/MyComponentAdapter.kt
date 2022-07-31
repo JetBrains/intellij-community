@@ -4,7 +4,6 @@ package com.intellij.serviceContainer
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CompletableDeferred
 import org.picocontainer.ComponentAdapter
@@ -32,7 +31,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     }
   }
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
     try {
       val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
       if (instance is Disposable) {
@@ -54,8 +53,6 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
           })
         }
       }
-
-      componentManager.componentCreated(indicator)
       return instance
     }
     catch (t: Throwable) {

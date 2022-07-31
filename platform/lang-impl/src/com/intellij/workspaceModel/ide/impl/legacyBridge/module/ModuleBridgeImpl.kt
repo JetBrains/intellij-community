@@ -95,7 +95,12 @@ internal class ModuleBridgeImpl(
   }
 
   override fun callCreateComponents() {
+    @Suppress("DEPRECATION")
     createComponents()
+  }
+
+  override suspend fun callCreateComponentsNonBlocking() {
+    createComponentsNonBlocking()
   }
 
   override fun initFacets() {

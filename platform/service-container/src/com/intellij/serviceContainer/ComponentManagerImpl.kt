@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
@@ -124,7 +123,6 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private var instantiatedComponentCount = 0
   private var componentConfigCount = -1
 
   @Suppress("LeakingThis")
@@ -211,14 +209,6 @@ abstract class ComponentManagerImpl(
       throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus ?: getOrCreateMessageBusUnderLock()
-  }
-
-  protected open fun setProgressDuringInit(indicator: ProgressIndicator) {
-    indicator.fraction = getPercentageOfComponentsLoaded()
-  }
-
-  fun getPercentageOfComponentsLoaded(): Double {
-    return instantiatedComponentCount.toDouble() / componentConfigCount
   }
 
   final override fun getExtensionArea(): ExtensionsAreaImpl {
@@ -401,6 +391,8 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @Suppress("DuplicatedCode")
+  @Deprecated(message = "Use createComponents")
   protected fun createComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
@@ -410,7 +402,25 @@ abstract class ComponentManagerImpl(
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
-      componentAdapter.getInstanceUncached<Any>(this, keyClass = null, indicator = null)
+      componentAdapter.getInstance<Any>(this, keyClass = null)
+    }
+
+    activity?.end()
+
+    LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
+  }
+
+  @Suppress("DuplicatedCode")
+  protected suspend fun createComponentsNonBlocking() {
+    LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
+
+    val activity = when (val activityNamePrefix = activityNamePrefix()) {
+      null -> null
+      else -> StartUpMeasurer.startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
+    }
+
+    for (componentAdapter in componentAdapters.getImmutableSet()) {
+      componentAdapter.getInstanceAsync<Any>(this, keyClass = null).await()
     }
 
     activity?.end()
@@ -617,7 +627,7 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  final override fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
+  final override suspend fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
     val key = serviceClass.name
     val adapter = componentKeyToAdapter.get(serviceClass.name)
     if (adapter !is ServiceComponentAdapter) {
@@ -1104,7 +1114,7 @@ abstract class ComponentManagerImpl(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  protected open fun preloadService(service: ServiceDescriptor): Job? {
+  protected open suspend fun preloadService(service: ServiceDescriptor): Job? {
     val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return null
     val deferred = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
     if (deferred.isCompleted) {
@@ -1201,15 +1211,6 @@ abstract class ComponentManagerImpl(
       }
     }
     return null
-  }
-
-  internal fun componentCreated(indicator: ProgressIndicator?) {
-    instantiatedComponentCount++
-
-    if (indicator != null) {
-      indicator.checkCanceled()
-      setProgressDuringInit(indicator)
-    }
   }
 
   final override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {

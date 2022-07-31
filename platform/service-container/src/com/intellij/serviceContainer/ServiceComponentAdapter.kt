@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CompletableDeferred
 
@@ -30,9 +28,7 @@ internal class ServiceComponentAdapter(
 
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl,
-                                          implementationClass: Class<T>,
-                                          indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
     if (isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
@@ -40,16 +36,7 @@ internal class ServiceComponentAdapter(
         LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation $implementationClassName"))
       }
     }
-
-    val progressManager = if (indicator == null) null else ProgressManager.getInstance()
-    if (progressManager == null || progressManager.isInNonCancelableSection) {
-      return createAndInitialize(componentManager, implementationClass)
-    }
-    else {
-      return progressManager.computeInNonCancelableSection<T, Exception> {
-        createAndInitialize(componentManager, implementationClass)
-      }
-    }
+    return createAndInitialize(componentManager, implementationClass)
   }
 
   private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {

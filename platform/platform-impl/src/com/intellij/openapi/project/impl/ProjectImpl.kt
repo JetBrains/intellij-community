@@ -18,7 +18,6 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -76,7 +75,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
       }
 
       launch {
-        project.createComponents()
+        project.createComponentsNonBlocking()
       }
     }
   }
@@ -326,10 +325,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   }
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
-
-  override fun setProgressDuringInit(indicator: ProgressIndicator) {
-    indicator.fraction = getPercentageOfComponentsLoaded() / if (LoadingState.PROJECT_OPENED.isOccurred) 10 else 2
-  }
 
   override fun save() {
     val app = ApplicationManagerEx.getApplicationEx()

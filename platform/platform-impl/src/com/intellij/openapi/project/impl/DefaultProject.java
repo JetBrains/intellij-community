@@ -286,10 +286,6 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   }
 
   @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-  }
-
-  @Override
   public boolean isDefault() {
     return true;
   }

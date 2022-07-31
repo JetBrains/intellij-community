@@ -12,18 +12,33 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.intellij.openapi.progress.ProgressManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal sealed class BaseComponentAdapter(@JvmField internal val componentManager: ComponentManagerImpl,
                                            @JvmField val pluginDescriptor: PluginDescriptor,
                                            @field:Volatile private var deferred: CompletableDeferred<Any>,
                                            private var implementationClass: Class<*>?) : ComponentAdapter {
-  @Volatile
+  companion object {
+    private val IS_DEFERRED_PREPARED: VarHandle
+    private val INITIALIZING: VarHandle
+
+    init {
+      val lookup = MethodHandles.privateLookupIn(BaseComponentAdapter::class.java, MethodHandles.lookup())
+      IS_DEFERRED_PREPARED = lookup.findVarHandle(BaseComponentAdapter::class.java, "isDeferredPrepared", Boolean::class.javaPrimitiveType)
+      INITIALIZING = lookup.findVarHandle(BaseComponentAdapter::class.java, "initializing", Boolean::class.javaPrimitiveType)
+    }
+  }
+
+  @Suppress("unused")
+  private var isDeferredPrepared = false
+  @Suppress("unused")
   private var initializing = false
 
   val pluginId: PluginId
@@ -59,9 +74,9 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
     return getInstance(componentManager, null)
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : Any> getInstance(componentManager: ComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true): T? {
     if (deferred.isCompleted) {
-      @Suppress("UNCHECKED_CAST")
       return deferred.getCompleted() as T
     }
     else if (!createIfNeeded) {
@@ -69,44 +84,54 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
     }
 
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    val indicator: ProgressIndicator? = ProgressIndicatorProvider.getGlobalProgressIndicator()
     checkContainerIsActive(componentManager, indicator)
-    return getInstanceUncached(componentManager, keyClass, indicator)
-  }
 
-  fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
 
-    synchronized(this) {
-      if (deferred.isCompleted) {
-        if (activityCategory != null) {
-          val end = StartUpMeasurer.getCurrentTime()
-          if ((end - beforeLockTime) > 100) {
-            // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
-            StartUpMeasurer.addCompletedActivity(beforeLockTime, end, implementationClassName, ActivityCategory.SERVICE_WAITING, /* pluginId = */ null)
-          }
-        }
+    if (IS_DEFERRED_PREPARED.compareAndSet(this, false, true)) {
+      return createInstance(keyClass, componentManager, activityCategory, indicator)
+    }
 
-        @Suppress("UNCHECKED_CAST")
-        return deferred.getCompleted() as T
+    // without this check, will be a deadlock if during createInstance we call createInstance again (cyclic initialization)
+    if (Thread.holdsLock(this)) {
+      throw PluginException("Cyclic service initialization: ${toString()}", pluginId)
+    }
+
+    val result = (deferred as Deferred<T>).asCompletableFuture().join()
+    if (activityCategory != null) {
+      val end = StartUpMeasurer.getCurrentTime()
+      if ((end - beforeLockTime) > 100) {
+        // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
+        StartUpMeasurer.addCompletedActivity(beforeLockTime, end, implementationClassName, ActivityCategory.SERVICE_WAITING, /* pluginId = */ null)
       }
+    }
+    return result
+  }
 
-      return getInstanceUncachedImpl(keyClass, componentManager, indicator, activityCategory)
+  @Synchronized
+  private fun <T : Any> createInstance(keyClass: Class<T>?,
+                                       componentManager: ComponentManagerImpl,
+                                       activityCategory: ActivityCategory?,
+                                       indicator: ProgressIndicator?): T {
+    check(!deferred.isCompleted)
+    check(INITIALIZING.compareAndSet(this, false, true)) { PluginException("Cyclic service initialization: ${toString()}", pluginId) }
+
+    if (indicator == null || ProgressManager.getInstance().isInNonCancelableSection) {
+      return doCreateInstance(keyClass, componentManager, activityCategory)
+    }
+    else {
+      return ProgressManager.getInstance().computeInNonCancelableSection<T, RuntimeException> {
+        doCreateInstance(keyClass, componentManager, activityCategory)
+      }
     }
   }
 
-  private fun <T : Any> getInstanceUncachedImpl(keyClass: Class<T>?,
-                                                componentManager: ComponentManagerImpl,
-                                                indicator: ProgressIndicator?,
-                                                activityCategory: ActivityCategory?): T {
-    if (initializing) {
-      LOG.error(PluginException("Cyclic service initialization: ${toString()}", pluginId))
-    }
-
+  private fun <T : Any> doCreateInstance(keyClass: Class<T>?,
+                          componentManager: ComponentManagerImpl,
+                          activityCategory: ActivityCategory?): T {
     try {
-      initializing = true
-
       val startTime = StartUpMeasurer.getCurrentTime()
       val implementationClass: Class<T>
       if (keyClass != null && isImplementationEqualsToInterface()) {
@@ -116,11 +141,9 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
       else {
         @Suppress("UNCHECKED_CAST")
         implementationClass = getImplementationClass() as Class<T>
-        // check after loading class once again
-        checkContainerIsActive(componentManager, indicator)
       }
 
-      val instance = doCreateInstance(componentManager, implementationClass, indicator)
+      val instance = doCreateInstance(componentManager, implementationClass)
       activityCategory?.let { category ->
         val end = StartUpMeasurer.getCurrentTime()
         if (activityCategory != ActivityCategory.MODULE_SERVICE || (end - startTime) > StartUpMeasurer.MEASURE_THRESHOLD) {
@@ -131,30 +154,30 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
       deferred.complete(instance)
       return instance
     }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      deferred.completeExceptionally(e)
+      throw e
+    }
     finally {
-      initializing = false
+      INITIALIZING.set(this, false)
     }
   }
 
-  fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): Deferred<T> {
-    if (deferred.isCompleted || initializing) {
-      @Suppress("UNCHECKED_CAST")
-      return deferred as Deferred<T>
-    }
-
-    val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
-    synchronized(this) {
-      if (deferred.isCompleted) {
-        @Suppress("UNCHECKED_CAST")
-        return deferred as Deferred<T>
+  @Suppress("UNCHECKED_CAST")
+  suspend fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): Deferred<T> {
+    return withContext(NonCancellable) {
+      if (!IS_DEFERRED_PREPARED.compareAndSet(this@BaseComponentAdapter, false, true)) {
+        return@withContext deferred as Deferred<T>
       }
 
-      getInstanceUncachedImpl(keyClass = keyClass,
-                              componentManager = componentManager,
-                              indicator = null,
-                              activityCategory = activityCategory)
-      @Suppress("UNCHECKED_CAST")
-      return deferred as Deferred<T>
+      createInstance(keyClass = keyClass,
+                     componentManager = componentManager,
+                     activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
+                     indicator = null)
+      deferred as Deferred<T>
     }
   }
 
@@ -183,5 +206,5 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
 
   protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?
 
-  protected abstract fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
+  protected abstract fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T
 }
