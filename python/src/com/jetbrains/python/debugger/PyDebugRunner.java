@@ -35,6 +35,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -61,6 +62,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -124,10 +127,18 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
-      .thenAsync(ignored ->
-                   Registry.get("python.use.targets.api").asBoolean()
-                   ? createSessionUsingTargetsApi(state, environment)
-                   : createSessionLegacy(state, environment));
+      .thenAsync(ignored -> {
+        if (Registry.is("python.use.targets.api")) {
+          return createSessionUsingTargetsApi(state, environment);
+        }
+        if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
+          Project project = environment.getProject();
+          Module module = PyRunnerUtil.getModule(state);
+          throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
+                                                  () -> showPythonInterpreterSettings(project, module));
+        }
+        return createSessionLegacy(state, environment);
+      });
   }
 
   @NotNull
