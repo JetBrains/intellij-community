@@ -72,8 +72,5 @@
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
-
-    <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
-                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
   </extensions>
 </idea-plugin>

@@ -1370,6 +1370,9 @@
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
     <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport" />
+
+    <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
+                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
