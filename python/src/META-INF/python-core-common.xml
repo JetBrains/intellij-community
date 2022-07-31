@@ -605,6 +605,7 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
+    <remoteSdkValidator implementation="com.jetbrains.python.target.PyTargetSdkValidator"/>
   </extensions>
 
   <actions>
