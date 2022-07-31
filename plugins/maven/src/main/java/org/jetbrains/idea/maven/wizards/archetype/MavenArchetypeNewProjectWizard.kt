@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionC
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
+import com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension.Companion.setSpinning
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.trim
@@ -60,8 +61,8 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import java.awt.Component
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JList
 
 class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
@@ -213,7 +214,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       return null
     }
 
-    private fun <R> Component.executeBackgroundTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
+    private fun <R> JComponent.executeBackgroundTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
       BackgroundTaskUtil.execute(backgroundExecutor, context.disposable) {
         val result = onBackgroundThread()
         invokeLater(ModalityState.stateForComponent(this)) {
@@ -222,7 +223,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       }
     }
 
-    private fun Component.invokeWhenBackgroundTasksFinished(onUiThread: () -> Unit) {
+    private fun JComponent.invokeWhenBackgroundTasksFinished(onUiThread: () -> Unit) {
       /** [backgroundExecutor] has one worker, so we can schedule NOP task and call callback when it completed. */
       executeBackgroundTask(onBackgroundThread = /*NOP*/{}, onUiThread = { onUiThread() })
     }
@@ -253,6 +254,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadArchetypes() {
       val archetypeManager = MavenArchetypeManager.getInstance(context.projectOrDefault)
 
+      archetypeComboBox.setSpinning(true)
       archetypeComboBox.collectionModel.removeAll()
       archetypeItem = ArchetypeItem.NONE
       archetypeComboBox.executeBackgroundTask(
@@ -265,6 +267,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         onUiThread = { archetypes ->
           archetypeComboBox.collectionModel.replaceAll(archetypes)
           archetypeItem = ArchetypeItem.NONE
+          archetypeComboBox.setSpinning(false)
         }
       )
     }
