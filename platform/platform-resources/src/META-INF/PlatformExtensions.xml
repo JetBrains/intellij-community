@@ -68,8 +68,7 @@
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
                         serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
-                        serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl" preload="true"/>
+    <!-- preload com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl - request it in constructor -->
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileManager"
                         serviceImplementation="com.intellij.openapi.vfs.PlatformVirtualFileManager" preload="true"/>
 
