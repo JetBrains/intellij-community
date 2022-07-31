@@ -666,7 +666,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
       return clientManager.getSelectedFile();
     }
-    return getActiveSplittersSync().getCurrentFile();
+    // if mySplitters is null, it means that not yet initialized
+    return mySplitters == null ? null : getActiveSplittersSync().getCurrentFile();
   }
 
   @Override
