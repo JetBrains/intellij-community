@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -12,9 +11,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
+import com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
-import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitWorkflowHandler
@@ -59,29 +57,24 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
     val isFreezedDialogTitle = actionName?.let {
       VcsBundle.message("error.cant.perform.operation.now", removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase())
     }
-
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
       LOG.debug("ChangeListManager is freezed. returning.")
+      return
     }
-    else if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning) {
+
+    if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning) {
       LOG.debug("Background operation is running. returning.")
+      return
     }
-    else {
-      val selectedChanges = context.selectedChanges?.asList().orEmpty()
-      val selectedUnversioned = context.selectedUnversionedFilePaths
-      val initialChangeList = getInitiallySelectedChangeList(context, project)
-      val pathsToCommit = DescindingFilesFilter.filterDescindingFiles(getRoots(context), project).asList()
-      val executor = getExecutor(project)
-      val forceUpdateCommitStateFromContext = isForceUpdateCommitStateFromContext()
+    val selectedChanges = context.selectedChanges?.asList().orEmpty()
+    val selectedUnversioned = context.selectedUnversionedFilePaths
+    val initialChangeList = getInitiallySelectedChangeList(context, project)
+    val pathsToCommit = DescindingFilesFilter.filterDescindingFiles(getRoots(context), project).asList()
+    val executor = getExecutor(project)
+    val forceUpdateCommitStateFromContext = isForceUpdateCommitStateFromContext()
 
-      StoreUtil.saveDocumentsAndProjectSettings(project)
-
-      ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
-        true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
-        performCheckIn(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
-                       executor, forceUpdateCommitStateFromContext)
-      }
-    }
+    CheckinActionUtil.performCheckInAfterUpdate(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
+                                                executor, forceUpdateCommitStateFromContext)
   }
 
   @Deprecated("getActionName() will be used instead")
@@ -91,38 +84,6 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
 
   protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
-
-  private fun performCheckIn(project: Project,
-                             selectedChanges: List<Change>,
-                             selectedUnversioned: List<FilePath>,
-                             initialChangeList: LocalChangeList,
-                             pathsToCommit: List<FilePath>,
-                             executor: CommitExecutor?,
-                             forceUpdateCommitStateFromContext: Boolean) {
-    LOG.debug("invoking commit dialog after update")
-
-    val changesToCommit: Collection<Change>
-    val included: Collection<Any>
-
-    if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
-      val manager = ChangeListManager.getInstance(project)
-      changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
-      included = initialChangeList.changes.intersect(changesToCommit)
-    }
-    else {
-      changesToCommit = selectedChanges.toList()
-      included = concat(changesToCommit, selectedUnversioned)
-    }
-
-    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
-    if (executor == null && workflowHandler != null) {
-      workflowHandler.setCommitState(initialChangeList, included, forceUpdateCommitStateFromContext)
-      workflowHandler.activate()
-    }
-    else {
-      CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
-    }
-  }
 
   protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
     val manager = ChangeListManager.getInstance(project)
