@@ -594,6 +594,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Exception) {
         LOG.error(e)
       }
