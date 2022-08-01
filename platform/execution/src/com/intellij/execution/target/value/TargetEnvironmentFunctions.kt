@@ -90,19 +90,19 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   if (this is LocalTargetEnvironmentRequest) return constant(localPath)
-  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
+  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(Path.of(localPath)) }
 }
 
 fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
     when (targetEnvironment) {
       is LocalTargetEnvironment -> localPath
-      else -> targetEnvironment.resolveLocalPath(localPath)
+      else -> targetEnvironment.resolveLocalPath(Paths.get(localPath))
     }
   }
 }
 
-private fun TargetEnvironment.resolveLocalPath(localPath: String): String {
+private fun TargetEnvironment.resolveLocalPath(localPath: Path): String {
   if (this is ExternallySynchronized) {
     val pathForSynchronizedVolume = tryMapToSynchronizedVolume(localPath)
     if (pathForSynchronizedVolume != null) return pathForSynchronizedVolume
@@ -114,40 +114,36 @@ private fun TargetEnvironment.resolveLocalPath(localPath: String): String {
   return joinPaths(volume.targetRoot, relativePath, targetPlatform)
 }
 
-private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String): String? {
+private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: Path): String? {
   // TODO [targets] Does not look nice
   this as TargetEnvironment
-  val targetFileSeparator = targetPlatform.platform.fileSeparator
-  val (volume, relativePath) = synchronizedVolumes.firstNotNullOfOrNull { volume ->
-    getRelativePathIfAncestor(ancestor = volume.localPath, file = localPath)?.let { relativePath ->
-      volume to if (File.separatorChar != targetFileSeparator) {
-        relativePath.replace(File.separatorChar, targetFileSeparator)
-      }
-      else {
-        relativePath
-      }
-    }
-  } ?: return null
+  val (volume, relativePath) = findRemotePathByMapping(synchronizedVolumes, localPath, targetPlatform) ?: return null
   return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 
-fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
-  val targetFileSeparator = targetPlatform.platform.fileSeparator
-  return uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
-      uploadRoot to if (File.separatorChar != targetFileSeparator) {
-        relativePath.replace(File.separatorChar, targetFileSeparator)
-      }
-      else {
-        relativePath
-      }
-    }
-  }.firstOrNull()
+@Deprecated("Do not use strings for local path", ReplaceWith("getUploadRootForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? =
+  getUploadRootForLocalPath(Paths.get(localPath))
+
+fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: Path): Pair<TargetEnvironment.UploadRoot, String>? =
+  findRemotePathByMapping(uploadVolumes, localPath, targetPlatform)
+
+/**
+ * If [localPath] could be mapped to the remote system by one of the [mappings], return
+ * both: mapping and mapped path
+ */
+private fun <T> findRemotePathByMapping(mappings: Collection<T>, localPath: Path, target: TargetPlatform): Pair<T, String>?
+  where T : TargetEnvironment.MappingWithLocalPath = mappings.firstNotNullOfOrNull { uploadRoot ->
+  val targetFileSep = target.platform.fileSeparator
+  getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
+    uploadRoot to if (File.separatorChar != targetFileSep) relativePath.replace(File.separatorChar, targetFileSep) else relativePath
+  }
 }
 
-private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
+
+private fun getRelativePathIfAncestor(ancestor: Path, file: Path): String? =
   try {
-    ancestor.relativize(Paths.get(file)).takeIf { !it.startsWith("..") }?.toString()
+    ancestor.relativize(file).takeIf { !it.startsWith("..") }?.toString()
   }
   catch (ignored: InvalidPathException) {
     null

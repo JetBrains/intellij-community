@@ -11,5 +11,5 @@ import java.nio.file.Path
 interface ExternallySynchronized {
   val synchronizedVolumes: List<SynchronizedVolume>
 
-  data class SynchronizedVolume(val localPath: Path, val targetPath: String)
+  data class SynchronizedVolume(override val localRootPath: Path, val targetPath: String): TargetEnvironment.MappingWithLocalPath
 }
