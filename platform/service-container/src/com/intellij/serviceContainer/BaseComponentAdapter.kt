@@ -24,7 +24,7 @@ import java.lang.invoke.VarHandle
 internal sealed class BaseComponentAdapter(
   @JvmField internal val componentManager: ComponentManagerImpl,
   @JvmField val pluginDescriptor: PluginDescriptor,
-  @field:Volatile private var deferred: CompletableDeferred<Any>,
+  private val deferred: CompletableDeferred<Any>,
   private var implementationClass: Class<*>?,
 ) : ComponentAdapter {
   companion object {
