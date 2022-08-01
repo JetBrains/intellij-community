@@ -325,13 +325,7 @@ public final class HighlightFixUtil {
   static void registerLambdaReturnTypeFixes(HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
     PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     if (type != null) {
-      PsiType exprType = expression.getType();
-      if (exprType != null && TypeConversionUtil.areTypesConvertible(exprType, type)) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(type, expression));
-      }
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(type, expression));
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapExpressionFix(type, expression));
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(type, expression));
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(info, expression, type);
     }
   }
 

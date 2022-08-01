@@ -582,8 +582,7 @@ public final class HighlightMethodUtil {
       highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(
         expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
       if (methodCall instanceof PsiMethodCallExpression) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createWrapWithAdapterFix(expectedTypeByParent, (PsiExpression)methodCall));
+        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, (PsiMethodCallExpression)methodCall, expectedTypeByParent);
       }
     }
     else {
@@ -944,16 +943,6 @@ public final class HighlightMethodUtil {
     }
     else if (qualifierExpression instanceof PsiSuperExpression && ((PsiSuperExpression)qualifierExpression).getQualifier() == null) {
       QualifySuperArgumentFix.registerQuickFixAction((PsiSuperExpression)qualifierExpression, highlightInfo);
-    }
-
-    PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
-    if (expectedTypeByParent != null) {
-      PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null &&
-          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) &&
-          !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
-      }
     }
 
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
