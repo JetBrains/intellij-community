@@ -23,11 +23,6 @@ import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
-private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> {
-  val manager = ChangeListManager.getInstance(project)
-  return roots.flatMap { manager.getChangesIn(it) }.toSet()
-}
-
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
@@ -112,7 +107,8 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
     val included: Collection<Any>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
-      changesToCommit = getChangesIn(project, roots)
+      val manager = ChangeListManager.getInstance(project)
+      changesToCommit = roots.flatMap { manager.getChangesIn(it) }.toSet()
       included = initialChangeList.changes.intersect(changesToCommit)
     }
     else {
