@@ -170,6 +170,7 @@ data class LibraryLicense(
 
   fun eplV1(): LibraryLicense = epl(1)
   fun eplV2(): LibraryLicense = epl(2)
+  fun eplV1(licenseUrl: String): LibraryLicense = epl(licenseUrl, 1)
   fun eplV2(licenseUrl: String): LibraryLicense = epl(licenseUrl, 2)
 
   private fun epl(licenseUrl: String, v: Int): LibraryLicense {
