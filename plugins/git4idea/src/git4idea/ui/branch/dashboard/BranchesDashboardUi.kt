@@ -79,7 +79,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val tree = BranchesTreeComponent(project).apply {
     accessibleContext.accessibleName = message("git.log.branches.tree.accessible.name")
   }
-  private val filteringTree = FilteringBranchesTree(project, tree, uiController, disposable = this)
+  private val filteringTree = FilteringBranchesTree(project, tree, uiController, place = "BranchesDashboardTree", disposable = this)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
