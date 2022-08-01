@@ -1,4 +1,4 @@
-        UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> PsiTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> PsiTypeParameter:T: T
             UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> PsiTypeParameter:T: T
             UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> PsiField:name: name
             UQualifiedReferenceExpression -> UThisExpression (label = null) -> null: null
