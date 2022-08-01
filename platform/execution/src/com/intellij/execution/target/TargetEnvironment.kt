@@ -63,8 +63,15 @@ abstract class TargetEnvironment(
     }
   }
 
+  /**
+   * Mapping of localPath -> Something
+   */
+  interface MappingWithLocalPath {
+    val localRootPath: Path
+  }
+
   data class UploadRoot @JvmOverloads constructor(
-    val localRootPath: Path,
+    override val localRootPath: Path,
 
     val targetRootPath: TargetPath,
 
@@ -73,7 +80,7 @@ abstract class TargetEnvironment(
      * TODO maybe get rid of it? It causes a race between two environments using the same upload root.
      */
     val removeAtShutdown: Boolean = false
-  ) {
+  ): MappingWithLocalPath {
     var volumeData: TargetEnvironmentType.TargetSpecificVolumeData? = null  // excluded from equals / hashcode
   }
 
