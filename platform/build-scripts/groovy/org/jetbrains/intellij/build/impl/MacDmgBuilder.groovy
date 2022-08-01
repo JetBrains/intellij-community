@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidatorKt
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.tasks.SignKt
 
@@ -69,6 +70,20 @@ final class MacDmgBuilder {
     }
     if (jreArchivePath != null && Files.exists(sitFile)) {
       context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
+      generateIntegrityManifest(sitFile, zipRoot, context)
+    }
+  }
+
+  private static void generateIntegrityManifest(Path sitFile, String sitRoot, BuildContext context) {
+    if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      def tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
+      try {
+        ProcessKt.runProcess(["7z", "x", "-bd", sitFile.toString()], tempSit, context.messages)
+        RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), sitFile.fileName.toString())
+      }
+      finally {
+        NioFiles.deleteRecursively(tempSit)
+      }
     }
   }
 

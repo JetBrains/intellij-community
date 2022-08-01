@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.name
 
 class LinuxDistributionBuilder(private val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
@@ -87,14 +88,15 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         context.messages.info("Skipping building Snap packages for non-x64 arch")
       }
 
-      val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
-      try {
-        ArchiveUtils.unTar(tarGzPath, tempTar)
-        val tarRoot = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-        RepairUtilityBuilder.generateManifest(context, tempTar.resolve(tarRoot), tarGzPath.fileName.toString())
-      }
-      finally {
-        NioFiles.deleteRecursively(tempTar)
+      if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+        val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
+        try {
+          ArchiveUtils.unTar(tarGzPath, tempTar)
+          RepairUtilityBuilder.generateManifest(context, tempTar.resolve(rootDirectoryName), tarGzPath.name)
+        }
+        finally {
+          NioFiles.deleteRecursively(tempTar)
+        }
       }
     }
   }
