@@ -261,7 +261,6 @@ final class CommunityRepositoryModules {
       withProjectLibrary("git-learning-project")
     },
     plugin("intellij.searchEverywhereMl") {
-      withModule("intellij.searchEverywhereMl.core")
       withModule("intellij.searchEverywhereMl.yaml")
       withModule("intellij.searchEverywhereMl.vcs")
     },
