@@ -40,7 +40,7 @@ internal class KotlinDistAutomaticDownloaderForKotlinBundled(
     }
 
     override fun kotlinBundledDetected() {
-        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project) ?: return
+        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project)
         downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries = true, jpsVersion, project)
     }
 }
