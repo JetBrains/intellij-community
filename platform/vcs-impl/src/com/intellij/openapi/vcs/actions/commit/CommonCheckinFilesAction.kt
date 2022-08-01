@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.VcsContextUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 class CommonCheckinFilesAction : DumbAwareAction() {
@@ -42,7 +43,8 @@ class CommonCheckinFilesAction : DumbAwareAction() {
   }
 
   companion object {
-    private fun getActionName(project: Project, pathsToCommit: List<FilePath>): @NlsActions.ActionText String {
+    @ApiStatus.Internal
+    fun getActionName(project: Project, pathsToCommit: List<FilePath>): @NlsActions.ActionText String {
       val commonVcs = pathsToCommit.mapNotNull { VcsUtil.getVcsFor(project, it) }.distinct().singleOrNull()
       val operationName = commonVcs?.checkinEnvironment?.checkinOperationName
       return appendSubject(pathsToCommit, operationName ?: VcsBundle.message("vcs.command.name.checkin"))
@@ -59,7 +61,8 @@ class CommonCheckinFilesAction : DumbAwareAction() {
       }
     }
 
-    private fun isActionEnabled(project: Project, path: FilePath): Boolean {
+    @ApiStatus.Internal
+    fun isActionEnabled(project: Project, path: FilePath): Boolean {
       val status = ChangeListManager.getInstance(project).getStatus(path)
       return (path.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED
     }
