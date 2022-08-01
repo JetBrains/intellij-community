@@ -2,14 +2,13 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +43,11 @@ public final class SpecialAnnotationsUtilBase {
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         doQuickFixInternal(project, targetList, qualifiedName);
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        return new IntentionPreviewInfo.Html(JavaBundle.message("special.annotations.annotations.preview", qualifiedName));
       }
     };
   }
