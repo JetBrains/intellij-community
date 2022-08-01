@@ -437,17 +437,22 @@ public class JBTabsImpl extends JComponent
   }
 
   private boolean isInsideTabsArea(int x, int y) {
-    if (myHeaderFitSize == null) return false;
+    Dimension area = myHeaderFitSize;
+    if (myTableLayout.myLastTableLayout != null) {
+      area = myTableLayout.myLastTableLayout.tabRectangle.getSize();
+    }
+
+    if (area == null) return false;
 
     switch (getTabsPosition()) {
       case top:
-        return y <= myHeaderFitSize.height;
+        return y <= area.height;
       case left:
-        return x <= myHeaderFitSize.width;
+        return x <= area.width;
       case bottom:
-        return y >= getHeight() - myHeaderFitSize.height;
+        return y >= getHeight() - area.height;
       case right:
-        return x >= getWidth() - myHeaderFitSize.width;
+        return x >= getWidth() - area.width;
     }
 
     return false;
@@ -1969,6 +1974,7 @@ public class JBTabsImpl extends JComponent
   private void updateScrollBarModel() {
     if (myScrollBarModel.getValueIsAdjusting()) return;
 
+    boolean pinnedTabsSeparately = myTableLayout.myLastTableLayout != null && TabLayout.showPinnedTabsSeparately();
     int maximum = 0;
     int value = 0;
     int extent = 0;
@@ -1977,7 +1983,8 @@ public class JBTabsImpl extends JComponent
       extent = getTabsAreaWidth();
 
       int theMostLeftX = 0;
-      for (Component tab : myInfo2Label.values()) {
+      for (TabLabel tab : myInfo2Label.values()) {
+        if (tab.isPinned() && pinnedTabsSeparately) continue;
         maximum += tab.getPreferredSize().width;
         theMostLeftX = Math.min(theMostLeftX, tab.getX());
       }
@@ -1990,7 +1997,8 @@ public class JBTabsImpl extends JComponent
       }
 
       int theMostTopX = 0;
-      for (Component tab : myInfo2Label.values()) {
+      for (TabLabel tab : myInfo2Label.values()) {
+        if (tab.isPinned() && pinnedTabsSeparately) continue;
         maximum += tab.getPreferredSize().height;
         theMostTopX = Math.min(theMostTopX, tab.getY());
       }
