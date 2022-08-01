@@ -7,6 +7,7 @@ import com.intellij.ide.util.TipAndTrickPromotionFactory
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
@@ -17,7 +18,6 @@ import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
-import training.util.RoundedPanel
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JLabel
@@ -43,7 +43,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   }
 
   private fun createOpenLessonPanel(project: Project, lesson: Lesson, tip: TipAndTrickBean): JPanel {
-    val container = RoundedPanel(8)
+    val container = BackgroundRoundedPanel(8)
     container.layout = BoxLayout(container, BoxLayout.X_AXIS)
     container.background = UISettings.getInstance().shortcutBackgroundColor
 
