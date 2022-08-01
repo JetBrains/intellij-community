@@ -126,13 +126,37 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
           null -> {}
         }
-        if (entityFilter(replaceWithStorage.entityDataByIdOrDie(replaceWithEntity).entitySource)) {
+        val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithEntity)
+        if (entityFilter(replaceWithEntityData.entitySource)) {
           addOperations += AddSubtree(targetRootEntityId, replaceWithEntity)
           replaceWithEntity.addState(ReplaceWithState.SubtreeMoved)
           break
         } else {
-          replaceWithEntity.addState(ReplaceWithState.NoChangeTraceLost)
-          break
+          // Searching for the associated entity
+          val children = targetStorage.refs.getChildrenRefsOfParentBy(targetRootEntityId.asParent())
+          // TODO won't work for abstract
+          val targetChildrenIds = children.filterKeys { it.childClass == replaceWithEntity.clazz }
+          require(targetChildrenIds.size < 2) { "Unexpected amount of children" }
+
+          val ids = if (targetChildrenIds.isEmpty()) {
+            emptyList()
+          } else {
+            targetChildrenIds.entries.single().value
+          }
+          val targetChildrenMap = buildMap {
+            ids.forEach { id -> targetStorage.entityDataByIdOrDie(id.id).also { put(it, it) } }
+          }
+
+          val targetRelatedEntity = targetChildrenMap[replaceWithEntityData]
+
+          if (targetRelatedEntity == null) {
+            replaceWithEntity.addState(ReplaceWithState.NoChangeTraceLost)
+            break
+          } else {
+            val newTargetRootEntityId = targetRelatedEntity.createEntityId()
+            replaceWithEntity.addState(ReplaceWithState.NoChange(newTargetRootEntityId))
+            targetRootEntityId = newTargetRootEntityId
+          }
         }
       }
     }

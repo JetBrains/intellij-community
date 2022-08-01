@@ -878,9 +878,7 @@ class ReplaceBySourceAsTreeTest {
     assertTrue(endChildren.any { it.data == "internal" })
 
     thisStateCheck {
-      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
-      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
-      thisRoot.children.single().children.single() assert ReplaceState.Remove
+      thisRoot assert ReplaceState.NoChange
     }
 
     replaceWithCheck {
