@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.IconButton
@@ -24,6 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
 import com.intellij.util.IconUtil
 import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -46,17 +50,11 @@ import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.ComboBoxWithAutoCompletion
-import net.miginfocom.layout.AC
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
-import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
 import java.util.Collections.synchronizedMap
 import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 internal class GitRebaseDialog(private val project: Project,
                                private val roots: List<VirtualFile>,
@@ -85,11 +83,12 @@ internal class GitRebaseDialog(private val project: Project,
   private val ontoLabel = createOntoLabel()
   private val ontoField = createOntoField()
 
-  private val topPanel = createTopPanel()
-  private val bottomPanel = createBottomPanel()
+  private lateinit var topUpstreamFieldPlaceholder: Placeholder
+  private lateinit var topBranchFieldPlaceholder: Placeholder
+  private lateinit var bottomUpstreamFieldPlaceholder: Placeholder
+  private lateinit var bottomBranchFieldPlaceholder: Placeholder
   private val optionsPanel = GitOptionsPanel(::optionChosen, ::getOptionInfo)
-
-  private val panel = createPanel()
+  private val panel: DialogPanel = createPanel()
 
   private var okActionTriggered = false
 
@@ -107,15 +106,9 @@ internal class GitRebaseDialog(private val project: Project,
     updateBranches()
     loadSettings()
 
-    // We call pack() manually.
-    isAutoAdjustable = false
-
     init()
-    window.minimumSize = JBDimension(200, 60)
 
     updateUi()
-    validate()
-    pack()
 
     updateOkActionEnabled()
 
@@ -331,54 +324,46 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun showRootField() = roots.size > 1
 
-  private fun createTopPanel() = JPanel().apply {
-    layout = MigLayout(
-      LC()
-        .fillX()
-        .insets("0")
-        .gridGap("0", "0")
-        .hideMode(3)
-        .noVisualPadding())
+  private fun createPanel() = panel {
+    customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+      row {
+        if (showRootField()) {
+          cell(rootField)
+            .applyToComponent { rootField.columns(COLUMNS_SHORT) }
+        }
 
-    if (showRootField()) {
-      add(rootField,
-          CC()
-            .gapAfter("0")
-            .minWidth("${JBUI.scale(110)}px"))
+        cell(createCmdLabel())
+
+        cell(ontoLabel)
+
+        cell(ontoField)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
+          .applyToComponent { setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH)) }
+
+        topUpstreamFieldPlaceholder = placeholder()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
+
+        topUpstreamFieldPlaceholder.component = upstreamField
+        updateUpstreamFieldConstraints()
+
+        topBranchFieldPlaceholder = placeholder()
+      }.customize(JBVerticalGaps(0, 6))
+
+      row {
+        bottomUpstreamFieldPlaceholder = placeholder()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
+        bottomBranchFieldPlaceholder = placeholder()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
+      }.customize(JBVerticalGaps(0, 6))
+
+      row {
+        cell(optionsPanel)
+      }
     }
-
-    add(createCmdLabel(),
-        CC()
-          .alignY("top")
-          .gapAfter("0")
-          .minWidth("${JBUI.scale(100)}px"))
-
-    add(ontoLabel,
-        CC()
-          .alignY("top")
-          .gapAfter("0")
-          .minWidth("${JBUI.scale(60)}px"))
-
-    add(ontoField,
-        CC()
-          .gapAfter("0")
-          .minWidth("${JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH)}px")
-          .growX()
-          .pushX())
-
-    add(upstreamField, getUpstreamFieldConstraints())
-  }
-
-  private fun createBottomPanel() = JPanel().apply {
-    layout = MigLayout(
-      LC()
-        .fillX()
-        .insets("0")
-        .gridGap("0", "0")
-        .hideMode(3)
-        .noVisualPadding())
-
-    isVisible = false
   }
 
   private fun createCmdLabel() = CmdLabel("git rebase",
@@ -470,14 +455,6 @@ internal class GitRebaseDialog(private val project: Project,
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
   }
 
-  private fun createPanel() = JPanel().apply {
-    layout = MigLayout(LC().insets("0").hideMode(3), AC().grow())
-
-    add(topPanel, CC().growX())
-    add(bottomPanel, CC().newline().growX())
-    add(optionsPanel, CC().newline())
-  }
-
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) {
     popupBuilder.createPopup()
   }.apply {
@@ -519,8 +496,6 @@ internal class GitRebaseDialog(private val project: Project,
     }
 
     updateUi()
-    validate()
-    pack()
 
     updateOkActionEnabled()
   }
@@ -549,6 +524,11 @@ internal class GitRebaseDialog(private val project: Project,
     updateBottomPanel()
     optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
     panel.invalidate()
+
+    SwingUtilities.invokeLater {
+      validate()
+      pack()
+    }
   }
 
   private fun updatePlaceholders() {
@@ -564,8 +544,9 @@ internal class GitRebaseDialog(private val project: Project,
     ontoLabel.isVisible = showOntoField
     ontoField.isVisible = showOntoField
 
-    if (!showOntoField && !isAlreadyAdded(upstreamField, topPanel)) {
-      topPanel.add(upstreamField, getUpstreamFieldConstraints())
+    if (!showOntoField && topUpstreamFieldPlaceholder.component != upstreamField) {
+      topUpstreamFieldPlaceholder.component = upstreamField
+      updateUpstreamFieldConstraints()
     }
 
     val showBranchField = !showRootField()
@@ -574,29 +555,27 @@ internal class GitRebaseDialog(private val project: Project,
 
     var isDirty = false
     if (showBranchField) {
-      if (!isAlreadyAdded(branchField, topPanel)) {
-        topPanel.add(branchField, CC().alignY("top"))
+      if (topBranchFieldPlaceholder.component != branchField) {
+        topBranchFieldPlaceholder.component = branchField
 
-        val layout = topPanel.layout as MigLayout
-
-        val constraints = CC().minWidth("${JBUI.scale(SHORT_FIELD_LENGTH)}px").growX().pushX().alignY("top")
-        layout.setComponentConstraints(upstreamField, constraints)
-        layout.setComponentConstraints(branchField, constraints)
+        val minWidth = JBUI.scale(SHORT_FIELD_LENGTH)
+        upstreamField.setMinimumAndPreferredWidth(minWidth)
+        branchField.setMinimumAndPreferredWidth(minWidth)
 
         isDirty = true
       }
     }
     else {
-      topPanel.remove(branchField)
+      topBranchFieldPlaceholder.component = null
       isDirty = true
     }
 
-    if (isDirty && isAlreadyAdded(upstreamField, topPanel)) {
+    if (isDirty && topUpstreamFieldPlaceholder.component == upstreamField) {
       (upstreamField.ui as FlatComboBoxUI).apply {
         border = Insets(1, 1, 1, if (!showBranchField) 1 else 0)
       }
       if (!showBranchField) {
-        (topPanel.layout as MigLayout).setComponentConstraints(upstreamField, getUpstreamFieldConstraints())
+        updateUpstreamFieldConstraints()
       }
     }
   }
@@ -607,39 +586,22 @@ internal class GitRebaseDialog(private val project: Project,
     val showBranch = (showRoot || showOnto) && GitRebaseOption.SWITCH_BRANCH in selectedOptions
 
     if (showOnto) {
-      if (!isAlreadyAdded(upstreamField, bottomPanel)) {
-        bottomPanel.add(upstreamField, 0)
-      }
+      bottomUpstreamFieldPlaceholder.component = upstreamField
       (upstreamField.ui as FlatComboBoxUI).apply {
         border = Insets(1, 1, 1, if (!showBranch) 1 else 0)
       }
     }
     if (showBranch) {
-      if (!isAlreadyAdded(branchField, bottomPanel)) {
-        bottomPanel.add(branchField)
-      }
+      bottomBranchFieldPlaceholder.component = branchField
     }
     else {
-      bottomPanel.remove(branchField)
-    }
-
-    bottomPanel.isVisible = bottomPanel.components.isNotEmpty()
-
-    val layout = bottomPanel.layout as MigLayout
-    bottomPanel.components.forEach { component ->
-      layout.setComponentConstraints(component, getBottomPanelComponentConstraints(bottomPanel.componentCount == 1))
+      bottomBranchFieldPlaceholder.component = null
     }
   }
 
-  private fun getBottomPanelComponentConstraints(singleInRow: Boolean) = CC().alignY("top").width(if (singleInRow) "100%" else "50%")
-
-  private fun getUpstreamFieldConstraints() = CC()
-    .alignY("top")
-    .minWidth("${JBUI.scale(if (!showRootField()) 370 else 280)}px")
-    .growX()
-    .pushX()
-
-  private fun isAlreadyAdded(component: JComponent, container: Container) = component.parent == container
+  private fun updateUpstreamFieldConstraints() {
+    upstreamField.setMinimumAndPreferredWidth(JBUI.scale(if (!showRootField()) 370 else 280))
+  }
 
   internal inner class RevValidator(private val field: ComboBoxWithAutoCompletion<String>) {
 

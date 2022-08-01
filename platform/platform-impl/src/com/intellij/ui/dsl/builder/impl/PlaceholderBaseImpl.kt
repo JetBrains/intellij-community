@@ -28,8 +28,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       if (componentField !== value) {
         removeComponent()
         if (value != null) {
-          value.isVisible = visible && parent.isVisible()
-          value.isEnabled = enabled && parent.isEnabled()
+          value.isVisible = value.isVisible && visible && parent.isVisible()
+          value.isEnabled = value.isEnabled && enabled && parent.isEnabled()
 
           componentField = value
 
