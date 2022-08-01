@@ -281,6 +281,31 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent())
   }
+  
+  fun `test method source in another class`() {
+    myFixture.addFileToProject("SampleTest.kt", """"
+        open class SampleTest {
+          companion object {
+              @kotlin.jvm.JvmStatic
+              fun squares() : List<org.junit.jupiter.params.provider.Arguments> {
+                  return listOf(
+                      org.junit.jupiter.params.provider.Arguments.of(1, 1)
+                  )
+              }
+          }
+      }""".trimIndent())
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+
+      class MethodSourceUsage {
+        @ParameterizedTest
+        @MethodSource("SampleTest#squares")
+        void testSquares(int input, int expected) {}
+      }
+    """.trimIndent())
+  }
+  
   fun `test malformed parameterized value source multiple parameters`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class ValueSourcesTest { 
