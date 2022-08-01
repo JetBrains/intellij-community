@@ -31,9 +31,9 @@ interface SimpleEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): SimpleEntity {
       val builder = builder()
       builder.version = version
-      builder.entitySource = entitySource
       builder.name = name
       builder.isSimple = isSimple
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

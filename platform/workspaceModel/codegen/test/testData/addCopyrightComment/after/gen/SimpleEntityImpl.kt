@@ -73,6 +73,13 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SimpleEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var name: String
       get() = getEntityData().name
@@ -130,6 +137,11 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SimpleEntity(name, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

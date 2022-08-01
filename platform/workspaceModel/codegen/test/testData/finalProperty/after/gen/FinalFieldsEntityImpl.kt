@@ -75,6 +75,13 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as FinalFieldsEntity
+      this.descriptor = dataSource.descriptor
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var descriptor: AnotherDataClass
       get() = getEntityData().descriptor
@@ -133,6 +140,11 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FinalFieldsEntity(descriptor, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

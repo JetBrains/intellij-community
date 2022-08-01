@@ -84,6 +84,14 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as CollectionFieldEntity
+      this.versions = dataSource.versions.toMutableSet()
+      this.entitySource = dataSource.entitySource
+      this.names = dataSource.names.toMutableList()
+    }
+
 
     private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
 
@@ -178,6 +186,11 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CollectionFieldEntity(versions, names, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

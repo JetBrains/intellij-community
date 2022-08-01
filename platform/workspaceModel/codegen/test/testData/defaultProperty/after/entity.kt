@@ -31,8 +31,8 @@ interface DefaultFieldEntity : WorkspaceEntity {
     operator fun invoke(version: Int, data: TestData, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
       val builder = builder()
       builder.version = version
-      builder.entitySource = entitySource
       builder.data = data
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

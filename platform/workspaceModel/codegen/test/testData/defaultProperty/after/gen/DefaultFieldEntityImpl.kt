@@ -78,6 +78,16 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as DefaultFieldEntity
+      this.version = dataSource.version
+      this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
+      this.anotherVersion = dataSource.anotherVersion
+      this.description = dataSource.description
+    }
+
 
     override var version: Int
       get() = getEntityData().version
@@ -167,6 +177,13 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DefaultFieldEntity(version, data, entitySource) {
+      this.anotherVersion = this@DefaultFieldEntityData.anotherVersion
+      this.description = this@DefaultFieldEntityData.description
+    }
   }
 
   override fun equals(other: Any?): Boolean {

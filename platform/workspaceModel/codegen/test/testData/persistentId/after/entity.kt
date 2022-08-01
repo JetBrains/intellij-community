@@ -37,10 +37,10 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
       val builder = builder()
       builder.version = version
-      builder.entitySource = entitySource
       builder.name = name
       builder.related = related
       builder.sealedClassWithLinks = sealedClassWithLinks
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

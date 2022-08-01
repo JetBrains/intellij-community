@@ -73,6 +73,13 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as UnknownPropertyTypeEntity
+      this.date = dataSource.date
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var date: Date
       get() = getEntityData().date
@@ -131,6 +138,11 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return UnknownPropertyTypeEntity(date, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

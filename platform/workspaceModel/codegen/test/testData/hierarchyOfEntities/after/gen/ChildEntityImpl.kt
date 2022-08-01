@@ -90,6 +90,15 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as ChildEntity
+      this.data1 = dataSource.data1
+      this.data2 = dataSource.data2
+      this.data3 = dataSource.data3
+      this.entitySource = dataSource.entitySource
+    }
+
 
     override var data1: String
       get() = getEntityData().data1
@@ -169,6 +178,11 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildEntity(data1, data2, data3, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {

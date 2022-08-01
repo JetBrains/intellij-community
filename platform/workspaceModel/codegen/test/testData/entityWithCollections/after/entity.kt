@@ -29,8 +29,8 @@ interface CollectionFieldEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): CollectionFieldEntity {
       val builder = builder()
       builder.versions = versions.toMutableWorkspaceSet()
-      builder.entitySource = entitySource
       builder.names = names.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

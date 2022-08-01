@@ -93,6 +93,16 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity) {
+      dataSource as SimplePersistentIdEntity
+      this.version = dataSource.version
+      this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
+      this.related = dataSource.related
+      this.sealedClassWithLinks = dataSource.sealedClassWithLinks
+    }
+
 
     override var version: Int
       get() = getEntityData().version
@@ -377,6 +387,11 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SimplePersistentIdEntity(version, name, related, sealedClassWithLinks, entitySource) {
+    }
   }
 
   override fun equals(other: Any?): Boolean {
