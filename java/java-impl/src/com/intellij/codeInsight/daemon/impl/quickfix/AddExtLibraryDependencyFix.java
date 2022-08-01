@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
@@ -75,6 +76,6 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return new IntentionPreviewInfo.Html(
-      JavaBundle.message("adds.ext.library.preview", myLibraryDescriptor.getPresentableName(), myCurrentModule.getName(), myQualifiedClassName));
+      HtmlChunk.text(JavaBundle.message("adds.ext.library.preview", myLibraryDescriptor.getPresentableName(), myCurrentModule.getName(), myQualifiedClassName)));
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
@@ -133,11 +134,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return new IntentionPreviewInfo.Html(
-      JavaBundle.message("adds.module.dependencies.preview", 
-                         myModules.size(),
-                         ContainerUtil.getFirstItem(myModules).getName(),
-                         NlsMessages.formatAndList(ContainerUtil.map2List(myModules, module -> "'" + module.getName() + "'")),
-                         myCurrentModule.getName()));
+      HtmlChunk.text(JavaBundle.message("adds.module.dependencies.preview",
+                                         myModules.size(),
+                                         ContainerUtil.getFirstItem(myModules).getName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myModules, module -> "'" + module.getName() + "'")),
+                                         myCurrentModule.getName())));
   }
 
   private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {
