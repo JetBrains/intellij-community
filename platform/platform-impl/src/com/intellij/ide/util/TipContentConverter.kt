@@ -1,0 +1,199 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util
+
+import com.intellij.ide.ui.text.paragraph.ListParagraph
+import com.intellij.ide.ui.text.paragraph.TextParagraph
+import com.intellij.ide.ui.text.parts.*
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ui.JBFont
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
+import java.awt.Desktop
+import java.net.URI
+import javax.swing.Icon
+import javax.swing.text.StyleConstants
+
+internal class TipContentConverter(private val tipContent: Element, private val iconsMap: Map<String, Icon>) {
+  fun convert(): List<TextParagraph> {
+    val list = mutableListOf<TextParagraph>()
+    for (node in tipContent.childNodes()) {
+      if (node is Element) {
+        convertParagraph(node)?.let { list.add(it) }
+      }
+      else if (node is TextNode) {
+        val text = node.text()
+        if (text.isNotBlank()) {
+          list.add(TextParagraph(listOf(RegularTextPart(text))))
+        }
+      }
+      else warnIfNotBlankNode(node)
+    }
+
+    return list
+  }
+
+  private fun convertParagraph(element: Element): TextParagraph? {
+    return when {
+      element.tagName() == "p" && element.hasClass("image") -> convertImageParagraph(element)
+      element.tagName() == "p" -> convertCommonParagraph(element)
+      element.tagName() == "ul" -> convertListParagraph(element)
+      else -> {
+        warnIfNotBlankNode(element)
+        null
+      }
+    }
+  }
+
+  private fun convertImageParagraph(element: Element): TextParagraph? {
+    for (node in element.childNodes()) {
+      if (node is Element && node.tagName() == "img" && node.hasAttr("src")) {
+        val path = node.attr("src")
+        val icon = iconsMap[path]
+        if (icon != null) {
+          return TextParagraph(listOf(IllustrationTextPart(icon))).editAttributes {
+            StyleConstants.setSpaceAbove(this, TextParagraph.BIG_INDENT)
+            StyleConstants.setLineSpacing(this, 0f)  // it is required to not add extra space below the image
+          }
+        }
+        else LOG.warn("Failed to find icon for path: $path")
+      }
+      else warnIfNotBlankNode(node)
+    }
+    LOG.warn("Not found img node in element:\n$element")
+    return null
+  }
+
+  private fun convertListParagraph(element: Element): TextParagraph? {
+    val items = mutableListOf<List<TextParagraph>>()
+    for (node in element.childNodes()) {
+      if (node is Element && node.tagName() == "li") {
+        val paragraphs = mutableListOf<TextParagraph>()
+        for (child in node.childNodes()) {
+          if (child is Element) {
+            convertParagraph(child)?.let { paragraphs.add(it) }
+          }
+          else warnIfNotBlankNode(child)
+        }
+        if (paragraphs.isNotEmpty()) {
+          items.add(paragraphs)
+        }
+        else LOG.warn("List item doesn't contain any paragraph:\n$node")
+      }
+      else warnIfNotBlankNode(node)
+    }
+
+    return if (items.isNotEmpty()) {
+      ListParagraph(items)
+    }
+    else {
+      LOG.warn("List doesn't contain any list item:\n$element")
+      null
+    }
+  }
+
+  private fun convertCommonParagraph(element: Element): TextParagraph? {
+    val list = mutableListOf<TextPart>()
+    for (node in element.childNodes()) {
+      if (node is TextNode) {
+        list.add(RegularTextPart(node.text()))
+        continue
+      }
+      else if (node is Element) {
+        val textPart = when {
+          node.tagName() == "b" -> {
+            RegularTextPart(getElementInnerText(node), isBold = true).apply {
+              fontGetter = { JBFont.h3() }
+            }
+          }
+          node.tagName() == "span" && node.hasClass("control") -> {
+            RegularTextPart(getElementInnerText(node), isBold = true)
+          }
+          node.tagName() == "span" && node.hasClass("shortcut") -> {
+            val text = getElementInnerText(node)
+            if (text.startsWith("&shortcut:")) {
+              val actionId = text.removePrefix("&shortcut:").removeSuffix(";")
+              ShortcutTextPart(actionId, isRaw = false, addSpaceAround = true)
+            }
+            else ShortcutTextPart(text, isRaw = true, addSpaceAround = true)
+          }
+          node.tagName() == "span" && node.hasClass("code_emphasis") -> {
+            CodeTextPart(getElementInnerText(node), addSpaceAround = true)
+          }
+          node.tagName() == "span" -> {
+            // any other span elements: inlined product information
+            RegularTextPart(getElementInnerText(node))
+          }
+          node.tagName() == "img" && node.hasAttr("src") -> {
+            val path = node.attr("src")
+            val icon = iconsMap[path]
+            if (icon != null) {
+              IconTextPart(icon)
+            }
+            else {
+              LOG.warn("Failed to find icon for path: $path")
+              null
+            }
+          }
+          node.tagName() == "a" && node.hasAttr("href") -> {
+            val url = node.attr("href")
+            LinkTextPart(getElementInnerText(node)) {
+              try {
+                val desktop = if (Desktop.isDesktopSupported()) Desktop.getDesktop() else null
+                if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+                  desktop.browse(URI(url))
+                }
+              }
+              catch (ex: Exception) {
+                LOG.warn(ex)
+              }
+            }
+          }
+          else -> {
+            LOG.warn("Found unknown node:\n$node")
+            RegularTextPart(getElementInnerText(node))
+          }
+        }
+
+        if (textPart != null) {
+          list.add(textPart)
+        }
+        else LOG.warn("Failed to covert element to text part:\n$node")
+      }
+      else warnIfNotBlankNode(node)
+    }
+
+    return if (list.isNotEmpty()) {
+      TextParagraph(list)
+    }
+    else {
+      LOG.warn("Paragraph is empty:\n$element")
+      null
+    }
+  }
+
+  private fun getElementInnerText(element: Element): String {
+    if (element.childNodeSize() == 0) {
+      LOG.warn("Expected element with child node, but was:\n$element")
+      return element.toString()
+    }
+    val child = element.childNode(0)
+    return if (child is TextNode) {
+      child.text()
+    }
+    else {
+      LOG.warn("Expected text node, but was:\n$child")
+      child.toString()
+    }
+  }
+
+  private fun warnIfNotBlankNode(node: Node) {
+    if (node !is TextNode || node.text().isNotBlank()) {
+      LOG.warn("Found unknown node:\n$node")
+    }
+  }
+
+  companion object {
+    private val LOG: Logger = Logger.getInstance(TipContentConverter::class.java)
+  }
+}
