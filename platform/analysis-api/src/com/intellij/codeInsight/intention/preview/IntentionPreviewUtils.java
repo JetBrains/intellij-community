@@ -28,7 +28,7 @@ public class IntentionPreviewUtils {
   }
 
   /**
-   * @param element
+   * @param element element to check
    * @return true if given element is a copy created for preview
    */
   public static boolean isPreviewElement(@NotNull PsiElement element) {
