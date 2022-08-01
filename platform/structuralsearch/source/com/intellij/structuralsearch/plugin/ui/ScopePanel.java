@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * A scope panel in the style of the one in the Find in Files dialog.
+ *
  * @author Bas Leijdekkers
  */
 public class ScopePanel extends JPanel {
@@ -56,11 +58,11 @@ public class ScopePanel extends JPanel {
   private final Project myProject;
   @NotNull private SearchScope myScope;
   private NullableConsumer<? super SearchScope> myConsumer;
-  Scopes.Type myScopeType;
+  private Scopes.Type myScopeType;
   private boolean myUpdating = false;
 
-  final ActionToolbarImpl myToolbar;
-  final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
+  private final ActionToolbarImpl myToolbar;
+  private final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
   private final ModulesComboBox myModulesComboBox = new ModulesComboBox();
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
@@ -76,18 +78,18 @@ public class ScopePanel extends JPanel {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
-    myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE, false));
+    myModulesComboBox.addItemListener(e -> setScopeFromUI());
     myModulesComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     myScopesComboBox.initialize(project, true, false, "", SCOPE_FILTER).onSuccess(o -> {
       if (myCurrentNamedScope != null) {
         myScopesComboBox.selectItem(myCurrentNamedScope);
         myCurrentNamedScope = null;
       }
-      myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED, false));
+      myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI());
     });
     Disposer.register(parent, myScopesComboBox);
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);
-    myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY, false));
+    myDirectoryComboBox.setCallback(() -> setScopeFromUI());
 
     myScopeDetailsPanel.add(Scopes.Type.PROJECT.toString(), new JLabel());
     myScopeDetailsPanel.add(Scopes.Type.MODULE.toString(), shrinkWrap(myModulesComboBox));
@@ -154,7 +156,19 @@ public class ScopePanel extends JPanel {
     showScope(scopeType);
   }
 
-  public void setScopesFromContext(SearchScope scope) {
+  /**
+   * Sets the preselected scope if specified and initializes sensible defaults for
+   * module, directory and named scopes. These are retrieved from the data context.
+   * Module is set the current module of the current editor or the selected file or directory.
+   * Directory is set the directory of the file in the current editor, selected directory or
+   * the containing directory of the selected file.
+   * Named scope is set to Current File when invoked from an editor, or a change list scope when invoked from
+   * Local Changes. When multiple files or directories are selected in for example the Project View, the
+   * named scope is set to the Selected Files and Directories scope
+   * @param scope  the scope to preselect.
+   */
+  public void setScopesFromContext(@Nullable SearchScope scope) {
+    if (scope != null) myScope = scope;
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
       Scopes.Type foundScope = null;
       myUpdating = true;
@@ -264,9 +278,9 @@ public class ScopePanel extends JPanel {
     return myScope;
   }
 
-  void setScopeFromUI(@NotNull Scopes.Type type, boolean requestFocus) {
+  private void setScopeFromUI() {
     if (myUpdating) return;
-    switch (type) {
+    switch (myScopeType) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
         break;
@@ -274,18 +288,16 @@ public class ScopePanel extends JPanel {
         final Module module = myModulesComboBox.getSelectedModule();
         if (module == null) return;
         myScope = GlobalSearchScope.moduleScope(module);
-        if (requestFocus) myModulesComboBox.requestFocus();
         break;
       case DIRECTORY:
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
         if (directory == null) return;
         myScope = GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
-        if (requestFocus) myDirectoryComboBox.getComboBox().requestFocus();
         break;
       case NAMED:
-        final SearchScope scope = myScopesComboBox.getSelectedScope();
-        myScope = scope == null ? GlobalSearchScope.projectScope(myProject) : scope;
-        if (requestFocus) myScopesComboBox.requestFocus();
+        final SearchScope namedScope = myScopesComboBox.getSelectedScope();
+        if (namedScope == null) return;
+        myScope = namedScope;
         break;
     }
     if (myConsumer != null) myConsumer.consume(myScope);
@@ -294,7 +306,10 @@ public class ScopePanel extends JPanel {
   private void showScope(@NotNull Scopes.Type scopeType) {
     myScopeType = scopeType;
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, scopeType.toString());
-    setScopeFromUI(scopeType, true);
+    if (myScopeType == Scopes.Type.MODULE) myModulesComboBox.requestFocus();
+    else if (myScopeType == Scopes.Type.DIRECTORY) myDirectoryComboBox.getComboBox().requestFocus();
+    else if (myScopeType == Scopes.Type.NAMED) myScopesComboBox.requestFocus();
+    setScopeFromUI();
     myToolbar.updateActionsImmediately();
   }
 
