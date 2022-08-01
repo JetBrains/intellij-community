@@ -44,7 +44,6 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
     assert directory != null;
     final Ref<PsiFile> featuresDump = new Ref<>();
     calculateFeaturesForUsage(editor, file, project, featuresDump);
-    //createFileWithFeatures(directory, featuresDump).navigate(true);
   }
 
   @Override

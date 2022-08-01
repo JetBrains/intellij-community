@@ -21,6 +21,7 @@
     <registryKey defaultValue="false" description="Parent statement condition feature"
                  key="similarity.find.usages.parent.statement.condition.feature"/>
     <registryKey defaultValue="true" description="Use information from sibling nodes" key="similarity.find.usages.use.sibling.features"/>
+    <registryKey defaultValue="false" description="Adds 'import clustering data' action for similar usages preview" key="similarity.import.clustering.results.action.enabled"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">
