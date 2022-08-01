@@ -162,6 +162,9 @@ internal sealed class BaseComponentAdapter(
       deferred.complete(instance)
       return instance
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: CancellationException) {
       throw e
     }
