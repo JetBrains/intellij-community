@@ -6,7 +6,6 @@ import com.intellij.openapi.util.IconLoader
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
-import javax.swing.JPanel
 
 internal class PyOnboardingTourPromoter : OnboardingLessonPromoter(
   "python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name"), "Python"
@@ -14,10 +13,6 @@ internal class PyOnboardingTourPromoter : OnboardingLessonPromoter(
   override val promoImage: Icon
     get() = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java.classLoader)
 
-  override fun getPromotionForInitialState(): JPanel? {
-    if (ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("PyCharm Edu")) {
-      return null
-    }
-    return super.getPromotionForInitialState()
-  }
+  override fun canCreatePromo(isEmptyState: Boolean): Boolean =
+    super.canCreatePromo(isEmptyState) && !ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("PyCharm Edu")
 }

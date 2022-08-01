@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.welcomeScreen
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.invokeLater
@@ -37,13 +38,13 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override val promoImage: Icon
     get() = FeaturesTrainerIcons.Img.PluginIcon
 
-  override fun getPromotionForInitialState(): JPanel? {
+  override fun getPromotion(isEmptyState: Boolean): JPanel? {
     scheduleOnboardingFeedback()
-    if (PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false)) {
-      return null
-    }
-    return super.getPromotionForInitialState()
+    return super.getPromotion(isEmptyState)
   }
+  override fun canCreatePromo(isEmptyState: Boolean): Boolean =
+    !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
+    RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5
 
   override val headerLabel: String
     get() = LearnBundle.message("welcome.promo.header")
@@ -87,6 +88,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override val closeAction: ((JPanel) -> Unit) = { promoPanel ->
     PropertiesComponent.getInstance().setValue(PROMO_HIDDEN, true)
     promoPanel.removeAll()
+    promoPanel.border = JBUI.Borders.empty(0, 2, 0, 0)
+    promoPanel.isOpaque = false
     val text = LearnBundle.message("welcome.promo.close.hint",
                                    ActionsBundle.message("group.HelpMenu.text").dropMnemonic(),
                                    LearnBundle.message("action.ShowLearnPanel.text"), lessonName)

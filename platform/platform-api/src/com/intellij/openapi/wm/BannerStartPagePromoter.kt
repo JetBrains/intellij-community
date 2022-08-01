@@ -21,9 +21,8 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 
 abstract class BannerStartPagePromoter : StartPagePromoter {
-  override fun getPromotionForInitialState(): JPanel? {
-    val rPanel: JPanel = NonOpaquePanel()
-    rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(16))
+  override fun getPromotion(isEmptyState: Boolean): JPanel? {
+    if (!canCreatePromo(isEmptyState)) return null
 
     val vPanel: JPanel = NonOpaquePanel()
     vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
@@ -39,10 +38,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(header)
     headerPanel.add(Box.createHorizontalGlue())
 
+    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
+
     closeAction?.let { closeAction ->
       val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
       val closeButton = InplaceButton(closeIcons) {
-        closeAction(rPanel)
+        closeAction(hPanel)
       }
       closeButton.maximumSize = Dimension(16, 16)
       headerPanel.add(closeButton)
@@ -72,18 +73,16 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     vPanel.add(Box.createVerticalGlue())
     vPanel.add(buttonPixelHunting(jButton))
 
-    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
-    hPanel.border = JBUI.Borders.empty(JBUI.scale(12), JBUI.scale(16), JBUI.scale(16), JBUI.scale(16))
+    hPanel.border = JBUI.Borders.empty(12, 16, 16, 16)
     val picture = JLabel(promoImage)
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
     hPanel.add(rigid(20, 0))
     hPanel.add(vPanel)
 
-    rPanel.add(hPanel)
-    return rPanel
+    return hPanel
   }
 
   private fun buttonPixelHunting(button: JButton): JPanel {
@@ -125,4 +124,5 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
   protected abstract fun runAction()
+  protected open fun canCreatePromo(isEmptyState: Boolean): Boolean = isEmptyState
 }
