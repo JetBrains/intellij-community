@@ -421,7 +421,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       JFrame frame = project == null ? null : WindowManager.getInstance().getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
-        throw new IllegalArgumentException("focusOwner cannot be null");
+        throw new IllegalArgumentException("focusOwner cannot be null:\n" +
+                                           "  contextComponent: " + component + "\n" +
+                                           "  project: " + project + "\n" +
+                                           "  frame: " + frame);
       }
     }
 
