@@ -125,8 +125,11 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     conditionsCache.getContainedInCurrentBranchCondition(root)
 
   @CalledInAny
-  fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash) =
-    createTask(root, hash, logData.dataPack).getContainingBranches()
+  fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash): List<String> {
+    val dataPack = logData.dataPack
+    val checksum = dataPack.refsModel.branches.hashCode()
+    return CachingTask(createTask(root, hash, dataPack), checksum).run()
+  }
 
   private fun createTask(root: VirtualFile, hash: Hash, dataPack: DataPack): Task {
     val provider = logData.getLogProvider(root)
@@ -183,12 +186,13 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   }
 
   private inner class CachingTask(private val delegate: Task, private val branchesChecksum: Int) {
-    fun run() {
+    fun run(): List<String> {
       val branches = delegate.getContainingBranches()
       val commitId = CommitId(delegate.myHash, delegate.myRoot)
       ApplicationManager.getApplication().invokeLater {
         cache(commitId, branches, branchesChecksum)
       }
+      return branches
     }
   }
 
