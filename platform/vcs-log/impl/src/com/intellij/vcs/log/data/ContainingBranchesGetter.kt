@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
@@ -35,8 +36,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     conditionsCache = CurrentBranchConditionCache(logData, parentDisposable)
     taskExecutor = SequentialLimitedLifoExecutor(parentDisposable, 10, CachingTask::run)
     logData.addDataPackChangeListener { dataPack: DataPack ->
-      val currentBranches = dataPack.refsModel.branches
-      val checksum = currentBranches.hashCode()
+      val checksum = dataPack.refsModel.branches.hashCode()
       if (currentBranchesChecksum != 0 && currentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
         clearCache()
       }
@@ -99,25 +99,23 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     return cache.getIfPresent(CommitId(hash, root))
   }
 
+  @CalledInAny
   fun getContainingBranchesQuickly(root: VirtualFile, hash: Hash): List<String>? {
-    LOG.assertTrue(EventQueue.isDispatchThread())
-    val commitId = CommitId(hash, root)
-    var branches = cache.getIfPresent(commitId)
-    if (branches == null) {
-      val index = logData.getCommitIndex(hash, root)
-      val pg = logData.dataPack.permanentGraph
-      if (pg is PermanentGraphImpl<Int>) {
-        val nodeId = pg.permanentCommitsInfo.getNodeId(index)
-        branches = if (nodeId < 10000 && canUseGraphForComputation(logData.getLogProvider(root))) {
-          getContainingBranchesSynchronously(root, hash)
-        }
-        else {
-          BackgroundTaskUtil.tryComputeFast({ getContainingBranchesSynchronously(root, hash) }, 100)
-        }
-        if (branches != null) cache.put(commitId, branches)
+    val cachedBranches = cache.getIfPresent(CommitId(hash, root))
+    if (cachedBranches != null) return cachedBranches
+
+    val dataPack = logData.dataPack
+    val commitIndex = logData.getCommitIndex(hash, root)
+    val pg = dataPack.permanentGraph
+    if (pg is PermanentGraphImpl<Int>) {
+      val nodeId = pg.permanentCommitsInfo.getNodeId(commitIndex)
+      if (nodeId < 10000 && canUseGraphForComputation(logData.getLogProvider(root))) {
+        return getContainingBranchesSynchronously(dataPack, root, hash)
       }
     }
-    return branches
+    return BackgroundTaskUtil.tryComputeFast({
+                                               return@tryComputeFast getContainingBranchesSynchronously(dataPack, root, hash)
+                                             }, 100)
   }
 
   @CalledInAny
@@ -126,9 +124,12 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
   @CalledInAny
   fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash): List<String> {
-    val dataPack = logData.dataPack
-    val checksum = dataPack.refsModel.branches.hashCode()
-    return CachingTask(createTask(root, hash, dataPack), checksum).run()
+    return getContainingBranchesSynchronously(logData.dataPack, root, hash)
+  }
+
+  @CalledInAny
+  private fun getContainingBranchesSynchronously(dataPack: DataPack, root: VirtualFile, hash: Hash): List<String> {
+    return CachingTask(createTask(root, hash, dataPack), dataPack.refsModel.branches.hashCode()).run()
   }
 
   private fun createTask(root: VirtualFile, hash: Hash, dataPack: DataPack): Task {
@@ -189,7 +190,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     fun run(): List<String> {
       val branches = delegate.getContainingBranches()
       val commitId = CommitId(delegate.myHash, delegate.myRoot)
-      ApplicationManager.getApplication().invokeLater {
+      UIUtil.invokeLaterIfNeeded {
         cache(commitId, branches, branchesChecksum)
       }
       return branches
