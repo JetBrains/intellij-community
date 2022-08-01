@@ -17,6 +17,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -257,6 +258,35 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
     else {
       return super.doCreateProcess(commandLine);
+    }
+  }
+
+  @Override
+  protected @NotNull ProcessHandler createProcessHandler(@NotNull Process process,
+                                                         @NotNull String commandLineString,
+                                                         @NotNull TargetEnvironment targetEnvironment,
+                                                         @NotNull TargetedCommandLine commandLine) {
+    if (emulateTerminal()) {
+      return new OSProcessHandler(process, commandLineString, commandLine.getCharset()) {
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return new BaseOutputReader.Options() {
+            @Override
+            public BaseDataReader.SleepingPolicy policy() {
+              return BaseDataReader.SleepingPolicy.BLOCKING;
+            }
+
+            @Override
+            public boolean splitToLines() {
+              return false;
+            }
+          };
+        }
+      };
+    }
+    else {
+      return super.createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     }
   }
 
