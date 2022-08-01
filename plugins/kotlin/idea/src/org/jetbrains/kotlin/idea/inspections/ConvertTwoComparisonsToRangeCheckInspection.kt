@@ -48,7 +48,7 @@ class ConvertTwoComparisonsToRangeCheckInspection :
         val rangeData = generateRangeExpressionData(element) ?: return
         val replaced = element.replace(rangeData.createExpression())
         (replaced as? KtBinaryExpression)?.right?.let {
-            ReplaceRangeToWithUntilInspection.applyFixIfApplicable(it)
+            AbstractReplaceRangeToWithRangeUntilInspection.applyFixIfApplicable(it)
         }
     }
 
