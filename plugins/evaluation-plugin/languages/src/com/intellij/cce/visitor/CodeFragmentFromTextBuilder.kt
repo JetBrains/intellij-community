@@ -1,5 +1,6 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.actions.CompletionStrategy
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.cce.processor.EvaluationRootProcessor
 import com.intellij.cce.core.CodeFragment
@@ -7,7 +8,7 @@ import com.intellij.cce.core.CodeToken
 import com.intellij.cce.util.text
 
 class CodeFragmentFromTextBuilder : CodeFragmentBuilder() {
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment {
+  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, strategy: CompletionStrategy): CodeFragment {
     val text = file.text()
     val codeFragment = CodeFragment(0, text.length)
     codeFragment.text = text

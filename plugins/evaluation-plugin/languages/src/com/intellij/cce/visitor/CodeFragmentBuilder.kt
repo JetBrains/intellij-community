@@ -1,5 +1,6 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.actions.CompletionStrategy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.cce.processor.EvaluationRootProcessor
@@ -20,5 +21,5 @@ abstract class CodeFragmentBuilder {
     return rootProcessor.getRoot() ?: throw NullRootException(code.path)
   }
 
-  abstract fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment
+  abstract fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, strategy: CompletionStrategy): CodeFragment
 }

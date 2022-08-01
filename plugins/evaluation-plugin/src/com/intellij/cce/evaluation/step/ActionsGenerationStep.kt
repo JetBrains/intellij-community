@@ -57,7 +57,7 @@ class ActionsGenerationStep(
             ?: evaluationRootInfo.parentPsi.textOffset + evaluationRootInfo.parentPsi.textLength)
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
-        val codeFragment = codeFragmentBuilder.build(file, rootVisitor)
+        val codeFragment = codeFragmentBuilder.build(file, rootVisitor, strategy)
         val fileActions = actionsGenerator.generate(codeFragment)
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
