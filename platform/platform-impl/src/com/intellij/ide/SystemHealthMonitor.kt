@@ -242,7 +242,7 @@ private suspend fun checkEnvironment() {
   try {
     if (shellEnvDeferred!!.await() == false) {
       val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
-        BrowserUtil.browse("https://jb.gg/shell-env")
+        BrowserUtil.browse("https://intellij.com/shell-env")
       }
       val appName = ApplicationNamesInfo.getInstance().fullProductName
       val shell = System.getenv("SHELL")
