@@ -344,7 +344,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
-    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator, isDebug());
+    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
 
     // Attach extensions
     PythonRunConfigurationExtensionsManager.Companion.getInstance()
@@ -404,12 +404,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private static ProcessHandler doStartProcess(@NotNull TargetEnvironment targetEnvironment,
-                                               @NotNull TargetedCommandLine commandLine,
-                                               @NotNull ProgressIndicator progressIndicator,
-                                               boolean isDebug) throws ExecutionException {
+  private ProcessHandler doStartProcess(@NotNull TargetEnvironment targetEnvironment,
+                                        @NotNull TargetedCommandLine commandLine,
+                                        @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
     final ProcessHandler processHandler;
-    processHandler = doCreateProcess(targetEnvironment, commandLine, progressIndicator, isDebug);
+    Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
+    // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
+    String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
+    processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -471,17 +473,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private static ProcessHandler doCreateProcess(@NotNull TargetEnvironment targetEnvironment,
-                                                @NotNull TargetedCommandLine commandLine,
-                                                @NotNull ProgressIndicator progressIndicator,
-                                                boolean isDebug) throws ExecutionException {
-    Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
-    // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
-    String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
+  protected ProcessHandler createProcessHandler(@NotNull Process process,
+                                                @NotNull String commandLineString,
+                                                @NotNull TargetEnvironment targetEnvironment,
+                                                @NotNull TargetedCommandLine commandLine) {
     if (targetEnvironment instanceof LocalTargetEnvironment) {
       // TODO This special treatment of local target must be replaced with a generalized approach
       //  (f.e. with an ability of a target environment to match arbitrary local path to a target one)
-      if (isDebug) {
+      if (isDebug()) {
         return new PyDebugProcessHandler(process, commandLineString, commandLine.getCharset());
       }
       return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
