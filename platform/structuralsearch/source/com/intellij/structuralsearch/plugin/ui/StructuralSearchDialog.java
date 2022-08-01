@@ -374,10 +374,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private void startSearching() {
     if (myReplace) {
-      new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
+      new ReplaceCommand(getConfiguration(), mySearchContext).startSearching();
     }
     else {
-      new SearchCommand(myConfiguration, mySearchContext).startSearching();
+      new SearchCommand(getConfiguration(), mySearchContext).startSearching();
     }
   }
 
