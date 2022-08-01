@@ -176,29 +176,29 @@ enum class HintType(
             val rightExp = binaryExpression.right ?: return emptyList()
             val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
             val operation = operationReference.resolveToCall()?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
-            val (leftText, rightText) = when (operation) {
+            val (leftText: String?, rightText: String?) = when (operation) {
                 "kotlin.ranges.downTo" -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
-                    KotlinBundle.message("hints.ranges.downTo.left") to KotlinBundle.message("hints.ranges.downTo.right")
+                    KotlinBundle.message("hints.ranges.greaterOrEqual") to KotlinBundle.message("hints.ranges.greaterOrEqual")
                 }
                 "kotlin.ranges.until" -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
-                    KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
+                    KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.less")
                 }
                 in rangeToTypes -> {
-                    KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right")
+                    KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.lessOrEqual")
                 }
                 "kotlin.ranges.rangeUntil" -> {
-                    KotlinBundle.message("hints.ranges.rangeUntil.left") to KotlinBundle.message("hints.ranges.rangeUntil.right")
+                    KotlinBundle.message("hints.ranges.lessOrEqual") to null
                 }
                 else -> return emptyList()
             }
-            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset).takeUnless { leftText.isEmpty() }
-            val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset).takeUnless { rightText.isEmpty() }
+            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
+            val rightInfo = rightText?.let { InlayInfo(text = it, offset = rightExp.startOffset) }
             return listOfNotNull(
-                leftInfo?.let { InlayInfoDetails(it, listOf(TextInlayInfoDetail(leftText, smallText = false))) },
+                InlayInfoDetails(leftInfo, listOf(TextInlayInfoDetail(leftText, smallText = false))),
                 rightInfo?.let { InlayInfoDetails(it, listOf(TextInlayInfoDetail(rightText, smallText = false))) }
             )
         }
