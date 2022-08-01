@@ -9,10 +9,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -26,6 +23,9 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             return shouldBeUnresolved!!
         }
     }
+
+    override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
 
     protected open fun doTest(path: String) {
         assert(path.endsWith(".kt")) { path }
