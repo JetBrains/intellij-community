@@ -67,19 +67,17 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
       LOG.debug("Background operation is running. returning.")
     }
     else {
-      val roots = prepareRootsForCommit(getRoots(context), project)
-      queueCheckin(project, context, roots)
-    }
-  }
-
-  protected open fun queueCheckin(
-    project: Project,
-    context: VcsContext,
-    roots: Array<FilePath>
-  ) {
-    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
-      true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
-      performCheckIn(context, project, roots)
+      val selectedChanges = context.selectedChanges?.asList().orEmpty()
+      val selectedUnversioned = context.selectedUnversionedFilePaths
+      val initialChangeList = getInitiallySelectedChangeList(context, project)
+      val pathsToCommit = prepareRootsForCommit(getRoots(context), project).asList()
+      val executor = getExecutor(project)
+      val forceUpdateCommitStateFromContext = isForceUpdateCommitStateFromContext()
+      ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+        true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
+        performCheckIn(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
+                       executor, forceUpdateCommitStateFromContext)
+      }
     }
   }
 
@@ -97,32 +95,32 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
 
   protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
 
-  protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
+  private fun performCheckIn(project: Project,
+                             selectedChanges: List<Change>,
+                             selectedUnversioned: List<FilePath>,
+                             initialChangeList: LocalChangeList,
+                             pathsToCommit: List<FilePath>,
+                             executor: CommitExecutor?,
+                             forceUpdateCommitStateFromContext: Boolean) {
     LOG.debug("invoking commit dialog after update")
 
-    val selectedChanges = context.selectedChanges
-    val selectedUnversioned = context.selectedUnversionedFilePaths
-    val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
     val included: Collection<Any>
 
-    if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
+    if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
       val manager = ChangeListManager.getInstance(project)
-      changesToCommit = roots.flatMap { manager.getChangesIn(it) }.toSet()
+      changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
       included = initialChangeList.changes.intersect(changesToCommit)
     }
     else {
-      changesToCommit = selectedChanges.orEmpty().toList()
+      changesToCommit = selectedChanges.toList()
       included = concat(changesToCommit, selectedUnversioned)
     }
 
-    val executor = getExecutor(project)
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
-      workflowHandler.run {
-        setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())
-        activate()
-      }
+      workflowHandler.setCommitState(initialChangeList, included, forceUpdateCommitStateFromContext)
+      workflowHandler.activate()
     }
     else {
       CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
