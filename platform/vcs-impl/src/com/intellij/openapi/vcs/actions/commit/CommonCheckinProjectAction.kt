@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -17,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.L
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.ApiStatus
 
 private val LOCAL_CHANGES_ACTION_PLACES = setOf(CHANGES_VIEW_TOOLBAR, CHANGES_VIEW_POPUP)
 private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACTION_PLACES
@@ -28,20 +31,29 @@ private fun AnActionEvent.isToggleCommitEnabled(): Boolean {
          commitMode.isToggleMode
 }
 
+@ApiStatus.Internal
+fun AnActionEvent.isCommonCommitActionHidden(): Boolean {
+  if (isToggleCommitEnabled() && isFromLocalChanges()) {
+    // Show toggle button instead, ToggleChangesViewCommitUiAction
+    return true
+  }
+
+  val commitMode = getProjectCommitMode()
+  if (commitMode is CommitMode.NonModalCommitMode && !commitMode.isToggleMode && isFromLocalChangesPlace()) {
+    // Hide from LocalChanges toolwindow in non-modal commit (we use a commit workflow button instead).
+    return true
+  }
+
+  return false
+}
+
 class CommonCheckinProjectAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun update(e: AnActionEvent) {
-    if (e.isToggleCommitEnabled() && e.isFromLocalChanges()) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    // hide from LocalChanges toolwindow in non-modal commit (we use a commit workflow button instead)
-    val commitMode = e.getProjectCommitMode()
-    if (commitMode is CommitMode.NonModalCommitMode && !commitMode.isToggleMode && e.isFromLocalChangesPlace()) {
+    if (e.isCommonCommitActionHidden()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -99,12 +111,17 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
 
 private fun performCheckinProjectAction(e: AnActionEvent) {
   val project = e.project!!
-  val roots = ProjectLevelVcsManager.getInstance(project).allVcsRoots
-    .filter { it.vcs?.checkinEnvironment != null }
-    .map { getFilePath(it.path) }
+  val roots = getAllCommittableRoots(project)
 
   val initialChangelist = CheckinActionUtil.getInitiallySelectedChangeList(project, e)
 
   CheckinActionUtil.performCommonCommitAction(e, project, initialChangelist, roots, ActionsBundle.message("action.CheckinProject.text"),
                                               null, false)
+}
+
+@ApiStatus.Internal
+fun getAllCommittableRoots(project: Project): List<FilePath> {
+  return ProjectLevelVcsManager.getInstance(project).allVcsRoots
+    .filter { it.vcs?.checkinEnvironment != null }
+    .map { getFilePath(it.path) }
 }
