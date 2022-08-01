@@ -15,6 +15,8 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -29,9 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
+  private static final Logger LOG = Logger.getInstance(PsiAwareTextEditorImpl.class);
 
   public PsiAwareTextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
     super(project, file, provider);
@@ -52,19 +56,20 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
       document != null && !myProject.isDefault() && PsiDocumentManager.getInstance(myProject).isCommitted(document);
-    CodeFoldingState foldingState = shouldBuildInitialFoldings
-                                    ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
-                                    : null;
+    CodeFoldingState foldingState = catchingExceptions(() -> shouldBuildInitialFoldings
+                                                             ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
+                                                             : null);
 
-    List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
+
+    List<? extends Segment> focusZones = catchingExceptions(() -> FocusModePassFactory.calcFocusZones(psiFile));
 
     Editor editor = getEditor();
     DocRenderPassFactory.Items items = document != null && psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())
-                                       ? DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
+                                       ? catchingExceptions(() -> DocRenderPassFactory.calculateItemsToRender(editor, psiFile))
                                        : null;
 
-    HintsBuffer buffer = psiFile != null ? InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor) : null;
-    var placeholders = CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile);
+    HintsBuffer buffer = psiFile != null ? catchingExceptions(() -> InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor)) : null;
+    var placeholders = catchingExceptions(() -> CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile));
 
     return () -> {
       baseResult.run();
@@ -88,7 +93,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         InlayHintsPassFactory.Companion.applyPlaceholders(psiFile, editor, buffer);
       }
 
-      if (!placeholders.isEmpty()) {
+      if (placeholders != null && !placeholders.isEmpty()) {
         CodeVisionPassFactory.applyPlaceholders(editor, placeholders);
       }
 
@@ -96,6 +101,19 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
     };
+  }
+
+  private static @Nullable <T> T catchingExceptions(Supplier<T> computable) {
+    try {
+      return computable.get();
+    }
+    catch (Throwable e) {
+      if (e instanceof ControlFlowException) {
+        throw e;
+      }
+      LOG.warn("Exception during editor loading", e);
+    }
+    return null;
   }
 
   @NotNull
