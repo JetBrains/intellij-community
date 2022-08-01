@@ -10,6 +10,3 @@ import library.*
 fun test() {
     val a = A.<caret>Companion
 }
-
-// FIR_IGNORE
-// FIR_COMPARISON
