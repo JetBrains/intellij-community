@@ -21,10 +21,12 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal sealed class BaseComponentAdapter(@JvmField internal val componentManager: ComponentManagerImpl,
-                                           @JvmField val pluginDescriptor: PluginDescriptor,
-                                           @field:Volatile private var deferred: CompletableDeferred<Any>,
-                                           private var implementationClass: Class<*>?) : ComponentAdapter {
+internal sealed class BaseComponentAdapter(
+  @JvmField internal val componentManager: ComponentManagerImpl,
+  @JvmField val pluginDescriptor: PluginDescriptor,
+  @field:Volatile private var deferred: CompletableDeferred<Any>,
+  private var implementationClass: Class<*>?,
+) : ComponentAdapter {
   companion object {
     private val IS_DEFERRED_PREPARED: VarHandle
     private val INITIALIZING: VarHandle
@@ -38,6 +40,7 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
 
   @Suppress("unused")
   private var isDeferredPrepared = false
+
   @Suppress("unused")
   private var initializing = false
 
@@ -104,7 +107,10 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
       val end = StartUpMeasurer.getCurrentTime()
       if ((end - beforeLockTime) > 100) {
         // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
-        StartUpMeasurer.addCompletedActivity(beforeLockTime, end, implementationClassName, ActivityCategory.SERVICE_WAITING, /* pluginId = */ null)
+        StartUpMeasurer.addCompletedActivity(
+          beforeLockTime, end, implementationClassName,
+          ActivityCategory.SERVICE_WAITING, /* pluginId = */ null
+        )
       }
     }
     return result
@@ -128,9 +134,11 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
     }
   }
 
-  private fun <T : Any> doCreateInstance(keyClass: Class<T>?,
-                          componentManager: ComponentManagerImpl,
-                          activityCategory: ActivityCategory?): T {
+  private fun <T : Any> doCreateInstance(
+    keyClass: Class<T>?,
+    componentManager: ComponentManagerImpl,
+    activityCategory: ActivityCategory?,
+  ): T {
     try {
       val startTime = StartUpMeasurer.getCurrentTime()
       val implementationClass: Class<T>
@@ -173,10 +181,12 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
         return@withContext deferred as Deferred<T>
       }
 
-      createInstance(keyClass = keyClass,
-                     componentManager = componentManager,
-                     activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
-                     indicator = null)
+      createInstance(
+        keyClass = keyClass,
+        componentManager = componentManager,
+        activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
+        indicator = null,
+      )
       deferred as Deferred<T>
     }
   }
@@ -194,7 +204,9 @@ internal sealed class BaseComponentAdapter(@JvmField internal val componentManag
     }
     if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
-        val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
+        val error = AlreadyDisposedException(
+          "Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})"
+        )
         throw if (indicator == null) error else ProcessCanceledException(error)
       }
     }
