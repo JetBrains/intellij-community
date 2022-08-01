@@ -18,7 +18,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
+import com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
