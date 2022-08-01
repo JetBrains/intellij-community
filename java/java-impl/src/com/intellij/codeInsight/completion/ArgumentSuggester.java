@@ -87,7 +87,7 @@ class ArgumentSuggester {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(myType.getPresentableText());
       presentation.setIcon(PlatformIcons.METHOD_ICON);

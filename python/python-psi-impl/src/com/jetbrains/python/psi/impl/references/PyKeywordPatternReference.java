@@ -119,7 +119,7 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setItemText(getLookupString());
     }

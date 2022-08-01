@@ -158,7 +158,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     boolean qualify = myHelper != null && !myHelper.willBeImported() || myForcedQualifier != null;
 
     PsiVariable variable = getObject();

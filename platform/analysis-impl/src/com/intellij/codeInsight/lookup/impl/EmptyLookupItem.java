@@ -38,7 +38,7 @@ public class EmptyLookupItem extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(myText);
   }
 

@@ -120,7 +120,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     renderClassItem(presentation, this, getObject(), false, " " + myPackageDisplayName, mySubstitutor);
   }
 

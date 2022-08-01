@@ -261,7 +261,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     final Object object = getObject();
     if (object instanceof PsiClass) {
       JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object, myDiamond, myLocationString, mySubstitutor);

@@ -516,9 +516,9 @@ class BasicCompletionSession(
                                     }
                                 }
 
-                                override fun renderElement(presentation: LookupElementPresentation?) {
+                                override fun renderElement(presentation: LookupElementPresentation) {
                                     super.renderElement(presentation)
-                                    presentation?.appendTailText(
+                                    presentation.appendTailText(
                                         KotlinIdeaCompletionBundle.message(
                                             "presentation.tail.for.0.in.1",
                                             name,

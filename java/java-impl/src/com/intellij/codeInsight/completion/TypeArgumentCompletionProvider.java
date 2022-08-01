@@ -188,7 +188,7 @@ class TypeArgumentCompletionProvider {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       myTypeItems.get(0).renderElement(presentation);
       presentation.setItemText(getLookupString());
       if (myTypeItems.size() > 1) {

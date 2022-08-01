@@ -55,7 +55,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myIcon);
     presentation.setItemText(myPresentableText);
     PsiType type = getType();
