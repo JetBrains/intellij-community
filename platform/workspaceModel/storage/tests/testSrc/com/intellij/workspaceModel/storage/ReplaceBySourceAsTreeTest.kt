@@ -438,7 +438,7 @@ class ReplaceBySourceAsTreeTest {
   @Ignore
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithSoftLinkEntity(named.persistentId)
+    builder.addWithSoftLinkEntity(named.persistentId)
     resetChanges()
     builder.assertConsistency()
 
@@ -658,7 +658,7 @@ class ReplaceBySourceAsTreeTest {
   }
 
   @Test
-  @Ignore("Well, this case is explicetely not supported yet")
+  @Ignore("Well, this case is explicitly not supported yet")
   fun `replace oneToOne connection with partial move`() {
     val parentEntity = builder.addOoParentEntity()
     builder.addOoChildEntity(parentEntity)
@@ -758,8 +758,8 @@ class ReplaceBySourceAsTreeTest {
 
   @Test
   fun `move two children`() {
-    val entity = builder add NamedEntity("Data", AnotherSource)
-    val newEntity = replacement add NamedEntity("Data", AnotherSource) {
+    builder add NamedEntity("Data", AnotherSource)
+    replacement add NamedEntity("Data", AnotherSource) {
       children = listOf(
         NamedChildEntity("data1", MySource),
         NamedChildEntity("data2", MySource),
@@ -776,18 +776,18 @@ class ReplaceBySourceAsTreeTest {
 
   @Test
   fun `remove two children`() {
-    val entity = builder add NamedEntity("Data", AnotherSource) {
+    builder add NamedEntity("Data", AnotherSource) {
       children = listOf(
         NamedChildEntity("data1", MySource),
         NamedChildEntity("data2", MySource),
       )
     }
-    val newEntity = replacement add NamedEntity("Data", AnotherSource)
+    replacement add NamedEntity("Data", AnotherSource)
 
     rbsMySources()
 
     builder.assertConsistency()
-    val parentEntity = assertSingleNameEntity("Data")
+    assertSingleNameEntity("Data")
     assertNoNamedChildEntities()
   }
 
@@ -885,6 +885,80 @@ class ReplaceBySourceAsTreeTest {
       replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
       replaceRoot.children.single() assert ReplaceWithState.NoChange(thisRoot.children.single().base.id)
       replaceRoot.children.single().children.single() assert ReplaceWithState.SubtreeMoved
+    }
+  }
+
+  @Test
+  fun `rbs for deep chain 3`() {
+    builder add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", AnotherSource) {
+          this.children = listOf(TreeMultiparentLeafEntity("internal", MySource))
+        },
+      )
+    }
+    val thisRoot = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceRoot = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", AnotherSource) {
+          this.children = listOf(TreeMultiparentLeafEntity("internal2", AnotherSource))
+        },
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    val endChildren = builder.entities(TreeMultiparentRootEntity::class.java).single().children.single().children
+    assertTrue(endChildren.isEmpty())
+
+    thisStateCheck {
+      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
+      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
+      thisRoot.children.single().children.single() assert ReplaceState.Remove
+    }
+
+    replaceWithCheck {
+      replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
+    }
+  }
+
+  @Test
+  fun `rbs for deep chain 4`() {
+    builder add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", MySource) {
+          this.children = listOf(TreeMultiparentLeafEntity("internal", AnotherSource))
+        },
+      )
+    }
+    val thisRoot = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceRoot = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", MySource) {
+          this.children = listOf(TreeMultiparentLeafEntity("internal2", AnotherSource))
+        },
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    val endChildren = builder.entities(TreeMultiparentRootEntity::class.java).single().children.single().children
+    assertEquals("internal", endChildren.single().data)
+
+    thisStateCheck {
+      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
+      thisRoot.children.single() assert ReplaceState.Relabel
+    }
+
+    replaceWithCheck {
+      replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
+      replaceRoot.children.single() assert ReplaceWithState.Relabel(thisRoot.children.single().base.id)
     }
   }
 
