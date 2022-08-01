@@ -592,6 +592,7 @@ public class JBTabsImpl extends JComponent
       mySingleRow = true;
     }
     setupScrollBar();
+    myTableLayout.setWithScrollBar(isWithScrollBar());
     boolean useTableLayout = !isSingleRow();
      useTableLayout |= getTabsPosition() == JBTabsPosition.top
                 && supportsTableLayoutAsSingleRow()
@@ -2122,7 +2123,7 @@ public class JBTabsImpl extends JComponent
   private int getTabsAreaWidth() {
     if (myMoreToolbar.getComponent().isVisible()) {
       return myMoreToolbar.getComponent().getX();
-    } else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
+    } else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible() && myTableLayout.myLastTableLayout == null) {
       return myEntryPointToolbar.getComponent().getX();
     }
     return getBounds().width;
