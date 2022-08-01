@@ -12,7 +12,7 @@
     <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>
+    <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.commit.CommonCheckinFilesAction"/>
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>

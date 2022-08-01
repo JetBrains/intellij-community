@@ -19,6 +19,7 @@ private fun VcsContext.getCommonVcs(): AbstractVcs? {
   return getRoots().mapNotNull { getVcsFor(project, it) }.distinct().singleOrNull()
 }
 
+@Deprecated("Use [com.intellij.openapi.vcs.actions.commit.CheckinActionUtil] instead")
 open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
   override fun getActionName(dataContext: VcsContext): String {
     val actionName = dataContext.getCommonVcs()?.checkinEnvironment?.checkinOperationName

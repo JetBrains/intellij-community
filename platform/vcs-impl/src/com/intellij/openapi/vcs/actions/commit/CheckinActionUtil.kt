@@ -127,4 +127,21 @@ object CheckinActionUtil {
            ?: e.getData(VcsDataKeys.CHANGES)?.firstOrNull()?.let { manager.getChangeList(it) }
            ?: manager.defaultChangeList
   }
+
+  fun getInitiallySelectedChangeListFor(project: Project, pathsToCommit: List<FilePath>): LocalChangeList {
+    val manager = ChangeListManager.getInstance(project)
+    val defaultChangeList = manager.defaultChangeList
+    var result: LocalChangeList? = null
+
+    for (filePath in pathsToCommit) {
+      if (filePath.virtualFile == null) continue
+
+      val changes = manager.getChangesIn(filePath)
+      if (ContainerUtil.intersects(changes, defaultChangeList.changes)) return defaultChangeList
+
+      result = changes.firstOrNull()?.let { manager.getChangeList(it) }
+    }
+
+    return result ?: defaultChangeList
+  }
 }
