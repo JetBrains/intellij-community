@@ -13,10 +13,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -230,16 +228,22 @@ public final class MavenServerManager implements Disposable {
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
     String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
+    Sdk jdk;
     try {
-      return MavenUtil.getJdk(project, jdkForImporterName);
+      jdk = MavenUtil.getJdk(project, jdkForImporterName);
     }
     catch (ExternalSystemJdkException e) {
-      Sdk jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
+      jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
       MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
                                                                             SyncBundle.message("importing.jdk.changed.description",
                                                                                                jdkForImporterName, jdk.getName())
       );
+    }
+    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
       return jdk;
+    } else {
+      MavenLog.LOG.info("Selected jdk [" + jdk.getName() + "] is not JDK1.8+ Will use internal jdk instead");
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
   }
 
