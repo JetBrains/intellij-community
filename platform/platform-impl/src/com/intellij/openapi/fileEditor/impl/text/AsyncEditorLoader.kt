@@ -199,8 +199,9 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
   fun getEditorState(level: FileEditorStateLevel): TextEditorState {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val state = provider.getStateImpl(project, editor, level)
+    val delayedState = delayedState
     if (!isDone && delayedState != null) {
-      state.setDelayedFoldState { delayedState!!.foldingState }
+      state.setDelayedFoldState { delayedState.foldingState }
     }
     return state
   }
