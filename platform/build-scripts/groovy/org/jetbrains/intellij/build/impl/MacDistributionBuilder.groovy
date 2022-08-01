@@ -225,7 +225,7 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
           Unit invoke() {
             Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                          jreArchive, suffix, notarize)
+                                          jreArchive, suffix, arch, notarize)
             return null
           }
         }))
@@ -240,7 +240,7 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
         @Override
         Unit invoke() {
           MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                        null, "-no-jdk$suffix", notarize)
+                                        null, "-no-jdk$suffix", arch, notarize)
           return null
         }
       }))

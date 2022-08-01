@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.name
 
 class LinuxDistributionBuilder(private val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
@@ -92,7 +91,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           ArchiveUtils.unTar(tarGzPath, tempTar)
-          RepairUtilityBuilder.generateManifest(context, tempTar.resolve(rootDirectoryName), tarGzPath.name)
+          RepairUtilityBuilder.generateManifest(context, tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch)
         }
         finally {
           NioFiles.deleteRecursively(tempTar)
