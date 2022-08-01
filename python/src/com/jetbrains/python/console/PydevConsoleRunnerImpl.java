@@ -580,8 +580,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                                      usePty);
 
     // The environment is now prepared and ide server port should be resolved, so let's start the server
-    // TODO check if binding to "localhost" properly works for Docker target on Linux host machine
-    String ideServerHost = "localhost";
+    ResolvedPortBinding resolvedServerPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
+    String ideServerHost;
+    if (resolvedServerPortBinding != null) {
+      ideServerHost = resolvedServerPortBinding.getLocalEndpoint().getHost();
+    }
+    else {
+      LOG.error("The resolution of the local port binding for \"" + ideServerPort + "\" port cannot be found in the prepared environment" +
+                ", falling back to \"localhost\" for the server socket binding on the local machine");
+      ideServerHost = "localhost";
+    }
     PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, ideServerHost, ideServerPort);
     myPydevConsoleCommunication = communicationServer;
     try {
