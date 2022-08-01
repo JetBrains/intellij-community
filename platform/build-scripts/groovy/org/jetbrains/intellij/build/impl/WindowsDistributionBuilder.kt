@@ -26,7 +26,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiPredicate
-import kotlin.io.path.name
 
 internal class WindowsDistributionBuilder(
   private val context: BuildContext,
@@ -153,7 +152,7 @@ internal class WindowsDistributionBuilder(
 
       runProcess(listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, context.messages)
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-        RepairUtilityBuilder.generateManifest(context, tempExe, exePath!!.name)
+        RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
       }
     }
     finally {
