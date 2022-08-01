@@ -281,7 +281,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   private fun clearMessages() {
-    lessonMessagePane.clear()
+    lessonMessagePane.clearMessages()
   }
 
   private fun createButtonsPanel(): JPanel {

@@ -7,6 +7,7 @@ import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.text.paragraph.TextParagraph;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -20,6 +21,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +35,7 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +47,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -61,6 +65,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
+import static com.intellij.util.ImageLoader.*;
 import static com.intellij.util.ui.UIUtil.drawImage;
 
 /**
@@ -113,6 +118,133 @@ public final class TipUIUtil {
       tip.fileName = tipFileName;
     }
     return tip;
+  }
+
+  public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip) {
+    Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip);
+    String text = result.first;
+    @Nullable ClassLoader loader = result.second;
+    @Nullable String tipsPath = result.third;
+
+    Document tipHtml = Jsoup.parse(text);
+    Element tipContent = tipHtml.body();
+
+    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath);
+    inlineProductInfo(tipContent);
+
+    List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons).convert();
+    if (paragraphs.size() > 0) {
+      paragraphs.get(0).editAttributes(attr -> {
+        StyleConstants.setSpaceAbove(attr, TextParagraph.NO_INDENT);
+        return Unit.INSTANCE;
+      });
+    }
+    return paragraphs;
+  }
+
+  private static Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> loadTip(@Nullable TipAndTrickBean tip) {
+    if (tip == null) return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null);
+    try {
+      File tipFile = new File(tip.fileName);
+      if (tipFile.isAbsolute() && tipFile.exists()) {
+        String content = FileUtil.loadFile(tipFile, StandardCharsets.UTF_8);
+        return Trinity.create(content, null, tipFile.getParentFile().getAbsolutePath());
+      }
+      else {
+        final ClassLoader fallbackLoader = TipUIUtil.class.getClassLoader();
+        final PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+        final DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+
+        //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
+        ClassLoader tipLoader = null;
+
+        if (langBundle != null) {
+          final PluginDescriptor langBundleLoader = langBundle.pluginDescriptor;
+          if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
+        }
+
+        if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.getPluginClassLoader() != null) {
+          tipLoader = pluginDescriptor.getPluginClassLoader();
+        }
+
+        if (tipLoader == null) tipLoader = fallbackLoader;
+
+        String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
+        //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+        if (ideCode.contains("ic")) ideCode = "iu";
+        //So primary loader is determined. Now we're constructing retrievers that use a pair of path/loader to try to get the tips.
+        final List<TipRetriever> retrievers = new ArrayList<>();
+
+        retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
+        retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
+        retrievers.add(new TipRetriever(tipLoader, "tips", ""));
+        retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
+
+        for (final TipRetriever retriever : retrievers) {
+          String tipContent = retriever.getTipContent(tip.fileName);
+          if (tipContent != null) {
+            final String tipImagesLocation =
+              String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
+            return Trinity.create(tipContent, retriever.myLoader, tipImagesLocation);
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    //All retrievers have failed or error occurred, return error.
+    return Trinity.create(getCantReadText(tip), null, null);
+  }
+
+  private static Map<String, Icon> loadImages(@NotNull Element tipContent, @Nullable ClassLoader loader, @Nullable String tipsPath) {
+    if (tipsPath == null) return Collections.emptyMap();
+    Map<String, Icon> icons = new HashMap<>();
+    tipContent.getElementsByTag("img").forEach(imgElement -> {
+      if (!imgElement.hasAttr("src")) {
+        LOG.warn("Not found src attribute in img element:\n" + imgElement);
+        return;
+      }
+      String path = imgElement.attr("src");
+
+      Image image = null;
+      if (loader == null) {
+        try {
+          URL imageUrl = new File(tipsPath, path).toURI().toURL();
+          image = loadFromUrl(imageUrl);
+        }
+        catch (MalformedURLException e) {
+          LOG.warn(e);
+        }
+      }
+      else {
+        int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
+        if (StartupUiUtil.isUnderDarcula()) {
+          flags |= USE_DARK;
+        }
+        image = loadImage(tipsPath + path, Collections.emptyList(), null, loader, flags, ScaleContext.create(), !path.endsWith(".svg"));
+      }
+
+      if (image != null) {
+        Icon icon = new JBImageIcon(image);
+        icons.put(path, icon);
+      }
+      else {
+        LOG.warn("Not found icon for path: " + path);
+      }
+    });
+    return icons;
+  }
+
+  private static void inlineProductInfo(@NotNull Element tipContent) {
+    // Inline all custom entities like productName
+    for (Element element : tipContent.getElementsContainingOwnText("&")) {
+      String text = element.text();
+      for (TipEntity entity : ENTITIES) {
+        text = entity.inline(text);
+      }
+      element.text(text);
+    }
   }
 
   public static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {

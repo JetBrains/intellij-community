@@ -229,8 +229,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
     redraw()
   }
 
-  fun clear() {
-    text = ""
+  fun clearMessages() {
+    clear()
     activeMessages.clear()
     restoreMessages.clear()
     inactiveMessages.clear()

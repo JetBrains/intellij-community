@@ -77,9 +77,7 @@ open class StyledTextPane : JTextPane(), Disposable {
   }
 
   open fun redraw() {
-    paragraphRanges.clear()
-    text = ""
-    highlighter.removeAllHighlights()
+    clear()
     var curOffset = 0
     for ((ind, paragraph) in paragraphs.withIndex()) {
       val isLast = ind == paragraphs.lastIndex
@@ -87,6 +85,12 @@ open class StyledTextPane : JTextPane(), Disposable {
       curOffset = paragraph.insertToDocument(this, curOffset, isLast)
       paragraphRanges.add(start until curOffset)
     }
+  }
+
+  fun clear() {
+    paragraphRanges.clear()
+    text = ""
+    highlighter.removeAllHighlights()
   }
 
   protected fun getParagraphRange(paragraph: TextParagraph): IntRange {
