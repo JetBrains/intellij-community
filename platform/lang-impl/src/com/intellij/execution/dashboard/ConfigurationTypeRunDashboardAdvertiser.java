@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,19 +27,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements RunManagerListener, Disposable {
+public final class ConfigurationTypeRunDashboardAdvertiser implements RunManagerListener, Disposable {
   public static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Services Tool Window";
   private static final String DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID = "run.dashboard.multiple.run.configurations";
   private static final String SHOW_RUN_DASHBOARD_NOTIFICATION = "show.run.dashboard.notification";
 
   private final Project myProject;
+  private final String myRunConfigurationTypeId;
   private Notification myNotification;
 
-  public ConfigurationTypeRunDashboardAdvertiserBase(@NotNull Project project) {
+  public ConfigurationTypeRunDashboardAdvertiser(@NotNull Project project, String runConfigurationTypeId) {
     myProject = project;
+    myRunConfigurationTypeId = runConfigurationTypeId;
   }
-
-  protected abstract @NotNull ConfigurationType getType();
 
   @Override
   public void dispose() {
@@ -66,25 +67,33 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
   public final void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
     if (!isEnabled(myProject)) return;
 
-    if (settings.getType().equals(getType())) {
+    if (myRunConfigurationTypeId.equals(settings.getType().getId())) {
       ApplicationManager.getApplication().invokeLater(this::checkRunDashboardAvailability, o -> Disposer.isDisposed(this));
     }
   }
 
   private void checkRunDashboardAvailability() {
-    ConfigurationType type = getType();
     List<RunnerAndConfigurationSettings> settings =
-      RunManager.getInstance(myProject).getConfigurationSettingsList(type);
+      ContainerUtil.filter(RunManager.getInstance(myProject).getAllSettings(),
+                           c -> myRunConfigurationTypeId.equals(c.getType().getId()));
 
     if (settings.size() <= 1) return;
-    if (RunDashboardManager.getInstance(myProject).getTypes().contains(type.getId())) {
+    if (RunDashboardManager.getInstance(myProject).getTypes().contains(myRunConfigurationTypeId)) {
       return;
     }
 
     if (myNotification != null && !myNotification.isExpired()) return;
 
-    myNotification = createNotification(myProject, type.getId(), type.getDisplayName());
+    myNotification = createNotification(myProject, myRunConfigurationTypeId, getRunConfigurationDisplayName());
     myNotification.notify(myProject);
+  }
+
+  private String getRunConfigurationDisplayName() {
+    ConfigurationType configurationType = ContainerUtil.find(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions(),
+                                                             c -> myRunConfigurationTypeId.equals(c.getId()));
+    assert configurationType != null;
+
+    return configurationType.getDisplayName();
   }
 
   private static Notification createNotification(Project project, String typeId, String typeDisplayName) {
