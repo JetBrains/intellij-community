@@ -16,11 +16,9 @@ public final class CommandLineArgs {
     for (String arg : args) {
       if (arg.equalsIgnoreCase(DISABLE_NON_BUNDLED_PLUGINS)) {
         IdeaPluginDescriptorImpl.disableNonBundledPlugins = true;
-        break;
       }
       else if (arg.equalsIgnoreCase(DONT_REOPEN_PROJECTS)) {
         RecentProjectsManagerBase.dontReopenProjects = true;
-        break;
       }
     }
   }
