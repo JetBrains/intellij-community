@@ -47,6 +47,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -181,6 +182,11 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
     myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
+
+    if (ExperimentalUI.isNewUI()) {
+      getHistoryViewer().getSettings().setLineMarkerAreaShown(false);
+      getConsoleEditor().getSettings().setLineMarkerAreaShown(true);
+    }
   }
 
   @Override
