@@ -15,6 +15,10 @@ public final class DescindingFilesFilter {
   private DescindingFilesFilter() {
   }
 
+  /**
+   * Filter-out nested folders for VCSes that do not {@link AbstractVcs#allowsNestedRoots}
+   * and paths not under VCS.
+   */
   public static FilePath @NotNull [] filterDescindingFiles(FilePath @NotNull [] roots, Project project) {
     final List<FilePath> result = new ArrayList<>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
@@ -36,7 +40,8 @@ public final class DescindingFilesFilter {
         final List<FilePath> newList = new ArrayList<>();
         newList.add(root);
         chains.put(vcs.getKeyInstanceMethod(), newList);
-      } else {
+      }
+      else {
         boolean failed = false;
         for (FilePath chainedPath : chain) {
           if (VfsUtilCore.isAncestor(chainedPath.getIOFile(), root.getIOFile(), false)) {
@@ -45,7 +50,7 @@ public final class DescindingFilesFilter {
             break;
           }
         }
-        if (! failed) {
+        if (!failed) {
           chain.add(root);
         }
       }

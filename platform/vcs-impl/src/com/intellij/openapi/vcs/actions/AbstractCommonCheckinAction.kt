@@ -70,9 +70,12 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
       val selectedChanges = context.selectedChanges?.asList().orEmpty()
       val selectedUnversioned = context.selectedUnversionedFilePaths
       val initialChangeList = getInitiallySelectedChangeList(context, project)
-      val pathsToCommit = prepareRootsForCommit(getRoots(context), project).asList()
+      val pathsToCommit = DescindingFilesFilter.filterDescindingFiles(getRoots(context), project).asList()
       val executor = getExecutor(project)
       val forceUpdateCommitStateFromContext = isForceUpdateCommitStateFromContext()
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+
       ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
         true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
         performCheckIn(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
@@ -86,12 +89,6 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
   protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = null
 
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
-
-  protected open fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> {
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-
-    return DescindingFilesFilter.filterDescindingFiles(roots, project)
-  }
 
   protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
 
