@@ -157,6 +157,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   private void addMostCommonUsagesForSelectedGroups() {
     Ref<Collection<UsageCluster>> sortedClusters = new Ref<>();
+    myAlreadyRenderedSnippets = 0;
     Task.Backgroundable loadMostCommonUsagePatternsTask =
       new Task.Backgroundable(myProject, UsageViewBundle.message(
         "similar.usages.loading.most.common.usage.patterns.progress.title")) {
