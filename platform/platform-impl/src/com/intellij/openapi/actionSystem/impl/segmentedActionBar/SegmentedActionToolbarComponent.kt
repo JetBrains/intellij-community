@@ -80,7 +80,8 @@ open class SegmentedActionToolbarComponent(place: String,
         component = it
       }
     }
-    else if (component is ActionButton) {
+
+    if (component is ActionButton) {
       val actionButton = component as ActionButton
       updateActionButtonLook(actionButton)
     }
