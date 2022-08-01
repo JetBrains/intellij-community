@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JTextPane
 import javax.swing.text.SimpleAttributeSet
+import javax.swing.text.StyleConstants
 
 /**
  * Text part that inserts icon to the [JTextPane]. Assumed that icon height is small enough to fit in the line of text between other text parts.
@@ -27,13 +28,8 @@ open class IconTextPart(val icon: Icon) : TextPart("") {
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class IllustrationTextPart(val icon: Icon) : TextPart("") {
-  override val attributes = SimpleAttributeSet()
-
-  override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    // reduce the icon height by the line height, because otherwise there will be extra space below the icon
-    val height = icon.iconHeight - textPane.getFontMetrics(textPane.font).height
-    textPane.insertIconWithFixedHeight(icon, height)
-    return startOffset + 1
+open class IllustrationTextPart(val icon: Icon) : TextPart(" ") {
+  override val attributes = SimpleAttributeSet().apply {
+    StyleConstants.setIcon(this, icon)
   }
 }

@@ -45,25 +45,31 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
     val useInternalParagraphStyle: Boolean,
     val textProperties: TaskTextProperties?,
   ) : TextParagraph(textParts) {
+    private val isIllustration: Boolean = textParts.singleOrNull() is IllustrationTextPart
+
     override val attributes: SimpleAttributeSet
       get() = SimpleAttributeSet().apply {
         if (panelMode) {
           StyleConstants.setLeftIndent(this, UISettings.getInstance().checkIndent.toFloat())
           StyleConstants.setRightIndent(this, 0f)
           StyleConstants.setSpaceBelow(this, 0.0f)
-          StyleConstants.setLineSpacing(this, 0.2f)
         }
         else {
-          StyleConstants.setLineSpacing(this, 0.2f)
           StyleConstants.setLeftIndent(this, UISettings.getInstance().balloonIndent.toFloat())
         }
+
+        if (isIllustration) {
+          // it is required to not add extra space below the image
+          StyleConstants.setLineSpacing(this, 0f)
+        }
+        else StyleConstants.setLineSpacing(this, 0.2f)
 
         val properties = textProperties
         if (properties != null) {
           StyleConstants.setSpaceAbove(this, properties.spaceAbove.toFloat())
           StyleConstants.setSpaceBelow(this, properties.spaceBelow.toFloat())
         }
-        else if (useInternalParagraphStyle || textParts.singleOrNull() is IllustrationTextPart) {
+        else if (useInternalParagraphStyle || isIllustration) {
           StyleConstants.setSpaceAbove(this, UISettings.getInstance().taskInternalParagraphAbove.toFloat())
         }
         else if (panelMode) {
