@@ -46,6 +46,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     val contentRoots = runReadAction {
       ModuleManager.getInstance(project).modules.asSequence()
         .flatMap { it.rootManager.contentRoots.asSequence() }
+        .filter { it.isInLocalFileSystem }
         .filter { it.isDirectory }.distinct().toList()
     }
     for (root in contentRoots) {
@@ -75,6 +76,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     val newMappings = mutableListOf<VcsDirectoryMapping>()
     contentRoots
+      .filter { it.isInLocalFileSystem }
       .filter { it.isDirectory }
       .forEach { file ->
         val vcs = vcsManager.findVersioningVcs(file)
