@@ -2,17 +2,73 @@
 package com.intellij.openapi.vcs.actions.commit
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.removeEllipsisSuffix
 
 object CheckinActionUtil {
   private val LOG = logger<CheckinActionUtil>()
+
+  fun updateCommonCommitAction(e: AnActionEvent) {
+    val project = e.project
+    val presentation = e.presentation
+
+    if (project == null ||
+        !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
+        CommitModeManager.getInstance(project).getCurrentCommitMode().disableDefaultCommitAction()) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
+
+    presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+    presentation.isVisible = true
+  }
+
+  fun performCommonCommitAction(e: AnActionEvent,
+                                project: Project,
+                                initialChangeList: LocalChangeList,
+                                pathsToCommit: List<FilePath>,
+                                actionName: @NlsActions.ActionText String?,
+                                executor: CommitExecutor?,
+                                forceUpdateCommitStateFromContext: Boolean) {
+    LOG.debug("performCommonCommitAction")
+
+    val isFreezedDialogTitle = actionName?.let {
+      val operationName = UIUtil.removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase()
+      VcsBundle.message("error.cant.perform.operation.now", operationName)
+    }
+    val changeListManager = ChangeListManager.getInstance(project)
+    if (changeListManager.isFreezedWithNotification(isFreezedDialogTitle)) {
+      LOG.debug("ChangeListManager is freezed, abort commit")
+      return
+    }
+
+    if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning) {
+      LOG.debug("Background operation is running, abort commit")
+      return
+    }
+
+    val selectedChanges = e.getData(VcsDataKeys.CHANGES)?.asList().orEmpty()
+    val selectedUnversioned = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY)?.toList().orEmpty()
+    val filteredPaths = DescindingFilesFilter.filterDescindingFiles(pathsToCommit.toTypedArray(), project).asList()
+
+    performCheckInAfterUpdate(project, selectedChanges, selectedUnversioned, initialChangeList, filteredPaths,
+                              executor, forceUpdateCommitStateFromContext)
+  }
 
   @RequiresEdt
   fun performCheckInAfterUpdate(project: Project,
@@ -62,5 +118,13 @@ object CheckinActionUtil {
       LOG.debug("invoking commit dialog after update")
       CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
     }
+  }
+
+  fun getInitiallySelectedChangeList(project: Project, e: AnActionEvent): LocalChangeList {
+    val manager = ChangeListManager.getInstance(project)
+
+    return e.getData(VcsDataKeys.CHANGE_LISTS)?.firstOrNull()?.let { manager.findChangeList(it.name) }
+           ?: e.getData(VcsDataKeys.CHANGES)?.firstOrNull()?.let { manager.getChangeList(it) }
+           ?: manager.defaultChangeList
   }
 }
