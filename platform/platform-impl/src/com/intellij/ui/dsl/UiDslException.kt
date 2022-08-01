@@ -45,6 +45,13 @@ fun checkPositive(name: String, value: Int) {
 }
 
 @ApiStatus.Internal
+fun checkNull(value: Any?) {
+  if (value != null) {
+    throw UiDslException("Value must be null")
+  }
+}
+
+@ApiStatus.Internal
 fun checkComponent(component: Component?): JComponent {
   if (component !is JComponent) {
     throw UiDslException("Only JComponents are supported: $component")
