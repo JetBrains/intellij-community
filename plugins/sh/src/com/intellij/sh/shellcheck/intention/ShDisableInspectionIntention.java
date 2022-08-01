@@ -2,6 +2,7 @@
 package com.intellij.sh.shellcheck.intention;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
@@ -14,6 +15,7 @@ import com.intellij.sh.ShBundle;
 import com.intellij.sh.shellcheck.ShShellcheckInspection;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -64,5 +66,10 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
   @Override
   public Icon getIcon(int flags) {
     return AllIcons.Actions.Cancel;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return null;
   }
 }
