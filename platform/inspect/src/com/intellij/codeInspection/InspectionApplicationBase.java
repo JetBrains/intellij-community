@@ -293,7 +293,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       catch (ParsingException e) {
         LOG.error("Error of scope parsing", e);
         gracefulExit();
-        return null;
+        throw new IllegalStateException("unreachable");
       }
     }
 
