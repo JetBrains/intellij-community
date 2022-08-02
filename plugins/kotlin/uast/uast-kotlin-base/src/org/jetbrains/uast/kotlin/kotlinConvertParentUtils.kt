@@ -168,6 +168,10 @@ internal fun convertParentImpl(
         return result.initializingClass
     }
 
+    if (element !is KotlinUAnonymousClass && result is KotlinUObjectLiteralExpression) {
+        result.constructorCall?.let { return it }
+    }
+
     if (result is UCallExpression && result.uastParent is UEnumConstant) {
         return result.uastParent
     }

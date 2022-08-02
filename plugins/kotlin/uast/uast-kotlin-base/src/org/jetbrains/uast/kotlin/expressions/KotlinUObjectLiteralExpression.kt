@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -59,6 +60,15 @@ class KotlinUObjectLiteralExpression(
         superClassConstructorCall?.let {
             baseResolveProviderService.getArgumentForParameter(it, i, this)
         }
+
+    /**
+     * `super` call in the fake-constructor of anonymous class
+     */
+    val constructorCall: UExpression?
+        get() = this.declaration.methods.asSequence().filterIsInstance<KotlinConstructorUMethod>()
+             .singleOrNull()?.uastBody?.safeAs<KotlinLazyUBlockExpression>()
+             ?.expressions
+             ?.firstOrNull()
 
     private class ObjectLiteralClassReference(
         override val sourcePsi: KtSuperTypeCallEntry,
