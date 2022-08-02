@@ -278,18 +278,17 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   @Nullable
   protected SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
-    SearchScope scope;
 
     if (myAnalyzeChanges) {
       List<VirtualFile> files = getChangedFiles(project);
-      scope = GlobalSearchScope.filesWithoutLibrariesScope(project, files);
+      return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
     }
     else {
       if (myScopePattern != null) {
         try {
           PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
           NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
-          scope = GlobalSearchScopesCore.filterScope(project, namedScope);
+          return GlobalSearchScopesCore.filterScope(project, namedScope);
         }
         catch (ParsingException e) {
           LOG.error("Error of scope parsing", e);
@@ -300,7 +299,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       else if (mySourceDirectory == null) {
         String scopeName = System.getProperty("idea.analyze.scope");
         NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
+        return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
       }
       else {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
@@ -310,10 +309,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
           printHelpAndExit();
         }
-        scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+        return GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
       }
     }
-    return scope;
   }
 
   private static void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
