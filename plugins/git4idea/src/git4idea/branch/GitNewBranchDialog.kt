@@ -12,10 +12,13 @@ import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.whenStateChangedFromKeyPress
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
+import git4idea.config.GitRefNameValidatorSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator
@@ -60,6 +63,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   private var overwriteCheckbox: JCheckBox? = null
   private var setTrackingCheckbox: JCheckBox? = null
   private val validator = GitRefNameValidator.getInstance()
+  private val gitRefNameValidatorSettings = GitRefNameValidatorSettings.getInstance()
 
   init {
     title = dialogTitle
@@ -75,8 +79,13 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
         .bindText(::branchName, { branchName = it })
         .horizontalAlign(HorizontalAlign.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
-        .focused().validationOnApply(
-        validateBranchName()).apply { startTrackingValidationIfNeeded() }
+        .focused()
+        .validationOnApply(validateBranchName())
+        .apply {
+          startTrackingValidationIfNeeded()
+          // Use mnemonic-like keyboard shortcut to focus on text input
+          component.focusAccelerator = 'i'
+        }
     }
     row {
       if (showCheckOutOption) {
@@ -101,6 +110,14 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
           mnemonic = KeyEvent.VK_T
         }
       }
+    }
+
+    row {
+      checkBox(GitBundle.message("settings.branching.name.validator.replacement.toggle.short"))
+        .bindSelected({ gitRefNameValidatorSettings.isOn }, { gitRefNameValidatorSettings.isOn = it })
+        .whenStateChangedFromKeyPress() { gitRefNameValidatorSettings.isOn = it }
+        .whenStateChangedFromUi() { gitRefNameValidatorSettings.isOn = it }
+        .component.apply { mnemonic = KeyEvent.VK_V }
     }
   }
 

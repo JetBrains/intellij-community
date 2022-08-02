@@ -2,9 +2,13 @@
 package git4idea.validators;
 
 import com.intellij.util.Function;
+import git4idea.config.FakeGitRefNameValidatorSettings;
+import git4idea.config.GitRefNameValidatorSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -107,11 +111,15 @@ public class GitRefNameValidatorTest {
 
   @Test
   public void testAll() {
-    if (myIsExpectedValid) {
-      assertValid(myRefNameToTest);
-    }
-    else {
-      assertInvalid(myRefNameToTest);
+    try (MockedStatic<GitRefNameValidatorSettings> applicationSettings = Mockito.mockStatic(GitRefNameValidatorSettings.class)) {
+      applicationSettings.when(() -> GitRefNameValidatorSettings.getInstance()).thenReturn(new FakeGitRefNameValidatorSettings());
+
+      if (myIsExpectedValid) {
+        assertValid(myRefNameToTest);
+      }
+      else {
+        assertInvalid(myRefNameToTest);
+      }
     }
   }
 

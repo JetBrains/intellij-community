@@ -17,8 +17,12 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.config.GitRefNameValidatorSettings;
+import git4idea.config.GitRefNameValidatorSettingsInterface;
+import git4idea.util.MethodChainer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +33,8 @@ import java.util.regex.Pattern;
 public final class GitRefNameValidator implements InputValidator {
 
   private static final GitRefNameValidator INSTANCE = new GitRefNameValidator();
+  @NotNull
+  private static final GitRefNameValidatorSettingsInterface applicationSettings = GitRefNameValidatorSettings.getInstance();
 
   // illegal control characters - from 0 to 31 and 7F (DEL)
   private static final String CONTROL_CHARS;
@@ -42,7 +48,7 @@ public final class GitRefNameValidator implements InputValidator {
     sb.append("]");
     CONTROL_CHARS = sb.toString();
   }
-  private static final Pattern ILLEGALCHARS = Pattern.compile(
+  private static final Pattern ILLEGAL_CHARS = Pattern.compile(
     "(^\\.)|" +                             // begins with a dot
     "(^-)|" +                               // begins with '-'
     "(^/)|" +                               // begins with '/'
@@ -55,7 +61,7 @@ public final class GitRefNameValidator implements InputValidator {
     "(([./]|\\.lock)$)|" +                  // ends with dot, slash or ".lock"
     "\\.(?=/)|" +                           // has a dot before slash in the middle
     "(?<=/)\\.|" +                          // has a dot after slash in the middle
-    ILLEGALCHARS.pattern()
+    ILLEGAL_CHARS.pattern()
   );
 
   public static GitRefNameValidator getInstance() {
@@ -64,7 +70,50 @@ public final class GitRefNameValidator implements InputValidator {
 
   private GitRefNameValidator() {}
 
-  @Override
+  @NotNull
+  private static String getReplacementString() {
+    return applicationSettings.getReplacementOption().getReplacementString();
+  }
+
+  @NotNull
+  private static String replaceDoubleQuotes(String branchName) {
+    return branchName.replaceAll("\"", "");
+  }
+
+  @NotNull
+  private static String replaceIllegalChars(String branchName) {
+    return branchName.replaceAll(ILLEGAL_CHARS.pattern(), getReplacementString());
+  }
+
+  @NotNull
+  private static String replaceIllegal(String branchName) {
+      return branchName.replaceAll(ILLEGAL.pattern(), getReplacementString());
+  }
+
+  @NotNull
+  private static String deduplicateForwardSlashes(String branchName) {
+    return branchName.replaceAll("(/){2,}", "/");
+  }
+
+  @NotNull
+  private static String deduplicateUnderscores(String branchName) {
+    int myMax = applicationSettings.getMaxNumberOfConsecutiveUnderscores();
+
+    String underscorePattern = String.format("(_){%s,}", myMax + 1);
+    String replacementString = "_".repeat(myMax);
+
+    return branchName.replaceAll(underscorePattern, replacementString);
+  }
+
+  @NotNull
+  private static String convertToLowerCase(@NotNull String branchName) {
+    return applicationSettings.isConvertingToLowerCase() ? branchName.toLowerCase(Locale.getDefault()) : branchName;
+  }
+
+  public static boolean isOn() {
+    return applicationSettings.isOn();
+  }
+
   public boolean checkInput(String inputString) {
     return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
   }
@@ -76,16 +125,28 @@ public final class GitRefNameValidator implements InputValidator {
 
   @NotNull
   public String cleanUpBranchName(@NotNull String branchName) {
-    return deduplicateChars(branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", ""));
+    if (!isOn()) {
+      return branchName;
+    }
+
+    return MethodChainer.wrap(branchName)
+      .run(GitRefNameValidator::replaceIllegal)
+      .run(GitRefNameValidator::replaceDoubleQuotes)
+      .run(GitRefNameValidator::deduplicateForwardSlashes)
+      .run(GitRefNameValidator::deduplicateUnderscores)
+      .run(GitRefNameValidator::convertToLowerCase)
+      .unwrap();
   }
 
   @NotNull
   public String cleanUpBranchNameOnTyping(@NotNull String branchName) {
-    return branchName.replaceAll(ILLEGALCHARS.pattern(), "_");
-  }
+    if (!isOn()) {
+      return branchName;
+    }
 
-  @NotNull
-  public String deduplicateChars(@NotNull String branchName) {
-    return branchName.replaceAll("(/){2,}", "/" ).replaceAll("(_){2,}", "_");
+    return MethodChainer.wrap(branchName)
+      .run(GitRefNameValidator::replaceIllegalChars)
+      .run(GitRefNameValidator::convertToLowerCase)
+      .unwrap();
   }
 }
