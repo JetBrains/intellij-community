@@ -160,13 +160,19 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.repaint()
   }
 
-  inner class LoadingLayer internal constructor(processIcon: AsyncProcessIcon) : JPanel() {
-    internal val text = JLabel("", SwingConstants.CENTER)
+  private inner class LoadingLayer(processIcon: AsyncProcessIcon) : JPanel() {
+    val text = JLabel("", SwingConstants.CENTER)
+
     private var snapshot: BufferedImage? = null
     private var snapshotBg: Color? = null
-    internal val progress: AsyncProcessIcon
-    var isLoading = false
-      private set
+
+    val progress: AsyncProcessIcon
+
+    val isLoading: Boolean
+      get() = _visible
+
+    private var _visible = false
+
     private var currentAlpha = 0f
     private val textComponent: NonOpaquePanel
 
@@ -180,13 +186,13 @@ open class LoadingDecorator @JvmOverloads constructor(
     }
 
     fun setVisible(visible: Boolean, takeSnapshot: Boolean) {
-      if (isVisible == visible || (visible && currentAlpha != -1f)) {
+      if (_visible == visible || (_visible && currentAlpha != -1f)) {
         return
       }
 
-      isVisible = visible
+      _visible = visible
       fadeOutAnimator.reset()
-      if (visible) {
+      if (_visible) {
         isVisible = true
         currentAlpha = -1f
         if (takeSnapshot && width > 0 && height > 0) {
