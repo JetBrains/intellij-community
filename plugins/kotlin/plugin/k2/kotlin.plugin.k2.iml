@@ -34,6 +34,9 @@
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
@@ -78,6 +81,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />

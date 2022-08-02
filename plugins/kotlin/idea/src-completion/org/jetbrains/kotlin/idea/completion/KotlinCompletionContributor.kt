@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns
@@ -13,9 +12,10 @@ import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiComment
 import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
-import org.jetbrains.kotlin.idea.completion.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -57,7 +57,7 @@ class KotlinCompletionContributor : CompletionContributor() {
         // this code will make replacement offset "modified" and prevents altering it by the code in CompletionProgressIndicator
         context.replacementOffset = context.replacementOffset
 
-        val dummyIdentifierCorrected = service<CompletionDummyIdentifierProviderService>().correctPositionForStringTemplateEntry(context)
+        val dummyIdentifierCorrected = CompletionDummyIdentifierProviderService.getInstance().correctPositionForStringTemplateEntry(context)
         if (dummyIdentifierCorrected) {
             return
         }
@@ -66,7 +66,7 @@ class KotlinCompletionContributor : CompletionContributor() {
 
             PackageDirectiveCompletion.ACTIVATION_PATTERN.accepts(tokenBefore) -> PackageDirectiveCompletion.DUMMY_IDENTIFIER
 
-            else -> service<CompletionDummyIdentifierProviderService>().provideDummyIdentifier(context)
+            else -> CompletionDummyIdentifierProviderService.getInstance().provideDummyIdentifier(context)
         }
 
         val tokenAt = psiFile.findElementAt(max(0, offset))

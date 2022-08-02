@@ -101,5 +101,9 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
+    <orderEntry type="module" module-name="kotlin.completion.api" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-common" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
   </component>
 </module>

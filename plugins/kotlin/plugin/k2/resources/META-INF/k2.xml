@@ -121,7 +121,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
-                        serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"/>
+                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"

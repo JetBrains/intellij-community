@@ -81,6 +81,8 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.completion.api" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-common" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
@@ -91,6 +93,8 @@
     <orderEntry type="module" module-name="kotlin.migration" />
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="TEST" />

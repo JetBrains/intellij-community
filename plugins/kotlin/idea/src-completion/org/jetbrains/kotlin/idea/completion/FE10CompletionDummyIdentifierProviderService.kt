@@ -6,11 +6,12 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.completion.implCommon.AbstractCompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class FE10CompletionDummyIdentifierProviderService: CompletionDummyIdentifierProviderService() {
+class FE10CompletionDummyIdentifierProviderService: AbstractCompletionDummyIdentifierProviderService() {
     override fun allTargetsAreFunctionsOrClasses(nameReferenceExpression: KtNameReferenceExpression): Boolean {
         val bindingContext = nameReferenceExpression.getResolutionFacade().analyze(nameReferenceExpression, BodyResolveMode.PARTIAL)
         val targets = nameReferenceExpression.getReferenceTargets(bindingContext)
