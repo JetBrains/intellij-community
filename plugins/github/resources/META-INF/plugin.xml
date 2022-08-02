@@ -205,5 +205,9 @@
     <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="CopyFileReference"/>
     </action>
+
+    <action id="Github.Copy.Link.To.GitHub" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
+      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
+    </action>
   </actions>
 </idea-plugin>
