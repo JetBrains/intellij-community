@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
+import org.jetbrains.idea.maven.server.MavenServer;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -85,7 +86,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
                                                     List<File> classpath,
                                                     String root) {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
-    classpath.add(new File(root, "maven-server-api.jar"));
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "maven2-server.jar"));

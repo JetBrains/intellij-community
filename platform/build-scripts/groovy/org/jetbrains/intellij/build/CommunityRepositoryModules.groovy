@@ -80,7 +80,6 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.platform.tracing.ide"),
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
-      withModule("intellij.maven.server", "maven-server-api.jar")
       withModule("intellij.maven.server.m2.impl", "maven2-server.jar")
       withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
       withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
@@ -246,6 +245,7 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.color.scheme.warmNeon"),
     simplePlugin("intellij.reStructuredText"),
     simplePlugin("intellij.maven.model"),
+    simplePlugin("intellij.maven.server"),
     simplePlugin("intellij.vcs.hg"),
     simplePlugin("intellij.vcs.github"),
     simplePlugin("intellij.java.i18n"),
