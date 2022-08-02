@@ -241,7 +241,7 @@ class KotlinDslGradleKotlinJSBrowserFrameworkSupportProvider :
     }
 
     override fun additionalSubTargetSettings(): String =
-        browserConfiguration(kotlinDsl = true)
+        browserConfiguration()
 }
 
 class KotlinDslGradleKotlinJSNodeFrameworkSupportProvider :
