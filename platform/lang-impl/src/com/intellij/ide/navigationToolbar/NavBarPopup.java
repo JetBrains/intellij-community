@@ -114,7 +114,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         myPanel.getUpdateQueue().rebuildUi();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
-          show(item, false); // end-less loop protection
+          NavBarItem updatedItem = myPanel.getItemWithObject(item.getObject());
+          if (updatedItem == null) updatedItem = item;
+          show(updatedItem, false); // end-less loop protection
         });
       });
     } else {
