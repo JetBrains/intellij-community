@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -26,9 +25,9 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.StreamHandler;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
@@ -265,7 +264,6 @@ public final class TestLoggerFactory implements Logger.Factory {
       factory.myTestStartedMillis = 0;
       factory.dumpLogBuffer(success, testName);
     }
-    LogToStdoutJulHandler.flushAllInstances();
   }
 
   public static void logTestFailure(@NotNull Throwable t) {
@@ -485,19 +483,11 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private static class LogToStdoutJulHandler extends StreamHandler {
-    private static final @NotNull WeakList<LogToStdoutJulHandler> ourInstances = new WeakList<>();
-
+  private static class LogToStdoutJulHandler extends ConsoleHandler {
     LogToStdoutJulHandler() {
-      super(System.out, new WithTimeSinceTestStartedJulFormatter());
+      setFormatter(new WithTimeSinceTestStartedJulFormatter());
+      setOutputStream(System.out);
       setLevel(Level.ALL);
-      ourInstances.add(this);
-    }
-
-    static void flushAllInstances() {
-      for (LogToStdoutJulHandler instance : ourInstances) {
-        instance.flush();
-      }
     }
   }
 
