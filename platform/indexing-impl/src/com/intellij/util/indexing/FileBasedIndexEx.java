@@ -34,7 +34,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
-import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -160,7 +159,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
-    var trace = logAllKeysLookupStarted(indexId)
+    var trace = allKeysLookupStarted(indexId)
       .withProject(scope.getProject());
     try (trace) {
       waitUntilIndicesAreInitialized();
@@ -169,7 +168,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return true;
       }
 
-      trace.logIndexValidationFinished();
+      trace.indexValidationFinished();
 
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
       Boolean validated = myAccessValidator.validate(indexId, () -> {
@@ -244,7 +243,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                           @NotNull K dataKey,
                                                                           @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
-    try (var trace = logValuesLookupStarted(indexId)) {
+    try (var trace = valuesLookupStarted(indexId)) {
       trace.keysWithAND(1)
         .withProject(project);
 
@@ -316,7 +315,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return null;
       }
       TRACE_OF_VALUES_LOOKUP.get()
-        .logIndexValidationFinished();
+        .indexValidationFinished();
 
       final R validated = myAccessValidator.validate(
         indexId,
@@ -424,7 +423,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<? super InvertedIndexValueIterator<V>> valueProcessor) {
-    try (var trace = logValuesLookupStarted(indexId)) {
+    try (var trace = valuesLookupStarted(indexId)) {
       trace.keysWithAND(1)
         .withProject(scope.getProject());
       //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
@@ -586,7 +585,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @Nullable Condition<? super V> valueChecker,
                                                         @Nullable IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
-    try (var trace = logValuesLookupStarted(indexId)) {
+    try (var trace = valuesLookupStarted(indexId)) {
       trace.keysWithAND(dataKeys.size())
         .withProject(scope.getProject());
 
@@ -615,7 +614,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                        @NotNull GlobalSearchScope filter,
                                                        @Nullable Condition<? super V> valueChecker,
                                                        @Nullable IdFilter projectFilesFilter) {
-    try (var trace = logValuesLookupStarted(indexId)) {
+    try (var trace = valuesLookupStarted(indexId)) {
       trace.keysWithOR(dataKeys.size());
       IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
       IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&

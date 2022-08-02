@@ -18,7 +18,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
-import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -42,6 +41,7 @@ import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
 import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.TRACE_OF_STUB_VALUES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.stubValuesLookupStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -130,7 +130,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                @Nullable IdFilter idFilter,
                                                                @NotNull Class<Psi> requiredClass,
                                                                @NotNull Processor<? super Psi> processor) {
-    var trace = IndexOperationFusStatisticsCollector.logStubValuesLookupStarted(indexKey)
+    var trace = stubValuesLookupStarted(indexKey)
       .withProject(project);
 
     try (trace) {
@@ -171,7 +171,7 @@ public abstract class StubIndexEx extends StubIndex {
         shouldHaveKeys = true;
       }
 
-      trace.logStubTreesDeserializingStarted();
+      trace.stubTreesDeserializingStarted();
 
       try {
         while (fileStream.hasNext()) {
@@ -374,7 +374,7 @@ public abstract class StubIndexEx extends StubIndex {
     final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
 
-    trace.logIndexValidationFinished();
+    trace.indexValidationFinished();
 
     IdFilter finalIdFilter = idFilter != null
                              ? idFilter
