@@ -298,6 +298,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
+    checkinErrorNotifications.clear()
     coroutineScope.cancel()
     super.dispose()
   }
