@@ -48,7 +48,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
       }
 
       @Override
-      protected void doImport(PsiField toImport) {
+      protected void doImport(@NotNull PsiField toImport) {
         PsiJavaCodeReferenceElement element = myRef.getElement();
         if (!(element instanceof PsiReferenceExpression)) return;
         WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null,
@@ -59,7 +59,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return false;
   }
 }

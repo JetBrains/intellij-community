@@ -40,12 +40,12 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
+    return generatePreview(file, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
   }
 
   @NotNull
   @Override
-  protected List<PsiField> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
+  List<PsiField> getMembersToImport(boolean applicableOnly, int maxResults) {
     Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     PsiJavaCodeReferenceElement element = myRef.getElement();
@@ -56,9 +56,9 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), searchMode) {
+    StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), maxResults) {
       @Override
-      protected boolean isApplicable(PsiField field, PsiElement place) {
+      protected boolean isApplicable(@NotNull PsiField field, @NotNull PsiElement place) {
         ProgressManager.checkCanceled();
         PsiType fieldType = field.getType();
         return isApplicableFor(fieldType);
@@ -101,7 +101,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return true;
   }
 }

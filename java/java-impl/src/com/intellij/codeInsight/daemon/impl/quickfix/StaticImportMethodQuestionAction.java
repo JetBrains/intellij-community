@@ -24,8 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +57,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    final PsiElement element = myRef.getElement();
+    PsiElement element = myRef.getElement();
     if (element == null || !element.isValid()){
       return false;
     }
@@ -79,9 +77,9 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     return true;
   }
 
-  protected void doImport(final T toImport) {
-    final Project project = toImport.getProject();
-    final PsiElement element = myRef.getElement();
+  protected void doImport(@NotNull T toImport) {
+    Project project = toImport.getProject();
+    PsiElement element = myRef.getElement();
     if (element == null) return;
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
@@ -93,7 +91,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       doImport(myCandidates.get(0));
       return;
     }
-    final BaseListPopupStep<T> step =
+    BaseListPopupStep<T> step =
       new BaseListPopupStep<>(getPopupTitle(), myCandidates) {
 
         @Override
@@ -107,7 +105,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         }
 
         @Override
-        public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
             return FINAL_CHOICE;
           }
@@ -141,40 +139,32 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         }
       };
 
-    final JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (superRenderer) -> {
-      final GroupedItemsListRenderer<T> rightArrow = (GroupedItemsListRenderer<T>)superRenderer;
-      final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
-      return new ListCellRenderer<T>() {
-        @Override
-        public Component getListCellRendererComponent(JList<? extends T> list,
-                                                      T value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-          JPanel panel = new JPanel(new BorderLayout());
-          Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          JLabel arrowLabel = rightArrow.getNextStepLabel();
-          arrowLabel.setBackground(psiRendererComponent.getBackground());
-          panel.setBackground(psiRendererComponent.getBackground());
-          panel.add(psiRendererComponent, BorderLayout.CENTER);
-          panel.add(arrowLabel, BorderLayout.EAST);
-          return panel;
-        }
+    JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, superRenderer -> {
+      GroupedItemsListRenderer<T> rightArrow = (GroupedItemsListRenderer<T>)superRenderer;
+      StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
+      return (ListCellRenderer<T>)(list, value, index, isSelected, cellHasFocus) -> {
+        JPanel panel = new JPanel(new BorderLayout());
+        Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        JLabel arrowLabel = rightArrow.getNextStepLabel();
+        arrowLabel.setBackground(psiRendererComponent.getBackground());
+        panel.setBackground(psiRendererComponent.getBackground());
+        panel.add(psiRendererComponent, BorderLayout.CENTER);
+        panel.add(arrowLabel, BorderLayout.EAST);
+        return panel;
       };
     });
     popup.showInBestPositionFor(editor);
   }
 
   private static final class StaticMemberRenderer extends PsiElementListCellRenderer<PsiMember> {
-
     @Override
-    public String getElementText(PsiMember element) {
+    public @NotNull String getElementText(PsiMember element) {
       return getElementPresentableName(element);
     }
 
     @Override
-    public String getContainerText(final PsiMember element, final String name) {
+    public String getContainerText(PsiMember element, String name) {
       return PsiClassRenderingInfo.getContainerTextStatic(element);
     }
 
@@ -192,8 +182,8 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     }
   }
 
-  private static @NlsSafe String getElementPresentableName(PsiMember element) {
-    final PsiClass aClass = element.getContainingClass();
+  private static @NlsSafe @NotNull String getElementPresentableName(@NotNull PsiMember element) {
+    PsiClass aClass = element.getContainingClass();
     LOG.assertTrue(aClass != null);
     return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
   }

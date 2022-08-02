@@ -28,7 +28,7 @@ public final class PsiClassRenderingInfo implements PsiElementRenderingInfo<PsiC
   }
 
   @Nullable
-  public static String getContainerTextStatic(final PsiElement element) {
+  public static String getContainerTextStatic(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)file).getPackageName();

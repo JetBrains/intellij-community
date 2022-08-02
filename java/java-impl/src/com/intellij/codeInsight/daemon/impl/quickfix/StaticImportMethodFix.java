@@ -40,25 +40,25 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
+    return generatePreview(file, (__, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
   }
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
+  List<PsiMethod> getMembersToImport(boolean applicableOnly, int maxResults) {
     Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     PsiMethodCallExpression element = myRef.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
+    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), maxResults);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return true;
   }
 
@@ -89,13 +89,12 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   private static final class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
-
-    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, @NotNull SearchMode mode) {
-      super(place, showMembersFromDefaultPackage, mode);
+    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, int maxResults) {
+      super(place, showMembersFromDefaultPackage, maxResults);
     }
 
     @Override
-    protected boolean isApplicable(PsiMethod method, PsiElement place) {
+    protected boolean isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
       ProgressManager.checkCanceled();
       PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
       MethodCandidateInfo candidateInfo =

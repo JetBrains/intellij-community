@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -28,19 +27,19 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 // will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
-public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements IntentionAction, HintAction {
+abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements IntentionAction, HintAction {
   private final List<SmartPsiElementPointer<T>> myApplicableCandidates;
   private final List<T> candidates;
   protected final SmartPsiElementPointer<R> myRef;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
-    myRef = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(reference);
+    Project project = file.getProject();
+    myRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
     // search for suitable candidates here, in the background thread
-    List<T> applicableCandidates = getMembersToImport(true, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
-    candidates = !applicableCandidates.isEmpty() ? applicableCandidates 
-                                                 : getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS);
-
+    List<T> applicableCandidates = getMembersToImport(true, 100);
+    candidates = applicableCandidates.isEmpty() ?
+                 getMembersToImport(false, 2) : applicableCandidates;
     myApplicableCandidates = ContainerUtil.map(applicableCandidates, SmartPointerManager::createPointer);
   }
 
@@ -89,14 +88,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @NotNull
-  protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
+  abstract List<T> getMembersToImport(boolean applicableOnly, int maxResults);
 
-  protected abstract boolean toAddStaticImports();
-
-  public static boolean isExcluded(@NotNull PsiMember method) {
-    String name = PsiUtil.getMemberQualifiedName(method);
-    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
-  }
+  abstract boolean toAddStaticImports();
 
   @NotNull
   protected abstract QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
@@ -116,8 +110,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     ApplicationManager.getApplication().runWriteAction(() -> {
       List<T> applicableCandidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
       List<T> methodsToImport = applicableCandidates.isEmpty() ?
-                                getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS)
-                                                               : applicableCandidates;
+                                getMembersToImport(false, 100) : applicableCandidates;
       if (!methodsToImport.isEmpty()) {
         createQuestionAction(methodsToImport, project, editor).execute();
       }

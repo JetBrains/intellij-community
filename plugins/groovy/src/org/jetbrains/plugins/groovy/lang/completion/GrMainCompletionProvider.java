@@ -419,7 +419,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       @Override
-      protected boolean isAccessible(PsiMember member) {
+      protected boolean isAccessible(@NotNull PsiMember member) {
         boolean result = super.isAccessible(member);
 
         if (!result && member instanceof GrField) {
