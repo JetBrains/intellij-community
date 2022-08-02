@@ -16,7 +16,7 @@ import junit.framework.Assert.*
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.UUID
+import java.util.*
 
 class EntityStorageSerializationTest {
   @Test
@@ -153,7 +153,7 @@ class EntityStorageSerializationTest {
 
     val result = serializer.deserializeCache(inputStream)
 
-    assertNull(result.getOrThrow())
+    assertNull(result.getOrNull())
   }
 }
 
