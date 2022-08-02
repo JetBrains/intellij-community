@@ -493,6 +493,9 @@ public final class UpdateHighlightersUtil {
     else if (severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
       layer = HighlighterLayer.ELEMENT_UNDER_CARET;
     }
+    else if (severityRegistrar.getAllSeverities().contains(severity) && !SeverityRegistrar.isDefaultSeverity(severity)) {
+      layer = HighlighterLayer.WARNING;
+    }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }
