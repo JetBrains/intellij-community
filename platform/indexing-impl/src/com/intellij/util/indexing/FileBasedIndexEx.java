@@ -34,6 +34,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
+import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -269,7 +270,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         });
         return fileIdsInner;
       });
-      
+
       trace.lookupResultSize(fileIds.size());
 
       return createLazyFileIterator(fileIds, scope);
