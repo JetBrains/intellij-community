@@ -34,7 +34,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
-import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -276,7 +275,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return createLazyFileIterator(fileIds, scope);
     }
   }
-
 
   @Override
   public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
