@@ -42,9 +42,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     return configureByFile(fname);
   }
 
-  private Map<String, PsiElement> loadTest(int expected_marks) {
+  private Map<String, PsiElement> loadTest(int expectedMarks) {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), expected_marks);
+    assertEquals("Test data sanity", expectedMarks, marks.size());
     return marks;
   }
 
