@@ -90,7 +90,7 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
   }
 
   public void testCast() {
-    doFixTest();
+    doTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
   }
 
   public void testParseInt() {
@@ -105,8 +105,8 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
     assertQuickfixNotAvailable("Fix all 'Unnecessary boxing' problems in file");
   }
 
-  private void doFixTest() {
-    doTest(getTestName(false), InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
+  public void testConstantReference() {
+    doTest("Fix all 'Unnecessary boxing' problems in file");
   }
 
   @Override
