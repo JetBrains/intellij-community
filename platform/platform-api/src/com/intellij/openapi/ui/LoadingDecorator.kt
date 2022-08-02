@@ -25,11 +25,13 @@ import java.awt.image.BufferedImage
 import javax.swing.*
 
 @OptIn(FlowPreview::class)
-open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
-                                                      parent: Disposable,
-                                                      startDelayMs: Int,
-                                                      useMinimumSize: Boolean = false,
-                                                      icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")) {
+open class LoadingDecorator @JvmOverloads constructor(
+  content: JComponent?,
+  parent: Disposable,
+  startDelayMs: Int,
+  useMinimumSize: Boolean = false,
+  icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")
+) {
   companion object {
     @JvmField
     val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
