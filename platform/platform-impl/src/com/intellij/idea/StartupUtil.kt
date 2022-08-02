@@ -229,7 +229,7 @@ fun start(isHeadless: Boolean,
 
     val setBaseLafJob = launch(asyncDispatcher) { setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob, initUiJob, mainScope) }
     if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
-      launchAndMeasure("coroutine debug probes init") {
+      launchAndMeasure("coroutine debug probes init", Dispatchers.Default) {
         enableCoroutineDump()
       }
     }
