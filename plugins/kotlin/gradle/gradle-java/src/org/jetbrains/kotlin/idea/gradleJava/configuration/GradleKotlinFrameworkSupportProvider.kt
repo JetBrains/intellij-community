@@ -274,7 +274,7 @@ open class GradleKotlinJSBrowserFrameworkSupportProvider(
     }
 
     override fun additionalSubTargetSettings(): String? =
-        browserConfiguration()
+        browserConfiguration(kotlinDsl = false)
 }
 
 open class GradleKotlinJSNodeFrameworkSupportProvider(
