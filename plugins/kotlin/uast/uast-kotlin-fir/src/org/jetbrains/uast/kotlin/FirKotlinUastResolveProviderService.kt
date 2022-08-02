@@ -303,6 +303,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             else -> null
         } ?: return null
 
+        if (resolvedTargetSymbol is KtSyntheticJavaPropertySymbol && ktExpression is KtSimpleNameExpression) {
+            // No PSI for this synthetic Java property. Either corresponding getter or setter has PSI.
+            return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
+        }
+
         val resolvedTargetElement = resolvedTargetSymbol.psiForUast(ktExpression.project)
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
@@ -317,7 +322,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         when ((resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)) {
             is KtSourceModule -> {
                 // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
-                resolvedTargetElement?.getMaybeLightElement(ktExpression)?.let { return it }
+                resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
             }
             is KtLibraryModule -> {
                 // For decompiled declarations, we can try light element conversion (only).

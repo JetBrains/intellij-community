@@ -1044,6 +1044,35 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("Point", plusPoint?.containingClass?.name)
     }
 
+    fun checkResolveSyntheticJavaPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """public class X {
+        |String getFoo();
+        |void setFoo(String s);
+        |}""".trimMargin()
+        )
+
+        myFixture.configureByText(
+            "main.kt", """
+                fun box(x : X) {
+                  x.foo = "42"
+                }
+            """.trimIndent()
+        )
+
+        val visitor = PropertyAccessorVisitor { it.endsWith("foo") || it.endsWith("setFoo") }
+        myFixture.file.toUElement()!!.accept(visitor)
+        TestCase.assertEquals(2, visitor.resolvedElements.size)
+        val nodes = visitor.resolvedElements.keys
+        TestCase.assertTrue(nodes.any { it is USimpleNameReferenceExpression })
+        // Will create on-the-fly accessor call for Java synthetic property
+        TestCase.assertTrue(nodes.any { it is UCallExpression})
+        // Both simple name reference (`foo`) and its on-the-fly accessor call are resolved to the same Java synthetic property accessor.
+        val resolvedPsiElements = visitor.resolvedElements.values.toSet()
+        TestCase.assertEquals(1, resolvedPsiElements.size)
+        TestCase.assertEquals("setFoo", (resolvedPsiElements.single() as PsiMethod).name)
+    }
+
     fun checkResolveKotlinPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "Foo.kt", """
