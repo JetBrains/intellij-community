@@ -48,8 +48,7 @@ class CloseTab(c: JComponent,
     val pinned = isPinned()
 
     if (ExperimentalUI.isNewUI()) {
-      val showModifiedIcon = UISettings.getInstance().markModifiedTabsWithAsterisk
-                             && editorWindow.getComposite(file)?.isModified == true
+      val showModifiedIcon = isModified()
       e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, showModifiedIcon)
       val icon = if (showModifiedIcon) {
         if (pinned) {
@@ -69,16 +68,17 @@ class CloseTab(c: JComponent,
       }
       else CLOSE_ICON
 
+      e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || showModifiedIcon
       e.presentation.icon = icon
-      e.presentation.hoveredIcon = if (!pinned) CLOSE_HOVERED_ICON else icon
+      e.presentation.hoveredIcon = if (!pinned && UISettings.getInstance().showCloseButton) CLOSE_HOVERED_ICON else icon
     }
     else {
+      e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned
       e.presentation.icon = if (!pinned) CLOSE_ICON else AllIcons.Actions.PinTab
       e.presentation.hoveredIcon = if (!pinned) CLOSE_HOVERED_ICON else AllIcons.Actions.PinTab
     }
 
-    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned
-    if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
+    if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean() || isCloseActionRestricted()) {
       e.presentation.text = ""
       shortcutSet = CustomShortcutSet.EMPTY
     }
@@ -96,7 +96,18 @@ class CloseTab(c: JComponent,
 
   private fun isPinned() = editorWindow.isFilePinned(file)
 
+  private fun isModified() = UISettings.getInstance().markModifiedTabsWithAsterisk && editorWindow.getComposite(file)?.isModified == true
+
+  /**
+   * Whether to restrict user to close the tab or not.
+   * Restrict it only in new UI when close button is not shown and file is not pinned and modified (blue dot shown in place of close icon)
+   */
+  private fun isCloseActionRestricted() = ExperimentalUI.isNewUI() && !UISettings.getInstance().showCloseButton && !isPinned() && isModified()
+
   override fun actionPerformed(e: AnActionEvent) {
+    if (isCloseActionRestricted()) {
+      return
+    }
     if (isPinned() && e.place == ActionPlaces.EDITOR_TAB) {
       if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
         editorWindow.setFilePinned(file, false)
@@ -104,6 +115,7 @@ class CloseTab(c: JComponent,
       }
       return
     }
+
     val mgr = FileEditorManagerEx.getInstanceEx(project)
     val window: EditorWindow?
     if (ActionPlaces.EDITOR_TAB == e.place) {
