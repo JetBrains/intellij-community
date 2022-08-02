@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
@@ -64,8 +65,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef);
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<>(project, editor, methodsToImport, myRef);
   }
 
   @Nullable

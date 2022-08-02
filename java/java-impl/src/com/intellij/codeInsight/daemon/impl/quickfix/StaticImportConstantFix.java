@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -70,8 +71,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
       @NotNull
       @Override
       protected String getPopupTitle() {

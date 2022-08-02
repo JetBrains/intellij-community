@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,10 +26,10 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
-                                                                             @NotNull Project project,
-                                                                             Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
+                                                @NotNull Project project,
+                                                Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiMethod>(project, editor, methodsToImport, myRef) {
       @Override
       protected void doImport(@NotNull PsiMethod toImport) {
         PsiMethodCallExpression element = myRef.getElement();

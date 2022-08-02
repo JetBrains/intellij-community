@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -37,10 +38,10 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
-                                                                            @NotNull Project project,
-                                                                            Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, fieldsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
+                                                @NotNull Project project,
+                                                Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiField>(project, editor, fieldsToImport, myRef) {
       @NotNull
       @Override
       protected String getPopupTitle() {

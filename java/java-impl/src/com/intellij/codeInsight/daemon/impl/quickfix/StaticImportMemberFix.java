@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,8 +32,8 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   private final List<SmartPsiElementPointer<T>> myApplicableCandidates;
   private final List<T> candidates;
   protected final SmartPsiElementPointer<R> myRef;
+  private final long myPsiModificationCount;
 
-  @SuppressWarnings("AbstractMethodCallInConstructor")
   StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
     Project project = file.getProject();
     myRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
@@ -41,6 +42,7 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     candidates = applicableCandidates.isEmpty() ?
                  getMembersToImport(false, 2) : applicableCandidates;
     myApplicableCandidates = ContainerUtil.map(applicableCandidates, SmartPointerManager::createPointer);
+    myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
 
   @NotNull
@@ -87,6 +89,11 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
       ;
   }
 
+  private boolean isPsiModificationStampChanged(@NotNull Project project) {
+    long currentPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
+    return currentPsiModificationCount != myPsiModificationCount;
+  }
+
   @NotNull
   abstract List<T> getMembersToImport(boolean applicableOnly, int maxResults);
 
@@ -117,40 +124,6 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     });
   }
 
-  @NotNull
-  private ImportClassFixBase.Result doFix(@NotNull Editor editor) {
-    if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-    List<T> candidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
-    if (candidates.isEmpty()) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    PsiElement element = getElement();
-    if (element == null) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    if (toAddStaticImports() &&
-        candidates.size() == 1 &&
-        PsiTreeUtil.isAncestor(element.getContainingFile(), candidates.get(0), true)) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-        && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-      TextRange textRange = element.getTextRange();
-      HintManager.getInstance().showQuestionHint(editor, hintText,
-                                                 textRange.getStartOffset(),
-                                                 textRange.getEndOffset(), action);
-    }
-    return ImportClassFixBase.Result.POPUP_SHOWN;
-  }
-
-  
 
   @Override
   public boolean startInWriteAction() {
@@ -160,11 +133,34 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   @Override
   public boolean showHint(@NotNull Editor editor) {
     PsiElement callExpression = getElement();
-    if (callExpression == null || 
-        getQualifierExpression() != null) {
+    if (callExpression == null || getQualifierExpression() != null) {
       return false;
     }
-    ImportClassFixBase.Result result = doFix(editor);
-    return result == ImportClassFixBase.Result.POPUP_SHOWN || result == ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
+    if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
+      return false;
+    }
+    List<T> candidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
+    if (candidates.isEmpty()) {
+      return false;
+    }
+
+    T firstCandidate = candidates.get(0);
+    PsiFile containingFile = callExpression.getContainingFile();
+    if (!toAddStaticImports() ||
+        candidates.size() != 1 ||
+        !PsiTreeUtil.isAncestor(containingFile, firstCandidate, true)) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+          && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+        TextRange textRange = callExpression.getTextRange();
+        QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
+        String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(firstCandidate));
+        HintManager.getInstance().showQuestionHint(editor, hintText,
+                                                   textRange.getStartOffset(),
+                                                   textRange.getEndOffset(), action);
+      }
+      return true;
+    }
+
+    return false;
   }
 }

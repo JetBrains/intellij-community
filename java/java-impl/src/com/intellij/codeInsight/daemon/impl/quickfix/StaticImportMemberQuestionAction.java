@@ -31,14 +31,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class StaticImportMethodQuestionAction<T extends PsiMember> implements QuestionAction {
-  private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
+class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionAction {
+  private static final Logger LOG = Logger.getInstance(StaticImportMemberQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
   private final List<? extends T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
-  StaticImportMethodQuestionAction(@NotNull Project project,
+  StaticImportMemberQuestionAction(@NotNull Project project,
                                    Editor editor,
                                    @NotNull List<? extends T> candidates,
                                    @NotNull SmartPsiElementPointer<? extends PsiElement> ref) {
