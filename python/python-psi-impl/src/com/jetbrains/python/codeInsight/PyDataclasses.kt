@@ -31,6 +31,11 @@ private val STD_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash"
 private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "weakref_slot", "str",
                                       "auto_attribs", "kw_only", "cache_hash", "auto_exc", "eq", "order")
 
+private val ATTRS_OMITTED_VALUE = setOf(
+  "attr.NOTHING",
+  "attrs.NOTHING",
+)
+
 /**
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
@@ -40,7 +45,13 @@ private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
   Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
   Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
   Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS)
+  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
 )
 
 
@@ -73,7 +84,7 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
 
     return when (type.asPredefinedType) {
       PyDataclassParameters.PredefinedType.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
-      PyDataclassParameters.PredefinedType.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+      PyDataclassParameters.PredefinedType.ATTRS -> qNames.any { it.toString() in ATTRS_OMITTED_VALUE }
       else -> false
     }
   }
@@ -216,6 +227,10 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
     private const val DEFAULT_UNSAFE_HASH = false
     private const val DEFAULT_FROZEN = false
     private const val DEFAULT_KW_ONLY = false
+    private val ATTRS_AUTO_FROZEN_DECORATORS = setOf(
+      KnownDecorator.ATTR_FROZEN.qualifiedName, 
+      KnownDecorator.ATTRS_FROZEN.qualifiedName
+    )
   }
 
   private var init = DEFAULT_INIT
@@ -223,7 +238,7 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
   private var eq = DEFAULT_EQ
   private var order = if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
-  private var frozen = DEFAULT_FROZEN
+  private var frozen = decorator in ATTRS_AUTO_FROZEN_DECORATORS || DEFAULT_FROZEN
   private var kwOnly = DEFAULT_KW_ONLY
 
   private var initArgument: PyExpression? = null
