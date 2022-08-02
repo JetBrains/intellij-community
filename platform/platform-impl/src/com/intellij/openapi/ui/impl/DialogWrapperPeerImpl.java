@@ -1046,13 +1046,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return false;
     }
 
-    RegistryManager registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager.class);
+    RegistryManager registryManager = getRegistryManager();
     return registryManager != null && registryManager.is("ide.perProjectModality");
   }
 
   public static boolean isDisableAutoRequestFocus() {
-    RegistryManager registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager.class);
+    RegistryManager registryManager = getRegistryManager();
     return (registryManager == null || registryManager.is("suppress.focus.stealing.disable.auto.request.focus"))
            && !(SystemInfo.isXfce || SystemInfo.isI3);
+  }
+
+  private static @Nullable RegistryManager getRegistryManager() {
+    Application application = ApplicationManager.getApplication();
+    return application != null ? application.getServiceIfCreated(RegistryManager.class) : null;
   }
 }
