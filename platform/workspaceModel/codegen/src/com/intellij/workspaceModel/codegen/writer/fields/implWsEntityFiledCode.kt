@@ -145,5 +145,15 @@ internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
         "More then one reference to ${owner.name} declared at ${declaredReferenceFromChild[0].owner}#${declaredReferenceFromChild[0].name}," +
         "${declaredReferenceFromChild[1].owner}#${declaredReferenceFromChild[1].name}")
     }
-    return declaredReferenceFromChild[0]
+    val referencedField = declaredReferenceFromChild[0]
+    if (this.type.getRefType().child == referencedField.type.getRefType().child) {
+      val (childStr, fix) = if (this.type.getRefType().child) {
+        "child" to "Have you @Child annotation on both sides?"
+      }
+      else {
+        "parent" to "Did you forget to add @Child annotation?"
+      }
+      error("Both fields ${owner.name}#$name and ${ref.target.name} are marked as $childStr. $fix")
+    }
+    return referencedField
   }

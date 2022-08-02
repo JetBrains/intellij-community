@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import java.io.File
 import java.nio.file.Path
 
-class EntityCodeGenTest: CodeGenerationTestBase() {
+class EntityCodeGenTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(PathManagerEx.getCommunityHomePath() + "/platform/workspaceModel/codegen/test/testData/$testDirectoryName")
 
@@ -37,6 +37,7 @@ class EntityCodeGenTest: CodeGenerationTestBase() {
   fun testEntityWithCollections() {
     doTest()
   }
+
   fun testRefsSetNotSupported() {
     assertThrows(IllegalStateException::class.java) { doTest() }
   }
@@ -51,6 +52,14 @@ class EntityCodeGenTest: CodeGenerationTestBase() {
 
   fun testAddCopyrightComment() {
     doTest(keepUnknownFields = true)
+  }
+
+  fun testBothLinksAreParents() {
+    assertThrows(IllegalStateException::class.java) { doTest() }
+  }
+
+  fun testBothLinksAreChildren() {
+    assertThrows(IllegalStateException::class.java) { doTest() }
   }
 
   private fun doTest(keepUnknownFields: Boolean = false) {
