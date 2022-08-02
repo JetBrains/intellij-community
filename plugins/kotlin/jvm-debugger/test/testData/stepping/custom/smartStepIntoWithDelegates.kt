@@ -65,3 +65,4 @@ fun main(args: Array<String>) {
     test4()
     test5()
 }
+// IGNORE_K2

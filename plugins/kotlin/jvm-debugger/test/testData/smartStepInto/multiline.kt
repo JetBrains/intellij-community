@@ -10,3 +10,4 @@ fun f2() = 1
 fun f3() = 1
 
 // EXISTS: f1(vararg Int), f2(), f3()
+// IGNORE_K2

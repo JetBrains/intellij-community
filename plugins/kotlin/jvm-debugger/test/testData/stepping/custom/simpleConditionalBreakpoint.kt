@@ -6,3 +6,4 @@ fun main(args: Array<String>) {
 }
 
 // RESUME: 1
+// IGNORE_K2

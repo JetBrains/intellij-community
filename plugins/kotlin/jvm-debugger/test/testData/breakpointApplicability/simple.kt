@@ -8,3 +8,5 @@ fun main() { /// M
 fun foo(a: Int) { /// M
     val b = 6 /// L
 } /// L
+
+// IGNORE_K2

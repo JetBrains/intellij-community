@@ -20,3 +20,5 @@ fun foo3() { /// M
 fun foo4() { /// M
     fun local(block: () -> Unit = { println() }) {} /// *, L, λ
 } /// L
+
+// IGNORE_K2

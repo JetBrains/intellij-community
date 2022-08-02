@@ -122,3 +122,5 @@ fun main(args: Array<String>) {
     //Breakpoint!
     fun1(fun2(fun1(fun2(2)), fun4(fun3(2))), fun3(fun5(fun6(2)), fun7(fun8(2))))
 }
+
+// IGNORE_K2
