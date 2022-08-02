@@ -25,6 +25,15 @@ fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T
 }
 
 /**
+ * Unregister service specified by [serviceInterface] if it was registered;
+ * throws [IllegalStateException] if the service was not registered.
+ */
+@TestOnly
+fun ComponentManager.unregisterService(serviceInterface: Class<*>) {
+  (this as ComponentManagerImpl).unregisterService(serviceInterface)
+}
+
+/**
  * Register a new service or replace an existing service with a specified instance for testing purposes.
  * Registration will be rolled back when parentDisposable is disposed. In most of the cases,
  * [com.intellij.testFramework.UsefulTestCase.getTestRootDisposable] should be specified.

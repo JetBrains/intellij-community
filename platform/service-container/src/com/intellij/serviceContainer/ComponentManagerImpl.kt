@@ -883,6 +883,17 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @TestOnly
+  fun unregisterService(serviceInterface: Class<*>) {
+    val key = serviceInterface.name
+    when (val adapter = componentKeyToAdapter.remove(key)) {
+      null -> error("Trying to unregister $key service which is not registered")
+      !is ServiceComponentAdapter -> error("$key service should be registered as a service, but was ${adapter::class.java}")
+    }
+    serviceInstanceHotCache.remove(serviceInterface)
+  }
+
+
   @Suppress("DuplicatedCode")
   fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
     checkState()
