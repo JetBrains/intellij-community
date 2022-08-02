@@ -1054,6 +1054,31 @@ class ReplaceBySourceAsTreeTest {
     builder.assertConsistency()
   }
 
+  @Test
+  fun `abstract entity`() {
+    builder add HeadAbstractionEntity("Data", AnotherSource) {
+      this.child = LeftEntity(AnotherSource) {
+        this.children = listOf(
+          LeftEntity(MySource),
+          RightEntity(MySource),
+        )
+      }
+    }
+
+    replacement add HeadAbstractionEntity("Data", AnotherSource) {
+      this.child = LeftEntity(AnotherSource) {
+        this.children = listOf(
+          MiddleEntity("info1", MySource),
+          MiddleEntity("info1", MySource),
+        )
+      }
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]

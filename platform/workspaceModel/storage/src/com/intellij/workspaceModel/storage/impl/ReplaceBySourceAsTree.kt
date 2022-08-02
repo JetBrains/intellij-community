@@ -134,8 +134,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         } else {
           // Searching for the associated entity
           val children = targetStorage.refs.getChildrenRefsOfParentBy(targetRootEntityId.asParent())
-          // TODO won't work for abstract
-          val targetChildrenIds = children.filterKeys { it.childClass == replaceWithEntity.clazz }
+          val targetChildrenIds = children.filterKeys { sameClass(it.childClass, replaceWithEntity.clazz, it.connectionType) }
           require(targetChildrenIds.size < 2) { "Unexpected amount of children" }
 
           val ids = if (targetChildrenIds.isEmpty()) {
@@ -402,8 +401,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                                 childClassEntityId: EntityId): EntityId? {
       val targetChildren = targetStorage.refs.getChildrenRefsOfParentBy(targetRootEntityId.asParent())
 
-      // TODO: This search won't work for abstract entities
-      val targetFoundChildren = targetChildren.filterKeys { it.childClass == childClassEntityId.clazz }
+      val targetFoundChildren = targetChildren.filterKeys { sameClass(it.childClass, childClassEntityId.clazz, it.connectionType) }
       require(targetFoundChildren.size < 2) { "Got unexpected amount of children" }
       require(targetFoundChildren.isNotEmpty()) { "How this may happen? Because we have at least one child in our trace" }
 
@@ -414,8 +412,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val replaceWithEntityIds = if (replaceWithRootId != null) {
         val replaceWithChildren = replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithRootId.asParent())
 
-        // TODO: This search won't work for abstract entities
-        val replaceWithFoundChildren = replaceWithChildren.filterKeys { it.childClass == childClassEntityId.clazz }
+        val replaceWithFoundChildren = replaceWithChildren.filterKeys { sameClass(it.childClass, childClassEntityId.clazz, it.connectionType) }
         require(replaceWithFoundChildren.size < 2) { "Got unexpected amount of children" }
 
         if (replaceWithFoundChildren.isEmpty()) {
