@@ -212,8 +212,8 @@ open class SegmentedActionToolbarComponent(place: String,
 
     traceState(lastIds, filteredIds, ides)
     lastIds = filteredIds
-    isActive = filtered.size > 1
-    super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+    isActive = newVisibleActions.size > 1
+    super.actionsUpdated(forced, if (filtered.size > 1) filtered else newVisibleActions)
     ApplicationManager.getApplication().messageBus.syncPublisher(ToolbarActionsUpdatedListener.TOPIC).actionsUpdated()
   }
 
