@@ -45,6 +45,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (instanceOfExpression == null) return false;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
     if (checkType == null) return false;
+    if (instanceOfExpression.getPattern() != null) return false;
     PsiExpression operand = instanceOfExpression.getOperand();
     PsiType operandType = operand.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)) return false;
