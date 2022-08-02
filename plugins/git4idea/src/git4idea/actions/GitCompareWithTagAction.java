@@ -87,7 +87,7 @@ public class GitCompareWithTagAction extends DvcsCompareWithAction<GitRepository
     Collection<Change> changes =
       GitChangeUtils.getDiffWithWorkingDir(project, repository.getRoot(), refToCompare, Collections.singletonList(filePath), false);
 
-    // if git returned no changes we need to check that file exist in compareWith branch to avoid this error in diff dialog
+    // if git returned no changes, we need to check that file exists in compareWith branch to avoid this error in diff dialog
     // a.e. when you perform compareWith for unversioned file
     if (changes.isEmpty() && GitHistoryUtils.getCurrentRevision(project, filePath, refToCompare) == null) {
       throw new VcsException(GitBundle.message("git.compare.with.tag.file.not.found.in.tag",

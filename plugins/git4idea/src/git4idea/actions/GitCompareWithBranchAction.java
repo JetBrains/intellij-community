@@ -78,7 +78,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =
       GitChangeUtils.getDiffWithWorkingDir(project, gitRepositoryRoot, branchToCompare, Collections.singletonList(filePath), false);
-    // if git returned no changes we need to check that file exist in compareWith branch to avoid this error in diff dialog
+    // if git returned no changes, we need to check that file exists in compareWith branch to avoid this error in diff dialog
     // a.e. when you perform compareWith for unversioned file
     if (changes.isEmpty() && GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare) == null) {
       throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
