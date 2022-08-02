@@ -693,8 +693,7 @@ class ReplaceBySourceAsTreeTest {
     }
 
     replaceWithCheck {
-      anotherParent assert ReplaceWithState.Relabel(0)
-      anotherParent assert ReplaceWithState.Relabel(0)
+      anotherParent assert ReplaceWithState.Relabel(parentEntity.base.id)
     }
   }
 
