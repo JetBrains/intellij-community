@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JPanel
-import kotlin.properties.Delegates.observable
 
 @ApiStatus.Internal
 class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanel(layout) {
