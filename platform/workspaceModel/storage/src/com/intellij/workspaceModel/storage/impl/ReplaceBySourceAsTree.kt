@@ -190,8 +190,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       @Suppress("MoveVariableDeclarationIntoWhen")
       val targetCurrentState = targetState[(targetEntity as WorkspaceEntityBase).id]
       when (targetCurrentState) {
-        ReplaceState.NoChange -> return true
-        ReplaceState.Relabel -> return true
+        is ReplaceState.NoChange -> return true
+        is ReplaceState.Relabel -> return true
         is ReplaceState.Relink -> {
           when (targetCurrentState) {
             is ReplaceState.Relink.Relabel -> return true
@@ -247,16 +247,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         return
       }
 
-      var replaceWithRootEntityId = (replaceWithStorage.resolve(targetRootEntity.persistentId)!! as WorkspaceEntityBase).id
+      var replaceWithRootEntityId: EntityId? = (replaceWithStorage.resolve(targetRootEntity.persistentId)!! as WorkspaceEntityBase).id
 
       var targetRootEntityId = targetRootEntity.id
       var markOtherToRemove = false
-      var nextTargetRootEntityId = targetRootEntityId
       for (targetWorkspaceEntityBase in targetRootTrack.reversed()) {
-
-        targetRootEntityId = nextTargetRootEntityId
-        nextTargetRootEntityId = targetWorkspaceEntityBase
-
         if (markOtherToRemove) {
           targetWorkspaceEntityBase.addState(ReplaceState.Remove)
           continue
@@ -264,15 +259,29 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
         val rootState = targetState[targetRootEntityId]
         if (rootState is ReplaceState.Relink && targetWorkspaceEntityBase.clazz.findWorkspaceEntity() in rootState.linkedChildren) {
+          targetRootEntityId = targetWorkspaceEntityBase
+          replaceWithRootEntityId = targetState.getValue(targetWorkspaceEntityBase).oppositeId()
           continue
         }
 
         val childState = targetState[targetWorkspaceEntityBase]
         if (childState != null) {
           when (childState) {
-            ReplaceState.NoChange -> continue
-            ReplaceState.Relabel -> continue
-            is ReplaceState.Relink -> continue
+            is ReplaceState.NoChange -> {
+              targetRootEntityId = targetWorkspaceEntityBase
+              replaceWithRootEntityId = childState.replaceWithEntityId
+              continue
+            }
+            is ReplaceState.Relabel -> {
+              targetRootEntityId = targetWorkspaceEntityBase
+              replaceWithRootEntityId = childState.replaceWithEntityId
+              continue
+            }
+            is ReplaceState.Relink -> {
+              targetRootEntityId = targetWorkspaceEntityBase
+              replaceWithRootEntityId = childState.replaceWithEntityId
+              continue
+            }
             ReplaceState.Remove -> {
               markOtherToRemove = true
               continue
@@ -280,7 +289,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
         }
 
-        val newReplaceWithRootEntityId = processChildren(targetRootEntityId, targetWorkspaceEntityBase, replaceWithRootEntityId)
+        val newReplaceWithRootEntityId = processChildren(targetRootEntityId, replaceWithRootEntityId, targetWorkspaceEntityBase)
 
         if (newReplaceWithRootEntityId != null) {
           replaceWithRootEntityId = newReplaceWithRootEntityId
@@ -288,6 +297,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           // Target entity was removed, no sense to continue processing
           markOtherToRemove = true
         }
+        targetRootEntityId = targetWorkspaceEntityBase
 
         // OPEN QUESTION: DO WE FORCE ONLY A SINGLE KEYED CHILDREN (Can we have two children with the same key)
         // (a) no
@@ -343,8 +353,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val currentTargetState = targetState[targetRootEntityId]
       if (currentTargetState != null) {
         when (currentTargetState) {
-          ReplaceState.NoChange -> return true
-          ReplaceState.Relabel -> return true
+          is ReplaceState.NoChange -> return true
+          is ReplaceState.Relabel -> return true
           is ReplaceState.Relink -> return true
           ReplaceState.Remove -> return false
         }
@@ -359,7 +369,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           return false
         }
         else {
-          targetRootEntityId.addState(ReplaceState.NoChange)
+          targetRootEntityId.addState(ReplaceState.NoChange(null))
           return false
         }
       }
@@ -388,8 +398,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     private fun processChildren(targetRootEntityId: EntityId,
-                                childClassEntityId: EntityId,
-                                replaceWithRootId: EntityId): EntityId? {
+                                replaceWithRootId: EntityId?,
+                                childClassEntityId: EntityId): EntityId? {
       val targetChildren = targetStorage.refs.getChildrenRefsOfParentBy(targetRootEntityId.asParent())
 
       // TODO: This search won't work for abstract entities
@@ -401,18 +411,22 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       //----
 
-      val replaceWithChildren = replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithRootId.asParent())
+      val replaceWithEntityIds = if (replaceWithRootId != null) {
+        val replaceWithChildren = replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithRootId.asParent())
 
-      // TODO: This search won't work for abstract entities
-      val replaceWithFoundChildren = replaceWithChildren.filterKeys { it.childClass == childClassEntityId.clazz }
-      require(replaceWithFoundChildren.size < 2) { "Got unexpected amount of children" }
+        // TODO: This search won't work for abstract entities
+        val replaceWithFoundChildren = replaceWithChildren.filterKeys { it.childClass == childClassEntityId.clazz }
+        require(replaceWithFoundChildren.size < 2) { "Got unexpected amount of children" }
 
-      val replaceWithEntityIds = if (replaceWithFoundChildren.isEmpty()) {
+        if (replaceWithFoundChildren.isEmpty()) {
+          emptyList()
+        }
+        else {
+          val (_, replaceWithChildEntityIds) = replaceWithFoundChildren.entries.single()
+          replaceWithChildEntityIds
+        }
+      } else {
         emptyList()
-      }
-      else {
-        val (_, replaceWithChildEntityIds) = replaceWithFoundChildren.entries.single()
-        replaceWithChildEntityIds
       }
 
       //----
@@ -464,7 +478,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
       }
 
-      targetChildrenMap.keys.forEach { targetEntityData -> removeWorkspaceData(targetEntityData.createEntityId(), null) }
+      targetChildrenMap.keys.forEach { targetEntityData ->
+        val targetEntityId = targetEntityData.createEntityId()
+        if (entityFilter(targetEntityData.entitySource)) {
+          removeWorkspaceData(targetEntityId, null)
+        } else {
+          doNothingOn(targetEntityId, null)
+        }
+      }
 
       targetRootEntityId.updateStateLinkProcessed(childClassEntityId.clazz.findWorkspaceEntity())
 
@@ -474,7 +495,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
     targetEntityId operation Operation.Relabel(replaceWithEntityId)
-    targetEntityId.addState(ReplaceState.Relabel)
+    targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId))
     replaceWithEntityId.addState(ReplaceWithState.Relabel(targetEntityId))
   }
 
@@ -489,9 +510,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     replaceWithEntityData.createEntityId().addState(ReplaceWithState.SubtreeMoved)
   }
 
-  private fun doNothingOn(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
-    targetEntityId.addState(ReplaceState.NoChange)
-    replaceWithEntityId.addState(ReplaceWithState.NoChange(targetEntityId))
+  private fun doNothingOn(targetEntityId: EntityId, replaceWithEntityId: EntityId?) {
+    targetEntityId.addState(ReplaceState.NoChange(replaceWithEntityId))
+    replaceWithEntityId?.addState(ReplaceWithState.NoChange(targetEntityId))
   }
 
   private fun EntityId.addState(state: ReplaceState) {
@@ -516,12 +537,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val currentState = targetState[this]
     require(currentState != null)
     when (currentState) {
-      ReplaceState.Relabel -> targetState[this] = ReplaceState.Relink.Relabel(listOf(clazz))
+      is ReplaceState.Relabel -> targetState[this] = ReplaceState.Relink.Relabel(listOf(clazz), currentState.replaceWithEntityId)
       is ReplaceState.Relink -> when (currentState) {
-        is ReplaceState.Relink.Relabel -> targetState[this] = ReplaceState.Relink.Relabel(currentState.linkedChildren + listOf(clazz))
-        is ReplaceState.Relink.NoChange -> targetState[this] = ReplaceState.Relink.NoChange(currentState.linkedChildren + listOf(clazz))
+        is ReplaceState.Relink.Relabel -> targetState[this] = ReplaceState.Relink.Relabel(currentState.linkedChildren + listOf(clazz),
+                                                                                          currentState.replaceWithEntityId)
+        is ReplaceState.Relink.NoChange -> targetState[this] = ReplaceState.Relink.NoChange(currentState.linkedChildren + listOf(clazz),
+                                                                                            currentState.replaceWithEntityId)
       }
-      is ReplaceState.NoChange -> targetState[this] = ReplaceState.Relink.NoChange(listOf(clazz))
+      is ReplaceState.NoChange -> targetState[this] = ReplaceState.Relink.NoChange(listOf(clazz), currentState.replaceWithEntityId)
       else -> error("")
     }
   }
@@ -557,12 +580,24 @@ internal sealed interface Operation {
 internal class AddSubtree(val targetParent: EntityId?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
-  object Relabel : ReplaceState
-  object NoChange : ReplaceState
+  data class Relabel(val replaceWithEntityId: EntityId) : ReplaceState
+  data class NoChange(val replaceWithEntityId: EntityId?) : ReplaceState
   object Remove : ReplaceState
-  abstract class Relink(val linkedChildren: List<Class<out WorkspaceEntity>>) : ReplaceState {
-    class Relabel(linkedChildren: List<Class<out WorkspaceEntity>>) : Relink(linkedChildren)
-    class NoChange(linkedChildren: List<Class<out WorkspaceEntity>>) : Relink(linkedChildren)
+  abstract class Relink(open val linkedChildren: List<Class<out WorkspaceEntity>>, open val replaceWithEntityId: EntityId?) : ReplaceState {
+    data class Relabel(override val linkedChildren: List<Class<out WorkspaceEntity>>, override val replaceWithEntityId: EntityId?)
+      : Relink(linkedChildren, replaceWithEntityId)
+
+    data class NoChange(override val linkedChildren: List<Class<out WorkspaceEntity>>, override val replaceWithEntityId: EntityId?)
+      : Relink(linkedChildren, replaceWithEntityId)
+  }
+
+  fun oppositeId(): EntityId? {
+    return when (this) {
+      is NoChange -> replaceWithEntityId
+      is Relabel -> replaceWithEntityId
+      is Relink -> replaceWithEntityId
+      Remove -> null
+    }
   }
 }
 

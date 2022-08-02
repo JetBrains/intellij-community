@@ -284,8 +284,8 @@ class ReplaceBySourceAsTreeTest {
     assertTrue(parents.single { it.myName == "myProperty" }.children.none())
     assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
     thisStateCheck {
-      parent assert ReplaceState.Relink.Relabel(listOf(NamedChildEntity::class.java))
-      parent2 assert ReplaceState.Relabel
+      parent assert ReplaceState.Relink.Relabel(listOf(NamedChildEntity::class.java), parent.base.id)
+      parent2 assert ReplaceState.Relabel(parent2.base.id)
       child assert ReplaceState.Remove
     }
     replaceWithCheck {
@@ -677,7 +677,6 @@ class ReplaceBySourceAsTreeTest {
     val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
     builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
 
-    replacement = createEmptyBuilder()
     val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
     replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
 
@@ -688,8 +687,8 @@ class ReplaceBySourceAsTreeTest {
     assertNotNull(builder.entities(OoParentWithPidEntity::class.java).single().childOne)
 
     thisStateCheck {
-      parentEntity assert ReplaceState.Relink.Relabel(listOf(OoChildForParentWithPidEntity::class.java))
-      parentEntity.childOne!! assert ReplaceState.Relabel
+      parentEntity assert ReplaceState.Relink.Relabel(listOf(OoChildForParentWithPidEntity::class.java), anotherParent.base.id)
+      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id)
     }
 
     replaceWithCheck {
@@ -747,7 +746,7 @@ class ReplaceBySourceAsTreeTest {
     assertNoNamedChildEntities()
 
     thisStateCheck {
-      entity assert ReplaceState.Relink.NoChange(listOf(NamedChildEntity::class.java))
+      entity assert ReplaceState.Relink.NoChange(listOf(NamedChildEntity::class.java), newEntity.base.id)
     }
 
     replaceWithCheck {
@@ -837,8 +836,8 @@ class ReplaceBySourceAsTreeTest {
     assertEquals("internal2", builder.entities(TreeMultiparentRootEntity::class.java).single().children.single().children.single().data)
 
     thisStateCheck {
-      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
-      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
+      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.base.id)
+      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.children.single().base.id)
       thisRoot.children.single().children.single() assert ReplaceState.Remove
     }
 
@@ -877,7 +876,7 @@ class ReplaceBySourceAsTreeTest {
     assertTrue(endChildren.any { it.data == "internal" })
 
     thisStateCheck {
-      thisRoot assert ReplaceState.NoChange
+      thisRoot assert ReplaceState.NoChange(replaceRoot.base.id)
     }
 
     replaceWithCheck {
@@ -914,8 +913,8 @@ class ReplaceBySourceAsTreeTest {
     assertTrue(endChildren.isEmpty())
 
     thisStateCheck {
-      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
-      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
+      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.base.id)
+      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.children.single().base.id)
       thisRoot.children.single().children.single() assert ReplaceState.Remove
     }
 
@@ -951,14 +950,49 @@ class ReplaceBySourceAsTreeTest {
     assertEquals("internal", endChildren.single().data)
 
     thisStateCheck {
-      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java))
-      thisRoot.children.single() assert ReplaceState.Relabel
+      thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.base.id)
+      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id)
     }
 
     replaceWithCheck {
       replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
       replaceRoot.children.single() assert ReplaceWithState.Relabel(thisRoot.children.single().base.id)
     }
+  }
+
+  @Test
+  fun `rbs lot of children`() {
+    builder add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", AnotherSource) {
+          children = listOf(
+            TreeMultiparentLeafEntity("internal", MySource),
+          )
+        },
+        TreeMultiparentLeafEntity("info2", AnotherSource),
+        TreeMultiparentLeafEntity("info3", AnotherSource),
+        TreeMultiparentLeafEntity("info4", AnotherSource),
+        TreeMultiparentLeafEntity("info5", AnotherSource),
+      )
+    }
+    val thisRoot = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceRoot = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("info1", AnotherSource) {
+          children = listOf(
+            TreeMultiparentLeafEntity("internal", MySource),
+          )
+        },
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    val endChildren = builder.entities(TreeMultiparentRootEntity::class.java).single().children
+    assertEquals(5, endChildren.size)
   }
 
   @Test
