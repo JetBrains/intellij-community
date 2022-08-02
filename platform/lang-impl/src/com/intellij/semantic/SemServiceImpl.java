@@ -1,11 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
+import com.intellij.ProjectTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.UserDataHolder;
@@ -19,6 +25,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +37,7 @@ import static java.util.Collections.emptyList;
 /**
  * @author peter
  */
-public final class SemServiceImpl extends SemService {
-  private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
+public final class SemServiceImpl extends SemService implements Disposable {
 
   private final Object lock = ObjectUtils.sentinel(getClass().getName());
   private volatile MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers;
@@ -42,6 +48,20 @@ public final class SemServiceImpl extends SemService {
     this.project = project;
     myCVManager = CachedValuesManager.getManager(project);
     SemContributor.EP_NAME.addChangeListener(() -> producers = null, project);
+
+    MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
+    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        producers = null;
+      }
+    });
+    messageBusConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void exitDumbMode() {
+        producers = null;
+      }
+    });
   }
 
   private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> collectProducers() {
@@ -69,10 +89,13 @@ public final class SemServiceImpl extends SemService {
         return;
       }
       catch (Exception e) {
-        LOG.error(e);
+        Logger.getInstance(SemServiceImpl.class).error(e);
         return;
       }
-      semContributor.registerSemProviders(registrar, project);
+
+      if (semContributor.isAvailable(project)) {
+        semContributor.registerSemProviders(registrar, project);
+      }
     });
 
     return map;
@@ -88,7 +111,12 @@ public final class SemServiceImpl extends SemService {
 
   @SuppressWarnings("unchecked")
   private @NotNull <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi, SemCacheChunk chunk) {
-    ensureInitialized();
+    if (DumbService.isDumb(project)) {
+      // SEM is available only in Smart mode
+      return emptyList();
+    }
+
+    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> currentProducers = ensureInitialized();
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
@@ -97,7 +125,7 @@ public final class SemServiceImpl extends SemService {
 
     ProcessingContext processingContext = new ProcessingContext();
     for (SemKey<?> each : key.getInheritors()) {
-      List<SemElement> list = createSemElements(each, psi, processingContext);
+      List<SemElement> list = createSemElements(currentProducers, each, psi, processingContext);
       map.put(each, list);
       result.addAll((List<T>)list);
     }
@@ -111,17 +139,28 @@ public final class SemServiceImpl extends SemService {
     return new ArrayList<>(result);
   }
 
-  private void ensureInitialized() {
-    if (producers == null) {
-      synchronized (lock) {
-        if (producers == null) {
-          producers = collectProducers();
-        }
+  private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> ensureInitialized() {
+    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> current = producers;
+    if (current != null) {
+      return current;
+    }
+
+    synchronized (lock) {
+      current = producers;
+      if (current != null) {
+        return current;
       }
+
+      MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> newProducers = collectProducers();
+      producers = newProducers;
+      return newProducers;
     }
   }
 
-  private @NotNull List<SemElement> createSemElements(SemKey<?> key, PsiElement psi, ProcessingContext processingContext) {
+  private static @NotNull List<SemElement> createSemElements(
+    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers,
+    SemKey<?> key, PsiElement psi, ProcessingContext processingContext
+  ) {
     List<SemElement> result = null;
     Collection<BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> functions = producers.get(key);
     if (!functions.isEmpty()) {
@@ -134,6 +173,10 @@ public final class SemServiceImpl extends SemService {
       }
     }
     return result == null ? emptyList() : Collections.unmodifiableList(result);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @SuppressWarnings("unchecked")
