@@ -54,8 +54,7 @@ import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.TRACE_OF_VALUES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.logValuesLookupStarted;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.*;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -161,35 +160,31 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
-    final long startedAt = System.currentTimeMillis();
-    try {
+    var trace = logAllKeysLookupStarted(indexId)
+      .withProject(scope.getProject());
+    try (trace) {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
 
-      final long actualityEnsuredAt = System.currentTimeMillis();
+      trace.logIndexValidationFinished();
 
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
-      Boolean validated = myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
-
-      final long finishedAt = System.currentTimeMillis();
-      //RC: failed lookup will not be included in stats
-      //    skipped lookup (i.e. because index is going to rebuild) will not be included in stats
-      IndexOperationFusStatisticsCollector.indexAllKeysLookupFinished(
-        indexId.getName(),
-        (actualityEnsuredAt - startedAt),
-        (finishedAt - actualityEnsuredAt),
-        -1 // FIXME RC: extract all keys from lambda
-      );
+      Boolean validated = myAccessValidator.validate(indexId, () -> {
+        trace.totalKeysIndexed(index.keysCountApproximately());
+        return index.processAllKeys(processor, scope, idFilterAdjusted);
+      });
 
       return validated;
     }
     catch (StorageException e) {
+      trace.lookupFailed();
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
+      trace.lookupFailed();
       final Throwable cause = e.getCause();
       if (cause instanceof StorageException || cause instanceof IOException) {
         scheduleRebuild(indexId, cause);
