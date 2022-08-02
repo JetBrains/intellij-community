@@ -36,7 +36,8 @@ class HttpWrapper {
     acceptContentType: String,
     timeoutInSeconds: Int = 10,
     headers: List<Pair<String, String>>,
-    useCache: Boolean = false
+    useCache: Boolean = false,
+    verbose: Boolean = true
   ): String = suspendCancellableCoroutine { cont ->
     try {
       val cacheKey = getCacheKey(url, acceptContentType, timeoutInSeconds, headers)
@@ -58,7 +59,7 @@ class HttpWrapper {
         val statusCode = request.connection.castSafelyTo<HttpURLConnection>()?.responseCode ?: -1
         val responseText = request.connection.getInputStream().use { it.readBytes { cont.isCancelled }.toString(Charsets.UTF_8) }
         if (cont.isCancelled) return@connect
-        if (statusCode != HttpURLConnection.HTTP_OK) {
+        if (statusCode != HttpURLConnection.HTTP_OK && verbose) {
           Logger.getInstance("HttpWrapper").debug(
             """
             |
