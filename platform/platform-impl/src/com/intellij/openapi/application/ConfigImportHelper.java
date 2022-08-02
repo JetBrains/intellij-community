@@ -903,11 +903,9 @@ public final class ConfigImportHelper {
                                           @NotNull List<IdeaPluginDescriptor> secondAccumulator,
                                           @NotNull Predicate<? super IdeaPluginDescriptor> predicate) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (descriptor.isBundled()) {
-        continue;
+      if (!descriptor.isBundled()) {
+        (predicate.test(descriptor) ? firstAccumulator : secondAccumulator).add(descriptor);
       }
-
-      (predicate.test(descriptor) ? firstAccumulator : secondAccumulator).add(descriptor);
     }
   }
 
