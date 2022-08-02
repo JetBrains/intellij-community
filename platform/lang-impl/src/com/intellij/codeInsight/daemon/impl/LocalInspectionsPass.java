@@ -157,12 +157,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributesKey attributesKey = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-     if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
+    if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
       attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), myFile);
     }
     TextAttributes attributes = attributesKey == null || editorColorsScheme == null || severity.getName().equals(attributesKey.getExternalName())
                                 ? severityRegistrar.getTextAttributesBySeverity(severity)
                                 : editorColorsScheme.getAttributes(attributesKey);
+    if (attributesKey != null && (attributes == null || attributes.isEmpty())) {
+      attributes = severityRegistrar.getCustomSeverityTextAttributes(attributesKey);
+    }
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
       .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
       .description(message)
