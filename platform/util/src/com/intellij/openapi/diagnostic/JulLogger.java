@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 public class JulLogger extends Logger {
   @SuppressWarnings("NonConstantLogger") protected final java.util.logging.Logger myLogger;
@@ -161,10 +162,20 @@ public class JulLogger extends Logger {
     rootLogger.addHandler(fileHandler);
 
     if (enableConsoleLogger && logConsole) {
-      ConsoleHandler consoleHandler = new ConsoleHandler();
+      ConsoleHandler consoleHandler = new OptimizedConsoleHandler();
       consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, showDateInConsole));
       consoleHandler.setLevel(java.util.logging.Level.WARNING);
       rootLogger.addHandler(consoleHandler);
+    }
+  }
+
+  private static final class OptimizedConsoleHandler extends ConsoleHandler {
+    @Override
+    public void publish(LogRecord record) {
+      // checking levels _before_ calling a synchronized method
+      if (isLoggable(record)) {
+        super.publish(record);
+      }
     }
   }
 }
