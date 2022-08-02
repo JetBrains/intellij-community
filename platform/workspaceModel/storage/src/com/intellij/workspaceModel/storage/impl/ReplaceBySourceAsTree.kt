@@ -251,7 +251,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       var targetRootEntityId = targetRootEntity.id
       var markOtherToRemove = false
+      var nextTargetRootEntityId = targetRootEntityId
       for (targetWorkspaceEntityBase in targetRootTrack.reversed()) {
+
+        targetRootEntityId = nextTargetRootEntityId
+        nextTargetRootEntityId = targetWorkspaceEntityBase
+
         if (markOtherToRemove) {
           targetWorkspaceEntityBase.addState(ReplaceState.Remove)
           continue
@@ -283,7 +288,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           // Target entity was removed, no sense to continue processing
           markOtherToRemove = true
         }
-        targetRootEntityId = targetWorkspaceEntityBase
 
         // OPEN QUESTION: DO WE FORCE ONLY A SINGLE KEYED CHILDREN (Can we have two children with the same key)
         // (a) no

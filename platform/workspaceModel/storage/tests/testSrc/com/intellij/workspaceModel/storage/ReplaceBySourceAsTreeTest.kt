@@ -962,6 +962,40 @@ class ReplaceBySourceAsTreeTest {
   }
 
   @Test
+  fun `rbs for deep chain 5`() {
+    builder add ModuleTestEntity("data", AnotherSource) {
+      this.contentRoots = listOf(
+        ContentRootTestEntity(AnotherSource) {
+          this.sourceRootOrder = SourceRootTestOrderEntity("info", MySource)
+          this.sourceRoots = listOf(
+            SourceRootTestEntity("data", MySource)
+          )
+        }
+      )
+    }
+    val thisRoot = builder.toSnapshot().entities(ModuleTestEntity::class.java).single()
+
+    val replaceRoot = replacement add ModuleTestEntity("data", AnotherSource) {
+      this.contentRoots = listOf(
+        ContentRootTestEntity(AnotherSource) {
+          this.sourceRootOrder = SourceRootTestOrderEntity("info", MySource)
+          this.sourceRoots = listOf(
+            SourceRootTestEntity("data", MySource)
+          )
+        }
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    val contentRoot = builder.entities(ModuleTestEntity::class.java).single().contentRoots.single()
+    assertEquals("info", contentRoot.sourceRootOrder!!.data)
+    assertEquals("data", contentRoot.sourceRoots.single().data)
+  }
+
+  @Test
   fun `rbs for multiple parents`() {
     builder add TreeMultiparentRootEntity("data", AnotherSource) {
       children = listOf(
