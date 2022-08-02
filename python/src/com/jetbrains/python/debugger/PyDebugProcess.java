@@ -814,6 +814,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
         XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+        // Could be null when the current function is called for a thread that is already dead.
+        // In this case a new element shouldn't be added to myStackFrameCache
+        if (values == null) {
+          return null;
+        }
         myStackFrameCache.put(frame.getThreadFrameId(), values);
       }
       showFailedTestInfoIfNecessary(frame);
