@@ -39,6 +39,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -121,7 +122,19 @@ public final class TipUIUtil {
   }
 
   public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip) {
-    Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip);
+    return loadAndParseTip(tip, false);
+  }
+
+  /**
+   * Throws exception on any issue occurred during tip loading and parsing
+   */
+  @TestOnly
+  public static List<TextParagraph> loadAndParseTipStrict(@Nullable TipAndTrickBean tip) {
+    return loadAndParseTip(tip, true);
+  }
+
+  private static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip, boolean isStrict) {
+    Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip, isStrict);
     String text = result.first;
     @Nullable ClassLoader loader = result.second;
     @Nullable String tipsPath = result.third;
@@ -129,20 +142,24 @@ public final class TipUIUtil {
     Document tipHtml = Jsoup.parse(text);
     Element tipContent = tipHtml.body();
 
-    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath);
+    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath, isStrict);
     inlineProductInfo(tipContent);
 
-    List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons).convert();
+    List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons, isStrict).convert();
     if (paragraphs.size() > 0) {
       paragraphs.get(0).editAttributes(attr -> {
         StyleConstants.setSpaceAbove(attr, TextParagraph.NO_INDENT);
         return Unit.INSTANCE;
       });
     }
+    else {
+      handleWarning("Parsed paragraphs is empty for tip: " + tip, isStrict);
+    }
     return paragraphs;
   }
 
-  private static Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> loadTip(@Nullable TipAndTrickBean tip) {
+  private static Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> loadTip(@Nullable TipAndTrickBean tip,
+                                                                                           boolean isStrict) {
     if (tip == null) return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null);
     try {
       File tipFile = new File(tip.fileName);
@@ -191,18 +208,21 @@ public final class TipUIUtil {
       }
     }
     catch (IOException e) {
-      LOG.warn(e);
+      handleError(e, isStrict);
     }
     //All retrievers have failed or error occurred, return error.
     return Trinity.create(getCantReadText(tip), null, null);
   }
 
-  private static Map<String, Icon> loadImages(@NotNull Element tipContent, @Nullable ClassLoader loader, @Nullable String tipsPath) {
+  private static Map<String, Icon> loadImages(@NotNull Element tipContent,
+                                              @Nullable ClassLoader loader,
+                                              @Nullable String tipsPath,
+                                              boolean isStrict) {
     if (tipsPath == null) return Collections.emptyMap();
     Map<String, Icon> icons = new HashMap<>();
     tipContent.getElementsByTag("img").forEach(imgElement -> {
       if (!imgElement.hasAttr("src")) {
-        LOG.warn("Not found src attribute in img element:\n" + imgElement);
+        handleWarning("Not found src attribute in img element:\n" + imgElement, isStrict);
         return;
       }
       String path = imgElement.attr("src");
@@ -214,7 +234,7 @@ public final class TipUIUtil {
           image = loadFromUrl(imageUrl);
         }
         catch (MalformedURLException e) {
-          LOG.warn(e);
+          handleError(e, isStrict);
         }
       }
       else {
@@ -230,7 +250,7 @@ public final class TipUIUtil {
         icons.put(path, icon);
       }
       else {
-        LOG.warn("Not found icon for path: " + path);
+        handleWarning("Not found icon for path: " + path, isStrict);
       }
     });
     return icons;
@@ -244,6 +264,24 @@ public final class TipUIUtil {
         text = entity.inline(text);
       }
       element.text(text);
+    }
+  }
+
+  private static void handleWarning(@NotNull String message, boolean isStrict) {
+    if (isStrict) {
+      throw new RuntimeException("Warning: " + message);
+    }
+    else {
+      LOG.warn(message);
+    }
+  }
+
+  private static void handleError(@NotNull Throwable t, boolean isStrict) {
+    if (isStrict) {
+      throw new RuntimeException(t);
+    }
+    else {
+      LOG.warn(t);
     }
   }
 

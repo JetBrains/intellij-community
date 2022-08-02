@@ -15,7 +15,9 @@ import java.net.URI
 import javax.swing.Icon
 import javax.swing.text.StyleConstants
 
-internal class TipContentConverter(private val tipContent: Element, private val iconsMap: Map<String, Icon>) {
+internal class TipContentConverter(private val tipContent: Element,
+                                   private val iconsMap: Map<String, Icon>,
+                                   private val isStrict: Boolean) {
   fun convert(): List<TextParagraph> {
     val list = mutableListOf<TextParagraph>()
     for (node in tipContent.childNodes()) {
@@ -58,11 +60,11 @@ internal class TipContentConverter(private val tipContent: Element, private val 
             StyleConstants.setLineSpacing(this, 0f)  // it is required to not add extra space below the image
           }
         }
-        else LOG.warn("Failed to find icon for path: $path")
+        else handleWarning("Failed to find icon for path: $path")
       }
       else warnIfNotBlankNode(node)
     }
-    LOG.warn("Not found img node in element:\n$element")
+    handleWarning("Not found img node in element:\n$element")
     return null
   }
 
@@ -80,7 +82,7 @@ internal class TipContentConverter(private val tipContent: Element, private val 
         if (paragraphs.isNotEmpty()) {
           items.add(paragraphs)
         }
-        else LOG.warn("List item doesn't contain any paragraph:\n$node")
+        else handleWarning("List item doesn't contain any paragraph:\n$node")
       }
       else warnIfNotBlankNode(node)
     }
@@ -89,7 +91,7 @@ internal class TipContentConverter(private val tipContent: Element, private val 
       ListParagraph(items)
     }
     else {
-      LOG.warn("List doesn't contain any list item:\n$element")
+      handleWarning("List doesn't contain any list item:\n$element")
       null
     }
   }
@@ -133,7 +135,7 @@ internal class TipContentConverter(private val tipContent: Element, private val 
               IconTextPart(icon)
             }
             else {
-              LOG.warn("Failed to find icon for path: $path")
+              handleWarning("Failed to find icon for path: $path")
               null
             }
           }
@@ -152,7 +154,7 @@ internal class TipContentConverter(private val tipContent: Element, private val 
             }
           }
           else -> {
-            LOG.warn("Found unknown node:\n$node")
+            handleWarning("Found unknown node:\n$node")
             RegularTextPart(getElementInnerText(node))
           }
         }
@@ -160,7 +162,7 @@ internal class TipContentConverter(private val tipContent: Element, private val 
         if (textPart != null) {
           list.add(textPart)
         }
-        else LOG.warn("Failed to covert element to text part:\n$node")
+        else handleWarning("Failed to covert element to text part:\n$node")
       }
       else warnIfNotBlankNode(node)
     }
@@ -169,14 +171,14 @@ internal class TipContentConverter(private val tipContent: Element, private val 
       TextParagraph(list)
     }
     else {
-      LOG.warn("Paragraph is empty:\n$element")
+      handleWarning("Paragraph is empty:\n$element")
       null
     }
   }
 
   private fun getElementInnerText(element: Element): String {
     if (element.childNodeSize() == 0) {
-      LOG.warn("Expected element with child node, but was:\n$element")
+      handleWarning("Expected element with child node, but was:\n$element")
       return element.toString()
     }
     val child = element.childNode(0)
@@ -184,16 +186,18 @@ internal class TipContentConverter(private val tipContent: Element, private val 
       child.text()
     }
     else {
-      LOG.warn("Expected text node, but was:\n$child")
+      handleWarning("Expected text node, but was:\n$child")
       child.toString()
     }
   }
 
   private fun warnIfNotBlankNode(node: Node) {
     if (node !is TextNode || node.text().isNotBlank()) {
-      LOG.warn("Found unknown node:\n$node")
+      handleWarning("Found unknown node:\n$node")
     }
   }
+
+  private fun handleWarning(message: String) = if (isStrict) throw RuntimeException("Warning: $message") else LOG.warn(message)
 
   companion object {
     private val LOG: Logger = Logger.getInstance(TipContentConverter::class.java)
