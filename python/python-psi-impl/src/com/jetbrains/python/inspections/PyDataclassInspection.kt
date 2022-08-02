@@ -27,12 +27,24 @@ class PyDataclassInspection : PyInspection() {
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
     private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
-    private val ATTRS_HELPERS = setOf("attr.fields",
-                                      "attr.fields_dict",
-                                      "attr.asdict",
-                                      "attr.astuple",
-                                      "attr.assoc",
-                                      "attr.evolve")
+    // Strictly, we don't need the "attrs" namespace aliases here, because we resolve these names to the original definitions
+    // re-exported from the "attr" package, but we keep them here anyway not to depend on the project's layout.
+    private val ATTRS_INSTANCE_HELPERS = setOf(
+      "attr.asdict",
+      "attr.astuple",
+      "attr.assoc",
+      "attr.evolve",
+      "attrs.asdict",
+      "attrs.astuple",
+      "attrs.assoc",
+      "attrs.evolve",
+    )
+    private val ATTRS_CLASS_HELPERS = setOf(
+      "attr.fields",
+      "attr.fields_dict",
+      "attrs.fields",
+      "attrs.fields_dict",
+    )
 
     private enum class ClassOrder {
       MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
@@ -184,7 +196,7 @@ class PyDataclassInspection : PyInspection() {
       if (calleeQName != null) {
         val dataclassType = when {
           DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
-          ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
+          ATTRS_CLASS_HELPERS.contains(calleeQName) || ATTRS_INSTANCE_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
           else -> return
         }
 
@@ -454,7 +466,7 @@ class PyDataclassInspection : PyInspection() {
                 val stub = PyDataclassFieldStubImpl.create(attribute)
                 if (stub != null && (stub.hasDefault() || stub.hasDefaultFactory())) {
                   registerProblem(method.nameIdentifier,
-                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.is.set.using.attr.ib"),
+                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", "${stub.calleeName}()"),
                                   ProblemHighlightType.GENERIC_ERROR)
                 }
               }
@@ -671,7 +683,7 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperAttrsArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val instance = calleeQName != "attr.fields" && calleeQName != "attr.fields_dict"
+      val instance = calleeQName in ATTRS_INSTANCE_HELPERS
 
       val type = myTypeEvalContext.getType(argument)
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.ATTRS, !instance, instance, true)) {

@@ -919,7 +919,18 @@ public class PyStubsTest extends PyTestCase {
       () -> {
         final PyFile file = getTestFile();
 
-        final DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+        DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+        checker.check("a", true, false, true);
+        checker.check("b", false, true, true);
+        checker.check("c", false, false, true);
+        checker.check("d", false, false, false);
+        checker.check("e", false, false, false);
+        checker.check("f", false, false, false);
+        checker.check("g", false, false, true);
+        checker.check("h", false, true, true);
+        checker.check("i", false, false, true);
+
+        checker = new DataclassFieldChecker(file.findTopLevelClass("B"));
         checker.check("a", true, false, true);
         checker.check("b", false, true, true);
         checker.check("c", false, false, true);

@@ -17,6 +17,19 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import java.io.IOException
 
+private val ATTRS_ATTRIBUTES = setOf(
+  "attr.ib",
+  "attr.attr",
+  "attr.attrib",
+  "attr.field",
+  "attrs.field",
+)
+
+private val ATTRS_FACTORY = setOf(
+  "attr.Factory",
+  "attrs.Factory",
+)
+
 class PyDataclassFieldStubImpl private constructor(private val calleeName: QualifiedName,
                                                    private val parameters: FieldParameters) : PyDataclassFieldStub {
   companion object {
@@ -47,15 +60,10 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     private fun calculateCalleeNameAndType(callee: PyReferenceExpression): Pair<QualifiedName, PyDataclassParameters.PredefinedType>? {
       val qualifiedName = callee.asQualifiedName() ?: return null
 
-      val dataclassesField = QualifiedName.fromComponents("dataclasses", "field")
-      val attrIb = QualifiedName.fromComponents("attr", "ib")
-      val attrAttr = QualifiedName.fromComponents("attr", "attr")
-      val attrAttrib = QualifiedName.fromComponents("attr", "attrib")
-
       for (originalQName in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
-        when (originalQName) {
-          dataclassesField -> return qualifiedName to PyDataclassParameters.PredefinedType.STD
-          attrIb, attrAttr, attrAttrib -> return qualifiedName to PyDataclassParameters.PredefinedType.ATTRS
+        when (originalQName.toString()) {
+          "dataclasses.field" -> return qualifiedName to PyDataclassParameters.PredefinedType.STD
+          in ATTRS_ATTRIBUTES -> return qualifiedName to PyDataclassParameters.PredefinedType.ATTRS
         }
       }
 
@@ -83,7 +91,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
           val hasFactoryInDefault =
             callee != null &&
-            QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
+            PyResolveUtil.resolveImportedElementQNameLocally(callee).any { it.toString() in ATTRS_FACTORY }
 
           return FieldParameters(!hasFactoryInDefault, hasFactory || hasFactoryInDefault, initValue, kwOnly)
         }
