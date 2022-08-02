@@ -109,7 +109,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
         List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
         if (unusedParameters.isEmpty()) return;
-        if (scope != null && scope.getScopeType() == AnalysisScope.PROJECT) return;
+        if (scope != null && scope.isTotalScope()) return;
 
         UDeclaration uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
