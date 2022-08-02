@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isDouble
 import org.jetbrains.kotlin.types.typeUtil.isFloat
@@ -73,7 +74,7 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
         private fun isApplicable(expression: KtExpression, context: BindingContext, useRangeUntil: Boolean): Boolean {
             val (left, right) = expression.getArguments() ?: return false
             // `until` isn't available for floating point numbers
-            fun KtExpression.isRangeUntilOrUntilApplicable() = context.getType(this)
+            fun KtExpression.isRangeUntilOrUntilApplicable() = getType(context)
                 ?.let { it.isPrimitiveNumberType() && (useRangeUntil || !it.isDouble() && !it.isFloat()) }
             return right?.deparenthesize()?.isMinusOne() == true &&
                     left?.isRangeUntilOrUntilApplicable() == true && right.isRangeUntilOrUntilApplicable() == true

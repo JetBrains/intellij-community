@@ -4650,6 +4650,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/emptyRange/char.kt");
         }
 
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/double.kt");
+        }
+
         @TestMetadata("downTo.kt")
         public void testDownTo() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/downTo.kt");
@@ -4668,6 +4673,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("rangeUntil2.kt")
         public void testRangeUntil2() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/rangeUntil2.kt");
+        }
+
+        @TestMetadata("rangeUntilFloat.kt")
+        public void testRangeUntilFloat() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/rangeUntilFloat.kt");
         }
 
         @TestMetadata("simple.kt")
