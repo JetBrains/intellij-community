@@ -13010,9 +13010,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("closedRange.kt")
-        public void testClosedRange() throws Exception {
-            runTest("testData/inspectionsLocal/replaceRangeToWithRangeUntil/closedRange.kt");
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("testData/inspectionsLocal/replaceRangeToWithRangeUntil/float.kt");
         }
 
         @TestMetadata("minusTwo.kt")
@@ -13058,9 +13058,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("closedRange.kt")
-        public void testClosedRange() throws Exception {
-            runTest("testData/inspectionsLocal/replaceRangeToWithUntil/closedRange.kt");
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("testData/inspectionsLocal/replaceRangeToWithUntil/float.kt");
         }
 
         @TestMetadata("minusTwo.kt")
