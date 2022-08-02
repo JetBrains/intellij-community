@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.IndexId;
 import org.jetbrains.annotations.NotNull;
@@ -20,80 +21,67 @@ import org.jetbrains.annotations.Nullable;
  * created 20.07.22 at 18:20
  */
 public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector {
+  private static final Logger LOG = Logger.getInstance(IndexOperationFusStatisticsCollector.class);
 
-  //FIXME RC: For real group name better to be like 'index-lookup'/'index-usage', and then event names
-  //          like 'lookup-all-keys', 'lookup-values'
-  //          E.g. YT to register new group: https://youtrack.jetbrains.com/issue/FUS-1818/Add-new-group-cloudprojectsbranches
-  private static final EventLogGroup GROUP = new EventLogGroup(
-    "index.usage",
-    1
-  );
+  /**
+   * If true than attempt to call tracing methods in incorrect sequence (start->...->finish) will throw exception.
+   * if false (default) -> incorrect sequence of calls will log error message, but try to continue normal operation
+   */
+  public static final boolean THROW_ON_INCORRECT_USAGE =
+    Boolean.getBoolean("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE");
+
+  //FIXME RC: YT to register new group: https://youtrack.jetbrains.com/issue/FUS-1818/Add-new-group-cloudprojectsbranches
+  private static final EventLogGroup GROUP = new EventLogGroup("index.usage", 1);
 
   // ================== EVENTS FIELDS:
 
-  private static final StringEventField INDEX_NAME_FIELD = new StringEventField.ValidatedByCustomValidationRule(
-    "index_name",
-    IndexIDValidationRule.class
-  );
+  private static final StringEventField INDEX_NAME_FIELD =
+    new StringEventField.ValidatedByCustomValidationRule("index_name", IndexIDValidationRule.class);
 
   private static final BooleanEventField LOOKUP_FAILED = new BooleanEventField("lookup-failed");
 
-  /**Total lookup time (including up-to-date/validation, and stubs deserializing) */
+  /**
+   * Total lookup time (including up-to-date/validation, and stubs deserializing)
+   */
   private static final LongEventField LOOKUP_DURATION_MS = new LongEventField("lookup-duration-ms");
   private static final LongEventField UP_TO_DATE_CHECK_DURATION_MS = new LongEventField("up-to-date-check-ms");
   private static final LongEventField STUB_TREE_DESERIALIZING_DURATION_MS = new LongEventField("psi-tree-deserializing-ms");
 
   private static final IntEventField LOOKUP_KEYS_COUNT = new IntEventField("keys");
   private static final IntEventField TOTAL_KEYS_INDEXED_COUNT = new IntEventField("total-keys-indexed");
-  private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP = new EnumEventField<>(
-    "lookup-op",
-    LookupOperation.class,
-    kind -> kind.name().toLowerCase()
-  );
+  private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP =
+    new EnumEventField<>("lookup-op", LookupOperation.class, kind -> kind.name().toLowerCase());
 
   // ================== EVENTS:
-  private static final VarargEventId INDEX_ALL_KEYS_LOOKUP = GROUP.registerVarargEvent(
-    "lookup.all-keys",
-    INDEX_NAME_FIELD,
+  private static final VarargEventId INDEX_ALL_KEYS_LOOKUP = GROUP.registerVarargEvent("lookup.all-keys", INDEX_NAME_FIELD,
 
-    LOOKUP_FAILED,
+                                                                                       LOOKUP_FAILED,
 
-    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
-    LOOKUP_DURATION_MS,
-    UP_TO_DATE_CHECK_DURATION_MS,
+                                                                                       //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
+                                                                                       LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
 
-    TOTAL_KEYS_INDEXED_COUNT
-  );
+                                                                                       TOTAL_KEYS_INDEXED_COUNT);
 
-  private static final VarargEventId INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent(
-    "lookup.values",
-    INDEX_NAME_FIELD,
+  private static final VarargEventId INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent("lookup.values", INDEX_NAME_FIELD,
 
-    LOOKUP_FAILED,
+                                                                                     LOOKUP_FAILED,
 
-    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
-    LOOKUP_DURATION_MS,
-    UP_TO_DATE_CHECK_DURATION_MS,
+                                                                                     //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
+                                                                                     LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
 
-    LOOKUP_KEYS_COUNT,
-    LOOKUP_KEYS_OP,
-    TOTAL_KEYS_INDEXED_COUNT
-  );
+                                                                                     LOOKUP_KEYS_COUNT, LOOKUP_KEYS_OP,
+                                                                                     TOTAL_KEYS_INDEXED_COUNT);
 
-  private static final VarargEventId STUB_INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent(
-    "lookup.stub-values",
-    INDEX_NAME_FIELD,
+  private static final VarargEventId STUB_INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent("lookup.stub-values", INDEX_NAME_FIELD,
 
-    LOOKUP_FAILED,
+                                                                                          LOOKUP_FAILED,
 
-    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION_MS)
-    LOOKUP_DURATION_MS,
-    UP_TO_DATE_CHECK_DURATION_MS,
-    STUB_TREE_DESERIALIZING_DURATION_MS,
+                                                                                          //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION_MS)
+                                                                                          LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
+                                                                                          STUB_TREE_DESERIALIZING_DURATION_MS,
 
-    //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
-    TOTAL_KEYS_INDEXED_COUNT
-  );
+                                                                                          //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
+                                                                                          TOTAL_KEYS_INDEXED_COUNT);
 
   // ================== IMPLEMENTATION METHODS:
 
@@ -117,14 +105,113 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
 
     @NotNull
     @Override
-    protected ValidationResultType doValidate(final @NotNull String indexId,
-                                              final @NotNull EventContext context) {
+    protected ValidationResultType doValidate(final @NotNull String indexId, final @NotNull EventContext context) {
       //FIXME RC: allow all for prototyping, but for real -- CustomValidationRule to accept only index names
       //TODO RC: how to really check string is and ID of existing index?
 
       return ValidationResultType.ACCEPTED;
     }
   }
+
+  private static abstract class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable {
+    protected boolean traceWasStarted = false;
+    protected @Nullable IndexId<?, ?> indexId;
+    protected @Nullable Project project;
+
+    protected long lookupStartedAtMs;
+    protected boolean lookupFailed;
+    protected int totalKeysIndexed;
+
+    protected T lookupStarted(final IndexId<?, ?> indexId) {
+      ensureNotYetStarted();
+      //if not thrown -> and continue as-if no previous trace exists, i.e. overwrite all data remaining from unfinished trace
+
+      this.indexId = indexId;
+      this.project = null;
+      this.lookupFailed = false;
+      this.totalKeysIndexed = -1;
+
+      traceWasStarted = true;
+      lookupStartedAtMs = System.currentTimeMillis();
+      return (T)this;
+    }
+
+    public void lookupFinished() {
+      if (!mustBeStarted()) {
+        //if trace wasn't started -> nothing (meaningful) to report
+        return;
+      }
+
+      try {
+        reportGatheredDataToAnalytics();
+      }
+      finally {
+        traceWasStarted = false;
+        indexId = null;
+        project = null;//don't hold reference in thread-local
+      }
+    }
+
+    protected abstract void reportGatheredDataToAnalytics();
+
+    @Override
+    public final void close() {
+      lookupFinished();
+    }
+
+    //=== Additional info about what was lookup-ed, and context/environment:
+
+    public T withProject(final @Nullable Project project) {
+      this.project = project;
+      return (T)this;
+    }
+
+    public T lookupFailed() {
+      this.lookupFailed = true;
+      return (T)this;
+    }
+
+    public T totalKeysIndexed(final int totalKeysIndexed) {
+      this.totalKeysIndexed = totalKeysIndexed;
+      return (T)this;
+    }
+
+    private void ensureNotYetStarted() {
+      if (traceWasStarted) {
+        final String errorMessage = "Code bug: .logQueryStarted() was called, but not paired with .logQueryFinished() yet. " + this;
+        if (THROW_ON_INCORRECT_USAGE) {
+          throw new AssertionError(errorMessage);
+        }
+        else {
+          LOG.warn(errorMessage);
+        }
+      }
+    }
+
+    protected boolean mustBeStarted() {
+      if (!traceWasStarted) {
+        final String errorMessage = "Code bug: .lookupStarted() must be called before. " + this;
+        if (THROW_ON_INCORRECT_USAGE) {
+          throw new AssertionError(errorMessage);
+        }
+        else {
+          LOG.warn(errorMessage);
+        }
+      }
+
+      return traceWasStarted;
+    }
+
+    public String toString() {
+      return getClass().getSimpleName() +
+             "{indexId=" + indexId +
+             ", project=" + project +
+             ", is started? =" + traceWasStarted +
+             ", lookupStartedAtMs=" + lookupStartedAtMs +
+             '}';
+    }
+  }
+
 
   //========================== 'All keys' lookup reporting:
 
@@ -134,109 +221,46 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
    * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
    * object.
    */
-  public static class AllKeysLookupTrace implements AutoCloseable {
-    private boolean traceWasStarted = false;
-    private @Nullable IndexId<?, ?> indexId;
-    private @Nullable Project project;
-    private long lookupStartedAtMs;
+  public static class AllKeysLookupTrace extends LookupTraceBase<AllKeysLookupTrace> {
     private long indexValidationFinishedAtMs;
 
-    private int totalKeysIndexed;
-
-    private boolean lookupFailed;
-
-
-    public AllKeysLookupTrace logLookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      //TODO RC: generally it is not a good idea to throw exception during analytics. Useful for
-      // debugging, but better to be switchable with flag like THROW_ON_INCORRECT_USAGE
-
-      assert !traceWasStarted : ".logQueryStarted() was called, but not paired with .logQueryFinished() yet. " + this;
-
-      this.indexId = indexId;
-      this.project = null;
-      this.lookupFailed = false;
-      this.totalKeysIndexed = -1;
-
-      traceWasStarted = true;
-      lookupStartedAtMs = System.currentTimeMillis();
-      this.indexValidationFinishedAtMs = lookupStartedAtMs;
+    public AllKeysLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+      super.lookupStarted(indexId);
+      this.indexValidationFinishedAtMs = -1;
 
       return this;
     }
 
-    public AllKeysLookupTrace logIndexValidationFinished() {
-      if (traceWasStarted) {
-        indexValidationFinishedAtMs = System.currentTimeMillis();
-      }
+    public AllKeysLookupTrace indexValidationFinished() {
+      mustBeStarted();
+      indexValidationFinishedAtMs = System.currentTimeMillis();
       return this;
-    }
-
-    public void logLookupFinished() {
-      assert traceWasStarted : ".logLookupStarted() must be called first! " + this;
-      final long lookupFinishedAtMs = System.currentTimeMillis();
-
-      try {
-        //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-        //         such events are in total, otherwise we wouldn't be able to measure improvements
-        //         between versions
-        INDEX_ALL_KEYS_LOOKUP.log(
-          project,
-
-          INDEX_NAME_FIELD.with(indexId.getName()),
-
-          //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
-          // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
-          UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
-
-          LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
-
-          LOOKUP_FAILED.with(lookupFailed),
-
-          TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
-        );
-      }
-      finally {
-        traceWasStarted = false;
-        indexId = null;
-        project = null;
-        lookupFailed = false;
-      }
     }
 
     @Override
-    public void close() { //to be used in try-with-resources
-      logLookupFinished();
-    }
+    protected void reportGatheredDataToAnalytics() {
+      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
+      //         such events are in total, otherwise we wouldn't be able to measure improvements
+      //         between versions
+      final long lookupFinishedAtMs = System.currentTimeMillis();
+      INDEX_ALL_KEYS_LOOKUP.log(project,
 
-    //=== Additional info about what was lookup-ed, and context/environment:
+                                INDEX_NAME_FIELD.with(indexId.getName()),
 
-    public AllKeysLookupTrace withProject(final @Nullable Project project) {
-      this.project = project;
-      return this;
-    }
+                                //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
+                                // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
+                                UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
 
-    public AllKeysLookupTrace lookupFailed() {
-      this.lookupFailed = true;
-      return this;
-    }
+                                LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-    public AllKeysLookupTrace totalKeysIndexed(final int totalKeysIndexed) {
-      this.totalKeysIndexed = totalKeysIndexed;
-      return this;
-    }
+                                LOOKUP_FAILED.with(lookupFailed),
 
-    public String toString() {
-      return "{indexId=" + indexId +
-             ", project=" + project +
-             ", is started? =" + traceWasStarted +
-             ", queryStartedAtMs=" + lookupStartedAtMs +
-             ", validationFinishedAtMs=" + indexValidationFinishedAtMs +
-             '}';
+                                TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
   }
 
-  public static AllKeysLookupTrace logAllKeysLookupStarted(final IndexId<?, ?> indexId) {
-    return TRACE_OF_ALL_KEYS_LOOKUP.get().logLookupStarted(indexId);
+  public static AllKeysLookupTrace allKeysLookupStarted(final IndexId<?, ?> indexId) {
+    return TRACE_OF_ALL_KEYS_LOOKUP.get().lookupStarted(indexId);
   }
 
 
@@ -248,89 +272,51 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
    * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
    * object.
    */
-  public static class ValuesLookupTrace implements AutoCloseable {
-    private boolean traceWasStarted = false;
-    private @Nullable IndexId<?, ?> indexId;
-    private @Nullable Project project;
-    private long lookupStartedAtMs;
+  public static class ValuesLookupTrace extends LookupTraceBase<ValuesLookupTrace> {
     private long indexValidationFinishedAtMs;
 
     /**
      * How many keys were looked up (-1 => 'unknown')
      */
     private int lookupKeysCount = -1;
-    private int totalKeysIndexed;
-
     private LookupOperation lookupOperation = LookupOperation.UNKNOWN;
-    private boolean lookupFailed;
 
 
-    public ValuesLookupTrace logLookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      //TODO RC: generally it is not a good idea to throw exception during analytics. Useful for
-      // debugging, but better to be switchable with flag like THROW_ON_INCORRECT_USAGE
+    public ValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+      super.lookupStarted(indexId);
 
-      assert !traceWasStarted : ".logQueryStarted() was called, but not paired with .logQueryFinished() yet. " + this;
-
-      this.indexId = indexId;
-      this.project = null;
-      this.lookupFailed = false;
       this.lookupOperation = LookupOperation.UNKNOWN;
       this.lookupKeysCount = -1;
-      this.totalKeysIndexed = -1;
-
-      traceWasStarted = true;
-      lookupStartedAtMs = System.currentTimeMillis();
-      this.indexValidationFinishedAtMs = lookupStartedAtMs;
+      this.indexValidationFinishedAtMs = -1;
 
       return this;
     }
 
-    public ValuesLookupTrace logIndexValidationFinished() {
-      if (traceWasStarted) {
-        indexValidationFinishedAtMs = System.currentTimeMillis();
-      }
+    public ValuesLookupTrace indexValidationFinished() {
+      mustBeStarted();
+      indexValidationFinishedAtMs = System.currentTimeMillis();
       return this;
-    }
-
-    public void logLookupFinished() {
-      assert traceWasStarted : ".logLookupStarted() must be called first! " + this;
-      final long lookupFinishedAtMs = System.currentTimeMillis();
-
-      try {
-        //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-        //         such events are in total, otherwise we wouldn't be able to measure improvements
-        //         between versions
-        INDEX_VALUES_LOOKUP.log(
-          project,
-
-          INDEX_NAME_FIELD.with(indexId.getName()),
-
-          //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
-          // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
-          UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
-
-          LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
-
-          LOOKUP_FAILED.with(lookupFailed),
-
-          LOOKUP_KEYS_OP.with(lookupOperation),
-          LOOKUP_KEYS_COUNT.with(lookupKeysCount),
-          TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
-        );
-      }
-      finally {
-        traceWasStarted = false;
-        indexId = null;
-        project = null;
-        lookupFailed = false;
-        lookupKeysCount = -1;//unknown
-        lookupOperation = LookupOperation.UNKNOWN;
-      }
     }
 
     @Override
-    public void close() { //to be used in try-with-resources 
-      logLookupFinished();
+    protected void reportGatheredDataToAnalytics() {
+      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
+      //         such events are in total, otherwise we wouldn't be able to measure improvements
+      //         between versions
+      final long lookupFinishedAtMs = System.currentTimeMillis();
+      INDEX_VALUES_LOOKUP.log(project,
+
+                              INDEX_NAME_FIELD.with(indexId.getName()),
+
+                              UP_TO_DATE_CHECK_DURATION_MS.with(
+                                indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
+
+                              LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
+
+                              LOOKUP_FAILED.with(lookupFailed),
+
+                              LOOKUP_KEYS_OP.with(lookupOperation), LOOKUP_KEYS_COUNT.with(lookupKeysCount),
+                              TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
 
     //=== Additional info about what was lookup-ed, and context/environment:
@@ -346,34 +332,10 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
       this.lookupOperation = LookupOperation.OR;
       return this;
     }
-
-    public ValuesLookupTrace withProject(final @Nullable Project project) {
-      this.project = project;
-      return this;
-    }
-
-    public ValuesLookupTrace lookupFailed() {
-      this.lookupFailed = true;
-      return this;
-    }
-
-    public ValuesLookupTrace totalKeysIndexed(final int totalKeysIndexed) {
-      this.totalKeysIndexed = totalKeysIndexed;
-      return this;
-    }
-
-    public String toString() {
-      return "{indexId=" + indexId +
-             ", project=" + project +
-             ", is started? =" + traceWasStarted +
-             ", queryStartedAtMs=" + lookupStartedAtMs +
-             ", validationFinishedAtMs=" + indexValidationFinishedAtMs +
-             '}';
-    }
   }
 
-  public static ValuesLookupTrace logValuesLookupStarted(final IndexId<?, ?> indexId) {
-    return TRACE_OF_VALUES_LOOKUP.get().logLookupStarted(indexId);
+  public static ValuesLookupTrace valuesLookupStarted(final IndexId<?, ?> indexId) {
+    return TRACE_OF_VALUES_LOOKUP.get().lookupStarted(indexId);
   }
 
   enum LookupOperation {AND, OR, UNKNOWN}
@@ -386,120 +348,58 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
    * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
    * object.
    */
-  public static class StubValuesLookupTrace implements AutoCloseable {
-    private boolean traceWasStarted = false;
-
-    private @Nullable IndexId<?, ?> indexId;
-    private @Nullable Project project;
-
+  public static class StubValuesLookupTrace extends LookupTraceBase<StubValuesLookupTrace> {
     //total lookup time = (upToDateCheck time) + (pure index lookup time) + (Stub Trees deserializing time)
-    private long lookupStartedAtMs;
     private long indexValidationFinishedAtMs;
     private long stubTreesDeserializingStarted;
 
-    private int totalKeysIndexed;
+    public StubValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+      super.lookupStarted(indexId);
 
-    private boolean lookupFailed;
-
-
-    public StubValuesLookupTrace logLookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      //TODO RC: generally it is not a good idea to throw exception during analytics. Useful for
-      // debugging, but better to be switchable with flag like THROW_ON_INCORRECT_USAGE
-
-      assert !traceWasStarted : ".logQueryStarted() was called, but not paired with .logQueryFinished() yet. " + this;
-
-      this.indexId = indexId;
-      this.project = null;
-      this.lookupFailed = false;
-      this.totalKeysIndexed = -1;
-
-      traceWasStarted = true;
-      lookupStartedAtMs = System.currentTimeMillis();
-      indexValidationFinishedAtMs = lookupStartedAtMs;
-      stubTreesDeserializingStarted = lookupStartedAtMs;
+      indexValidationFinishedAtMs = -1;
+      stubTreesDeserializingStarted = -1;
 
       return this;
     }
 
-    public StubValuesLookupTrace logIndexValidationFinished() {
-      if (traceWasStarted) {
-        indexValidationFinishedAtMs = System.currentTimeMillis();
-      }
+    public StubValuesLookupTrace indexValidationFinished() {
+      mustBeStarted();
+      indexValidationFinishedAtMs = System.currentTimeMillis();
       return this;
     }
 
-    public StubValuesLookupTrace logStubTreesDeserializingStarted() {
-      this.stubTreesDeserializingStarted = System.currentTimeMillis();
+    public StubValuesLookupTrace stubTreesDeserializingStarted() {
+      mustBeStarted();
+      stubTreesDeserializingStarted = System.currentTimeMillis();
       return this;
-    }
-
-    public void logLookupFinished() {
-      assert traceWasStarted : ".logLookupStarted() must be called first! " + this;
-      final long lookupFinishedAtMs = System.currentTimeMillis();
-
-      try {
-        //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-        //         such events are in total, otherwise we wouldn't be able to measure improvements
-        //         between versions
-        STUB_INDEX_VALUES_LOOKUP.log(
-          project,
-
-          INDEX_NAME_FIELD.with(indexId.getName()),
-
-          //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
-          // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
-          UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
-
-          STUB_TREE_DESERIALIZING_DURATION_MS.with(lookupFinishedAtMs - stubTreesDeserializingStarted),
-
-          LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
-
-          LOOKUP_FAILED.with(lookupFailed),
-
-          TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
-        );
-      }
-      finally {
-        traceWasStarted = false;
-        indexId = null;
-        project = null;
-        lookupFailed = false;
-      }
     }
 
     @Override
-    public void close() { //to be used in try-with-resources
-      logLookupFinished();
-    }
+    protected void reportGatheredDataToAnalytics() {
+      final long lookupFinishedAtMs = System.currentTimeMillis();
 
-    //=== Additional info about what was lookup-ed, and context/environment:
+      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
+      //         such events are in total, otherwise we wouldn't be able to measure improvements
+      //         between versions
+      STUB_INDEX_VALUES_LOOKUP.log(project,
 
-    public StubValuesLookupTrace withProject(final @Nullable Project project) {
-      this.project = project;
-      return this;
-    }
+                                   INDEX_NAME_FIELD.with(indexId.getName()),
 
-    public StubValuesLookupTrace lookupFailed() {
-      this.lookupFailed = true;
-      return this;
-    }
+                                   UP_TO_DATE_CHECK_DURATION_MS.with(
+                                     indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
 
-    public StubValuesLookupTrace totalKeysIndexed(final int totalKeysIndexed) {
-      this.totalKeysIndexed = totalKeysIndexed;
-      return this;
-    }
+                                   STUB_TREE_DESERIALIZING_DURATION_MS.with(
+                                     stubTreesDeserializingStarted > 0 ? lookupFinishedAtMs - stubTreesDeserializingStarted : 0),
 
-    public String toString() {
-      return "{indexId=" + indexId +
-             ", project=" + project +
-             ", is started? =" + traceWasStarted +
-             ", queryStartedAtMs=" + lookupStartedAtMs +
-             ", validationFinishedAtMs=" + indexValidationFinishedAtMs +
-             '}';
+                                   LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
+
+                                   LOOKUP_FAILED.with(lookupFailed),
+
+                                   TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
   }
 
-  public static StubValuesLookupTrace logStubValuesLookupStarted(final IndexId<?, ?> indexId) {
-    return TRACE_OF_STUB_VALUES_LOOKUP.get().logLookupStarted(indexId);
+  public static StubValuesLookupTrace stubValuesLookupStarted(final IndexId<?, ?> indexId) {
+    return TRACE_OF_STUB_VALUES_LOOKUP.get().lookupStarted(indexId);
   }
 }
