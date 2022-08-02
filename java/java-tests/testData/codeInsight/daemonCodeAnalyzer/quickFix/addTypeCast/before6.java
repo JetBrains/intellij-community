@@ -1,4 +1,4 @@
-// "Cast to 'int'" "true-preview"
+// "Cast expression to 'int'" "true-preview"
 class a {
  void f() {
    double d = 4;

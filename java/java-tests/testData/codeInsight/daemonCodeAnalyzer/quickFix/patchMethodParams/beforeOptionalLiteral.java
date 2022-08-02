@@ -1,4 +1,4 @@
-// "Cast to 'long'" "true-preview"
+// "Convert argument to 'long'" "true-preview"
 import java.util.*;
 
 class Demo {
