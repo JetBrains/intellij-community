@@ -128,6 +128,7 @@ class FileSetFormatValidator(
   override fun printReport() {
     super.printReport()
     messageOutput.info("${succeeded} file(s) are well formed.\n")
+    messageOutput.info("${processed - succeeded} file(s) need(s) reformatting.\n")
   }
 
   override fun isResultSuccessful() = succeeded == processed
