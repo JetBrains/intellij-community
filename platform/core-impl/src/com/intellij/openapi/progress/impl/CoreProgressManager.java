@@ -209,8 +209,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         else {
           StringWriter stackTrace = new StringWriter();
           ThreadDumper.dumpCallStack(other, stackTrace, other.getStackTrace());
-          LOG.error("Other (" + other +") is already running under this indicator (" + progress+", " + progress.getClass()+ ")," +
-                    " starting/stopping it here might be a data race. Its stack trace:\n" + stackTrace);
+          LOG.error("Other (" + other +") is already running under this indicator (" + progress+ ", " + progress.getClass() + "), starting/stopping it here might be a data race.\n" +
+                    "Consider using com.intellij.openapi.progress.ProgressManager.executeProcessUnderProgress\n" +
+                    "The other stack trace:\n" + stackTrace);
         }
       }
     }
