@@ -296,12 +296,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
           return null;
         }
       }
-      else if (mySourceDirectory == null) {
-        String scopeName = System.getProperty("idea.analyze.scope");
-        NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
-      }
-      else {
+      else if (mySourceDirectory != null) {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
 
         VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
@@ -310,6 +305,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
           printHelpAndExit();
         }
         return GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+      }
+      else {
+        String scopeName = System.getProperty("idea.analyze.scope");
+        NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+        return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
       }
     }
   }
