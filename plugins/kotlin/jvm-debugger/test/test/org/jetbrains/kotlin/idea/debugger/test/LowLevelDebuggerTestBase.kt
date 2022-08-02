@@ -66,6 +66,9 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
             }
         }
 
+    protected open fun createDebuggerTestCompilerFacility(testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean) =
+        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend)
+
     fun doTest(testFilePath: String) {
         val wholeFile = File(testFilePath)
         val expectedText = KotlinTestUtils.doLoadFile(wholeFile)
@@ -76,7 +79,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
         val classesDir = File(testAppDirectory, CLASSES_DIRECTORY_NAME)
         val classBuilderFactory = OriginCollectingClassBuilderFactory(ClassBuilderMode.FULL)
-        val compilerFacility = DebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true)
+        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true)
         val compilationResult = compilerFacility.compileTestSources(
             project, jvmSourcesOutputDirectory, classesDir, classBuilderFactory
         )

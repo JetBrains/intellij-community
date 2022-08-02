@@ -57,7 +57,7 @@ abstract class AbstractSelectExpressionForDebuggerTestWithAnalysisApi : Abstract
     override val expectedDirectiveName: String
         get() = "EXPECTED_ANALYSIS_API"
 
-    fun doTest(unused: String) = doTest(unused, useAnalysisApi = true)
+    protected open fun doTest(unused: String) = doTest(unused, useAnalysisApi = true)
 }
 
 abstract class AbstractSelectExpressionForDebuggerTestWithLegacyImplementation : AbstractSelectExpressionForDebuggerTest() {

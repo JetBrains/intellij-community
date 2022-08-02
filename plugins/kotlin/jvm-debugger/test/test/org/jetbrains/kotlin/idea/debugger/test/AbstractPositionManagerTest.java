@@ -45,6 +45,8 @@ import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,7 +99,13 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
     @NotNull
     private static String getPath(@NotNull String fileName) {
-        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_BASE, fileName);
+        String path;
+        try {
+            path = new File(fileName).getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return StringsKt.substringAfter(path, DEBUGGER_TESTDATA_PATH_BASE, path);
     }
 
     private void performTest() {
@@ -119,8 +127,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
                 Collections.singletonMap(JvmAnalysisFlags.getSuppressMissingBuiltinsError(), true)
         ));
 
-        GenerationState state =
-                GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, scope -> PackagePartProvider.Empty.INSTANCE);
+        GenerationState state = getCompileFiles(files, configuration);
 
         Map<String, ReferenceType> referencesByName = getReferenceMap(state.getFactory());
 
@@ -139,6 +146,11 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
             }
         });
 
+    }
+
+    @NotNull
+    protected GenerationState getCompileFiles(List<KtFile> files, CompilerConfiguration configuration) {
+        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, scope -> PackagePartProvider.Empty.INSTANCE);
     }
 
     @Override

@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-class DebuggerTestCompilerFacility(
+open class DebuggerTestCompilerFacility(
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
     private val useIrBackend: Boolean
@@ -122,7 +122,7 @@ class DebuggerTestCompilerFacility(
     }
 
     // Returns the qualified name of the main test class.
-    fun compileTestSources(
+    open fun compileTestSources(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
@@ -175,7 +175,7 @@ class DebuggerTestCompilerFacility(
         return mainClassName
     }
 
-    fun compileTestSources(
+    open fun compileTestSources(
         project: Project,
         srcDir: File,
         classesDir: File,
@@ -207,7 +207,7 @@ class DebuggerTestCompilerFacility(
         ).compile()
     }
 
-    private fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
+    protected open fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
 
         val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
@@ -259,7 +259,7 @@ class DebuggerTestCompilerFacility(
         return CompilationResult(analysisResult, state, resolutionFacade)
     }
 
-    private fun compileKotlinFilesInIdeAndFindMainClass(project: Project, files: List<KtFile>, classesDir: File): String {
+    protected open fun compileKotlinFilesInIdeAndFindMainClass(project: Project, files: List<KtFile>, classesDir: File): String {
         val (analysisResult, _, resolutionFacade) = compileKotlinFilesInIde(project, files, classesDir)
         return findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, files)?.asString()
             ?: error("Cannot find main class name")
