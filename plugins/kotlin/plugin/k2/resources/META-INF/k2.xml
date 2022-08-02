@@ -97,7 +97,9 @@
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
     <lang.psiDocumentation id="KotlinDocumentationTargetProvider"
-                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
+                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <lang.documentation id="KotlinDocumentationTargetProvider"
+                        implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>

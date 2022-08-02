@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral")
-
 package org.jetbrains.kotlin.idea.quickDoc
 
 import com.google.common.html.HtmlEscapers
@@ -190,7 +188,6 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     }
 }
 
-
 private fun StringBuilder.renderEnumSpecialFunction(
     originalElement: PsiElement?,
     element: KtClass,
@@ -236,7 +233,7 @@ private fun findElementWithText(element: PsiElement?, text: String): PsiElement?
     }
 }
 
-private fun PsiElement?.isModifier() =
+internal fun PsiElement?.isModifier() =
     this != null && parent is KtModifierList && KtTokens.MODIFIER_KEYWORDS_ARRAY.firstOrNull { it.value == text } != null
 
 private fun StringBuilder.renderKotlinDeclaration(

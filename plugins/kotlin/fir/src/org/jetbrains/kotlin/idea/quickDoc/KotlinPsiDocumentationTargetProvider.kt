@@ -2,12 +2,24 @@
 package org.jetbrains.kotlin.idea.quickDoc
 
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.DocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
-class KotlinDocumentationTargetProvider : PsiDocumentationTargetProvider {
+class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
         return if (element.language.`is`(KotlinLanguage.INSTANCE)) KotlinDocumentationTarget(element, originalElement) else null
+    }
+}
+
+class KotlinDocumentationTargetProvider : DocumentationTargetProvider {
+    override fun documentationTargets(file: PsiFile, offset: Int): MutableList<out DocumentationTarget> {
+        val element = file.findElementAt(offset)
+        if (element.isModifier()) {
+            return arrayListOf(KotlinDocumentationTarget(element!!, element))
+        }
+        return arrayListOf()
     }
 }
