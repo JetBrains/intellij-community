@@ -28,7 +28,7 @@ import javax.swing.*
 open class LoadingDecorator @JvmOverloads constructor(
   content: JComponent?,
   parent: Disposable,
-  startDelayMs: Int,
+  private val startDelayMs: Int,
   useMinimumSize: Boolean = false,
   icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")
 ) {
@@ -38,11 +38,11 @@ open class LoadingDecorator @JvmOverloads constructor(
   }
 
   var overlayBackground: Color? = null
-  var pane: JLayeredPane
-  var loadingLayer: LoadingLayer
-  var fadeOutAnimator: Animator
-  var delay: Int
-  private val startRequests = MutableSharedFlow<Boolean>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
+  private val loadingLayer: LoadingLayer = LoadingLayer(icon)
+  private val fadeOutAnimator: Animator
+  private val startRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var startRequestsJob: Job? = null
 
   var loadingText: @Nls String?
@@ -56,9 +56,6 @@ open class LoadingDecorator @JvmOverloads constructor(
     get() = loadingLayer.isLoading
 
   init {
-    pane = MyLayeredPane(if (useMinimumSize) content else null)
-    loadingLayer = LoadingLayer(icon)
-    delay = startDelayMs
     loadingText = CommonBundle.getLoadingTreeNodeText()
     fadeOutAnimator = object : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
@@ -135,7 +132,7 @@ open class LoadingDecorator @JvmOverloads constructor(
       return
     }
 
-    if (delay > 0) {
+    if (startDelayMs > 0) {
       startListening()
       check(startRequests.tryEmit(takeSnapshot))
     }
