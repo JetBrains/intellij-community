@@ -198,4 +198,9 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testOperatorOverloads() {
         doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
+
+    fun testResolveKotlinPropertyAccessor() {
+        doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
 }

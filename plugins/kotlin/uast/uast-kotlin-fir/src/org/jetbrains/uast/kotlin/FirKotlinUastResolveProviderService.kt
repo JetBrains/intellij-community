@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -196,13 +196,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
+    override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
             val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>() ?: return null
-            val propertySymbol = variableAccessCall.symbol as? KtPropertySymbol ?: return null
+            val propertySymbol = variableAccessCall.symbol as? KtSyntheticJavaPropertySymbol?: return null
             when (variableAccessCall.simpleAccess) {
                 is KtSimpleVariableAccess.Read ->
-                    toPsiMethod(propertySymbol.getter ?: return null, ktSimpleNameExpression)
+                    toPsiMethod(propertySymbol.getter, ktSimpleNameExpression)
                 is KtSimpleVariableAccess.Write ->
                     toPsiMethod(propertySymbol.setter ?: return null, ktSimpleNameExpression)
             }

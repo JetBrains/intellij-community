@@ -24,6 +24,7 @@ import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastResolveApiFixtureTestBase : UastPluginSelection {
     fun checkResolveStringFromUast(myFixture: JavaCodeInsightTestFixture, project: Project) {
@@ -1041,6 +1042,58 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("plus", plusPoint?.name)
         TestCase.assertEquals("other", plusPoint?.parameters?.get(0)?.name)
         TestCase.assertEquals("Point", plusPoint?.containingClass?.name)
+    }
+
+    fun checkResolveKotlinPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "Foo.kt", """
+                class X {
+                  val foo : String
+                    get() = "forty two"
+                  
+                  fun viaAnonymousInner() {
+                    val btn = object : Any() {
+                      val x = foo
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val visitor = PropertyAccessorVisitor { it.endsWith("foo") || it.endsWith("getFoo") }
+        myFixture.file.toUElement()!!.accept(visitor)
+        TestCase.assertEquals(1, visitor.resolvedElements.size)
+        val nodes = visitor.resolvedElements.keys
+        TestCase.assertTrue(nodes.all { it is USimpleNameReferenceExpression })
+        // Should not create on-the-fly accessor call for Kotlin property
+        TestCase.assertTrue(nodes.none { it is UCallExpression})
+        val resolvedPsiElements = visitor.resolvedElements.values.toSet()
+        TestCase.assertEquals(1, resolvedPsiElements.size)
+        TestCase.assertEquals("getFoo", (resolvedPsiElements.single() as PsiMethod).name)
+    }
+
+    private class PropertyAccessorVisitor(
+        private val nameFilter : (String) -> Boolean
+    ) : AbstractUastVisitor() {
+        val resolvedElements = mutableMapOf<UElement, PsiElement>()
+
+        override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+            val name = node.resolvedName ?: return false
+            if (!nameFilter.invoke(name)) {
+                return false
+            }
+            node.resolve()?.let { resolvedElements[node] = it }
+            return true
+        }
+
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+            val name = node.methodName ?: return false
+            if (!nameFilter.invoke(name)) {
+                return false
+            }
+            node.resolve()?.let { resolvedElements[node] = it }
+            return true
+        }
     }
 
 }
