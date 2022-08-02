@@ -3,7 +3,7 @@
 import java.util.List as UtilList
 
 /**
- * [Util<caret>]
+ * [UtilList<caret>]
  */
 fun foo(){}
 
