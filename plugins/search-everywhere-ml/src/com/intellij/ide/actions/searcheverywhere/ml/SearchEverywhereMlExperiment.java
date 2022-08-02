@@ -43,7 +43,7 @@ public class SearchEverywhereMlExperiment {
             .addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 2));
 
       put(SearchEverywhereTabWithMl.FILES,
-          new Experiment().addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 3));
+          new Experiment().addExperiment(ExperimentType.NO_ML, 3));
     }};
   }
 

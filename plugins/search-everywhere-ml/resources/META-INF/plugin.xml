@@ -22,7 +22,7 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="false" id="searcheverywhere.ml.sort.files"
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
 
