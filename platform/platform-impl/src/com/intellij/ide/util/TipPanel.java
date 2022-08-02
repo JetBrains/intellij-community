@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     setTips(TipAndTrickBean.EP_NAME.getExtensionList());
   }
 
-  void setTips(@NotNull List<TipAndTrickBean> list) {
+  @ApiStatus.Internal
+  public void setTips(@NotNull List<TipAndTrickBean> list) {
     RecommendationDescription recommendation = ApplicationManager.getApplication().getService(TipsOrderUtil.class).sort(list);
     myTips = new ArrayList<>(recommendation.getTips());
     myAlgorithm = recommendation.getAlgorithm();

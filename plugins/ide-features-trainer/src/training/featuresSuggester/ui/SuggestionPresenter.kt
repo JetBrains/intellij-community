@@ -93,7 +93,7 @@ class NotificationSuggestionPresenter :
     val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
     return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
       override fun actionPerformed(e: AnActionEvent) {
-        SingleTipDialog.showForProject(project, tip)
+        SingleTipDialog(tip, project).show()
         notification.hideBalloon()
         FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
