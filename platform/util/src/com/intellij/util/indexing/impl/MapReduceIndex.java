@@ -202,6 +202,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  @Override
+  public int keysCountApproximately() {
+    return myStorage.keysCountApproximately();
+  }
+
   protected boolean isDisposed() {
     return myDisposed;
   }

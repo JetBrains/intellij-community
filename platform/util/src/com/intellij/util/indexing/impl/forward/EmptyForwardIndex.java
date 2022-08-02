@@ -24,4 +24,9 @@ public class EmptyForwardIndex implements ForwardIndex {
 
   @Override
   public void force() { }
+
+  @Override
+  public int keysCountApproximately() {
+    return 0;
+  }
 }

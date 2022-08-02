@@ -223,6 +223,11 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     });
   }
 
+  @Override
+  public int keysCountApproximately() {
+    return myMap.getStorageMap().keysCount();
+  }
+
   protected boolean compactOnClose() {
     return false;
   }

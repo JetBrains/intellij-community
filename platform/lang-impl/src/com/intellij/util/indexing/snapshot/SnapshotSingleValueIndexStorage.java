@@ -125,6 +125,12 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   }
 
   @Override
+  public int keysCountApproximately() {
+    assert myInitialized;
+    return myForwardIndex.keysCountApproximately();
+  }
+
+  @Override
   public void close() throws StorageException {}
 
   @Override

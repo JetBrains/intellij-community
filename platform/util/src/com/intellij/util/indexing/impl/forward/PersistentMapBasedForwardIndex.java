@@ -53,6 +53,11 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   }
 
   @Override
+  public int keysCountApproximately() {
+    return myPersistentMap.keysCountApproximately();
+  }
+
+  @Override
   public void clear() throws IOException {
     myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly, myStorageLockContext);

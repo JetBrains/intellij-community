@@ -297,6 +297,11 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
+  public int keysCountApproximately() {
+    return myFileTypeEnumerator.getSize();
+  }
+
+  @Override
   public int getFileTypeId(String name) throws IOException {
     return myFileTypeEnumerator.enumerate(name);
   }

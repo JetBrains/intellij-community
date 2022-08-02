@@ -306,5 +306,10 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     @Override
     public void dispose() {
     }
+
+    @Override
+    public int keysCountApproximately() {
+      return 0;
+    }
   }
 }

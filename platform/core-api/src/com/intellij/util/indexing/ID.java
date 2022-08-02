@@ -42,6 +42,9 @@ public class ID<K, V> extends IndexId<K,V> {
     reloadEnumFile(getEnumFile());
   }
 
+  //FIXME RC: method should probably be synchronized, since it uses current value .ourNameToIdRegistry
+  //          while building new state, and this is unsafe if whole method could be called concurrently,
+  //          and that old value could be changed along the way
   private static void reloadEnumFile(@NotNull Path enumFile) {
     if (enumFile.equals(ourNameToIdRegistry.getFile())) {
       return;

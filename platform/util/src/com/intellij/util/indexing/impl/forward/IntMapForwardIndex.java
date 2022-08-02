@@ -47,6 +47,11 @@ public class IntMapForwardIndex implements IntForwardIndex {
   }
 
   @Override
+  public int keysCountApproximately() {
+    return myPersistentMap.keysCountApproximately();
+  }
+
+  @Override
   public void clear() throws IOException {
     myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myStorageFile, myHasChunks);

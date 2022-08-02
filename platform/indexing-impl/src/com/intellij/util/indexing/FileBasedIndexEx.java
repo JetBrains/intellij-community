@@ -34,6 +34,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
+import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -52,6 +53,9 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.TRACE_OF_VALUES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.logValuesLookupStarted;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -157,14 +161,30 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
+    final long startedAt = System.currentTimeMillis();
     try {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
+
+      final long actualityEnsuredAt = System.currentTimeMillis();
+
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
-      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
+      Boolean validated = myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
+
+      final long finishedAt = System.currentTimeMillis();
+      //RC: failed lookup will not be included in stats
+      //    skipped lookup (i.e. because index is going to rebuild) will not be included in stats
+      IndexOperationFusStatisticsCollector.indexAllKeysLookupFinished(
+        indexId.getName(),
+        (actualityEnsuredAt - startedAt),
+        (finishedAt - actualityEnsuredAt),
+        -1 // FIXME RC: extract all keys from lambda
+      );
+
+      return validated;
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -225,31 +245,39 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
+  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
-    if (project instanceof LightEditCompatible) return Collections.emptyIterator();
-    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
-    if (restrictToFileIt != null) {
-      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
-      if (restrictToFile == null) return Collections.emptyIterator();
-      return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
-             Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
-    }
+    try (var trace = logValuesLookupStarted(indexId)) {
+      trace.keysWithAND(1)
+        .withProject(project);
 
-    IdFilter filter = extractIdFilter(scope, project);
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+      if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+      @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
+      if (restrictToFileIt != null) {
+        VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+        if (restrictToFile == null) return Collections.emptyIterator();
+        return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
+               Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
+      }
 
-    IntSet fileIds = processExceptions(indexId, null, scope, index -> {
-      IntSet fileIdsInner = new IntOpenHashSet();
-      index.getData(dataKey).forEach((id, value) -> {
-        if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return  true;
-        fileIdsInner.add(id);
-        return true;
+      IdFilter filter = extractIdFilter(scope, project);
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+
+      IntSet fileIds = processExceptions(indexId, null, scope, index -> {
+        IntSet fileIdsInner = new IntOpenHashSet();
+        trace.totalKeysIndexed(index.keysCountApproximately());
+        index.getData(dataKey).forEach((id, value) -> {
+          if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
+          fileIdsInner.add(id);
+          return true;
+        });
+        return fileIdsInner;
       });
-      return fileIdsInner;
-    });
 
-    return createLazyFileIterator(fileIds, scope);
+      return createLazyFileIterator(fileIds, scope);
+    }
   }
 
 
@@ -292,11 +320,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
         return null;
       }
+      TRACE_OF_VALUES_LOOKUP.get()
+        .logIndexValidationFinished();
 
-      return myAccessValidator.validate(indexId,
-                                        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index)));
+      final R validated = myAccessValidator.validate(
+        indexId,
+        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index))
+      );
+
+      return validated;
     }
     catch (StorageException e) {
+      TRACE_OF_VALUES_LOOKUP.get().lookupFailed();
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
@@ -394,10 +429,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<? super InvertedIndexValueIterator<V>> valueProcessor) {
-    final Boolean result = processExceptions(indexId, restrictToFile, scope,
-                                             index -> valueProcessor.process(
-                                               (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
-    return result == null || result.booleanValue();
+    try (var trace = logValuesLookupStarted(indexId)) {
+      trace.keysWithAND(1)
+        .withProject(scope.getProject());
+      //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
+      final ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(index.keysCountApproximately());
+        var valuesIterator = (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator();
+        return valueProcessor.process(valuesIterator);
+      };
+      final Boolean result = processExceptions(indexId, restrictToFile, scope, convertor);
+      return result == null || result.booleanValue();
+    }
   }
 
   @Override
@@ -544,47 +587,57 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Nullable
   private <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
                                                         @NotNull Collection<? extends K> dataKeys,
-                                                        @NotNull GlobalSearchScope filter,
+                                                        @NotNull GlobalSearchScope scope,
                                                         @Nullable Condition<? super V> valueChecker,
                                                         @Nullable IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
-                                   accessibleFileFilter.test(id) &&
-                                   (restrictedIds == null || restrictedIds.contains(id));
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
-      try {
-        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.remove();
-      }
-    };
+    try (var trace = logValuesLookupStarted(indexId)) {
+      trace.keysWithAND(dataKeys.size())
+        .withProject(scope.getProject());
 
-    return processExceptions(indexId, null, filter, convertor);
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(scope.getProject());
+      IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                     accessibleFileFilter.test(id) &&
+                                     (restrictedIds == null || restrictedIds.contains(id));
+      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(index.keysCountApproximately());
+        IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+        try {
+          return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
+        }
+        finally {
+          IndexDebugProperties.DEBUG_INDEX_ID.remove();
+        }
+      };
+
+      return processExceptions(indexId, null, scope, convertor);
+    }
   }
 
   @Nullable
   private <K, V> IntSet collectFileIdsContainingAnyKey(@NotNull ID<K, V> indexId,
-                                                        @NotNull Collection<? extends K> dataKeys,
-                                                        @NotNull GlobalSearchScope filter,
-                                                        @Nullable Condition<? super V> valueChecker,
-                                                        @Nullable IdFilter projectFilesFilter) {
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
-                                   accessibleFileFilter.test(id);
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
-      try {
-        return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.remove();
-      }
-    };
+                                                       @NotNull Collection<? extends K> dataKeys,
+                                                       @NotNull GlobalSearchScope filter,
+                                                       @Nullable Condition<? super V> valueChecker,
+                                                       @Nullable IdFilter projectFilesFilter) {
+    try (var trace = logValuesLookupStarted(indexId)) {
+      trace.keysWithOR(dataKeys.size());
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
+      IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                     accessibleFileFilter.test(id);
+      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(index.keysCountApproximately());
+        IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+        try {
+          return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
+        }
+        finally {
+          IndexDebugProperties.DEBUG_INDEX_ID.remove();
+        }
+      };
 
-    return processExceptions(indexId, null, filter, convertor);
+      return processExceptions(indexId, null, filter, convertor);
+    }
   }
 
   private boolean processVirtualFiles(@NotNull IntCollection ids,
@@ -750,7 +803,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @NotNull
-  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter,
+                                               @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
     return new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
@@ -767,7 +821,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
     return IndexUpToDateCheckIn.disableUpToDateCheckIn(runnable);
   }
 

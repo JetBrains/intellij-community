@@ -190,6 +190,11 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   @Override
+  public int keysCountApproximately() {
+    return myImpl.keysCount();
+  }
+
+  @Override
   public final void close() throws IOException {
     myImpl.close();
   }

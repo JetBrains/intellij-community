@@ -15,7 +15,7 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$USER_HOME$/Library/Caches/JetBrains/IntelliJIdea2022.1/kotlin-dist-for-ide/1.7.0-release-282/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
           <option name="errors">

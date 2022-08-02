@@ -128,4 +128,9 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   @Override
   public void dispose() {
   }
+
+  @Override
+  public int keysCountApproximately() {
+    return 0;
+  }
 }

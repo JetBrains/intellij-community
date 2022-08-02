@@ -315,6 +315,11 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     catch (IOException ignored) {}
   }
 
+  @Override
+  public int keysCount() {
+    return getSize();
+  }
+
   @TestOnly // public for tests
   @SuppressWarnings("WeakerAccess") // used in upsource for some reason
   public boolean makesSenseToCompact() {

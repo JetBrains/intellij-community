@@ -33,6 +33,11 @@ public final class InMemoryForwardIndex implements ForwardIndex {
   public void force() { }
 
   @Override
+  public int keysCountApproximately() {
+    return myMap.size();
+  }
+
+  @Override
   public void clear() {
     myMap.clear();
   }
