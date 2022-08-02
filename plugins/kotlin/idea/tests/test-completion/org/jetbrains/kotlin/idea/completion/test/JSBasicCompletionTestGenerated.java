@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.completion;
+package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,3308 +14,3069 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractHighLevelJvmBasicCompletionTest {
+public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/basic/common")
-    public abstract static class Common extends AbstractHighLevelJvmBasicCompletionTest {
+    @TestMetadata("testData-completion/basic/common")
+    public abstract static class Common extends AbstractJSBasicCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/annotations")
-        public static class Annotations extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/annotations")
+        public static class Annotations extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterPackageName.kt")
             public void testAfterPackageName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/AfterPackageName.kt");
+                runTest("testData-completion/basic/common/annotations/AfterPackageName.kt");
             }
 
             @TestMetadata("Annotated.kt")
             public void testAnnotated() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/Annotated.kt");
+                runTest("testData-completion/basic/common/annotations/Annotated.kt");
             }
 
             @TestMetadata("AnnotationTarget.kt")
             public void testAnnotationTarget() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/AnnotationTarget.kt");
+                runTest("testData-completion/basic/common/annotations/AnnotationTarget.kt");
             }
 
             @TestMetadata("Deprecated.kt")
             public void testDeprecated() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/Deprecated.kt");
+                runTest("testData-completion/basic/common/annotations/Deprecated.kt");
             }
 
             @TestMetadata("Deprecated2.kt")
             public void testDeprecated2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/Deprecated2.kt");
+                runTest("testData-completion/basic/common/annotations/Deprecated2.kt");
             }
 
             @TestMetadata("ForType.kt")
             public void testForType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ForType.kt");
+                runTest("testData-completion/basic/common/annotations/ForType.kt");
             }
 
             @TestMetadata("FunctionAnnotation1.kt")
             public void testFunctionAnnotation1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/FunctionAnnotation1.kt");
+                runTest("testData-completion/basic/common/annotations/FunctionAnnotation1.kt");
             }
 
             @TestMetadata("FunctionAnnotation2.kt")
             public void testFunctionAnnotation2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/FunctionAnnotation2.kt");
+                runTest("testData-completion/basic/common/annotations/FunctionAnnotation2.kt");
             }
 
             @TestMetadata("NoCatchParameterAutopopup.kt")
             public void testNoCatchParameterAutopopup() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/NoCatchParameterAutopopup.kt");
+                runTest("testData-completion/basic/common/annotations/NoCatchParameterAutopopup.kt");
             }
 
             @TestMetadata("NoSetterParameterAutopopup.kt")
             public void testNoSetterParameterAutopopup() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/NoSetterParameterAutopopup.kt");
+                runTest("testData-completion/basic/common/annotations/NoSetterParameterAutopopup.kt");
             }
 
             @TestMetadata("OnlyAnnotations.kt")
             public void testOnlyAnnotations() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/OnlyAnnotations.kt");
+                runTest("testData-completion/basic/common/annotations/OnlyAnnotations.kt");
             }
 
             @TestMetadata("ParameterAnnotation1.kt")
             public void testParameterAnnotation1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation1.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation1.kt");
             }
 
             @TestMetadata("ParameterAnnotation2.kt")
             public void testParameterAnnotation2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation2.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation2.kt");
             }
 
             @TestMetadata("ParameterAnnotation3.kt")
             public void testParameterAnnotation3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation3.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation3.kt");
             }
 
             @TestMetadata("ParameterAnnotation4.kt")
             public void testParameterAnnotation4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation4.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation4.kt");
             }
 
             @TestMetadata("ParameterAnnotation5.kt")
             public void testParameterAnnotation5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation5.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation5.kt");
             }
 
             @TestMetadata("ParameterAnnotation6.kt")
             public void testParameterAnnotation6() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation6.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation6.kt");
             }
 
             @TestMetadata("ParameterAnnotation7.kt")
             public void testParameterAnnotation7() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation7.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation7.kt");
             }
 
             @TestMetadata("ParameterAnnotation8.kt")
             public void testParameterAnnotation8() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation8.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation8.kt");
             }
 
             @TestMetadata("ParameterAnnotation9.kt")
             public void testParameterAnnotation9() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotation9.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotation9.kt");
             }
 
             @TestMetadata("ParameterAnnotationArgs.kt")
             public void testParameterAnnotationArgs() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotationArgs.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotationArgs.kt");
             }
 
             @TestMetadata("ParameterAnnotationAutoPopup1.kt")
             public void testParameterAnnotationAutoPopup1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotationAutoPopup1.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotationAutoPopup1.kt");
             }
 
             @TestMetadata("ParameterAnnotationAutoPopup2.kt")
             public void testParameterAnnotationAutoPopup2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/ParameterAnnotationAutoPopup2.kt");
+                runTest("testData-completion/basic/common/annotations/ParameterAnnotationAutoPopup2.kt");
             }
 
             @TestMetadata("TopLevelAnnotation1.kt")
             public void testTopLevelAnnotation1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotation1.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotation1.kt");
             }
 
             @TestMetadata("TopLevelAnnotation2.kt")
             public void testTopLevelAnnotation2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotation2.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotation2.kt");
             }
 
             @TestMetadata("TopLevelAnnotation3.kt")
             public void testTopLevelAnnotation3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotation3.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotation3.kt");
             }
 
             @TestMetadata("TopLevelAnnotation4.kt")
             public void testTopLevelAnnotation4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotation4.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotation4.kt");
             }
 
             @TestMetadata("TopLevelAnnotationArg1.kt")
             public void testTopLevelAnnotationArg1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotationArg1.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotationArg1.kt");
             }
 
             @TestMetadata("TopLevelAnnotationArg2.kt")
             public void testTopLevelAnnotationArg2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TopLevelAnnotationArg2.kt");
+                runTest("testData-completion/basic/common/annotations/TopLevelAnnotationArg2.kt");
             }
 
             @TestMetadata("TypeAliasToAnnotation.kt")
             public void testTypeAliasToAnnotation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/annotations/TypeAliasToAnnotation.kt");
+                runTest("testData-completion/basic/common/annotations/TypeAliasToAnnotation.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/autoPopup")
-        public static class AutoPopup extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/autoPopup")
+        public static class AutoPopup extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AutoPopupBreak.kt")
             public void testAutoPopupBreak() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/AutoPopupBreak.kt");
+                runTest("testData-completion/basic/common/autoPopup/AutoPopupBreak.kt");
             }
 
             @TestMetadata("AutoPopupThis.kt")
             public void testAutoPopupThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/AutoPopupThis.kt");
+                runTest("testData-completion/basic/common/autoPopup/AutoPopupThis.kt");
             }
 
             @TestMetadata("AutopopupInFunExtensionReceiver.kt")
             public void testAutopopupInFunExtensionReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
+                runTest("testData-completion/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
             }
 
             @TestMetadata("GenericExtensionFunTypeArgument.kt")
             public void testGenericExtensionFunTypeArgument() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
+                runTest("testData-completion/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
             }
 
             @TestMetadata("GenericExtensionFunTypeArgument2.kt")
             public void testGenericExtensionFunTypeArgument2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/GenericExtensionFunTypeArgument2.kt");
+                runTest("testData-completion/basic/common/autoPopup/GenericExtensionFunTypeArgument2.kt");
             }
 
             @TestMetadata("InExtFunName.kt")
             public void testInExtFunName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/InExtFunName.kt");
+                runTest("testData-completion/basic/common/autoPopup/InExtFunName.kt");
             }
 
             @TestMetadata("InGenericExtFunName.kt")
             public void testInGenericExtFunName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/InGenericExtFunName.kt");
+                runTest("testData-completion/basic/common/autoPopup/InGenericExtFunName.kt");
             }
 
             @TestMetadata("InValExtType.kt")
             public void testInValExtType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/InValExtType.kt");
+                runTest("testData-completion/basic/common/autoPopup/InValExtType.kt");
             }
 
             @TestMetadata("NoAutoPopupAfterNumberLiteral.kt")
             public void testNoAutoPopupAfterNumberLiteral() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutoPopupAfterNumberLiteral.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutoPopupAfterNumberLiteral.kt");
             }
 
             @TestMetadata("NoAutoPopupInValName.kt")
             public void testNoAutoPopupInValName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutoPopupInValName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutoPopupInValName.kt");
             }
 
             @TestMetadata("NoAutopopupInFunName.kt")
             public void testNoAutopopupInFunName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutopopupInFunName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutopopupInFunName.kt");
             }
 
             @TestMetadata("NoAutopopupInGenericFunName.kt")
             public void testNoAutopopupInGenericFunName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutopopupInGenericFunName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutopopupInGenericFunName.kt");
             }
 
             @TestMetadata("NoAutopopupInGenericValName.kt")
             public void testNoAutopopupInGenericValName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutopopupInGenericValName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutopopupInGenericValName.kt");
             }
 
             @TestMetadata("NoAutopopupInGenericVarName.kt")
             public void testNoAutopopupInGenericVarName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutopopupInGenericVarName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutopopupInGenericVarName.kt");
             }
 
             @TestMetadata("NoAutopopupInVarName.kt")
             public void testNoAutopopupInVarName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoAutopopupInVarName.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoAutopopupInVarName.kt");
             }
 
             @TestMetadata("NoSecondPressCompletionInAutoPopup.kt")
             public void testNoSecondPressCompletionInAutoPopup() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/NoSecondPressCompletionInAutoPopup.kt");
+                runTest("testData-completion/basic/common/autoPopup/NoSecondPressCompletionInAutoPopup.kt");
             }
 
             @TestMetadata("OnlyScopedClassesWithoutExplicit.kt")
             public void testOnlyScopedClassesWithoutExplicit() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/autoPopup/OnlyScopedClassesWithoutExplicit.kt");
+                runTest("testData-completion/basic/common/autoPopup/OnlyScopedClassesWithoutExplicit.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/boldOrGrayed")
-        public static class BoldOrGrayed extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/boldOrGrayed")
+        public static class BoldOrGrayed extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterNullable.kt")
             public void testAfterNullable() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/AfterNullable.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/AfterNullable.kt");
             }
 
             @TestMetadata("AfterNullableAutoCast.kt")
             public void testAfterNullableAutoCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/AfterNullableAutoCast.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/AfterNullableAutoCast.kt");
             }
 
             @TestMetadata("AfterNullableAutoCast2.kt")
             public void testAfterNullableAutoCast2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/AfterNullableAutoCast2.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/AfterNullableAutoCast2.kt");
             }
 
             @TestMetadata("ImmediateExtensionMembers1.kt")
             public void testImmediateExtensionMembers1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers1.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers1.kt");
             }
 
             @TestMetadata("ImmediateExtensionMembers2.kt")
             public void testImmediateExtensionMembers2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers2.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers2.kt");
             }
 
             @TestMetadata("ImmediateExtensionMembers3.kt")
             public void testImmediateExtensionMembers3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers3.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers3.kt");
             }
 
             @TestMetadata("ImmediateExtensionMembers4.kt")
             public void testImmediateExtensionMembers4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers4.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembers4.kt");
             }
 
             @TestMetadata("ImmediateExtensionMembersGeneric.kt")
             public void testImmediateExtensionMembersGeneric() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembersGeneric.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateExtensionMembersGeneric.kt");
             }
 
             @TestMetadata("ImmediateMembers1.kt")
             public void testImmediateMembers1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateMembers1.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateMembers1.kt");
             }
 
             @TestMetadata("ImmediateMembers2.kt")
             public void testImmediateMembers2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateMembers2.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateMembers2.kt");
             }
 
             @TestMetadata("ImmediateMembers3.kt")
             public void testImmediateMembers3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateMembers3.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateMembers3.kt");
             }
 
             @TestMetadata("ImmediateMembers4.kt")
             public void testImmediateMembers4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateMembers4.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateMembers4.kt");
             }
 
             @TestMetadata("ImmediateMembers5.kt")
             public void testImmediateMembers5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/ImmediateMembers5.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/ImmediateMembers5.kt");
             }
 
             @TestMetadata("InExtensionForNullable.kt")
             public void testInExtensionForNullable() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/InExtensionForNullable.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/InExtensionForNullable.kt");
             }
 
             @TestMetadata("KT9835.kt")
             public void testKT9835() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/KT9835.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/KT9835.kt");
             }
 
             @TestMetadata("NonPredictableSmartCast.kt")
             public void testNonPredictableSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/NonPredictableSmartCast.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/NonPredictableSmartCast.kt");
             }
 
             @TestMetadata("NonPredictableSmartCastWithWrongReturnType.kt")
             public void testNonPredictableSmartCastWithWrongReturnType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/NonPredictableSmartCastWithWrongReturnType.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/NonPredictableSmartCastWithWrongReturnType.kt");
             }
 
             @TestMetadata("SafeCallAfterNullable.kt")
             public void testSafeCallAfterNullable() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/SafeCallAfterNullable.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/SafeCallAfterNullable.kt");
             }
 
             @TestMetadata("TwoReceivers.kt")
             public void testTwoReceivers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/boldOrGrayed/TwoReceivers.kt");
+                runTest("testData-completion/basic/common/boldOrGrayed/TwoReceivers.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/callableReference")
-        public static class CallableReference extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/callableReference")
+        public static class CallableReference extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("EmptyQualifier.kt")
             public void testEmptyQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/EmptyQualifier.kt");
+                runTest("testData-completion/basic/common/callableReference/EmptyQualifier.kt");
             }
 
             @TestMetadata("EmptyQualifierInExtensionFun.kt")
             public void testEmptyQualifierInExtensionFun() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/EmptyQualifierInExtensionFun.kt");
+                runTest("testData-completion/basic/common/callableReference/EmptyQualifierInExtensionFun.kt");
             }
 
             @TestMetadata("ExpressionQualifier.kt")
             public void testExpressionQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/ExpressionQualifier.kt");
+                runTest("testData-completion/basic/common/callableReference/ExpressionQualifier.kt");
             }
 
             @TestMetadata("GenericConstructor.kt")
             public void testGenericConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/GenericConstructor.kt");
+                runTest("testData-completion/basic/common/callableReference/GenericConstructor.kt");
             }
 
             @TestMetadata("HigherOrderFunction.kt")
             public void testHigherOrderFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/HigherOrderFunction.kt");
+                runTest("testData-completion/basic/common/callableReference/HigherOrderFunction.kt");
             }
 
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/NonEmptyQualifier.kt");
+                runTest("testData-completion/basic/common/callableReference/NonEmptyQualifier.kt");
             }
 
             @TestMetadata("SyntheticExtensions.kt")
             public void testSyntheticExtensions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/SyntheticExtensions.kt");
+                runTest("testData-completion/basic/common/callableReference/SyntheticExtensions.kt");
             }
 
             @TestMetadata("SyntheticExtensions2.kt")
             public void testSyntheticExtensions2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/callableReference/SyntheticExtensions2.kt");
+                runTest("testData-completion/basic/common/callableReference/SyntheticExtensions2.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/dslMarker")
-        public static class DslMarker extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/dslMarker")
+        public static class DslMarker extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("2dslsInsideOtherChild.kt")
             public void test2dslsInsideOtherChild() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/2dslsInsideOtherChild.kt");
+                runTest("testData-completion/basic/common/dslMarker/2dslsInsideOtherChild.kt");
             }
 
             @TestMetadata("2receivers.kt")
             public void test2receivers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/2receivers.kt");
+                runTest("testData-completion/basic/common/dslMarker/2receivers.kt");
             }
 
             @TestMetadata("child.kt")
             public void testChild() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/child.kt");
+                runTest("testData-completion/basic/common/dslMarker/child.kt");
             }
 
             @TestMetadata("compositeDsl.kt")
             public void testCompositeDsl() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/compositeDsl.kt");
+                runTest("testData-completion/basic/common/dslMarker/compositeDsl.kt");
             }
 
             @TestMetadata("container.kt")
             public void testContainer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/container.kt");
+                runTest("testData-completion/basic/common/dslMarker/container.kt");
             }
 
             @TestMetadata("noDslCompletionForNonDslReciever.kt")
             public void testNoDslCompletionForNonDslReciever() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
+                runTest("testData-completion/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
             }
 
             @TestMetadata("root.kt")
             public void testRoot() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/dslMarker/root.kt");
+                runTest("testData-completion/basic/common/dslMarker/root.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/extensionFunctionTypeValues")
-        public static class ExtensionFunctionTypeValues extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/extensionFunctionTypeValues")
+        public static class ExtensionFunctionTypeValues extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ImplicitReceiver.kt")
             public void testImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionFunctionTypeValues/ImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionFunctionTypeValues/ImplicitReceiver.kt");
             }
 
             @TestMetadata("SafeCall.kt")
             public void testSafeCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionFunctionTypeValues/SafeCall.kt");
+                runTest("testData-completion/basic/common/extensionFunctionTypeValues/SafeCall.kt");
             }
 
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionFunctionTypeValues/Simple.kt");
+                runTest("testData-completion/basic/common/extensionFunctionTypeValues/Simple.kt");
             }
 
             @TestMetadata("SmartCast.kt")
             public void testSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionFunctionTypeValues/SmartCast.kt");
+                runTest("testData-completion/basic/common/extensionFunctionTypeValues/SmartCast.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/extensionMethodInObject")
-        public static class ExtensionMethodInObject extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/extensionMethodInObject")
+        public static class ExtensionMethodInObject extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("CompanionObjectExplicitReceiver.kt")
             public void testCompanionObjectExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiver.kt");
             }
 
             @TestMetadata("CompanionObjectExplicitReceiverInfixExtension.kt")
             public void testCompanionObjectExplicitReceiverInfixExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverInfixExtension.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverInfixExtension.kt");
             }
 
             @TestMetadata("CompanionObjectExplicitReceiverNoPrefix.kt")
             public void testCompanionObjectExplicitReceiverNoPrefix() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverNoPrefix.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverNoPrefix.kt");
             }
 
             @TestMetadata("CompanionObjectExplicitReceiverSafeAccess.kt")
             public void testCompanionObjectExplicitReceiverSafeAccess() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverSafeAccess.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CompanionObjectExplicitReceiverSafeAccess.kt");
             }
 
             @TestMetadata("CompanionObjectImplicitReceiver.kt")
             public void testCompanionObjectImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CompanionObjectImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CompanionObjectImplicitReceiver.kt");
             }
 
             @TestMetadata("CorrectTypeExplicitReceiver.kt")
             public void testCorrectTypeExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CorrectTypeExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CorrectTypeExplicitReceiver.kt");
             }
 
             @TestMetadata("CorrectTypeImplicitReceiver.kt")
             public void testCorrectTypeImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/CorrectTypeImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/CorrectTypeImplicitReceiver.kt");
             }
 
             @TestMetadata("InheritedExtensionConcreteType.kt")
             public void testInheritedExtensionConcreteType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/InheritedExtensionConcreteType.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/InheritedExtensionConcreteType.kt");
             }
 
             @TestMetadata("InheritedExtensionDeepInheritance.kt")
             public void testInheritedExtensionDeepInheritance() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/InheritedExtensionDeepInheritance.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/InheritedExtensionDeepInheritance.kt");
             }
 
             @TestMetadata("InheritedExtensionGenericType.kt")
             public void testInheritedExtensionGenericType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/InheritedExtensionGenericType.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/InheritedExtensionGenericType.kt");
             }
 
             @TestMetadata("InheritedExtensionGenericTypeConstraint.kt")
             public void testInheritedExtensionGenericTypeConstraint() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/InheritedExtensionGenericTypeConstraint.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/InheritedExtensionGenericTypeConstraint.kt");
             }
 
             @TestMetadata("KTIJ17933.kt")
             public void testKTIJ17933() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/KTIJ17933.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/KTIJ17933.kt");
             }
 
             @TestMetadata("KTIJ19149.kt")
             public void testKTIJ19149() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/KTIJ19149.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/KTIJ19149.kt");
             }
 
             @TestMetadata("MultipleImplicitReceivers.kt")
             public void testMultipleImplicitReceivers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/MultipleImplicitReceivers.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/MultipleImplicitReceivers.kt");
             }
 
             @TestMetadata("ObjectExplicitReceiver.kt")
             public void testObjectExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/ObjectExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/ObjectExplicitReceiver.kt");
             }
 
             @TestMetadata("ObjectImplicitReceiver.kt")
             public void testObjectImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/ObjectImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/ObjectImplicitReceiver.kt");
             }
 
             @TestMetadata("OverridenExtensionsInObject.kt")
             public void testOverridenExtensionsInObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensionMethodInObject/OverridenExtensionsInObject.kt");
+                runTest("testData-completion/basic/common/extensionMethodInObject/OverridenExtensionsInObject.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/extensions")
-        public static class Extensions extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/extensions")
+        public static class Extensions extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ComplexCapture.kt")
             public void testComplexCapture() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ComplexCapture.kt");
+                runTest("testData-completion/basic/common/extensions/ComplexCapture.kt");
             }
 
             @TestMetadata("ComplexCapture2.kt")
             public void testComplexCapture2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ComplexCapture2.kt");
+                runTest("testData-completion/basic/common/extensions/ComplexCapture2.kt");
             }
 
             @TestMetadata("ExtensionInExtendedClass.kt")
             public void testExtensionInExtendedClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionInExtendedClass.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionInExtendedClass.kt");
             }
 
             @TestMetadata("ExtensionInExtendedClassThis.kt")
             public void testExtensionInExtendedClassThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionInExtendedClassThis.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionInExtendedClassThis.kt");
             }
 
             @TestMetadata("ExtensionInExtension.kt")
             public void testExtensionInExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionInExtension.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionInExtension.kt");
             }
 
             @TestMetadata("ExtensionInExtensionThis.kt")
             public void testExtensionInExtensionThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionInExtensionThis.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionInExtensionThis.kt");
             }
 
             @TestMetadata("ExtensionOnFQObject.kt")
             public void testExtensionOnFQObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionOnFQObject.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionOnFQObject.kt");
             }
 
             @TestMetadata("ExtensionOnNestedClassObject.kt")
             public void testExtensionOnNestedClassObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ExtensionOnNestedClassObject.kt");
+                runTest("testData-completion/basic/common/extensions/ExtensionOnNestedClassObject.kt");
             }
 
             @TestMetadata("Extensions.kt")
             public void testExtensions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/Extensions.kt");
+                runTest("testData-completion/basic/common/extensions/Extensions.kt");
             }
 
             @TestMetadata("InvalidTypeParameters.kt")
             public void testInvalidTypeParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/InvalidTypeParameters.kt");
+                runTest("testData-completion/basic/common/extensions/InvalidTypeParameters.kt");
             }
 
             @TestMetadata("IrrelevantExtension.kt")
             public void testIrrelevantExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/IrrelevantExtension.kt");
+                runTest("testData-completion/basic/common/extensions/IrrelevantExtension.kt");
             }
 
             @TestMetadata("JavaTypeExtension.kt")
             public void testJavaTypeExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/JavaTypeExtension.kt");
+                runTest("testData-completion/basic/common/extensions/JavaTypeExtension.kt");
             }
 
             @TestMetadata("KotlinGenericTypeExtension.kt")
             public void testKotlinGenericTypeExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/KotlinGenericTypeExtension.kt");
+                runTest("testData-completion/basic/common/extensions/KotlinGenericTypeExtension.kt");
             }
 
             @TestMetadata("KotlinTypeExtension.kt")
             public void testKotlinTypeExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/KotlinTypeExtension.kt");
+                runTest("testData-completion/basic/common/extensions/KotlinTypeExtension.kt");
             }
 
             @TestMetadata("MemberExtensionFromWith.kt")
             public void testMemberExtensionFromWith() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/MemberExtensionFromWith.kt");
+                runTest("testData-completion/basic/common/extensions/MemberExtensionFromWith.kt");
             }
 
             @TestMetadata("MemberExtensionWithoutExplicitReceiver.kt")
             public void testMemberExtensionWithoutExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/MemberExtensionWithoutExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensions/MemberExtensionWithoutExplicitReceiver.kt");
             }
 
             @TestMetadata("MemberExtensionsFromMemberExtension.kt")
             public void testMemberExtensionsFromMemberExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/MemberExtensionsFromMemberExtension.kt");
+                runTest("testData-completion/basic/common/extensions/MemberExtensionsFromMemberExtension.kt");
             }
 
             @TestMetadata("NoDuplicatedMethodForSmartCast.kt")
             public void testNoDuplicatedMethodForSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/NoDuplicatedMethodForSmartCast.kt");
+                runTest("testData-completion/basic/common/extensions/NoDuplicatedMethodForSmartCast.kt");
             }
 
             @TestMetadata("NoExtensionFromOuter.kt")
             public void testNoExtensionFromOuter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/NoExtensionFromOuter.kt");
+                runTest("testData-completion/basic/common/extensions/NoExtensionFromOuter.kt");
             }
 
             @TestMetadata("NoMemberExtensionsFromCompanionObject.kt")
             public void testNoMemberExtensionsFromCompanionObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/NoMemberExtensionsFromCompanionObject.kt");
+                runTest("testData-completion/basic/common/extensions/NoMemberExtensionsFromCompanionObject.kt");
             }
 
             @TestMetadata("ParametrizedExpectedType.kt")
             public void testParametrizedExpectedType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/ParametrizedExpectedType.kt");
+                runTest("testData-completion/basic/common/extensions/ParametrizedExpectedType.kt");
             }
 
             @TestMetadata("StarTypeArg.kt")
             public void testStarTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/StarTypeArg.kt");
+                runTest("testData-completion/basic/common/extensions/StarTypeArg.kt");
             }
 
             @TestMetadata("WrongExplicitReceiver.kt")
             public void testWrongExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/WrongExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensions/WrongExplicitReceiver.kt");
             }
 
             @TestMetadata("WrongImplicitReceiver.kt")
             public void testWrongImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/extensions/WrongImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/extensions/WrongImplicitReceiver.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/fromSmart")
-        public static class FromSmart extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/fromSmart")
+        public static class FromSmart extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterAs.kt")
             public void testAfterAs() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/AfterAs.kt");
+                runTest("testData-completion/basic/common/fromSmart/AfterAs.kt");
             }
 
             @TestMetadata("AfterAsNoDuplicates.kt")
             public void testAfterAsNoDuplicates() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/AfterAsNoDuplicates.kt");
+                runTest("testData-completion/basic/common/fromSmart/AfterAsNoDuplicates.kt");
             }
 
             @TestMetadata("ArrayLiteralAnnotationConstructorAsDefaultValueForArray.kt")
             public void testArrayLiteralAnnotationConstructorAsDefaultValueForArray() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationConstructorAsDefaultValueForArray.kt");
+                runTest("testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationConstructorAsDefaultValueForArray.kt");
             }
 
             @TestMetadata("ArrayLiteralAnnotationConstructorAsDefaultValueForVararg.kt")
             public void testArrayLiteralAnnotationConstructorAsDefaultValueForVararg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationConstructorAsDefaultValueForVararg.kt");
+                runTest("testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationConstructorAsDefaultValueForVararg.kt");
             }
 
             @TestMetadata("ArrayLiteralAnnotationUseForArray.kt")
             public void testArrayLiteralAnnotationUseForArray() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationUseForArray.kt");
+                runTest("testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationUseForArray.kt");
             }
 
             @TestMetadata("ArrayLiteralAnnotationUseForVararg.kt")
             public void testArrayLiteralAnnotationUseForVararg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationUseForVararg.kt");
+                runTest("testData-completion/basic/common/fromSmart/ArrayLiteralAnnotationUseForVararg.kt");
             }
 
             @TestMetadata("CustomAnnotation.kt")
             public void testCustomAnnotation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/CustomAnnotation.kt");
+                runTest("testData-completion/basic/common/fromSmart/CustomAnnotation.kt");
             }
 
             @TestMetadata("EnumEntries.kt")
             public void testEnumEntries() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/EnumEntries.kt");
+                runTest("testData-completion/basic/common/fromSmart/EnumEntries.kt");
             }
 
             @TestMetadata("JavaStaticMethods.kt")
             public void testJavaStaticMethods() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/JavaStaticMethods.kt");
+                runTest("testData-completion/basic/common/fromSmart/JavaStaticMethods.kt");
             }
 
             @TestMetadata("JavaStaticMethods2.kt")
             public void testJavaStaticMethods2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/JavaStaticMethods2.kt");
+                runTest("testData-completion/basic/common/fromSmart/JavaStaticMethods2.kt");
             }
 
             @TestMetadata("MultipleArgs.kt")
             public void testMultipleArgs() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/MultipleArgs.kt");
+                runTest("testData-completion/basic/common/fromSmart/MultipleArgs.kt");
             }
 
             @TestMetadata("PropertyDelegate.kt")
             public void testPropertyDelegate() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/PropertyDelegate.kt");
+                runTest("testData-completion/basic/common/fromSmart/PropertyDelegate.kt");
             }
 
             @TestMetadata("WhenByEnum.kt")
             public void testWhenByEnum() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromSmart/WhenByEnum.kt");
+                runTest("testData-completion/basic/common/fromSmart/WhenByEnum.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/fromUnresolvedNames")
-        public static class FromUnresolvedNames extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/fromUnresolvedNames")
+        public static class FromUnresolvedNames extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ExtensionFunction.kt")
             public void testExtensionFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/ExtensionFunction.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/ExtensionFunction.kt");
             }
 
             @TestMetadata("ExtensionProperty.kt")
             public void testExtensionProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/ExtensionProperty.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/ExtensionProperty.kt");
             }
 
             @TestMetadata("FunctionInCompanionObject.kt")
             public void testFunctionInCompanionObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/FunctionInCompanionObject.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/FunctionInCompanionObject.kt");
             }
 
             @TestMetadata("LocalVal.kt")
             public void testLocalVal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/LocalVal.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/LocalVal.kt");
             }
 
             @TestMetadata("MemberFunction.kt")
             public void testMemberFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/MemberFunction.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/MemberFunction.kt");
             }
 
             @TestMetadata("MemberFunction2.kt")
             public void testMemberFunction2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/MemberFunction2.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/MemberFunction2.kt");
             }
 
             @TestMetadata("MemberProperty.kt")
             public void testMemberProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/MemberProperty.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/MemberProperty.kt");
             }
 
             @TestMetadata("MemberProperty2.kt")
             public void testMemberProperty2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/MemberProperty2.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/MemberProperty2.kt");
             }
 
             @TestMetadata("NotForExtensionFunction.kt")
             public void testNotForExtensionFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/NotForExtensionFunction.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/NotForExtensionFunction.kt");
             }
 
             @TestMetadata("Parameter.kt")
             public void testParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/Parameter.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/Parameter.kt");
             }
 
             @TestMetadata("TopLevelClass.kt")
             public void testTopLevelClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/TopLevelClass.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/TopLevelClass.kt");
             }
 
             @TestMetadata("TopLevelFunction.kt")
             public void testTopLevelFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/TopLevelFunction.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/TopLevelFunction.kt");
             }
 
             @TestMetadata("TopLevelInterface.kt")
             public void testTopLevelInterface() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/TopLevelInterface.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/TopLevelInterface.kt");
             }
 
             @TestMetadata("TopLevelObject.kt")
             public void testTopLevelObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/fromUnresolvedNames/TopLevelObject.kt");
+                runTest("testData-completion/basic/common/fromUnresolvedNames/TopLevelObject.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/getOperator")
-        public static class GetOperator extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/getOperator")
+        public static class GetOperator extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("Extension.kt")
             public void testExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/getOperator/Extension.kt");
+                runTest("testData-completion/basic/common/getOperator/Extension.kt");
             }
 
             @TestMetadata("NotForSafeCall.kt")
             public void testNotForSafeCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/getOperator/NotForSafeCall.kt");
+                runTest("testData-completion/basic/common/getOperator/NotForSafeCall.kt");
             }
 
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/getOperator/Simple.kt");
+                runTest("testData-completion/basic/common/getOperator/Simple.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/highOrderFunctions")
-        public static class HighOrderFunctions extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/highOrderFunctions")
+        public static class HighOrderFunctions extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ContextVariables1.kt")
             public void testContextVariables1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariables1.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariables1.kt");
             }
 
             @TestMetadata("ContextVariables2.kt")
             public void testContextVariables2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariables2.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariables2.kt");
             }
 
             @TestMetadata("ContextVariables3.kt")
             public void testContextVariables3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariables3.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariables3.kt");
             }
 
             @TestMetadata("ContextVariablesFilter.kt")
             public void testContextVariablesFilter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariablesFilter.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariablesFilter.kt");
             }
 
             @TestMetadata("ContextVariablesMap.kt")
             public void testContextVariablesMap() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariablesMap.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariablesMap.kt");
             }
 
             @TestMetadata("ContextVariablesShadowing.kt")
             public void testContextVariablesShadowing() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/ContextVariablesShadowing.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/ContextVariablesShadowing.kt");
             }
 
             @TestMetadata("HigherOrderFunction1.kt")
             public void testHigherOrderFunction1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/HigherOrderFunction1.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/HigherOrderFunction1.kt");
             }
 
             @TestMetadata("HigherOrderFunction2.kt")
             public void testHigherOrderFunction2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/HigherOrderFunction2.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/HigherOrderFunction2.kt");
             }
 
             @TestMetadata("OptionalParameters.kt")
             public void testOptionalParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/OptionalParameters.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/OptionalParameters.kt");
             }
 
             @TestMetadata("SuspendFunction.kt")
             public void testSuspendFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/highOrderFunctions/SuspendFunction.kt");
+                runTest("testData-completion/basic/common/highOrderFunctions/SuspendFunction.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/inInitBlock")
-        public static class InInitBlock extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/inInitBlock")
+        public static class InInitBlock extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("localVariable.kt")
             public void testLocalVariable() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inInitBlock/localVariable.kt");
+                runTest("testData-completion/basic/common/inInitBlock/localVariable.kt");
             }
 
             @TestMetadata("property.kt")
             public void testProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inInitBlock/property.kt");
+                runTest("testData-completion/basic/common/inInitBlock/property.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/inStringLiterals")
-        public static class InStringLiterals extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/inStringLiterals")
+        public static class InStringLiterals extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("EA76497.kt")
             public void testEA76497() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/EA76497.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/EA76497.kt");
             }
 
             @TestMetadata("StringTemplate1.kt")
             public void testStringTemplate1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/StringTemplate1.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/StringTemplate1.kt");
             }
 
             @TestMetadata("StringTemplate2.kt")
             public void testStringTemplate2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/StringTemplate2.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/StringTemplate2.kt");
             }
 
             @TestMetadata("StringTemplateDot.kt")
             public void testStringTemplateDot() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/StringTemplateDot.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/StringTemplateDot.kt");
             }
 
             @TestMetadata("StringTemplateDot2.kt")
             public void testStringTemplateDot2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/StringTemplateDot2.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/StringTemplateDot2.kt");
             }
 
             @TestMetadata("StringTemplateDotSomething.kt")
             public void testStringTemplateDotSomething() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inStringLiterals/StringTemplateDotSomething.kt");
+                runTest("testData-completion/basic/common/inStringLiterals/StringTemplateDotSomething.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/inSuperTypes")
-        public static class InSuperTypes extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/inSuperTypes")
+        public static class InSuperTypes extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("baseClass.kt")
             public void testBaseClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inSuperTypes/baseClass.kt");
+                runTest("testData-completion/basic/common/inSuperTypes/baseClass.kt");
             }
 
             @TestMetadata("baseClassWithPrefix.kt")
             public void testBaseClassWithPrefix() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inSuperTypes/baseClassWithPrefix.kt");
+                runTest("testData-completion/basic/common/inSuperTypes/baseClassWithPrefix.kt");
             }
 
             @TestMetadata("typeParameter.kt")
             public void testTypeParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inSuperTypes/typeParameter.kt");
+                runTest("testData-completion/basic/common/inSuperTypes/typeParameter.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/inTypeAlias")
-        public static class InTypeAlias extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/inTypeAlias")
+        public static class InTypeAlias extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("member.kt")
             public void testMember() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inTypeAlias/member.kt");
+                runTest("testData-completion/basic/common/inTypeAlias/member.kt");
             }
 
             @TestMetadata("topLevel.kt")
             public void testTopLevel() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/inTypeAlias/topLevel.kt");
+                runTest("testData-completion/basic/common/inTypeAlias/topLevel.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams")
-        public static class LambdaAndTypeParams extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/lambdaAndTypeParams")
+        public static class LambdaAndTypeParams extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("LambdaAndErrorType.kt")
             public void testLambdaAndErrorType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams/LambdaAndErrorType.kt");
+                runTest("testData-completion/basic/common/lambdaAndTypeParams/LambdaAndErrorType.kt");
             }
 
             @TestMetadata("LambdaAndNothingCommon.kt")
             public void testLambdaAndNothingCommon() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingCommon.kt");
+                runTest("testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingCommon.kt");
             }
 
             @TestMetadata("LambdaAndNothingList.kt")
             public void testLambdaAndNothingList() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingList.kt");
+                runTest("testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingList.kt");
             }
 
             @TestMetadata("LambdaAndNothingMap.kt")
             public void testLambdaAndNothingMap() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingMap.kt");
+                runTest("testData-completion/basic/common/lambdaAndTypeParams/LambdaAndNothingMap.kt");
             }
 
             @TestMetadata("LambdaAndTypeVariable.kt")
             public void testLambdaAndTypeVariable() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaAndTypeParams/LambdaAndTypeVariable.kt");
+                runTest("testData-completion/basic/common/lambdaAndTypeParams/LambdaAndTypeVariable.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/lambdaSignature")
-        public static class LambdaSignature extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/lambdaSignature")
+        public static class LambdaSignature extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ParameterName1.kt")
             public void testParameterName1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterName1.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterName1.kt");
             }
 
             @TestMetadata("ParameterName2.kt")
             public void testParameterName2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterName2.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterName2.kt");
             }
 
             @TestMetadata("ParameterName3.kt")
             public void testParameterName3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterName3.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterName3.kt");
             }
 
             @TestMetadata("ParameterName4.kt")
             public void testParameterName4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterName4.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterName4.kt");
             }
 
             @TestMetadata("ParameterName5.kt")
             public void testParameterName5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterName5.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterName5.kt");
             }
 
             @TestMetadata("ParameterType1.kt")
             public void testParameterType1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterType1.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterType1.kt");
             }
 
             @TestMetadata("ParameterType2.kt")
             public void testParameterType2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterType2.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterType2.kt");
             }
 
             @TestMetadata("ParameterType3.kt")
             public void testParameterType3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterType3.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterType3.kt");
             }
 
             @TestMetadata("ParameterType4.kt")
             public void testParameterType4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterType4.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterType4.kt");
             }
 
             @TestMetadata("ParameterType5.kt")
             public void testParameterType5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/lambdaSignature/ParameterType5.kt");
+                runTest("testData-completion/basic/common/lambdaSignature/ParameterType5.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/namedArguments")
-        public static class NamedArguments extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/namedArguments")
+        public static class NamedArguments extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterBrace.kt")
             public void testAfterBrace() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/AfterBrace.kt");
+                runTest("testData-completion/basic/common/namedArguments/AfterBrace.kt");
             }
 
             @TestMetadata("AfterComma.kt")
             public void testAfterComma() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/AfterComma.kt");
+                runTest("testData-completion/basic/common/namedArguments/AfterComma.kt");
             }
 
             @TestMetadata("AfterVararg.kt")
             public void testAfterVararg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/AfterVararg.kt");
+                runTest("testData-completion/basic/common/namedArguments/AfterVararg.kt");
             }
 
             @TestMetadata("BooleanArgumentExpected.kt")
             public void testBooleanArgumentExpected() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/BooleanArgumentExpected.kt");
+                runTest("testData-completion/basic/common/namedArguments/BooleanArgumentExpected.kt");
             }
 
             @TestMetadata("CompactTypeNames.kt")
             public void testCompactTypeNames() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/CompactTypeNames.kt");
+                runTest("testData-completion/basic/common/namedArguments/CompactTypeNames.kt");
             }
 
             @TestMetadata("ForEmptyParametersFunction.kt")
             public void testForEmptyParametersFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/ForEmptyParametersFunction.kt");
+                runTest("testData-completion/basic/common/namedArguments/ForEmptyParametersFunction.kt");
             }
 
             @TestMetadata("InParameterExpression.kt")
             public void testInParameterExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/InParameterExpression.kt");
+                runTest("testData-completion/basic/common/namedArguments/InParameterExpression.kt");
             }
 
             @TestMetadata("NamedArgumentOnIncorrectPosition.kt")
             public void testNamedArgumentOnIncorrectPosition() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NamedArgumentOnIncorrectPosition.kt");
+                runTest("testData-completion/basic/common/namedArguments/NamedArgumentOnIncorrectPosition.kt");
             }
 
             @TestMetadata("NamedArgumentOnItsOwnPosition.kt")
             public void testNamedArgumentOnItsOwnPosition() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NamedArgumentOnItsOwnPosition.kt");
+                runTest("testData-completion/basic/common/namedArguments/NamedArgumentOnItsOwnPosition.kt");
             }
 
             @TestMetadata("NamedArgumentOnItsOwnPosition2.kt")
             public void testNamedArgumentOnItsOwnPosition2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NamedArgumentOnItsOwnPosition2.kt");
+                runTest("testData-completion/basic/common/namedArguments/NamedArgumentOnItsOwnPosition2.kt");
             }
 
             @TestMetadata("NamedArgumentsFromOverloads.kt")
             public void testNamedArgumentsFromOverloads() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NamedArgumentsFromOverloads.kt");
+                runTest("testData-completion/basic/common/namedArguments/NamedArgumentsFromOverloads.kt");
             }
 
             @TestMetadata("NamedArgumentsFromOverloads2.kt")
             public void testNamedArgumentsFromOverloads2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NamedArgumentsFromOverloads2.kt");
+                runTest("testData-completion/basic/common/namedArguments/NamedArgumentsFromOverloads2.kt");
             }
 
             @TestMetadata("NoAlreadyUsedParameters.kt")
             public void testNoAlreadyUsedParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NoAlreadyUsedParameters.kt");
+                runTest("testData-completion/basic/common/namedArguments/NoAlreadyUsedParameters.kt");
             }
 
             @TestMetadata("NoParamsFromUnapplicableOverload.kt")
             public void testNoParamsFromUnapplicableOverload() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NoParamsFromUnapplicableOverload.kt");
+                runTest("testData-completion/basic/common/namedArguments/NoParamsFromUnapplicableOverload.kt");
             }
 
             @TestMetadata("NotAfterDot.kt")
             public void testNotAfterDot() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NotAfterDot.kt");
+                runTest("testData-completion/basic/common/namedArguments/NotAfterDot.kt");
             }
 
             @TestMetadata("NotInBrackets.kt")
             public void testNotInBrackets() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NotInBrackets.kt");
+                runTest("testData-completion/basic/common/namedArguments/NotInBrackets.kt");
             }
 
             @TestMetadata("NotInElse.kt")
             public void testNotInElse() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NotInElse.kt");
+                runTest("testData-completion/basic/common/namedArguments/NotInElse.kt");
             }
 
             @TestMetadata("NotOnlyNamedArguments.kt")
             public void testNotOnlyNamedArguments() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NotOnlyNamedArguments.kt");
+                runTest("testData-completion/basic/common/namedArguments/NotOnlyNamedArguments.kt");
             }
 
             @TestMetadata("NotOnlyNamedArguments2.kt")
             public void testNotOnlyNamedArguments2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/NotOnlyNamedArguments2.kt");
+                runTest("testData-completion/basic/common/namedArguments/NotOnlyNamedArguments2.kt");
             }
 
             @TestMetadata("OfConstructor.kt")
             public void testOfConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/OfConstructor.kt");
+                runTest("testData-completion/basic/common/namedArguments/OfConstructor.kt");
             }
 
             @TestMetadata("OnlyNamedArguments.kt")
             public void testOnlyNamedArguments() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/OnlyNamedArguments.kt");
+                runTest("testData-completion/basic/common/namedArguments/OnlyNamedArguments.kt");
             }
 
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/namedArguments/WithParameterExpression.kt");
+                runTest("testData-completion/basic/common/namedArguments/WithParameterExpression.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/noCompletion")
-        public static class NoCompletion extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/noCompletion")
+        public static class NoCompletion extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("DoNotCompleteForErrorReceivers.kt")
             public void testDoNotCompleteForErrorReceivers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/DoNotCompleteForErrorReceivers.kt");
+                runTest("testData-completion/basic/common/noCompletion/DoNotCompleteForErrorReceivers.kt");
             }
 
             @TestMetadata("DoNotCompleteForErrorReceiversForce.kt")
             public void testDoNotCompleteForErrorReceiversForce() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/DoNotCompleteForErrorReceiversForce.kt");
+                runTest("testData-completion/basic/common/noCompletion/DoNotCompleteForErrorReceiversForce.kt");
             }
 
             @TestMetadata("InPackageBegin.kt")
             public void testInPackageBegin() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/InPackageBegin.kt");
+                runTest("testData-completion/basic/common/noCompletion/InPackageBegin.kt");
             }
 
             @TestMetadata("NoCompletionAfterBigFloat.kt")
             public void testNoCompletionAfterBigFloat() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/NoCompletionAfterBigFloat.kt");
+                runTest("testData-completion/basic/common/noCompletion/NoCompletionAfterBigFloat.kt");
             }
 
             @TestMetadata("NoCompletionAfterFloat.kt")
             public void testNoCompletionAfterFloat() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/NoCompletionAfterFloat.kt");
+                runTest("testData-completion/basic/common/noCompletion/NoCompletionAfterFloat.kt");
             }
 
             @TestMetadata("NoCompletionAfterInt.kt")
             public void testNoCompletionAfterInt() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/NoCompletionAfterInt.kt");
+                runTest("testData-completion/basic/common/noCompletion/NoCompletionAfterInt.kt");
             }
 
             @TestMetadata("NoCompletionAfterLong.kt")
             public void testNoCompletionAfterLong() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/noCompletion/NoCompletionAfterLong.kt");
+                runTest("testData-completion/basic/common/noCompletion/NoCompletionAfterLong.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/objects")
-        public static class Objects extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/objects")
+        public static class Objects extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("PropertyFromCompanionObjectFromTypeAliasToNestedInObjectClass.kt")
             public void testPropertyFromCompanionObjectFromTypeAliasToNestedInObjectClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/objects/PropertyFromCompanionObjectFromTypeAliasToNestedInObjectClass.kt");
+                runTest("testData-completion/basic/common/objects/PropertyFromCompanionObjectFromTypeAliasToNestedInObjectClass.kt");
             }
 
             @TestMetadata("PropertyOfTypeAliasToObject.kt")
             public void testPropertyOfTypeAliasToObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/objects/PropertyOfTypeAliasToObject.kt");
+                runTest("testData-completion/basic/common/objects/PropertyOfTypeAliasToObject.kt");
             }
 
             @TestMetadata("TypeAliasToNestedObject.kt")
             public void testTypeAliasToNestedObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/objects/TypeAliasToNestedObject.kt");
+                runTest("testData-completion/basic/common/objects/TypeAliasToNestedObject.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/operatorNames")
-        public static class OperatorNames extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/operatorNames")
+        public static class OperatorNames extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("NoOperatorNameForTopLevel.kt")
             public void testNoOperatorNameForTopLevel() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/operatorNames/NoOperatorNameForTopLevel.kt");
+                runTest("testData-completion/basic/common/operatorNames/NoOperatorNameForTopLevel.kt");
             }
 
             @TestMetadata("OperatorNameForExtension.kt")
             public void testOperatorNameForExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/operatorNames/OperatorNameForExtension.kt");
+                runTest("testData-completion/basic/common/operatorNames/OperatorNameForExtension.kt");
             }
 
             @TestMetadata("OperatorNameForMember.kt")
             public void testOperatorNameForMember() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/operatorNames/OperatorNameForMember.kt");
+                runTest("testData-completion/basic/common/operatorNames/OperatorNameForMember.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/override")
-        public static class Override extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/override")
+        public static class Override extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterFunKeyword.kt")
             public void testAfterFunKeyword() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/AfterFunKeyword.kt");
+                runTest("testData-completion/basic/common/override/AfterFunKeyword.kt");
             }
 
             @TestMetadata("AfterValKeyword.kt")
             public void testAfterValKeyword() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/AfterValKeyword.kt");
+                runTest("testData-completion/basic/common/override/AfterValKeyword.kt");
             }
 
             @TestMetadata("AfterValKeywordInConstructorParameter.kt")
             public void testAfterValKeywordInConstructorParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/AfterValKeywordInConstructorParameter.kt");
+                runTest("testData-completion/basic/common/override/AfterValKeywordInConstructorParameter.kt");
             }
 
             @TestMetadata("AfterVarKeyword.kt")
             public void testAfterVarKeyword() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/AfterVarKeyword.kt");
+                runTest("testData-completion/basic/common/override/AfterVarKeyword.kt");
             }
 
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/Generics.kt");
+                runTest("testData-completion/basic/common/override/Generics.kt");
             }
 
             @TestMetadata("InConstructorParameters.kt")
             public void testInConstructorParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/InConstructorParameters.kt");
+                runTest("testData-completion/basic/common/override/InConstructorParameters.kt");
             }
 
             @TestMetadata("InConstructorParameters2.kt")
             public void testInConstructorParameters2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/InConstructorParameters2.kt");
+                runTest("testData-completion/basic/common/override/InConstructorParameters2.kt");
             }
 
             @TestMetadata("NoOverrideAfterFunKeyword.kt")
             public void testNoOverrideAfterFunKeyword() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/NoOverrideAfterFunKeyword.kt");
+                runTest("testData-completion/basic/common/override/NoOverrideAfterFunKeyword.kt");
             }
 
             @TestMetadata("PreferImplementToOverride.kt")
             public void testPreferImplementToOverride() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/PreferImplementToOverride.kt");
+                runTest("testData-completion/basic/common/override/PreferImplementToOverride.kt");
             }
 
             @TestMetadata("SecondConstructorParameter.kt")
             public void testSecondConstructorParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/SecondConstructorParameter.kt");
+                runTest("testData-completion/basic/common/override/SecondConstructorParameter.kt");
             }
 
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/Simple.kt");
+                runTest("testData-completion/basic/common/override/Simple.kt");
             }
 
             @TestMetadata("TypeFunctionName.kt")
             public void testTypeFunctionName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/override/TypeFunctionName.kt");
+                runTest("testData-completion/basic/common/override/TypeFunctionName.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/parameterNameAndType")
-        public static class ParameterNameAndType extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/parameterNameAndType")
+        public static class ParameterNameAndType extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ByAbbreviation.kt")
             public void testByAbbreviation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ByAbbreviation.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ByAbbreviation.kt");
             }
 
             @TestMetadata("NoAutoInsertion.kt")
             public void testNoAutoInsertion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NoAutoInsertion.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NoAutoInsertion.kt");
             }
 
             @TestMetadata("NoDuplication.kt")
             public void testNoDuplication() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NoDuplication.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NoDuplication.kt");
             }
 
             @TestMetadata("NoDuplicationJava.kt")
             public void testNoDuplicationJava() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NoDuplicationJava.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NoDuplicationJava.kt");
             }
 
             @TestMetadata("NoFromFileAndFromClassesDuplication.kt")
             public void testNoFromFileAndFromClassesDuplication() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NoFromFileAndFromClassesDuplication.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NoFromFileAndFromClassesDuplication.kt");
             }
 
             @TestMetadata("NotForAnnnotationTypeConstructor.kt")
             public void testNotForAnnnotationTypeConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForAnnnotationTypeConstructor.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForAnnnotationTypeConstructor.kt");
             }
 
             @TestMetadata("NotForAnonymousFunction.kt")
             public void testNotForAnonymousFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForAnonymousFunction.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForAnonymousFunction.kt");
             }
 
             @TestMetadata("NotForCatchParameter.kt")
             public void testNotForCatchParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForCatchParameter.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForCatchParameter.kt");
             }
 
             @TestMetadata("NotForLambdaParameter1.kt")
             public void testNotForLambdaParameter1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter1.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter1.kt");
             }
 
             @TestMetadata("NotForLambdaParameter2.kt")
             public void testNotForLambdaParameter2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter2.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter2.kt");
             }
 
             @TestMetadata("NotForLambdaParameter3.kt")
             public void testNotForLambdaParameter3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter3.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForLambdaParameter3.kt");
             }
 
             @TestMetadata("NotForSetterParameter.kt")
             public void testNotForSetterParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotForSetterParameter.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotForSetterParameter.kt");
             }
 
             @TestMetadata("NotImported.kt")
             public void testNotImported() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotImported.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotImported.kt");
             }
 
             @TestMetadata("NotImportedJava.kt")
             public void testNotImportedJava() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/NotImportedJava.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/NotImportedJava.kt");
             }
 
             @TestMetadata("ParametersInFile.kt")
             public void testParametersInFile() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFile.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFile.kt");
             }
 
             @TestMetadata("ParametersInFileInaccessibleType.kt")
             public void testParametersInFileInaccessibleType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFileInaccessibleType.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFileInaccessibleType.kt");
             }
 
             @TestMetadata("ParametersInFileInaccessibleType2.kt")
             public void testParametersInFileInaccessibleType2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFileInaccessibleType2.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFileInaccessibleType2.kt");
             }
 
             @TestMetadata("ParametersInFileTypeParameter1.kt")
             public void testParametersInFileTypeParameter1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter1.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter1.kt");
             }
 
             @TestMetadata("ParametersInFileTypeParameter2.kt")
             public void testParametersInFileTypeParameter2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter2.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter2.kt");
             }
 
             @TestMetadata("ParametersInFileTypeParameter3.kt")
             public void testParametersInFileTypeParameter3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter3.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ParametersInFileTypeParameter3.kt");
             }
 
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/Simple.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/Simple.kt");
             }
 
             @TestMetadata("URLConnection.kt")
             public void testURLConnection() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/URLConnection.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/URLConnection.kt");
             }
 
             @TestMetadata("UserPrefix1.kt")
             public void testUserPrefix1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/UserPrefix1.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/UserPrefix1.kt");
             }
 
             @TestMetadata("UserPrefix2.kt")
             public void testUserPrefix2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/UserPrefix2.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/UserPrefix2.kt");
             }
 
             @TestMetadata("UserPrefix3.kt")
             public void testUserPrefix3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/UserPrefix3.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/UserPrefix3.kt");
             }
 
             @TestMetadata("ValParameter.kt")
             public void testValParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/ValParameter.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/ValParameter.kt");
             }
 
             @TestMetadata("VarParameter.kt")
             public void testVarParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterNameAndType/VarParameter.kt");
+                runTest("testData-completion/basic/common/parameterNameAndType/VarParameter.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/primaryConstructor")
-        public static class PrimaryConstructor extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/primaryConstructor")
+        public static class PrimaryConstructor extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primaryConstructor/parameterDefaultValue.kt");
+                runTest("testData-completion/basic/common/primaryConstructor/parameterDefaultValue.kt");
             }
 
             @TestMetadata("previousParameter.kt")
             public void testPreviousParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primaryConstructor/previousParameter.kt");
+                runTest("testData-completion/basic/common/primaryConstructor/previousParameter.kt");
             }
 
             @TestMetadata("propertyType.kt")
             public void testPropertyType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primaryConstructor/propertyType.kt");
+                runTest("testData-completion/basic/common/primaryConstructor/propertyType.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/primitiveCompletion")
-        public static class PrimitiveCompletion extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/primitiveCompletion")
+        public static class PrimitiveCompletion extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("classExtensionFunctionExplicitReceiver.kt")
             public void testClassExtensionFunctionExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classExtensionFunctionExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classExtensionFunctionExplicitReceiver.kt");
             }
 
             @TestMetadata("classFieldsAndFunctions.kt")
             public void testClassFieldsAndFunctions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctions.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctions.kt");
             }
 
             @TestMetadata("classFieldsAndFunctionsExplicitReceiver.kt")
             public void testClassFieldsAndFunctionsExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsExplicitReceiver.kt");
             }
 
             @TestMetadata("classFieldsAndFunctionsFromInheritor.kt")
             public void testClassFieldsAndFunctionsFromInheritor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInheritor.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInheritor.kt");
             }
 
             @TestMetadata("classFieldsAndFunctionsFromInnerClass.kt")
             public void testClassFieldsAndFunctionsFromInnerClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClass.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClass.kt");
             }
 
             @TestMetadata("classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt")
             public void testClassFieldsAndFunctionsFromInnerClassExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt");
             }
 
             @TestMetadata("completionInLocalFunction.kt")
             public void testCompletionInLocalFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/completionInLocalFunction.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/completionInLocalFunction.kt");
             }
 
             @TestMetadata("completionInPropertyLambdaInitializer.kt")
             public void testCompletionInPropertyLambdaInitializer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
             }
 
             @TestMetadata("defaultKotlinImports.kt")
             public void testDefaultKotlinImports() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/defaultKotlinImports.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/defaultKotlinImports.kt");
             }
 
             @TestMetadata("explicitReceiverCompletion.kt")
             public void testExplicitReceiverCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/explicitReceiverCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/explicitReceiverCompletion.kt");
             }
 
             @TestMetadata("extensionPropertyAndFunctionExplicitReceiver.kt")
             public void testExtensionPropertyAndFunctionExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/extensionPropertyAndFunctionExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/extensionPropertyAndFunctionExplicitReceiver.kt");
             }
 
             @TestMetadata("extensionPropertyAndFunctionImplicitReceiver.kt")
             public void testExtensionPropertyAndFunctionImplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/extensionPropertyAndFunctionImplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/extensionPropertyAndFunctionImplicitReceiver.kt");
             }
 
             @TestMetadata("extensionRecompletion.kt")
             public void testExtensionRecompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/extensionRecompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/extensionRecompletion.kt");
             }
 
             @TestMetadata("genericExtensionPropertyAndFunctionExplicitReceiver.kt")
             public void testGenericExtensionPropertyAndFunctionExplicitReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/genericExtensionPropertyAndFunctionExplicitReceiver.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/genericExtensionPropertyAndFunctionExplicitReceiver.kt");
             }
 
             @TestMetadata("implicitReceiverCompletion.kt")
             public void testImplicitReceiverCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/implicitReceiverCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/implicitReceiverCompletion.kt");
             }
 
             @TestMetadata("implicitReceiverFromExtensionMethod.kt")
             public void testImplicitReceiverFromExtensionMethod() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/implicitReceiverFromExtensionMethod.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/implicitReceiverFromExtensionMethod.kt");
             }
 
             @TestMetadata("insideFunctionWithParameters.kt")
             public void testInsideFunctionWithParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
             }
 
             @TestMetadata("localClassConstructor.kt")
             public void testLocalClassConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/localClassConstructor.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/localClassConstructor.kt");
             }
 
             @TestMetadata("localClassMember.kt")
             public void testLocalClassMember() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/localClassMember.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/localClassMember.kt");
             }
 
             @TestMetadata("localVariablesAndFunctions.kt")
             public void testLocalVariablesAndFunctions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/localVariablesAndFunctions.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/localVariablesAndFunctions.kt");
             }
 
             @TestMetadata("localVariablesAndFunctionsFromNestedScope.kt")
             public void testLocalVariablesAndFunctionsFromNestedScope() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/localVariablesAndFunctionsFromNestedScope.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/localVariablesAndFunctionsFromNestedScope.kt");
             }
 
             @TestMetadata("noCompletionAfterNumberLiteral1.kt")
             public void testNoCompletionAfterNumberLiteral1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral1.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral1.kt");
             }
 
             @TestMetadata("noCompletionAfterNumberLiteral2.kt")
             public void testNoCompletionAfterNumberLiteral2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral2.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral2.kt");
             }
 
             @TestMetadata("nullableCompletion.kt")
             public void testNullableCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/nullableCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/nullableCompletion.kt");
             }
 
             @TestMetadata("smartCast.kt")
             public void testSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/smartCast.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/smartCast.kt");
             }
 
             @TestMetadata("stringCompletion.kt")
             public void testStringCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/stringCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/stringCompletion.kt");
             }
 
             @TestMetadata("topLevelClasses.kt")
             public void testTopLevelClasses() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelClasses.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelClasses.kt");
             }
 
             @TestMetadata("topLevelPropertyGetterBodyCompletion.kt")
             public void testTopLevelPropertyGetterBodyCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterBodyCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterBodyCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyGetterExpressionCompletion.kt")
             public void testTopLevelPropertyGetterExpressionCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterExpressionCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterExpressionCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyGetterTypeCompletion.kt")
             public void testTopLevelPropertyGetterTypeCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterTypeCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertyGetterTypeCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyInitializerCompletion.kt")
             public void testTopLevelPropertyInitializerCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertyInitializerCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertyInitializerCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertySetterBodyCompletion.kt")
             public void testTopLevelPropertySetterBodyCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertySetterBodyCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertySetterBodyCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertySetterExpressionCompletion.kt")
             public void testTopLevelPropertySetterExpressionCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertySetterExpressionCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertySetterExpressionCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyTypeCompletion.kt")
             public void testTopLevelPropertyTypeCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelPropertyTypeCompletion.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelPropertyTypeCompletion.kt");
             }
 
             @TestMetadata("topLevelVariablesAndFunctions.kt")
             public void testTopLevelVariablesAndFunctions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/topLevelVariablesAndFunctions.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/topLevelVariablesAndFunctions.kt");
             }
 
             @TestMetadata("twoReceivers.kt")
             public void testTwoReceivers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/primitiveCompletion/twoReceivers.kt");
+                runTest("testData-completion/basic/common/primitiveCompletion/twoReceivers.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/shadowing")
-        public static class Shadowing extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/shadowing")
+        public static class Shadowing extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ExtensionShadows.kt")
             public void testExtensionShadows() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/ExtensionShadows.kt");
+                runTest("testData-completion/basic/common/shadowing/ExtensionShadows.kt");
             }
 
             @TestMetadata("InInitializer1.kt")
             public void testInInitializer1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer1.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer1.kt");
             }
 
             @TestMetadata("InInitializer2.kt")
             public void testInInitializer2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer2.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer2.kt");
             }
 
             @TestMetadata("InInitializer3.kt")
             public void testInInitializer3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer3.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer3.kt");
             }
 
             @TestMetadata("InInitializer4.kt")
             public void testInInitializer4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer4.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer4.kt");
             }
 
             @TestMetadata("InInitializer5.kt")
             public void testInInitializer5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer5.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer5.kt");
             }
 
             @TestMetadata("InInitializer6.kt")
             public void testInInitializer6() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer6.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer6.kt");
             }
 
             @TestMetadata("InInitializer7.kt")
             public void testInInitializer7() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/InInitializer7.kt");
+                runTest("testData-completion/basic/common/shadowing/InInitializer7.kt");
             }
 
             @TestMetadata("Locals1.kt")
             public void testLocals1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/Locals1.kt");
+                runTest("testData-completion/basic/common/shadowing/Locals1.kt");
             }
 
             @TestMetadata("Locals2.kt")
             public void testLocals2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/Locals2.kt");
+                runTest("testData-completion/basic/common/shadowing/Locals2.kt");
             }
 
             @TestMetadata("Overloads.kt")
             public void testOverloads() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/Overloads.kt");
+                runTest("testData-completion/basic/common/shadowing/Overloads.kt");
             }
 
             @TestMetadata("OverloadsAndVararg.kt")
             public void testOverloadsAndVararg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/OverloadsAndVararg.kt");
+                runTest("testData-completion/basic/common/shadowing/OverloadsAndVararg.kt");
             }
 
             @TestMetadata("PreferCloserMember.kt")
             public void testPreferCloserMember() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferCloserMember.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferCloserMember.kt");
             }
 
             @TestMetadata("PreferCloserReceiverGeneric.kt")
             public void testPreferCloserReceiverGeneric() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferCloserReceiverGeneric.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferCloserReceiverGeneric.kt");
             }
 
             @TestMetadata("PreferMemberExtension.kt")
             public void testPreferMemberExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMemberExtension.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMemberExtension.kt");
             }
 
             @TestMetadata("PreferMemberToExtension.kt")
             public void testPreferMemberToExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMemberToExtension.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMemberToExtension.kt");
             }
 
             @TestMetadata("PreferMemberToGlobal.kt")
             public void testPreferMemberToGlobal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMemberToGlobal.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMemberToGlobal.kt");
             }
 
             @TestMetadata("PreferMoreSpecificExtension.kt")
             public void testPreferMoreSpecificExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMoreSpecificExtension.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMoreSpecificExtension.kt");
             }
 
             @TestMetadata("PreferMoreSpecificExtensionGeneric.kt")
             public void testPreferMoreSpecificExtensionGeneric() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGeneric.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGeneric.kt");
             }
 
             @TestMetadata("PreferMoreSpecificExtensionGenericWithMultipleParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithMultipleParam() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithMultipleParam.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithMultipleParam.kt");
             }
 
             @TestMetadata("PreferMoreSpecificExtensionGenericWithParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithParam() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithParam.kt");
+                runTest("testData-completion/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithParam.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/smartCast")
-        public static class SmartCast extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/smartCast")
+        public static class SmartCast extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("functionWithContract.kt")
             public void testFunctionWithContract() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/functionWithContract.kt");
+                runTest("testData-completion/basic/common/smartCast/functionWithContract.kt");
             }
 
             @TestMetadata("MemberExtensionAfterThisSmartCast.kt")
             public void testMemberExtensionAfterThisSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/MemberExtensionAfterThisSmartCast.kt");
+                runTest("testData-completion/basic/common/smartCast/MemberExtensionAfterThisSmartCast.kt");
             }
 
             @TestMetadata("MembersAfterSmartCast.kt")
             public void testMembersAfterSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/MembersAfterSmartCast.kt");
+                runTest("testData-completion/basic/common/smartCast/MembersAfterSmartCast.kt");
             }
 
             @TestMetadata("SmartCastAfterIf.kt")
             public void testSmartCastAfterIf() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/SmartCastAfterIf.kt");
+                runTest("testData-completion/basic/common/smartCast/SmartCastAfterIf.kt");
             }
 
             @TestMetadata("SmartCastAfterIfMethod.kt")
             public void testSmartCastAfterIfMethod() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/SmartCastAfterIfMethod.kt");
+                runTest("testData-completion/basic/common/smartCast/SmartCastAfterIfMethod.kt");
             }
 
             @TestMetadata("SmartCastForThis.kt")
             public void testSmartCastForThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/SmartCastForThis.kt");
+                runTest("testData-completion/basic/common/smartCast/SmartCastForThis.kt");
             }
 
             @TestMetadata("SmartCastInWhen.kt")
             public void testSmartCastInWhen() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/SmartCastInWhen.kt");
+                runTest("testData-completion/basic/common/smartCast/SmartCastInWhen.kt");
             }
 
             @TestMetadata("SmartCastThis.kt")
             public void testSmartCastThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/smartCast/SmartCastThis.kt");
+                runTest("testData-completion/basic/common/smartCast/SmartCastThis.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/staticMembers")
-        public static class StaticMembers extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/staticMembers")
+        public static class StaticMembers extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ImportsFromEnumEntry.kt")
             public void testImportsFromEnumEntry() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/ImportsFromEnumEntry.kt");
+                runTest("testData-completion/basic/common/staticMembers/ImportsFromEnumEntry.kt");
             }
 
             @TestMetadata("ImportsFromNonObject.kt")
             public void testImportsFromNonObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/ImportsFromNonObject.kt");
+                runTest("testData-completion/basic/common/staticMembers/ImportsFromNonObject.kt");
             }
 
             @TestMetadata("ImportsFromObjectNoDuplicates.kt")
             public void testImportsFromObjectNoDuplicates() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/ImportsFromObjectNoDuplicates.kt");
+                runTest("testData-completion/basic/common/staticMembers/ImportsFromObjectNoDuplicates.kt");
             }
 
             @TestMetadata("JavaStaticFields.kt")
             public void testJavaStaticFields() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticFields.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticFields.kt");
             }
 
             @TestMetadata("JavaStaticFieldsFromImports.kt")
             public void testJavaStaticFieldsFromImports() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticFieldsFromImports.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticFieldsFromImports.kt");
             }
 
             @TestMetadata("JavaStaticMethods.kt")
             public void testJavaStaticMethods() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticMethods.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticMethods.kt");
             }
 
             @TestMetadata("JavaStaticMethodsFromImports.kt")
             public void testJavaStaticMethodsFromImports() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticMethodsFromImports.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticMethodsFromImports.kt");
             }
 
             @TestMetadata("JavaStaticMethodsNoDuplicates.kt")
             public void testJavaStaticMethodsNoDuplicates() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticMethodsNoDuplicates.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticMethodsNoDuplicates.kt");
             }
 
             @TestMetadata("JavaStaticMethodsNoDuplicatesFromBases.kt")
             public void testJavaStaticMethodsNoDuplicatesFromBases() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/staticMembers/JavaStaticMethodsNoDuplicatesFromBases.kt");
+                runTest("testData-completion/basic/common/staticMembers/JavaStaticMethodsNoDuplicatesFromBases.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/substitutedSignature")
-        public static class SubstitutedSignature extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/substitutedSignature")
+        public static class SubstitutedSignature extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("SubstitutedSignature1.kt")
             public void testSubstitutedSignature1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature1.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature1.kt");
             }
 
             @TestMetadata("SubstitutedSignature2.kt")
             public void testSubstitutedSignature2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature2.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature2.kt");
             }
 
             @TestMetadata("SubstitutedSignature3.kt")
             public void testSubstitutedSignature3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature3.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature3.kt");
             }
 
             @TestMetadata("SubstitutedSignature4.kt")
             public void testSubstitutedSignature4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature4.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature4.kt");
             }
 
             @TestMetadata("SubstitutedSignature5.kt")
             public void testSubstitutedSignature5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature5.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature5.kt");
             }
 
             @TestMetadata("SubstitutedSignature6.kt")
             public void testSubstitutedSignature6() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignature6.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignature6.kt");
             }
 
             @TestMetadata("SubstitutedSignatureSOE.kt")
             public void testSubstitutedSignatureSOE() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/substitutedSignature/SubstitutedSignatureSOE.kt");
+                runTest("testData-completion/basic/common/substitutedSignature/SubstitutedSignatureSOE.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/super")
-        public static class Super extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/super")
+        public static class Super extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("QualifierType1.kt")
             public void testQualifierType1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType1.kt");
+                runTest("testData-completion/basic/common/super/QualifierType1.kt");
             }
 
             @TestMetadata("QualifierType2.kt")
             public void testQualifierType2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType2.kt");
+                runTest("testData-completion/basic/common/super/QualifierType2.kt");
             }
 
             @TestMetadata("QualifierType3.kt")
             public void testQualifierType3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType3.kt");
+                runTest("testData-completion/basic/common/super/QualifierType3.kt");
             }
 
             @TestMetadata("QualifierType4.kt")
             public void testQualifierType4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType4.kt");
+                runTest("testData-completion/basic/common/super/QualifierType4.kt");
             }
 
             @TestMetadata("QualifierType5.kt")
             public void testQualifierType5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType5.kt");
+                runTest("testData-completion/basic/common/super/QualifierType5.kt");
             }
 
             @TestMetadata("QualifierType6.kt")
             public void testQualifierType6() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierType6.kt");
+                runTest("testData-completion/basic/common/super/QualifierType6.kt");
             }
 
             @TestMetadata("QualifierTypeAny.kt")
             public void testQualifierTypeAny() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierTypeAny.kt");
+                runTest("testData-completion/basic/common/super/QualifierTypeAny.kt");
             }
 
             @TestMetadata("QualifierTypeAnyInInterface.kt")
             public void testQualifierTypeAnyInInterface() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierTypeAnyInInterface.kt");
+                runTest("testData-completion/basic/common/super/QualifierTypeAnyInInterface.kt");
             }
 
             @TestMetadata("QualifierTypeGeneric.kt")
             public void testQualifierTypeGeneric() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/QualifierTypeGeneric.kt");
+                runTest("testData-completion/basic/common/super/QualifierTypeGeneric.kt");
             }
 
             @TestMetadata("SuperMethod.kt")
             public void testSuperMethod() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/super/SuperMethod.kt");
+                runTest("testData-completion/basic/common/super/SuperMethod.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/typeArgsOrNot")
-        public static class TypeArgsOrNot extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/typeArgsOrNot")
+        public static class TypeArgsOrNot extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ConstructorTypeArg.kt")
             public void testConstructorTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/ConstructorTypeArg.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/ConstructorTypeArg.kt");
             }
 
             @TestMetadata("FunctionTypeArg.kt")
             public void testFunctionTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/FunctionTypeArg.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/FunctionTypeArg.kt");
             }
 
             @TestMetadata("FunctionTypeArg2.kt")
             public void testFunctionTypeArg2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/FunctionTypeArg2.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/FunctionTypeArg2.kt");
             }
 
             @TestMetadata("LessThan.kt")
             public void testLessThan() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/LessThan.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/LessThan.kt");
             }
 
             @TestMetadata("NestedTypeArg.kt")
             public void testNestedTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/NestedTypeArg.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/NestedTypeArg.kt");
             }
 
             @TestMetadata("SecondTypeArg.kt")
             public void testSecondTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/SecondTypeArg.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/SecondTypeArg.kt");
             }
 
             @TestMetadata("SecondTypeArg2.kt")
             public void testSecondTypeArg2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/SecondTypeArg2.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/SecondTypeArg2.kt");
             }
 
             @TestMetadata("SecondTypeArg3.kt")
             public void testSecondTypeArg3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/SecondTypeArg3.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/SecondTypeArg3.kt");
             }
 
             @TestMetadata("SecondTypeArg4.kt")
             public void testSecondTypeArg4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/typeArgsOrNot/SecondTypeArg4.kt");
+                runTest("testData-completion/basic/common/typeArgsOrNot/SecondTypeArg4.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common")
-        public static class Uncategorized extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common")
+        public static class Uncategorized extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("AfterFloatOnNewLine.kt")
             public void testAfterFloatOnNewLine() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/AfterFloatOnNewLine.kt");
+                runTest("testData-completion/basic/common/AfterFloatOnNewLine.kt");
             }
 
             @TestMetadata("AfterIntSeparatedWithComments.kt")
             public void testAfterIntSeparatedWithComments() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/AfterIntSeparatedWithComments.kt");
+                runTest("testData-completion/basic/common/AfterIntSeparatedWithComments.kt");
             }
 
             @TestMetadata("ambiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ambiguousSuperMethod.kt");
+                runTest("testData-completion/basic/common/ambiguousSuperMethod.kt");
             }
 
             @TestMetadata("ambiguousSuperMethodDiamond.kt")
             public void testAmbiguousSuperMethodDiamond() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ambiguousSuperMethodDiamond.kt");
+                runTest("testData-completion/basic/common/ambiguousSuperMethodDiamond.kt");
             }
 
             @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
             public void testAmbiguousSuperMethodDiamondAny() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ambiguousSuperMethodDiamondAny.kt");
+                runTest("testData-completion/basic/common/ambiguousSuperMethodDiamondAny.kt");
             }
 
             @TestMetadata("ambiguousSuperMethodHigherUp.kt")
             public void testAmbiguousSuperMethodHigherUp() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ambiguousSuperMethodHigherUp.kt");
+                runTest("testData-completion/basic/common/ambiguousSuperMethodHigherUp.kt");
             }
 
             @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
             public void testAmbiguousSuperMethodSingleImpl() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ambiguousSuperMethodSingleImpl.kt");
+                runTest("testData-completion/basic/common/ambiguousSuperMethodSingleImpl.kt");
             }
 
             @TestMetadata("BasicAny.kt")
             public void testBasicAny() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/BasicAny.kt");
+                runTest("testData-completion/basic/common/BasicAny.kt");
             }
 
             @TestMetadata("BasicInt.kt")
             public void testBasicInt() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/BasicInt.kt");
+                runTest("testData-completion/basic/common/BasicInt.kt");
             }
 
             @TestMetadata("BeforeDotInCall.kt")
             public void testBeforeDotInCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/BeforeDotInCall.kt");
+                runTest("testData-completion/basic/common/BeforeDotInCall.kt");
             }
 
             @TestMetadata("CallLocalLambda.kt")
             public void testCallLocalLambda() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/CallLocalLambda.kt");
+                runTest("testData-completion/basic/common/CallLocalLambda.kt");
             }
 
             @TestMetadata("classObjectElementsInClass.kt")
             public void testClassObjectElementsInClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/classObjectElementsInClass.kt");
+                runTest("testData-completion/basic/common/classObjectElementsInClass.kt");
             }
 
             @TestMetadata("ClassRedeclaration1.kt")
             public void testClassRedeclaration1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ClassRedeclaration1.kt");
+                runTest("testData-completion/basic/common/ClassRedeclaration1.kt");
             }
 
             @TestMetadata("ClassRedeclaration2.kt")
             public void testClassRedeclaration2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ClassRedeclaration2.kt");
+                runTest("testData-completion/basic/common/ClassRedeclaration2.kt");
             }
 
             @TestMetadata("CompletionInSetter.kt")
             public void testCompletionInSetter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/CompletionInSetter.kt");
+                runTest("testData-completion/basic/common/CompletionInSetter.kt");
             }
 
             @TestMetadata("ComponentFunction.kt")
             public void testComponentFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ComponentFunction.kt");
+                runTest("testData-completion/basic/common/ComponentFunction.kt");
             }
 
             @TestMetadata("ConsiderExtensionType.kt")
             public void testConsiderExtensionType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ConsiderExtensionType.kt");
+                runTest("testData-completion/basic/common/ConsiderExtensionType.kt");
             }
 
             @TestMetadata("CoroutineContextReleaseCoroutines.kt")
             public void testCoroutineContextReleaseCoroutines() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/CoroutineContextReleaseCoroutines.kt");
+                runTest("testData-completion/basic/common/CoroutineContextReleaseCoroutines.kt");
             }
 
             @TestMetadata("DataClassMembers.kt")
             public void testDataClassMembers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/DataClassMembers.kt");
+                runTest("testData-completion/basic/common/DataClassMembers.kt");
             }
 
             @TestMetadata("DataClassMembers2.kt")
             public void testDataClassMembers2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/DataClassMembers2.kt");
+                runTest("testData-completion/basic/common/DataClassMembers2.kt");
             }
 
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
             public void testEnumItemsThroughChainedTypeAlias() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/EnumItemsThroughChainedTypeAlias.kt");
+                runTest("testData-completion/basic/common/EnumItemsThroughChainedTypeAlias.kt");
             }
 
             @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
             public void testEnumItemsThroughSingleTypeAlias() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+                runTest("testData-completion/basic/common/EnumItemsThroughSingleTypeAlias.kt");
             }
 
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtendClassName.kt");
+                runTest("testData-completion/basic/common/ExtendClassName.kt");
             }
 
             @TestMetadata("ExtendQualifiedClassName.kt")
             public void testExtendQualifiedClassName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtendQualifiedClassName.kt");
+                runTest("testData-completion/basic/common/ExtendQualifiedClassName.kt");
             }
 
             @TestMetadata("ExtensionForProperty.kt")
             public void testExtensionForProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionForProperty.kt");
+                runTest("testData-completion/basic/common/ExtensionForProperty.kt");
             }
 
             @TestMetadata("ExtensionFunReceiver.kt")
             public void testExtensionFunReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionFunReceiver.kt");
+                runTest("testData-completion/basic/common/ExtensionFunReceiver.kt");
             }
 
             @TestMetadata("ExtensionFunReceiverForce.kt")
             public void testExtensionFunReceiverForce() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionFunReceiverForce.kt");
+                runTest("testData-completion/basic/common/ExtensionFunReceiverForce.kt");
             }
 
             @TestMetadata("ExtensionFunctionInClassObject.kt")
             public void testExtensionFunctionInClassObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionFunctionInClassObject.kt");
+                runTest("testData-completion/basic/common/ExtensionFunctionInClassObject.kt");
             }
 
             @TestMetadata("ExtensionInsideFunction.kt")
             public void testExtensionInsideFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionInsideFunction.kt");
+                runTest("testData-completion/basic/common/ExtensionInsideFunction.kt");
             }
 
             @TestMetadata("ExtensionOnTypeAliasFromOtherTypeAlias.kt")
             public void testExtensionOnTypeAliasFromOtherTypeAlias() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionOnTypeAliasFromOtherTypeAlias.kt");
+                runTest("testData-completion/basic/common/ExtensionOnTypeAliasFromOtherTypeAlias.kt");
             }
 
             @TestMetadata("ExtensionToIntInFloatStyle.kt")
             public void testExtensionToIntInFloatStyle() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionToIntInFloatStyle.kt");
+                runTest("testData-completion/basic/common/ExtensionToIntInFloatStyle.kt");
             }
 
             @TestMetadata("ExtensionWithAdditionalTypeParameters.kt")
             public void testExtensionWithAdditionalTypeParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionWithAdditionalTypeParameters.kt");
+                runTest("testData-completion/basic/common/ExtensionWithAdditionalTypeParameters.kt");
             }
 
             @TestMetadata("ExtensionWithGenericParamInReceiver.kt")
             public void testExtensionWithGenericParamInReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionWithGenericParamInReceiver.kt");
+                runTest("testData-completion/basic/common/ExtensionWithGenericParamInReceiver.kt");
             }
 
             @TestMetadata("ExtensionWithGenericReceiver.kt")
             public void testExtensionWithGenericReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionWithGenericReceiver.kt");
+                runTest("testData-completion/basic/common/ExtensionWithGenericReceiver.kt");
             }
 
             @TestMetadata("ExtensionWithInternalGenericParameters.kt")
             public void testExtensionWithInternalGenericParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionWithInternalGenericParameters.kt");
+                runTest("testData-completion/basic/common/ExtensionWithInternalGenericParameters.kt");
             }
 
             @TestMetadata("ExtensionWithManyTypeParamsInReceiver.kt")
             public void testExtensionWithManyTypeParamsInReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionWithManyTypeParamsInReceiver.kt");
+                runTest("testData-completion/basic/common/ExtensionWithManyTypeParamsInReceiver.kt");
             }
 
             @TestMetadata("ExtensionsWithTypeParameterConstraints.kt")
             public void testExtensionsWithTypeParameterConstraints() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ExtensionsWithTypeParameterConstraints.kt");
+                runTest("testData-completion/basic/common/ExtensionsWithTypeParameterConstraints.kt");
             }
 
             @TestMetadata("FromImports.kt")
             public void testFromImports() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/FromImports.kt");
+                runTest("testData-completion/basic/common/FromImports.kt");
             }
 
             @TestMetadata("FunctionCompletionFormatting.kt")
             public void testFunctionCompletionFormatting() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/FunctionCompletionFormatting.kt");
+                runTest("testData-completion/basic/common/FunctionCompletionFormatting.kt");
             }
 
             @TestMetadata("FunctionVariableCallArgument.kt")
             public void testFunctionVariableCallArgument() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/FunctionVariableCallArgument.kt");
+                runTest("testData-completion/basic/common/FunctionVariableCallArgument.kt");
             }
 
             @TestMetadata("GenericCompanionExtension.kt")
             public void testGenericCompanionExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/GenericCompanionExtension.kt");
+                runTest("testData-completion/basic/common/GenericCompanionExtension.kt");
             }
 
             @TestMetadata("GenericExtensionFunReceiver1.kt")
             public void testGenericExtensionFunReceiver1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/GenericExtensionFunReceiver1.kt");
+                runTest("testData-completion/basic/common/GenericExtensionFunReceiver1.kt");
             }
 
             @TestMetadata("GenericExtensionFunReceiver2.kt")
             public void testGenericExtensionFunReceiver2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/GenericExtensionFunReceiver2.kt");
+                runTest("testData-completion/basic/common/GenericExtensionFunReceiver2.kt");
             }
 
             @TestMetadata("GenericKotlinClass.kt")
             public void testGenericKotlinClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/GenericKotlinClass.kt");
+                runTest("testData-completion/basic/common/GenericKotlinClass.kt");
             }
 
             @TestMetadata("GetPrefixForProperties.kt")
             public void testGetPrefixForProperties() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/GetPrefixForProperties.kt");
+                runTest("testData-completion/basic/common/GetPrefixForProperties.kt");
             }
 
             @TestMetadata("ImportedEnumMembers.kt")
             public void testImportedEnumMembers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ImportedEnumMembers.kt");
+                runTest("testData-completion/basic/common/ImportedEnumMembers.kt");
             }
 
             @TestMetadata("ImportedMemberFromObject.kt")
             public void testImportedMemberFromObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ImportedMemberFromObject.kt");
+                runTest("testData-completion/basic/common/ImportedMemberFromObject.kt");
             }
 
             @TestMetadata("InCallExpression.kt")
             public void testInCallExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InCallExpression.kt");
+                runTest("testData-completion/basic/common/InCallExpression.kt");
             }
 
             @TestMetadata("InClassInitializer.kt")
             public void testInClassInitializer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InClassInitializer.kt");
+                runTest("testData-completion/basic/common/InClassInitializer.kt");
             }
 
             @TestMetadata("InClassObject.kt")
             public void testInClassObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InClassObject.kt");
+                runTest("testData-completion/basic/common/InClassObject.kt");
             }
 
             @TestMetadata("InClassPropertyAccessor.kt")
             public void testInClassPropertyAccessor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InClassPropertyAccessor.kt");
+                runTest("testData-completion/basic/common/InClassPropertyAccessor.kt");
             }
 
             @TestMetadata("InEmptyImport.kt")
             public void testInEmptyImport() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InEmptyImport.kt");
+                runTest("testData-completion/basic/common/InEmptyImport.kt");
             }
 
             @TestMetadata("InEmptyPackage.kt")
             public void testInEmptyPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InEmptyPackage.kt");
+                runTest("testData-completion/basic/common/InEmptyPackage.kt");
             }
 
             @TestMetadata("InExpressionNoPrefix.kt")
             public void testInExpressionNoPrefix() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InExpressionNoPrefix.kt");
+                runTest("testData-completion/basic/common/InExpressionNoPrefix.kt");
             }
 
             @TestMetadata("InExtendTypeAnnotation.kt")
             public void testInExtendTypeAnnotation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InExtendTypeAnnotation.kt");
+                runTest("testData-completion/basic/common/InExtendTypeAnnotation.kt");
             }
 
             @TestMetadata("InFileWithMultiDeclaration.kt")
             public void testInFileWithMultiDeclaration() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InFileWithMultiDeclaration.kt");
+                runTest("testData-completion/basic/common/InFileWithMultiDeclaration.kt");
             }
 
             @TestMetadata("InFileWithTypedef.kt")
             public void testInFileWithTypedef() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InFileWithTypedef.kt");
+                runTest("testData-completion/basic/common/InFileWithTypedef.kt");
             }
 
             @TestMetadata("InFunInClassInitializer.kt")
             public void testInFunInClassInitializer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InFunInClassInitializer.kt");
+                runTest("testData-completion/basic/common/InFunInClassInitializer.kt");
             }
 
             @TestMetadata("InFunctionArguments.kt")
             public void testInFunctionArguments() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InFunctionArguments.kt");
+                runTest("testData-completion/basic/common/InFunctionArguments.kt");
             }
 
             @TestMetadata("InGlobalPropertyInitializer.kt")
             public void testInGlobalPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InGlobalPropertyInitializer.kt");
+                runTest("testData-completion/basic/common/InGlobalPropertyInitializer.kt");
             }
 
             @TestMetadata("InImport.kt")
             public void testInImport() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InImport.kt");
+                runTest("testData-completion/basic/common/InImport.kt");
             }
 
             @TestMetadata("InInitializerInPropertyAccessor.kt")
             public void testInInitializerInPropertyAccessor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InInitializerInPropertyAccessor.kt");
+                runTest("testData-completion/basic/common/InInitializerInPropertyAccessor.kt");
             }
 
             @TestMetadata("InInnerClass.kt")
             public void testInInnerClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InInnerClass.kt");
+                runTest("testData-completion/basic/common/InInnerClass.kt");
             }
 
             @TestMetadata("InLambda.kt")
             public void testInLambda() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InLambda.kt");
+                runTest("testData-completion/basic/common/InLambda.kt");
             }
 
             @TestMetadata("InLocalObjectDeclaration.kt")
             public void testInLocalObjectDeclaration() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InLocalObjectDeclaration.kt");
+                runTest("testData-completion/basic/common/InLocalObjectDeclaration.kt");
             }
 
             @TestMetadata("InLongDotQualifiedExpression.kt")
             public void testInLongDotQualifiedExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InLongDotQualifiedExpression.kt");
+                runTest("testData-completion/basic/common/InLongDotQualifiedExpression.kt");
             }
 
             @TestMetadata("InMiddleOfPackage.kt")
             public void testInMiddleOfPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InMiddleOfPackage.kt");
+                runTest("testData-completion/basic/common/InMiddleOfPackage.kt");
             }
 
             @TestMetadata("InMiddleOfPackageDirective.kt")
             public void testInMiddleOfPackageDirective() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InMiddleOfPackageDirective.kt");
+                runTest("testData-completion/basic/common/InMiddleOfPackageDirective.kt");
             }
 
             @TestMetadata("InNestedClass.kt")
             public void testInNestedClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InNestedClass.kt");
+                runTest("testData-completion/basic/common/InNestedClass.kt");
             }
 
             @TestMetadata("InObjectInDelegationSpecifier.kt")
             public void testInObjectInDelegationSpecifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InObjectInDelegationSpecifier.kt");
+                runTest("testData-completion/basic/common/InObjectInDelegationSpecifier.kt");
             }
 
             @TestMetadata("InPackage.kt")
             public void testInPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InPackage.kt");
+                runTest("testData-completion/basic/common/InPackage.kt");
             }
 
             @TestMetadata("InParametersTypes.kt")
             public void testInParametersTypes() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InParametersTypes.kt");
+                runTest("testData-completion/basic/common/InParametersTypes.kt");
             }
 
             @TestMetadata("InParametersTypesForce.kt")
             public void testInParametersTypesForce() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InParametersTypesForce.kt");
+                runTest("testData-completion/basic/common/InParametersTypesForce.kt");
             }
 
             @TestMetadata("InPropertyAccessor.kt")
             public void testInPropertyAccessor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InPropertyAccessor.kt");
+                runTest("testData-completion/basic/common/InPropertyAccessor.kt");
             }
 
             @TestMetadata("InPropertyInitializer.kt")
             public void testInPropertyInitializer() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InPropertyInitializer.kt");
+                runTest("testData-completion/basic/common/InPropertyInitializer.kt");
             }
 
             @TestMetadata("InSecondaryConstructorBody.kt")
             public void testInSecondaryConstructorBody() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InSecondaryConstructorBody.kt");
+                runTest("testData-completion/basic/common/InSecondaryConstructorBody.kt");
             }
 
             @TestMetadata("InSecondaryConstructorDefaultParameter.kt")
             public void testInSecondaryConstructorDefaultParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InSecondaryConstructorDefaultParameter.kt");
+                runTest("testData-completion/basic/common/InSecondaryConstructorDefaultParameter.kt");
             }
 
             @TestMetadata("InSecondaryConstructorDelegationCall.kt")
             public void testInSecondaryConstructorDelegationCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InSecondaryConstructorDelegationCall.kt");
+                runTest("testData-completion/basic/common/InSecondaryConstructorDelegationCall.kt");
             }
 
             @TestMetadata("InSecondaryConstructorFirstDefaultParameter.kt")
             public void testInSecondaryConstructorFirstDefaultParameter() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InSecondaryConstructorFirstDefaultParameter.kt");
+                runTest("testData-completion/basic/common/InSecondaryConstructorFirstDefaultParameter.kt");
             }
 
             @TestMetadata("InTypeAnnotation.kt")
             public void testInTypeAnnotation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InTypeAnnotation.kt");
+                runTest("testData-completion/basic/common/InTypeAnnotation.kt");
             }
 
             @TestMetadata("InfixCall.kt")
             public void testInfixCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InfixCall.kt");
+                runTest("testData-completion/basic/common/InfixCall.kt");
             }
 
             @TestMetadata("InfixCallNoSpecialLambdaArgumentItem.kt")
             public void testInfixCallNoSpecialLambdaArgumentItem() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InfixCallNoSpecialLambdaArgumentItem.kt");
+                runTest("testData-completion/basic/common/InfixCallNoSpecialLambdaArgumentItem.kt");
             }
 
             @TestMetadata("InnerClass.kt")
             public void testInnerClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InnerClass.kt");
+                runTest("testData-completion/basic/common/InnerClass.kt");
             }
 
             @TestMetadata("InnerInBaseClass.kt")
             public void testInnerInBaseClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InnerInBaseClass.kt");
+                runTest("testData-completion/basic/common/InnerInBaseClass.kt");
             }
 
             @TestMetadata("InsideAnonymousClass.kt")
             public void testInsideAnonymousClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InsideAnonymousClass.kt");
+                runTest("testData-completion/basic/common/InsideAnonymousClass.kt");
             }
 
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
             public void testInterfaceNameBeforeRunBug() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/InterfaceNameBeforeRunBug.kt");
+                runTest("testData-completion/basic/common/InterfaceNameBeforeRunBug.kt");
             }
 
             @TestMetadata("KT10664.kt")
             public void testKT10664() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT10664.kt");
+                runTest("testData-completion/basic/common/KT10664.kt");
             }
 
             @TestMetadata("KT12033.kt")
             public void testKT12033() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT12033.kt");
+                runTest("testData-completion/basic/common/KT12033.kt");
             }
 
             @TestMetadata("KT13780.kt")
             public void testKT13780() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT13780.kt");
+                runTest("testData-completion/basic/common/KT13780.kt");
             }
 
             @TestMetadata("KT13780_1.kt")
             public void testKT13780_1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT13780_1.kt");
+                runTest("testData-completion/basic/common/KT13780_1.kt");
             }
 
             @TestMetadata("KT31762.kt")
             public void testKT31762() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT31762.kt");
+                runTest("testData-completion/basic/common/KT31762.kt");
             }
 
             @TestMetadata("KT33903_1.kt")
             public void testKT33903_1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT33903_1.kt");
+                runTest("testData-completion/basic/common/KT33903_1.kt");
             }
 
             @TestMetadata("KT33903_2.kt")
             public void testKT33903_2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KT33903_2.kt");
+                runTest("testData-completion/basic/common/KT33903_2.kt");
             }
 
             @TestMetadata("KTIJ20039.kt")
             public void testKTIJ20039() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KTIJ20039.kt");
+                runTest("testData-completion/basic/common/KTIJ20039.kt");
             }
 
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
             public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
+                runTest("testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
             }
 
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion2.kt")
             public void testKeywordsAreLowInParameterTypeCompletion2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion2.kt");
+                runTest("testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion2.kt");
             }
 
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion3.kt")
             public void testKeywordsAreLowInParameterTypeCompletion3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion3.kt");
+                runTest("testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion3.kt");
             }
 
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
             public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+                runTest("testData-completion/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
             }
 
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/LocalMultideclarationValues.kt");
+                runTest("testData-completion/basic/common/LocalMultideclarationValues.kt");
             }
 
             @TestMetadata("NameWithDollars.kt")
             public void testNameWithDollars() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NameWithDollars.kt");
+                runTest("testData-completion/basic/common/NameWithDollars.kt");
             }
 
             @TestMetadata("NamedObject.kt")
             public void testNamedObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NamedObject.kt");
+                runTest("testData-completion/basic/common/NamedObject.kt");
             }
 
             @TestMetadata("NestedBuiltInClass.kt")
             public void testNestedBuiltInClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedBuiltInClass.kt");
+                runTest("testData-completion/basic/common/NestedBuiltInClass.kt");
             }
 
             @TestMetadata("NestedClassBug.kt")
             public void testNestedClassBug() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassBug.kt");
+                runTest("testData-completion/basic/common/NestedClassBug.kt");
             }
 
             @TestMetadata("NestedClassNameForExtension.kt")
             public void testNestedClassNameForExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassNameForExtension.kt");
+                runTest("testData-completion/basic/common/NestedClassNameForExtension.kt");
             }
 
             @TestMetadata("NestedClassNameForExtension2.kt")
             public void testNestedClassNameForExtension2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassNameForExtension2.kt");
+                runTest("testData-completion/basic/common/NestedClassNameForExtension2.kt");
             }
 
             @TestMetadata("NestedClassesOnClassWithDefaultObject.kt")
             public void testNestedClassesOnClassWithDefaultObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassesOnClassWithDefaultObject.kt");
+                runTest("testData-completion/basic/common/NestedClassesOnClassWithDefaultObject.kt");
             }
 
             @TestMetadata("NestedClassesOnClassWithNamedDefaultObject.kt")
             public void testNestedClassesOnClassWithNamedDefaultObject() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassesOnClassWithNamedDefaultObject.kt");
+                runTest("testData-completion/basic/common/NestedClassesOnClassWithNamedDefaultObject.kt");
             }
 
             @TestMetadata("NestedClassesOnDefaultObjectLiteral.kt")
             public void testNestedClassesOnDefaultObjectLiteral() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
+                runTest("testData-completion/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
             }
 
             @TestMetadata("NoAutoInsertionOfNotImported.kt")
             public void testNoAutoInsertionOfNotImported() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoAutoInsertionOfNotImported.kt");
+                runTest("testData-completion/basic/common/NoAutoInsertionOfNotImported.kt");
             }
 
             @TestMetadata("NoClassNameDuplication.kt")
             public void testNoClassNameDuplication() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoClassNameDuplication.kt");
+                runTest("testData-completion/basic/common/NoClassNameDuplication.kt");
             }
 
             @TestMetadata("NoCompletionForCoroutinesIntinsics.kt")
             public void testNoCompletionForCoroutinesIntinsics() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoCompletionForCoroutinesIntinsics.kt");
+                runTest("testData-completion/basic/common/NoCompletionForCoroutinesIntinsics.kt");
             }
 
             @TestMetadata("NoCompletionForCoroutinesJvmInternal.kt")
             public void testNoCompletionForCoroutinesJvmInternal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoCompletionForCoroutinesJvmInternal.kt");
+                runTest("testData-completion/basic/common/NoCompletionForCoroutinesJvmInternal.kt");
             }
 
             @TestMetadata("NoCompletionForExcluded.kt")
             public void testNoCompletionForExcluded() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoCompletionForExcluded.kt");
+                runTest("testData-completion/basic/common/NoCompletionForExcluded.kt");
             }
 
             @TestMetadata("NoEmptyPackage.kt")
             public void testNoEmptyPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoEmptyPackage.kt");
+                runTest("testData-completion/basic/common/NoEmptyPackage.kt");
             }
 
             @TestMetadata("NoEnumEntryType.kt")
             public void testNoEnumEntryType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoEnumEntryType.kt");
+                runTest("testData-completion/basic/common/NoEnumEntryType.kt");
             }
 
             @TestMetadata("NoEnumMembersFromImplicitQualifier.kt")
             public void testNoEnumMembersFromImplicitQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoEnumMembersFromImplicitQualifier.kt");
+                runTest("testData-completion/basic/common/NoEnumMembersFromImplicitQualifier.kt");
             }
 
             @TestMetadata("NoExtensionsAfterQualifier.kt")
             public void testNoExtensionsAfterQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoExtensionsAfterQualifier.kt");
+                runTest("testData-completion/basic/common/NoExtensionsAfterQualifier.kt");
             }
 
             @TestMetadata("NoLocalsDeclaredAhead.kt")
             public void testNoLocalsDeclaredAhead() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoLocalsDeclaredAhead.kt");
+                runTest("testData-completion/basic/common/NoLocalsDeclaredAhead.kt");
             }
 
             @TestMetadata("NoNestedClassAfterReceiver.kt")
             public void testNoNestedClassAfterReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoNestedClassAfterReceiver.kt");
+                runTest("testData-completion/basic/common/NoNestedClassAfterReceiver.kt");
             }
 
             @TestMetadata("NoNestedClassesFromImplicitQualifier.kt")
             public void testNoNestedClassesFromImplicitQualifier() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoNestedClassesFromImplicitQualifier.kt");
+                runTest("testData-completion/basic/common/NoNestedClassesFromImplicitQualifier.kt");
             }
 
             @TestMetadata("NoPackageFacadeClasses.kt")
             public void testNoPackageFacadeClasses() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoPackageFacadeClasses.kt");
+                runTest("testData-completion/basic/common/NoPackageFacadeClasses.kt");
             }
 
             @TestMetadata("NoParameterAnnotationInPresentation.kt")
             public void testNoParameterAnnotationInPresentation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoParameterAnnotationInPresentation.kt");
+                runTest("testData-completion/basic/common/NoParameterAnnotationInPresentation.kt");
             }
 
             @TestMetadata("NoTopLevelCompletionInQualifiedUserTypes.kt")
             public void testNoTopLevelCompletionInQualifiedUserTypes() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
+                runTest("testData-completion/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
             }
 
             @TestMetadata("ObjectInTypePosition.kt")
             public void testObjectInTypePosition() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ObjectInTypePosition.kt");
+                runTest("testData-completion/basic/common/ObjectInTypePosition.kt");
             }
 
             @TestMetadata("ObjectMembersFromNested.kt")
             public void testObjectMembersFromNested() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ObjectMembersFromNested.kt");
+                runTest("testData-completion/basic/common/ObjectMembersFromNested.kt");
             }
 
             @TestMetadata("ObjectRedeclaration1.kt")
             public void testObjectRedeclaration1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ObjectRedeclaration1.kt");
+                runTest("testData-completion/basic/common/ObjectRedeclaration1.kt");
             }
 
             @TestMetadata("ObjectRedeclaration2.kt")
             public void testObjectRedeclaration2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ObjectRedeclaration2.kt");
+                runTest("testData-completion/basic/common/ObjectRedeclaration2.kt");
             }
 
             @TestMetadata("OverloadFunctions.kt")
             public void testOverloadFunctions() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/OverloadFunctions.kt");
+                runTest("testData-completion/basic/common/OverloadFunctions.kt");
             }
 
             @TestMetadata("parameterDefaultValueInFunction.kt")
             public void testParameterDefaultValueInFunction() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/parameterDefaultValueInFunction.kt");
+                runTest("testData-completion/basic/common/parameterDefaultValueInFunction.kt");
             }
 
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/PreferLessParameters.kt");
+                runTest("testData-completion/basic/common/PreferLessParameters.kt");
             }
 
             @TestMetadata("PrivatesInSecondPressCompletion.kt")
             public void testPrivatesInSecondPressCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/PrivatesInSecondPressCompletion.kt");
+                runTest("testData-completion/basic/common/PrivatesInSecondPressCompletion.kt");
             }
 
             @TestMetadata("ProtectedExtensionMethod.kt")
             public void testProtectedExtensionMethod() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ProtectedExtensionMethod.kt");
+                runTest("testData-completion/basic/common/ProtectedExtensionMethod.kt");
             }
 
             @TestMetadata("QualifiedSuperMembers.kt")
             public void testQualifiedSuperMembers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/QualifiedSuperMembers.kt");
+                runTest("testData-completion/basic/common/QualifiedSuperMembers.kt");
             }
 
             @TestMetadata("RecieverMembersFromExtAccessor.kt")
             public void testRecieverMembersFromExtAccessor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/RecieverMembersFromExtAccessor.kt");
+                runTest("testData-completion/basic/common/RecieverMembersFromExtAccessor.kt");
             }
 
             @TestMetadata("RecieverMembersFromExtFun.kt")
             public void testRecieverMembersFromExtFun() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/RecieverMembersFromExtFun.kt");
+                runTest("testData-completion/basic/common/RecieverMembersFromExtFun.kt");
             }
 
             @TestMetadata("SecondTypeArg.kt")
             public void testSecondTypeArg() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SecondTypeArg.kt");
+                runTest("testData-completion/basic/common/SecondTypeArg.kt");
             }
 
             @TestMetadata("SetPrefixForProperties.kt")
             public void testSetPrefixForProperties() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SetPrefixForProperties.kt");
+                runTest("testData-completion/basic/common/SetPrefixForProperties.kt");
             }
 
             @TestMetadata("ShortClassNamesInTypePosition.kt")
             public void testShortClassNamesInTypePosition() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/ShortClassNamesInTypePosition.kt");
+                runTest("testData-completion/basic/common/ShortClassNamesInTypePosition.kt");
             }
 
             @TestMetadata("StandardJetArrayFirst.kt")
             public void testStandardJetArrayFirst() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/StandardJetArrayFirst.kt");
+                runTest("testData-completion/basic/common/StandardJetArrayFirst.kt");
             }
 
             @TestMetadata("StandardJetDoubleFirst.kt")
             public void testStandardJetDoubleFirst() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/StandardJetDoubleFirst.kt");
+                runTest("testData-completion/basic/common/StandardJetDoubleFirst.kt");
             }
 
             @TestMetadata("SubpackageInFun.kt")
             public void testSubpackageInFun() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SubpackageInFun.kt");
+                runTest("testData-completion/basic/common/SubpackageInFun.kt");
             }
 
             @TestMetadata("SuperMembers.kt")
             public void testSuperMembers() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SuperMembers.kt");
+                runTest("testData-completion/basic/common/SuperMembers.kt");
             }
 
             @TestMetadata("SuperMembers2.kt")
             public void testSuperMembers2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SuperMembers2.kt");
+                runTest("testData-completion/basic/common/SuperMembers2.kt");
             }
 
             @TestMetadata("SuperMembers3.kt")
             public void testSuperMembers3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SuperMembers3.kt");
+                runTest("testData-completion/basic/common/SuperMembers3.kt");
             }
 
             @TestMetadata("SuperMembers4.kt")
             public void testSuperMembers4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SuperMembers4.kt");
+                runTest("testData-completion/basic/common/SuperMembers4.kt");
             }
 
             @TestMetadata("SuspendCanBePrefixSelectedInParameterTypeCompletion.kt")
             public void testSuspendCanBePrefixSelectedInParameterTypeCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/SuspendCanBePrefixSelectedInParameterTypeCompletion.kt");
+                runTest("testData-completion/basic/common/SuspendCanBePrefixSelectedInParameterTypeCompletion.kt");
             }
 
             @TestMetadata("TopLevelClassCompletionInQualifiedCall.kt")
             public void testTopLevelClassCompletionInQualifiedCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassCompletionInQualifiedCall.kt");
+                runTest("testData-completion/basic/common/TopLevelClassCompletionInQualifiedCall.kt");
             }
 
             @TestMetadata("TopLevelClassName1.kt")
             public void testTopLevelClassName1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassName1.kt");
+                runTest("testData-completion/basic/common/TopLevelClassName1.kt");
             }
 
             @TestMetadata("topLevelClassName2.kt")
             public void testTopLevelClassName2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/topLevelClassName2.kt");
+                runTest("testData-completion/basic/common/topLevelClassName2.kt");
             }
 
             @TestMetadata("TopLevelClassName4.kt")
             public void testTopLevelClassName4() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassName4.kt");
+                runTest("testData-completion/basic/common/TopLevelClassName4.kt");
             }
 
             @TestMetadata("TopLevelClassName5.kt")
             public void testTopLevelClassName5() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassName5.kt");
+                runTest("testData-completion/basic/common/TopLevelClassName5.kt");
             }
 
             @TestMetadata("TopLevelClassName6.kt")
             public void testTopLevelClassName6() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassName6.kt");
+                runTest("testData-completion/basic/common/TopLevelClassName6.kt");
             }
 
             @TestMetadata("TopLevelClassName-3.kt")
             public void testTopLevelClassName_3() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TopLevelClassName-3.kt");
+                runTest("testData-completion/basic/common/TopLevelClassName-3.kt");
             }
 
             @TestMetadata("TypeArgCompletionBug.kt")
             public void testTypeArgCompletionBug() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TypeArgCompletionBug.kt");
+                runTest("testData-completion/basic/common/TypeArgCompletionBug.kt");
             }
 
             @TestMetadata("TypeArgFromTheSameFile.kt")
             public void testTypeArgFromTheSameFile() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TypeArgFromTheSameFile.kt");
+                runTest("testData-completion/basic/common/TypeArgFromTheSameFile.kt");
             }
 
             @TestMetadata("TypeArgOfOwnerClass.kt")
             public void testTypeArgOfOwnerClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TypeArgOfOwnerClass.kt");
+                runTest("testData-completion/basic/common/TypeArgOfOwnerClass.kt");
             }
 
             @TestMetadata("TypeParameterFromOuterClass.kt")
             public void testTypeParameterFromOuterClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/TypeParameterFromOuterClass.kt");
+                runTest("testData-completion/basic/common/TypeParameterFromOuterClass.kt");
             }
 
             @TestMetadata("VariableClassName.kt")
             public void testVariableClassName() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/VariableClassName.kt");
+                runTest("testData-completion/basic/common/VariableClassName.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/variableNameAndType")
-        public static class VariableNameAndType extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/variableNameAndType")
+        public static class VariableNameAndType extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("Lateinit.kt")
             public void testLateinit() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/variableNameAndType/Lateinit.kt");
+                runTest("testData-completion/basic/common/variableNameAndType/Lateinit.kt");
             }
 
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/variableNameAndType/Local.kt");
+                runTest("testData-completion/basic/common/variableNameAndType/Local.kt");
             }
 
             @TestMetadata("TopLevel.kt")
             public void testTopLevel() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/variableNameAndType/TopLevel.kt");
+                runTest("testData-completion/basic/common/variableNameAndType/TopLevel.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/common/visibility")
-        public static class Visibility extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("testData-completion/basic/common/visibility")
+        public static class Visibility extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("KT9970.kt")
             public void testKT9970() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/KT9970.kt");
+                runTest("testData-completion/basic/common/visibility/KT9970.kt");
             }
 
             @TestMetadata("VisibilityClassMembersFromExternal.kt")
             public void testVisibilityClassMembersFromExternal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityClassMembersFromExternal.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityClassMembersFromExternal.kt");
             }
 
             @TestMetadata("VisibilityClassMembersFromExternalForce.kt")
             public void testVisibilityClassMembersFromExternalForce() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityClassMembersFromExternalForce.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityClassMembersFromExternalForce.kt");
             }
 
             @TestMetadata("VisibilityInSubclass.kt")
             public void testVisibilityInSubclass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityInSubclass.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityInSubclass.kt");
             }
 
             @TestMetadata("VisibilityInSubclassForce.kt")
             public void testVisibilityInSubclassForce() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityInSubclassForce.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityInSubclassForce.kt");
             }
 
             @TestMetadata("VisibilityOfClassMembersFromLocalClassConstructor.kt")
             public void testVisibilityOfClassMembersFromLocalClassConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityOfClassMembersFromLocalClassConstructor.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityOfClassMembersFromLocalClassConstructor.kt");
             }
 
             @TestMetadata("VisibilityOfClassMembersFromLocalClassMember.kt")
             public void testVisibilityOfClassMembersFromLocalClassMember() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityOfClassMembersFromLocalClassMember.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityOfClassMembersFromLocalClassMember.kt");
             }
 
             @TestMetadata("VisibilityOfCompanionObjectMembersFromOutside.kt")
             public void testVisibilityOfCompanionObjectMembersFromOutside() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityOfCompanionObjectMembersFromOutside.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityOfCompanionObjectMembersFromOutside.kt");
             }
 
             @TestMetadata("VisibilityOfCompanionObjectMembersFromSubclass.kt")
             public void testVisibilityOfCompanionObjectMembersFromSubclass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityOfCompanionObjectMembersFromSubclass.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityOfCompanionObjectMembersFromSubclass.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThis.kt")
             public void testVisibilityPrivateToThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThis.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThis.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisInConstructor.kt")
             public void testVisibilityPrivateToThisInConstructor() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisInConstructor.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisInConstructor.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisInConstructorWithThis.kt")
             public void testVisibilityPrivateToThisInConstructorWithThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisInConstructorWithThis.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisInConstructorWithThis.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisInSpecialScope.kt")
             public void testVisibilityPrivateToThisInSpecialScope() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisInSpecialScope.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisInSpecialScope.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisWithReceiver.kt")
             public void testVisibilityPrivateToThisWithReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisWithReceiver.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisWithReceiver.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisWithReceiver2.kt")
             public void testVisibilityPrivateToThisWithReceiver2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisWithReceiver2.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisWithReceiver2.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisWithThis.kt")
             public void testVisibilityPrivateToThisWithThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisWithThis.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisWithThis.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThisWithWrongThis.kt")
             public void testVisibilityPrivateToThisWithWrongThis() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/common/visibility/VisibilityPrivateToThisWithWrongThis.kt");
+                runTest("testData-completion/basic/common/visibility/VisibilityPrivateToThisWithWrongThis.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/basic/java")
-    public abstract static class Java extends AbstractHighLevelJvmBasicCompletionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/java/boldOrGrayed")
-        public static class BoldOrGrayed extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ImmediateMembersForPlatformType.kt")
-            public void testImmediateMembersForPlatformType() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/boldOrGrayed/ImmediateMembersForPlatformType.kt");
-            }
-
-            @TestMetadata("NonPredictableSmartCast1.kt")
-            public void testNonPredictableSmartCast1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/boldOrGrayed/NonPredictableSmartCast1.kt");
-            }
-
-            @TestMetadata("NonPredictableSmartCast2.kt")
-            public void testNonPredictableSmartCast2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/boldOrGrayed/NonPredictableSmartCast2.kt");
-            }
-
-            @TestMetadata("SyntheticJavaProperties1.kt")
-            public void testSyntheticJavaProperties1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/boldOrGrayed/SyntheticJavaProperties1.kt");
-            }
-
-            @TestMetadata("SyntheticJavaProperties2.kt")
-            public void testSyntheticJavaProperties2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/boldOrGrayed/SyntheticJavaProperties2.kt");
-            }
+    @TestMetadata("testData-completion/basic/js")
+    public static class Js extends AbstractJSBasicCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/java/importAliases")
-        public static class ImportAliases extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("Class.kt")
-            public void testClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/Class.kt");
-            }
-
-            @TestMetadata("ExtensionFun.kt")
-            public void testExtensionFun() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/ExtensionFun.kt");
-            }
-
-            @TestMetadata("ExtensionValSmart.kt")
-            public void testExtensionValSmart() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/ExtensionValSmart.kt");
-            }
-
-            @TestMetadata("KDoc.kt")
-            public void testKDoc() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/KDoc.kt");
-            }
-
-            @TestMetadata("KDocExtension.kt")
-            public void testKDocExtension() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/KDocExtension.kt");
-            }
-
-            @TestMetadata("PrefixUsed.kt")
-            public void testPrefixUsed() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/PrefixUsed.kt");
-            }
-
-            @TestMetadata("TopLevelFun.kt")
-            public void testTopLevelFun() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/TopLevelFun.kt");
-            }
-
-            @TestMetadata("TopLevelVal.kt")
-            public void testTopLevelVal() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/TopLevelVal.kt");
-            }
-
-            @TestMetadata("TypeAlias.kt")
-            public void testTypeAlias() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/importAliases/TypeAlias.kt");
-            }
+        @TestMetadata("AutoForceCompletion.kt")
+        public void testAutoForceCompletion() throws Exception {
+            runTest("testData-completion/basic/js/AutoForceCompletion.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/java/syntheticExtensions")
-        public static class SyntheticExtensions extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("DoNotHideGetterWhenExtensionCannotBeUsed.kt")
-            public void testDoNotHideGetterWhenExtensionCannotBeUsed() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/DoNotHideGetterWhenExtensionCannotBeUsed.kt");
-            }
-
-            @TestMetadata("InGenericClass.kt")
-            public void testInGenericClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/InGenericClass.kt");
-            }
-
-            @TestMetadata("NullableReceiver.kt")
-            public void testNullableReceiver() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/NullableReceiver.kt");
-            }
-
-            @TestMetadata("SafeCall.kt")
-            public void testSafeCall() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SafeCall.kt");
-            }
-
-            @TestMetadata("ShowGetSetOnSecondCompletion.kt")
-            public void testShowGetSetOnSecondCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/ShowGetSetOnSecondCompletion.kt");
-            }
-
-            @TestMetadata("SmartCast.kt")
-            public void testSmartCast() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SmartCast.kt");
-            }
-
-            @TestMetadata("SmartCast2.kt")
-            public void testSmartCast2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SmartCast2.kt");
-            }
-
-            @TestMetadata("SuppressedByNotPropertyList.kt")
-            public void testSuppressedByNotPropertyList() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SuppressedByNotPropertyList.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions1.kt")
-            public void testSyntheticExtensions1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SyntheticExtensions1.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions2.kt")
-            public void testSyntheticExtensions2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/syntheticExtensions/SyntheticExtensions2.kt");
-            }
+        @TestMetadata("DoNotPreferDynamic.kt")
+        public void testDoNotPreferDynamic() throws Exception {
+            runTest("testData-completion/basic/js/DoNotPreferDynamic.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/basic/java")
-        public static class Uncategorized extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AutoForceCompletion.kt")
-            public void testAutoForceCompletion() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/AutoForceCompletion.kt");
-            }
-
-            @TestMetadata("ClassFromDependency.kt")
-            public void testClassFromDependency() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/ClassFromDependency.kt");
-            }
-
-            @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
-            public void testCompletionForExcludedWhenInternalUse() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/CompletionForExcludedWhenInternalUse.kt");
-            }
-
-            @TestMetadata("ExtensionFromStandardLibrary.kt")
-            public void testExtensionFromStandardLibrary() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/ExtensionFromStandardLibrary.kt");
-            }
-
-            @TestMetadata("InPackage.kt")
-            public void testInPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/InPackage.kt");
-            }
-
-            @TestMetadata("JavaClassNames.kt")
-            public void testJavaClassNames() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/JavaClassNames.kt");
-            }
-
-            @TestMetadata("JavaPackage.kt")
-            public void testJavaPackage() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/JavaPackage.kt");
-            }
-
-            @TestMetadata("JavaSyntheticProperty.kt")
-            public void testJavaSyntheticProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/JavaSyntheticProperty.kt");
-            }
-
-            @TestMetadata("KProperty.kt")
-            public void testKProperty() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/KProperty.kt");
-            }
-
-            @TestMetadata("KT9166.kt")
-            public void testKT9166() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/KT9166.kt");
-            }
-
-            @TestMetadata("NoDuplicationForImportedJavaClass.kt")
-            public void testNoDuplicationForImportedJavaClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NoDuplicationForImportedJavaClass.kt");
-            }
-
-            @TestMetadata("NoDuplicationForRuntimeClass.kt")
-            public void testNoDuplicationForRuntimeClass() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NoDuplicationForRuntimeClass.kt");
-            }
-
-            @TestMetadata("NoSyntheticClasses.kt")
-            public void testNoSyntheticClasses() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NoSyntheticClasses.kt");
-            }
-
-            @TestMetadata("NonImportedPrefixMatching1.kt")
-            public void testNonImportedPrefixMatching1() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NonImportedPrefixMatching1.kt");
-            }
-
-            @TestMetadata("NonImportedPrefixMatching2.kt")
-            public void testNonImportedPrefixMatching2() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NonImportedPrefixMatching2.kt");
-            }
-
-            @TestMetadata("NullableAnnotation.kt")
-            public void testNullableAnnotation() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/NullableAnnotation.kt");
-            }
-
-            @TestMetadata("Number.kt")
-            public void testNumber() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/Number.kt");
-            }
-
-            @TestMetadata("PackageDirective.kt")
-            public void testPackageDirective() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/PackageDirective.kt");
-            }
-
-            @TestMetadata("SAMAdaptersStatic.kt")
-            public void testSAMAdaptersStatic() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/SAMAdaptersStatic.kt");
-            }
-
-            @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")
-            public void testStandardKotlinTypeAliasAfterExplicitlyImported() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/StandardKotlinTypeAliasAfterExplicitlyImported.kt");
-            }
-
-            @TestMetadata("StandardKotlinTypeAliasFirst.kt")
-            public void testStandardKotlinTypeAliasFirst() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/StandardKotlinTypeAliasFirst.kt");
-            }
-
-            @TestMetadata("TopLevelFromStandardLibrary.kt")
-            public void testTopLevelFromStandardLibrary() throws Exception {
-                runTest("../idea/tests/testData-completion/basic/java/TopLevelFromStandardLibrary.kt");
-            }
+        @TestMetadata("DynamicKeyword.kt")
+        public void testDynamicKeyword() throws Exception {
+            runTest("testData-completion/basic/js/DynamicKeyword.kt");
         }
-    }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/idea-fir/testData/completion/basic/common")
-    public abstract static class CommonFir extends AbstractHighLevelJvmBasicCompletionTest {
+        @TestMetadata("InPackage.kt")
+        public void testInPackage() throws Exception {
+            runTest("testData-completion/basic/js/InPackage.kt");
+        }
 
+        @TestMetadata("JSStd.kt")
+        public void testJSStd() throws Exception {
+            runTest("testData-completion/basic/js/JSStd.kt");
+        }
     }
 }

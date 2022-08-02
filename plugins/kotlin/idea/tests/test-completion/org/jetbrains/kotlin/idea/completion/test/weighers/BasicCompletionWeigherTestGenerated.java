@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.completion.wheigher;
+package org.jetbrains.kotlin.idea.completion.test.weighers;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,550 +14,550 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData-completion/weighers/basic")
-public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWeigherTest {
+@TestMetadata("testData-completion/weighers/basic")
+public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicCompletionWeigherTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/weighers/basic/contextualReturn")
-    public abstract static class ContextualReturn extends AbstractHighLevelWeigherTest {
+    @TestMetadata("testData-completion/weighers/basic/contextualReturn")
+    public abstract static class ContextualReturn extends AbstractBasicCompletionWeigherTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType")
-        public static class NoReturnType extends AbstractHighLevelWeigherTest {
+        @TestMetadata("testData-completion/weighers/basic/contextualReturn/noReturnType")
+        public static class NoReturnType extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("BeginOfNestedBlock.kt")
             public void testBeginOfNestedBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/BeginOfNestedBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/BeginOfNestedBlock.kt");
             }
 
             @TestMetadata("BeginOfTopLevelBlock.kt")
             public void testBeginOfTopLevelBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/BeginOfTopLevelBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/BeginOfTopLevelBlock.kt");
             }
 
             @TestMetadata("EndOfNestedBlock.kt")
             public void testEndOfNestedBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/EndOfNestedBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/EndOfNestedBlock.kt");
             }
 
             @TestMetadata("EndOfTopLevelBlock.kt")
             public void testEndOfTopLevelBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/EndOfTopLevelBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/EndOfTopLevelBlock.kt");
             }
 
             @TestMetadata("ForWithBody.kt")
             public void testForWithBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/ForWithBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/ForWithBody.kt");
             }
 
             @TestMetadata("ForWithoutBody.kt")
             public void testForWithoutBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/ForWithoutBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/ForWithoutBody.kt");
             }
 
             @TestMetadata("IfWithoutBody.kt")
             public void testIfWithoutBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/IfWithoutBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/IfWithoutBody.kt");
             }
 
             @TestMetadata("InElvis.kt")
             public void testInElvis() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/InElvis.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/InElvis.kt");
             }
 
             @TestMetadata("InElvisWhenSmartCompletionWins.kt")
             public void testInElvisWhenSmartCompletionWins() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/InElvisWhenSmartCompletionWins.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/InElvisWhenSmartCompletionWins.kt");
             }
 
             @TestMetadata("InWhenSingleExpression.kt")
             public void testInWhenSingleExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/InWhenSingleExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/InWhenSingleExpression.kt");
             }
 
             @TestMetadata("InWhenWithBody.kt")
             public void testInWhenWithBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/noReturnType/InWhenWithBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/noReturnType/InWhenWithBody.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType")
-        public static class WithReturnType extends AbstractHighLevelWeigherTest {
+        @TestMetadata("testData-completion/weighers/basic/contextualReturn/withReturnType")
+        public static class WithReturnType extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("BeginOfNestedBlock.kt")
             public void testBeginOfNestedBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/BeginOfNestedBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/BeginOfNestedBlock.kt");
             }
 
             @TestMetadata("BeginOfTopLevelBlock.kt")
             public void testBeginOfTopLevelBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/BeginOfTopLevelBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/BeginOfTopLevelBlock.kt");
             }
 
             @TestMetadata("EndOfNestedBlock.kt")
             public void testEndOfNestedBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/EndOfNestedBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/EndOfNestedBlock.kt");
             }
 
             @TestMetadata("EndOfTopLevelBlock.kt")
             public void testEndOfTopLevelBlock() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/EndOfTopLevelBlock.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/EndOfTopLevelBlock.kt");
             }
 
             @TestMetadata("ForWithBody.kt")
             public void testForWithBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/ForWithBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/ForWithBody.kt");
             }
 
             @TestMetadata("ForWithoutBody.kt")
             public void testForWithoutBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/ForWithoutBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/ForWithoutBody.kt");
             }
 
             @TestMetadata("IfWithoutBody.kt")
             public void testIfWithoutBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/IfWithoutBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/IfWithoutBody.kt");
             }
 
             @TestMetadata("InElvis.kt")
             public void testInElvis() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InElvis.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InElvis.kt");
             }
 
             @TestMetadata("InElvisInReturn.kt")
             public void testInElvisInReturn() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InElvisInReturn.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InElvisInReturn.kt");
             }
 
             @TestMetadata("InElvisWhenSmartCompletionWins.kt")
             public void testInElvisWhenSmartCompletionWins() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InElvisWhenSmartCompletionWins.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InElvisWhenSmartCompletionWins.kt");
             }
 
             @TestMetadata("InIfAsReturnedExpression.kt")
             public void testInIfAsReturnedExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InIfAsReturnedExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InIfAsReturnedExpression.kt");
             }
 
             @TestMetadata("InIfInWhenWithBodyAsReturnedExpression.kt")
             public void testInIfInWhenWithBodyAsReturnedExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InIfInWhenWithBodyAsReturnedExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InIfInWhenWithBodyAsReturnedExpression.kt");
             }
 
             @TestMetadata("InNotElvisBinaryOperator.kt")
             public void testInNotElvisBinaryOperator() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InNotElvisBinaryOperator.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InNotElvisBinaryOperator.kt");
             }
 
             @TestMetadata("InWhenAsReturnedExpression.kt")
             public void testInWhenAsReturnedExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenAsReturnedExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenAsReturnedExpression.kt");
             }
 
             @TestMetadata("InWhenSingleExpression.kt")
             public void testInWhenSingleExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenSingleExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenSingleExpression.kt");
             }
 
             @TestMetadata("InWhenWithBody.kt")
             public void testInWhenWithBody() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenWithBody.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenWithBody.kt");
             }
 
             @TestMetadata("InWhenWithBodyAsReturnedExpression.kt")
             public void testInWhenWithBodyAsReturnedExpression() throws Exception {
-                runTest("../idea/tests/testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenWithBodyAsReturnedExpression.kt");
+                runTest("testData-completion/weighers/basic/contextualReturn/withReturnType/InWhenWithBodyAsReturnedExpression.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/weighers/basic/expectedInfo")
-    public static class ExpectedInfo extends AbstractHighLevelWeigherTest {
+    @TestMetadata("testData-completion/weighers/basic/expectedInfo")
+    public static class ExpectedInfo extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("AfterAs.kt")
         public void testAfterAs() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/AfterAs.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/AfterAs.kt");
         }
 
         @TestMetadata("CompanionObjectMethod.kt")
         public void testCompanionObjectMethod() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/CompanionObjectMethod.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/CompanionObjectMethod.kt");
         }
 
         @TestMetadata("EnumEntries.kt")
         public void testEnumEntries() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/EnumEntries.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/EnumEntries.kt");
         }
 
         @TestMetadata("ExpectedType.kt")
         public void testExpectedType() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/ExpectedType.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/ExpectedType.kt");
         }
 
         @TestMetadata("ExpectedType2.kt")
         public void testExpectedType2() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/ExpectedType2.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/ExpectedType2.kt");
         }
 
         @TestMetadata("LambdaValue.kt")
         public void testLambdaValue() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/LambdaValue.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/LambdaValue.kt");
         }
 
         @TestMetadata("MultiArgsItem.kt")
         public void testMultiArgsItem() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/MultiArgsItem.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/MultiArgsItem.kt");
         }
 
         @TestMetadata("NameSimilarity.kt")
         public void testNameSimilarity() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/NameSimilarity.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/NameSimilarity.kt");
         }
 
         @TestMetadata("NameSimilarityAndNoExpectedType.kt")
         public void testNameSimilarityAndNoExpectedType() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/NameSimilarityAndNoExpectedType.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/NameSimilarityAndNoExpectedType.kt");
         }
 
         @TestMetadata("NameSimilarityAndNoExpectedType2.kt")
         public void testNameSimilarityAndNoExpectedType2() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/NameSimilarityAndNoExpectedType2.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/NameSimilarityAndNoExpectedType2.kt");
         }
 
         @TestMetadata("NoStupidComparison.kt")
         public void testNoStupidComparison() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/NoStupidComparison.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/NoStupidComparison.kt");
         }
 
         @TestMetadata("Null.kt")
         public void testNull() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/Null.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/Null.kt");
         }
 
         @TestMetadata("PreferMatchingThis.kt")
         public void testPreferMatchingThis() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/PreferMatchingThis.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/PreferMatchingThis.kt");
         }
 
         @TestMetadata("TrueFalse.kt")
         public void testTrueFalse() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/TrueFalse.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/TrueFalse.kt");
         }
 
         @TestMetadata("WhenByEnum.kt")
         public void testWhenByEnum() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedInfo/WhenByEnum.kt");
+            runTest("testData-completion/weighers/basic/expectedInfo/WhenByEnum.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/weighers/basic/expectedType")
-    public static class ExpectedType extends AbstractHighLevelWeigherTest {
+    @TestMetadata("testData-completion/weighers/basic/expectedType")
+    public static class ExpectedType extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("ifConditionQualified.kt")
         public void testIfConditionQualified() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedType/ifConditionQualified.kt");
+            runTest("testData-completion/weighers/basic/expectedType/ifConditionQualified.kt");
         }
 
         @TestMetadata("returnFromFunction.kt")
         public void testReturnFromFunction() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedType/returnFromFunction.kt");
+            runTest("testData-completion/weighers/basic/expectedType/returnFromFunction.kt");
         }
 
         @TestMetadata("returnFromFunctionQualifiedSelector.kt")
         public void testReturnFromFunctionQualifiedSelector() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
+            runTest("testData-completion/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
         }
 
         @TestMetadata("returnFromLambda.kt")
         public void testReturnFromLambda() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedType/returnFromLambda.kt");
+            runTest("testData-completion/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
         @TestMetadata("whileConditionQualified.kt")
         public void testWhileConditionQualified() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/expectedType/whileConditionQualified.kt");
+            runTest("testData-completion/weighers/basic/expectedType/whileConditionQualified.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/weighers/basic/parameterNameAndType")
-    public static class ParameterNameAndType extends AbstractHighLevelWeigherTest {
+    @TestMetadata("testData-completion/weighers/basic/parameterNameAndType")
+    public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("Deprecated.kt")
         public void testDeprecated() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/Deprecated.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/Deprecated.kt");
         }
 
         @TestMetadata("FromCurrentFilePriority.kt")
         public void testFromCurrentFilePriority() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/FromCurrentFilePriority.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/FromCurrentFilePriority.kt");
         }
 
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/ImportedFirst.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/ImportedFirst.kt");
         }
 
         @TestMetadata("MoreWordsMatchFirst.kt")
         public void testMoreWordsMatchFirst() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/MoreWordsMatchFirst.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/MoreWordsMatchFirst.kt");
         }
 
         @TestMetadata("ShorterFirst.kt")
         public void testShorterFirst() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/ShorterFirst.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/ShorterFirst.kt");
         }
 
         @TestMetadata("StartMatchFirst.kt")
         public void testStartMatchFirst() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/StartMatchFirst.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/StartMatchFirst.kt");
         }
 
         @TestMetadata("UserPrefix.kt")
         public void testUserPrefix() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/parameterNameAndType/UserPrefix.kt");
+            runTest("testData-completion/weighers/basic/parameterNameAndType/UserPrefix.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData-completion/weighers/basic")
-    public static class Uncategorized extends AbstractHighLevelWeigherTest {
+    @TestMetadata("testData-completion/weighers/basic")
+    public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("AfterNullable.kt")
         public void testAfterNullable() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/AfterNullable.kt");
+            runTest("testData-completion/weighers/basic/AfterNullable.kt");
         }
 
         @TestMetadata("CallableReference_NothingLast.kt")
         public void testCallableReference_NothingLast() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/CallableReference_NothingLast.kt");
+            runTest("testData-completion/weighers/basic/CallableReference_NothingLast.kt");
         }
 
         @TestMetadata("Callables.kt")
         public void testCallables() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/Callables.kt");
+            runTest("testData-completion/weighers/basic/Callables.kt");
         }
 
         @TestMetadata("DelegateToOtherObject.kt")
         public void testDelegateToOtherObject() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DelegateToOtherObject.kt");
+            runTest("testData-completion/weighers/basic/DelegateToOtherObject.kt");
         }
 
         @TestMetadata("DeprecatedFun.kt")
         public void testDeprecatedFun() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DeprecatedFun.kt");
+            runTest("testData-completion/weighers/basic/DeprecatedFun.kt");
         }
 
         @TestMetadata("DeprecatedJavaClass.kt")
         public void testDeprecatedJavaClass() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DeprecatedJavaClass.kt");
+            runTest("testData-completion/weighers/basic/DeprecatedJavaClass.kt");
         }
 
         @TestMetadata("DeprecatedSinceKotlinFun.kt")
         public void testDeprecatedSinceKotlinFun() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DeprecatedSinceKotlinFun.kt");
+            runTest("testData-completion/weighers/basic/DeprecatedSinceKotlinFun.kt");
         }
 
         @TestMetadata("DslCallWithExpectedType.kt")
         public void testDslCallWithExpectedType() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DslCallWithExpectedType.kt");
+            runTest("testData-completion/weighers/basic/DslCallWithExpectedType.kt");
         }
 
         @TestMetadata("DslCalls.kt")
         public void testDslCalls() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DslCalls.kt");
+            runTest("testData-completion/weighers/basic/DslCalls.kt");
         }
 
         @TestMetadata("DslCallsAnnotatedFunctionType.kt")
         public void testDslCallsAnnotatedFunctionType() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DslCallsAnnotatedFunctionType.kt");
+            runTest("testData-completion/weighers/basic/DslCallsAnnotatedFunctionType.kt");
         }
 
         @TestMetadata("DslCallsWithMultipleReceivers.kt")
         public void testDslCallsWithMultipleReceivers() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DslCallsWithMultipleReceivers.kt");
+            runTest("testData-completion/weighers/basic/DslCallsWithMultipleReceivers.kt");
         }
 
         @TestMetadata("DslMemberCalls.kt")
         public void testDslMemberCalls() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/DslMemberCalls.kt");
+            runTest("testData-completion/weighers/basic/DslMemberCalls.kt");
         }
 
         @TestMetadata("ExactMatchForKeyword.kt")
         public void testExactMatchForKeyword() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/ExactMatchForKeyword.kt");
+            runTest("testData-completion/weighers/basic/ExactMatchForKeyword.kt");
         }
 
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/ImportedFirst.kt");
+            runTest("testData-completion/weighers/basic/ImportedFirst.kt");
         }
 
         @TestMetadata("ImportedFirstForJavaClass.kt")
         public void testImportedFirstForJavaClass() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/ImportedFirstForJavaClass.kt");
+            runTest("testData-completion/weighers/basic/ImportedFirstForJavaClass.kt");
         }
 
         @TestMetadata("ImportedOrder.kt")
         public void testImportedOrder() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/ImportedOrder.kt");
+            runTest("testData-completion/weighers/basic/ImportedOrder.kt");
         }
 
         @TestMetadata("KT-25588_1.kts")
         public void testKT_25588_1() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/KT-25588_1.kts");
+            runTest("testData-completion/weighers/basic/KT-25588_1.kts");
         }
 
         @TestMetadata("KT-25588_2.kts")
         public void testKT_25588_2() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/KT-25588_2.kts");
+            runTest("testData-completion/weighers/basic/KT-25588_2.kts");
         }
 
         @TestMetadata("KeywordsLast.kt")
         public void testKeywordsLast() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/KeywordsLast.kt");
+            runTest("testData-completion/weighers/basic/KeywordsLast.kt");
         }
 
         @TestMetadata("LambdaSignature.kt")
         public void testLambdaSignature() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/LambdaSignature.kt");
+            runTest("testData-completion/weighers/basic/LambdaSignature.kt");
         }
 
         @TestMetadata("LocalFileBeforeImported.kt")
         public void testLocalFileBeforeImported() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/LocalFileBeforeImported.kt");
+            runTest("testData-completion/weighers/basic/LocalFileBeforeImported.kt");
         }
 
         @TestMetadata("LocalValuesAndParams.kt")
         public void testLocalValuesAndParams() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/LocalValuesAndParams.kt");
+            runTest("testData-completion/weighers/basic/LocalValuesAndParams.kt");
         }
 
         @TestMetadata("LocalsBeforeKeywords.kt")
         public void testLocalsBeforeKeywords() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/LocalsBeforeKeywords.kt");
+            runTest("testData-completion/weighers/basic/LocalsBeforeKeywords.kt");
         }
 
         @TestMetadata("LocalsPropertiesKeywords.kt")
         public void testLocalsPropertiesKeywords() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/LocalsPropertiesKeywords.kt");
+            runTest("testData-completion/weighers/basic/LocalsPropertiesKeywords.kt");
         }
 
         @TestMetadata("NamedParameters.kt")
         public void testNamedParameters() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NamedParameters.kt");
+            runTest("testData-completion/weighers/basic/NamedParameters.kt");
         }
 
         @TestMetadata("NamedParameters2.kt")
         public void testNamedParameters2() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NamedParameters2.kt");
+            runTest("testData-completion/weighers/basic/NamedParameters2.kt");
         }
 
         @TestMetadata("NamedParameters3.kt")
         public void testNamedParameters3() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NamedParameters3.kt");
+            runTest("testData-completion/weighers/basic/NamedParameters3.kt");
         }
 
         @TestMetadata("NoExpectedType.kt")
         public void testNoExpectedType() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NoExpectedType.kt");
+            runTest("testData-completion/weighers/basic/NoExpectedType.kt");
         }
 
         @TestMetadata("NullArgForInfixFunctionOnTheLeft.kt")
         public void testNullArgForInfixFunctionOnTheLeft() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NullArgForInfixFunctionOnTheLeft.kt");
+            runTest("testData-completion/weighers/basic/NullArgForInfixFunctionOnTheLeft.kt");
         }
 
         @TestMetadata("NullArgForInfixFunctionOnTheRight.kt")
         public void testNullArgForInfixFunctionOnTheRight() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NullArgForInfixFunctionOnTheRight.kt");
+            runTest("testData-completion/weighers/basic/NullArgForInfixFunctionOnTheRight.kt");
         }
 
         @TestMetadata("NullArgForNotImportedFunction.kt")
         public void testNullArgForNotImportedFunction() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NullArgForNotImportedFunction.kt");
+            runTest("testData-completion/weighers/basic/NullArgForNotImportedFunction.kt");
         }
 
         @TestMetadata("NullForIfConditionOnTheLeft.kt")
         public void testNullForIfConditionOnTheLeft() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NullForIfConditionOnTheLeft.kt");
+            runTest("testData-completion/weighers/basic/NullForIfConditionOnTheLeft.kt");
         }
 
         @TestMetadata("NullForIfConditionOnTheRight.kt")
         public void testNullForIfConditionOnTheRight() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/NullForIfConditionOnTheRight.kt");
+            runTest("testData-completion/weighers/basic/NullForIfConditionOnTheRight.kt");
         }
 
         @TestMetadata("Packages.kt")
         public void testPackages() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/Packages.kt");
+            runTest("testData-completion/weighers/basic/Packages.kt");
         }
 
         @TestMetadata("ParametersBeforeKeywords.kt")
         public void testParametersBeforeKeywords() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/ParametersBeforeKeywords.kt");
+            runTest("testData-completion/weighers/basic/ParametersBeforeKeywords.kt");
         }
 
         @TestMetadata("PreferFromJdk.kt")
         public void testPreferFromJdk() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/PreferFromJdk.kt");
+            runTest("testData-completion/weighers/basic/PreferFromJdk.kt");
         }
 
         @TestMetadata("PreferGetMethodToProperty.kt")
         public void testPreferGetMethodToProperty() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/PreferGetMethodToProperty.kt");
+            runTest("testData-completion/weighers/basic/PreferGetMethodToProperty.kt");
         }
 
         @TestMetadata("Prefix.kt")
         public void testPrefix() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/Prefix.kt");
+            runTest("testData-completion/weighers/basic/Prefix.kt");
         }
 
         @TestMetadata("PropertiesBeforeKeywords.kt")
         public void testPropertiesBeforeKeywords() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/PropertiesBeforeKeywords.kt");
+            runTest("testData-completion/weighers/basic/PropertiesBeforeKeywords.kt");
         }
 
         @TestMetadata("StaticMembers.kt")
         public void testStaticMembers() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/StaticMembers.kt");
+            runTest("testData-completion/weighers/basic/StaticMembers.kt");
         }
 
         @TestMetadata("SuperMembers.kt")
         public void testSuperMembers() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/SuperMembers.kt");
+            runTest("testData-completion/weighers/basic/SuperMembers.kt");
         }
 
         @TestMetadata("TopLevelKeywordWithClassName.kt")
         public void testTopLevelKeywordWithClassName() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/TopLevelKeywordWithClassName.kt");
+            runTest("testData-completion/weighers/basic/TopLevelKeywordWithClassName.kt");
         }
 
         @TestMetadata("UnavailableDslReceiver.kt")
         public void testUnavailableDslReceiver() throws Exception {
-            runTest("../idea/tests/testData-completion/weighers/basic/UnavailableDslReceiver.kt");
+            runTest("testData-completion/weighers/basic/UnavailableDslReceiver.kt");
         }
     }
 }

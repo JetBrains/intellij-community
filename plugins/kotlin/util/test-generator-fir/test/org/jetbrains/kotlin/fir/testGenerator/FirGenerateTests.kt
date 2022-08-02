@@ -138,7 +138,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir", testDataPath = "../completion/tests/testData") {
+    testGroup("fir", testDataPath = "../idea/tests/testData-completion") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)

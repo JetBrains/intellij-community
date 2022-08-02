@@ -1071,7 +1071,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("completion/tests") {
+    testGroup("idea/tests", testSourcesPath = "test-completion", testDataPath = "testData-completion") {
         testClass<AbstractCompiledKotlinInJavaCompletionTest> {
             model("injava", pattern = JAVA, isRecursive = false)
         }
@@ -1187,8 +1187,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    //TODO: move these tests into idea-completion module
-    testGroup("idea/tests", testDataPath = "../../completion/tests/testData") {
+    testGroup("idea/tests", testDataPath = "testData-completion") {
         testClass<AbstractCodeFragmentCompletionHandlerTest> {
             model("handlers/runtimeCast")
         }
@@ -1319,7 +1318,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("performance-tests", testDataPath = "../completion/tests/testData") {
+    testGroup("performance-tests", testDataPath = "../idea/tests/testData-completion") {
         testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
             model("incrementalResolve", testMethodName = "doPerfTest")
         }

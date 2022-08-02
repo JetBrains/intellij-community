@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.perf.stats;
+package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,17 +14,22 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("performance-tests")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData-completion/handlers/basic")
-public class PerformanceBasicCompletionHandlerStatNamesTestGenerated extends AbstractPerformanceBasicCompletionHandlerStatNamesTest {
+@TestMetadata("testData-completion/basic/java8")
+public class Java8BasicCompletionTestGenerated extends AbstractJava8BasicCompletionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("GetOperator.kt")
-    public void testGetOperator() throws Exception {
-        runTest("../idea/tests/testData-completion/handlers/basic/GetOperator.kt");
+    @TestMetadata("CollectionMethods.kt")
+    public void testCollectionMethods() throws Exception {
+        runTest("testData-completion/basic/java8/CollectionMethods.kt");
+    }
+
+    @TestMetadata("StreamMethods.kt")
+    public void testStreamMethods() throws Exception {
+        runTest("testData-completion/basic/java8/StreamMethods.kt");
     }
 }
