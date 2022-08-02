@@ -241,7 +241,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   @NotNull
   protected static JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(UIUtil.getListBackground(), SeparatorOrientation.VERTICAL);
-    separator.setHGap(0);
+    separator.setHGap(1);
     separator.setVGap(0);
     return separator;
   }
