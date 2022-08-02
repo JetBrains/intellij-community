@@ -133,6 +133,7 @@ internal class IntentionPreviewComputable(private val project: Project,
         .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
     }
     if (info == IntentionPreviewInfo.FALLBACK_DIFF) {
+      if (!action.startInWriteAction()) return info to null
       if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
       // Use fallback algorithm only if invokeForPreview is not explicitly overridden
       // in this case, the absence of diff could be intended, thus should not be logged as error
