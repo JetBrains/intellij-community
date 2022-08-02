@@ -56,7 +56,7 @@ public final class DialogAppender extends Handler {
     }
 
     synchronized (this) {
-      if (LoadingState.COMPONENTS_LOADED.isOccurred() || ourDelay) {
+      if (LoadingState.COMPONENTS_LOADED.isOccurred() && !ourDelay) {
         IdeaLoggingEvent queued;
         while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
         queueAppend(ideaEvent);
