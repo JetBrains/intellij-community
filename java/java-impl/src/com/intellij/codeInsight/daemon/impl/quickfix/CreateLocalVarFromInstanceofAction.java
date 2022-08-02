@@ -260,7 +260,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
             if (declarationStatement != null) {
               caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
-            new EnterAction().getHandler().execute(editor, null, DataManager.getInstance().getDataContext());
+            new EnterAction().getHandler().execute(editor, null, null);
           };
           if (file.isPhysical()) {
             ApplicationManager.getApplication().runWriteAction(action);
