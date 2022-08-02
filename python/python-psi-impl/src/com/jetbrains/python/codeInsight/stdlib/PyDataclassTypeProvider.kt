@@ -29,9 +29,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       referenceTarget is PyParameter && referenceTarget.isSelf && anchor is PyCallExpression -> {
         PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
           ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
-          ?.let {
-            it.containingClass?.let { getDataclassTypeForClass(it, context) }
-          }
+          ?.containingClass
+          ?.let { getDataclassTypeForClass(it, context) }
       }
       else -> null
     }
