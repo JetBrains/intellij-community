@@ -36,6 +36,7 @@ internal fun convertParentImpl(
                 convertParentImpl(service, uElement, grandParent)?.let { return it }
                 parent = grandParent
             }
+
             is KtFile -> {
                 parent.toUElementOfType<UClass>()?.let { return it } // mutlifile facade class
             }
@@ -57,22 +58,25 @@ internal fun convertParentImpl(
         when (psi.useSiteTarget?.getAnnotationUseSiteTarget()) {
             AnnotationUseSiteTarget.PROPERTY_GETTER ->
                 parent = (parentUnwrapped as? KtProperty)?.getter
-                         ?: (parentUnwrapped as? KtParameter)?.toLightGetter()
-                         ?: parent
+                    ?: (parentUnwrapped as? KtParameter)?.toLightGetter()
+                            ?: parent
 
             AnnotationUseSiteTarget.PROPERTY_SETTER ->
                 parent = (parentUnwrapped as? KtProperty)?.setter
-                         ?: (parentUnwrapped as? KtParameter)?.toLightSetter()
-                         ?: parent
+                    ?: (parentUnwrapped as? KtParameter)?.toLightSetter()
+                            ?: parent
+
             AnnotationUseSiteTarget.FIELD ->
                 parent = (parentUnwrapped as? KtProperty)
                     ?: (parentUnwrapped as? KtParameter)
                         ?.takeIf { it.isPropertyParameter() }
                         ?.let(LightClassUtil::getLightClassBackingField)
                             ?: parent
+
             AnnotationUseSiteTarget.SETTER_PARAMETER ->
                 parent = (parentUnwrapped as? KtParameter)
                     ?.toLightSetter()?.parameterList?.parameters?.firstOrNull() ?: parent
+
             else -> {}
         }
     }

@@ -88,6 +88,7 @@ interface BaseKotlinConverter {
                 is KtLightMethod -> {
                     el<UMethod>(build(KotlinUMethod::create))
                 }
+
                 is UastFakeLightMethod -> {
                     el<UMethod> {
                         val ktFunction = element.original
@@ -97,6 +98,7 @@ interface BaseKotlinConverter {
                             KotlinUMethodWithFakeLightDelegate(ktFunction, element, givenParent)
                     }
                 }
+
                 is UastFakeLightPrimaryConstructor -> {
                     convertFakeLightConstructorAlternatives(element, givenParent, requiredTypes).firstOrNull()
                 }
@@ -106,6 +108,7 @@ interface BaseKotlinConverter {
                         is KtEnumEntry -> el<UEnumConstant> {
                             convertEnumEntry(element.kotlinOrigin as KtEnumEntry, givenParent)
                         }
+
                         else -> el<UClass> { KotlinUClass.create(element, givenParent) }
                     }
                 }
@@ -113,21 +116,26 @@ interface BaseKotlinConverter {
                 is KtLightField -> {
                     convertToUField(element, element.kotlinOrigin)
                 }
+
                 is KtLightFieldForSourceDeclarationSupport -> {
                     // KtLightFieldForDecompiledDeclaration is not a KtLightField
                     convertToUField(element, element.kotlinOrigin)
                 }
+
                 is KtLightParameter -> {
                     el<UParameter>(buildKtOpt(element.kotlinOrigin, ::KotlinUParameter))
                 }
+
                 is UastKotlinPsiParameter -> {
                     el<UParameter>(buildKt(element.ktParameter, ::KotlinUParameter))
                 }
+
                 is UastKotlinPsiParameterBase<*> -> {
                     el<UParameter> {
                         element.ktOrigin.safeAs<KtTypeReference>()?.let { convertReceiverParameter(it) }
                     }
                 }
+
                 is UastKotlinPsiVariable -> {
                     el<ULocalVariable>(buildKt(element.ktElement, ::KotlinULocalVariable))
                 }
@@ -137,6 +145,7 @@ interface BaseKotlinConverter {
                         convertEnumEntry(element, givenParent)
                     }
                 }
+
                 is KtClassOrObject -> {
                     convertClassOrObject(element, givenParent, this).firstOrNull()
                 }
@@ -174,6 +183,7 @@ interface BaseKotlinConverter {
                         convertDeclaration(lightMethod, givenParent, requiredTypes)
                     }
                 }
+
                 is KtProperty -> {
                     if (element.isLocal) {
                         convertPsiElement(element, givenParent, requiredTypes)
@@ -181,6 +191,7 @@ interface BaseKotlinConverter {
                         convertNonLocalProperty(element, givenParent, requiredTypes).firstOrNull()
                     }
                 }
+
                 is KtParameter -> {
                     convertParameter(element, givenParent, this).firstOrNull()
                 }
@@ -188,6 +199,7 @@ interface BaseKotlinConverter {
                 is KtFile -> {
                     convertKtFile(element, givenParent, this).firstOrNull()
                 }
+
                 is FakeFileForLightClass -> {
                     el<UFile> { KotlinUFile(element.navigationElement, languagePlugin) }
                 }
@@ -195,6 +207,7 @@ interface BaseKotlinConverter {
                 is KtAnnotationEntry -> {
                     el<UAnnotation>(build(::convertAnnotation))
                 }
+
                 is KtCallExpression -> {
                     if (requiredTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
                         !requiredTypes.isAssignableFrom(UCallExpression::class.java)
@@ -202,16 +215,19 @@ interface BaseKotlinConverter {
                         el<UAnnotation> { KotlinUNestedAnnotation.create(element, givenParent) }
                     } else null
                 }
+
                 is KtLightElementBase -> {
                     element.kotlinOrigin?.let {
                         convertDeclarationOrElement(it, givenParent, requiredTypes)
                     }
                 }
+
                 is KtDelegatedSuperTypeEntry -> {
                     el<KotlinSupertypeDelegationUExpression> {
                         KotlinSupertypeDelegationUExpression(element, givenParent)
                     }
                 }
+
                 else -> null
             }
         }
@@ -322,6 +338,7 @@ interface BaseKotlinConverter {
                         ?: getLightClassForFakeMethod(ownerFunction)
                             ?.takeIf { !it.isAnnotationType }
                             ?.let { UastFakeLightMethod(ownerFunction, it) }
+
                     is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerFunction)
                     else -> null
                 } ?: return@uParam null
@@ -399,12 +416,15 @@ interface BaseKotlinConverter {
                         forceUInjectionHost() || requiredTypes.contains(UInjectionHost::class.java) -> {
                             expr<UInjectionHost> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
                         }
+
                         expression.entries.isEmpty() -> {
                             expr<ULiteralExpression> { KotlinStringULiteralExpression(expression, givenParent, "") }
                         }
+
                         expression.entries.size == 1 -> {
                             convertStringTemplateEntry(expression.entries[0], givenParent, requiredTypes)
                         }
+
                         else -> {
                             expr<KotlinStringTemplateUPolyadicExpression> {
                                 KotlinStringTemplateUPolyadicExpression(expression, givenParent)
@@ -412,6 +432,7 @@ interface BaseKotlinConverter {
                         }
                     }
                 }
+
                 is KtCollectionLiteralExpression -> expr<UCallExpression>(build(::KotlinUCollectionLiteralExpression))
                 is KtConstantExpression -> expr<ULiteralExpression>(build(::KotlinULiteralExpression))
 
@@ -427,6 +448,7 @@ interface BaseKotlinConverter {
                     } else
                         KotlinUBlockExpression(expression, givenParent)
                 }
+
                 is KtReturnExpression -> expr<UReturnExpression>(build(::KotlinUReturnExpression))
                 is KtThrowExpression -> expr<UThrowExpression>(build(::KotlinUThrowExpression))
                 is KtTryExpression -> expr<UTryExpression>(build(::KotlinUTryExpression))
@@ -462,6 +484,7 @@ interface BaseKotlinConverter {
                         expr<UBinaryExpression>(build(::KotlinUBinaryExpression))
                     }
                 }
+
                 is KtPrefixExpression -> expr<UPrefixExpression>(build(::KotlinUPrefixExpression))
                 is KtPostfixExpression -> expr<UPostfixExpression>(build(::KotlinUPostfixExpression))
 
@@ -472,6 +495,7 @@ interface BaseKotlinConverter {
                         }
                     } ?: UastEmptyExpression(givenParent)
                 }
+
                 is KtLambdaExpression -> expr<ULambdaExpression>(build(::KotlinULambdaExpression))
                 is KtFunction -> {
                     if (expression.name.isNullOrEmpty()) {
@@ -480,6 +504,7 @@ interface BaseKotlinConverter {
                         expr<UDeclarationsExpression>(build(::createLocalFunctionDeclaration))
                     }
                 }
+
                 is KtAnnotatedExpression -> {
                     expression.baseExpression
                         ?.let { convertExpression(it, givenParent, requiredTypes) }
@@ -552,6 +577,7 @@ interface BaseKotlinConverter {
                         rightOperand = convertOrEmpty(condition.rangeExpression, this)
                     }
                 }
+
                 is KtWhenConditionIsPattern -> expr<UBinaryExpression> {
                     KotlinCustomUBinaryExpressionWithType(condition, givenParent).apply {
                         operand = KotlinStringUSimpleReferenceExpression("it", this)
@@ -598,12 +624,15 @@ interface BaseKotlinConverter {
                         }
                     }
                 }
+
                 is KtClassBody -> {
                     el<UExpressionList>(build(KotlinUExpressionList.Companion::createClassBody))
                 }
+
                 is KtCatchClause -> {
                     el<UCatchClause>(build(::KotlinUCatchClause))
                 }
+
                 is KtVariableDeclaration -> {
                     if (element is KtProperty && !element.isLocal) {
                         convertNonLocalProperty(element, givenParent, this).firstOrNull()
@@ -612,49 +641,62 @@ interface BaseKotlinConverter {
                             ?: expr<UDeclarationsExpression> { convertExpression(element, givenParent, requiredTypes) }
                     }
                 }
+
                 is KtExpression -> {
                     convertExpression(element, givenParent, requiredTypes)
                 }
+
                 is KtLambdaArgument -> {
                     element.getLambdaExpression()?.let { convertExpression(it, givenParent, requiredTypes) }
                 }
+
                 is KtLightElementBase -> {
                     when (val expression = element.kotlinOrigin) {
                         is KtExpression -> convertExpression(expression, givenParent, requiredTypes)
                         else -> el<UExpression> { UastEmptyExpression(givenParent) }
                     }
                 }
+
                 is KtLiteralStringTemplateEntry, is KtEscapeStringTemplateEntry -> {
                     el<ULiteralExpression>(build(::KotlinStringULiteralExpression))
                 }
+
                 is KtStringTemplateEntry -> {
                     element.expression?.let { convertExpression(it, givenParent, requiredTypes) }
                         ?: expr<UExpression> { UastEmptyExpression(givenParent) }
                 }
+
                 is KtWhenEntry -> {
                     el<USwitchClauseExpressionWithBody>(build(::KotlinUSwitchEntry))
                 }
+
                 is KtWhenCondition -> {
                     convertWhenCondition(element, givenParent, requiredTypes)
                 }
+
                 is KtTypeReference -> {
                     requiredTypes.accommodate(
                         alternative { KotlinUTypeReferenceExpression(element, givenParent) },
                         alternative { convertReceiverParameter(element) }
                     ).firstOrNull()
                 }
+
                 is KtConstructorDelegationCall -> {
                     el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
                 }
+
                 is KtSuperTypeCallEntry -> {
                     el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
                 }
+
                 is KtImportDirective -> {
                     el<UImportStatement>(build(::KotlinUImportStatement))
                 }
+
                 is PsiComment -> {
                     el<UComment>(build(::UComment))
                 }
+
                 is KDocName -> {
                     if (element.getQualifier() == null)
                         el<USimpleNameReferenceExpression> {
@@ -664,6 +706,7 @@ interface BaseKotlinConverter {
                         }
                     else el<UQualifiedReferenceExpression>(build(::KotlinDocUQualifiedReferenceExpression))
                 }
+
                 is LeafPsiElement -> {
                     when {
                         element.elementType in identifiersTokens -> {
@@ -673,9 +716,11 @@ interface BaseKotlinConverter {
                                 el<UIdentifier>(build(::KotlinUIdentifier))
                             else null
                         }
+
                         element.elementType in KtTokens.OPERATIONS && element.parent is KtOperationReferenceExpression -> {
                             el<UIdentifier>(build(::KotlinUIdentifier))
                         }
+
                         element.elementType == KtTokens.LBRACKET && element.parent is KtCollectionLiteralExpression -> {
                             el<UIdentifier> {
                                 UIdentifier(
@@ -684,9 +729,11 @@ interface BaseKotlinConverter {
                                 )
                             }
                         }
+
                         else -> null
                     }
                 }
+
                 else -> null
             }
         }
