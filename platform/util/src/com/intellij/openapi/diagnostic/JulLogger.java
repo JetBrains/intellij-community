@@ -154,15 +154,15 @@ public class JulLogger extends Logger {
     boolean logConsole = SystemProperties.getBooleanProperty("idea.log.console", true);
 
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
-
-    RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
-    fileHandler.setLevel(java.util.logging.Level.FINEST);
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
+
+    Handler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
     fileHandler.setFormatter(layout);
+    fileHandler.setLevel(java.util.logging.Level.FINEST);
     rootLogger.addHandler(fileHandler);
 
     if (enableConsoleLogger && logConsole) {
-      ConsoleHandler consoleHandler = new OptimizedConsoleHandler();
+      Handler consoleHandler = new OptimizedConsoleHandler();
       consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
       consoleHandler.setLevel(java.util.logging.Level.WARNING);
       rootLogger.addHandler(consoleHandler);
