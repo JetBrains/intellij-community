@@ -88,6 +88,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
+  /**
+   * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+   */
   @NotNull
   @Override
   public GeneralCommandLine generateCommandLine() {
