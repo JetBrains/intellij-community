@@ -100,16 +100,12 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
-  public void register(@NotNull
-                       final String groupDisplayName, @NotNull
-                       final NotificationDisplayType displayType) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType displayType) {
     register(groupDisplayName, displayType, true);
   }
 
   @Override
-  public void register(@NotNull String groupDisplayName,
-                       @NotNull NotificationDisplayType displayType,
-                       boolean shouldLog) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType displayType, boolean shouldLog) {
     register(groupDisplayName, displayType, shouldLog, false);
   }
 
@@ -151,7 +147,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     changeSettings(new NotificationSettings(groupId, displayType, shouldLog, shouldReadAloud));
   }
 
-  public synchronized void changeSettings(NotificationSettings settings) {
+  public synchronized void changeSettings(@NotNull NotificationSettings settings) {
     String groupDisplayName = settings.getGroupId();
     if (settings.equals(getDefaultSettings(groupDisplayName))) {
       myIdToSettingsMap.remove(groupDisplayName);
@@ -189,12 +185,12 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
-  public synchronized void loadState(@NotNull final Element state) {
+  public synchronized void loadState(@NotNull Element state) {
     myIdToSettingsMap.clear();
     for (Element child : state.getChildren("notification")) {
-      final NotificationSettings settings = NotificationSettings.Companion.load(child);
+      NotificationSettings settings = NotificationSettings.Companion.load(child);
       if (settings != null) {
-        final String id = settings.getGroupId();
+        String id = settings.getGroupId();
         LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
         myIdToSettingsMap.put(id, settings);
       }
