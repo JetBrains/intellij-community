@@ -15,11 +15,10 @@ class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
 }
 
 class KotlinDocumentationTargetProvider : DocumentationTargetProvider {
-    override fun documentationTargets(file: PsiFile, offset: Int): MutableList<out DocumentationTarget> {
-        val element = file.findElementAt(offset)
-        if (element.isModifier()) {
-            return arrayListOf(KotlinDocumentationTarget(element!!, element))
-        }
-        return arrayListOf()
+    override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
+        val element = file.findElementAt(offset) ?: return emptyList()
+        return if (element.isModifier()) {
+            arrayListOf(KotlinDocumentationTarget(element, element))
+        } else emptyList()
     }
 }
