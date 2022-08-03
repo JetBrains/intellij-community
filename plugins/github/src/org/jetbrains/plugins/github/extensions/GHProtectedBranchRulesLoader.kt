@@ -18,7 +18,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubProjectSettings
 
 private val LOG = logger<GHProtectedBranchRulesLoader>()
@@ -63,7 +63,8 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
         val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
 
         val githubRepositoryMapping =
-          project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository).find { it.gitRemoteUrlCoordinates.remote == remote }
+          project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
+            .find { it.gitRemoteUrlCoordinates.remote == remote }
           ?: continue
 
         val repositoryCoordinates = githubRepositoryMapping.ghRepositoryCoordinates

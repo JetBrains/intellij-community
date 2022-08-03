@@ -3,14 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @Service
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
@@ -27,7 +26,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
   var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GHProjectRepositoriesManager>().knownRepositories.find {
+      val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
         it.gitRemoteUrlCoordinates.url == url
       } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null

@@ -107,7 +107,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
       val possibleRemotes = gitRepository
-        ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
+        ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
         ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
