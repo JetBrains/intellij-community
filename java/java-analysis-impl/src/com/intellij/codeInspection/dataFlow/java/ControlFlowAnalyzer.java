@@ -1019,9 +1019,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
               }
-              else if (expressionValue != null && targetType != null && labelElement instanceof PsiPattern) {
-                processPatternInSwitch(((PsiPattern)labelElement), expressionValue, targetType);
-                addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+              else if (expressionValue != null && targetType != null) {
+                if (labelElement instanceof PsiPattern) {
+                  processPatternInSwitch(((PsiPattern)labelElement), expressionValue, targetType);
+
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                }
+                else if (labelElement instanceof PsiPatternGuard) {
+                  processPatternInSwitch(((PsiPatternGuard)labelElement).getPattern(), expressionValue, targetType);
+                  PsiExpression guard = ((PsiPatternGuard)labelElement).getGuardingExpression();
+                  DeferredOffset endGuardOffset = new DeferredOffset();
+                  if (guard != null) {
+                    addInstruction(new ConditionalGotoInstruction(endGuardOffset, DfTypes.FALSE));
+                    guard.accept(this);
+                  }
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  endGuardOffset.setOffset(getInstructionCount());
+                }
               }
             }
           }
