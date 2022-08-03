@@ -5,6 +5,7 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.RowGridLayout
@@ -33,7 +34,10 @@ private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", C
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
   object : RowGridLayout(0, 4, 2, SwingConstants.CENTER) {
-    override fun getCellSize(sizes: List<Dimension>) = Dimension(JBUI.scale(24), JBUI.scale(28))
+    override fun getCellSize(sizes: List<Dimension>) = when {
+      ExperimentalUI.isNewUI() -> Dimension(JBUI.scale(30), JBUI.scale(34))
+      else -> Dimension(JBUI.scale(24), JBUI.scale(28))
+    }
   }
 }
 
@@ -56,7 +60,10 @@ internal class BookmarkTypeChooser(
   init {
     add(panel {
       row {
-        comment(message("mnemonic.chooser.comment"), 55)
+        val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
+        comment(message("mnemonic.chooser.comment"), lineLength).apply {
+          if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(0, 4)
+        }
       }
 
       row {
@@ -70,6 +77,7 @@ internal class BookmarkTypeChooser(
           .applyToComponent {
             text = description ?: ""
             emptyText.text = message("mnemonic.chooser.description")
+            isOpaque = false
             addKeyListener(object: KeyListener {
               override fun keyTyped(e: KeyEvent?) = Unit
               override fun keyReleased(e: KeyEvent?) = Unit
@@ -88,7 +96,11 @@ internal class BookmarkTypeChooser(
         cell(createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
       }
     }.apply {
-      border = JBUI.Borders.empty(2, 6)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 8, 2, 8)
+        else -> JBUI.Borders.empty(2, 6)
+      }
+      isOpaque = false
       isFocusCycleRoot = true
       focusTraversalPolicy = object: LayoutFocusTraversalPolicy() {
         override fun accept(aComponent: Component?): Boolean {
@@ -96,6 +108,8 @@ internal class BookmarkTypeChooser(
         }
       }
     })
+
+    background = namedColor("Popup.background")
   }
 
   private fun createLegend(color: Color, @Nls text: String) = JLabel(text).apply {
@@ -126,17 +140,26 @@ private class BookmarkLayoutGrid(
 
   init {
     addToLeft(JPanel(SHARED_LAYOUT).apply {
-      border = JBUI.Borders.empty(5)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(10, 0, 14, 14)
+        else -> JBUI.Borders.empty(5)
+      }
+      isOpaque = false
       BookmarkType.values()
         .filter { it.mnemonic.isDigit() }
         .forEach { add(createButton(it)) }
     })
     addToRight(JPanel(SHARED_LAYOUT).apply {
-      border = JBUI.Borders.empty(5)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(10, 0, 14, 0)
+        else -> JBUI.Borders.empty(5)
+      }
+      isOpaque = false
       BookmarkType.values()
         .filter { it.mnemonic.isLetter() }
         .forEach { add(createButton(it)) }
     })
+    isOpaque = false
     updateButtons(current)
   }
 
@@ -144,6 +167,7 @@ private class BookmarkLayoutGrid(
 
   fun createButton(type: BookmarkType) = JButton(type.mnemonic.toString()).apply {
     setMnemonic(type.mnemonic)
+    isOpaque = false
     putClientProperty("ActionToolbar.smallVariant", true)
     putClientProperty(TYPE_KEY, type)
     addPropertyChangeListener { repaint() }
@@ -174,7 +198,7 @@ private class BookmarkLayoutGrid(
         }
         else -> {
           it.putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
-          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonBackground"))
+          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("Popup.background"))
           it.putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
         }
       }
