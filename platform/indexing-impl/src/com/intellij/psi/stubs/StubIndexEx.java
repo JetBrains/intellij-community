@@ -40,8 +40,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.TRACE_OF_STUB_VALUES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.stubValuesLookupStarted;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.TRACE_OF_STUB_VALUES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.stubValuesLookupStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -159,12 +159,20 @@ public abstract class StubIndexEx extends StubIndex {
         if (!(singleFileInScope.hasNext())) return true;
         FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
         fileStream = singleFileInScope;
+        trace.lookupResultSize(1);
         shouldHaveKeys = false;
       }
       else {
         IntSet fileIds = getContainingIds(indexKey, key, project, idFilter, scope);
-        if (fileIds == null) return true;
+        if (fileIds == null) {
+          trace.lookupResultSize(0);
+          return true;
+        }
+        else {
+          trace.lookupResultSize(fileIds.size());
+        }
         IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
+
         // already ensured up-to-date in getContainingIds() method
         IntIterator idIterator = fileIds.iterator();
         fileStream = StubIndexImplUtil.mapIdIterator(idIterator, accessibleFileFilter);

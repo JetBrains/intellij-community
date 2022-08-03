@@ -53,7 +53,7 @@ import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -269,6 +269,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         });
         return fileIdsInner;
       });
+      
+      trace.lookupResultSize(fileIds.size());
 
       return createLazyFileIterator(fileIds, scope);
     }
@@ -604,7 +606,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         }
       };
 
-      return processExceptions(indexId, null, scope, convertor);
+      final IntSet ids = processExceptions(indexId, null, scope, convertor);
+      trace.lookupResultSize(ids.size());
+      return ids;
     }
   }
 
@@ -630,7 +634,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         }
       };
 
-      return processExceptions(indexId, null, filter, convertor);
+      final IntSet ids = processExceptions(indexId, null, filter, convertor);
+      trace.lookupResultSize(ids.size());
+      return ids;
     }
   }
 

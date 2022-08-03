@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -18,7 +18,7 @@ import static org.junit.Assume.assumeTrue;
  * Tests for [IndexOperationFusStatisticsCollector].
  */
 @RunWith(JUnit4.class)
-public class IndexOperationFusStatisticsCollectorTest extends JavaCodeInsightFixtureTestCase {
+public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCase {
 
   //This class mostly checks methods contracts. It would be nice to check reported events also, but there
   //     is no simple way to do it (so it seems)
@@ -61,7 +61,7 @@ public class IndexOperationFusStatisticsCollectorTest extends JavaCodeInsightFix
 
 
   @Test
-  public void reportingDontThrowAnythingIfStartedCalledTwice() {
+  public void reportingDontThrowAnythingIfStartedCalledTwice_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
                 THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
@@ -70,7 +70,7 @@ public class IndexOperationFusStatisticsCollectorTest extends JavaCodeInsightFix
   }
 
   @Test
-  public void reportingDontThrowAnythingIfReportingMethodsCalledWithoutStartedFirst() {
+  public void reportingDontThrowAnythingIfReportingMethodsCalledWithoutStartedFirst_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
                 THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
@@ -100,46 +100,11 @@ public class IndexOperationFusStatisticsCollectorTest extends JavaCodeInsightFix
   }
 
   @Test
-  public void reportingThrowExceptionIfReportingMethodsCalledWithoutStartedFirst_with_THROW_ON_INCORRECT_USAGE() {
+  public void lookupFinishedThrowExceptionIfCalledWithoutStartedFirst_with_THROW_ON_INCORRECT_USAGE() {
     assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
                THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     var trace = TRACE_OF_ALL_KEYS_LOOKUP.get();
-    try {
-      trace.withProject(null);
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
-    }
-    catch (AssertionError e) {
-
-    }
-    try {
-      trace.withProject(null);
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
-    }
-    catch (AssertionError e) {
-
-    }
-    try {
-      trace.indexValidationFinished();
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
-    }
-    catch (AssertionError e) {
-
-    }
-    try {
-      trace.totalKeysIndexed(10);
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
-    }
-    catch (AssertionError e) {
-
-    }
-    try {
-      trace.lookupFailed();
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
-    }
-    catch (AssertionError e) {
-
-    }
     try {
       trace.lookupFinished();
       fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
