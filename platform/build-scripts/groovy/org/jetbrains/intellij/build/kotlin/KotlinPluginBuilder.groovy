@@ -76,6 +76,7 @@ final class KotlinPluginBuilder {
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
     "kotlin.line-indent-provider",
+    "kotlin.live-templates",
     "kotlin.jvm",
     "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",

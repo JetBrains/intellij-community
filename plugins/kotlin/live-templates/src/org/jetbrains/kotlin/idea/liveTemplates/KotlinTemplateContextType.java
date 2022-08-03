@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlighter;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
@@ -76,7 +75,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Generic extends KotlinTemplateContextType {
         public Generic() {
-            super(KotlinBundle.message("template.context.type.generic"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.generic"));
         }
 
         @Override
@@ -92,7 +91,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class TopLevel extends KotlinTemplateContextType {
         public TopLevel() {
-            super(KotlinBundle.message("template.context.type.top.level"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.top.level"));
         }
 
         @Override
@@ -121,7 +120,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class ObjectDeclaration extends KotlinTemplateContextType {
         public ObjectDeclaration() {
-            super(KotlinBundle.message("object.declaration"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.object"));
         }
 
         @Override
@@ -133,7 +132,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Class extends KotlinTemplateContextType {
         public Class() {
-            super(KotlinBundle.message("class"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.class"));
         }
 
         @Override
@@ -144,7 +143,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Statement extends KotlinTemplateContextType {
         public Statement() {
-            super(KotlinBundle.message("statement"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.statement"));
         }
 
         @Override
@@ -161,7 +160,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Expression extends KotlinTemplateContextType {
         public Expression() {
-            super(KotlinBundle.message("expression"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.expression"));
         }
 
         @Override
@@ -174,7 +173,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Comment extends KotlinTemplateContextType {
         public Comment() {
-            super(KotlinBundle.message("comment"));
+            super(KotlinLiveTemplatesBundle.message("template.context.type.comment"));
         }
 
         @Override

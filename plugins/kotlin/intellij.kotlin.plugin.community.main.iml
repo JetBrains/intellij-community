@@ -108,6 +108,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" exported="" />
     <orderEntry type="module" module-name="kotlin.injection" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
+    <orderEntry type="module" module-name="kotlin.live-templates" exported="" />
     <orderEntry type="module" module-name="kotlin.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.native" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />
