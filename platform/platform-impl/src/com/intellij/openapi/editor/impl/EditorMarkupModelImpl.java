@@ -1857,6 +1857,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isDumbAware() {
       return true;
     }

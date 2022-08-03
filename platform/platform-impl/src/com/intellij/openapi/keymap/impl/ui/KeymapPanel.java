@@ -816,6 +816,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       editSelection(e.getInputEvent(), false);
     }
@@ -838,6 +842,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myFilterComponent.reset();
       currentKeymapChanged();
@@ -856,6 +865,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(enabled);
       presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

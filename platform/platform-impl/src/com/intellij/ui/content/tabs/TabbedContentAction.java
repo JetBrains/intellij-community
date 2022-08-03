@@ -61,6 +61,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   @SuppressWarnings("ComponentNotRegistered")

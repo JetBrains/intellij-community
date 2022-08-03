@@ -1503,6 +1503,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
     public boolean isDumbAware() {
       return true;
     }

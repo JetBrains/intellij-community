@@ -501,6 +501,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;

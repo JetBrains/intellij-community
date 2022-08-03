@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolwindowSwitcher
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -60,6 +61,10 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
         override fun update(e: AnActionEvent) {
           val toolWindowManager = ToolWindowManagerEx.getInstanceEx(e.project ?: return)
           e.presentation.isEnabledAndVisible = ToolwindowSwitcher.getToolWindows(toolWindowManager, notVisibleOnStripePredicate).isNotEmpty()
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+          return ActionUpdateThread.EDT
         }
       }
     }

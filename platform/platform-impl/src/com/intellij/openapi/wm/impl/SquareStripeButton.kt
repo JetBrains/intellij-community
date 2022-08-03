@@ -154,6 +154,10 @@ private class MoveToAction(private val toolWindow: ToolWindowImpl,
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = targetAnchor.anchor != toolWindow.anchor || toolWindow.isSplitMode != targetAnchor.isSplit
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 private class HideAction(private val toolWindow: ToolWindowImpl)
