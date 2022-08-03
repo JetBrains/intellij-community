@@ -62,7 +62,6 @@
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
-    <module name="kotlin.live-templates"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
@@ -86,5 +85,6 @@
 
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>
+    <module name="kotlin.code-insight.live-templates-shared"/>
   </content>
 </idea-plugin>

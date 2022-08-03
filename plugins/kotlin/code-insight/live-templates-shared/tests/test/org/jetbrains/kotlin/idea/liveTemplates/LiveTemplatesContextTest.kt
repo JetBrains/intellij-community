@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("live-templates/tests")
+@TestRoot("code-insight/live-templates-shared/tests")
 @TestMetadata("testData/context")
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesContextTest : KotlinLightCodeInsightFixtureTestCase() {

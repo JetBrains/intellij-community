@@ -71,7 +71,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
-    <orderEntry type="module" module-name="kotlin.live-templates" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
