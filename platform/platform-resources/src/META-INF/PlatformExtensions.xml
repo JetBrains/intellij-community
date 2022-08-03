@@ -114,6 +114,9 @@
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.EditMemorySettingsService"
+                        serviceImplementation="com.intellij.diagnostic.EditMemorySettingsServiceImpl" preload="true"/>
+
     <applicationService serviceImplementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
     <startupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"/>
 
