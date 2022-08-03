@@ -1,4 +1,4 @@
-// "Adapt using 'Math.toIntExact()'" "true-preview"
+// "Adapt argument using 'Math.toIntExact()'" "true-preview"
 import java.util.*;
 
 class Demo {

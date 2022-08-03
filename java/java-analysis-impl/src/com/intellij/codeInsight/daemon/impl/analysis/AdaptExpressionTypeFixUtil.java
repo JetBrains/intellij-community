@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceExpressionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapWithAdapterMethodCallFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -116,9 +118,11 @@ class AdaptExpressionTypeFixUtil {
   static void registerExpectedTypeFixes(@NotNull HighlightInfo info, @NotNull PsiExpression expression, @Nullable PsiType expectedType) {
     if (expectedType == null) return;
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(expectedType, expression));
+    TextRange range = expression.getTextRange();
+    String role = info.startOffset == range.getStartOffset() && info.endOffset == range.getEndOffset() ? null : getRole(expression);
+    QuickFixAction.registerQuickFixAction(info, new WrapWithAdapterMethodCallFix(expectedType, expression, role));
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression));
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapExpressionFix(expectedType, expression));
+    QuickFixAction.registerQuickFixAction(info, new WrapExpressionFix(expectedType, expression, role));
     PsiType argType = expression.getType();
     if (expression instanceof PsiMethodCallExpression) {
       JavaResolveResult result = ((PsiMethodCallExpression)expression).resolveMethodGenerics();
@@ -128,8 +132,6 @@ class AdaptExpressionTypeFixUtil {
     }
     PsiType castToType = suggestCastTo(expectedType, argType);
     if (castToType != null) {
-      TextRange range = expression.getTextRange();
-      String role = info.startOffset == range.getStartOffset() && info.endOffset == range.getEndOffset() ? null : getRole(expression);
       QuickFixAction.registerQuickFixAction(info, new AddTypeCastFix(castToType, expression, role));
     }
     if (expression instanceof PsiMethodCallExpression) {

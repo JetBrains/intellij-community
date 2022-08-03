@@ -1,4 +1,4 @@
-// "Wrap using 'String.valueOf()'" "true-preview"
+// "Wrap lambda return using 'String.valueOf()'" "true-preview"
 import java.util.stream.*;
 
 class Demo {

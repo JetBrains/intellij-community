@@ -30,22 +30,29 @@ public class WrapExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
 
   private final PsiExpression myExpression;
+  private final @Nullable String myRole;
   private final PsiClassType myExpectedType;
   private final boolean myPrimitiveExpected;
   private final String myMethodPresentation;
 
-  public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression) {
+  public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression, @Nullable String role) {
     myExpression = expression;
+    myRole = role;
     myExpectedType = getClassType(expectedType, expression);
     myPrimitiveExpected = expectedType instanceof PsiPrimitiveType;
     myMethodPresentation = getMethodPresentation(myExpression, myExpectedType, myPrimitiveExpected);
   }
 
-  private WrapExpressionFix(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected, String methodPresentation) {
+  private WrapExpressionFix(PsiExpression expression,
+                            PsiClassType expectedType,
+                            boolean primitiveExpected,
+                            String methodPresentation,
+                            @Nullable String role) {
     myExpression = expression;
     myExpectedType = expectedType;
     myPrimitiveExpected = primitiveExpected;
     myMethodPresentation = methodPresentation;
+    myRole = role;
   }
 
   @Nullable
@@ -62,7 +69,8 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", myMethodPresentation);
+    return myRole == null ? QuickFixBundle.message("wrap.expression.using.static.accessor.text", myMethodPresentation) :
+           QuickFixBundle.message("wrap.expression.using.static.accessor.text.role", myMethodPresentation, myRole);
   }
 
   private static String getMethodPresentation(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected) {
@@ -196,7 +204,7 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr, null));
     }
   }
 
@@ -205,6 +213,7 @@ public class WrapExpressionFix implements IntentionAction {
     return new WrapExpressionFix(PsiTreeUtil.findSameElementInCopy(myExpression, target),
                                  myExpectedType,
                                  myPrimitiveExpected,
-                                 myMethodPresentation);
+                                 myMethodPresentation,
+                                 myRole);
   }
 }

@@ -1,4 +1,4 @@
-// "Wrap using 'String.valueOf()'" "true-preview"
+// "Wrap argument using 'String.valueOf()'" "true-preview"
 import java.util.*;
 
 class Demo {

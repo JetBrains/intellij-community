@@ -1,4 +1,4 @@
-// "Adapt using 'new File()'" "true-preview"
+// "Adapt argument using 'new File()'" "true-preview"
 import java.util.*;
 import java.io.File;
 

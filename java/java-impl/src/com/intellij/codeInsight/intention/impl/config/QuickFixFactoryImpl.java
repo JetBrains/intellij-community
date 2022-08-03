@@ -260,7 +260,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    return new WrapExpressionFix(type, expression);
+    return new WrapExpressionFix(type, expression, null);
   }
 
   @NotNull
@@ -922,7 +922,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new WrapWithAdapterMethodCallFix(type, expression);
+    return new WrapWithAdapterMethodCallFix(type, expression, null);
   }
 
   @NotNull
