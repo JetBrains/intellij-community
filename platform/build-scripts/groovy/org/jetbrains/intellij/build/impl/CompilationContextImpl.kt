@@ -374,9 +374,9 @@ private fun defineJavaSdk(context: CompilationContext) {
     .forEach { sdkName ->
       val vendorPrefixEnd = sdkName.indexOf('-')
       val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
-      check(sdkNameWithoutVendor == "11") {
+      check(sdkNameWithoutVendor == "17") {
         "Project model at ${context.paths.projectHome} requested SDK $sdkNameWithoutVendor, " +
-        "but only '11' is supported as SDK in intellij project"
+        "but only '17' is supported as SDK in intellij project"
       }
 
       if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
