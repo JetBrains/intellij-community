@@ -10734,16 +10734,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceAssociateFunction")
-    public static class ReplaceAssociateFunction extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("version1_2.kt")
-        public void testVersion1_2() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssociateFunction/version1_2.kt");
-        }
-
+    public abstract static class ReplaceAssociateFunction extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceAssociateFunction/associateBy")
         public static class AssociateBy extends AbstractLocalInspectionTest {
@@ -10868,11 +10859,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
             }
 
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/arrayVersion13.kt");
-            }
-
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
@@ -10944,11 +10930,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("array.kt")
             public void testArray() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/array.kt");
-            }
-
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/arrayVersion13.kt");
             }
 
             @TestMetadata("basic.kt")
