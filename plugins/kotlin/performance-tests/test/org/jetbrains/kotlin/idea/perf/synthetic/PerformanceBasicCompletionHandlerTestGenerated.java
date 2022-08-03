@@ -59,6 +59,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/callableReference/ClassConstructor.kt");
         }
 
+        @TestMetadata("ClassProperty.kt")
+        public void testClassProperty() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/callableReference/ClassProperty.kt");
+        }
+
+        @TestMetadata("ClassThisProperty.kt")
+        public void testClassThisProperty() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/callableReference/ClassThisProperty.kt");
+        }
+
         @TestMetadata("EmptyQualifier.kt")
         public void testEmptyQualifier() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/callableReference/EmptyQualifier.kt");

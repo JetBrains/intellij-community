@@ -38,10 +38,10 @@ abstract class AbstractClass
 // EXIST: { itemText: "globalFun", attributes: "" }
 // EXIST: { itemText: "globalVal", attributes: "" }
 // EXIST: { itemText: "globalVar", attributes: "" }
+// EXIST: { itemText: "memberFun", attributes: "grayed" }
+// EXIST: { itemText: "memberVal", attributes: "grayed" }
 // ABSENT: extensionFun
 // ABSENT: extensionVal
-// ABSENT: memberFun
-// ABSENT: memberVal
 // EXIST: { itemText: "localFun", attributes: "" }
 // ABSENT: local
 // ABSENT: companionObjectFun
