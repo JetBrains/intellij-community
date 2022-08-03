@@ -46,7 +46,7 @@ internal class BookmarkTypeChooser(
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
     assigned,
-    { current = it },
+    { if (current == it) save() else current = it },
     { save() }
   )
   private lateinit var descriptionField: JBTextField
@@ -154,8 +154,8 @@ private class BookmarkLayoutGrid(
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
     cursor = SHARED_CURSOR
-  }.also {
-    it.addKeyListener(this)
+
+    addKeyListener(this@BookmarkLayoutGrid)
   }
 
   fun updateButtons(current: BookmarkType?) {
