@@ -3,12 +3,11 @@ package com.intellij.completion.ml.features
 
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
-import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.storage.LookupStorage
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper
 
 class MLCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> {
@@ -16,11 +15,11 @@ class MLCompletionWeigher : CompletionWeigher() {
     if (!storage.shouldComputeFeatures()) return DummyComparable.EMPTY
     val result = mutableMapOf<String, MLFeatureValue>()
     val contextFeatures = storage.contextProvidersResult()
-    for (provider in ElementFeatureProvider.forLanguage(storage.language)) {
+    ExtensionProcessingHelper.forEachExtensionSafe(ElementFeatureProvider.forLanguage(storage.language)) { provider ->
       val name = provider.name
 
       val features = storage.performanceTracker.trackElementFeaturesCalculation(name) {
-        provider.calculateFeaturesSafe(element, location, contextFeatures)
+        provider.calculateFeatures(element, location, contextFeatures)
       }
 
       for ((featureName, featureValue) in features) {
@@ -29,17 +28,6 @@ class MLCompletionWeigher : CompletionWeigher() {
     }
 
     return if (result.isEmpty()) DummyComparable.EMPTY else DummyComparable(result)
-  }
-
-  private fun ElementFeatureProvider.calculateFeaturesSafe(element: LookupElement,
-                                                           location: CompletionLocation,
-                                                           contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
-    try {
-      return calculateFeatures(element, location, contextFeatures)
-    } catch (e: Throwable) {
-      LOG.error("Error while feature provider \"$name\" calculation", e)
-      return emptyMap()
-    }
   }
 
   internal class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
@@ -54,9 +42,5 @@ class MLCompletionWeigher : CompletionWeigher() {
     companion object {
       val EMPTY = DummyComparable(emptyMap())
     }
-  }
-
-  companion object {
-    private val LOG = logger<MLCompletionWeigher>()
   }
 }
