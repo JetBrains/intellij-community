@@ -84,7 +84,6 @@ public class MavenSettingsTest extends MavenTestCase {
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject);
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());
-    importingConfigurable.disposeUIResources();
   }
 
   public void testNotModifiedAfterCreation() {

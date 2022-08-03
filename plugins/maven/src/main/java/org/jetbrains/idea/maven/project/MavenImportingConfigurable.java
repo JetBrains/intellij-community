@@ -43,8 +43,9 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
   public MavenImportingConfigurable(@NotNull Project project) {
     myProject = project;
-    myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
-    myDisposable = Disposer.newDisposable();
+    final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    myImportingSettings = mavenProjectsManager.getImportingSettings();
+    myDisposable = Disposer.newDisposable(mavenProjectsManager, "Maven importing configurable disposable");
 
     myAdditionalConfigurables = new ArrayList<>();
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
