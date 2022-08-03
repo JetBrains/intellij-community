@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 
 sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    override fun visitRangeTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
         val useRangeUntil = expression.possibleToUseRangeUntil(context)
         if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) return
         if (!isApplicable(expression, context, useRangeUntil)) return
@@ -34,10 +34,10 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
         holder.registerProblem(expression, desc, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceWithUntilQuickFix(useRangeUntil))
     }
 
-    override fun visitUntilOrRangeUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    override fun visitUntilOrRangeUntil(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
     }
 
-    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    override fun visitDownTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
     }
 
     private class ReplaceWithUntilQuickFix(private val useRangeUntil: Boolean) : LocalQuickFix {
@@ -55,21 +55,21 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
 
     companion object {
         fun applyFixIfApplicable(expression: KtExpression) {
-            val context = expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+            val context = lazy { expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
             val useRangeUntil = expression.possibleToUseRangeUntil(context)
             if (isApplicable(expression, context, useRangeUntil)) {
                 applyFix(expression, useRangeUntil)
             }
         }
 
-        private fun KtElement.possibleToUseRangeUntil(context: BindingContext): Boolean =
+        private fun KtElement.possibleToUseRangeUntil(context: Lazy<BindingContext>): Boolean =
             languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator) &&
-                    isOptInAllowed(FqName("kotlin.ExperimentalStdlibApi"), languageVersionSettings, context)
+                    isOptInAllowed(FqName("kotlin.ExperimentalStdlibApi"), languageVersionSettings, context.value)
 
-        private fun isApplicable(expression: KtExpression, context: BindingContext, useRangeUntil: Boolean): Boolean {
+        private fun isApplicable(expression: KtExpression, context: Lazy<BindingContext>, useRangeUntil: Boolean): Boolean {
             val (left, right) = expression.getArguments() ?: return false
             // `until` isn't available for floating point numbers
-            fun KtExpression.isRangeUntilOrUntilApplicable() = getType(context)
+            fun KtExpression.isRangeUntilOrUntilApplicable() = getType(context.value)
                 ?.let { it.isPrimitiveNumberType() && (useRangeUntil || !it.isDouble() && !it.isFloat()) }
             return right?.deparenthesize()?.isMinusOne() == true &&
                     left?.isRangeUntilOrUntilApplicable() == true && right.isRangeUntilOrUntilApplicable() == true

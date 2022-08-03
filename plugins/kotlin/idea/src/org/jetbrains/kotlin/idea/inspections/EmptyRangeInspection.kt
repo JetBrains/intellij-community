@@ -23,18 +23,18 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
  */
 class EmptyRangeInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) =
+    override fun visitRangeTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
         visitRangeToImpl<Nothing>(expression, context, holder)
 
-    override fun visitUntilOrRangeUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) =
+    override fun visitUntilOrRangeUntil(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
         visitUntilOrRangeUntilImpl<Nothing>(expression, context, holder)
 
-    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) =
+    override fun visitDownTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
         visitDownToImpl<Nothing>(expression, context, holder)
 
     private fun <T> visitRangeToImpl(
         expression: KtExpression,
-        context: BindingContext,
+        context: Lazy<BindingContext>,
         holder: ProblemsHolder
     ) where T : Comparable<T> {
         expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
@@ -44,7 +44,7 @@ class EmptyRangeInspection : AbstractRangeInspection() {
 
     private fun <T> visitUntilOrRangeUntilImpl(
         expression: KtExpression,
-        context: BindingContext,
+        context: Lazy<BindingContext>,
         holder: ProblemsHolder
     ) where T : Comparable<T> {
         expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
@@ -57,7 +57,7 @@ class EmptyRangeInspection : AbstractRangeInspection() {
 
     private fun <T> visitDownToImpl(
         expression: KtExpression,
-        context: BindingContext,
+        context: Lazy<BindingContext>,
         holder: ProblemsHolder
     ) where T : Number, T : Comparable<T> {
         expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
@@ -65,9 +65,9 @@ class EmptyRangeInspection : AbstractRangeInspection() {
         }
     }
 
-    private fun ProblemsHolder.registerProblem(expression: KtExpression, context: BindingContext, downTo: Boolean) {
+    private fun ProblemsHolder.registerProblem(expression: KtExpression, context: Lazy<BindingContext>, downTo: Boolean) {
         val (msg, fixes) =
-            if (!downTo || expression.getType(context)?.isIterable(DefaultBuiltIns.Instance) == true) {
+            if (!downTo || expression.getType(context.value)?.isIterable(DefaultBuiltIns.Instance) == true) {
                 val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
                 KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName) to arrayOf(ReplaceFix(operator))
             } else {
@@ -95,10 +95,10 @@ class EmptyRangeInspection : AbstractRangeInspection() {
         }
     }
 
-    private fun <T> KtExpression.getComparableArguments(context: BindingContext): Pair<T, T>? where T : Comparable<T> {
+    private fun <T> KtExpression.getComparableArguments(context: Lazy<BindingContext>): Pair<T, T>? where T : Comparable<T> {
         val (start, end) = getArguments() ?: return null
         @Suppress("UNCHECKED_CAST")
-        fun KtExpression.value() = constantValueOrNull(context)?.boxedValue()
+        fun KtExpression.value() = constantValueOrNull(context.value)?.boxedValue()
             // Because it's possible to write such things `2L..0`
             ?.let { if (it is Number && it !is Double && it !is Float) it.toLong() else it } as? T
 
