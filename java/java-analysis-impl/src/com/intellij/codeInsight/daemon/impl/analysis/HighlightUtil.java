@@ -569,7 +569,6 @@ public final class HighlightUtil {
     }
     if (expression != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, expression, lType);
-      HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
       if (!(expression.getParent() instanceof PsiConditionalExpression && PsiType.VOID.equals(lType))) {
         HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
       }
@@ -617,18 +616,10 @@ public final class HighlightUtil {
           TextRange textRange = statement.getTextRange();
           errorResult = checkAssignability(returnType, valueType, returnValue, textRange, returnValue.getStartOffsetInParent());
           if (errorResult != null && valueType != null) {
-            if (returnType instanceof PsiArrayType) {
-              PsiType erasedValueType = TypeConversionUtil.erasure(valueType);
-              if (erasedValueType != null &&
-                  TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), erasedValueType)) {
-                QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createSurroundWithArrayFix(null, returnValue));
-              }
-            }
             if (!PsiType.VOID.equals(valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, valueType, true));
             }
             HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, errorResult);
-            HighlightFixUtil.registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
           }
         }
       }
