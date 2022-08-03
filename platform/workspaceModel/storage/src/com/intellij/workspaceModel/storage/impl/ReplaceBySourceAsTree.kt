@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.*
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 
 /**
  * # Replace By Source as a tree
@@ -138,11 +140,16 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           } else {
             targetChildrenIds.entries.single().value
           }
-          val targetChildrenMap = buildMap {
-            ids.forEach { id -> targetStorage.entityDataByIdOrDie(id.id).also { put(it, it) } }
+
+          val targetChildrenMap = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(EntityDataStrategy())
+          ids.forEach { id ->
+            targetStorage.entityDataByIdOrDie(id.id).also {
+              val existing = targetChildrenMap[it]
+              targetChildrenMap[it] = if (existing != null) existing + it else listOf(it)
+            }
           }
 
-          val targetRelatedEntity = targetChildrenMap[replaceWithEntityData]
+          val targetRelatedEntity = targetChildrenMap.removeSome(replaceWithEntityData)
 
           if (targetRelatedEntity == null) {
             replaceWithEntity.addState(ReplaceWithState.NoChangeTraceLost)
@@ -458,17 +465,17 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       //----
 
-      val targetChildrenMap = buildMap {
-        targetChildEntityIds.forEach { id ->
-          val value = targetStorage.entityDataByIdOrDie(id.id)
-          put(value, value)
-        }
-      }.toMutableMap()
+      val targetChildrenMap = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(EntityDataStrategy())
+      targetChildEntityIds.forEach { id ->
+        val value = targetStorage.entityDataByIdOrDie(id.id)
+        val existingValue = targetChildrenMap[value]
+        targetChildrenMap[value] = if (existingValue != null) existingValue + value else listOf(value)
+      }
 
       var returnValue: EntityId? = null
 
       replaceWithEntityIds.map { replaceWithStorage.entityDataByIdOrDie(it.id) }.forEach { replaceWithEntityData ->
-        val targetEntityData = targetChildrenMap.remove(replaceWithEntityData)
+        val targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
         val replaceWithSourceMatches = entityFilter(replaceWithEntityData.entitySource)
         if (targetEntityData != null) {
           val targetSourceMatches = entityFilter(targetEntityData.entitySource)
@@ -520,6 +527,31 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
   }
 
+  private class EntityDataStrategy : Hash.Strategy<WorkspaceEntityData<out WorkspaceEntity>> {
+    override fun equals(a: WorkspaceEntityData<out WorkspaceEntity>?, b: WorkspaceEntityData<out WorkspaceEntity>?): Boolean {
+      if (a == null || b == null) {
+        return false
+      }
+      return a.equalsIgnoringEntitySource(b)
+    }
+
+    override fun hashCode(o: WorkspaceEntityData<out WorkspaceEntity>?): Int {
+      return o?.hashCodeIgnoringEntitySource() ?: 0
+    }
+  }
+
+  private fun <K, V> Object2ObjectOpenCustomHashMap<K, List<V>>.removeSome(key: K): V? {
+    val existingValue = this[key] ?: return null
+    return if (existingValue.size == 1) {
+      this.remove(key)
+      existingValue.single()
+    } else {
+      val firstElement = existingValue[0]
+      this[key] = existingValue.drop(1)
+      firstElement
+    }
+  }
+
   private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
     targetEntityId operation Operation.Relabel(replaceWithEntityId)
     targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId))
@@ -558,7 +590,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   private infix fun EntityId.operation(state: Operation) {
     val currentState = operations[this]
-    require(currentState == null)
+    require(currentState == null) {
+      "Unexpected existing state for ${this.asString()}: $currentState"
+    }
     operations[this] = state
   }
 

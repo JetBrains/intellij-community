@@ -838,7 +838,8 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.base.id)
-      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.children.single().base.id)
+      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java),
+                                                                     replaceRoot.children.single().base.id)
       thisRoot.children.single().children.single() assert ReplaceState.Remove
     }
 
@@ -915,7 +916,8 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       thisRoot assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.base.id)
-      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java), replaceRoot.children.single().base.id)
+      thisRoot.children.single() assert ReplaceState.Relink.NoChange(listOf(TreeMultiparentLeafEntity::class.java),
+                                                                     replaceRoot.children.single().base.id)
       thisRoot.children.single().children.single() assert ReplaceState.Remove
     }
 
@@ -1081,7 +1083,7 @@ class ReplaceBySourceAsTreeTest {
   }
 
   @Test
-  fun `non persistent  id root`() {
+  fun `non persistent id root`() {
     val targetEntity = builder.addSampleEntity("data", MySource)
     val replaceWithEntity = replacement.addSampleEntity("data", MySource)
 
@@ -1094,6 +1096,33 @@ class ReplaceBySourceAsTreeTest {
     replaceWithCheck {
       replaceWithEntity assert ReplaceWithState.Relabel(targetEntity.base.id)
     }
+  }
+
+  @Test
+  fun `same child`() {
+    builder add NamedEntity("data", MySource) {
+      children = listOf(
+        NamedChildEntity("Info1", SampleEntitySource("a")),
+        NamedChildEntity("Info1", SampleEntitySource("a")),
+      )
+    }
+
+    replacement add NamedEntity("data", MySource) {
+      children = listOf(
+        NamedChildEntity("Info1", SampleEntitySource("x")),
+        NamedChildEntity("Info1", SampleEntitySource("x")),
+      )
+    }
+
+    builder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    builder.assertConsistency()
+
+    val sources = builder.entities(NamedEntity::class.java).single().children
+      .map { (it.entitySource as SampleEntitySource).name }
+      .toSet()
+      .single()
+    assertEquals("x", sources)
   }
 
   private inner class ThisStateChecker {
