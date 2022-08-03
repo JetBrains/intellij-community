@@ -431,7 +431,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                        private val f: (Int)->Int = { a: Int -> a * 2 }
                        fun foo(): Int {
                            val test: Int = 12
-                           for (i in 10..42) {
+                           for (i in 10..<42) {
                                println (when {
                                    i < test -> -1
                                    i > test -> 1
@@ -443,6 +443,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                            try {
                                when (test) {
                                    12 -> println("foo")
+                                   in 10..42 -> println("baz")
                                    else -> println("bar")
                                }
                            } catch (e: Exception) {
