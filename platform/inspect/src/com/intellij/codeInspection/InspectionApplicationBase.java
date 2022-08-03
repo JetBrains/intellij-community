@@ -270,7 +270,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   @Nullable
   @VisibleForTesting
-  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public final AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
