@@ -272,12 +272,6 @@ public final class BuildDependenciesUtil {
         break;
       }
 
-      if (entry.getName().equals("__index__")) {
-        // don't unpack a special index file for JetBrains ZIP
-        // TODO: to be removed from here, it's not the place to add arbitrary exclusions
-        continue;
-      }
-
       Entry.Type type = entry.getType();
 
       Path entryPath = converter.getOutputPath(entry.getName(), type == Entry.Type.DIR);

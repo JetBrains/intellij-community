@@ -127,22 +127,6 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFileToCacheLocation - __index__ excluded`() {
-    val testArchive = createTestFile(archiveType, listOf(
-      TestFile("dir/__index__"),
-      TestFile("__index__"),
-      TestFile("__index__2"),
-    ))
-
-    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
-
-    Assert.assertTrue(root.resolve("__index__2").exists())
-    Assert.assertFalse(root.resolve("__index__").exists())
-    Assert.assertTrue(root.resolve("dir/__index__").exists())
-  }
-
-  @Test
   fun `extractFileToCacheLocation - symlink pointing to outside location`() {
     val testArchive = createTestFile(archiveType, listOf(
       TestFile("dir/test.symlink", symlinkTarget = "../dir/.///../../test.txt"),
