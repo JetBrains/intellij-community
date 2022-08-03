@@ -13,8 +13,6 @@ abstract class PersistingReviewListSearchHistoryModel<S : ReviewListSearchValue>
 
   protected abstract var persistentHistory: List<S>
 
-  private var delayedHistoryAdditionJob: Job? = null
-
   override fun add(search: S) {
     persistentHistory = persistentHistory.toMutableList().apply {
       remove(search)
