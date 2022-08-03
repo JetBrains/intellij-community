@@ -154,7 +154,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   private void setDefaultForeground() {
     if (myNameLabel != null) {
-      myNameLabel.setForeground(isValueSelected() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground());
+      myNameLabel.setForeground(UIUtil.getLabelInfoForeground());
     }
     myValueLabel.setForeground(UIUtil.getLabelForeground());
   }
