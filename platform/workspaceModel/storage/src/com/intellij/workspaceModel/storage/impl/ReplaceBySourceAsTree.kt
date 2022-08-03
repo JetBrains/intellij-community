@@ -98,16 +98,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     private fun processReplaceWithRootEntity(replaceWithRootEntity: WorkspaceEntityBase,
                                              replaceWithEntitiesTrack: ArrayList<EntityId>) {
-      require(replaceWithRootEntity is WorkspaceEntityWithPersistentId) {
-        "Root entities without persistent ids are not yet supported"
-      }
-
-      val continueProcess = findAndReplaceRootEntity(replaceWithRootEntity)
+      val (continueProcess, targetRootEntityIdN) = findAndReplaceRootEntity(replaceWithRootEntity)
       if (!continueProcess) return
       replaceWithEntitiesTrack.remove(replaceWithRootEntity.id).also { require(it) }
 
-      val targetRoot = targetStorage.resolve(replaceWithRootEntity.persistentId)!!
-      var targetRootEntityId = (targetRoot as WorkspaceEntityBase).id
+      assert(targetRootEntityIdN != null)
+      var targetRootEntityId: EntityId = targetRootEntityIdN!!
 
       for (replaceWithEntity in replaceWithEntitiesTrack.reversed()) {
 
@@ -160,44 +156,44 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityWithPersistentId): Boolean {
+    private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityBase): Pair<Boolean, EntityId?> {
 
       @Suppress("MoveVariableDeclarationIntoWhen")
-      val currentState = replaceWithState[(replaceWithRootEntity as WorkspaceEntityBase).id]
+      val currentState = replaceWithState[replaceWithRootEntity.id]
       when (currentState) {
-        is ReplaceWithState.SubtreeMoved -> return false
-        is ReplaceWithState.NoChange -> return true
-        ReplaceWithState.NoChangeTraceLost -> return false
-        is ReplaceWithState.Relabel -> return true
+        ReplaceWithState.SubtreeMoved -> return false to null
+        is ReplaceWithState.NoChange -> return true to currentState.targetEntityId
+        ReplaceWithState.NoChangeTraceLost -> return false to null
+        is ReplaceWithState.Relabel -> return true to currentState.targetEntityId
         null -> Unit
       }
 
-      val persistentId = replaceWithRootEntity.persistentId
-      val targetEntity = targetStorage.resolve(persistentId)
+      val targetEntity = findEntityInTargetStorage(replaceWithRootEntity)
       if (targetEntity == null) {
         if (entityFilter(replaceWithRootEntity.entitySource)) {
-          addOperations += AddSubtree(null, (replaceWithRootEntity as WorkspaceEntityBase).id)
-          (replaceWithRootEntity as WorkspaceEntityBase).id.addState(ReplaceWithState.SubtreeMoved)
-          return false
+          addOperations += AddSubtree(null, replaceWithRootEntity.id)
+          replaceWithRootEntity.id.addState(ReplaceWithState.SubtreeMoved)
+          return false to null
         }
         else {
-          (replaceWithRootEntity as WorkspaceEntityBase).id.addState(ReplaceWithState.NoChangeTraceLost)
-          return false
+          replaceWithRootEntity.id.addState(ReplaceWithState.NoChangeTraceLost)
+          return false to null
         }
       }
 
+      val targetEntityId = (targetEntity as WorkspaceEntityBase).id
       @Suppress("MoveVariableDeclarationIntoWhen")
-      val targetCurrentState = targetState[(targetEntity as WorkspaceEntityBase).id]
+      val targetCurrentState = targetState[targetEntityId]
       when (targetCurrentState) {
-        is ReplaceState.NoChange -> return true
-        is ReplaceState.Relabel -> return true
+        is ReplaceState.NoChange -> return true to targetEntityId
+        is ReplaceState.Relabel -> return true to targetEntityId
         is ReplaceState.Relink -> {
           when (targetCurrentState) {
-            is ReplaceState.Relink.Relabel -> return true
-            is ReplaceState.Relink.NoChange -> return true
+            is ReplaceState.Relink.Relabel -> return true to targetEntityId
+            is ReplaceState.Relink.NoChange -> return true to targetEntityId
           }
         }
-        ReplaceState.Remove -> return false
+        ReplaceState.Remove -> return false to targetEntityId
         null -> Unit
       }
 
@@ -206,19 +202,32 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           error("This branch should be already processed because we process 'target' entities first")
         }
         entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          replaceWorkspaceData((targetEntity as WorkspaceEntityBase).id, (replaceWithRootEntity as WorkspaceEntityBase).id)
-          return true
+          replaceWorkspaceData(targetEntity.id, replaceWithRootEntity.id)
+          return true to targetEntityId
         }
         !entityFilter(replaceWithRootEntity.entitySource) && entityFilter(targetEntity.entitySource) -> {
           error("This branch should be already processed because we process 'target' entities first")
         }
         !entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          doNothingOn((targetEntity as WorkspaceEntityBase).id, (replaceWithRootEntity as WorkspaceEntityBase).id)
-          return true
+          doNothingOn(targetEntity.id, replaceWithRootEntity.id)
+          return true to targetEntityId
         }
       }
 
       error("Unexpected branch")
+    }
+
+    fun findEntityInTargetStorage(replaceWithRootEntity: WorkspaceEntityBase): WorkspaceEntity? {
+      return if (replaceWithRootEntity is WorkspaceEntityWithPersistentId) {
+        val persistentId = replaceWithRootEntity.persistentId
+        targetStorage.resolve(persistentId)
+      } else {
+        targetStorage.entities(replaceWithRootEntity.id.clazz.findWorkspaceEntity())
+          .filter {
+            targetStorage.entityDataByIdOrDie((it as WorkspaceEntityBase).id) == replaceWithStorage.entityDataByIdOrDie(replaceWithRootEntity.id)
+          }
+          .firstOrNull()
+      }
     }
   }
 
@@ -232,11 +241,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
 
     private fun processRoot(targetRootEntity: WorkspaceEntityBase, targetRootTrack: MutableList<EntityId>) {
-      require(targetRootEntity is WorkspaceEntityWithPersistentId) {
-        "Root entities without persistent ids are not yet supported"
-      }
-
-      val continueProcess = findAndReplaceRootEntity(targetRootEntity)
+      var (continueProcess, replaceWithRootEntityId) = findAndReplaceRootEntity(targetRootEntity)
       targetRootTrack.remove(targetRootEntity.id).also { require(it) }
 
       if (!continueProcess) {
@@ -245,8 +250,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         return
       }
-
-      var replaceWithRootEntityId: EntityId? = (replaceWithStorage.resolve(targetRootEntity.persistentId)!! as WorkspaceEntityBase).id
 
       var targetRootEntityId = targetRootEntity.id
       var markOtherToRemove = false
@@ -347,29 +350,36 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    fun findAndReplaceRootEntity(targetRootEntity: WorkspaceEntityWithPersistentId): Boolean {
-      val targetRootEntityId = (targetRootEntity as WorkspaceEntityBase).id
+    fun findAndReplaceRootEntity(targetRootEntity: WorkspaceEntityBase): Pair<Boolean, EntityId?> {
+      val targetRootEntityId = targetRootEntity.id
       val currentTargetState = targetState[targetRootEntityId]
       if (currentTargetState != null) {
         when (currentTargetState) {
-          is ReplaceState.NoChange -> return true
-          is ReplaceState.Relabel -> return true
-          is ReplaceState.Relink -> return true
-          ReplaceState.Remove -> return false
+          is ReplaceState.NoChange -> {
+            return true to currentTargetState.replaceWithEntityId
+          }
+          is ReplaceState.Relabel -> {
+            return true to currentTargetState.replaceWithEntityId
+          }
+          is ReplaceState.Relink -> {
+            return true to currentTargetState.replaceWithEntityId
+          }
+          ReplaceState.Remove -> {
+            return false to null
+          }
         }
       }
 
-      val persistentId = targetRootEntity.persistentId
-      val replaceWithEntity = replaceWithStorage.resolve(persistentId)
+      val replaceWithEntity = findEntityInReplaceWithStorage(targetRootEntity)
       if (replaceWithEntity == null) {
         if (entityFilter(targetRootEntity.entitySource)) {
           targetRootEntityId operation Operation.Remove
           targetRootEntityId.addState(ReplaceState.Remove)
-          return false
+          return false to null
         }
         else {
           targetRootEntityId.addState(ReplaceState.NoChange(null))
-          return false
+          return false to null
         }
       }
 
@@ -377,23 +387,36 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       when {
         entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
           replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          return true
+          return true to replaceWithEntity.id
         }
         entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
           removeWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          return false
+          return false to replaceWithEntity.id
         }
         !entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
           replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          return true
+          return true to replaceWithEntity.id
         }
         !entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
           doNothingOn(targetRootEntity.id, replaceWithEntity.id)
-          return true
+          return true to replaceWithEntity.id
         }
       }
 
       error("Unexpected branch")
+    }
+
+    fun findEntityInReplaceWithStorage(targetRootEntity: WorkspaceEntityBase): WorkspaceEntity? {
+      return if (targetRootEntity is WorkspaceEntityWithPersistentId) {
+        val persistentId = targetRootEntity.persistentId
+        replaceWithStorage.resolve(persistentId)
+      } else {
+        replaceWithStorage.entities(targetRootEntity.id.clazz.findWorkspaceEntity())
+          .filter {
+            replaceWithStorage.entityDataByIdOrDie((it as WorkspaceEntityBase).id) == targetStorage.entityDataByIdOrDie(targetRootEntity.id)
+          }
+          .firstOrNull()
+      }
     }
 
     private fun processChildren(targetRootEntityId: EntityId,

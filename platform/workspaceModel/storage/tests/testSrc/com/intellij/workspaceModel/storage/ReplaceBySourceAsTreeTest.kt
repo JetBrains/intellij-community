@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
 import org.junit.Assert.assertEquals
@@ -1077,6 +1078,22 @@ class ReplaceBySourceAsTreeTest {
     rbsMySources()
 
     builder.assertConsistency()
+  }
+
+  @Test
+  fun `non persistent  id root`() {
+    val targetEntity = builder.addSampleEntity("data", MySource)
+    val replaceWithEntity = replacement.addSampleEntity("data", MySource)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    thisStateCheck {
+      targetEntity assert ReplaceState.Relabel(replaceWithEntity.base.id)
+    }
+    replaceWithCheck {
+      replaceWithEntity assert ReplaceWithState.Relabel(targetEntity.base.id)
+    }
   }
 
   private inner class ThisStateChecker {
