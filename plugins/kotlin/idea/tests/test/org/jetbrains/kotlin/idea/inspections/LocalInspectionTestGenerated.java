@@ -12652,6 +12652,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverFor.kt");
         }
 
+        @TestMetadata("implicitReceiverRangeUntil.kt")
+        public void testImplicitReceiverRangeUntil() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverRangeUntil.kt");
+        }
+
         @TestMetadata("implicitReceiverUntil.kt")
         public void testImplicitReceiverUntil() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverUntil.kt");
@@ -12690,6 +12695,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simpleExpression.kt")
         public void testSimpleExpression() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpression.kt");
+        }
+
+        @TestMetadata("simpleExpressionRangeUntil.kt")
+        public void testSimpleExpressionRangeUntil() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpressionRangeUntil.kt");
         }
 
         @TestMetadata("simpleExpressionUntil.kt")
