@@ -25,12 +25,13 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class HttpWrapper {
   private val logger = Logger.getInstance(HttpWrapper::class.java)
-  private val cache = HashMap<String, String>()
+  private val cache = ConcurrentHashMap<String, String>()
 
   internal suspend fun requestString(
     url: String,
@@ -42,8 +43,8 @@ class HttpWrapper {
   ): String = suspendCancellableCoroutine { cont ->
     try {
       val cacheKey = getCacheKey(url, acceptContentType, timeoutInSeconds, headers)
-      if (useCache && cache.containsKey(cacheKey)) {
-        cont.resume(cacheKey)
+      if (useCache) {
+        cache[cacheKey]?.let { cont.resume(it) }
       }
 
       val builder = HttpRequests.request(url)
