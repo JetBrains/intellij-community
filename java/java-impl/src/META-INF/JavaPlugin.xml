@@ -1109,7 +1109,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
-    <usageTargetProvider implementation="com.intellij.find.findUsages.ThrowsUsageTargetProvider"/>
+    <usageTargetProvider implementation="com.intellij.find.findUsages.JavaUsageTargetProvider"/>
     <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaBackspaceHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer" implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
