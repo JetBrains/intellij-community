@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
-import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverTypeIfSelectorIsSizeOrLength
@@ -21,25 +19,15 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceManualRangeWithIndicesCalls]
  */
-class ReplaceManualRangeWithIndicesCallsInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
-        override fun visitBinaryExpression(binaryExpression: KtBinaryExpression) {
-            visitRange(holder, binaryExpression)
-        }
-
-        override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-            visitRange(holder, expression)
-        }
-    }
-
-    private fun visitRange(holder: ProblemsHolder, range: KtExpression) {
-        val type = range.getRangeBinaryExpressionType() ?: return
+class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection() {
+    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
         val (left, right) = range.getArguments() ?: return
         if (left == null) return
         if (right == null) return

@@ -9,6 +9,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.inspections.collections.isIterable
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.psi.KtExpression
@@ -23,45 +25,30 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
  */
 class EmptyRangeInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
-        visitRangeToImpl<Nothing>(expression, context, holder)
+    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) =
+        visitRangeImpl<Nothing>(range, context, type, holder)
 
-    override fun visitUntilOrRangeUntil(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
-        visitUntilOrRangeUntilImpl<Nothing>(expression, context, holder)
-
-    override fun visitDownTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) =
-        visitDownToImpl<Nothing>(expression, context, holder)
-
-    private fun <T> visitRangeToImpl(
-        expression: KtExpression,
+    private fun <T> visitRangeImpl(
+        range: KtExpression,
         context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
         holder: ProblemsHolder
     ) where T : Comparable<T> {
-        expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
-            if (startValue > endValue) holder.registerProblem(expression, context, downTo = true)
-        }
-    }
-
-    private fun <T> visitUntilOrRangeUntilImpl(
-        expression: KtExpression,
-        context: Lazy<BindingContext>,
-        holder: ProblemsHolder
-    ) where T : Comparable<T> {
-        expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
-            when {
-                startValue > endValue -> holder.registerProblem(expression, context, downTo = true)
-                startValue == endValue -> holder.registerProblem(expression, context, downTo = false)
+        when (type) {
+            RANGE_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue > endValue) holder.registerProblem(range, context, downTo = true)
             }
-        }
-    }
 
-    private fun <T> visitDownToImpl(
-        expression: KtExpression,
-        context: Lazy<BindingContext>,
-        holder: ProblemsHolder
-    ) where T : Number, T : Comparable<T> {
-        expression.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
-            if (startValue < endValue) holder.registerProblem(expression, context, downTo = false)
+            UNTIL, RANGE_UNTIL -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                when {
+                    startValue > endValue -> holder.registerProblem(range, context, downTo = true)
+                    startValue == endValue -> holder.registerProblem(range, context, downTo = false)
+                }
+            }
+
+            DOWN_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue < endValue) holder.registerProblem(range, context, downTo = false)
+            }
         }
     }
 

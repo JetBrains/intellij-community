@@ -11,33 +11,33 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isDouble
 import org.jetbrains.kotlin.types.typeUtil.isFloat
 import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
-import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 
 sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
-        val useRangeUntil = expression.possibleToUseRangeUntil(context)
+    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
+        when (type) {
+            UNTIL, RANGE_UNTIL, DOWN_TO -> return
+            RANGE_TO -> Unit
+        }
+        val useRangeUntil = range.possibleToUseRangeUntil(context)
         if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) return
-        if (!isApplicable(expression, context, useRangeUntil)) return
+        if (!isApplicable(range, context, useRangeUntil)) return
         val desc =
             if (useRangeUntil) KotlinBundle.message("inspection.replace.range.to.with.rangeUntil.display.name")
             else KotlinBundle.message("inspection.replace.range.to.with.until.display.name")
-        holder.registerProblem(expression, desc, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceWithUntilQuickFix(useRangeUntil))
-    }
-
-    override fun visitUntilOrRangeUntil(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
-    }
-
-    override fun visitDownTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder) {
+        holder.registerProblem(range, desc, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceWithUntilQuickFix(useRangeUntil))
     }
 
     private class ReplaceWithUntilQuickFix(private val useRangeUntil: Boolean) : LocalQuickFix {

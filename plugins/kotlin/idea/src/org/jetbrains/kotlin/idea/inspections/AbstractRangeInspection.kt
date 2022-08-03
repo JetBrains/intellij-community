@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -30,18 +30,10 @@ abstract class AbstractRangeInspection : AbstractKotlinInspection() {
 
     private fun visitRange(expression: KtExpression, holder: ProblemsHolder) {
         val context = lazy { expression.analyze(BodyResolveMode.PARTIAL) }
-        when (expression.getRangeBinaryExpressionType(context) ?: return) {
-            RANGE_TO -> visitRangeTo(expression, context, holder)
-            UNTIL, RANGE_UNTIL -> visitUntilOrRangeUntil(expression, context, holder)
-            DOWN_TO -> visitDownTo(expression, context, holder)
-        }
+        visitRange(expression, context, expression.getRangeBinaryExpressionType(context) ?: return, holder)
     }
 
-    abstract fun visitRangeTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder)
-
-    abstract fun visitUntilOrRangeUntil(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder)
-
-    abstract fun visitDownTo(expression: KtExpression, context: Lazy<BindingContext>, holder: ProblemsHolder)
+    abstract fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder)
 
     companion object {
         fun KtExpression.constantValueOrNull(context: BindingContext? = null): ConstantValue<Any?>? {
