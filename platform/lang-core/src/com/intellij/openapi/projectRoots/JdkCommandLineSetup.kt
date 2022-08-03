@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
@@ -636,8 +635,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
     }
 
-    if (!parametersList.hasParameter("sun.stdout.encoding") &&
-        !parametersList.hasParameter("sun.stderr.encoding")) {
+    if (!parametersList.hasProperty("sun.stdout.encoding") &&
+        !parametersList.hasProperty("sun.stderr.encoding")) {
       try {
         val versionString = javaParameters.jdk?.versionString
         if (versionString != null && JavaVersion.parse(versionString).isAtLeast(18)) {
