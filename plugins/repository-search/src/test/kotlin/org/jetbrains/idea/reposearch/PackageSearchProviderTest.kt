@@ -22,7 +22,7 @@ import com.sun.net.httpserver.HttpServer
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
 import org.jetbrains.idea.packagesearch.api.PackageSearchApiContentTypes
-import org.jetbrains.idea.packagesearch.api.PackageSearchProviderImpl
+import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -62,7 +62,7 @@ class PackageSearchProviderTest {
     val params = createServer(suggestEndpoint, response)
     val data: MutableList<RepositoryArtifactData> = ArrayList()
 
-    PackageSearchProviderImpl(MyPackageSearchServiceConfig()).suggestPrefix(
+    PackageSearchProvider(MyPackageSearchServiceConfig()).suggestPrefix(
       groupId = "org.apache.maven",
       artifactId = "maven-plugin-api",
       consumer = data::add
@@ -85,7 +85,7 @@ class PackageSearchProviderTest {
     val params = createServer(fulltextEndpoint, response)
     val data: MutableList<RepositoryArtifactData> = ArrayList()
 
-    PackageSearchProviderImpl(MyPackageSearchServiceConfig()).fulltextSearch(
+    PackageSearchProvider(MyPackageSearchServiceConfig()).fulltextSearch(
       searchString = "maven-plugin-api",
       consumer = data::add
     )

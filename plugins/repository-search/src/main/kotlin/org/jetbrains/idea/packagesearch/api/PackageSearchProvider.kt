@@ -16,40 +16,244 @@
 
 package org.jetbrains.idea.packagesearch.api
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.io.URLUtil
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
+import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
+import org.jetbrains.idea.packagesearch.http.HttpWrapper
+import org.jetbrains.idea.reposearch.DependencySearchBundle
+import org.jetbrains.idea.reposearch.DependencySearchProvider
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.packagesearch.api.statistics.ApiStatisticsResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackageResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import java.util.function.Consumer
 
-interface PackageSearchProvider {
+internal object PackageSearchApiContentTypes {
+  const val StandardV2 = "application/vnd.jetbrains.packagesearch.standard.v2+json"
+  const val MinimalV2 = "application/vnd.jetbrains.packagesearch.minimal.v2+json"
+  const val Json = "application/json"
+  const val Html = "text/html"
+}
+
+private val emptyStandardV2PackagesWithRepos = ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>(
+  packages = emptyList(),
+  repositories = emptyList()
+)
+
+class PackageSearchProvider(
+  private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
+) : DependencySearchProvider {
+
+  private val httpWrapper = HttpWrapper()
+
+  private val maxRequestResultsCount = 25
+  private val maxMavenCoordinatesParts = 3
+
+  private val json = Json {
+    ignoreUnknownKeys = true
+    encodeDefaults = false
+  }
+
+  @Deprecated("Use V2 PKGS API: [PackageSearchProvider#packagesByQuery]")
+  @ScheduledForRemoval
+  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) = runBlocking {
+    ProgressManager.checkCanceled()
+    val pkgsResponse = packagesByQuery(searchString)
+    pkgsResponse.packages
+      .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
+      .map { convertApiStandardPackage2RepositoryArtifactData(it) }
+      .forEach { consumer.accept(it) }
+  }
+
+  @Deprecated("Use V2 PKGS API: [PackageSearchProvider#suggestPackages]")
+  @ScheduledForRemoval
+  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) = runBlocking {
+    ProgressManager.checkCanceled()
+    val pkgsResponse = suggestPackages(groupId, artifactId)
+    pkgsResponse.packages
+      .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
+      .map { convertApiStandardPackage2RepositoryArtifactData(it) }
+      .forEach { consumer.accept(it) }
+  }
+
+  override fun isLocal(): Boolean = false
+
+  private fun convertApiStandardPackage2RepositoryArtifactData(pkg: ApiStandardPackage): RepositoryArtifactData {
+    val items = pkg.versions.map {
+      MavenDependencyCompletionItem(
+        pkg.groupId,
+        pkg.artifactId,
+        it.version,
+        MavenDependencyCompletionItem.Type.REMOTE)
+    }
+    return MavenRepositoryArtifactInfo(
+      pkg.groupId,
+      pkg.artifactId,
+      items.toTypedArray()
+    )
+  }
+
   suspend fun packagesByQuery(
     searchQuery: String,
     onlyStable: Boolean = false,
     onlyMpp: Boolean = false,
     repositoryIds: List<String> = emptyList()
-  ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
+  ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    if (searchQuery.isEmpty()) {
+      return emptyStandardV2PackagesWithRepos
+    }
+
+    val joinedRepositoryIds = repositoryIds.joinToString(",") { URLUtil.encodeQuery(it) }
+    val requestUrl = buildString {
+      append(config.baseUrl)
+      append("/package?query=")
+      append(URLUtil.encodeQuery(searchQuery))
+      append("&onlyStable=")
+      append(onlyStable.toString())
+      append("&onlyMpp=")
+      append(onlyMpp.toString())
+
+      if (repositoryIds.isNotEmpty()) {
+        append("&repositoryIds=")
+        append(joinedRepositoryIds)
+      }
+    }
+
+    return httpWrapper.requestString(
+      requestUrl,
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
 
   suspend fun suggestPackages(
     groupId: String?,
     artifactId: String?,
     onlyMpp: Boolean = false,
     repositoryIds: List<String> = emptyList()
-  ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
+  ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    if (groupId == null && artifactId == null) {
+      return emptyStandardV2PackagesWithRepos
+    }
 
-  suspend fun packagesByRange(range: List<String>): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
+    val joinedRepositoryIds = repositoryIds.joinToString(",") { URLUtil.encodeQuery(it) }
+    val requestUrl = buildString {
+      append(config.baseUrl)
+      append("/package?groupid=")
+      append(URLUtil.encodeQuery(groupId ?: ""))
+      append("&artifactid=")
+      append(URLUtil.encodeQuery(artifactId ?: ""))
+      append("&onlyMpp=")
+      append(onlyMpp.toString())
+
+      if (repositoryIds.isNotEmpty()) {
+        append("&repositoryIds=")
+        append(joinedRepositoryIds)
+      }
+    }
+
+    return httpWrapper.requestString(
+      requestUrl,
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
+
+  suspend fun packagesByRange(range: List<String>): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    if (range.isEmpty()) {
+      return emptyStandardV2PackagesWithRepos
+    }
+
+    require(range.size <= maxRequestResultsCount) {
+      DependencySearchBundle.message("reposearch.search.client.error.too.many.requests.for.range")
+    }
+
+    require(range.none { it.split(":").size >= maxMavenCoordinatesParts }) {
+      DependencySearchBundle.message("reposearch.search.client.error.no.versions.for.range")
+    }
+
+    val joinedRange = range.joinToString(",") { URLUtil.encodeQuery(it) }
+    val requestUrl = "${config.baseUrl}/package?range=$joinedRange"
+
+    return httpWrapper.requestString(
+      requestUrl,
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
 
   suspend fun packageByHash(
     hash: String,
     hashingAlgorithm: HashingAlgorithm
-  ): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
+  ): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    val urlParam = when (hashingAlgorithm) {
+      HashingAlgorithm.SHA1 -> "sha1=$hash"
+      HashingAlgorithm.MD5 -> "md5=$hash"
+    }
 
-  suspend fun packageById(id: String): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
+    return httpWrapper.requestString(
+      "${config.baseUrl}/package?$urlParam",
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
 
-  suspend fun readmeByPackageId(id: String): String
+  suspend fun packageById(id: String): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    return httpWrapper.requestString(
+      "${config.baseUrl}/package/$id",
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
 
-  suspend fun statistics(): ApiStatisticsResponse
+  suspend fun readmeByPackageId(id: String): String {
+    return httpWrapper.requestString(
+      "${config.baseUrl}/package/$id/readme",
+      PackageSearchApiContentTypes.Html,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    )
+  }
 
-  suspend fun repositories(): ApiRepositoriesResponse
+  suspend fun statistics(): ApiStatisticsResponse {
+    return httpWrapper.requestString(
+      "${config.baseUrl}/api/statistics",
+      PackageSearchApiContentTypes.Json,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
+
+  suspend fun repositories(): ApiRepositoriesResponse {
+    return httpWrapper.requestString(
+      "${config.baseUrl}/repositories",
+      PackageSearchApiContentTypes.StandardV2,
+      config.timeoutInSeconds,
+      config.headers,
+      config.useCache
+    ).let { json.decodeFromString(it) }
+  }
 }

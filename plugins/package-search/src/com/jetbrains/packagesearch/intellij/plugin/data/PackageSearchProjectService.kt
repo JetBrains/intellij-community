@@ -76,7 +76,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
-import org.jetbrains.idea.packagesearch.api.PackageSearchProviderImpl
+import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -86,7 +86,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(
-        PackageSearchProviderImpl(),
+        PackageSearchProvider(),
         project.packageSearchProjectCachesService.installedDependencyCache
     )
 
