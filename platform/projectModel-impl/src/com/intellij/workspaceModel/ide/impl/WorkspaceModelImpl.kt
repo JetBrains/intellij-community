@@ -8,12 +8,13 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import org.jetbrains.annotations.TestOnly
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import kotlin.system.measureTimeMillis
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -80,14 +81,25 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     val result = updater(builder)
     startPreUpdateHandlers(before, builder)
     val changes = builder.collectChanges(before)
-    entityStorage.replace(builder.toSnapshot(), changes, this::onBeforeChanged, this::onChanged)
+    val newStorage = builder.toSnapshot()
+    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+      before.assertConsistency()
+      newStorage.assertConsistency()
+    }
+    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     return result
   }
 
   final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
+    val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
     val result = updater(builder)
-    entityStorage.replaceSilently(builder.toSnapshot())
+    val newStorage = builder.toSnapshot()
+    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+      before.assertConsistency()
+      newStorage.assertConsistency()
+    }
+    entityStorage.replaceSilently(newStorage)
     return result
   }
 
