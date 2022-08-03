@@ -108,7 +108,9 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         try {
             return getTarget(editor, file) != null
         } finally {
-            CREATE_BY_PATTERN_MAY_NOT_REFORMAT = false
+            if (isUnitTestMode()) { // do not trigger additional class loading outside of tests
+                CREATE_BY_PATTERN_MAY_NOT_REFORMAT = false
+            }
         }
     }
 
