@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -270,10 +272,12 @@ public abstract class Invoker implements Disposable {
   static final class Task<T> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends T> supplier;
+    private final String clientId;
     private volatile T result;
 
     Task(@NotNull Supplier<? extends T> supplier) {
       this.supplier = supplier;
+      this.clientId = ClientId.getCurrentValue();
     }
 
     boolean canRestart(boolean disposed, int attempt) {
@@ -311,7 +315,9 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void run() {
-      result = supplier.get();
+      try (AccessToken ignored = ClientId.withClientId(clientId)) {
+        result = supplier.get();
+      }
     }
 
     @Override
