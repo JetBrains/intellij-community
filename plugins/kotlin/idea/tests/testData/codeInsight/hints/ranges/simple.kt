@@ -8,6 +8,10 @@ class Foo : Comparable<Foo> {
 }
 
 fun foo() {
+    // rangeTo and rangeUntil are not an infix functions and shouldn't have hints
+    for (index in 0 rangeTo 100) {}
+    for (index in 0 rangeUntil 100) {}
+
     for (index in 0.rangeTo(100)) {}
     for (index in 'a'.rangeTo('z')) {}
     for (index in 0L.rangeTo(100L)) {}

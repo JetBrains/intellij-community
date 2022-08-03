@@ -78,13 +78,14 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
 
 internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
-    val name = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
-        ?: castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
-    return when (name) {
-        "..", "rangeTo" -> RangeKtExpressionType.RANGE_TO
-        "..<", "rangeUntil" -> RangeKtExpressionType.RANGE_UNTIL
-        "downTo" -> RangeKtExpressionType.DOWN_TO
-        "until" -> RangeKtExpressionType.UNTIL
+    val binaryExprName = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
+    val dotQualifiedName = castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
+    val name = binaryExprName ?: dotQualifiedName
+    return when {
+        binaryExprName == ".." || dotQualifiedName == "rangeTo" -> RangeKtExpressionType.RANGE_TO
+        binaryExprName == "..<" || dotQualifiedName == "rangeUntil" -> RangeKtExpressionType.RANGE_UNTIL
+        name == "downTo" -> RangeKtExpressionType.DOWN_TO
+        name == "until" -> RangeKtExpressionType.UNTIL
         else -> null
     }?.takeIf {
         val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
