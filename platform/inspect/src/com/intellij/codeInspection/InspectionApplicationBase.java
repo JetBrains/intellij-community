@@ -705,7 +705,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     });
   }
 
-  public @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl profile = loadInspectionProfile(project, myProfileName, myProfilePath, "command line");
     if (profile != null) return profile;
 
