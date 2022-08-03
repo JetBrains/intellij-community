@@ -73,6 +73,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
       indicateHovering();
     }
     indicateFocusing();
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return this;
   }
 
