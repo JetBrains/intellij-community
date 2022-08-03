@@ -29,6 +29,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class HttpWrapper {
+  private val logger = Logger.getInstance(HttpWrapper::class.java)
   private val cache = HashMap<String, String>()
 
   internal suspend fun requestString(
@@ -60,7 +61,7 @@ class HttpWrapper {
         val responseText = request.connection.getInputStream().use { it.readBytes { cont.isCancelled }.toString(Charsets.UTF_8) }
         if (cont.isCancelled) return@connect
         if (statusCode != HttpURLConnection.HTTP_OK && verbose) {
-          Logger.getInstance("HttpWrapper").debug(
+          logger.trace(
             """
             |
             |<-- HTTP GET $url
