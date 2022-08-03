@@ -246,7 +246,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       if (!continueProcess) {
         if (targetState[targetRootEntity.id] == ReplaceState.Remove) {
-          targetRootTrack.forEach { it.addState(ReplaceState.Remove) }
+          targetRootTrack.forEach {
+            val currentState = targetState[it]
+            if (currentState == null) {
+              it.addState(ReplaceState.Remove)
+            } else if (currentState !is ReplaceState.Remove) {
+              error("Unexpected state: $currentState")
+            }
+          }
         }
         return
       }
@@ -537,7 +544,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   private fun EntityId.addState(state: ReplaceState) {
     val currentState = targetState[this]
-    require(currentState == null)
+    require(currentState == null) {
+      "Unexpected existing state for $this: $currentState"
+    }
     targetState[this] = state
   }
 
