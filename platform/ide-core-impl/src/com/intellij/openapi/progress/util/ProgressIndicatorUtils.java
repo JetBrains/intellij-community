@@ -366,7 +366,9 @@ public final class ProgressIndicatorUtils {
 
   /** Use when a deadlock is possible otherwise. */
   public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
-    Cancellation.checkCancelled();
+    if (!Cancellation.isInNonCancelableSection()) {
+      Cancellation.checkCancelled();
+    }
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks
     if (indicator.isCanceled()) {           // if a just-canceled indicator or PCE is disabled

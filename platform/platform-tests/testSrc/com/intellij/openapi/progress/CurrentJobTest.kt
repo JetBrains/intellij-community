@@ -61,6 +61,14 @@ class CurrentJobTest : CancellationTest() {
       assertThrows<JobCanceledException> {
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
       }
+      Cancellation.computeInNonCancelableSection<Unit, Exception> {
+        assertDoesNotThrow {
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+        }
+      }
+      assertThrows<JobCanceledException> {
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+      }
     }
   }
 }
