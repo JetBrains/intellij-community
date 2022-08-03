@@ -950,7 +950,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "switch (a) {\n" +
       "    case R(\n" +
       "            int x,\n" +
-      "            String y) -> {\n" +
+      "            String y\n" +
+      "    ) -> {\n" +
       "    }\n" +
       "}");
   }
@@ -963,8 +964,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       " case R(int x, String y) -> {}\n" +
       "}",
       "switch (a) {\n" +
-      "    case R(int x,\n" +
-      "           String y\n" +
+      "    case R(\n" +
+      "            int x,\n" +
+      "            String y\n" +
       "    ) -> {\n" +
       "    }\n" +
       "}");
