@@ -75,18 +75,16 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
         get() = KotlinBundle.message("inlay.kotlin.values.hints")
 }
 
-internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>?): Boolean = getRangeBinaryExpressionType(context) != null
+internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
 
-internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>?): RangeKtExpressionType? {
+internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
     val name = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
         ?: castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
     return when (name) {
-        ".." -> RangeKtExpressionType.rangeTo
-        "rangeTo" -> RangeKtExpressionType.rangeTo
-        "..<" -> RangeKtExpressionType.rangeUntil
-        "rangeUntil" -> RangeKtExpressionType.rangeUntil
-        "downTo" -> RangeKtExpressionType.downTo
-        "until" -> RangeKtExpressionType.until
+        "..", "rangeTo" -> RangeKtExpressionType.RANGE_TO
+        "..<", "rangeUntil" -> RangeKtExpressionType.RANGE_UNTIL
+        "downTo" -> RangeKtExpressionType.DOWN_TO
+        "until" -> RangeKtExpressionType.UNTIL
         else -> null
     }?.takeIf {
         val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
@@ -94,7 +92,6 @@ internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingCont
     }
 }
 
-@Suppress("EnumEntryName")
 enum class RangeKtExpressionType {
-    rangeTo, rangeUntil, downTo, until
+    RANGE_TO, RANGE_UNTIL, DOWN_TO, UNTIL
 }

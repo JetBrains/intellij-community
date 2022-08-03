@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 enum class HintType(
@@ -168,27 +167,27 @@ enum class HintType(
         KotlinBundle.message("hints.settings.dont.show.ranges"),
         true
     ) {
-        override fun isApplicable(e: PsiElement): Boolean = e is KtBinaryExpression && e.isRangeExpression(context = null)
+        override fun isApplicable(e: PsiElement): Boolean = e is KtBinaryExpression && e.isRangeExpression()
 
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             val binaryExpression = e.safeAs<KtBinaryExpression>() ?: return emptyList()
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
             val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
-            val type = binaryExpression.getRangeBinaryExpressionType(context = null) ?: return emptyList()
+            val type = binaryExpression.getRangeBinaryExpressionType() ?: return emptyList()
             val (leftText: String, rightText: String?) = when (type) {
-                RangeKtExpressionType.rangeTo -> {
+                RANGE_TO -> {
                     KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.lessOrEqual")
                 }
-                RangeKtExpressionType.rangeUntil -> {
+                RANGE_UNTIL -> {
                     KotlinBundle.message("hints.ranges.lessOrEqual") to null
                 }
-                RangeKtExpressionType.downTo -> {
+                DOWN_TO -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
                     KotlinBundle.message("hints.ranges.greaterOrEqual") to KotlinBundle.message("hints.ranges.greaterOrEqual")
                 }
-                RangeKtExpressionType.until -> {
+                UNTIL -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
                     KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.less")

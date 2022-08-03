@@ -959,7 +959,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
                 is KtBinaryExpression -> {
                     val (leftRelation, rightRelation) =
-                        range.getRangeBinaryExpressionType(context = null)?.getRelationType() ?: (null to null)
+                        range.getRangeBinaryExpressionType()?.getRelationType() ?: (null to null)
                     if (leftRelation != null && rightRelation != null) {
                         val left = range.left
                         val right = range.right
@@ -1276,10 +1276,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processInCheck(kotlinType: KotlinType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
         if (kotlinType != null && (kotlinType.isInt() || kotlinType.isLong())) {
             if (range is KtBinaryExpression) {
-                val type = range.getRangeBinaryExpressionType(context = null)
+                val type = range.getRangeBinaryExpressionType()
                 val pair = when (type) {
-                    rangeTo, until, rangeUntil -> range.left to range.right
-                    null, downTo -> null
+                    RANGE_TO, UNTIL, RANGE_UNTIL -> range.left to range.right
+                    null, DOWN_TO -> null
                 }
                 if (type != null && pair != null) {
                     val (left, right) = pair

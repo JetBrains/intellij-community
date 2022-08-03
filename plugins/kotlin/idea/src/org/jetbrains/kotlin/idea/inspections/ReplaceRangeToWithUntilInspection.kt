@@ -25,11 +25,9 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptIn
 
 sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspection() {
     override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        val useRangeUntil = expression.possibleToUseRangeUntil()
+        val useRangeUntil = expression.possibleToUseRangeUntil(context)
+        if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) return
         if (!isApplicable(expression, context, useRangeUntil)) return
-        if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) {
-            return
-        }
         val desc =
             if (useRangeUntil) KotlinBundle.message("inspection.replace.range.to.with.rangeUntil.display.name")
             else KotlinBundle.message("inspection.replace.range.to.with.until.display.name")
@@ -57,19 +55,16 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
 
     companion object {
         fun applyFixIfApplicable(expression: KtExpression) {
-            val useRangeUntil = expression.possibleToUseRangeUntil()
-            if (isApplicable(expression, expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL), useRangeUntil)) {
+            val context = expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+            val useRangeUntil = expression.possibleToUseRangeUntil(context)
+            if (isApplicable(expression, context, useRangeUntil)) {
                 applyFix(expression, useRangeUntil)
             }
         }
 
-        private fun KtElement.possibleToUseRangeUntil(): Boolean =
+        private fun KtElement.possibleToUseRangeUntil(context: BindingContext): Boolean =
             languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator) &&
-                    isOptInAllowed(
-                        FqName("kotlin.ExperimentalStdlibApi"),
-                        languageVersionSettings,
-                        analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
-                    )
+                    isOptInAllowed(FqName("kotlin.ExperimentalStdlibApi"), languageVersionSettings, context)
 
         private fun isApplicable(expression: KtExpression, context: BindingContext, useRangeUntil: Boolean): Boolean {
             val (left, right) = expression.getArguments() ?: return false
@@ -107,6 +102,10 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
  * Tests: [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceRangeToWithUntil]
  */
 class ReplaceRangeToWithUntilInspection : AbstractReplaceRangeToWithRangeUntilInspection()
+
+/**
+ * Tests: [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceRangeToWithRangeUntil]
+ */
 class ReplaceRangeToWithRangeUntilInspection : AbstractReplaceRangeToWithRangeUntilInspection()
 
 private fun KtExpression.deparenthesize() = KtPsiUtil.safeDeparenthesize(this)

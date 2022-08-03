@@ -3,9 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -32,9 +31,9 @@ abstract class AbstractRangeInspection : AbstractKotlinInspection() {
     private fun visitRange(expression: KtExpression, holder: ProblemsHolder) {
         val context = lazy { expression.analyze(BodyResolveMode.PARTIAL) }
         when (expression.getRangeBinaryExpressionType(context) ?: return) {
-            RangeKtExpressionType.rangeTo -> visitRangeTo(expression, context.value, holder)
-            RangeKtExpressionType.until, RangeKtExpressionType.rangeUntil -> visitUntilOrRangeUntil(expression, context.value, holder)
-            RangeKtExpressionType.downTo -> visitDownTo(expression, context.value, holder)
+            RANGE_TO -> visitRangeTo(expression, context.value, holder)
+            UNTIL, RANGE_UNTIL -> visitUntilOrRangeUntil(expression, context.value, holder)
+            DOWN_TO -> visitDownTo(expression, context.value, holder)
         }
     }
 
