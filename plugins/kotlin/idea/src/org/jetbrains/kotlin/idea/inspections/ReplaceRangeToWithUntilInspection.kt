@@ -7,19 +7,16 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isDouble
 import org.jetbrains.kotlin.types.typeUtil.isFloat
@@ -31,7 +28,7 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
             UNTIL, RANGE_UNTIL, DOWN_TO -> return
             RANGE_TO -> Unit
         }
-        val useRangeUntil = range.possibleToUseRangeUntil(context)
+        val useRangeUntil = range.isPossibleToUseRangeUntil(context)
         if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) return
         if (!isApplicable(range, context, useRangeUntil)) return
         val desc =
@@ -56,15 +53,11 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
     companion object {
         fun applyFixIfApplicable(expression: KtExpression) {
             val context = lazy { expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
-            val useRangeUntil = expression.possibleToUseRangeUntil(context)
+            val useRangeUntil = expression.isPossibleToUseRangeUntil(context)
             if (isApplicable(expression, context, useRangeUntil)) {
                 applyFix(expression, useRangeUntil)
             }
         }
-
-        private fun KtElement.possibleToUseRangeUntil(context: Lazy<BindingContext>): Boolean =
-            languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator) &&
-                    isOptInAllowed(FqName("kotlin.ExperimentalStdlibApi"), languageVersionSettings, context.value)
 
         private fun isApplicable(expression: KtExpression, context: Lazy<BindingContext>, useRangeUntil: Boolean): Boolean {
             val (left, right) = expression.getArguments() ?: return false

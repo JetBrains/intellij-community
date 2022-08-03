@@ -2107,6 +2107,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/for/falseIndicesReversed.java");
         }
 
+        @TestMetadata("forRangeToRangeUntil.java")
+        public void testForRangeToRangeUntil() throws Exception {
+            runTest("testData/newJ2k/for/forRangeToRangeUntil.java");
+        }
+
         @TestMetadata("forRangeWithBlock.java")
         public void testForRangeWithBlock() throws Exception {
             runTest("testData/newJ2k/for/forRangeWithBlock.java");
