@@ -62,6 +62,7 @@
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
+    <module name="kotlin.live-templates"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
