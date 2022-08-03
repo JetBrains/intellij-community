@@ -15,7 +15,7 @@ abstract class HierarchicalStructureByDefaultImportAndHighlightingTest : Multipl
 
     class TestBucket : HierarchicalStructureByDefaultImportAndHighlightingTest() {
         @Test
-        @PluginTargetVersions(pluginVersion = "1.8.0+")
+        @PluginTargetVersions(pluginVersion = "1.7.20-rc+")
         fun testCommonKlibHighlighting() {
             configureByFiles()
             importProject()
