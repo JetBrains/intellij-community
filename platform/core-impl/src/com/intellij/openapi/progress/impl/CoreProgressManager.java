@@ -71,13 +71,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    */
   private static final Map<ProgressIndicator, AtomicInteger> nonStandardIndicators = new ConcurrentHashMap<>();
 
-  /**
-   * true if running in non-cancelable section started with
-   * {@link #executeNonCancelableSection(Runnable)} in this thread
-   */
-  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>();
-    // do not supply initial value to conserve memory
-
   // must be under threadsUnderIndicator lock
   private void startBackgroundNonStandardIndicatorsPing() {
     if (myCheckCancelledFuture != null) {
@@ -130,9 +123,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (Cancellation.isCancelled() && !isInNonCancelableSection()) {
-      Cancellation.checkCancelled();
+    if (isInNonCancelableSection()) {
+      CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
+      if (behavior != CheckCanceledBehavior.NONE) {
+        ProgressIndicator indicator = behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS ? getProgressIndicator() : null;
+        runCheckCanceledHooks(indicator);
+      }
+      return;
     }
+
+    Cancellation.checkCancelled();
 
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
     if (behavior == CheckCanceledBehavior.NONE) return;
@@ -229,23 +229,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // FROM EDT: bg OR calling if can't
   @Override
   public <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try {
-      if (isInNonCancelableSection()) {
-        return computable.compute();
-      }
-      else {
-        try {
-          isInNonCancelableSection.set(Boolean.TRUE);
-          return computeUnderProgress(computable, NonCancelableIndicator.INSTANCE);
-        }
-        finally {
-          isInNonCancelableSection.remove();
-        }
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
-    }
+    return Cancellation.computeInNonCancelableSection(() -> computeUnderProgress(computable, NonCancelableIndicator.INSTANCE));
   }
 
   @Override
@@ -765,7 +749,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean isInNonCancelableSection() {
-    return isInNonCancelableSection.get() != null;
+    return Cancellation.isInNonCancelableSection();
   }
 
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
