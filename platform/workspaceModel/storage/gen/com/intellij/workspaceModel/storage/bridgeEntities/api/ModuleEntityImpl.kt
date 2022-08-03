@@ -671,4 +671,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + dependencies.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + type.hashCode()
+    result = 31 * result + dependencies.hashCode()
+    return result
+  }
 }

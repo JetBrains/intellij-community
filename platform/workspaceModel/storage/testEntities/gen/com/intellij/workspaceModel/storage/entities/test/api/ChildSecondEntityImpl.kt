@@ -255,4 +255,11 @@ class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() {
     result = 31 * result + secondData.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + commonData.hashCode()
+    result = 31 * result + secondData.hashCode()
+    return result
+  }
 }

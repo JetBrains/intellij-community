@@ -172,4 +172,10 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
     result = 31 * result + x.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + x.hashCode()
+    return result
+  }
 }

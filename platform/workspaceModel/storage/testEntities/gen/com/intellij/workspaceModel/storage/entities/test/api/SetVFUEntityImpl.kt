@@ -218,4 +218,11 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
     result = 31 * result + fileProperty.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    return result
+  }
 }

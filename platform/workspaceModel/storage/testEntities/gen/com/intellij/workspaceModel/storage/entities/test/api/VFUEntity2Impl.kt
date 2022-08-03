@@ -264,4 +264,13 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     result = 31 * result + notNullRoots.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + directoryPath.hashCode()
+    result = 31 * result + notNullRoots.hashCode()
+    return result
+  }
 }

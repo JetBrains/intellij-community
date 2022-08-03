@@ -250,4 +250,11 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
     result = 31 * result + relativeOutputPath.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + generated.hashCode()
+    result = 31 * result + relativeOutputPath.hashCode()
+    return result
+  }
 }

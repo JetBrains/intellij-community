@@ -232,4 +232,10 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
 }

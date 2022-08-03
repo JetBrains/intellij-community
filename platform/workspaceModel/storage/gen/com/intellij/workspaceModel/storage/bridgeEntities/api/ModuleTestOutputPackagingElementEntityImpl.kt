@@ -280,4 +280,10 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
     result = 31 * result + module.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + module.hashCode()
+    return result
+  }
 }

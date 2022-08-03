@@ -255,4 +255,11 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + providerType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
 }

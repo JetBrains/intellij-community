@@ -303,4 +303,14 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     result = 31 * result + languageLevelId.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + inheritedCompilerOutput.hashCode()
+    result = 31 * result + excludeOutput.hashCode()
+    result = 31 * result + compilerOutput.hashCode()
+    result = 31 * result + compilerOutputForTests.hashCode()
+    result = 31 * result + languageLevelId.hashCode()
+    return result
+  }
 }

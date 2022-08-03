@@ -1181,4 +1181,22 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     result = 31 * result + deepSealedClass.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + link.hashCode()
+    result = 31 * result + manyLinks.hashCode()
+    result = 31 * result + optionalLink.hashCode()
+    result = 31 * result + inContainer.hashCode()
+    result = 31 * result + inOptionalContainer.hashCode()
+    result = 31 * result + inContainerList.hashCode()
+    result = 31 * result + deepContainer.hashCode()
+    result = 31 * result + sealedContainer.hashCode()
+    result = 31 * result + listSealedContainer.hashCode()
+    result = 31 * result + justProperty.hashCode()
+    result = 31 * result + justNullableProperty.hashCode()
+    result = 31 * result + justListProperty.hashCode()
+    result = 31 * result + deepSealedClass.hashCode()
+    return result
+  }
 }

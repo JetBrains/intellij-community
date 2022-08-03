@@ -215,4 +215,10 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
     result = 31 * result + parentData.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + parentData.hashCode()
+    return result
+  }
 }

@@ -520,4 +520,13 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     result = 31 * result + excludedRoots.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    result = 31 * result + roots.hashCode()
+    result = 31 * result + excludedRoots.hashCode()
+    return result
+  }
 }

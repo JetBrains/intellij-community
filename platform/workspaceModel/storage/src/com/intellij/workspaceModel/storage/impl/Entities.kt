@@ -561,6 +561,15 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
       .fold(31) { acc, i -> acc * 17 + i }
   }
 
+  open fun hashCodeIgnoringEntitySource(): Int {
+    return ReflectionUtil.collectFields(this.javaClass)
+      .filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .filterNot { it.name == WorkspaceEntityData<*>::entitySource.name }
+      .onEach { it.isAccessible = true }
+      .mapNotNull { it.get(this)?.hashCode() }
+      .fold(31) { acc, i -> acc * 17 + i }
+  }
+
   override fun toString(): String {
     val fields = ReflectionUtil.collectFields(this.javaClass).toList().onEach { it.isAccessible = true }
       .joinToString(separator = ", ") { f -> "${f.name}=${f.get(this)}" }

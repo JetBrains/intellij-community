@@ -250,4 +250,11 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
     result = 31 * result + customModuleOptions.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + rootManagerTagCustomData.hashCode()
+    result = 31 * result + customModuleOptions.hashCode()
+    return result
+  }
 }

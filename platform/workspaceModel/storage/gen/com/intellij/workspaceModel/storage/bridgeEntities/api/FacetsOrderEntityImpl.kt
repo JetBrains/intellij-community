@@ -246,4 +246,10 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
     result = 31 * result + orderOfFacets.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfFacets.hashCode()
+    return result
+  }
 }

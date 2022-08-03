@@ -180,4 +180,10 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     result = 31 * result + myName.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    return result
+  }
 }

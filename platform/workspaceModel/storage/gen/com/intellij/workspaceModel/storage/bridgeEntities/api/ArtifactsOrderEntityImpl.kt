@@ -192,4 +192,10 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
     result = 31 * result + orderOfArtifacts.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfArtifacts.hashCode()
+    return result
+  }
 }

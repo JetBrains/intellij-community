@@ -242,4 +242,11 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
     result = 31 * result + link.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    result = 31 * result + link.hashCode()
+    return result
+  }
 }

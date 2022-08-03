@@ -228,4 +228,12 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
     result = 31 * result + secondFileProperty.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + secondFileProperty.hashCode()
+    return result
+  }
 }

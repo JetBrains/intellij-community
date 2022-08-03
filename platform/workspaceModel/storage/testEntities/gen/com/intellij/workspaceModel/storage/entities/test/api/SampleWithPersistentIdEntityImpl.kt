@@ -365,4 +365,15 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
     result = 31 * result + nullableData.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + booleanProperty.hashCode()
+    result = 31 * result + stringProperty.hashCode()
+    result = 31 * result + stringListProperty.hashCode()
+    result = 31 * result + stringMapProperty.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + nullableData.hashCode()
+    return result
+  }
 }

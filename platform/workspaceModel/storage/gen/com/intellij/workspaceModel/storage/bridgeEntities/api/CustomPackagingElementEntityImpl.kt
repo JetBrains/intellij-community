@@ -351,4 +351,11 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + typeId.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
 }

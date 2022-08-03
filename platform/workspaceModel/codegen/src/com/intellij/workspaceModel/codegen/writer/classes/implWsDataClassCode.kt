@@ -198,6 +198,15 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
         line("return result")
       }
+
+      // --- hashCodeIgnoringEntitySource
+      section("override fun hashCodeIgnoringEntitySource(): Int") {
+        line("var result = javaClass.hashCode()")
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
+          "result = 31 * result + $name.hashCode()"
+        }
+        line("return result")
+      }
     }
   }
 }

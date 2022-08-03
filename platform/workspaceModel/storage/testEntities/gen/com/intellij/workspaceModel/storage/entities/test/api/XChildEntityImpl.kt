@@ -311,4 +311,11 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
     result = 31 * result + dataClass.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childProperty.hashCode()
+    result = 31 * result + dataClass.hashCode()
+    return result
+  }
 }

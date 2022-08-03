@@ -165,4 +165,10 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
     result = 31 * result + passCheck.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + passCheck.hashCode()
+    return result
+  }
 }

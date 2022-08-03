@@ -222,4 +222,10 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
     result = 31 * result + childProperty.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childProperty.hashCode()
+    return result
+  }
 }

@@ -272,4 +272,11 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     result = 31 * result + links.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    result = 31 * result + links.hashCode()
+    return result
+  }
 }

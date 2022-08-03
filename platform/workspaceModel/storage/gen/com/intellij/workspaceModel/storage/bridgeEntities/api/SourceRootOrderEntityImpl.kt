@@ -249,4 +249,10 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
     result = 31 * result + orderOfSourceRoots.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfSourceRoots.hashCode()
+    return result
+  }
 }

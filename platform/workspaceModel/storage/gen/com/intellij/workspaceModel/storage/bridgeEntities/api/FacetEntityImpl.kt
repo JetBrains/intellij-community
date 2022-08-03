@@ -389,4 +389,13 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     result = 31 * result + moduleId.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + facetType.hashCode()
+    result = 31 * result + configurationXmlTag.hashCode()
+    result = 31 * result + moduleId.hashCode()
+    return result
+  }
 }

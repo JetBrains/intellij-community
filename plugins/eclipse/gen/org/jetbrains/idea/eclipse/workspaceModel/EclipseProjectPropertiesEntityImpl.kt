@@ -397,4 +397,16 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     result = 31 * result + srcPlace.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + variablePaths.hashCode()
+    result = 31 * result + eclipseUrls.hashCode()
+    result = 31 * result + unknownCons.hashCode()
+    result = 31 * result + knownCons.hashCode()
+    result = 31 * result + forceConfigureJdk.hashCode()
+    result = 31 * result + expectedModuleSourcePlace.hashCode()
+    result = 31 * result + srcPlace.hashCode()
+    return result
+  }
 }

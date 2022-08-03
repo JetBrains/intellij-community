@@ -414,4 +414,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     result = 31 * result + excludedPatterns.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + url.hashCode()
+    result = 31 * result + excludedUrls.hashCode()
+    result = 31 * result + excludedPatterns.hashCode()
+    return result
+  }
 }

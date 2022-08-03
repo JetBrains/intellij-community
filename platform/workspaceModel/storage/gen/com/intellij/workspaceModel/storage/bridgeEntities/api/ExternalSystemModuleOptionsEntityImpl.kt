@@ -350,4 +350,16 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
     result = 31 * result + externalSystemModuleType.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + externalSystem.hashCode()
+    result = 31 * result + externalSystemModuleVersion.hashCode()
+    result = 31 * result + linkedProjectPath.hashCode()
+    result = 31 * result + linkedProjectId.hashCode()
+    result = 31 * result + rootProjectPath.hashCode()
+    result = 31 * result + externalSystemModuleGroup.hashCode()
+    result = 31 * result + externalSystemModuleType.hashCode()
+    return result
+  }
 }

@@ -209,4 +209,12 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     result = 31 * result + optionalData.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + boolData.hashCode()
+    result = 31 * result + optionalData.hashCode()
+    return result
+  }
 }

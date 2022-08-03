@@ -251,4 +251,11 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + libraryType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
 }

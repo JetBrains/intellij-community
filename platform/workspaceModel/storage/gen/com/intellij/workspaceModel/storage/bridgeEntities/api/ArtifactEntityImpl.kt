@@ -403,4 +403,13 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     result = 31 * result + outputUrl.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + artifactType.hashCode()
+    result = 31 * result + includeInProjectBuild.hashCode()
+    result = 31 * result + outputUrl.hashCode()
+    return result
+  }
 }

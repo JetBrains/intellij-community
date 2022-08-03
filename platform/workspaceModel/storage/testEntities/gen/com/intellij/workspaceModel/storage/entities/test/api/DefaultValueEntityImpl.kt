@@ -207,4 +207,12 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
     result = 31 * result + anotherName.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isGenerated.hashCode()
+    result = 31 * result + anotherName.hashCode()
+    return result
+  }
 }

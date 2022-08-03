@@ -247,4 +247,11 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
     result = 31 * result + renamedOutputFileName.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + renamedOutputFileName.hashCode()
+    return result
+  }
 }

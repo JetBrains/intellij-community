@@ -203,4 +203,9 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
     var result = entitySource.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    return result
+  }
 }

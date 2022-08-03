@@ -258,4 +258,11 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
     result = 31 * result + additionalProperty.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    result = 31 * result + additionalProperty.hashCode()
+    return result
+  }
 }
