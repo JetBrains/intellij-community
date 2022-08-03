@@ -8,6 +8,15 @@
                      level="WARNING"
                      language="kotlin" key="inspection.remove.redundant.backticks.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     cleanupTool="true"
+                     key="inspection.sort.modifiers.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.DataClassPrivateConstructorInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
