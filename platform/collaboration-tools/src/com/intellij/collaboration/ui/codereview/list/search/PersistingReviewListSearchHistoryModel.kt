@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 
 abstract class PersistingReviewListSearchHistoryModel<S : ReviewListSearchValue>(
   private val scope: CoroutineScope,
@@ -17,16 +16,6 @@ abstract class PersistingReviewListSearchHistoryModel<S : ReviewListSearchValue>
     persistentHistory = persistentHistory.toMutableList().apply {
       remove(search)
       add(search)
-    }.trim(historySizeLimit)
-  }
-
-  companion object {
-    private fun <E> List<E>.trim(sizeLimit: Int): List<E> {
-      val result = this.toMutableList()
-      while (result.size > sizeLimit) {
-        result.removeFirst()
-      }
-      return result
-    }
+    }.takeLast(historySizeLimit)
   }
 }
