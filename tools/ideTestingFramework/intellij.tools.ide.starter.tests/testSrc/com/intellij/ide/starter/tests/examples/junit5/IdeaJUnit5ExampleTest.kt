@@ -4,7 +4,6 @@ import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.runner.TestContainerImpl
 import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.jetbrains.performancePlugin.commands.chain.exitApp
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.ExtendWith
@@ -16,7 +15,6 @@ class IdeaJUnit5ExampleTest {
   private lateinit var testInfo: TestInfo
   private lateinit var context: TestContainerImpl
 
-  @Disabled("Temporary ignore for not running in Ultimate tests suite")
   @Test
   fun openGradleJitPack() {
 
@@ -39,7 +37,6 @@ class IdeaJUnit5ExampleTest {
     )
   }
 
-  @Disabled("Temporary ignore for not running in Ultimate tests suite")
   @Test
   fun openMavenProject() {
 
