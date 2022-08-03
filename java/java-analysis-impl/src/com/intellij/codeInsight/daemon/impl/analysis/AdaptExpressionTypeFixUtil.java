@@ -12,10 +12,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -221,6 +218,10 @@ class AdaptExpressionTypeFixUtil {
     if (methodClass == null) return null;
     if (methodClass instanceof PsiTypeParameter) {
       if (!expected.equals(actual) && !(expected instanceof PsiPrimitiveType)) {
+        for (PsiClassType superType : methodClass.getSuperTypes()) {
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put((PsiTypeParameter)methodClass, expected);
+          if (!substitutor.substitute(superType).isAssignableFrom(expected)) return null;
+        }
         return Map.entry((PsiTypeParameter)methodClass, expected);
       }
       return null;
@@ -228,8 +229,12 @@ class AdaptExpressionTypeFixUtil {
     if (!(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return null;
     PsiClass expectedClass = ((PsiClassType)expected).resolve();
     PsiClass actualClass = ((PsiClassType)actual).resolve();
-    if (expectedClass == null || actualClass == null) return null;
-    if (!expectedClass.isEquivalentTo(actualClass) || !expectedClass.isEquivalentTo(methodClass)) return null;
+    if (expectedClass == null || actualClass == null || !actualClass.isEquivalentTo(methodClass)) return null;
+    if (!expectedClass.isEquivalentTo(actualClass)) {
+      methodType = trySubstitute(methodType, expectedClass);
+      actual = trySubstitute(actual, expectedClass);
+      if (methodType == null || actual == null) return null;
+    }
     PsiType[] methodTypeParameters = ((PsiClassType)methodType).getParameters();
     PsiType[] expectedTypeParameters = ((PsiClassType)expected).getParameters();
     PsiType[] actualTypeParameters = ((PsiClassType)actual).getParameters();
@@ -248,6 +253,16 @@ class AdaptExpressionTypeFixUtil {
       }
     }
     return existing;
+  }
+
+  private static @Nullable PsiType trySubstitute(@NotNull PsiType type, @NotNull PsiClass superClass) {
+    if (!(type instanceof PsiClassType)) return null;
+    PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    PsiClass psiClass = result.getElement();
+    if (psiClass == null) return null;
+    if (!psiClass.isInheritor(superClass, true)) return null;
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, result.getSubstitutor());
+    return JavaPsiFacade.getElementFactory(superClass.getProject()).createType(superClass, substitutor);
   }
 
   private static @Nullable PsiTypeParameter getSoleTypeParameter(@Nullable PsiType type) {
