@@ -50,12 +50,13 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
-  private @Nullable ClusteringSearchSession mySession;
+  private final @NotNull ClusteringSearchSession mySession;
   private @Nullable BackgroundableProcessIndicator myProcessIndicator;
   private int myAlreadyRenderedSnippets;
 
-  public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView) {
+  public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
+    mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
     mySelectedUsages = myUsageView.getSelectedUsages();
@@ -93,12 +94,6 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     setContent(myMostCommonUsageScrollPane);
   }
 
-  public  @Nullable ClusteringSearchSession getSession() {
-    if (mySession == null) {
-      mySession = findClusteringSessionInUsageView(myUsageView);
-    }
-    return mySession;
-  }
 
   private @NotNull ActionLink createOpenSimilarUsagesActionLink(@NotNull UsageInfo info, @NotNull Set<SimilarUsage> usagesToRender) {
     final ActionLink actionLink =
@@ -166,24 +161,20 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         @Override
         public void onSuccess() {
           if (!sortedClusters.isNull()) {
-            createSummaryComponent(getSession(), sortedClusters.get());
+            createSummaryComponent(mySession, sortedClusters.get());
             myMainPanel.revalidate();
           }
         }
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          ClusteringSearchSession session = getSession();
-          if (session != null) {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              sortedClusters.set(session.getClustersForSelectedUsages(indicator, mySelectedUsages));
-            });
-          }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            sortedClusters.set(mySession.getClustersForSelectedUsages(indicator, mySelectedUsages));
+          });
         }
       };
     myProcessIndicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(loadMostCommonUsagePatternsTask,
-                                                                       myProcessIndicator);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(loadMostCommonUsagePatternsTask, myProcessIndicator);
   }
 
   public static @Nullable ClusteringSearchSession findClusteringSessionInUsageView(@NotNull UsageView usageView) {

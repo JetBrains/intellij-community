@@ -397,9 +397,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
+      ClusteringSearchSession sessionInUsageView = findClusteringSessionInUsageView(usageViewImpl);
       Set<@NotNull GroupNode> selectedGroupNodes = usageViewImpl.selectedGroupNodes();
-      if (isOnlyGroupNodesSelected(infos, selectedGroupNodes)) {
-        showMostCommonUsagePatterns(usageViewImpl, selectedGroupNodes);
+      if (isOnlyGroupNodesSelected(infos, selectedGroupNodes) && sessionInUsageView != null) {
+        showMostCommonUsagePatterns(usageViewImpl, selectedGroupNodes, sessionInUsageView);
       }
       else {
         updateLayoutLater(infos);
@@ -431,12 +432,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
 
   private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl,
-                                           @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes) {
+                                           @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes, ClusteringSearchSession session) {
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       disposeMostCommonUsageComponent();
       removeAll();
-      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl);
+      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
       add(myCommonUsagePatternsComponent);
     }
   }
