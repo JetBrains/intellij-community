@@ -18,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -41,13 +40,7 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
     if (!shouldProcessMethods && !shouldProcessProperties) return;
     GrMethod method = PsiTreeUtil.getParentOfType(place, GrMethod.class);
     if (method == null) return;
-    if (shouldProcessProperties && ContainerUtil.exists(aClass.getSuperTypes(), superType -> {
-      PsiClass superClass = superType.resolve();
-      if (superClass == null) {
-        return false;
-      }
-      return Objects.equals(superClass.getQualifiedName(), SpockUtils.SPEC_CLASS_NAME);
-    }) && aClass == method.getContainingClass()) {
+    if (shouldProcessProperties && SpecificationKt.isSpockSpecification(aClass) && aClass == method.getContainingClass()) {
       Map<String, SpockVariableDescriptor> cachedValue = SpockUtils.getVariableMap(method);
 
       String nameHint = ResolveUtil.getNameHint(processor);
