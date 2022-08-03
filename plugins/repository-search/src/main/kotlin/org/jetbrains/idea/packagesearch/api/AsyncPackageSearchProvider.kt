@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.packagesearch.api
 
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
 import org.jetbrains.packagesearch.api.statistics.ApiStatisticsResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackageResponse
@@ -26,8 +25,6 @@ import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.util.concurrent.CompletableFuture
 
 interface AsyncPackageSearchProvider {
-  val myScope: CoroutineScope
-
   fun packagesByQuery(
     searchQuery: String,
     onlyStable: Boolean = false,

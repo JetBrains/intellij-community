@@ -16,7 +16,7 @@
 
 package org.jetbrains.idea.packagesearch.api
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.runBlocking
@@ -52,8 +52,7 @@ private val emptyStandardV2PackagesWithRepos = ApiPackagesResponse<ApiStandardPa
 )
 
 class PackageSearchProviderImpl(
-  private val config: PackageSearchServiceConfig =
-    ApplicationManager.getApplication().getService(DefaultPackageServiceConfig::class.java)
+  private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
 ) : DependencySearchProvider, PackageSearchProvider {
 
   private val httpWrapper = HttpWrapper()

@@ -17,7 +17,7 @@
 package org.jetbrains.idea.packagesearch.api
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.future
@@ -33,13 +33,12 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 class AsyncPackageSearchProviderImpl(
-  private val config: PackageSearchServiceConfig =
-    ApplicationManager.getApplication().getService(DefaultPackageServiceConfig::class.java)
+  private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
 ) : DependencySearchProvider, AsyncPackageSearchProvider, Disposable {
 
   private val myService = PackageSearchProviderImpl(config)
 
-  override val myScope =
+  private val myScope =
     CoroutineScope(SupervisorJob() + AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
 
   override fun dispose() {
