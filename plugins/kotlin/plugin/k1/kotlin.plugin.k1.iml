@@ -63,7 +63,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage" scope="RUNTIME" />
@@ -133,5 +134,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
   </component>
 </module>

@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" exported="" />
@@ -74,7 +75,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.api" exported="" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-common" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.impl-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />

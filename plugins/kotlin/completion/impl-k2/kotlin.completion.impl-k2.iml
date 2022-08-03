@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" />
     <orderEntry type="module" module-name="kotlin.completion.api" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-common" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

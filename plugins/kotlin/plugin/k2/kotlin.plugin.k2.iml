@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.impl-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage" scope="RUNTIME" />
