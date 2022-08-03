@@ -714,7 +714,7 @@ public final class HighlightClassUtil {
       String description = JavaErrorBundle.message("duplicate.class", name);
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnimplementInterfaceAction(name, true));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveDuplicateExtendsAction(name));
       return info;
     }
     return null;

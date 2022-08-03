@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -530,7 +529,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 
-  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates);
+  public abstract @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className);
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 

@@ -1,3 +1,3 @@
-// "Unimplement Interface" "true-preview"
+// "Unimplement" "true-preview"
 class X {
 }
