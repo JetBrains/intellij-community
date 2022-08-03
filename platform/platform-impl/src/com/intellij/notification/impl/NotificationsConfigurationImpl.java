@@ -26,6 +26,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private final Map<String, NotificationSettings> myIdToSettingsMap = new HashMap<>();
   private final Map<String, String> myToolWindowCapable = new HashMap<>();
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
 
@@ -131,8 +132,18 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
+  public boolean areNotificationsEnabled() {
+    return SHOW_BALLOONS;
+  }
+
+  @Override
   public @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId) {
     return getSettings(groupId).getDisplayType();
+  }
+
+  @Override
+  public void setDisplayType(@NotNull String groupId, @NotNull NotificationDisplayType displayType) {
+    changeSettings(getSettings(groupId).withDisplayType(displayType));
   }
 
   @Override

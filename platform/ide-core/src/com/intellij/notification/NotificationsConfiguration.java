@@ -11,7 +11,11 @@ public abstract class NotificationsConfiguration implements Notifications {
    */
   public static final String LIGHTWEIGHT_PREFIX = "LIGHTWEIGHT";
 
+  public abstract boolean areNotificationsEnabled();
+
   public abstract @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId);
+
+  public abstract void setDisplayType(@NotNull String groupId, @NotNull NotificationDisplayType displayType);
 
   public abstract void changeSettings(@NotNull String groupId, @NotNull NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
 
