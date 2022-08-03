@@ -5,7 +5,6 @@ import com.intellij.ide.ui.text.StyledTextPaneUtils.insertIconWithFixedHeight
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JTextPane
-import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 /**
@@ -13,8 +12,15 @@ import javax.swing.text.StyleConstants
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class IconTextPart(val icon: Icon) : TextPart("") {
-  override val attributes = SimpleAttributeSet()
+open class IconTextPart(icon: Icon) : TextPart("") {
+  val icon: Icon
+    get() = StyleConstants.getIcon(attributes)
+
+  init {
+    editAttributes {
+      StyleConstants.setIcon(this, icon)
+    }
+  }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
     val height = textPane.getFontMetrics(textPane.font).ascent  // fake height to place icon little lower
@@ -28,8 +34,13 @@ open class IconTextPart(val icon: Icon) : TextPart("") {
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class IllustrationTextPart(val icon: Icon) : TextPart(" ") {
-  override val attributes = SimpleAttributeSet().apply {
-    StyleConstants.setIcon(this, icon)
+open class IllustrationTextPart(icon: Icon) : TextPart(" ") {
+  val icon: Icon
+    get() = StyleConstants.getIcon(attributes)
+
+  init {
+    editAttributes {
+      StyleConstants.setIcon(this, icon)
+    }
   }
 }

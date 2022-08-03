@@ -90,10 +90,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
 
     override fun insertTextPart(textPart: TextPart, textPane: JTextPane, startOffset: Int): Int {
       editShortcutBackground(textPart)
-      val actualTextPart = editIcons(textPart)
-      val endOffset = super.insertTextPart(actualTextPart, textPane, startOffset)
-      editForeground(actualTextPart, textPane, startOffset, endOffset)
-      return endOffset
+      editIcons(textPart)
+      editForeground(textPart)
+      return super.insertTextPart(textPart, textPane, startOffset)
     }
 
     private fun editShortcutBackground(textPart: TextPart) {
@@ -105,19 +104,16 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
       }
     }
 
-    private fun editIcons(textPart: TextPart): TextPart {
-      if (state == MessageState.INACTIVE) {
-        if (textPart is IllustrationTextPart) {
-          return IllustrationTextPart(getInactiveIcon(textPart.icon))
-        }
-        else if (textPart is IconTextPart) {
-          return IconTextPart(getInactiveIcon(textPart.icon))
+    private fun editIcons(textPart: TextPart) {
+      if (state == MessageState.INACTIVE && (textPart is IllustrationTextPart || textPart is IconTextPart)) {
+        textPart.editAttributes {
+          val icon = StyleConstants.getIcon(this)
+          StyleConstants.setIcon(this, getInactiveIcon(icon))
         }
       }
-      return textPart
     }
 
-    private fun editForeground(textPart: TextPart, textPane: JTextPane, startOffset: Int, endOffset: Int) {
+    private fun editForeground(textPart: TextPart) {
       val foregroundColor = when (textPart) {
         is CodeTextPart -> codeForegroundColor
         is ShortcutTextPart -> shortcutTextColor
@@ -125,8 +121,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
         else -> null
       }
       if (foregroundColor != null) {
-        val textColorAttributes = SimpleAttributeSet().apply { StyleConstants.setForeground(this, foregroundColor) }
-        textPane.styledDocument.setCharacterAttributes(startOffset, endOffset - startOffset, textColorAttributes, false)
+        textPart.editAttributes {
+          StyleConstants.setForeground(this, foregroundColor)
+        }
       }
     }
   }

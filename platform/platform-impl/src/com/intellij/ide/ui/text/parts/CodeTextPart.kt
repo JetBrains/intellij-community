@@ -3,11 +3,12 @@ package com.intellij.ide.ui.text.parts
 
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JTextPane
-import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 /**
@@ -20,13 +21,14 @@ import javax.swing.text.StyleConstants
 open class CodeTextPart(text: String, private val addSpaceAround: Boolean = false) : TextPart(text) {
   var frameColor: Color = JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false)
 
-  override val attributes: SimpleAttributeSet
-    get() = SimpleAttributeSet().apply {
-      EditorColorsManager.getInstance().globalScheme.editorFontName
-      StyleConstants.setFontFamily(this, EditorColorsManager.getInstance().globalScheme.editorFontName)
-      StyleConstants.setFontSize(this, JBUI.Fonts.label().size)
+  init {
+    fontGetter = {
+      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size2D)
+    }
+    editAttributes {
       StyleConstants.setForeground(this, JBUI.CurrentTheme.Label.foreground())
     }
+  }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
     val textToInsert = if (addSpaceAround) " $text " else text

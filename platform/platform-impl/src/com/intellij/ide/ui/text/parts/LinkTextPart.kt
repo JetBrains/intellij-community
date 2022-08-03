@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.text.parts
 
-import com.intellij.ide.ui.text.StyledTextPaneUtils
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import javax.swing.JTextPane
-import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 /**
@@ -15,12 +13,12 @@ import javax.swing.text.StyleConstants
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class LinkTextPart(text: String, private val runnable: () -> Unit) : TextPart(text) {
-  override val attributes: SimpleAttributeSet
-    get() = SimpleAttributeSet().apply {
-      StyledTextPaneUtils.setCommonTextAttributes(this)
+  init {
+    editAttributes {
       StyleConstants.setUnderline(this, true)
       StyleConstants.setForeground(this, JBUI.CurrentTheme.Link.Foreground.ENABLED)
     }
+  }
 
   override val onClickAction: (JTextPane, Point, height: Int) -> Unit = { _, _, _ -> runnable() }
 }

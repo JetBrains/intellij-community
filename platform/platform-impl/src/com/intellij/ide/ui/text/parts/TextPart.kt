@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.text.parts
 
+import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Font
 import java.awt.Point
 import javax.swing.JTextPane
 import javax.swing.text.SimpleAttributeSet
+import javax.swing.text.StyleConstants
 
 /**
  * Abstract text part that provides following abilities:
@@ -18,7 +21,19 @@ import javax.swing.text.SimpleAttributeSet
 @ApiStatus.Internal
 abstract class TextPart(val text: String) {
 
-  protected abstract val attributes: SimpleAttributeSet
+  val attributes: SimpleAttributeSet = SimpleAttributeSet()
+    get() = field.apply {
+      val font = fontGetter()
+      StyleConstants.setFontFamily(this, font.name)
+      StyleConstants.setFontSize(this, font.size)
+    }
+
+  var fontGetter: () -> Font = { JBFont.label() }
+
+  inline fun editAttributes(edit: SimpleAttributeSet.() -> Unit): TextPart {
+    attributes.edit()
+    return this
+  }
 
   /**
    * Inserts this text part to the [textPane] from the given [startOffset]

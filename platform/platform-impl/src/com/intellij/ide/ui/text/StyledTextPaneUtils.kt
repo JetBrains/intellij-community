@@ -3,28 +3,18 @@ package com.intellij.ide.ui.text
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JTextPane
 import javax.swing.text.JTextComponent
-import javax.swing.text.SimpleAttributeSet
-import javax.swing.text.StyleConstants
 
 internal object StyledTextPaneUtils {
   private val arc: Int
     get() = JBUI.scale(4)
   private val indent: Int
     get() = JBUI.scale(2)
-
-  fun setCommonTextAttributes(attributes: SimpleAttributeSet) {
-    val font = JBFont.label()
-    StyleConstants.setFontFamily(attributes, font.fontName)
-    StyleConstants.setFontSize(attributes, font.size)
-    StyleConstants.setForeground(attributes, JBUI.CurrentTheme.Label.foreground())
-  }
 
   fun JTextComponent.drawRectangleAroundText(startOffset: Int, endOffset: Int, g: Graphics, needColor: Color, fill: Boolean) {
     val g2d = g as Graphics2D

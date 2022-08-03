@@ -2,10 +2,10 @@
 package com.intellij.ide.ui.text.parts
 
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
-import com.intellij.ide.ui.text.StyledTextPaneUtils
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.ide.ui.text.showActionKeyPopup
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -32,15 +32,18 @@ import javax.swing.text.StyleConstants
 open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpaceAround: Boolean = false) : TextPart(text) {
   var backgroundColor: Color = JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638)
 
-  override val attributes: SimpleAttributeSet
-    get() = SimpleAttributeSet().apply {
-      StyledTextPaneUtils.setCommonTextAttributes(this)
+  init {
+    editAttributes {
+      StyleConstants.setForeground(this, JBUI.CurrentTheme.Label.foreground())
       StyleConstants.setBold(this, true)
     }
+  }
 
   private val separatorAttributes: SimpleAttributeSet
     get() = SimpleAttributeSet().apply {
-      StyledTextPaneUtils.setCommonTextAttributes(this)
+      val font = fontGetter()
+      StyleConstants.setFontFamily(this, font.name)
+      StyleConstants.setFontSize(this, font.size)
       StyleConstants.setForeground(this, UIUtil.getLabelInfoForeground())
     }
 

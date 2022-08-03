@@ -2,7 +2,7 @@
 package com.intellij.ide.ui.text.paragraph
 
 import com.intellij.ide.ui.text.parts.TextPart
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JTextPane
 import javax.swing.text.SimpleAttributeSet
@@ -17,19 +17,31 @@ import javax.swing.text.StyleConstants
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class TextParagraph(val textParts: List<TextPart>) {
-  var spaceAbove: Int = MEDIUM_INDENT
-  var leftIndent: Int = NO_INDENT
+  private val unscaledAttributes: SimpleAttributeSet = SimpleAttributeSet().apply {
+    StyleConstants.setRightIndent(this, NO_INDENT)
+    StyleConstants.setLeftIndent(this, NO_INDENT)
+    StyleConstants.setSpaceAbove(this, MEDIUM_INDENT)
+    StyleConstants.setSpaceBelow(this, NO_INDENT)
+    StyleConstants.setLineSpacing(this, 0.2f)
+  }
 
-  protected open val attributes: SimpleAttributeSet
+  open val attributes: SimpleAttributeSet
     get() = SimpleAttributeSet().apply {
-      StyleConstants.setRightIndent(this, 0f)
-      StyleConstants.setLeftIndent(this, leftIndent.toFloat())
-      StyleConstants.setSpaceAbove(this, spaceAbove.toFloat())
-      StyleConstants.setSpaceBelow(this, 0f)
-      StyleConstants.setLineSpacing(this, 0.2f)
+      val unscaled = unscaledAttributes
+      StyleConstants.setRightIndent(this, JBUIScale.scale(StyleConstants.getRightIndent(unscaled)))
+      StyleConstants.setLeftIndent(this, JBUIScale.scale(StyleConstants.getLeftIndent(unscaled)))
+      StyleConstants.setSpaceAbove(this, JBUIScale.scale(StyleConstants.getSpaceAbove(unscaled)))
+      StyleConstants.setSpaceBelow(this, JBUIScale.scale(StyleConstants.getSpaceBelow(unscaled)))
+
+      StyleConstants.setLineSpacing(this, StyleConstants.getLineSpacing(unscaled))
     }
 
   private val partRanges: MutableList<IntRange> = mutableListOf()
+
+  fun editAttributes(edit: SimpleAttributeSet.() -> Unit): TextParagraph {
+    unscaledAttributes.edit()
+    return this
+  }
 
   /**
    * Inserts this paragraph to the [textPane] from the given [startOffset] and adds line break at the end
@@ -43,11 +55,12 @@ open class TextParagraph(val textParts: List<TextPart>) {
       curOffset = insertTextPart(part, textPane, curOffset)
       partRanges.add(start until curOffset)
     }
+    val curAttributes = attributes
     if (!isLast) {
-      textPane.document.insertString(curOffset, "\n", attributes)
+      textPane.document.insertString(curOffset, "\n", curAttributes)
       curOffset++
     }
-    textPane.styledDocument.setParagraphAttributes(startOffset, curOffset - startOffset, attributes, true)
+    textPane.styledDocument.setParagraphAttributes(startOffset, curOffset - startOffset, curAttributes, true)
     return curOffset
   }
 
@@ -64,12 +77,9 @@ open class TextParagraph(val textParts: List<TextPart>) {
   }
 
   companion object {
-    const val NO_INDENT: Int = 0
-    val SMALL_INDENT: Int
-      get() = JBUI.scale(6)
-    val MEDIUM_INDENT: Int
-      get() = JBUI.scale(12)
-    val BIG_INDENT: Int
-      get() = JBUI.scale(20)
+    const val NO_INDENT: Float = 0f
+    const val SMALL_INDENT: Float = 6f
+    const val MEDIUM_INDENT: Float = 12f
+    const val BIG_INDENT: Float = 20f
   }
 }
