@@ -170,7 +170,6 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) {
     super.readExternal(element);
 
@@ -180,7 +179,6 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 

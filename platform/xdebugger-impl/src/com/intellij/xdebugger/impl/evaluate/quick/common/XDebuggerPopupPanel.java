@@ -189,7 +189,6 @@ public abstract class XDebuggerPopupPanel {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());

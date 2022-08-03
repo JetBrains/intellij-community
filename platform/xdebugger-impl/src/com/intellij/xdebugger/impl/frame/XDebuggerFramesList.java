@@ -419,7 +419,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     @Override
     public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
-      //noinspection unchecked
       e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
     }
 

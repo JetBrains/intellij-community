@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -57,7 +55,6 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
-    //noinspection HardCodedStringLiteral
     final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }

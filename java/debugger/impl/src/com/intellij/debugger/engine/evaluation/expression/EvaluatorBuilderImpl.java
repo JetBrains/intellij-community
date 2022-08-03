@@ -909,7 +909,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           name = nameElement.getText();
         }
         else {
-          //noinspection HardCodedStringLiteral
           final String elementDisplayString = nameElement != null ? nameElement.getText() : "(null)";
           throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.identifier.expected", elementDisplayString));
           return;
