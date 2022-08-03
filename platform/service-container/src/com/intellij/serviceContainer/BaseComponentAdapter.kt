@@ -48,7 +48,7 @@ internal sealed class BaseComponentAdapter(
 
   protected abstract fun isImplementationEqualsToInterface(): Boolean
 
-  final override fun getComponentImplementation() = getImplementationClass()
+  final override fun getComponentImplementation(): Class<*> = getImplementationClass()
 
   @Synchronized
   fun getImplementationClass(): Class<*> {
@@ -65,7 +65,7 @@ internal sealed class BaseComponentAdapter(
     return result
   }
 
-  fun getInitializedInstance() = if (deferred.isCompleted) deferred.getCompleted() else null
+  fun getInitializedInstance(): Any? = if (deferred.isCompleted) deferred.getCompleted() else null
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
