@@ -101,6 +101,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     updateDefaultCommitActionEnabled()
     updateDefaultCommitActionName()
+    ui.setPrimaryCommitActions(createPrimaryCommitActions())
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
@@ -153,11 +154,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
 
-  private fun createCommitExecutorActions(): List<AnAction> {
-    val executors = workflow.commitExecutors.ifEmpty { return emptyList() }
-    val group = ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions") as ActionGroup
+  private fun createPrimaryCommitActions(): List<AnAction> {
+    val group = ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP) as ActionGroup
+    return group.getChildren(null).toList()
+  }
 
-    return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
+  private fun createCommitExecutorActions(): List<AnAction> {
+    val group = ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP) as ActionGroup
+    val executors = workflow.commitExecutors.filter { it.useDefaultAction() }
+    return group.getChildren(null).toList() +
+           executors.map { DefaultCommitExecutorAction(it) }
   }
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =

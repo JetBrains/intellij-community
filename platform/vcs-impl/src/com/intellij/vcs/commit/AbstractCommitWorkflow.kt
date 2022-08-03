@@ -317,9 +317,11 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
       getCommitExecutors(project, getAffectedVcses(changes, project))
 
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> =
-      vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors +
-      LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
+      return vcses.flatMap { it.commitExecutors } +
+             ChangeListManager.getInstance(project).registeredExecutors +
+             LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+    }
   }
 }
 

@@ -24,6 +24,7 @@ interface CommitActionsUi {
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
+  fun setPrimaryCommitActions(actions: List<AnAction>)
   fun setCustomCommitActions(actions: List<AnAction>)
 }
 

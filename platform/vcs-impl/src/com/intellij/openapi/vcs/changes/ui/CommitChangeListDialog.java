@@ -19,10 +19,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
@@ -395,8 +392,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions");
-      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
+      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
+      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
 
       result.addAll(map(primaryActions.getChildren(null), CommitExecutorAction::new));
       result.addAll(map(executorActions.getChildren(null), CommitExecutorAction::new));

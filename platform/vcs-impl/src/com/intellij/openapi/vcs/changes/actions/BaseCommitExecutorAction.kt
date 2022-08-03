@@ -10,6 +10,10 @@ import com.intellij.util.ui.JButtonAction
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import javax.swing.JButton
 
+/**
+ * @see com.intellij.openapi.vcs.VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP,
+ * @see com.intellij.openapi.vcs.VcsActions.COMMIT_EXECUTORS_GROUP
+ */
 abstract class CommitExecutorAction : JButtonAction(null) {
   init {
     isEnabledInModalContext = true

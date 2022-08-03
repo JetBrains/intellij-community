@@ -42,12 +42,9 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
     override fun isDefaultButton(): Boolean = isCommitButtonDefault()
   }
 
+  private val primaryActionGroup = DefaultActionGroup()
   private val primaryCommitActionsToolbar =
-    ActionManager.getInstance().createActionToolbar(
-      COMMIT_BUTTONS_TOOLBAR,
-      ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions") as ActionGroup,
-      true
-    ).apply {
+    ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
       setReservePlaceAutoPopupIcon(false)
       layoutPolicy = NOWRAP_LAYOUT_POLICY
 
@@ -96,6 +93,12 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
       defaultCommitAction.isEnabled = value
       primaryCommitActionsToolbar.updateActionsImmediately()
     }
+
+  override fun setPrimaryCommitActions(actions: List<AnAction>) {
+    primaryActionGroup.removeAll()
+    primaryActionGroup.addAll(actions)
+    primaryCommitActionsToolbar.updateActionsImmediately()
+  }
 
   override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
 
