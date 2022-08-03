@@ -41,7 +41,6 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     Integer.getInteger("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE", 10);
 
 
-  //FIXME RC: YT to register new group: https://youtrack.jetbrains.com/issue/FUS-1818/Add-new-group-cloudprojectsbranches
   private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 1);
 
   // ================== EVENTS FIELDS:
