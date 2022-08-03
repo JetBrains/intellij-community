@@ -38,14 +38,26 @@ internal val httpClient by lazy {
     }
     .addInterceptor { chain ->
       val request = chain.request()
-      var response = chain.proceed(request)
+      var response: Response? = null
+      var error: IOException? = null
+      val maxTryCount = 3
       var tryCount = 0
-      while (response.code >= 500 && tryCount < 3) {
-        response.close()
+      do {
+        response?.close()
+        response = try {
+          chain.proceed(request)
+        }
+        catch (e: IOException) {
+          if (error == null) {
+            error = IOException("$maxTryCount attempts to ${request.method} ${request.url} failed")
+          }
+          error?.addSuppressed(e)
+          null
+        }
         tryCount++
-        response = chain.proceed(request)
       }
-      response
+      while ((response == null || response!!.code >= 500) && tryCount < maxTryCount)
+      response ?: throw error ?: IllegalStateException()
     }
     .followRedirects(true)
     .build()
