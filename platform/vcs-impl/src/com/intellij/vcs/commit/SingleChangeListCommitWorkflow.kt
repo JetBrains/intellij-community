@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -62,12 +65,12 @@ open class SingleChangeListCommitWorkflow(
     else -> Unit
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+  override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean =
+    executeCustom(sessionInfo, commitState.changes, commitState.commitMessage)
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) =
+  override fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
     when {
-      result.shouldCommit -> doCommitCustom(executor, session)
+      result.shouldCommit -> doCommitCustom(sessionInfo)
       result.shouldCloseWindow ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
       else -> Unit
@@ -90,17 +93,18 @@ open class SingleChangeListCommitWorkflow(
     }
   }
 
-  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) {
+  private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
+    sessionInfo as CommitSessionInfo.Custom
     val cleaner = DefaultNameChangeListCleaner(project, commitState)
 
-    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(CommitResultHandler { cleaner.clean() })
       addResultHandler(getCommitCustomEventDispatcher())
       resultHandler?.let { addResultHandler(it) }
       addResultHandler(getEndExecutionHandler())
 
-      runCommit(executor.actionText)
+      runCommit(sessionInfo.executor.actionText)
     }
   }
 }

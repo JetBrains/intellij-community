@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
@@ -29,11 +31,11 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     if (result.shouldCommit) doCommit()
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+  override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean =
+    executeCustom(sessionInfo, commitState.changes, commitState.commitMessage)
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) {
-    if (result.shouldCommit) doCommitCustom(executor, session)
+  override fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    if (result.shouldCommit) doCommitCustom(sessionInfo)
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
@@ -56,14 +58,17 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     }
   }
 
-  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =
-    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+  private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
+    sessionInfo as CommitSessionInfo.Custom
+
+    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitCustomEventDispatcher())
       addResultHandler(getEndExecutionHandler())
 
-      runCommit(executor.actionText)
+      runCommit(sessionInfo.executor.actionText)
     }
+  }
 
   private fun clearChangeListData() {
     changeListManager.editChangeListData(commitState.changeList.name, null)

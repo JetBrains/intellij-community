@@ -88,7 +88,7 @@ class SingleChangeListCommitWorkflowHandler(
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
 
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
     getCommitMessage().isNotEmpty() ||
     !VcsConfiguration.getInstance(project).FORCE_NON_EMPTY_COMMENT ||
     ui.confirmCommitWithEmptyMessage()

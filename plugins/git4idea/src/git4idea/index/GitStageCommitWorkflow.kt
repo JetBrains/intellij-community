@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.*
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
@@ -34,7 +32,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
     updateVcses(setOf(GitVcs.getInstance(project)))
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean = error("Not supported currently")
+  override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean = error("Not supported currently")
 
   override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
     if (result.shouldCommit) doCommit()

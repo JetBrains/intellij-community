@@ -169,34 +169,34 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
   }
 
-  fun executeDefault(executor: CommitExecutor?): Boolean {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor)
+  fun executeDefault(sessionInfo: CommitSessionInfo): Boolean {
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
     processExecuteDefaultChecksResult(beforeCommitChecksResult)
     return beforeCommitChecksResult.shouldCommit
   }
 
   protected open fun processExecuteDefaultChecksResult(result: CommitChecksResult) = Unit
 
-  protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CommitChecksResult {
+  protected fun runBeforeCommitChecksWithEvents(sessionInfo: CommitSessionInfo): CommitChecksResult {
     fireBeforeCommitChecksStarted()
-    val result = runBeforeCommitChecks(executor)
-    fireBeforeCommitChecksEnded(isDefaultCommit, executor, result)
+    val result = runBeforeCommitChecks(sessionInfo)
+    fireBeforeCommitChecksEnded(sessionInfo, result)
 
     return result
   }
 
   protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
 
-  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) =
-    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, executor, result)
+  protected fun fireBeforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
+    eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo.isVcsCommit, sessionInfo.executor, result)
 
-  private fun runBeforeCommitChecks(executor: CommitExecutor?): CommitChecksResult {
+  private fun runBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitChecksResult {
     var result: CommitChecksResult? = null
 
     var checks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor, commitHandlers)
+      result = runBeforeCommitHandlersChecks(sessionInfo, commitHandlers)
     }
 
     commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
@@ -237,10 +237,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-  fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CommitChecksResult {
+  fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo, handlers: List<CheckinHandler>): CommitChecksResult {
     handlers.forEachLoggingErrors(LOG) { handler ->
       try {
-        val result = runBeforeCommitHandler(handler, executor)
+        val result = runBeforeCommitHandler(handler, sessionInfo)
         when (result) {
           CheckinHandler.ReturnResult.COMMIT -> Unit // continue
           CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
@@ -256,15 +256,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return CommitChecksResult.Passed(toCommit = true)
   }
 
-  protected open fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
+  protected open fun runBeforeCommitHandler(handler: CheckinHandler, sessionInfo: CommitSessionInfo): CheckinHandler.ReturnResult {
+    val executor = sessionInfo.executor
     if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
     LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
-    if (!executor.supportsPartialCommit()) {
+  open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
+    val executor = sessionInfo.executor
+    if (executor != null && !executor.supportsPartialCommit()) {
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
         return YES == showYesNoDialog(
@@ -276,26 +278,29 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return true
   }
 
-  abstract fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean
+  abstract fun executeCustom(sessionInfo: CommitSessionInfo): Boolean
 
-  protected fun executeCustom(executor: CommitExecutor, session: CommitSession, changes: List<Change>, commitMessage: String): Boolean =
-    configureCommitSession(executor, session, changes, commitMessage) &&
+  protected fun executeCustom(sessionInfo: CommitSessionInfo, changes: List<Change>, commitMessage: String): Boolean =
+    configureCommitSession(sessionInfo, changes, commitMessage) &&
     run {
-      val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor)
-      processExecuteCustomChecksResult(executor, session, beforeCommitChecksResult)
+      val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
+      processExecuteCustomChecksResult(sessionInfo, beforeCommitChecksResult)
       beforeCommitChecksResult.shouldCommit
     }
 
-  private fun configureCommitSession(executor: CommitExecutor,
-                                     session: CommitSession,
+  private fun configureCommitSession(sessionInfo: CommitSessionInfo,
                                      changes: List<Change>,
                                      commitMessage: String): Boolean {
-    val title = executor.getPresentableText()
-    return SessionDialog.configureCommitSession(project, title, session, changes, commitMessage)
+    if (sessionInfo is CommitSessionInfo.Custom) {
+      val title = sessionInfo.executor.getPresentableText()
+      return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
+    }
+    else {
+      return true
+    }
   }
 
-  protected open fun processExecuteCustomChecksResult(executor: CommitExecutor,
-                                                      session: CommitSession,
+  protected open fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo,
                                                       result: CommitChecksResult) = Unit
 
   companion object {
@@ -335,4 +340,19 @@ private class EndExecutionCommitResultHandler(private val workflow: AbstractComm
   override fun onSuccess(commitMessage: String) = workflow.endExecution()
   override fun onCancel() = workflow.endExecution()
   override fun onFailure(errors: List<VcsException>) = workflow.endExecution()
+}
+
+sealed class CommitSessionInfo {
+  val isVcsCommit: Boolean get() = session === CommitSession.VCS_COMMIT
+
+  abstract val executor: CommitExecutor?
+  abstract val session: CommitSession
+
+  object Default : CommitSessionInfo() {
+    override val executor: CommitExecutor? get() = null
+    override val session: CommitSession get() = CommitSession.VCS_COMMIT
+  }
+
+  class Custom(override val executor: CommitExecutor,
+               override val session: CommitSession) : CommitSessionInfo()
 }

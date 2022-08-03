@@ -166,9 +166,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
            executors.map { DefaultCommitExecutorAction(it) }
   }
 
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
     ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
+      val executorWithoutChangesAllowed = sessionInfo.executor?.areChangesRequired() == false
 
       isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
       isEmptyMessage = getCommitMessage().isBlank()
@@ -267,11 +267,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
 
-  override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
+  override fun doExecuteDefault(sessionInfo: CommitSessionInfo): Boolean {
+    if (!isBackgroundCommitChecks()) return super.doExecuteDefault(sessionInfo)
 
     coroutineScope.launch {
-      workflow.executeDefault(executor) {
+      workflow.executeDefault(sessionInfo) {
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
@@ -283,7 +283,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         })
         try {
           indicator.start()
-          runAllHandlers(executor, indicator, isOnlyRunCommitChecks)
+          runAllHandlers(sessionInfo, indicator, isOnlyRunCommitChecks)
         }
         finally {
           indicator.stop()
@@ -295,7 +295,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runAllHandlers(
-    executor: CommitExecutor?,
+    sessionInfo: CommitSessionInfo,
     indicator: ProgressIndicator,
     isOnlyRunCommitChecks: Boolean
   ): CommitChecksResult {
@@ -304,7 +304,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     FileDocumentManager.getInstance().saveAllDocuments()
 
     val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
-    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(executor, plainHandlers)
+    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(sessionInfo, plainHandlers)
     if (!plainHandlersResult.shouldCommit) return plainHandlersResult
 
     val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()

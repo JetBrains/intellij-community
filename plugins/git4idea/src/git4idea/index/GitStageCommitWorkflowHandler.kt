@@ -3,7 +3,6 @@ package git4idea.index
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.*
 import git4idea.index.ui.GitStageCommitPanel
 
@@ -51,10 +50,10 @@ class GitStageCommitWorkflowHandler(
 
   private fun initCommitMessage(isAfterCommit: Boolean) = setCommitMessage(commitMessagePolicy.getCommitMessage(isAfterCommit))
 
-  override fun checkCommit(executor: CommitExecutor?): Boolean {
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
     ui.commitProgressUi.isUnmerged = ui.conflictedRoots.any { ui.rootsToCommit.contains(it) }
-    val superCheckResult = super.checkCommit(executor)
+    val superCheckResult = super.checkCommit(sessionInfo)
     return superCheckResult && !ui.commitProgressUi.isEmptyRoots && !ui.commitProgressUi.isUnmerged
   }
 

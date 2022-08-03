@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
@@ -19,7 +18,8 @@ import kotlin.coroutines.resume
 private val LOG = logger<NonModalCommitWorkflow>()
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  override fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
+  override fun runBeforeCommitHandler(handler: CheckinHandler, sessionInfo: CommitSessionInfo): CheckinHandler.ReturnResult {
+    val executor = sessionInfo.executor
     if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
     LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
@@ -34,10 +34,10 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  suspend fun executeDefault(executor: CommitExecutor?, checker: suspend () -> CommitChecksResult) {
+  suspend fun executeDefault(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult) {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
-      result = checkCommit(executor, checker)
+      result = checkCommit(sessionInfo, checker)
       processExecuteDefaultChecksResult(result)
     }
     finally {
@@ -45,7 +45,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  private suspend fun checkCommit(executor: CommitExecutor?, checker: suspend () -> CommitChecksResult): CommitChecksResult {
+  private suspend fun checkCommit(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult): CommitChecksResult {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
     fireBeforeCommitChecksStarted()
@@ -56,7 +56,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       result = CommitChecksResult.Cancelled
     }
     finally {
-      fireBeforeCommitChecksEnded(true, executor, result)
+      fireBeforeCommitChecksEnded(sessionInfo, result)
     }
 
     return result
