@@ -285,7 +285,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement);
+    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement) &&
+           getModifiedExpression(startElement) != null;
   }
 
   @Override
