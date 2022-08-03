@@ -24,11 +24,22 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
   private static final Logger LOG = Logger.getInstance(IndexOperationFusStatisticsCollector.class);
 
   /**
-   * If true than attempt to call tracing methods in incorrect sequence (start->...->finish) will throw exception.
-   * if false (default) -> incorrect sequence of calls will log error message, but try to continue normal operation
+   * If true -> throw exception if tracing methods are called in incorrect order (e.g. .finish() before start()).
+   * if false (default) -> log warning on incorrect sequence of calls, but try to continue normal operation afterwards.
+   * <p>
+   * Really, value=true is only useful for debugging -- in production reporting are generally not expected to throw exceptions.
    */
   public static final boolean THROW_ON_INCORRECT_USAGE =
     Boolean.getBoolean("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE");
+
+  /**
+   * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_ONLY_OPERATIONS_LONGER_THAN_MS}.
+   * There are a lot of index lookups, and this threshold allows to reduce reporting traffic, since we're really only interested in
+   * long operations. Default value 0 means 'report lookups >0ms only'
+   */
+  public static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
+    Integer.getInteger("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE", 10);
+
 
   //FIXME RC: YT to register new group: https://youtrack.jetbrains.com/issue/FUS-1818/Add-new-group-cloudprojectsbranches
   private static final EventLogGroup GROUP = new EventLogGroup("index.usage", 1);
@@ -41,47 +52,70 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
   private static final BooleanEventField LOOKUP_FAILED = new BooleanEventField("lookup-failed");
 
   /**
-   * Total lookup time (including up-to-date/validation, and stubs deserializing)
+   * Total lookup time, as it is seen by 'client' (i.e. including up-to-date/validation, and stubs deserializing, etc...)
    */
   private static final LongEventField LOOKUP_DURATION_MS = new LongEventField("lookup-duration-ms");
   private static final LongEventField UP_TO_DATE_CHECK_DURATION_MS = new LongEventField("up-to-date-check-ms");
   private static final LongEventField STUB_TREE_DESERIALIZING_DURATION_MS = new LongEventField("psi-tree-deserializing-ms");
 
+  /**
+   * How many keys were lookup-ed (there are methods to lookup >1 keys at once)
+   */
   private static final IntEventField LOOKUP_KEYS_COUNT = new IntEventField("keys");
-  private static final IntEventField TOTAL_KEYS_INDEXED_COUNT = new IntEventField("total-keys-indexed");
+  /**
+   * For cases >1 keys lookup: what operation is applied (AND/OR)
+   */
   private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP =
     new EnumEventField<>("lookup-op", LookupOperation.class, kind -> kind.name().toLowerCase());
+  /**
+   * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
+   */
+  private static final IntEventField TOTAL_KEYS_INDEXED_COUNT = new IntEventField("total-keys-indexed");
 
   // ================== EVENTS:
-  private static final VarargEventId INDEX_ALL_KEYS_LOOKUP = GROUP.registerVarargEvent("lookup.all-keys", INDEX_NAME_FIELD,
 
-                                                                                       LOOKUP_FAILED,
+  private static final VarargEventId INDEX_ALL_KEYS_LOOKUP = GROUP.registerVarargEvent(
+    "lookup.all-keys",
+    INDEX_NAME_FIELD,
 
-                                                                                       //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
-                                                                                       LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
+    LOOKUP_FAILED,
 
-                                                                                       TOTAL_KEYS_INDEXED_COUNT);
+    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
+    LOOKUP_DURATION_MS,
+    UP_TO_DATE_CHECK_DURATION_MS,
 
-  private static final VarargEventId INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent("lookup.values", INDEX_NAME_FIELD,
+    TOTAL_KEYS_INDEXED_COUNT
+  );
 
-                                                                                     LOOKUP_FAILED,
+  private static final VarargEventId INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent(
+    "lookup.values",
+    INDEX_NAME_FIELD,
 
-                                                                                     //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
-                                                                                     LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
+    LOOKUP_FAILED,
 
-                                                                                     LOOKUP_KEYS_COUNT, LOOKUP_KEYS_OP,
-                                                                                     TOTAL_KEYS_INDEXED_COUNT);
+    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time)
+    LOOKUP_DURATION_MS,
+    UP_TO_DATE_CHECK_DURATION_MS,
 
-  private static final VarargEventId STUB_INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent("lookup.stub-values", INDEX_NAME_FIELD,
+    LOOKUP_KEYS_COUNT,
+    LOOKUP_KEYS_OP,
+    TOTAL_KEYS_INDEXED_COUNT
+  );
 
-                                                                                          LOOKUP_FAILED,
+  private static final VarargEventId STUB_INDEX_VALUES_LOOKUP = GROUP.registerVarargEvent(
+    "lookup.stub-values",
+    INDEX_NAME_FIELD,
 
-                                                                                          //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION_MS)
-                                                                                          LOOKUP_DURATION_MS, UP_TO_DATE_CHECK_DURATION_MS,
-                                                                                          STUB_TREE_DESERIALIZING_DURATION_MS,
+    LOOKUP_FAILED,
 
-                                                                                          //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
-                                                                                          TOTAL_KEYS_INDEXED_COUNT);
+    //LOOKUP_DURATION_MS = (UP_TO_DATE_CHECK_DURATION_MS) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION_MS)
+    LOOKUP_DURATION_MS,
+    UP_TO_DATE_CHECK_DURATION_MS,
+    STUB_TREE_DESERIALIZING_DURATION_MS,
+
+    //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
+    TOTAL_KEYS_INDEXED_COUNT
+  );
 
   // ================== IMPLEMENTATION METHODS:
 
@@ -143,7 +177,11 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
       }
 
       try {
-        reportGatheredDataToAnalytics();
+        final long finishedAtMs = System.currentTimeMillis();
+        final long lookupDurationMs = finishedAtMs - lookupStartedAtMs;
+        if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS) {
+          reportGatheredDataToAnalytics();
+        }
       }
       finally {
         traceWasStarted = false;
@@ -162,16 +200,19 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
     //=== Additional info about what was lookup-ed, and context/environment:
 
     public T withProject(final @Nullable Project project) {
+      mustBeStarted();
       this.project = project;
       return (T)this;
     }
 
     public T lookupFailed() {
+      mustBeStarted();
       this.lookupFailed = true;
       return (T)this;
     }
 
     public T totalKeysIndexed(final int totalKeysIndexed) {
+      mustBeStarted();
       this.totalKeysIndexed = totalKeysIndexed;
       return (T)this;
     }
@@ -239,23 +280,21 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
 
     @Override
     protected void reportGatheredDataToAnalytics() {
-      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-      //         such events are in total, otherwise we wouldn't be able to measure improvements
-      //         between versions
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      INDEX_ALL_KEYS_LOOKUP.log(project,
+      INDEX_ALL_KEYS_LOOKUP.log(
+        project,
 
-                                INDEX_NAME_FIELD.with(indexId.getName()),
+        INDEX_NAME_FIELD.with(indexId.getName()),
 
-                                //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
-                                // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
-                                UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
+        //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
+        // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
+        UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
 
-                                LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
+        LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-                                LOOKUP_FAILED.with(lookupFailed),
+        LOOKUP_FAILED.with(lookupFailed),
 
-                                TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
+        TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
   }
 
@@ -300,23 +339,21 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
 
     @Override
     protected void reportGatheredDataToAnalytics() {
-      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-      //         such events are in total, otherwise we wouldn't be able to measure improvements
-      //         between versions
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      INDEX_VALUES_LOOKUP.log(project,
+      INDEX_VALUES_LOOKUP.log(
+        project,
 
-                              INDEX_NAME_FIELD.with(indexId.getName()),
+        INDEX_NAME_FIELD.with(indexId.getName()),
 
-                              UP_TO_DATE_CHECK_DURATION_MS.with(
-                                indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
+        UP_TO_DATE_CHECK_DURATION_MS.with(
+          indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
 
-                              LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
+        LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-                              LOOKUP_FAILED.with(lookupFailed),
+        LOOKUP_FAILED.with(lookupFailed),
 
-                              LOOKUP_KEYS_OP.with(lookupOperation), LOOKUP_KEYS_COUNT.with(lookupKeysCount),
-                              TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
+        LOOKUP_KEYS_OP.with(lookupOperation), LOOKUP_KEYS_COUNT.with(lookupKeysCount),
+        TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
 
     //=== Additional info about what was lookup-ed, and context/environment:
@@ -377,25 +414,22 @@ public class IndexOperationFusStatisticsCollector extends CounterUsagesCollector
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
+      STUB_INDEX_VALUES_LOOKUP.log(
+        project,
 
-      //TODO RC: don't need to log each event with lookup time = 0, but it is worth to count how many
-      //         such events are in total, otherwise we wouldn't be able to measure improvements
-      //         between versions
-      STUB_INDEX_VALUES_LOOKUP.log(project,
+        INDEX_NAME_FIELD.with(indexId.getName()),
 
-                                   INDEX_NAME_FIELD.with(indexId.getName()),
+        UP_TO_DATE_CHECK_DURATION_MS.with(
+          indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
 
-                                   UP_TO_DATE_CHECK_DURATION_MS.with(
-                                     indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
+        STUB_TREE_DESERIALIZING_DURATION_MS.with(
+          stubTreesDeserializingStarted > 0 ? lookupFinishedAtMs - stubTreesDeserializingStarted : 0),
 
-                                   STUB_TREE_DESERIALIZING_DURATION_MS.with(
-                                     stubTreesDeserializingStarted > 0 ? lookupFinishedAtMs - stubTreesDeserializingStarted : 0),
+        LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-                                   LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
+        LOOKUP_FAILED.with(lookupFailed),
 
-                                   LOOKUP_FAILED.with(lookupFailed),
-
-                                   TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
+        TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed));
     }
   }
 

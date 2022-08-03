@@ -12,6 +12,7 @@ import org.junit.runners.JUnit4;
 
 import static com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector.*;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests for [IndexOperationFusStatisticsCollector].
@@ -80,6 +81,71 @@ public class IndexOperationFusStatisticsCollectorTest extends JavaCodeInsightFix
       trace.totalKeysIndexed(10);
       trace.lookupFailed();
       trace.lookupFinished();
+    }
+  }
+
+  @Test
+  public void reportingThrowExceptionIfStartedCalledTwice_with_THROW_ON_INCORRECT_USAGE() {
+    assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
+               THROW_ON_INCORRECT_USAGE);
+    //check for 'allKeys' only because all them have same superclass
+    var trace = allKeysLookupStarted(INDEX_ID);
+    try {
+      trace.lookupStarted(INDEX_ID);
+      fail("Subsequent .started() without finish should throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+      trace.lookupFinished();//without finishing -> legit tests run after will start to fail
+    }
+  }
+
+  @Test
+  public void reportingThrowExceptionIfReportingMethodsCalledWithoutStartedFirst_with_THROW_ON_INCORRECT_USAGE() {
+    assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
+               THROW_ON_INCORRECT_USAGE);
+    //check for 'allKeys' only because all them have same superclass
+    var trace = TRACE_OF_ALL_KEYS_LOOKUP.get();
+    try {
+      trace.withProject(null);
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
+    }
+    try {
+      trace.withProject(null);
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
+    }
+    try {
+      trace.indexValidationFinished();
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
+    }
+    try {
+      trace.totalKeysIndexed(10);
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
+    }
+    try {
+      trace.lookupFailed();
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
+    }
+    try {
+      trace.lookupFinished();
+      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+    }
+    catch (AssertionError e) {
+
     }
   }
 }
