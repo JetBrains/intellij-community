@@ -345,9 +345,6 @@ internal class GitRebaseDialog(private val project: Project,
           .horizontalAlign(HorizontalAlign.FILL)
           .resizableColumn()
 
-        topUpstreamFieldPlaceholder.component = upstreamField
-        updateUpstreamFieldConstraints()
-
         topBranchFieldPlaceholder = placeholder()
       }.customize(JBVerticalGaps(0, 6))
 
@@ -363,6 +360,9 @@ internal class GitRebaseDialog(private val project: Project,
       row {
         cell(optionsPanel)
       }
+    }.apply {
+      addUpstreamField(true)
+      updateUpstreamFieldConstraints()
     }
   }
 
@@ -545,7 +545,7 @@ internal class GitRebaseDialog(private val project: Project,
     ontoField.isVisible = showOntoField
 
     if (!showOntoField && topUpstreamFieldPlaceholder.component != upstreamField) {
-      topUpstreamFieldPlaceholder.component = upstreamField
+      addUpstreamField(true)
       updateUpstreamFieldConstraints()
     }
 
@@ -556,7 +556,7 @@ internal class GitRebaseDialog(private val project: Project,
     var isDirty = false
     if (showBranchField) {
       if (topBranchFieldPlaceholder.component != branchField) {
-        topBranchFieldPlaceholder.component = branchField
+        addBranchField(true)
 
         val minWidth = JBUI.scale(SHORT_FIELD_LENGTH)
         upstreamField.setMinimumAndPreferredWidth(minWidth)
@@ -586,16 +586,36 @@ internal class GitRebaseDialog(private val project: Project,
     val showBranch = (showRoot || showOnto) && GitRebaseOption.SWITCH_BRANCH in selectedOptions
 
     if (showOnto) {
-      bottomUpstreamFieldPlaceholder.component = upstreamField
+      addUpstreamField(false)
       (upstreamField.ui as FlatComboBoxUI).apply {
         border = Insets(1, 1, 1, if (!showBranch) 1 else 0)
       }
     }
     if (showBranch) {
-      bottomBranchFieldPlaceholder.component = branchField
+      addBranchField(false)
     }
     else {
       bottomBranchFieldPlaceholder.component = null
+    }
+  }
+
+  private fun addBranchField(top: Boolean) {
+    if (top) {
+      bottomBranchFieldPlaceholder.component = null
+      topBranchFieldPlaceholder.component = branchField
+    } else {
+      topBranchFieldPlaceholder.component = null
+      bottomBranchFieldPlaceholder.component = branchField
+    }
+  }
+
+  private fun addUpstreamField(top: Boolean) {
+    if (top) {
+      bottomUpstreamFieldPlaceholder.component = null
+      topUpstreamFieldPlaceholder.component = upstreamField
+    } else {
+      topUpstreamFieldPlaceholder.component = null
+      bottomUpstreamFieldPlaceholder.component = upstreamField
     }
   }
 
