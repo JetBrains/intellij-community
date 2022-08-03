@@ -46,7 +46,7 @@
                         serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
                         overrides="true"/>
 
-    <backgroundPostStartupActivity implementation="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator" order="last"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"
