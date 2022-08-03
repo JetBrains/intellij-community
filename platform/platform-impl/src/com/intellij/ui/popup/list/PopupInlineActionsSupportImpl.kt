@@ -94,6 +94,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     val size = panel.preferredSize
     size.width = PopupListElementRenderer.INLINE_BUTTON_WIDTH
     panel.preferredSize = size
+    panel.minimumSize = size
     panel.isOpaque = active
     panel.background = JBUI.CurrentTheme.Table.Hover.background(true)
     return panel

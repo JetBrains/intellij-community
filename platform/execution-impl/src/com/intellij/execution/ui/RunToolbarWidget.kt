@@ -32,20 +32,19 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
 import com.intellij.ui.*
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
@@ -268,7 +267,12 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true,
       ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    )
+    ).apply { disableExpandableItems(this) }
+  }
+
+  private fun disableExpandableItems(popup: ListPopup) {
+    val list = (popup as? ListPopupImpl)?.list
+    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
   }
 
   private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
