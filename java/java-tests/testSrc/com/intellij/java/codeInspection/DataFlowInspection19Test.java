@@ -20,4 +20,7 @@ public class DataFlowInspection19Test extends DataFlowInspectionTestCase {
   public void testWhenPatterns() {
     doTest();
   }
+  public void testSwitchNullability() {
+    doTest();
+  }
 }

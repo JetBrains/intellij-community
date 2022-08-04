@@ -36,6 +36,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -1115,7 +1116,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new JvmPushInstruction(expressionValue, null));
 
       DeferredOffset condGotoOffset = null;
-      if (!JavaPsiPatternUtil.isTotalForType(sourcePattern, checkType)) {
+      if (!JavaPsiPatternUtil.isTotalForType(sourcePattern, checkType) ||
+          !PsiUtil.getLanguageLevel(myCodeFragment).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
         addInstruction(new DupInstruction());
         addInstruction(new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(innerPattern), Nullability.NOT_NULL)));
 
