@@ -293,6 +293,7 @@ internal class PackageSearchProjectService(private val project: Project) {
                 .flatMapLatest { isLoadingFlow }
                 .throttle(1.seconds)
                 .onEach { controller?.clear() }
+                .filter { it }
                 .onEach {
                     controller = showBackgroundLoadingBar(
                         project,
