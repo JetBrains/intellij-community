@@ -103,7 +103,7 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
 
   protected fun Row.browsableTextField(@NlsContexts.DialogTitle title: String, propertyBinding: PropertyBinding<String>): CellBuilder<*> =
     if (targetType is BrowsableTargetEnvironmentType) {
-      textFieldWithBrowseTargetButton(this, targetType, targetProvider, project, title, propertyBinding)
+      textFieldWithBrowseTargetButton(this, targetType, targetProvider, project, title, propertyBinding, TargetBrowserHints())
     }
     else {
       textField(propertyBinding)

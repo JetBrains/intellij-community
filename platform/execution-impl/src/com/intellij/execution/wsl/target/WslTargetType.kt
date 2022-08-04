@@ -67,14 +67,14 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                              textComponentAccessor: TextComponentAccessor<T>,
                                              component: T,
                                              configurationSupplier: Supplier<out TargetEnvironmentConfiguration>,
-                                             noLocalFs: Boolean): ActionListener = ActionListener {
+                                             targetBrowserHints: TargetBrowserHints): ActionListener = ActionListener {
     val configuration = configurationSupplier.get()
     if (configuration is WslTargetEnvironmentConfiguration) {
       configuration.distribution?.let {
         WslPathBrowser(object : TextAccessor {
           override fun setText(text: String) = textComponentAccessor.setText(component, text)
           override fun getText() = textComponentAccessor.getText(component)
-        }).browsePath(it, component, accessWindowsFs = !noLocalFs)
+        }).browsePath(it, component, accessWindowsFs = targetBrowserHints.showLocalFsInBrowser)
         return@ActionListener
       }
     }
@@ -83,6 +83,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
 
   companion object {
     const val TYPE_ID = "wsl"
+
     @NlsSafe
     const val DISPLAY_NAME = "WSL"
     private val LOG = logger<WslTargetType>()
