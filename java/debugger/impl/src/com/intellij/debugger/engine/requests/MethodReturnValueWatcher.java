@@ -82,7 +82,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
       LOG.debug("-> " + event.method());
     }
     try {
-      if (myEntryRequest != null && myEntryRequest.isEnabled()) {
+      if (myEntryRequest != null && myEntryRequest.isEnabled() && myEntryMethod == null) {
         myExitRequest = createExitRequest();
         myExitRequest.addClassFilter(event.location().declaringType());
         myEntryMethod = event.method();
