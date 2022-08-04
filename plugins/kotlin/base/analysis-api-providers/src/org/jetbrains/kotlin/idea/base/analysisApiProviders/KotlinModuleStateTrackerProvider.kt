@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
+package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(Frontend10ApiUsage::class)
-internal class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
+class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener())
