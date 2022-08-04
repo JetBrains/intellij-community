@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.CommitSession
-import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import org.jetbrains.annotations.Nls
 
@@ -24,7 +23,7 @@ class CustomCommitter(
   private val commitMessage: String
 ) {
 
-  private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
+  private val resultHandlers = mutableListOf<CommitResultHandler>()
 
   fun addResultHandler(resultHandler: CommitResultHandler) {
     resultHandlers += resultHandler

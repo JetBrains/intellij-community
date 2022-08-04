@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AbstractCommitter>()
@@ -27,7 +26,7 @@ abstract class AbstractCommitter(
   val commitMessage: @NlsSafe String,
   val commitContext: CommitContext
 ) {
-  private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
+  private val resultHandlers = mutableListOf<CommitResultHandler>()
 
   private val _feedback = mutableSetOf<String>()
   private val _failedToCommitChanges = mutableListOf<Change>()
