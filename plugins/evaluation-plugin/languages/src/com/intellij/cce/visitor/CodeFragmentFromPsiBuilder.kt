@@ -1,6 +1,5 @@
 package com.intellij.cce.visitor
 
-import com.intellij.cce.actions.CompletionStrategy
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.Language
 import com.intellij.cce.processor.EvaluationRootProcessor
@@ -15,34 +14,24 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 
-class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language) : CodeFragmentBuilder() {
+open class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language) : CodeFragmentBuilder() {
   private val dumbService: DumbService = DumbService.getInstance(project)
 
-  private fun getVisitors(): List<CompletionEvaluationVisitor> = CompletionEvaluationVisitor.EP_NAME.extensions.toList()
+  open fun getVisitors(): List<CompletionEvaluationVisitor> = CompletionEvaluationVisitor.EP_NAME.extensions.toList()
 
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, strategy: CompletionStrategy): CodeFragment {
+  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment {
     val psi = dumbService.runReadActionInSmartMode<PsiFile> {
       PsiManager.getInstance(project).findFile(file)
     } ?: throw PsiConverterException("Cannot get PSI of file ${file.path}")
 
     val filePath = FilesHelper.getRelativeToProjectPath(project, file.path)
-    val visitor = getVisitor(strategy.codeGolf)
-    val fileTokens = getFileTokens(visitor, psi)
-    fileTokens.path = filePath
-    fileTokens.text = file.text()
-    return findRoot(fileTokens, rootProcessor)
-  }
-
-  private fun getVisitor(codeGolf: Boolean): CompletionEvaluationVisitor {
-    if (codeGolf) {
-      return CodeGolfVisitor(language)
-    }
-
     val visitors = getVisitors().filter { it.language == language }
     if (visitors.isEmpty()) throw IllegalStateException("No suitable visitors")
     if (visitors.size > 1) throw IllegalStateException("More than 1 suitable visitors")
-
-    return visitors.first()
+    val fileTokens = getFileTokens(visitors.first(), psi)
+    fileTokens.path = filePath
+    fileTokens.text = file.text()
+    return findRoot(fileTokens, rootProcessor)
   }
 
   private fun getFileTokens(visitor: CompletionEvaluationVisitor, psi: PsiElement): CodeFragment {
