@@ -128,9 +128,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionRunner runner =
       new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
                            myProfileWrapper, mySuppressedElements);
-    List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true, applyIncrementallyCallback,
+    List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true,
+                                                                                 applyIncrementallyCallback,
                                                                                  afterInsideProcessedCallback,
-                                                                                 afterOutsideProcessedCallback);
+                                                                                 afterOutsideProcessedCallback,
+                                                                                 wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
     ProgressManager.checkCanceled();
     myInfos = createHighlightsFromContexts(contexts);
   }
@@ -476,9 +478,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (language != null && Language.findLanguageByID(language) == null) {
         continue; // filter out at least unknown languages
       }
-      if (myIgnoreSuppressed && wrapper.getTool().isSuppressedFor(getFile())) {
+
+      if (myIgnoreSuppressed
+          && wrapper.isApplicable(getFile().getLanguage())
+          && wrapper.getTool().isSuppressedFor(getFile())) {
+        // inspections that do not match file language are excluded later in InspectionRunner.inspect
         continue;
       }
+
       enabled.add(wrapper);
     }
     return enabled;

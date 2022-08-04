@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -89,7 +90,8 @@ class InspectionRunner {
                                                      boolean addRedundantSuppressions,
                                                      @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterInsideProcessedCallback,
-                                                     @NotNull Consumer<? super InspectionContext> afterOutsideProcessedCallback) {
+                                                     @NotNull Consumer<? super InspectionContext> afterOutsideProcessedCallback,
+                                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
@@ -102,8 +104,11 @@ class InspectionRunner {
     List<PsiElement> outside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside, d.parents)));
     List<InspectionContext> injectedContexts = Collections.synchronizedList(new ArrayList<>());
 
-    List<LocalInspectionToolWrapper> filteredWrappers =
+    List<LocalInspectionToolWrapper> applicableByLanguage =
       InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
+    List<LocalInspectionToolWrapper> filteredWrappers = enabledToolsPredicate != null ?
+                                                        ContainerUtil.filter(applicableByLanguage, enabledToolsPredicate) : applicableByLanguage;
+
     List<InspectionContext> init = new ArrayList<>(filteredWrappers.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
     InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRange.create(finalPriorityRange), myIsOnTheFly, session -> {
@@ -119,7 +124,7 @@ class InspectionRunner {
       Map<PsiFile, PsiElement> foundInjected = createInjectedFileMap();
       InspectionContext TOMB_STONE = createTombStone();
       visitElements(init, inside, true, finalPriorityRange, TOMB_STONE, afterInsideProcessedCallback, foundInjected, injectedContexts,
-                    toolWrappers, applyIncrementallyCallback);
+                    toolWrappers, applyIncrementallyCallback, enabledToolsPredicate);
 
       Consumer<InspectionContext> afterOutside = context -> {
               InspectionProblemHolder holder = context.holder;
@@ -128,7 +133,7 @@ class InspectionRunner {
               afterOutsideProcessedCallback.accept(context);
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
-                    toolWrappers, empty());
+                    toolWrappers, empty(), enabledToolsPredicate);
       boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
@@ -246,7 +251,7 @@ class InspectionRunner {
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);
-    result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback()));
+    result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback(), null));
   }
 
   @NotNull
@@ -264,11 +269,12 @@ class InspectionRunner {
                              @NotNull Map<? super PsiFile, PsiElement> foundInjected,
                              @NotNull List<? super InspectionContext> injectedInsideContexts,
                              @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                             @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback) {
+                             @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
+                             Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     processInOrder(init, elements, inVisibleRange, finalPriorityRange, TOMB_STONE, afterProcessCallback);
 
     if (myInspectInjected) {
-      inspectInjectedPsi(elements, toolWrappers, foundInjected, injectedInsideContexts, applyIncrementallyCallback);
+      inspectInjectedPsi(elements, toolWrappers, foundInjected, injectedInsideContexts, applyIncrementallyCallback, enabledToolsPredicate);
     }
   }
 
@@ -361,7 +367,8 @@ class InspectionRunner {
                                   @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
                                   @NotNull Map<? super PsiFile, PsiElement> injectedToHost,
                                   @NotNull List<? super InspectionContext> outInjectedContexts,
-                                  @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> addDescriptorIncrementallyCallback) {
+                                  @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> addDescriptorIncrementallyCallback,
+                                  Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     Project project = myPsiFile.getProject();
     List<PsiFile> toInspect = new ArrayList<>();
     for (PsiElement element : elements) {
@@ -397,7 +404,7 @@ class InspectionRunner {
              InspectionRunner injectedRunner =
                new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), false, myIsOnTheFly, myProgress,
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
-             outInjectedContexts.addAll(injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback()));
+             outInjectedContexts.addAll(injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback(), enabledToolsPredicate));
            }
            return true;
          })) {
