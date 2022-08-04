@@ -176,7 +176,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
     for (IntentionActionWithTextCaching cached : getValues()) {
       IntentionAction action = cached.getAction();
-      if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) continue;
+      if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) {
+        continue;
+      }
 
       if (!cached.isShowSubmenu()) {
         result.put(action, Collections.emptyList());
