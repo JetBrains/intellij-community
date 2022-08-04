@@ -146,7 +146,6 @@ abstract class AbstractCommitter(
   private fun finishCommit(canceled: Boolean) {
     val errors = collectErrors(_exceptions)
     val noErrors = errors.isEmpty()
-    val noWarnings = _exceptions.isEmpty()
 
     if (canceled) {
       resultHandlers.forEachLoggingErrors(LOG) { it.onCancel() }
@@ -154,10 +153,6 @@ abstract class AbstractCommitter(
     else if (noErrors) {
       resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
       onSuccess()
-
-      if (noWarnings) {
-        progress(message("commit.dialog.completed.successfully"))
-      }
     }
     else {
       resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
