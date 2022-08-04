@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -33,8 +33,13 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
-import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +207,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     String fmApp;
 
     if (SystemInfo.isWindows) {
-      spawn(toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"');
+      if (JnaLoader.isLoaded()) {
+        openViaShellApi(dir, toSelect);
+      }
+      else {
+        spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+      }
     }
     else if (SystemInfo.isMac) {
       if (toSelect != null) {
@@ -240,18 +250,36 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  private static String shortPath(String path) {
-    if (path.contains("  ") && JnaLoader.isLoaded()) {
-      // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
-      // which breaks paths containing a sequence of two or more spaces.
-      // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.
-      char[] result = new char[WinDef.MAX_PATH];
-      if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
-        return Native.toString(result);
+  private static void openViaShellApi(String dir, String toSelect) {
+    if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
+
+    Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+    Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+    try {
+      WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, new WinDef.UINT(apIdl != null ? 1 : 0), apIdl, new WinDef.DWORD(0));
+      if (!WinError.S_OK.equals(result)) {
+        LOG.error("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
       }
     }
+    finally {
+      if (apIdl != null) {
+        Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+      }
+      Shell32Ex.INSTANCE.ILFree(pIdl);
+    }
+  }
 
-    return path;
+  private interface Shell32Ex extends StdCallLibrary {
+    Shell32Ex INSTANCE = init();
+
+    private static Shell32Ex init() {
+      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
+      return Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
+    }
+
+    Pointer ILCreateFromPath(String path);
+    void ILFree(Pointer pIdl);
+    WinNT.HRESULT SHOpenFolderAndSelectItems(Pointer pIdlFolder, WinDef.UINT cIdl, Pointer[] apIdl, WinDef.DWORD dwFlags);
   }
 
   private static void spawn(String... command) {
