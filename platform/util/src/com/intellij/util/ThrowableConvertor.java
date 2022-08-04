@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 /**
- * Not a converted for Throwables, but ThrowAbleConverter: converter (U->V) which is able to
+ * Not a 'converter for Throwables', but ThrowAbleConverter: converter (U->V) which is able to
  * throw exception T
  */
 @FunctionalInterface
