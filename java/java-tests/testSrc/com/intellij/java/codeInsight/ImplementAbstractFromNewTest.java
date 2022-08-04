@@ -15,7 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
-import com.intellij.java.codeInsight.daemon.quickFix.LightQuickFixAvailabilityTestCase;
+import com.intellij.codeInsight.daemon.impl.quickfix.LightQuickFixAvailabilityTestCase;
 
 public class ImplementAbstractFromNewTest extends LightQuickFixAvailabilityTestCase {
   @Override

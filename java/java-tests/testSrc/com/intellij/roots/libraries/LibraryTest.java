@@ -2,8 +2,8 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.ProjectTopics;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryTest;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.java.codeInsight.daemon.quickFix.OrderEntryTest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
