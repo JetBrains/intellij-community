@@ -21,10 +21,10 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -106,7 +106,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  private static @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getFile(AnActionEvent e) {
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
@@ -120,14 +120,15 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) ||
-        ActionPlaces.EDITOR_POPUP.equals(place) ||
-        ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
+    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
       return getFileManagerName();
     }
-    return SystemInfo.isMac
-           ? ActionsBundle.message("action.RevealIn.name.mac")
-           : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    else if (SystemInfo.isMac) {
+      return ActionsBundle.message("action.RevealIn.name.mac");
+    }
+    else {
+      return ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    }
   }
 
   public static @NlsSafe @NotNull String getFileManagerName() {
@@ -145,17 +146,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
 
     return null;
-  }
-
-  public static void showDialog(Project project,
-                                @DialogMessage String message,
-                                @DialogTitle String title,
-                                @NotNull File file,
-                                @Nullable DialogWrapper.DoNotAskOption option) {
-    String ok = getActionName(null), cancel = IdeBundle.message("action.close");
-    if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
-      openFile(file);
-    }
   }
 
   /**
@@ -348,4 +338,23 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       }
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated trivial to implement, just inline */
+  @Deprecated(forRemoval = true)
+  public static void showDialog(Project project,
+                                @NlsContexts.DialogMessage String message,
+                                @NlsContexts.DialogTitle String title,
+                                @NotNull File file,
+                                @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option) {
+    if (MessageDialogBuilder.okCancel(title, message)
+      .yesText(getActionName(null))
+      .noText(IdeBundle.message("action.close"))
+      .icon(Messages.getInformationIcon())
+      .doNotAsk(option)
+      .ask(project)) {
+      openFile(file);
+    }
+  }
+  //</editor-fold>
 }
