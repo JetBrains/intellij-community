@@ -222,4 +222,11 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
     result = 31 * result + names.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + versions.hashCode()
+    result = 31 * result + names.hashCode()
+    return result
+  }
 }

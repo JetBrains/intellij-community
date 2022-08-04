@@ -217,4 +217,12 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
     result = 31 * result + data3.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data1.hashCode()
+    result = 31 * result + data2.hashCode()
+    result = 31 * result + data3.hashCode()
+    return result
+  }
 }

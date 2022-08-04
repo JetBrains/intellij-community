@@ -171,4 +171,10 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
     result = 31 * result + date.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + date.hashCode()
+    return result
+  }
 }

@@ -429,4 +429,13 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     result = 31 * result + sealedClassWithLinks.hashCode()
     return result
   }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + related.hashCode()
+    result = 31 * result + sealedClassWithLinks.hashCode()
+    return result
+  }
 }
