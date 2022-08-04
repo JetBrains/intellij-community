@@ -27,8 +27,8 @@ class TestInProductSourceInspection : AbstractBaseUastLocalInspectionTool() {
 private class TestInProductSourceVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitClass(node: UClass): Boolean {
     val javaClass = node.javaPsi
-    if (TestUtils.isInTestSourceContent(javaClass) || !TestUtils.isJUnitTestClass(javaClass)) return true
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.test.case.in.product.source.problem.descriptor")
+    if (TestUtils.isInTestSourceContent(javaClass) || !TestFrameworks.getInstance().isTestClass(javaClass)) return true
+    val message = JvmAnalysisBundle.message("jvm.inspections.test.case.in.product.source.problem.descriptor")
     holder.registerUProblem(node, message)
     return true
   }
@@ -37,7 +37,7 @@ private class TestInProductSourceVisitor(private val holder: ProblemsHolder) : A
     val method = node.javaPsi
     val containingClass = method.containingClass ?: return true
     if (TestUtils.isInTestSourceContent(containingClass) || !TestFrameworks.getInstance().isTestMethod(method)) return true
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.test.method.in.product.source.problem.descriptor")
+    val message = JvmAnalysisBundle.message("jvm.inspections.test.method.in.product.source.problem.descriptor")
     holder.registerUProblem(node, message)
     return true
   }
