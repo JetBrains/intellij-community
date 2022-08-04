@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -125,3 +127,9 @@ private fun PsiElement.isSuitableTopmostElementAtOffset(offset: Int): Boolean =
 
 
 fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesize(this)
+
+fun KtDeclaration.isExpectDeclaration(): Boolean =
+    when {
+        hasExpectModifier() -> true
+        else -> containingClassOrObject?.isExpectDeclaration() == true
+    }

@@ -8,6 +8,7 @@ import com.intellij.debugger.ui.breakpoints.MethodBreakpoint
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint.MethodDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,21 +31,17 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getNavigationElement
-import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getOriginalElement
-import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
 
 class KotlinFunctionBreakpoint(
     project: Project,
@@ -165,7 +162,7 @@ private fun KtLightMethod.getSourceOrigin(): KtDeclaration? {
     val originalElement = lightMemberOrigin.auxiliaryOriginalElement
         ?: lightMemberOrigin.originalElement
         ?: return null
-    val sourceOrigin = getNavigationElement(originalElement)
+    val sourceOrigin = originalElement.fetchNavigationElement() as? KtDeclaration ?: return null
     if (sourceOrigin.containingFile is KtClsFile) {
         return null
     }
@@ -188,9 +185,15 @@ private fun resolveJvmMethodFromKotlinDeclaration(project: Project, sourcePositi
         declaration = constructor
     }
 
-    val originalDeclaration = getOriginalElement(declaration)
+    val originalDeclaration = declaration.fetchOriginalElement() ?: return null
     return originalDeclaration.toLightElements().firstIsInstanceOrNull()
 }
 
 fun KtDeclaration.getActualJvmDeclaration(): KtDeclaration? =
     actualsForExpected().firstOrNull { it.platform.isJvm() }
+
+private fun KtDeclaration.fetchNavigationElement(): KtElement? =
+    serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getNavigationElement(this)
+
+private fun KtDeclaration.fetchOriginalElement(): KtElement? =
+    serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getOriginalElement(this)
