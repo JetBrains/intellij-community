@@ -293,7 +293,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       if (method == null) return IntentionPreviewInfo.EMPTY;
       final PsiParameter parameter = findParameter(method, element);
       if (parameter == null) return IntentionPreviewInfo.EMPTY;
-      parameter.delete(); // show method signature diff with inlined parameter
+      var references = ReferencesSearch.search(parameter).findAll();
+      final PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
+      references.forEach((ref) -> ref.getElement().replace(defToInline));
       return IntentionPreviewInfo.DIFF;
     }
 
