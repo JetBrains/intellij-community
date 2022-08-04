@@ -88,16 +88,29 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
                                                                     transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
   JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
-fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
-  if (this is LocalTargetEnvironmentRequest) return constant(localPath)
-  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(Path.of(localPath)) }
+@Deprecated("Do not use strings for local path",
+            ReplaceWith("getTargetEnvironmentForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> = getTargetEnvironmentValueForLocalPath(
+  Path.of(localPath))
+
+fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
+  if (this is LocalTargetEnvironmentRequest) return constant(localPath.toString())
+  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
 }
 
-fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
+@Deprecated("Do not use strings for local path",
+            ReplaceWith("getTargetEnvironmentValueForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> =
+  getTargetEnvironmentValueForLocalPath(Path.of(localPath))
+
+/**
+ * Returns function [target,targetPath] that converts [localPath] to the targetPath on certain target
+ */
+fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
     when (targetEnvironment) {
-      is LocalTargetEnvironment -> localPath
-      else -> targetEnvironment.resolveLocalPath(Paths.get(localPath))
+      is LocalTargetEnvironment -> localPath.toString()
+      else -> targetEnvironment.resolveLocalPath(localPath)
     }
   }
 }

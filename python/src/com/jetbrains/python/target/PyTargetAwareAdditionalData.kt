@@ -24,15 +24,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
                                                                                   TargetBasedSdkAdditionalData,
                                                                                   RemoteSdkProperties by b,
                                                                                   PyRemoteSdkAdditionalDataMarker {
-  /**
-   * [local, remote] mapping for paths added by user
-   */
-  val pathsAddedByUser: Map<Path, String> get() = this.addedPathFiles.asMappings
 
-  /**
-   * [local, remote] mapping for paths explicitly removed by user
-   */
-  val pathsRemovedByUser: Map<Path, String> get() = this.excludedPathFiles.asMappings
 
   /**
    * The source of truth for the target configuration.
@@ -110,6 +102,19 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
 
     private val LOG = logger<PyTargetAwareAdditionalData>()
+
+    /**
+     * [local, remote] mapping for paths added by user
+     */
+    @JvmStatic
+    val PyTargetAwareAdditionalData.pathsAddedByUser: Map<Path, String> get() = this.addedPathFiles.asMappings
+
+    /**
+     * [local, remote] mapping for paths explicitly removed by user
+     */
+    @JvmStatic
+    val PyTargetAwareAdditionalData.pathsRemovedByUser: Map<Path, String> get() = this.excludedPathFiles.asMappings
+
 
     /**
      * Loads target data if it exists in xml. Returns `null` otherwise.

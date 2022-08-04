@@ -45,6 +45,13 @@ interface TargetEnvironmentRequest {
    */
   val configuration: TargetEnvironmentConfiguration?
 
+  // TODO: Upload, Download, manuallyMapped and ExternallySynchroized roots must be stored
+  // in one collection. Each mapping may have certain properties (upload only, do both, etc)
+  // Target-specific hints (like "prefer sync over mapping") may also be stored there.
+  // It also has to be extracted from request, since it is data-only structure, no
+  // request-specific code is required
+
+
   /**
    * Set of required upload roots.
    * Note that both local and remote paths must be unique across all requests.

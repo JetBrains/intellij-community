@@ -25,7 +25,7 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import com.jetbrains.python.ui.remotePathEditor.ManualPathEntryDialog;
+import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

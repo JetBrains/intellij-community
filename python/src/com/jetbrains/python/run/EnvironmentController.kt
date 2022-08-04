@@ -7,6 +7,7 @@ import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
 
 /**
  * This is a temporary interface for smoother transition to Targets API. Its
@@ -91,13 +92,13 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun putTargetPathValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath))
     envs[name] = targetValue
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
     envs[name] = localPaths
-      .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath) }
+      .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath)) }
       .joinToPathValue(targetEnvironmentRequest.targetPlatform)
   }
 
@@ -107,7 +108,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath))
     envs.merge(name, targetValue) { originalValue, additionalValue ->
       listOf(originalValue, additionalValue).joinToPathValue(targetEnvironmentRequest.targetPlatform)
     }
