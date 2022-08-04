@@ -27,6 +27,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
@@ -211,17 +212,27 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         override fun changed(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+            val moduleChanges = event.getChanges(ModuleEntity::class.java)
+            val sourceRootEntityChanges = event.getChanges(SourceRootEntity::class.java)
 
-            val outdatedModules: List<Module> = moduleChanges.asSequence()
-                .mapNotNull { it.oldEntity }
-                .mapNotNull { storageBefore.findModuleByEntity(it) }
-                .toList()
+            if (moduleChanges.isEmpty() && sourceRootEntityChanges.isEmpty()) return
 
-            val updatedModules = moduleChanges.asSequence()
-                .mapNotNull { it.newEntity }
-                .mapNotNull { storageAfter.findModuleByEntity(it) }
-                .toList()
+            val outdatedContentRootInModules =
+                sourceRootEntityChanges.mapNotNull { it.oldEntity?.contentRoot?.module }
+                    .mapNotNull { storageBefore.findModuleByEntity(it) }
+            val updatedContentRootInModules =
+                sourceRootEntityChanges.mapNotNull { it.newEntity?.contentRoot?.module }
+                    .mapNotNull { storageAfter.findModuleByEntity(it) }
+
+            val outdatedModules =
+                moduleChanges.asSequence().mapNotNull { it.oldEntity }
+                    .mapNotNull { storageBefore.findModuleByEntity(it) }
+                    .toList() + outdatedContentRootInModules + updatedContentRootInModules
+
+            val updatedModules: Set<Module> =
+                moduleChanges.asSequence().mapNotNull { it.newEntity }
+                    .mapNotNull { storageAfter.findModuleByEntity(it) }
+                    .toSet() + updatedContentRootInModules
 
             if (outdatedModules.isNotEmpty()) {
                 invalidateKeys(outdatedModules)
@@ -358,6 +369,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 val libraryInfos = libraryCache.values().flatten()
                 val sdkInfos = sdkCache.values()
                 val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
+
                 ideaModuleInfos
             }
         }
