@@ -182,7 +182,7 @@ private fun checkLightServiceOfModule(lightService: ClassInfo,
                                       errors: MutableList<Throwable>,
                                       taskExecutor: (task: () -> Unit) -> Unit) {
   // not clear - from what classloader light service will be loaded in reality
-  val lightServiceClass = loadLightServiceClass(lightService, plugin) ?: return
+  val lightServiceClass = loadLightServiceClass(lightService.name, plugin) ?: return
 
   val isProjectLevel: Boolean
   val isAppLevel: Boolean
@@ -222,21 +222,29 @@ private fun checkLightServiceOfModule(lightService: ClassInfo,
   }
 }
 
-private fun loadLightServiceClass(lightService: ClassInfo, plugin: IdeaPluginDescriptorImpl): Class<*>? {
-  for (item in plugin.content.modules) {
-    val descriptor = item.requireDescriptor()
-    if (lightService.name.startsWith(descriptor.packagePrefix!!)) {
+private fun loadLightServiceClass(
+  lightServiceClassName: String,
+  mainDescriptor: IdeaPluginDescriptorImpl,
+): Class<*>? {
+  fun loadClass(descriptor: IdeaPluginDescriptorImpl) =
+    (descriptor.pluginClassLoader as? PluginClassLoader)?.loadClass(lightServiceClassName, true)
+
+  for (moduleItem in mainDescriptor.content.modules) {
+    try {
       // module is not loaded - dependency is not provided
-      val classLoader = descriptor.pluginClassLoader as? PluginClassLoader ?: return null
-      return classLoader.loadClass(lightService.name, true)
+      return loadClass(moduleItem.requireDescriptor())
+    }
+    catch (_: PluginException) {
+    }
+    catch (_: ClassNotFoundException) {
     }
   }
 
   // ok, or no plugin dependencies at all, or all are disabled, resolve from main
   try {
-    return (plugin.pluginClassLoader as PluginClassLoader).loadClass(lightService.name, true)
+    return loadClass(mainDescriptor)
   }
-  catch (e: Exception) {
-    throw PluginException("Cannot load $lightService", e, plugin.pluginId)
+  catch (e: ClassNotFoundException) {
+    throw PluginException("Cannot load $lightServiceClassName", e, mainDescriptor.pluginId)
   }
 }
