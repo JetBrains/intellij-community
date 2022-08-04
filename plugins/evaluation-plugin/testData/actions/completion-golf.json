@@ -1,0 +1,147 @@
+{
+  "path": "example.java",
+  "checksum": "59052a35eb0d95d50373552a9901e5908a7fa5820ee2551fcc2e48f750ced52f",
+  "sessionsCount": 7,
+  "actions": [
+    {
+      "begin": 0,
+      "end": 22,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 0,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "public class Example {",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 27,
+      "end": 67,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 27,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "public static void main(String[] args) {",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 76,
+      "end": 94,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 76,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "test(args.length);",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 99,
+      "end": 100,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 99,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "}",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 105,
+      "end": 141,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 105,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "private static void test(Object a) {",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 146,
+      "end": 147,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 146,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "}",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 148,
+      "end": 149,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 148,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "}",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    }
+  ]
+}
