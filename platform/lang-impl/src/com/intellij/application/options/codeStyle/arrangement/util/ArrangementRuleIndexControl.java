@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,6 +69,10 @@ public class ArrangementRuleIndexControl extends JPanel {
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
     g.drawOval(0, y, myDiameter, myDiameter);
+
+    if (UIUtil.isUnderDarcula()) {
+      g.setColor(UIUtil.getLabelForeground());
+    }
     g.drawChars(myChars, 0, myChars.length, (myDiameter - myIndexWidth) / 2, myBaseLine);
   }
 
