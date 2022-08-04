@@ -159,7 +159,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
-    var trace = allKeysLookupStarted(indexId)
+    var trace = lookupAllKeysStarted(indexId)
       .withProject(scope.getProject());
     try (trace) {
       waitUntilIndicesAreInitialized();
@@ -243,7 +243,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                           @NotNull K dataKey,
                                                                           @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
-    try (var trace = valuesLookupStarted(indexId)) {
+    try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithAND(1)
         .withProject(project);
 
@@ -315,7 +315,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
         return null;
       }
-      TRACE_OF_VALUES_LOOKUP.get()
+      TRACE_OF_ENTRIES_LOOKUP.get()
         .indexValidationFinished();
 
       final R validated = myAccessValidator.validate(
@@ -326,7 +326,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return validated;
     }
     catch (StorageException e) {
-      TRACE_OF_VALUES_LOOKUP.get().lookupFailed();
+      TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
@@ -424,7 +424,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<? super InvertedIndexValueIterator<V>> valueProcessor) {
-    try (var trace = valuesLookupStarted(indexId)) {
+    try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithAND(1)
         .withProject(scope.getProject());
       //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
@@ -586,7 +586,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @Nullable Condition<? super V> valueChecker,
                                                         @Nullable IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
-    try (var trace = valuesLookupStarted(indexId)) {
+    try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithAND(dataKeys.size())
         .withProject(scope.getProject());
 
@@ -617,7 +617,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                        @NotNull GlobalSearchScope filter,
                                                        @Nullable Condition<? super V> valueChecker,
                                                        @Nullable IdFilter projectFilesFilter) {
-    try (var trace = valuesLookupStarted(indexId)) {
+    try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithOR(dataKeys.size());
       IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
       IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&

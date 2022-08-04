@@ -40,8 +40,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.TRACE_OF_STUB_VALUES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.stubValuesLookupStarted;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.lookupStubEntriesStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -130,7 +130,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                @Nullable IdFilter idFilter,
                                                                @NotNull Class<Psi> requiredClass,
                                                                @NotNull Processor<? super Psi> processor) {
-    var trace = stubValuesLookupStarted(indexKey)
+    var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 
     try (trace) {
@@ -376,7 +376,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                   final @NotNull Project project,
                                                   @Nullable IdFilter idFilter,
                                                   final @Nullable GlobalSearchScope scope) {
-    var trace = TRACE_OF_STUB_VALUES_LOOKUP.get();
+    var trace = TRACE_OF_STUB_ENTRIES_LOOKUP.get();
     final FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish

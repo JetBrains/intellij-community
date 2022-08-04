@@ -26,8 +26,8 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   private static final IndexId<?, ?> INDEX_ID = IndexId.create("test-index");
 
   @Test
-  public void stubValuesLookupReportingDontThrowAnythingIfCalledInCorrectSequence() {
-    var trace = stubValuesLookupStarted(INDEX_ID);
+  public void stubEntriesLookupReportingDontThrowAnythingIfCalledInCorrectSequence() {
+    var trace = lookupStubEntriesStarted(INDEX_ID);
     try (trace) {
       trace.withProject(null);
       trace.indexValidationFinished();
@@ -38,8 +38,8 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   }
 
   @Test
-  public void fileValuesLookupReportingDontThrowAnythingIfCalledInCorrectSequence() {
-    var trace = valuesLookupStarted(INDEX_ID);
+  public void fileEntriesLookupReportingDontThrowAnythingIfCalledInCorrectSequence() {
+    var trace = lookupEntriesStarted(INDEX_ID);
     try (trace) {
       trace.withProject(null);
       trace.indexValidationFinished();
@@ -50,7 +50,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
 
   @Test
   public void allKeysLookupReportingDontThrowAnythingIfCalledInCorrectSequence() {
-    var trace = allKeysLookupStarted(INDEX_ID);
+    var trace = lookupAllKeysStarted(INDEX_ID);
     try (trace) {
       trace.withProject(null);
       trace.indexValidationFinished();
@@ -65,7 +65,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
                 THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
-    var trace = allKeysLookupStarted(INDEX_ID);
+    var trace = lookupAllKeysStarted(INDEX_ID);
     trace.lookupStarted(INDEX_ID);
   }
 
@@ -89,7 +89,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
     assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
                THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
-    var trace = allKeysLookupStarted(INDEX_ID);
+    var trace = lookupAllKeysStarted(INDEX_ID);
     try {
       trace.lookupStarted(INDEX_ID);
       fail("Subsequent .started() without finish should throw exception if THROW_ON_INCORRECT_USAGE=true");

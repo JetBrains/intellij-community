@@ -11,13 +11,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * Collects and reports performance data (timings mostly) about index usage (lookup). Right now there 'all keys'
  * lookups and 'value(s) by key(s)' lookups are timed and reported with some additional infos.
+ * <p>
+ * There are 3 type of lookups measured now:
+ * <ol>
+ *   <li>lookup all keys in index ({@link #INDEX_ALL_KEYS_LOOKUP_EVENT})</li>
+ * <li>lookup entries by key(s) from file-based index ({@link #INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT})</li>
+ * <li>lookup entries by key from stub-index ({@link #STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT})</li>
+ * </ol>
+ * <p>
+ * Lookups have phases which could be worth to time on its own: e.g. 'ensure-up-to-date' phase (there delayed
+ * index updates could be applied), and psi-resolve phase (there Stub trees are read and parsed, and lookup key
+ * is looked up inside them).
+ * <p>
+ * In general, for all lookups we report field:
+ * <ol>
+ *      <li>indexId</li>
+ *      <li>total lookup time (from start to finish)</li>
+ *      <li>was lookup failed? -- failed lookup is the lookup there index was found to be broken or any other exception
+ *      was thrown, not the lookup results in 0 entries found.
+ *      <li>approximated size of index (number of keys)</li>
+ * </ol>
+ * Specific lookups also have their own fields, see apt. _EVENT fields
  */
 public class IndexOperationFusCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(IndexOperationFusCollector.class);
@@ -35,7 +55,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_ONLY_OPERATIONS_LONGER_THAN_MS}.
    * There are a lot of index lookups, and this threshold allows to reduce reporting traffic, since we're really only interested in
    * long operations. Default value 0 means 'report lookups >0ms only'.
-   *
+   * <p>
    * BEWARE: different values for that parameter correspond to a different way of sampling, hence, in theory, should be treated as
    * different event schema _version_.
    */
@@ -72,7 +92,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
    */
   private static final IntEventField TOTAL_KEYS_INDEXED_COUNT_FIELD = new IntEventField("total-keys-indexed");
-  private static final IntEventField LOOKUP_RESULT_VALUES_COUNT_FIELD = new IntEventField("values-found");
+  private static final IntEventField LOOKUP_RESULT_ENTRIES_COUNT_FIELD = new IntEventField("entries-found");
 
   // ================== EVENTS:
 
@@ -86,11 +106,11 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     UP_TO_DATE_CHECK_DURATION_MS_FIELD,
 
     TOTAL_KEYS_INDEXED_COUNT_FIELD
-    //LOOKUP_RESULT_VALUES_COUNT is useless here, since it == TOTAL_KEYS_INDEXED_COUNT
+    //LOOKUP_RESULT_ENTRIES_COUNT is useless here, since it == TOTAL_KEYS_INDEXED_COUNT
   );
 
-  private static final VarargEventId INDEX_VALUES_LOOKUP_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
-    "lookup.values",
+  private static final VarargEventId INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
+    "lookup.entries",
     INDEX_ID_FIELD,
 
     LOOKUP_FAILED_FIELD,
@@ -101,11 +121,11 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     LOOKUP_KEYS_COUNT_FIELD,
     LOOKUP_KEYS_OP_FIELD,
     TOTAL_KEYS_INDEXED_COUNT_FIELD,
-    LOOKUP_RESULT_VALUES_COUNT_FIELD
+    LOOKUP_RESULT_ENTRIES_COUNT_FIELD
   );
 
-  private static final VarargEventId STUB_INDEX_VALUES_LOOKUP_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
-    "lookup.stub-values",
+  private static final VarargEventId STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
+    "lookup.stub-entries",
     INDEX_ID_FIELD,
 
     LOOKUP_FAILED_FIELD,
@@ -117,7 +137,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
     //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
     TOTAL_KEYS_INDEXED_COUNT_FIELD,
-    LOOKUP_RESULT_VALUES_COUNT_FIELD
+    LOOKUP_RESULT_ENTRIES_COUNT_FIELD
   );
 
   // ================== IMPLEMENTATION METHODS:
@@ -257,24 +277,24 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
   //========================== 'All keys' lookup reporting:
 
-  public static final ThreadLocal<AllKeysLookupTrace> TRACE_OF_ALL_KEYS_LOOKUP = ThreadLocal.withInitial(AllKeysLookupTrace::new);
+  public static final ThreadLocal<LookupAllKeysTrace> TRACE_OF_ALL_KEYS_LOOKUP = ThreadLocal.withInitial(LookupAllKeysTrace::new);
 
   /**
-   * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
+   * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
    * object.
    */
-  public static class AllKeysLookupTrace extends LookupTraceBase<AllKeysLookupTrace> {
+  public static class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
     private long indexValidationFinishedAtMs;
 
     @Override
-    public AllKeysLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+    public LookupAllKeysTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
       this.indexValidationFinishedAtMs = -1;
 
       return this;
     }
 
-    public AllKeysLookupTrace indexValidationFinished() {
+    public LookupAllKeysTrace indexValidationFinished() {
       if (traceWasStarted) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
@@ -302,20 +322,21 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     }
   }
 
-  public static AllKeysLookupTrace allKeysLookupStarted(final IndexId<?, ?> indexId) {
+  public static LookupAllKeysTrace lookupAllKeysStarted(final IndexId<?, ?> indexId) {
     return TRACE_OF_ALL_KEYS_LOOKUP.get().lookupStarted(indexId);
   }
 
 
-  //========================== Values lookup reporting:
+  //========================== Entries lookup reporting:
 
-  public static final ThreadLocal<ValuesLookupTrace> TRACE_OF_VALUES_LOOKUP = ThreadLocal.withInitial(ValuesLookupTrace::new);
+  public static final ThreadLocal<LookupEntriesByKeysTrace> TRACE_OF_ENTRIES_LOOKUP =
+    ThreadLocal.withInitial(LookupEntriesByKeysTrace::new);
 
   /**
-   * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
+   * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
    * object.
    */
-  public static class ValuesLookupTrace extends LookupTraceBase<ValuesLookupTrace> {
+  public static class LookupEntriesByKeysTrace extends LookupTraceBase<LookupEntriesByKeysTrace> {
     private long indexValidationFinishedAtMs;
 
     /**
@@ -326,7 +347,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
 
     @Override
-    public ValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+    public LookupEntriesByKeysTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
 
       this.lookupOperation = LookupOperation.UNKNOWN;
@@ -336,7 +357,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       return this;
     }
 
-    public ValuesLookupTrace indexValidationFinished() {
+    public LookupEntriesByKeysTrace indexValidationFinished() {
       if (traceWasStarted) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
@@ -346,7 +367,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      INDEX_VALUES_LOOKUP_EVENT.log(
+      INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT.log(
         project,
 
         INDEX_ID_FIELD.with(indexId.getName()),
@@ -362,46 +383,47 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
         LOOKUP_KEYS_COUNT_FIELD.with(lookupKeysCount),
 
         TOTAL_KEYS_INDEXED_COUNT_FIELD.with(totalKeysIndexed),
-        LOOKUP_RESULT_VALUES_COUNT_FIELD.with(lookupResultSize)
+        LOOKUP_RESULT_ENTRIES_COUNT_FIELD.with(lookupResultSize)
       );
     }
 
     //=== Additional info about what was lookup-ed, and context/environment:
 
-    public ValuesLookupTrace keysWithAND(final int keysCount) {
+    public LookupEntriesByKeysTrace keysWithAND(final int keysCount) {
       this.lookupKeysCount = keysCount;
       this.lookupOperation = LookupOperation.AND;
       return this;
     }
 
-    public ValuesLookupTrace keysWithOR(final int keysCount) {
+    public LookupEntriesByKeysTrace keysWithOR(final int keysCount) {
       this.lookupKeysCount = keysCount;
       this.lookupOperation = LookupOperation.OR;
       return this;
     }
   }
 
-  public static ValuesLookupTrace valuesLookupStarted(final IndexId<?, ?> indexId) {
-    return TRACE_OF_VALUES_LOOKUP.get().lookupStarted(indexId);
+  public static LookupEntriesByKeysTrace lookupEntriesStarted(final IndexId<?, ?> indexId) {
+    return TRACE_OF_ENTRIES_LOOKUP.get().lookupStarted(indexId);
   }
 
   enum LookupOperation {AND, OR, UNKNOWN}
 
-  //========================== Stub-Index Values lookup reporting:
+  //========================== Stub-Index Entries lookup reporting:
 
-  public static final ThreadLocal<StubValuesLookupTrace> TRACE_OF_STUB_VALUES_LOOKUP = ThreadLocal.withInitial(StubValuesLookupTrace::new);
+  public static final ThreadLocal<LookupStubEntriesByKeyTrace> TRACE_OF_STUB_ENTRIES_LOOKUP = ThreadLocal.withInitial(
+    LookupStubEntriesByKeyTrace::new);
 
   /**
-   * Holds a trace (timestamps, pieces of data) for a 'lookup values' index query. To be used as thread-local
+   * Holds a trace (timestamps, pieces of data) for a 'lookup entries' stub-index query. To be used as thread-local
    * object.
    */
-  public static class StubValuesLookupTrace extends LookupTraceBase<StubValuesLookupTrace> {
+  public static class LookupStubEntriesByKeyTrace extends LookupTraceBase<LookupStubEntriesByKeyTrace> {
     //total lookup time = (upToDateCheck time) + (pure index lookup time) + (Stub Trees deserializing time)
     private long indexValidationFinishedAtMs;
     private long stubTreesDeserializingStarted;
 
     @Override
-    public StubValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+    public LookupStubEntriesByKeyTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
 
       indexValidationFinishedAtMs = -1;
@@ -410,14 +432,14 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       return this;
     }
 
-    public StubValuesLookupTrace indexValidationFinished() {
+    public LookupStubEntriesByKeyTrace indexValidationFinished() {
       if (traceWasStarted) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
       return this;
     }
 
-    public StubValuesLookupTrace stubTreesDeserializingStarted() {
+    public LookupStubEntriesByKeyTrace stubTreesDeserializingStarted() {
       if (traceWasStarted) {
         stubTreesDeserializingStarted = System.currentTimeMillis();
       }
@@ -427,7 +449,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      STUB_INDEX_VALUES_LOOKUP_EVENT.log(
+      STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT.log(
         project,
 
         INDEX_ID_FIELD.with(indexId.getName()),
@@ -443,12 +465,12 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
         LOOKUP_FAILED_FIELD.with(lookupFailed),
 
         TOTAL_KEYS_INDEXED_COUNT_FIELD.with(totalKeysIndexed),
-        LOOKUP_RESULT_VALUES_COUNT_FIELD.with(lookupResultSize)
+        LOOKUP_RESULT_ENTRIES_COUNT_FIELD.with(lookupResultSize)
       );
     }
   }
 
-  public static StubValuesLookupTrace stubValuesLookupStarted(final IndexId<?, ?> indexId) {
-    return TRACE_OF_STUB_VALUES_LOOKUP.get().lookupStarted(indexId);
+  public static LookupStubEntriesByKeyTrace lookupStubEntriesStarted(final IndexId<?, ?> indexId) {
+    return TRACE_OF_STUB_ENTRIES_LOOKUP.get().lookupStarted(indexId);
   }
 }
