@@ -58,6 +58,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                 sourceModule.checkValidity()
                 return sourceModuleCache.computeIfAbsent(sourceModule.module) { ModuleStateTrackerImpl() }
             }
+
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
             is KtBuiltinsModule -> ModuleStateTrackerImpl()
@@ -66,8 +67,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
     private inner class JdkListener : ProjectJdkTable.Listener {
         override fun jdkRemoved(jdk: Sdk) {
-            sdkCache[jdk]?.invalidate()
-            sdkCache.remove(jdk)
+            sdkCache.remove(jdk)?.invalidate()
         }
     }
 
@@ -78,15 +78,13 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         }
 
         private fun handleLibraryChanges(event: VersionedStorageChange) {
-            val libraryEntities = event.getChanges(LibraryEntity::class.java)
-            if (libraryEntities.isEmpty()) return
+            val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
             for (change in libraryEntities) {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findLibraryBridge(event.storageBefore)?.let { library ->
-                            libraryCache[library]?.invalidate()
-                            libraryCache.remove(library)
+                            libraryCache.remove(library)?.invalidate()
                         }
                     }
 
@@ -101,15 +99,13 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         }
 
         private fun handleModuleRootChanges(event: VersionedStorageChange) {
-            val moduleEntities = event.getChanges(ModuleEntity::class.java)
-            if (moduleEntities.isEmpty()) return
+            val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
             for (change in moduleEntities) {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            sourceModuleCache[module]?.invalidate()
-                            sourceModuleCache.remove(module)
+                            sourceModuleCache.remove(module)?.invalidate()
                         }
                     }
 
