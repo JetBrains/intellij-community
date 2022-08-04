@@ -202,10 +202,10 @@ final class RepairUtilityBuilder {
          def baseUrl = buildContext.applicationInfo.patchesUrl
          def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
          Map<String, String> manifestUrls = BINARIES.collectEntries {
-           [(it.integrityManifestUrlVariable): baseUrl + baseName + it.integrityManifestSuffix]
-         }
-         manifestUrls.each {(envVar, url) ->
-             buildContext.messages.info("$envVar=$url")
+           def envVar = it.integrityManifestUrlVariable
+           def url = baseUrl + baseName + it.integrityManifestSuffix
+           buildContext.messages.info("$envVar=$url")
+           [(envVar): url]
          }
          ProcessKt.runProcess(['bash', 'build.sh'], projectHome, buildContext.messages,
                               TimeUnit.MINUTES.toMillis(10L),
