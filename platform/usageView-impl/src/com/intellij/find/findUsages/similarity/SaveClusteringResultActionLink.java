@@ -58,7 +58,7 @@ public class SaveClusteringResultActionLink extends ActionLink {
 
   private static void createScratchFile(@NotNull Project project, @NotNull String fileContent) throws IOException {
     ScratchFileService fileService = ScratchFileService.getInstance();
-    VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), "features",
+    VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), "features.json",
                                                    ScratchFileService.Option.create_new_always);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(scratchFile);
     final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
@@ -91,9 +91,9 @@ public class SaveClusteringResultActionLink extends ActionLink {
           String fileNameBase = fileName.substring(0, fileName.indexOf('.')) +
                                 ":" +
                                 element.getTextRange().getStartOffset();
-
           sb.append("{\"filename\":").append("\"").append(fileNameBase).append("\",\n");
-          sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("},");
+          sb.append("\"cluster_number\": ").append(counter).append(",\n");
+          sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("},\n");
         }
       }
     }
