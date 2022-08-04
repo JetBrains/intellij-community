@@ -6,7 +6,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.HintAction;
@@ -24,24 +23,38 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
 // will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
-abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements IntentionAction, HintAction {
-  private final List<SmartPsiElementPointer<T>> myApplicableCandidates;
+abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements HintAction {
   private final List<T> candidates;
-  protected final SmartPsiElementPointer<R> myRef;
+  final SmartPsiElementPointer<R> myReferencePointer;
   private final long myPsiModificationCount;
 
   StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
+    if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // there is a lot of PSI computations and resolve going on here, ensure no freezes are reported
+      throw new IllegalStateException("Must be created in a background thread under the read action");
+    }
     Project project = file.getProject();
-    myRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
-    // search for suitable candidates here, in the background thread
-    List<T> applicableCandidates = getMembersToImport(true, 100);
-    candidates = applicableCandidates.isEmpty() ?
-                 getMembersToImport(false, 2) : applicableCandidates;
-    myApplicableCandidates = ContainerUtil.map(applicableCandidates, SmartPointerManager::createPointer);
+    myReferencePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
+    if (!PsiUtil.isLanguageLevel5OrHigher(file)
+        || !(file instanceof PsiJavaFile)
+        || getElement() == null
+        || !reference.isValid()
+        || getQualifierExpression() != null
+        || !BaseIntentionAction.canModify(file)
+        || resolveRef() != null) {
+      candidates = Collections.emptyList();
+    }
+    else {
+      // search for suitable candidates here, in the background thread
+      List<T> applicableCandidates = getMembersToImport(true, 100);
+      List<T> candidatesToImport = applicableCandidates.isEmpty() ? getMembersToImport(false, 2) : applicableCandidates;
+      candidates = ContainerUtil.filter(candidatesToImport, PsiElement::isValid);
+    }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
 
@@ -77,16 +90,7 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file)
-           && file instanceof PsiJavaFile
-           && getElement() != null
-           && getElement().isValid()
-           && getQualifierExpression() == null
-           && BaseIntentionAction.canModify(file)
-           && !candidates.isEmpty()
-           && ContainerUtil.all(candidates, PsiElement::isValid)
-           && resolveRef() == null
-      ;
+    return !isPsiModificationStampChanged(project) && !candidates.isEmpty();
   }
 
   private boolean isPsiModificationStampChanged(@NotNull Project project) {
@@ -103,7 +107,9 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   protected abstract QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable
-  protected abstract PsiElement getElement();
+  PsiElement getElement() {
+    return myReferencePointer.getElement();
+  }
 
   @Nullable
   protected abstract PsiElement getQualifierExpression();
@@ -113,14 +119,13 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)
+        || isPsiModificationStampChanged(project)
+        || candidates.isEmpty()) {
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(() -> {
-      List<T> applicableCandidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
-      List<T> methodsToImport = applicableCandidates.isEmpty() ?
-                                getMembersToImport(false, 100) : applicableCandidates;
-      if (!methodsToImport.isEmpty()) {
-        createQuestionAction(methodsToImport, project, editor).execute();
-      }
+      createQuestionAction(candidates, project, editor).execute();
     });
   }
 
@@ -139,25 +144,27 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
       return false;
     }
-    List<T> candidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
     if (candidates.isEmpty()) {
       return false;
     }
 
     T firstCandidate = candidates.get(0);
     PsiFile containingFile = callExpression.getContainingFile();
-    if (!toAddStaticImports() ||
-        candidates.size() != 1 ||
-        !PsiTreeUtil.isAncestor(containingFile, firstCandidate, true)) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-          && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-        TextRange textRange = callExpression.getTextRange();
-        QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
-        String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(firstCandidate));
-        HintManager.getInstance().showQuestionHint(editor, hintText,
-                                                   textRange.getStartOffset(),
-                                                   textRange.getEndOffset(), action);
-      }
+    if (containingFile == null || isPsiModificationStampChanged(containingFile.getProject())) {
+      return false;
+    }
+
+    if ((!toAddStaticImports() ||
+         candidates.size() != 1 ||
+         !PsiTreeUtil.isAncestor(containingFile, firstCandidate, true))
+        && !ApplicationManager.getApplication().isHeadlessEnvironment()
+        && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+      TextRange textRange = callExpression.getTextRange();
+      QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
+      String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(firstCandidate));
+      HintManager.getInstance().showQuestionHint(editor, hintText,
+                                                 textRange.getStartOffset(),
+                                                 textRange.getEndOffset(), action);
       return true;
     }
 

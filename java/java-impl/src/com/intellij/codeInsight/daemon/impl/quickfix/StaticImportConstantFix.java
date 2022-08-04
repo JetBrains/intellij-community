@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
+class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
   StaticImportConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(file, referenceElement);
   }
@@ -47,9 +47,9 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   @NotNull
   @Override
   List<PsiField> getMembersToImport(boolean applicableOnly, int maxResults) {
-    Project project = myRef.getProject();
+    Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
@@ -72,7 +72,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   @Override
   @NotNull
   protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
+    return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myReferencePointer) {
       @NotNull
       @Override
       protected String getPopupTitle() {
@@ -83,14 +83,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Nullable
   @Override
-  protected PsiElement getElement() {
-    return myRef.getElement();
-  }
-
-  @Nullable
-  @Override
   protected PsiElement getQualifierExpression() {
-    PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     return element != null ? element.getQualifier() : null;
   }
 

@@ -47,9 +47,9 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   @NotNull
   @Override
   List<PsiMethod> getMembersToImport(boolean applicableOnly, int maxResults) {
-    Project project = myRef.getProject();
+    Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myReferencePointer.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
@@ -66,19 +66,13 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   @Override
   @NotNull
   protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMemberQuestionAction<>(project, editor, methodsToImport, myRef);
-  }
-
-  @Nullable
-  @Override
-  protected PsiElement getElement() {
-    return myRef.getElement();
+    return new StaticImportMemberQuestionAction<>(project, editor, methodsToImport, myReferencePointer);
   }
 
   @Nullable
   @Override
   protected PsiElement getQualifierExpression() {
-    PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myReferencePointer.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 

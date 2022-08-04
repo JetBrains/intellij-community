@@ -29,10 +29,10 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
                                                 @NotNull Project project,
                                                 Editor editor) {
-    return new StaticImportMemberQuestionAction<PsiMethod>(project, editor, methodsToImport, myRef) {
+    return new StaticImportMemberQuestionAction<PsiMethod>(project, editor, methodsToImport, myReferencePointer) {
       @Override
       protected void doImport(@NotNull PsiMethod toImport) {
-        PsiMethodCallExpression element = myRef.getElement();
+        PsiMethodCallExpression element = myReferencePointer.getElement();
         if (element == null) return;
         WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"),
                                                  null, () -> qualifyStatically(toImport, project, element.getMethodExpression()));
