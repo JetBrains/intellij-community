@@ -315,7 +315,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val sdks = project.allSdks()
+            val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }
             invalidateEntries({ k, _ -> k !in sdks  })
 
             // force calculation
