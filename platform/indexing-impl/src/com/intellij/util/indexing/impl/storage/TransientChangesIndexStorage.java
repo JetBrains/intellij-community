@@ -193,7 +193,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
 
   @Override
   public int keysCountApproximately() {
-    //RC: this is imprecise upper bound -- some keys counted twice since they present in both transient
+    //RC: this imprecise upper bound -- some keys counted twice since they present in both transient
     //    and persistent storage
     return myMap.size() + myBackendStorage.keysCountApproximately();
   }

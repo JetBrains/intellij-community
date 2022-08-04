@@ -18,7 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.impl.InputData;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,19 +44,4 @@ public interface InvertedIndex<Key, Value, Input> {
   void clear() throws StorageException;
 
   void dispose();
-
-
-  /**
-   * Method was introduced for analytics purposes, and for that it is not required to be precise,
-   * i.e. it is OK to provide estimations, outdated info, include keys just removed, or something like
-   * that -- but it should be fast (ideally O(1), but at least sublinear on size).
-   * <p>
-   * It could be hard/costly to implement this method precisely for data structures with layered caching,
-   * and it is not clear would the method be useful in other contexts there precision is important,
-   * is it worth to define it as precise, and take associated costs.
-   *
-   * @return approximated number of keys in index, or -1 if this index doesn't provide such information
-   */
-  @ApiStatus.Experimental
-  int keysCountApproximately();
 }

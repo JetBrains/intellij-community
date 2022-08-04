@@ -11,6 +11,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   @Override
   public int keysCountApproximately() {
     assert myInitialized;
-    return myForwardIndex.keysCountApproximately();
+    return MeasurableIndexStore.keysCountApproximatelyIfPossible(myForwardIndex);
   }
 
   @Override

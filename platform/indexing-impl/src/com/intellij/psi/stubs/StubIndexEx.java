@@ -23,6 +23,7 @@ import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
@@ -407,7 +408,7 @@ public abstract class StubIndexEx extends StubIndex {
         }
       };
       myAccessValidator.validate(stubUpdatingIndexId, () -> {
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
           stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));

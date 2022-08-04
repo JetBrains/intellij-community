@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
+public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
 

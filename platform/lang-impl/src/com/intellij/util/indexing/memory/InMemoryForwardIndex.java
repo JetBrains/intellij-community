@@ -5,12 +5,13 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public final class InMemoryForwardIndex implements ForwardIndex {
+public final class InMemoryForwardIndex implements ForwardIndex, MeasurableIndexStore {
   private final IntObjectMap<byte[]> myMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   @Override

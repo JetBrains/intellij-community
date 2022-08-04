@@ -13,18 +13,4 @@ public interface KeyValueStore<K, V> extends Closeable {
   void put(K key, V value) throws IOException;
 
   void force();
-
-  /**
-   * Method was introduced for analytics purposes, and for that it is not required to be precise,
-   * i.e. it is OK to provide estimations, outdated info, include keys just removed, or something like
-   * that -- but it should be fast (ideally O(1), but at least sublinear on size).
-   *
-   * It could be hard/costly to implement this method precisely for data structures with layered caching,
-   * and it is not clear would the method be useful in other contexts there precision is important,
-   * is it worth to define it as precise, and take associated costs.
-   *
-   * @return approximated number of keys in index, or -1 if this index doesn't provide such information
-   */
-  @ApiStatus.Experimental
-  int keysCountApproximately();
 }

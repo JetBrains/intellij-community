@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class IntMapForwardIndex implements IntForwardIndex {
+public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore {
   @NotNull
   private final Path myStorageFile;
   private final boolean myHasChunks;
@@ -48,7 +48,10 @@ public class IntMapForwardIndex implements IntForwardIndex {
 
   @Override
   public int keysCountApproximately() {
-    return myPersistentMap.keysCountApproximately();
+    if (myPersistentMap instanceof MeasurableIndexStore) {
+      return ((MeasurableIndexStore)myPersistentMap).keysCountApproximately();
+    }
+    return KEYS_COUNT_UNKNOWN;
   }
 
   @Override

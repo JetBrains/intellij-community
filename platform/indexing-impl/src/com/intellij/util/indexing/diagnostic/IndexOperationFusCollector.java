@@ -68,36 +68,36 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   // ================== EVENTS FIELDS:
 
   private static final StringEventField INDEX_ID_FIELD =
-    new StringEventField.ValidatedByCustomValidationRule("index-id", IndexIdRuleValidator.class);
+    EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator.class);
 
-  private static final BooleanEventField LOOKUP_FAILED_FIELD = new BooleanEventField("lookup-failed");
+  private static final BooleanEventField LOOKUP_FAILED_FIELD = EventFields.Boolean("lookup_failed");
 
   /**
    * Total lookup time, as it is seen by 'client' (i.e. including up-to-date/validation, and stubs deserializing, etc...)
    */
-  private static final LongEventField LOOKUP_DURATION_MS_FIELD = new LongEventField("lookup-duration-ms");
-  private static final LongEventField UP_TO_DATE_CHECK_DURATION_MS_FIELD = new LongEventField("up-to-date-check-ms");
-  private static final LongEventField STUB_TREE_DESERIALIZING_DURATION_MS_FIELD = new LongEventField("psi-tree-deserializing-ms");
+  private static final LongEventField LOOKUP_DURATION_MS_FIELD = EventFields.Long("lookup_duration_ms");
+  private static final LongEventField UP_TO_DATE_CHECK_DURATION_MS_FIELD = EventFields.Long("up_to_date_check_ms");
+  private static final LongEventField STUB_TREE_DESERIALIZING_DURATION_MS_FIELD = EventFields.Long("psi_tree_deserializing_ms");
 
   /**
    * How many keys were lookup-ed (there are methods to lookup >1 keys at once)
    */
-  private static final IntEventField LOOKUP_KEYS_COUNT_FIELD = new IntEventField("keys");
+  private static final IntEventField LOOKUP_KEYS_COUNT_FIELD = EventFields.Int("keys");
   /**
    * For cases >1 keys lookup: what operation is applied (AND/OR)
    */
   private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP_FIELD =
-    new EnumEventField<>("lookup-op", LookupOperation.class, kind -> kind.name().toLowerCase(Locale.US));
+    EventFields.Enum("lookup_op", LookupOperation.class, kind -> kind.name().toLowerCase(Locale.US));
   /**
    * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
    */
-  private static final IntEventField TOTAL_KEYS_INDEXED_COUNT_FIELD = new IntEventField("total-keys-indexed");
-  private static final IntEventField LOOKUP_RESULT_ENTRIES_COUNT_FIELD = new IntEventField("entries-found");
+  private static final IntEventField TOTAL_KEYS_INDEXED_COUNT_FIELD = EventFields.Int("total_keys_indexed");
+  private static final IntEventField LOOKUP_RESULT_ENTRIES_COUNT_FIELD = EventFields.Int("entries_found");
 
   // ================== EVENTS:
 
   private static final VarargEventId INDEX_ALL_KEYS_LOOKUP_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
-    "lookup.all-keys",
+    "lookup.all_keys",
     INDEX_ID_FIELD,
 
     LOOKUP_FAILED_FIELD,
@@ -125,7 +125,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   );
 
   private static final VarargEventId STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
-    "lookup.stub-entries",
+    "lookup.stub_entries",
     INDEX_ID_FIELD,
 
     LOOKUP_FAILED_FIELD,

@@ -41,6 +41,7 @@ import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
+import com.intellij.util.io.MeasurableIndexStore;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
@@ -54,6 +55,7 @@ import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
+import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -172,7 +174,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
       Boolean validated = myAccessValidator.validate(indexId, () -> {
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         return index.processAllKeys(processor, scope, idFilterAdjusted);
       });
 
@@ -261,7 +263,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
       IntSet fileIds = processExceptions(indexId, null, scope, index -> {
         IntSet fileIdsInner = new IntOpenHashSet();
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         index.getData(dataKey).forEach((id, value) -> {
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
           fileIdsInner.add(id);
@@ -429,7 +431,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         .withProject(scope.getProject());
       //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
       final ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         var valuesIterator = (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator();
         return valueProcessor.process(valuesIterator);
       };
@@ -595,7 +597,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                      accessibleFileFilter.test(id) &&
                                      (restrictedIds == null || restrictedIds.contains(id));
       ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
         try {
           return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
@@ -623,7 +625,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                      accessibleFileFilter.test(id);
       ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-        trace.totalKeysIndexed(index.keysCountApproximately());
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
         try {
           return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);

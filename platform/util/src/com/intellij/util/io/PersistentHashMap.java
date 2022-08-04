@@ -25,7 +25,7 @@ import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
  * @implNote Please to not override this class, it is not final to preserve backward compatibility.
  * @see PersistentMapBuilder
  **/
-public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
+public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value>, MeasurableIndexStore {
   @NonNls
   static String DATA_FILE_EXTENSION = ".values";
 
