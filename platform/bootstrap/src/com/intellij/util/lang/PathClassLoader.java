@@ -9,6 +9,11 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.function.Function;
 
+/**
+ * This classloader implementation is separate from {@link UrlClassLoader}
+ * because {@link UrlClassLoader} is used in runtime modules with JDK 1.8,
+ * and this one runs in the IDE process and uses JDK 11+ features.
+ */
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
   static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
