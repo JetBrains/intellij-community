@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -96,7 +97,7 @@ private class TestMethodWithoutAssertionVisitor(
 ) : AbstractUastNonRecursiveVisitor() {
   override fun visitMethod(node: UMethod): Boolean {
     val javaMethod = node.javaPsi
-    if (!TestUtils.isTestMethod(javaMethod)) return true
+    if (!TestFrameworks.getInstance().isTestMethod(javaMethod)) return true
     if (TestUtils.hasExpectedExceptionAnnotation(javaMethod)) return true
     if (ignoreIfExceptionThrown && javaMethod.throwsList.referenceElements.isNotEmpty()) return true
     if (containsAssertion(node)) return true

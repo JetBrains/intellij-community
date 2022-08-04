@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -35,7 +36,7 @@ private class TestInProductSourceVisitor(private val holder: ProblemsHolder) : A
   override fun visitMethod(node: UMethod): Boolean {
     val method = node.javaPsi
     val containingClass = method.containingClass ?: return true
-    if (TestUtils.isInTestSourceContent(containingClass) || !TestUtils.isTestMethod(method)) return true
+    if (TestUtils.isInTestSourceContent(containingClass) || !TestFrameworks.getInstance().isTestMethod(method)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.junit.test.method.in.product.source.problem.descriptor")
     holder.registerUProblem(node, message)
     return true
