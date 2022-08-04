@@ -65,6 +65,13 @@ public final class BootstrapClassLoaderUtil {
       return result;
     }
 
+    // Non-unified classloader:
+    // - launcher is run with bootstrap classpath;
+    // - launcher computes classpath in runtime and replaces the classloader.
+    // Unified classloader:
+    // - classpath is generated during build,
+    // - classpath is used as is.
+    // TODO remove non-unified classloader
     boolean useUnifiedClassloader = Boolean.parseBoolean(System.getProperty("idea.use.unified.classloader", "true"));
     boolean strict = useUnifiedClassloader && Boolean.getBoolean("idea.strict.classpath");
     ClassLoader currentClassLoader = BootstrapClassLoaderUtil.class.getClassLoader();
