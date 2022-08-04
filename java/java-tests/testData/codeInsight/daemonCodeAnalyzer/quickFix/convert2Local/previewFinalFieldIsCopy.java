@@ -2,8 +2,7 @@
 class Test {
 
     public Test(String param) {
-    field = param;
-    System.out.println(field == null ? "null" : field);
+        System.out.println(param == null ? "null" : param);
   }
 
 }

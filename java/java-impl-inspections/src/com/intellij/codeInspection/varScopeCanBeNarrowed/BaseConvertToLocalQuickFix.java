@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
@@ -41,6 +43,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return false;
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return LocalQuickFix.super.getFileModifierForPreview(target);
+  }
+
   @Nullable
   protected abstract V getVariable(@NotNull ProblemDescriptor descriptor);
 
@@ -54,7 +61,9 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
     if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
-    if (!FileModificationService.getInstance().prepareFileForWrite(descriptor.getPsiElement().getContainingFile())) return;
+    if (!IntentionPreviewUtils.isPreviewElement(variable)
+        && !FileModificationService.getInstance().prepareFileForWrite(descriptor.getPsiElement().getContainingFile())
+    ) return;
     final PsiFile myFile = variable.getContainingFile();
     try {
       final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
@@ -74,12 +83,19 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
       if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
         Collection<PsiReference> references = ReferencesSearch.search(newVariable).findAll();
-        WriteAction.run(() -> {
+        if (IntentionPreviewUtils.isPreviewElement(declaration)) {
           for (PsiReference reference : references) {
             CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
           }
           declaration.delete();
-        });
+        } else { // TODO don't copy paste
+          WriteAction.run(() -> {
+            for (PsiReference reference : references) {
+              CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+            }
+            declaration.delete();
+          });
+        }
       }
     }
   }

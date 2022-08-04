@@ -4,8 +4,8 @@ class Foo {
     class Bar {
 
         void test() {
-        x = 2; // could be local
-        System.out.println(x);
+            int x = 2; // could be local
+            System.out.println(x);
       }
     }
   }

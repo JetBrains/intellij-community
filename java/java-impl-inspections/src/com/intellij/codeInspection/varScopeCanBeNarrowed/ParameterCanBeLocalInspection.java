@@ -3,6 +3,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
@@ -145,6 +146,12 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      applyFix(project, previewDescriptor);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    @Override
     @NotNull
     protected List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
       final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
@@ -152,7 +159,9 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       final PsiElement scope = variable.getDeclarationScope();
       if (!(scope instanceof PsiMethod)) return Collections.emptyList();
       final PsiMethod method = (PsiMethod)scope;
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(method)) return Collections.emptyList();
+      if (!IntentionPreviewUtils.isPreviewElement(variable)
+          && !FileModificationService.getInstance().preparePsiElementsForWrite(method)
+      ) return Collections.emptyList();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final List<ParameterInfoImpl> info = new ArrayList<>();
       for (int i = 0; i < parameters.length; i++) {
@@ -162,25 +171,24 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       }
       final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
       final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      PsiElement moved = WriteAction.compute(() -> copyVariableToMethodBody(variable, references));
+      PsiElement moved;
+      if (IntentionPreviewUtils.isPreviewElement(variable)) {
+        moved = copyVariableToMethodBody(variable, references);
+      } else {
+        moved = WriteAction.compute(() -> copyVariableToMethodBody(variable, references));
+      }
       if (moved == null) return Collections.emptyList();
       SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moved);
-      var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
-        method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams,
-        null, null, null, null
-      );
-      processor.run();
+      if (IntentionPreviewUtils.isPreviewElement(variable)) {
+        variable.delete();
+      } else {
+        var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+          method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams,
+          null, null, null, null
+        );
+        processor.run();
+      }
       return Collections.singletonList(Objects.requireNonNull(newDeclaration.getElement()));
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiParameter parameter = getVariable(previewDescriptor);
-      if (parameter == null) return IntentionPreviewInfo.EMPTY;
-      final Collection<PsiReference> references = ReferencesSearch.search(parameter).findAll();
-      copyVariableToMethodBody(parameter, references);
-      parameter.delete();
-      return IntentionPreviewInfo.DIFF;
     }
   }
 }
