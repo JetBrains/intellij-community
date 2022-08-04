@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
-import com.intellij.debugger.SourcePosition
+import org.jetbrains.kotlin.psi.KtDeclaration
 
-interface SourcePositionRefiner {
-    fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
+interface ActualDeclarationProvider {
+    fun getActualJvmDeclaration(declaration: KtDeclaration): KtDeclaration
 }

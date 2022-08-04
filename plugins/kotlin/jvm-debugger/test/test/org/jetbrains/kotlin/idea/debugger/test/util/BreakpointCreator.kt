@@ -28,7 +28,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 import org.jetbrains.kotlin.idea.debugger.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isKotlinSourceFile
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpoint
-import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpoint
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
