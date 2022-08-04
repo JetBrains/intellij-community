@@ -3,9 +3,6 @@ package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,10 +10,14 @@ import com.intellij.util.indexing.IndexId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
+
 /**
  * Collects and reports performance data (timings mostly) about index usage (lookup). Right now there 'all keys'
  * lookups and 'value(s) by key(s)' lookups are timed and reported with some additional infos.
- *
  */
 public class IndexOperationFusCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(IndexOperationFusCollector.class);
@@ -33,7 +34,10 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   /**
    * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_ONLY_OPERATIONS_LONGER_THAN_MS}.
    * There are a lot of index lookups, and this threshold allows to reduce reporting traffic, since we're really only interested in
-   * long operations. Default value 0 means 'report lookups >0ms only'
+   * long operations. Default value 0 means 'report lookups >0ms only'.
+   *
+   * BEWARE: different values for that parameter correspond to a different way of sampling, hence, in theory, should be treated as
+   * different event schema _version_.
    */
   public static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
     Integer.getInteger("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE", 10);
@@ -63,7 +67,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * For cases >1 keys lookup: what operation is applied (AND/OR)
    */
   private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP_FIELD =
-    new EnumEventField<>("lookup-op", LookupOperation.class, kind -> kind.name().toLowerCase());
+    new EnumEventField<>("lookup-op", LookupOperation.class, kind -> kind.name().toLowerCase(Locale.US));
   /**
    * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
    */
@@ -135,7 +139,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     protected int totalKeysIndexed;
     protected int lookupResultSize;
 
-    protected T lookupStarted(final IndexId<?, ?> indexId) {
+    protected T lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       ensureNotYetStarted();
       //if not thrown -> and continue as-if no previous trace exists, i.e. overwrite all data remaining from unfinished trace
 
@@ -147,7 +151,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
       traceWasStarted = true;
       lookupStartedAtMs = System.currentTimeMillis();
-      return (T)this;
+      return typeSafeThis();
     }
 
     public void lookupFinished() {
@@ -157,6 +161,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       }
 
       try {
+        requireNonNull(indexId, "indexId must be set here");
         final long finishedAtMs = System.currentTimeMillis();
         final long lookupDurationMs = finishedAtMs - lookupStartedAtMs;
         if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
@@ -183,33 +188,39 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       if (traceWasStarted) {
         this.project = project;
       }
-      return (T)this;
+      return typeSafeThis();
     }
 
     public T lookupFailed() {
       if (traceWasStarted) {
         this.lookupFailed = true;
       }
-      return (T)this;
+      return typeSafeThis();
     }
 
     public T totalKeysIndexed(final int totalKeysIndexed) {
       if (traceWasStarted) {
         this.totalKeysIndexed = totalKeysIndexed;
       }
-      return (T)this;
+      return typeSafeThis();
     }
 
     public T lookupResultSize(final int size) {
       if (traceWasStarted) {
         this.lookupResultSize = size;
       }
+      return typeSafeThis();
+    }
+
+    @NotNull
+    @SuppressWarnings("unchecked")
+    private T typeSafeThis() {
       return (T)this;
     }
 
     private void ensureNotYetStarted() {
       if (traceWasStarted) {
-        final String errorMessage = "Code bug: .logQueryStarted() was called, but not paired with .logQueryFinished() yet. " + this;
+        final String errorMessage = "Code bug: .lookupStarted() was already called, not paired with .lookupFinished() yet. " + this;
         if (THROW_ON_INCORRECT_USAGE) {
           throw new AssertionError(errorMessage);
         }
@@ -255,6 +266,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   public static class AllKeysLookupTrace extends LookupTraceBase<AllKeysLookupTrace> {
     private long indexValidationFinishedAtMs;
 
+    @Override
     public AllKeysLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
       this.indexValidationFinishedAtMs = -1;
@@ -313,6 +325,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     private LookupOperation lookupOperation = LookupOperation.UNKNOWN;
 
 
+    @Override
     public ValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
 
@@ -387,6 +400,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     private long indexValidationFinishedAtMs;
     private long stubTreesDeserializingStarted;
 
+    @Override
     public StubValuesLookupTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       super.lookupStarted(indexId);
 
