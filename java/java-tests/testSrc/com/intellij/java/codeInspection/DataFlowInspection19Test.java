@@ -23,4 +23,7 @@ public class DataFlowInspection19Test extends DataFlowInspectionTestCase {
   public void testSwitchNullability() {
     doTest();
   }
+  public void testRecordPatterns() {
+    doTest();
+  }
 }

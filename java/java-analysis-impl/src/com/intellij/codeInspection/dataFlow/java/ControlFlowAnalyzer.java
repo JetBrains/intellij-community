@@ -14,10 +14,7 @@ import com.intellij.codeInspection.dataFlow.java.inst.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.TrapTracker;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.*;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
@@ -1109,33 +1106,48 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
       processPattern(sourcePattern, unwrappedPattern, expressionValue, checkType, instanceofAnchor, endPatternOffset);
     }
+    else if (innerPattern instanceof PsiDeconstructionPattern) {
+      PsiPatternVariable variable = ((PsiDeconstructionPattern)innerPattern).getPatternVariable();
+      PsiType patternType = ((PsiDeconstructionPattern)innerPattern).getTypeElement().getType();
+      DfaVariableValue patternDfaVar = variable == null ? createTempVariable(patternType) :
+                                       PlainDescriptor.createVariableValue(getFactory(), variable);
+
+      addInstruction(new JvmPushInstruction(expressionValue, null));
+      addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
+
+      addInstruction(new PopInstruction());
+
+      PsiPattern[] components = ((PsiDeconstructionPattern)innerPattern).getDeconstructionList().getDeconstructionComponents();
+      PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
+      if (recordClass != null && recordClass.isRecord()) {
+        PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+        if (components.length == recordComponents.length) {
+          for (int i = 0; i < components.length; i++) {
+            PsiRecordComponent recordComponent = recordComponents[i];
+            PsiPattern patternComponent = components[i];
+            PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
+            if (accessor == null) continue;
+            DfaVariableValue accessorDfaVar = getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
+            processPattern(sourcePattern, patternComponent, accessorDfaVar, recordComponent.getType(), null, endPatternOffset);
+          }
+        }
+      }
+    }
     else if (innerPattern instanceof PsiTypeTestPattern) {
       PsiPatternVariable variable = ((PsiTypeTestPattern)innerPattern).getPatternVariable();
       if (variable == null) return;
+      DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
 
       addInstruction(new JvmPushInstruction(expressionValue, null));
 
-      DeferredOffset condGotoOffset = null;
-      if (!JavaPsiPatternUtil.isTotalForType(sourcePattern, checkType) ||
-          !PsiUtil.getLanguageLevel(myCodeFragment).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
-        addInstruction(new DupInstruction());
-        addInstruction(new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(innerPattern), Nullability.NOT_NULL)));
-
-        addInstruction(new InstanceofInstruction(instanceofAnchor, false));
-
-        condGotoOffset = new DeferredOffset();
-        addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-        addInstruction(new PopInstruction());
-        addInstruction(new PushValueInstruction(DfTypes.FALSE));
-        addInstruction(new GotoInstruction(endPatternOffset));
+      boolean java19plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_19_PREVIEW);
+      if (java19plus
+          ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isTotalForType(innerPattern, checkType))
+          : !JavaPsiPatternUtil.isTotalForType(innerPattern, checkType)) {
+        addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
       }
-
-      DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
-      SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
-      addInstruction(assignmentInstr);
-      if (condGotoOffset != null) {
-        condGotoOffset.setOffset(assignmentInstr.getIndex());
+      else {
+        addInstruction(new SimpleAssignmentInstruction(null, patternDfaVar));
       }
 
       addInstruction(new PopInstruction());
@@ -1146,6 +1158,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
+  private void addPatternTypeTest(@NotNull PsiPattern pattern,
+                                  @Nullable DfaAnchor instanceofAnchor,
+                                  @NotNull DeferredOffset endPatternOffset,
+                                  @NotNull DfaVariableValue patternDfaVar) {
+    DeferredOffset condGotoOffset;
+    addInstruction(new DupInstruction());
+    addInstruction(
+      new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(pattern), Nullability.NOT_NULL)));
+
+    addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+
+    condGotoOffset = new DeferredOffset();
+    addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
+
+    addInstruction(new PopInstruction());
+    addInstruction(new PushValueInstruction(DfTypes.FALSE));
+    addInstruction(new GotoInstruction(endPatternOffset));
+    SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
+    addInstruction(assignmentInstr);
+    condGotoOffset.setOffset(assignmentInstr.getIndex());
+  }
+
   @Override
   public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     startElement(expression);
@@ -1153,7 +1187,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null) {
       qualifier.accept(this);
-    } else {
+    }
+    else {
       pushUnknown();
     }
 
