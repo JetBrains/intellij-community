@@ -48,6 +48,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtSdkModule -> {
                 val sdkInfo = module.moduleInfo as SdkInfo
+                sdkInfo.checkValidity()
                 val sdk = sdkInfo.sdk
                 return sdkCache.computeIfAbsent(sdk) { ModuleStateTrackerImpl() }
             }
