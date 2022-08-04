@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -89,10 +90,8 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                     }
 
                     is EntityChange.Replaced -> {
-                        setOfNotNull(
-                            change.oldEntity.findLibraryBridge(event.storageBefore),
-                            change.newEntity.findLibraryBridge(event.storageBefore)
-                        ).forEach { libraryCache[it]?.incModificationCount() }
+                        val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
+                        libraryCache[changedLibrary]?.incModificationCount()
                     }
                 }
             }
@@ -110,14 +109,21 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                     }
 
                     is EntityChange.Replaced -> {
-                        setOfNotNull(
-                            change.oldEntity.findModule(event.storageBefore),
-                            change.newEntity.findModule(event.storageBefore)
-                        ).forEach { sourceModuleCache[it]?.incModificationCount() }
+                        val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
+                        sourceModuleCache[changedModule]?.incModificationCount()
                     }
                 }
             }
         }
+    }
+
+    private fun <C, E> EntityChange.Replaced<C>.getReplacedEntity(event: VersionedStorageChange, get: (C, EntityStorage) -> E): E {
+        val old = get(oldEntity, event.storageBefore)
+        val new = get(newEntity, event.storageAfter)
+        check (old == new) {
+            "$old should be equal to $new for ${EntityChange.Replaced::class.java}"
+        }
+        return new
     }
 
     @TestOnly
