@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.impl.SearchEverywhereItem;
 import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -68,7 +69,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1064,7 +1064,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
-      usages.addAll(StreamEx.of(foundElements).select(UsageInfo2UsageAdapter.class).toList());
+      for (Object element : foundElements) {
+        // TODO this should be managed by the contributor !!!
+        if (element instanceof UsageInfo2UsageAdapter) {
+          usages.add((UsageInfo2UsageAdapter)element);
+        }
+        else if (element instanceof SearchEverywhereItem) {
+          usages.add(((SearchEverywhereItem)element).getUsage());
+        }
+      }
 
       ReadAction.run(() -> foundElements.stream()
         .map(o -> toPsi(o))
