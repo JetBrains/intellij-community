@@ -75,21 +75,9 @@ class CompletionGolfFileReportGenerator(
       sessions.forEach { session ->
         val text = fullText.substring(offset, session.offset)
         val tab = text.lines().last().dropWhile { it == '\n' }
-        val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n'  }
+        val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
-        text.lines()
-          .drop(1).dropLast(1)
-          .forEach {
-          tr {
-            td("line-numbers") {
-              attributes["data-line-numbers"] = lineNumbers.toString()
-            }
-            td("code-line") {
-              span { +it }
-            }
-            lineNumbers++
-          }
-        }
+        lineNumbers += defaultText(text, lineNumbers)
 
         tr {
           td("line-numbers") {
@@ -104,6 +92,10 @@ class CompletionGolfFileReportGenerator(
         }
         offset = session.offset + session.expectedText.length
         lineNumbers++
+      }
+
+      if (offset != fullText.length) {
+        defaultText(fullText.substring(offset, fullText.length), lineNumbers)
       }
     }
   }
@@ -140,5 +132,21 @@ class CompletionGolfFileReportGenerator(
       +text
     }
     return offset + text.length
+  }
+
+  private fun TBODY.defaultText(text: String, lineNumbers: Int): Int {
+    return text.lines()
+      .drop(1).dropLast(1)
+      .onEachIndexed { i, line ->
+        tr {
+          td("line-numbers") {
+            attributes["data-line-numbers"] = lineNumbers.toString()
+          }
+          td("code-line") {
+            span { +line }
+          }
+          lineNumbers + i
+        }
+      }.size
   }
 }
