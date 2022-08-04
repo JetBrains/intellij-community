@@ -21,7 +21,7 @@ class BackgroundStepFactory(
 
   private var completionInvoker: CompletionInvoker = DelegationCompletionInvoker(
     CompletionInvokerImpl(project, Language.resolve(config.language),
-                          config.interpret.completionType, config.interpret.emulationSettings, config.interpret.codeGolfSettings),
+                          config.interpret.completionType, config.interpret.emulationSettings, config.interpret.completionGolfSettings),
     project)
 
   override fun generateActionsStep(): EvaluationStep =

@@ -1,6 +1,6 @@
 package com.intellij.cce.interpreter
 
-import com.intellij.cce.actions.CodeGolfEmulation
+import com.intellij.cce.actions.CompletionGolfEmulation
 import com.intellij.cce.actions.UserEmulator
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.*
@@ -38,7 +38,7 @@ class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
                             completionType: com.intellij.cce.actions.CompletionType,
                             userEmulationSettings: UserEmulator.Settings?,
-                            private val codeGolfSettings: CodeGolfEmulation.Settings?) : CompletionInvoker {
+                            private val completionGolfSettings: CompletionGolfEmulation.Settings?) : CompletionInvoker {
   private companion object {
     val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
     const val LOG_MAX_LENGTH = 50
@@ -185,9 +185,9 @@ class CompletionInvokerImpl(private val project: Project,
     return session
   }
 
-  override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
+  override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
     val document = editor!!.document
-    val emulator = CodeGolfEmulation.createFromSettings(codeGolfSettings, expectedLine)
+    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val session = Session(offset, expectedLine, null, nodeProperties)
     val line = document.getLineNumber(offset)
     var currentString = ""

@@ -10,7 +10,7 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang.StringEscapeUtils
 
-class CodeGolfFileReportGenerator(
+class CompletionGolfFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
@@ -46,7 +46,7 @@ class CodeGolfFileReportGenerator(
         }
       }
       script { src = "../res/script.js" }
-      script { +"isCodeGolf = true" }
+      script { +"isCompletionGolf = true" }
     }
   }
 

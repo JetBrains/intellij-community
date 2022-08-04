@@ -3,7 +3,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-abstract class CodeGolfMetric<T : Number> : Metric {
+abstract class CompletionGolfMetric<T : Number> : Metric {
   protected var sample = Sample()
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
@@ -17,7 +17,7 @@ abstract class CodeGolfMetric<T : Number> : Metric {
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
-class CodeGolfMovesSumMetric : CodeGolfMetric<Int>() {
+class CompletionGolfMovesSumMetric : CompletionGolfMetric<Int>() {
   override val name: String = "Code Golf Moves Count"
 
   override val valueType = MetricValueType.INT
@@ -37,7 +37,7 @@ class CodeGolfMovesSumMetric : CodeGolfMetric<Int>() {
   }
 }
 
-class CodeGolfMovesCountNormalised : CodeGolfMetric<Double>() {
+class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
   override val name: String = "Code Golf Moves Count Normalised"
 
   override val valueType = MetricValueType.DOUBLE
@@ -60,7 +60,7 @@ class CodeGolfMovesCountNormalised : CodeGolfMetric<Double>() {
   }
 }
 
-class CodeGolfPerfectLine : CodeGolfMetric<Int>() {
+class CompletionGolfPerfectLine : CompletionGolfMetric<Int>() {
   override val name: String = "Code Golf Perfect Line"
 
   override val valueType = MetricValueType.INT

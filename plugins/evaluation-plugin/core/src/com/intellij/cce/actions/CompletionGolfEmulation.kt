@@ -2,7 +2,7 @@ package com.intellij.cce.actions
 
 import com.intellij.cce.core.*
 
-class CodeGolfEmulation(private val settings: Settings = Settings(), private val expectedLine: String) {
+class CompletionGolfEmulation(private val settings: Settings = Settings(), private val expectedLine: String) {
   fun pickBestSuggestion(currentLine: String, lookup: Lookup, session: Session): Lookup {
     val suggestions = lookup.suggestions.ofSource(settings.source).take(settings.topN).toMutableList()
     val normalizedExpectedLine = expectedLine.drop(currentLine.length)
@@ -99,8 +99,8 @@ class CodeGolfEmulation(private val settings: Settings = Settings(), private val
   )
 
   companion object {
-    fun createFromSettings(settings: Settings?, expectedLine: String): CodeGolfEmulation {
-      return CodeGolfEmulation(settings ?: Settings(), expectedLine)
+    fun createFromSettings(settings: Settings?, expectedLine: String): CompletionGolfEmulation {
+      return CompletionGolfEmulation(settings ?: Settings(), expectedLine)
     }
   }
 }

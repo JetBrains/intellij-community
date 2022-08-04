@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import java.io.FileReader
-import java.nio.file.Paths
 
 class ActionsGeneratorTest {
   companion object {
@@ -88,9 +87,9 @@ class ActionsGeneratorTest {
                      prefix: CompletionPrefix = CompletionPrefix.SimplePrefix(emulateTyping = false, n = 1),
                      context: CompletionContext = CompletionContext.ALL,
                      emulateUser: Boolean = false,
-                     codeGolf: Boolean = false,
+                     completionGolf: Boolean = false,
                      filters: Map<String, EvaluationFilter> = emptyMap()) {
-    val actionsGenerator = ActionsGenerator(CompletionStrategy(prefix, context, emulateUser, codeGolf, filters), Language.JAVA)
+    val actionsGenerator = ActionsGenerator(CompletionStrategy(prefix, context, emulateUser, completionGolf, filters), Language.JAVA)
     val actions = actionsGenerator.generate(file)
     val actual = ActionSerializer.serialize(actions).prettifyJson()
     val expected = FileReader(testData.resolve(outputFile)).use { it.readText() }

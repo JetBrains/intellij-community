@@ -1,6 +1,6 @@
 package com.intellij.cce.processor
 
-import com.intellij.cce.actions.CodeGolfSession
+import com.intellij.cce.actions.CompletionGolfSession
 import com.intellij.cce.actions.DeleteRange
 import com.intellij.cce.actions.MoveCaret
 import com.intellij.cce.core.CodeFragment
@@ -8,7 +8,7 @@ import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
 
-class CodeGolfProcessor : GenerateActionsProcessor() {
+class CompletionGolfProcessor : GenerateActionsProcessor() {
   private val regexLines = Regex("[^\r\n]+")
   private val leadingTabsRegex = Regex("^\\s+")
 
@@ -28,7 +28,7 @@ class CodeGolfProcessor : GenerateActionsProcessor() {
       val nodeProperties = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {}
       addAction(DeleteRange(leadingTabs + range.first, leadingTabs + range.first + withoutTabs.length))
       addAction(MoveCaret(leadingTabs + range.first))
-      addAction(CodeGolfSession(withoutTabs, nodeProperties))
+      addAction(CompletionGolfSession(withoutTabs, nodeProperties))
     }
   }
 }
