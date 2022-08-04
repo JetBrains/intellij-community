@@ -16,9 +16,8 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.Nls
-
-private val LOG = logger<AbstractCommitter>()
 
 abstract class AbstractCommitter(
   val project: Project,
@@ -150,10 +149,10 @@ abstract class AbstractCommitter(
     val noWarnings = _exceptions.isEmpty()
 
     if (canceled) {
-      resultHandlers.forEach { it.onCancel() }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onCancel() }
     }
     else if (noErrors) {
-      resultHandlers.forEach { it.onSuccess(commitMessage) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
       onSuccess()
 
       if (noWarnings) {
@@ -161,12 +160,14 @@ abstract class AbstractCommitter(
       }
     }
     else {
-      resultHandlers.forEach { it.onFailure(errors) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
       onFailure()
     }
   }
 
   companion object {
+    private val LOG = logger<AbstractCommitter>()
+
     @JvmStatic
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 
