@@ -178,6 +178,10 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
     return window.isVisible
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (e.project!!.isDisposed) {
       return

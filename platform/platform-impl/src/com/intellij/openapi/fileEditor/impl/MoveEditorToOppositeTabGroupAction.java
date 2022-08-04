@@ -58,6 +58,11 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {
     if (vFile == null || window == null) {
       return false;

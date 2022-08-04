@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -35,5 +36,10 @@ public class SelectPreviousEditorTabAction extends AnAction implements DumbAware
   public void update(@NotNull AnActionEvent e) {
     // allow plugins to use the same keyboard shortcut
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

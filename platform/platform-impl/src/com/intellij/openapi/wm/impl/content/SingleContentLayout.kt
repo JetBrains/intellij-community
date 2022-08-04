@@ -558,6 +558,10 @@ internal class SingleContentLayout(
       }
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     private fun isPinned(): Boolean {
       return getSingleContentOrNull()?.isPinned == true
     }

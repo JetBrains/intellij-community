@@ -1523,6 +1523,11 @@ public final class PluginManagerConfigurable
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myState;
     }
@@ -1593,6 +1598,11 @@ public final class PluginManagerConfigurable
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myState = state;
       myInstalledSearchCallback.accept(this);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     public void setState(@Nullable SearchQueryParser.Installed parser) {
