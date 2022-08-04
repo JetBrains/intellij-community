@@ -16,7 +16,12 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 
-class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
+class BundledRuntimeImpl(
+  private val options: BuildOptions,
+  private val paths: BuildPaths,
+  private val dependenciesProperties: DependenciesProperties,
+  private val error: (String) -> Unit,
+  private val info: (String) -> Unit) : BundledRuntime {
   companion object {
     @JvmStatic
     fun getProductPrefix(context: BuildContext): String {
@@ -25,7 +30,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   private val build by lazy {
-    context.options.bundledRuntimeBuild ?: context.dependenciesProperties.property("runtimeBuild")
+    options.bundledRuntimeBuild ?: dependenciesProperties.property("runtimeBuild")
   }
 
   override fun getHomeForCurrentOsAndArch(): Path {
@@ -37,7 +42,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
       prefix = "jbrsdk-"
     }
     else {
-      context.options.bundledRuntimePrefix?.let {
+      options.bundledRuntimePrefix?.let {
         prefix = it
       }
     }
@@ -54,13 +59,13 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
 
   // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
   override fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = context.paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val targetDir = paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
-      context.paths.communityHomeDir,
+      paths.communityHomeDir,
       BuildDependenciesExtractOptions.STRIP_ROOT,
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
@@ -81,7 +86,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   private fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
     val archiveName = archiveName(prefix, arch, os)
     val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDir, url)
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(paths.communityHomeDir, url)
   }
 
   /**
@@ -101,13 +106,13 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   private fun runtimeBuildPrefix(): String {
-    if (!context.options.runtimeDebug) {
+    if (!options.runtimeDebug) {
       return ""
     }
-    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
-      context.messages.error("Either test or development mode is required to use fastdebug runtime build")
+    if (!options.isTestBuild && !options.isInDevelopmentMode) {
+      error("Either test or development mode is required to use fastdebug runtime build")
     }
-    context.messages.info("Fastdebug runtime build is requested")
+    info("Fastdebug runtime build is requested")
     return "fastdebug-"
   }
 

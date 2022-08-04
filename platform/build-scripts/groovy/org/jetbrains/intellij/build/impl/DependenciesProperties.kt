@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import java.nio.file.Files
 import java.nio.file.Path
@@ -9,8 +10,8 @@ import java.util.*
 import kotlin.io.path.appendText
 import kotlin.io.path.inputStream
 
-class DependenciesProperties(context: CompilationContext) {
-  private val propertiesFile = context.paths.communityHomeDir.communityRoot.resolve("build/dependencies/dependencies.properties")
+class DependenciesProperties(paths: BuildPaths) {
+  private val propertiesFile = paths.communityHomeDir.communityRoot.resolve("build/dependencies/dependencies.properties")
 
   private val props: Properties by lazy {
     propertiesFile.inputStream().use {

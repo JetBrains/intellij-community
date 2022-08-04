@@ -299,8 +299,8 @@ class CompilationContextImpl private constructor(model: JpsModel,
     val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
-    dependenciesProperties = DependenciesProperties(this)
-    bundledRuntime = BundledRuntimeImpl(this)
+    dependenciesProperties = DependenciesProperties(paths)
+    bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
     stableJdkHome = Jdk11Downloader.getJdkHome(paths.communityHomeDir)
     stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
   }
