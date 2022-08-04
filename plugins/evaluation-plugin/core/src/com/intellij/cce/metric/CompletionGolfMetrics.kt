@@ -8,9 +8,9 @@ abstract class CompletionGolfMetric<T : Number> : Metric {
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
 
-  protected fun computeMoves(session: Session): Int = session.lookups.sumBy { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
+  protected fun computeMoves(session: Session): Int = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
 
-  protected fun computeCompletionCalls(sessions: List<Session>): Int = sessions.sumBy { it.lookups.count { lookup -> lookup.isNew } }
+  protected fun computeCompletionCalls(sessions: List<Session>): Int = sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): T = compute(sessions, comparator).alsoAddToSample()
 
@@ -46,8 +46,8 @@ class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
     get() = sample.mean()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val linesLength = sessions.sumBy { it.expectedText.length } * 2.0
-    val amountOfMoves = sessions.sumBy { computeMoves(it) + it.lookups.count() } + computeCompletionCalls(sessions)
+    val linesLength = sessions.sumOf { it.expectedText.length } * 2.0
+    val amountOfMoves = sessions.sumOf { computeMoves(it) + it.lookups.count() } + computeCompletionCalls(sessions)
 
     val subtrahend = sessions.count() * 2.0
 
@@ -69,7 +69,6 @@ class CompletionGolfPerfectLine : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
-    return sessions.filter { it.success }
-      .count()
+    return sessions.count { it.success }
   }
 }
