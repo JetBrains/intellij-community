@@ -17,8 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * Collects and reports performance data (timings mostly) about index usage (lookup). Right now there 'all keys'
  * lookups and 'value(s) by key(s)' lookups are timed and reported with some additional infos.
  *
- * @author cheremin.ruslan
- * created 20.07.22 at 18:20
  */
 public class IndexOperationFusCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(IndexOperationFusCollector.class);

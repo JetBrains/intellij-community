@@ -15,7 +15,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
- * Tests for [IndexOperationFusStatisticsCollector].
+ * Tests for [IndexOperationFusCollector].
  */
 @RunWith(JUnit4.class)
 public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCase {
