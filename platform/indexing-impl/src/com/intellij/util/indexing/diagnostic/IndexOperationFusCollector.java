@@ -161,7 +161,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
     protected T lookupStarted(final @NotNull IndexId<?, ?> indexId) {
       ensureNotYetStarted();
-      //if not thrown -> and continue as-if no previous trace exists, i.e. overwrite all data remaining from unfinished trace
+      //if not thrown -> continue as-if no previous trace exists, i.e. overwrite all data remaining from unfinished trace
 
       this.indexId = indexId;
       this.project = null;
@@ -276,6 +276,12 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
 
   //========================== 'All keys' lookup reporting:
+
+  //FIXME RC: I expected index lookup are not re-entrant, hence single thread-local buffer for params is enough. But
+  //          this proves to be false: index lookups are re-entrant, and there are regular scenarios there index lookup
+  //          invoked inside another index lookup. Right now this leads to only the deepest lookup be reported, and all
+  //          data of lookups above it are dropped, with WARN-ings in logs -- which is not a big issue, but still an issue.
+  //          To deal with it correctly thread-local _stack_ of buffers is needed really
 
   public static final ThreadLocal<LookupAllKeysTrace> TRACE_OF_ALL_KEYS_LOOKUP = ThreadLocal.withInitial(LookupAllKeysTrace::new);
 
