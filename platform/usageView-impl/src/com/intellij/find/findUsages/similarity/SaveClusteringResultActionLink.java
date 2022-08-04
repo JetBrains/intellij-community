@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -20,7 +22,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
@@ -38,16 +39,15 @@ import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 
 
 public class SaveClusteringResultActionLink extends ActionLink {
-  public SaveClusteringResultActionLink(Project project, ClusteringSearchSession session) {
+  public SaveClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
           (event) -> {
-            assert session != null;
             List<UsageCluster> clusters = new ArrayList<>(session.getClusters());
             Task.Backgroundable loadMostCommonUsagePatternsTask = new Task.Backgroundable(project, UsageViewBundle.message(
               "similar.usages.internal.exporting.clustering.data.progress.title")) {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
-                buildSessionDataFile(project, clusters, indicator);
+                buildSessionDataFile(project, clusters, indicator, fileName);
               }
             };
             ProgressIndicator indicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
@@ -56,9 +56,9 @@ public class SaveClusteringResultActionLink extends ActionLink {
           });
   }
 
-  private static void createScratchFile(@NotNull Project project, @NotNull String fileContent) throws IOException {
+  private static void createScratchFile(@NotNull Project project, @NotNull String fileContent, @NotNull String fileName) throws IOException {
     ScratchFileService fileService = ScratchFileService.getInstance();
-    VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), "features.json",
+    VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), fileName+".json",
                                                    ScratchFileService.Option.create_new_always);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(scratchFile);
     final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
@@ -68,9 +68,9 @@ public class SaveClusteringResultActionLink extends ActionLink {
     }
   }
 
-  private static void buildSessionDataFile(Project project, List<UsageCluster> clusters, @NotNull ProgressIndicator indicator) {
-
-
+  private static void buildSessionDataFile(@NotNull Project project,
+                                           @NotNull List<UsageCluster> clusters,
+                                           @NotNull ProgressIndicator indicator, @NotNull String fileName) {
     int counter = 0;
     StringBuilder sb = new StringBuilder();
     sb.append("[");
@@ -82,16 +82,25 @@ public class SaveClusteringResultActionLink extends ActionLink {
           indicator.checkCanceled();
           Ref<PsiElement> elementRef = new Ref<>();
           Ref<String> fileNameRef = new Ref<>();
+          Ref<String> usageLineSnippet = new Ref<>();
           ApplicationManager.getApplication().runReadAction(() -> {
             elementRef.set(((UsageInfo2UsageAdapter)usage).getElement());
             fileNameRef.set(elementRef.get().getContainingFile().getVirtualFile().getName());
+            PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+            Document doc = docManager.getDocument(elementRef.get().getContainingFile());
+            if (doc == null) return;
+            int usageStartLineNumber = doc.getLineNumber(elementRef.get().getTextRange().getStartOffset());
+            int usageEndLineNumber = doc.getLineNumber(elementRef.get().getTextRange().getEndOffset());
+            usageLineSnippet.set(doc.getText(new TextRange(doc.getLineStartOffset(usageStartLineNumber),
+                                                           doc.getLineEndOffset(Math.min(usageEndLineNumber, doc.getLineCount() - 1)))));
           });
           PsiElement element = elementRef.get();
-          String fileName = fileNameRef.get();
-          String fileNameBase = fileName.substring(0, fileName.indexOf('.')) +
+          String sourceFileName = fileNameRef.get();
+          String fileNameBase = sourceFileName +
                                 ":" +
                                 element.getTextRange().getStartOffset();
           sb.append("{\"filename\":").append("\"").append(fileNameBase).append("\",\n");
+          sb.append("\"snippet\":").append("\"").append(StringUtil.escapeChar(usageLineSnippet.get(), '"').trim()).append("\",\n");
           sb.append("\"cluster_number\": ").append(counter).append(",\n");
           sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("},\n");
         }
@@ -100,7 +109,7 @@ public class SaveClusteringResultActionLink extends ActionLink {
     sb.append("]");
     try {
       writeCommandAction(project).run(() -> {
-        createScratchFile(project, sb.toString());
+        createScratchFile(project, sb.toString(), fileName);
       });
     }
     catch (IOException e) {
@@ -114,9 +123,8 @@ public class SaveClusteringResultActionLink extends ActionLink {
   }
 
   static @Nullable SaveClusteringResultActionLink getInternalSaveClusteringResultsLink(@NotNull Project project,
-                                                                                       @NotNull UsageViewImpl usageView) {
-    return Registry.is("similarity.import.clustering.results.action.enabled") ? new SaveClusteringResultActionLink(project,
-                                                                                                                   MostCommonUsagePatternsComponent.findClusteringSessionInUsageView(
-                                                                                                                     usageView)) : null;
+                                                                                       @NotNull ClusteringSearchSession session,
+                                                                                       @NotNull String fileName) {
+    return Registry.is("similarity.import.clustering.results.action.enabled") ? new SaveClusteringResultActionLink(project, session, fileName) : null;
   }
 }
