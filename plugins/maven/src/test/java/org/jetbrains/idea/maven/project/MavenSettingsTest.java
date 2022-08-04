@@ -72,8 +72,10 @@ public class MavenSettingsTest extends MavenTestCase {
     });
 
     s.setCreateModulesForAggregators(true);
+    s.setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
 
+    s.clone().setCreateModulesForAggregators(true);
     s.clone().setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
   }

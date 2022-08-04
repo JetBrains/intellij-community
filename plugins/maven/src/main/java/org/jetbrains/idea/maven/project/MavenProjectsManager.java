@@ -473,7 +473,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
                                               @NotNull List<MavenProject> unignored,
                                               boolean fromImport) {
-        if (!fromImport) scheduleImport();
+        if (!fromImport) scheduleImportChangedProjects();
       }
 
       @Override
@@ -1055,7 +1055,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       final ResolveContext context = new ResolveContext();
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
-          scheduleImport().processed(result);
+          scheduleImportChangedProjects().processed(result);
         }
         else {
           result.setResult(Collections.emptyList());
@@ -1146,7 +1146,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         MavenProject each = it.next();
         Runnable onCompletion = it.hasNext() ? null : () -> {
           result.setResult(null);
-          if (hasScheduledProjects()) scheduleImport();
+          if (hasScheduledProjects()) scheduleImportChangedProjects();
         };
         myFoldersResolvingProcessor.scheduleTask(
           new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
@@ -1183,11 +1183,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     synchronized (myImportingDataLock) {
       myImportModuleGroupsRequired = importModuleGroupsRequired;
     }
-    scheduleImport();
+    scheduleImportChangedProjects();
   }
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)
-  private Promise<List<Module>> scheduleImport() {
+  private Promise<List<Module>> scheduleImportChangedProjects() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
@@ -1224,7 +1224,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }
     scheduleForNextImport(toImport);
-    scheduleImport();
+    scheduleImportChangedProjects();
   }
 
   private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
