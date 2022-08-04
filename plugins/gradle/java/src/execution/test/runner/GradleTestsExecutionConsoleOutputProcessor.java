@@ -14,11 +14,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
  */
 public final class GradleTestsExecutionConsoleOutputProcessor {
   private static final Logger LOG = Logger.getInstance(GradleTestsExecutionConsoleOutputProcessor.class);
-  @SuppressWarnings("HardCodedStringLiteral")
   private static final String LOG_EOL = "<ijLogEol/>";
-  @SuppressWarnings("HardCodedStringLiteral")
   private static final String LOG_START = "<ijLog>";
-  @SuppressWarnings("HardCodedStringLiteral")
   private static final String LOG_END = "</ijLog>";
 
   public static void onOutput(@NotNull GradleTestsExecutionConsole executionConsole,
@@ -31,32 +28,7 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
       final TestEventXmlView xml = new TestEventXPPXmlView(eventMessage);
 
       final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
-      TestEventProcessor testEventProcessor = null;
-      switch (eventType) {
-        case CONFIGURATION_ERROR:
-          testEventProcessor = new ConfigurationErrorEventProcessor(executionConsole);
-          break;
-        case REPORT_LOCATION:
-          testEventProcessor = new ReportLocationEventProcessor(executionConsole);
-          break;
-        case BEFORE_TEST:
-          testEventProcessor = new BeforeTestEventProcessor(executionConsole);
-          break;
-        case ON_OUTPUT:
-          testEventProcessor = new OnOutputEventProcessor(executionConsole);
-          break;
-        case AFTER_TEST:
-          testEventProcessor = new AfterTestEventProcessor(executionConsole);
-          break;
-        case BEFORE_SUITE:
-          testEventProcessor = new BeforeSuiteEventProcessor(executionConsole);
-          break;
-        case AFTER_SUITE:
-          testEventProcessor = new AfterSuiteEventProcessor(executionConsole);
-          break;
-        case UNKNOWN_EVENT:
-          break;
-      }
+      var testEventProcessor = createTestEventProcessor(eventType, executionConsole);
       if (testEventProcessor != null) {
         testEventProcessor.process(xml);
       }
@@ -64,6 +36,22 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
     catch (TestEventXmlView.XmlParserException e) {
       LOG.error("Gradle test events parser error", e);
     }
+  }
+
+  private static @Nullable TestEventProcessor createTestEventProcessor(
+    @NotNull TestEventType eventType,
+    @NotNull GradleTestsExecutionConsole executionConsole
+  ) {
+    return switch (eventType) {
+      case CONFIGURATION_ERROR -> new ConfigurationErrorEventProcessor(executionConsole);
+      case REPORT_LOCATION -> new ReportLocationEventProcessor(executionConsole);
+      case BEFORE_TEST -> new BeforeTestEventProcessor(executionConsole);
+      case ON_OUTPUT -> new OnOutputEventProcessor(executionConsole);
+      case AFTER_TEST -> new AfterTestEventProcessor(executionConsole);
+      case BEFORE_SUITE -> new BeforeSuiteEventProcessor(executionConsole);
+      case AFTER_SUITE -> new AfterSuiteEventProcessor(executionConsole);
+      default -> null;
+    };
   }
 
   @Nullable
@@ -78,7 +66,7 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
       return null;
     }
     else {
-      if (consoleBuffer.length() == 0) {
+      if (consoleBuffer.isEmpty()) {
         if (StringUtil.startsWith(trimmedText, LOG_START) && StringUtil.endsWith(trimmedText, LOG_END)) {
           eventMessage = text;
         }
@@ -102,7 +90,7 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
       }
       eventMessage = bufferText;
     }
-    assert consoleBuffer.length() == 0;
+    assert consoleBuffer.isEmpty();
     return eventMessage;
   }
 }

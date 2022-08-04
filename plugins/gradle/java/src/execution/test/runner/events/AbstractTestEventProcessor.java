@@ -5,16 +5,17 @@ import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-
-import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer.GradleTestLocationInfo;
 
 /**
  * @author Vladislav.Soroka
@@ -43,21 +44,24 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
     return (GradleConsoleProperties)getExecutionConsole().getProperties();
   }
 
-  @NotNull
-  protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return findLocationUrl(JavaTestLocator.TEST_PROTOCOL, name, fqClassName);
+  protected boolean isSuite() {
+    return false;
   }
 
-  @NotNull
-  protected static String findLocationUrl(@NotNull String protocol, @Nullable String name, @NotNull String fqClassName) {
-    return name == null
-           ? JavaTestLocator.createLocationUrl(protocol, fqClassName)
-           : JavaTestLocator.createLocationUrl(protocol, fqClassName, name);
+  protected @Nullable SMTestProxy findTestProxy(@Nullable String testId) {
+    return getExecutionConsole().getTestsMap().get(testId);
   }
 
-  @Nullable
-  protected SMTestProxy findTestProxy(final String proxyId) {
-    return getExecutionConsole().getTestsMap().get(proxyId);
+  protected @NotNull SMTestProxy findParentTestProxy(@Nullable String parentTestId) {
+    var rootNode = getResultsViewer().getTestsRootNode();
+    if (StringUtil.isEmpty(parentTestId)) {
+      return rootNode;
+    }
+    var node = findTestProxy(parentTestId);
+    if (node == null) {
+      return rootNode;
+    }
+    return node;
   }
 
   protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
@@ -72,15 +76,62 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
     return GradleConsoleProperties.SHOW_INTERNAL_TEST_NODES.value(getProperties());
   }
 
-  protected final @NotNull String computeLocationUrl(@Nullable SMTestProxy parentProxy, @NotNull String fqClassName, @Nullable String name, @Nullable String displayName) {
-    if (parentProxy != null) {
-      for (GradleTestLocationCustomizer customizer : GradleTestLocationCustomizer.EP_NAME.getExtensionList()) {
-        GradleTestLocationInfo location = customizer.getLocationInfo(getProject(), parentProxy, fqClassName, name, displayName);
-        if (location != null) {
-          return findLocationUrl(location.getMethodName(), location.getFqClassName());
-        }
-      }
+  protected @NotNull GradleSMTestProxy createTestProxy(
+    @Nullable String parentTestId,
+    @NotNull String suiteName,
+    @NotNull String fqClassName,
+    @Nullable String methodName,
+    @Nullable String displayName
+  ) {
+    var parentTestProxy = findParentTestProxy(parentTestId);
+    var locationUrl = createLocationUrl(parentTestProxy, suiteName, fqClassName, methodName);
+    var testProxy = new GradleSMTestProxy(displayName, methodName == null, locationUrl, fqClassName);
+    testProxy.setLocator(getExecutionConsole().getUrlProvider());
+    testProxy.setParentId(parentTestId);
+    return testProxy;
+  }
+
+  private @NotNull String createLocationUrl(
+    @NotNull SMTestProxy parentProxy,
+    @NotNull String suiteName,
+    @NotNull String fqClassName,
+    @Nullable String methodName
+  ) {
+    var project = getProject();
+    var isSuite = isSuite();
+    var testLocationCustomizer = GradleTestLocationCustomizer.EP_NAME
+      .findFirstSafe(it -> it.isApplicable(project, parentProxy, isSuite, suiteName, fqClassName, methodName));
+    if (testLocationCustomizer != null) {
+      return testLocationCustomizer.createLocationUrl(parentProxy, isSuite, suiteName, fqClassName, methodName);
     }
-    return findLocationUrl(name, fqClassName);
+    var locationProtocol = isSuite ? JavaTestLocator.SUITE_PROTOCOL : JavaTestLocator.TEST_PROTOCOL;
+    return JavaTestLocator.createLocationUrl(locationProtocol, fqClassName, methodName);
+  }
+
+  protected void setParentForAllNodesInTreePath(@NotNull GradleSMTestProxy node) {
+    while (node != null) {
+      var parentId = node.getParentId();
+      var parentNode = findParentTestProxy(parentId);
+      if (node.getParent() == null) {
+        parentNode.addChild(node);
+      }
+      if (!node.isInProgress()) {
+        node.setStarted();
+        getResultsViewer().onTestStarted(node);
+        getExecutionConsole().getEventPublisher().onTestStarted(node);
+      }
+      node = ObjectUtils.tryCast(parentNode, GradleSMTestProxy.class);
+    }
+  }
+
+  protected void setStartedForAllNodesInTreePath(@NotNull GradleSMTestProxy node) {
+    while (node != null) {
+      if (!node.isInProgress()) {
+        node.setStarted();
+        getResultsViewer().onTestStarted(node);
+        getExecutionConsole().getEventPublisher().onTestStarted(node);
+      }
+      node = ObjectUtils.tryCast(node.getParent(), GradleSMTestProxy.class);
+    }
   }
 }

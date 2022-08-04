@@ -1,17 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -24,62 +19,40 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
 
   @Override
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
-    final String testId = eventXml.getTestId();
-    final String parentTestId = eventXml.getTestParentId();
-    final String name = eventXml.getTestName();
-    final String displayName = eventXml.getTestDisplayName();
-    final String fqClassName = eventXml.getTestClassName();
+    var testId = eventXml.getTestId();
+    var parentTestId = eventXml.getTestParentId();
+    var suiteName = eventXml.getTestClassName();
+    var fqClassName = eventXml.getTestClassName();
+    var methodName = eventXml.getTestName();
+    var displayName = eventXml.getTestDisplayName();
 
-    doProcess(testId, parentTestId, name, displayName, fqClassName);
+    doProcess(testId, parentTestId, suiteName, fqClassName, methodName, displayName);
   }
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
-    final String testId = testEvent.getEventId();
-    final String parentTestId = testEvent.getParentEventId();
-    final String fqClassName = testDescriptor.getClassName();
+    var testDescriptor = testEvent.getDescriptor();
+    var testId = testEvent.getEventId();
+    var parentTestId = testEvent.getParentEventId();
+    var suiteName = StringUtil.notNullize(testDescriptor.getSuiteName());
+    var fqClassName = StringUtil.notNullize(testDescriptor.getClassName());
+    var methodName = testDescriptor.getMethodName();
+    var displayName = testDescriptor.getDisplayName();
 
-    doProcess(testId, parentTestId, testDescriptor.getMethodName(), testDescriptor.getDisplayName(), fqClassName);
+    doProcess(testId, parentTestId, suiteName, fqClassName, methodName, displayName);
   }
 
-  private void doProcess(String testId, String parentTestId, String name, String displayName, String fqClassName) {
-    String locationUrl = computeLocationUrl(findTestProxy(parentTestId), fqClassName, name, displayName);
-    final GradleSMTestProxy testProxy = new GradleSMTestProxy(displayName, false, locationUrl, fqClassName);
-
-    testProxy.setStarted();
-    testProxy.setLocator(getExecutionConsole().getUrlProvider());
+  private void doProcess(
+    @NotNull String testId,
+    @Nullable String parentTestId,
+    @NotNull String suiteName,
+    @NotNull String fqClassName,
+    @Nullable String methodName,
+    @Nullable String displayName
+  ) {
+    var testProxy = createTestProxy(parentTestId, suiteName, fqClassName, methodName, displayName);
     registerTestProxy(testId, testProxy);
-
-    if (StringUtil.isEmpty(parentTestId)) {
-      getResultsViewer().getTestsRootNode().addChild(testProxy);
-    }
-    else {
-      final SMTestProxy parentTestProxy = findTestProxy(parentTestId);
-      if (parentTestProxy != null) {
-        final List<GradleSMTestProxy> notYetAddedParents = new SmartList<>();
-        SMTestProxy currentParentTestProxy = parentTestProxy;
-        while (currentParentTestProxy instanceof GradleSMTestProxy) {
-          final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
-          if (currentParentTestProxy.getParent() == null && parentId != null) {
-            notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);
-          }
-          currentParentTestProxy = findTestProxy(parentId);
-        }
-
-        for (GradleSMTestProxy gradleSMTestProxy : ContainerUtil.reverse(notYetAddedParents)) {
-          final SMTestProxy parentTestProxy1 = findTestProxy(gradleSMTestProxy.getParentId());
-          if (parentTestProxy1 != null) {
-            parentTestProxy1.addChild(gradleSMTestProxy);
-            getResultsViewer().onSuiteStarted(gradleSMTestProxy);
-            getExecutionConsole().getEventPublisher().onSuiteStarted(gradleSMTestProxy);
-          }
-        }
-        parentTestProxy.addChild(testProxy);
-      }
-    }
-
-    getResultsViewer().onTestStarted(testProxy);
-    getExecutionConsole().getEventPublisher().onTestStarted(testProxy);
+    setParentForAllNodesInTreePath(testProxy);
+    setStartedForAllNodesInTreePath(testProxy);
   }
 }

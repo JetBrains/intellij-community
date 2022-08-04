@@ -15,20 +15,42 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 internal interface GradleTestLocationCustomizer {
-  companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<GradleTestLocationCustomizer> = ExtensionPointName.create("org.jetbrains.plugins.gradle.testLocationCustomizer")
-  }
 
-  data class GradleTestLocationInfo(val fqClassName: String, val methodName : String?)
+  /**
+   * Checks that current test is framework-specific test.
+   *
+   * @param parent direct parent of a customizable test node
+   * @param isSuite is true if location url should be created for test suite otherwise for the test method
+   * @param fqClassName fully-qualified name of the class containing a test method of a customizable test node
+   * @param methodName name of a test method of a customizable test node
+   */
+  fun isApplicable(
+    project: Project,
+    parent: SMTestProxy,
+    isSuite: Boolean,
+    suiteName: String,
+    fqClassName: String,
+    methodName: String?
+  ): Boolean
 
   /**
    * Produces test framework-specific test location by the data of a test node.
    *
    * @param parent direct parent of a customizable test node
+   * @param isSuite is true if location url should be created for test suite otherwise for the test method
    * @param fqClassName fully-qualified name of the class containing a test method of a customizable test node
    * @param methodName name of a test method of a customizable test node
-   * @param displayName name of a customizable test node that will be displayed in the UI
    */
-  fun getLocationInfo(project: Project, parent: SMTestProxy, fqClassName: String, methodName: String?, displayName: String?): GradleTestLocationInfo?
+  fun createLocationUrl(
+    parent: SMTestProxy,
+    isSuite: Boolean,
+    suiteName: String,
+    fqClassName: String,
+    methodName: String?
+  ): String
+
+  companion object {
+    @JvmField
+    val EP_NAME = ExtensionPointName.create<GradleTestLocationCustomizer>("org.jetbrains.plugins.gradle.testLocationCustomizer")
+  }
 }

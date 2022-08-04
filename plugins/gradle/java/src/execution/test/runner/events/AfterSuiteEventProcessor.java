@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -34,6 +32,10 @@ public class AfterSuiteEventProcessor extends AbstractTestEventProcessor {
     super(executionConsole);
   }
 
+  @Override
+  protected boolean isSuite() {
+    return true;
+  }
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
@@ -82,11 +84,5 @@ public class AfterSuiteEventProcessor extends AbstractTestEventProcessor {
       getResultsViewer().onSuiteFinished(testProxy);
       getExecutionConsole().getEventPublisher().onSuiteFinished(testProxy);
     }
-  }
-
-  @Override
-  @NotNull
-  protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return findLocationUrl(JavaTestLocator.SUITE_PROTOCOL, name, fqClassName);
   }
 }

@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.execution.testframework.JavaTestLocator;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,72 +21,76 @@ public class BeforeSuiteEventProcessor extends AbstractTestEventProcessor {
   }
 
   @Override
-  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
-    final String testId = eventXml.getTestId();
-    final String parentTestId = eventXml.getTestParentId();
-    final String name = eventXml.getTestDisplayName();
-    final String fqClassName = eventXml.getTestClassName();
+  protected boolean isSuite() {
+    return true;
+  }
 
-    doProcess(testId, parentTestId, name, fqClassName);
+  @Override
+  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+    var testId = eventXml.getTestId();
+    var parentTestId = eventXml.getTestParentId();
+    var suiteName = ObjectUtils.coalesce(StringUtil.nullize(eventXml.getTestClassName()), eventXml.getTestDisplayName());
+    var fqClassName = eventXml.getTestClassName();
+    var displayName = eventXml.getTestDisplayName();
+
+    doProcess(testId, parentTestId, suiteName, fqClassName, displayName);
   }
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
-    final String testId = testEvent.getEventId();
-    final String parentTestId = testEvent.getParentEventId();
-    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
-    final String fqClassName = testDescriptor.getClassName();
+    var testDescriptor = testEvent.getDescriptor();
+    var testId = testEvent.getEventId();
+    var parentTestId = testEvent.getParentEventId();
+    var suiteName = StringUtil.notNullize(testDescriptor.getSuiteName());
+    var fqClassName = StringUtil.notNullize(testDescriptor.getClassName());
+    var displayName = testDescriptor.getDisplayName();
 
-    doProcess(testId, parentTestId, name, fqClassName);
+    doProcess(testId, parentTestId, suiteName, fqClassName, displayName);
   }
 
+  private void doProcess(
+    @NotNull String testId,
+    @Nullable String parentTestId,
+    @NotNull String suiteName,
+    @NotNull String fqClassName,
+    @Nullable String displayName
+  ) {
+    var isCombineSameTests = !showInternalTestNodes();
 
-  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
-    if (StringUtil.isEmpty(parentTestId)) {
-      registerTestProxy(testId, getResultsViewer().getTestsRootNode());
+    if (isCombineSameTests && isHiddenTestNode(suiteName)) {
+      var parentTestProxy = findParentTestProxy(parentTestId);
+      registerTestProxy(testId, parentTestProxy);
+      return;
     }
-    else {
-      SMTestProxy parentTest = findTestProxy(parentTestId);
-      if (isHiddenTestNode(name, parentTest)) {
-        registerTestProxy(testId, parentTest);
-      }
-      else {
-        boolean combineTestsOfTheSameSuite = !showInternalTestNodes();
-        String sameSuiteId = name + fqClassName;
-        if (combineTestsOfTheSameSuite) {
-          SMTestProxy testProxy = findTestProxy(sameSuiteId);
-          if (testProxy instanceof GradleSMTestProxy && Objects.equals(testProxy.getParent(), parentTest)) {
-            registerTestProxy(testId, testProxy);
-            if (!testProxy.isInProgress()) {
-              testProxy.setStarted();
-            }
-            return;
-          }
-        }
 
-        String locationUrl = computeLocationUrl(parentTest, fqClassName, null, name);
-        final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
-        testProxy.setLocator(getExecutionConsole().getUrlProvider());
-        testProxy.setParentId(parentTestId);
-        testProxy.setStarted();
+    if (isCombineSameTests) {
+      var testProxy = findSuiteTestProxy(suiteName, parentTestId);
+      if (testProxy != null) {
         registerTestProxy(testId, testProxy);
-        if (combineTestsOfTheSameSuite) {
-          registerTestProxy(sameSuiteId, testProxy);
-        }
+        return;
       }
+    }
+
+    var testProxy = createTestProxy(parentTestId, suiteName, fqClassName, null, displayName);
+    registerTestProxy(testId, testProxy);
+
+    if (isCombineSameTests) {
+      registerTestProxy(fqClassName, testProxy);
     }
   }
 
-  @Override
-  @NotNull
-  protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return findLocationUrl(JavaTestLocator.SUITE_PROTOCOL, name, fqClassName);
+  private @Nullable GradleSMTestProxy findSuiteTestProxy(@NotNull String suiteId, @Nullable String parentTestId) {
+    var parentTestProxy = findParentTestProxy(parentTestId);
+    var testProxy = findTestProxy(suiteId);
+    if (testProxy instanceof GradleSMTestProxy) {
+      if (Objects.equals(testProxy.getParent(), parentTestProxy)) {
+        return (GradleSMTestProxy)testProxy;
+      }
+    }
+    return null;
   }
 
-  private boolean isHiddenTestNode(String name, SMTestProxy parentTest) {
-    return parentTest != null &&
-           !showInternalTestNodes() &&
-           StringUtil.startsWith(name, "Gradle Test Executor");
+  private static boolean isHiddenTestNode(@Nullable String suiteName) {
+    return suiteName == null || suiteName.startsWith("Gradle Test Executor") || suiteName.startsWith("Gradle Test Run");
   }
 }
