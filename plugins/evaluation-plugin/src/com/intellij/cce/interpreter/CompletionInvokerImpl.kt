@@ -190,6 +190,7 @@ class CompletionInvokerImpl(private val project: Project,
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val session = Session(offset, expectedLine, null, nodeProperties)
     val line = document.getLineNumber(offset)
+    val tail = document.getLineEndOffset(line) - offset
     var currentString = ""
 
     while (currentString != expectedLine) {
@@ -197,7 +198,7 @@ class CompletionInvokerImpl(private val project: Project,
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
         printText(it.selectedWithoutPrefix() ?: expectedLine[currentString.length].toString())
-        currentString = document.getText(TextRange(offset, document.getLineEndOffset(line)))
+        currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
 
         if (currentString.isNotEmpty()) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
