@@ -3,37 +3,21 @@ package com.intellij.cce.processor
 import com.intellij.cce.actions.CompletionGolfSession
 import com.intellij.cce.actions.DeleteRange
 import com.intellij.cce.actions.MoveCaret
-import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.SimpleTokenProperties
-import com.intellij.cce.core.SymbolLocation
-import com.intellij.cce.core.TypeProperty
+import com.intellij.cce.core.*
 
 class CompletionGolfProcessor : GenerateActionsProcessor() {
-  private val regexLines = Regex("[^\r\n]+")
-  private val leadingTabsRegex = Regex("^\\s+")
-
   override fun process(code: CodeFragment) {
-    regexLines.findAll(code.text).forEach {
-      addActions(it.range, it.value)
+    code.getChildren().forEach {
+      addActions(it)
     }
   }
 
-  private fun addActions(range: IntRange, value: String) {
-    val leadingTabs = leadingTabsRegex.find(value)?.range?.length ?: 0
-    var withoutTabs = value.drop(leadingTabs)
-    val commentId = withoutTabs.indexOf("#")
-    withoutTabs = withoutTabs.substring(0, if (commentId < 0) withoutTabs.length else commentId).trim()
-
-    if (withoutTabs.isNotEmpty()) {
+  private fun addActions(token: CodeToken) {
+    if (token.text.isNotEmpty()) {
       val nodeProperties = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {}
-      addAction(DeleteRange(leadingTabs + range.first, leadingTabs + range.first + withoutTabs.length))
-      addAction(MoveCaret(leadingTabs + range.first))
-      addAction(CompletionGolfSession(withoutTabs, nodeProperties))
+      addAction(DeleteRange(token.offset, token.offset + token.length))
+      addAction(MoveCaret(token.offset))
+      addAction(CompletionGolfSession(token.text, nodeProperties))
     }
   }
 }
-
-private val IntRange.length: Int
-  get() {
-    return last - first + 1
-  }
