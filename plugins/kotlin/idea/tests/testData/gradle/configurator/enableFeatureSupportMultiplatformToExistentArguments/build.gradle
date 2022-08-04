@@ -25,7 +25,7 @@ kotlin {
             }
         }
         all {
-            languageSettings.enableLanguageFeature("MangleClassMembersReturningInlineClasses")
+            languageSettings.enableLanguageFeature("BareArrayClassLiteral")
         }
     }
 }
