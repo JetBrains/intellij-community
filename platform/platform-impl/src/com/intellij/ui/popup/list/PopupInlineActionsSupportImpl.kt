@@ -26,7 +26,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
     var res = 0
     res += myStep.getInlineActions(element).size
-    if (myStep.hasSubstep(element)) res++
+    if (res != 0 && myStep.hasSubstep(element)) res++
     return res
   }
 
@@ -58,7 +58,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     res.addAll(myStep.getInlineActions(element).map {
       item: InlineActionItem -> createInlineActionRunnable(item.action, event)
     })
-    if (myStep.hasSubstep(element)) res.add(createNextStepRunnable(element))
+    if (!res.isEmpty() && myStep.hasSubstep(element)) res.add(createNextStepRunnable(element))
     return res
   }
 
