@@ -1,5 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.plugin.artifacts
+/*
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+package org.jetbrains.kotlin.idea.artifacts
 
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -17,15 +20,13 @@ object TarGzipUnpacker {
         if (Files.notExists(source)) {
             throw IOException("File doesn't exists!")
         }
-        Files.newInputStream(source).use { fi ->
-            BufferedInputStream(fi).use { bi ->
-                GzipCompressorInputStream(bi).use { gzi ->
-                    TarArchiveInputStream(gzi).use { ti ->
-                        lateinit var entry: ArchiveEntry
-                        while (ti.nextEntry?.also { entry = it } != null) {
-
-                            val newPath: Path = zipSlipProtect(entry, target)
-                            if (entry.isDirectory) {
+        Files.newInputStream(source).use { fileInput ->
+            BufferedInputStream(fileInput).use { bufferedInput ->
+                GzipCompressorInputStream(bufferedInput).use { gzipInput ->
+                    TarArchiveInputStream(gzipInput).use { tarInput ->
+                        generateSequence { tarInput.nextEntry }.forEach {
+                            val newPath: Path = zipSlipProtect(it, target)
+                            if (it.isDirectory) {
                                 Files.createDirectories(newPath)
                             } else {
                                 val parent = newPath.parent
@@ -34,9 +35,7 @@ object TarGzipUnpacker {
                                         Files.createDirectories(parent)
                                     }
                                 }
-
-                                Files.copy(ti, newPath, StandardCopyOption.REPLACE_EXISTING)
-
+                                Files.copy(tarInput, newPath, StandardCopyOption.REPLACE_EXISTING)
                             }
                         }
                     }

@@ -2,16 +2,18 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
+import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadNativePrebuilt
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
 
-const val BASE_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
 const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
 
 object TestKotlinArtifacts {
@@ -113,20 +115,18 @@ object TestKotlinArtifacts {
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
-    private val libVersion
-        get() = (KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
-            ?: error("Can't get '$kotlincStdlibFileName' version"))
-
-    val platformName
-        get() = HostManager.platformName()
-
-    private fun getNativeLib(version: String = libVersion,
-                             platform: String = platformName,
-                             library: String = "klib/common/stdlib"): File {
+    private fun getNativeLib(
+        version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
+        platform: String = HostManager.platformName(),
+        library: String = "klib/common/stdlib"
+    ): File {
         val baseDir = Paths.get(PathManager.getCommunityHomePath()).resolve("out")
+        if (!File(baseDir.toString()).exists()) {
+            File(baseDir.toString()).mkdirs()
+        }
         val prebuilt = "kotlin-native-prebuilt-$platform-$version"
         val archiveName = "$prebuilt.tar.gz"
-        val downloadUrl = "$BASE_URL/$version/$platform/$archiveName"
+        val downloadUrl = "$NATIVE_PREBUILT_DEV_CDN_URL/$version/$platform/$archiveName"
         val downloadOut = "$baseDir/$archiveName"
         val libPath = "$baseDir/$prebuilt/$prebuilt/$library"
 
@@ -134,31 +134,12 @@ object TestKotlinArtifacts {
             return File(libPath)
         }
 
-        downloadNativePrebuilt(downloadUrl, downloadOut)
-        unpackPrebuildArchive(downloadOut, "$baseDir/$prebuilt")
+        val archiveFilePath = Paths.get(downloadOut)
+        downloadNativePrebuilt(downloadUrl, Paths.get(downloadOut))
+        unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
+        Files.deleteIfExists(archiveFilePath)
 
         return if (Files.exists(Paths.get(libPath))) File(libPath) else
             throw IOException("Library doesn't exist: $libPath")
-    }
-
-    private fun downloadNativePrebuilt(downloadURL: String, downloadOut: String) {
-        try {
-            val url = URL(downloadURL)
-
-            url.openStream().use {
-                Files.copy(it, Paths.get(downloadOut))
-            }
-        } catch (e: IOException) {
-            throw IOException("Couldn't download kotlin native prebuilt. ${e.message}")
-        }
-    }
-
-    private fun unpackPrebuildArchive(source: String, target: String) {
-        try {
-            TarGzipUnpacker.decompressTarGzipFile(Paths.get(source), Paths.get(target))
-        } catch (e: IOException){
-            throw IOException("Couldn't unpack prebuilt archive. ${e.message}")
-        }
-
     }
 }

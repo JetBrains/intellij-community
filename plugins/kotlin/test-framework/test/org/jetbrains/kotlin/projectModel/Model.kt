@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -106,15 +107,7 @@ sealed class ResolveLibrary(
     }
 }
 
-val platformTargetByHost: TargetPlatform
-    get() = when (TestKotlinArtifacts.platformName) {
-        "macos-x86_64" ->  NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
-        "macos-aarch64" ->  NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_ARM64)
-        "linux-x86_64" ->  NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
-        "windows-x86_64" ->  NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MINGW_X64)
-        else ->
-            throw Exception("${TestKotlinArtifacts.platformName} doesn't support")
-    }
+val platformTargetByHost: TargetPlatform = NativePlatforms.nativePlatformBySingleTarget(HostManager.host)
 
 sealed class Stdlib(
     name: String,

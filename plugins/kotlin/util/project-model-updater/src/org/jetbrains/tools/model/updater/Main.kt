@@ -13,6 +13,7 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 
     val kotlincVersion: String by Preference()
     val kotlinGradlePluginVersion: String by Preference()
+    val kotlinNativeVersion: String by Preference()
     val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
 
     enum class ArtifactMode {
@@ -61,6 +62,7 @@ fun main(args: Array<String>) {
     processRoot(communityRoot, isCommunity = true)
     patchGitignore(communityRoot, preferences.kotlincArtifactsMode)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateLatestKotlinNativeVersion(communityRoot, preferences.kotlinNativeVersion)
 }
 
 private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
@@ -120,18 +122,30 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
 }
 
 /**
- * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion] in the source code.
- * The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
+ * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]
+ * in the source code. The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
  * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
-    val sourceFile = communityRoot.resolve(
+    val gradleTestSourceFile = communityRoot.resolve(
         "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
+    updateFile(gradleTestSourceFile, """val latest = .*""",
+               "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")")
+}
 
-    val updatedFileContent = sourceFile.readText().replace(
-        Regex("""val latest = .*"""), "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+private fun updateLatestKotlinNativeVersion(communityRoot: File, kotlinNativeVersion: String) {
+    val ideaMultiplatformTestFile = communityRoot.resolve(
+        "plugins/kotlin/base/plugin/test/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
     )
+    updateFile(ideaMultiplatformTestFile,
+               """private const val predefinedKotlinNativeVersion =.*""",
+               "private const val predefinedKotlinNativeVersion = \"$kotlinNativeVersion\"")
+}
+
+private fun updateFile(sourceFile: File, regexp: String, replacement: String) {
+    val updatedFileContent = sourceFile.readText().replace(
+        Regex(regexp), replacement)
 
     sourceFile.writeText(updatedFileContent)
 }
