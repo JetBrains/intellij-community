@@ -7,8 +7,10 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.IndexId;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Locale;
 
@@ -48,7 +50,8 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * <p>
    * Really, value=true is only useful for debugging -- in production reporting are generally not expected to throw exceptions.
    */
-  public static final boolean THROW_ON_INCORRECT_USAGE =
+  @VisibleForTesting
+  static final boolean THROW_ON_INCORRECT_USAGE =
     Boolean.getBoolean("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE");
 
   /**
