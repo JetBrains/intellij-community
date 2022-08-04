@@ -130,8 +130,11 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return replaceThreadContext(coroutineContext).use {
-    withJob(coroutineContext.job, action)
+  val currentContext = coroutineContext
+  return replaceThreadContext(currentContext).use {
+    // this will catch com.intellij.openapi.progress.JobCanceledException
+    // and throw original java.util.concurrent.CancellationException instead
+    withJob(currentContext.job, action)
   }
 }
 
