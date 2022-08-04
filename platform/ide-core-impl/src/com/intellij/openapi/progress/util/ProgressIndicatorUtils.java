@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -366,9 +367,12 @@ public final class ProgressIndicatorUtils {
 
   /** Use when a deadlock is possible otherwise. */
   public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
-    if (!Cancellation.isInNonCancelableSection()) {
-      Cancellation.checkCancelled();
+    if (Cancellation.isInNonCancelableSection()) {
+      // just run the hooks, don't check for cancellation in non-cancellable section
+      ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(indicator);
+      return;
     }
+    Cancellation.checkCancelled();
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks
     if (indicator.isCanceled()) {           // if a just-canceled indicator or PCE is disabled
