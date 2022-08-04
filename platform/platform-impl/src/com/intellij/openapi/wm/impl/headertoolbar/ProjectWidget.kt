@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
@@ -115,7 +116,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
 
-    val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
+    val widgetRenderer = ProjectWidgetRenderer()
 
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
@@ -158,13 +159,20 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private class ProjectWidgetRenderer(val separatorSupplier: (PopupFactoryImpl.ActionItem) -> ListSeparator?): ListCellRenderer<PopupFactoryImpl.ActionItem> {
+  private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
                                               value: PopupFactoryImpl.ActionItem?,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, separatorSupplier.invoke(value))
+      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value))
+    }
+
+    private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
+      val model = list?.model as? ListPopupModel<*> ?: return null
+      val hasSeparator = model.isSeparatorAboveOf(value)
+      if (!hasSeparator) return null
+      return ListSeparator(model.getCaptionAboveOf(value))
     }
 
     private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {
