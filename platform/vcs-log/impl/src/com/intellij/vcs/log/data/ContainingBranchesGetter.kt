@@ -37,7 +37,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     taskExecutor = SequentialLimitedLifoExecutor(parentDisposable, 10, CachingTask::run)
     logData.addDataPackChangeListener { dataPack: DataPack ->
       val checksum = dataPack.refsModel.branches.hashCode()
-      if (currentBranchesChecksum != 0 && currentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+      if (currentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
         clearCache()
       }
       currentBranchesChecksum = checksum
