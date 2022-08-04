@@ -53,7 +53,7 @@ class CompletionGolfFragmentBuilder(project: Project, language: Language) : Code
 
       // Take only valuable lines
       if (text.find { it.isLetterOrDigit() } != null) {
-        codeFragment?.addChild(CodeToken(text, lastOffset, text.length, prop))
+        codeFragment?.addChild(CodeToken(text, range.startOffset, text.length, prop))
       }
       super.visitWhiteSpace(space)
     }
