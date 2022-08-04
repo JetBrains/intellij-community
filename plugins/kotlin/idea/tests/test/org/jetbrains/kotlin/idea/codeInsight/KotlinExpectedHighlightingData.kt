@@ -62,9 +62,6 @@ class InnerLineMarkerConfiguration: AbstractCodeMetaInfoRenderConfiguration() {
         val configuration = InnerLineMarkerConfiguration()
 
         fun sanitizeLineMarker(tooltip: String?): String {
-            if (tooltip == "X") {
-                throw Exception("X")
-            }
             return configuration.sanitizeLineMarker(tooltip)
         }
     }
