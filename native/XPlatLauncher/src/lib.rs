@@ -9,8 +9,9 @@ mod default;
 use serde::{Deserialize, Serialize};
 use std::{env};
 use std::fs::{File};
-use std::path::{PathBuf};
-use log::{debug, error, LevelFilter};
+use std::io::{BufReader};
+use std::path::{Path, PathBuf};
+use log::{debug, error, info, LevelFilter, Log, warn};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
@@ -33,12 +34,27 @@ fn main_impl() -> Result<()> {
     println!("Initializing logger");
 
     // TODO: set agreed configuration (probably simple logger instead of pretty colors for terminal) or replace the lib with our own code
-    CombinedLogger::init(
-        vec![
-            TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
-            WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log").unwrap()),
-        ]
-    )?;
+    let loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![
+        TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
+        // TODO: do not crash here?
+        WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log")?),
+    ];
+
+    CombinedLogger::init(loggers)?;
+
+
+    // let's the panic on JVM thread crash the launcher
+    let orig_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic_info| {
+        error!("{panic_info:?}");
+        // TODO: crash on JVM thread
+        // for l in &loggers {
+        //     l.flush()
+        // }
+
+        orig_hook(panic_info);
+        std::process::exit(1);
+    }));
 
     debug!("Launching");
 

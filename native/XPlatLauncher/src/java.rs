@@ -1,4 +1,4 @@
-use std::{mem, thread};
+use std::{mem, panic, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
 use jni::errors::Error;
