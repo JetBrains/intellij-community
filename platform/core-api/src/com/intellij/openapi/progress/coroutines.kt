@@ -74,10 +74,8 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
     // TODO put currentThreadContext() into the runBlocking context
     val context = currentJob +
                   CoroutineName("job run blocking")
-    runBlocking(context) {
-      replaceThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
@@ -105,10 +103,8 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
     val context = currentJob +
                   CoroutineName("indicator run blocking") +
                   ProgressIndicatorSink(indicator).asContextElement()
-    runBlocking(context) {
-      replaceThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
