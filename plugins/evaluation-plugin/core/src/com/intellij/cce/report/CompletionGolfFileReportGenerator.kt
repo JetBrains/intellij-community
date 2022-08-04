@@ -74,20 +74,20 @@ class CompletionGolfFileReportGenerator(
       var lineNumbers = 0
       sessions.forEach { session ->
         val text = fullText.substring(offset, session.offset)
-        val tab = text.split("\n").last().dropWhile { it == '\n' }
-        val skipped = text.split("\n").dropLast(1)
+        val tab = text.lines().last().dropWhile { it == '\n' }
+        val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n'  }
 
-        skipped.takeIf { it.isNotEmpty() }?.forEach {
-          if (it.isNotEmpty()) {
-            tr {
-              td("line-numbers") {
-                attributes["data-line-numbers"] = lineNumbers.toString()
-              }
-              td("code-line") {
-                span { +it }
-              }
-              lineNumbers++
+        text.lines()
+          .drop(1).dropLast(1)
+          .forEach {
+          tr {
+            td("line-numbers") {
+              attributes["data-line-numbers"] = lineNumbers.toString()
             }
+            td("code-line") {
+              span { +it }
+            }
+            lineNumbers++
           }
         }
 
@@ -97,6 +97,9 @@ class CompletionGolfFileReportGenerator(
           }
           td("code-line") {
             prepareLine(session.expectedText, session.lookups, tab, session.id)
+            if (tail.isNotEmpty()) {
+              span { +tail }
+            }
           }
         }
         offset = session.offset + session.expectedText.length
