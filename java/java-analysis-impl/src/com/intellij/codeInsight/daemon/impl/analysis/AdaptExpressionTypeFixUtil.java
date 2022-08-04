@@ -3,25 +3,26 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceExpressionAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.WrapExpressionFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.WrapWithAdapterMethodCallFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -41,11 +42,13 @@ class AdaptExpressionTypeFixUtil {
     JavaResolveResult result = call.resolveMethodGenerics();
     if (!(result instanceof MethodCandidateInfo)) return;
     PsiType methodType = method.getReturnType();
-    PsiType actualType = ((MethodCandidateInfo)result).getSubstitutor(false).substitute(methodType);
-    Map.Entry<PsiTypeParameter, PsiType> substitution = findDesiredSubstitution(expectedTypeByParent, actualType, methodType);
+    PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutor(false);
+    PsiType actualType = substitutor.substitute(methodType);
+    Substitution.TypeParameterSubstitution substitution =
+      tryCast(findDesiredSubstitution(expectedTypeByParent, actualType, methodType, 0), Substitution.TypeParameterSubstitution.class);
     if (substitution == null) return;
-    PsiTypeParameter typeParameter = substitution.getKey();
-    PsiType expectedTypeValue = substitution.getValue();
+    PsiTypeParameter typeParameter = substitution.myTypeParameter;
+    PsiType expectedTypeValue = substitution.myType;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     Set<PsiTypeParameter> set = Set.of(typeParameter);
 
@@ -75,7 +78,7 @@ class AdaptExpressionTypeFixUtil {
         QuickFixAction.registerQuickFixAction(info, fix);
       }
     }
-    PsiType expectedArgType = PsiSubstitutor.EMPTY.put(typeParameter, expectedTypeValue).substitute(parameterType);
+    PsiType expectedArgType = substitutor.put(typeParameter, expectedTypeValue).substitute(parameterType);
     if (arg instanceof PsiLambdaExpression && parameterType instanceof PsiClassType) {
       registerLambdaReturnFixes(info, (PsiLambdaExpression)arg, (PsiClassType)parameterType, expectedArgType, typeParameter);
       return;
@@ -182,6 +185,7 @@ class AdaptExpressionTypeFixUtil {
     }
   }
 
+  @Nls
   private static String getRole(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiExpressionList) {
@@ -201,55 +205,112 @@ class AdaptExpressionTypeFixUtil {
     return null;
   }
 
-  private static @Nullable Map.Entry<PsiTypeParameter, PsiType> findDesiredSubstitution(@Nullable PsiType expected,
-                                                                                        @Nullable PsiType actual,
-                                                                                        @Nullable PsiType methodType) {
-    if (expected == null || actual == null || methodType == null) return null;
+  private interface Substitution {
+    Substitution TOP = new Substitution() {
+      @Override
+      public String toString() {
+        return "TOP";
+      }
+    };
+    Substitution BOTTOM = new Substitution() {
+      @Override
+      public String toString() {
+        return "BOTTOM";
+      }
+    };
+
+    class TypeParameterSubstitution implements Substitution {
+      final @NotNull PsiTypeParameter myTypeParameter;
+      final @NotNull PsiType myType;
+
+      public TypeParameterSubstitution(@NotNull PsiTypeParameter parameter, @NotNull PsiType type) {
+        myTypeParameter = parameter;
+        myType = type;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeParameterSubstitution that = (TypeParameterSubstitution)o;
+        return myTypeParameter.equals(that.myTypeParameter) && myType.equals(that.myType);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(myTypeParameter, myType);
+      }
+
+      @Override
+      public String toString() {
+        return myTypeParameter.getName() + "->" + myType.getCanonicalText();
+      }
+    }
+  }
+
+
+  private static @NotNull Substitution findDesiredSubstitution(@Nullable PsiType expected,
+                                                               @Nullable PsiType actual,
+                                                               @Nullable PsiType methodType,
+                                                               int level) {
+    if (expected == null || actual == null || methodType == null) return Substitution.BOTTOM;
     if (expected instanceof PsiArrayType && actual instanceof PsiArrayType && methodType instanceof PsiArrayType) {
       return findDesiredSubstitution(((PsiArrayType)expected).getComponentType(),
                                      ((PsiArrayType)actual).getComponentType(),
-                                     ((PsiArrayType)methodType).getComponentType());
+                                     ((PsiArrayType)methodType).getComponentType(),
+                                     level);
     }
-    if (expected instanceof PsiWildcardType && ((PsiWildcardType)expected).isExtends()) {
-      expected = ((PsiWildcardType)expected).getExtendsBound();
+    if (expected instanceof PsiWildcardType && level == 1) {
+      PsiWildcardType wildcardType = (PsiWildcardType)expected;
+      if (wildcardType.isExtends()) {
+        expected = wildcardType.getExtendsBound();
+      }
+      else if (wildcardType.isSuper()) {
+        expected = wildcardType.getSuperBound();
+      }
     }
-    if (!(methodType instanceof PsiClassType)) return null;
+    if (actual instanceof PsiWildcardType && level == 1 && TypeUtils.isJavaLangObject(expected)) {
+      // workaround for collector accumulator, probably incorrect in general?
+      return Substitution.TOP;
+    }
+    if (expected.equals(actual)) return Substitution.TOP;
+    if (!(methodType instanceof PsiClassType)) return Substitution.BOTTOM;
     PsiClass methodClass = ((PsiClassType)methodType).resolve();
-    if (methodClass == null) return null;
+    if (methodClass == null) return Substitution.BOTTOM;
     if (methodClass instanceof PsiTypeParameter) {
-      if (!expected.equals(actual) && !(expected instanceof PsiPrimitiveType)) {
+      if (!(expected instanceof PsiPrimitiveType)) {
         for (PsiClassType superType : methodClass.getSuperTypes()) {
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put((PsiTypeParameter)methodClass, expected);
-          if (!substitutor.substitute(superType).isAssignableFrom(expected)) return null;
+          if (!substitutor.substitute(superType).isAssignableFrom(expected)) return Substitution.BOTTOM;
         }
-        return Map.entry((PsiTypeParameter)methodClass, expected);
+        return new Substitution.TypeParameterSubstitution((PsiTypeParameter)methodClass, expected);
       }
-      return null;
+      return Substitution.BOTTOM;
     }
-    if (!(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return null;
+    if (!(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return Substitution.BOTTOM;
     PsiClass expectedClass = ((PsiClassType)expected).resolve();
     PsiClass actualClass = ((PsiClassType)actual).resolve();
-    if (expectedClass == null || actualClass == null || !actualClass.isEquivalentTo(methodClass)) return null;
+    if (expectedClass == null || actualClass == null || !actualClass.isEquivalentTo(methodClass)) return Substitution.BOTTOM;
     if (!expectedClass.isEquivalentTo(actualClass)) {
+      if (level > 0) return Substitution.BOTTOM;
       methodType = trySubstitute(methodType, expectedClass);
       actual = trySubstitute(actual, expectedClass);
-      if (methodType == null || actual == null) return null;
+      if (methodType == null || actual == null) return Substitution.BOTTOM;
     }
     PsiType[] methodTypeParameters = ((PsiClassType)methodType).getParameters();
     PsiType[] expectedTypeParameters = ((PsiClassType)expected).getParameters();
     PsiType[] actualTypeParameters = ((PsiClassType)actual).getParameters();
     if (methodTypeParameters.length != expectedTypeParameters.length || methodTypeParameters.length != actualTypeParameters.length) {
-      return null;
+      return Substitution.BOTTOM;
     }
-    Map.Entry<PsiTypeParameter, PsiType> existing = null;
+    Substitution existing = Substitution.TOP;
     for (int i = 0; i < methodTypeParameters.length; i++) {
-      Map.Entry<PsiTypeParameter, PsiType> substitution =
-        findDesiredSubstitution(expectedTypeParameters[i], actualTypeParameters[i], methodTypeParameters[i]);
-      if (existing == null) {
+      Substitution substitution = findDesiredSubstitution(expectedTypeParameters[i], actualTypeParameters[i], methodTypeParameters[i], level+1);
+      if (existing == Substitution.TOP) {
         existing = substitution;
       }
-      else if (!existing.equals(substitution)) {
-        return null;
+      else if (substitution != Substitution.TOP && !existing.equals(substitution)) {
+        return Substitution.BOTTOM;
       }
     }
     return existing;
