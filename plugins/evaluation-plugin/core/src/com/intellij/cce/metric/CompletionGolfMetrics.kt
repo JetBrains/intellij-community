@@ -3,21 +3,21 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-abstract class CodeGolfMetric<T : Number> : Metric {
+abstract class CompletionGolfMetric<T : Number> : Metric {
   protected var sample = Sample()
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
 
-  protected fun computeMoves(session: Session): Int = session.lookups.sumBy { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
+  protected fun computeMoves(session: Session): Int = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
 
-  protected fun computeCompletionCalls(sessions: List<Session>): Int = sessions.sumBy { it.lookups.count { lookup -> lookup.isNew } }
+  protected fun computeCompletionCalls(sessions: List<Session>): Int = sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): T = compute(sessions, comparator).alsoAddToSample()
 
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
-class CodeGolfMovesSumMetric : CodeGolfMetric<Int>() {
+class CompletionGolfMovesSumMetric : CompletionGolfMetric<Int>() {
   override val name: String = "Code Golf Moves Count"
 
   override val valueType = MetricValueType.INT
@@ -37,7 +37,7 @@ class CodeGolfMovesSumMetric : CodeGolfMetric<Int>() {
   }
 }
 
-class CodeGolfMovesCountNormalised : CodeGolfMetric<Double>() {
+class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
   override val name: String = "Code Golf Moves Count Normalised"
 
   override val valueType = MetricValueType.DOUBLE
@@ -46,8 +46,8 @@ class CodeGolfMovesCountNormalised : CodeGolfMetric<Double>() {
     get() = sample.mean()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val linesLength = sessions.sumBy { it.expectedText.length } * 2.0
-    val amountOfMoves = sessions.sumBy { computeMoves(it) + it.lookups.count() } + computeCompletionCalls(sessions)
+    val linesLength = sessions.sumOf { it.expectedText.length } * 2.0
+    val amountOfMoves = sessions.sumOf { computeMoves(it) + it.lookups.count() } + computeCompletionCalls(sessions)
 
     val subtrahend = sessions.count() * 2.0
 
@@ -60,7 +60,7 @@ class CodeGolfMovesCountNormalised : CodeGolfMetric<Double>() {
   }
 }
 
-class CodeGolfPerfectLine : CodeGolfMetric<Int>() {
+class CompletionGolfPerfectLine : CompletionGolfMetric<Int>() {
   override val name: String = "Code Golf Perfect Line"
 
   override val valueType = MetricValueType.INT
@@ -69,7 +69,6 @@ class CodeGolfPerfectLine : CodeGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
-    return sessions.filter { it.success }
-      .count()
+    return sessions.count { it.success }
   }
 }

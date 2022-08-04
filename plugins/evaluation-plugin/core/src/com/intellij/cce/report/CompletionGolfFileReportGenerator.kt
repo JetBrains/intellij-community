@@ -10,7 +10,7 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang.StringEscapeUtils
 
-class CodeGolfFileReportGenerator(
+class CompletionGolfFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
@@ -46,7 +46,7 @@ class CodeGolfFileReportGenerator(
         }
       }
       script { src = "../res/script.js" }
-      script { +"isCodeGolf = true" }
+      script { +"isCompletionGolf = true" }
     }
   }
 
@@ -74,22 +74,10 @@ class CodeGolfFileReportGenerator(
       var lineNumbers = 0
       sessions.forEach { session ->
         val text = fullText.substring(offset, session.offset)
-        val tab = text.split("\n").last().dropWhile { it == '\n' }
-        val skipped = text.split("\n").dropLast(1)
+        val tab = text.lines().last().dropWhile { it == '\n' }
+        val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
-        skipped.takeIf { it.isNotEmpty() }?.forEach {
-          if (it.isNotEmpty()) {
-            tr {
-              td("line-numbers") {
-                attributes["data-line-numbers"] = lineNumbers.toString()
-              }
-              td("code-line") {
-                span { +it }
-              }
-              lineNumbers++
-            }
-          }
-        }
+        lineNumbers += defaultText(text, lineNumbers)
 
         tr {
           td("line-numbers") {
@@ -97,10 +85,17 @@ class CodeGolfFileReportGenerator(
           }
           td("code-line") {
             prepareLine(session.expectedText, session.lookups, tab, session.id)
+            if (tail.isNotEmpty()) {
+              span { +tail }
+            }
           }
         }
         offset = session.offset + session.expectedText.length
         lineNumbers++
+      }
+
+      if (offset != fullText.length) {
+        defaultText(fullText.substring(offset, fullText.length), lineNumbers)
       }
     }
   }
@@ -137,5 +132,21 @@ class CodeGolfFileReportGenerator(
       +text
     }
     return offset + text.length
+  }
+
+  private fun TBODY.defaultText(text: String, lineNumbers: Int): Int {
+    return text.lines()
+      .drop(1).dropLast(1)
+      .onEachIndexed { i, line ->
+        tr {
+          td("line-numbers") {
+            attributes["data-line-numbers"] = lineNumbers.toString()
+          }
+          td("code-line") {
+            span { +line }
+          }
+          lineNumbers + i
+        }
+      }.size
   }
 }

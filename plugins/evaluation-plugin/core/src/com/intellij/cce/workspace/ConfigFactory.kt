@@ -74,8 +74,8 @@ object ConfigFactory {
     builder.completeTokenSeed = map.getAs<Double?>("completeTokenSeed")?.toLong()
     if (map.containsKey("emulationSettings"))
       builder.emulationSettings = gson.fromJson(gson.toJson(map["emulationSettings"]), UserEmulator.Settings::class.java)
-    if (map.containsKey("codeGolfSettings"))
-      builder.codeGolfSettings = gson.fromJson(gson.toJson(map["codeGolfSettings"]), CodeGolfEmulation.Settings::class.java)
+    if (map.containsKey("completionGolfSettings"))
+      builder.completionGolfSettings = gson.fromJson(gson.toJson(map["completionGolfSettings"]), CompletionGolfEmulation.Settings::class.java)
     builder.saveLogs = map.getAs("saveLogs")
     if (map.containsKey("saveFeatures"))
       builder.saveFeatures = map.getAs("saveFeatures")
@@ -117,7 +117,7 @@ object ConfigFactory {
   private class CompletionStrategyDeserializer {
     fun deserialize(strategy: Map<String, Any>, language: String, builder: Config.Builder) {
       builder.emulateUser = if (strategy.containsKey("emulateUser")) strategy.getAs("emulateUser") else false
-      builder.codeGolf = if (strategy.containsKey("codeGolf")) strategy.getAs("codeGolf") else false
+      builder.completionGolf = if (strategy.containsKey("completionGolf")) strategy.getAs("completionGolf") else false
       builder.contextStrategy = CompletionContext.valueOf(strategy.getAs("context"))
       if (strategy.containsKey("filters")) {
         builder.filters.putAll(readFilters(strategy, language))
