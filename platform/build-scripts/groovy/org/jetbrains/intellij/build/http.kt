@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
@@ -29,7 +30,12 @@ internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
 }
 
 internal val httpClient by lazy {
+  val timeout = 1L
+  val unit = TimeUnit.MINUTES
   OkHttpClient.Builder()
+    .connectTimeout(timeout, unit)
+    .writeTimeout(timeout, unit)
+    .readTimeout(timeout, unit)
     .addInterceptor { chain ->
       chain.proceed(chain.request()
                       .newBuilder()
