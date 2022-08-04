@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.stubs
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -39,6 +41,9 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.*
 
 abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
@@ -71,6 +76,33 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
         return moduleWithSrcRootSet
     }
+
+    protected fun createModuleInTmpDir(
+        name: String,
+        createFiles: () -> List<FileWithText> = { emptyList() },
+    ): Module {
+        val tmpDir = createTempDirectory().toPath()
+        val root = (tmpDir / name).createDirectory()
+        val src1 = (root / "src").createDirectory()
+        createFiles().forEach { file ->
+            (src1 / file.name).writeText(file.text)
+        }
+        val module: Module = createModule(root, moduleType)
+        module.addContentRoot(src1)
+        return module
+    }
+
+    protected fun Module.addContentRoot(rootPath: Path) {
+        val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootPath.toFile())!!
+        WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
+            root.refresh(false, true)
+        }
+
+        PsiTestUtil.addSourceContentToRoots(this, root)
+    }
+
+    protected data class FileWithText(val name: String, val text: String)
+
 
     override fun tearDown() {
         runAll(
@@ -109,6 +141,18 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         dependencyScope: DependencyScope = DependencyScope.COMPILE,
         exported: Boolean = false
     ): Module = this.apply { ModuleRootModificationUtil.addDependency(this, other, dependencyScope, exported) }
+
+    fun Module.removeDependency(
+        other: Module,
+    ): Module = this.apply {
+        ModuleRootModificationUtil.updateModel(this) { model ->
+            val entry = model.orderEntries
+                .filterIsInstance<ModuleOrderEntry>()
+                .filter { it.moduleName == other.name }
+                .single()
+            model.removeOrderEntry(entry)
+        }
+    }
 
     fun Module.addLibrary(
         jar: File,

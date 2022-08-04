@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.annotations.TestOnly
@@ -117,7 +118,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         }
     }
 
-    private fun <C, E> EntityChange.Replaced<C>.getReplacedEntity(event: VersionedStorageChange, get: (C, EntityStorage) -> E): E {
+    private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(event: VersionedStorageChange, get: (C, EntityStorage) -> E): E {
         val old = get(oldEntity, event.storageBefore)
         val new = get(newEntity, event.storageAfter)
         check (old == new) {
