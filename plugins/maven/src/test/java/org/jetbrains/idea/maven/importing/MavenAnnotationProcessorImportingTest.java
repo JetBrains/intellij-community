@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author ibessonov
  */
-public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase {
+public class MavenAnnotationProcessorImportingTest extends MavenDomTestCase {
 
   @Test
   public void testExternalDependencyPath() {
@@ -60,7 +60,7 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
 
     final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     ProcessorConfigProfile projectProfile =
-      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+      config.findModuleProcessorProfile(MavenAnnotationProcessorImporter.getModuleProfileName("project"));
     assertNotNull(projectProfile);
     String path = projectProfile.getProcessorPath();
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
@@ -108,7 +108,7 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
 
     final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     ProcessorConfigProfile projectProfile =
-      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+      config.findModuleProcessorProfile(MavenAnnotationProcessorImporter.getModuleProfileName("project"));
     assertNotNull(projectProfile);
     String path = projectProfile.getProcessorPath();
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
@@ -175,12 +175,12 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
 
     ProcessorConfigProfile defaultProfile =
-      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE);
+      config.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE);
     assertNotNull(defaultProfile);
     assertSameElements(defaultProfile.getModuleNames(), "m1");
 
     ProcessorConfigProfile projectProfile =
-      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+      config.findModuleProcessorProfile(MavenAnnotationProcessorImporter.getModuleProfileName("project"));
     assertNotNull(projectProfile);
     assertSameElements(projectProfile.getModuleNames(), "m2");
     String path = projectProfile.getProcessorPath();

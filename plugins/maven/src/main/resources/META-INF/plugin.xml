@@ -492,7 +492,7 @@
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>

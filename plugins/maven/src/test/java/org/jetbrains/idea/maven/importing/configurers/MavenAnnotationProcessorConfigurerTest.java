@@ -3,14 +3,14 @@ package org.jetbrains.idea.maven.importing.configurers;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.maven.testFramework.MavenImportingTestCase;
+import com.intellij.openapi.application.WriteAction;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.junit.Assert;
 
-import static org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE;
-import static org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter.PROFILE_PREFIX;
+import static org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE;
+import static org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter.PROFILE_PREFIX;
 
 public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCase {
 
