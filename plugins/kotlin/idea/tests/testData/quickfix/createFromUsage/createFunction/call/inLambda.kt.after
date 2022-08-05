@@ -6,6 +6,6 @@ fun test() {
     run { foo() }
 }
 
-fun foo() {
+fun foo(): Any {
     TODO("Not yet implemented")
 }
