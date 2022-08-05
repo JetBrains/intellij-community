@@ -997,6 +997,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", -616852615, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", 2065426356, 0);
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", -366365267, 2);
+    /** 16x16 */ public static final @NotNull Icon Liquibase = load("providers/liquibase.svg", -191128344, 0);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", -1504561111, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", -288792143, 0);
     /** 16x17 */ public static final @NotNull Icon MimerSQL = load("providers/mimerSQL.svg", -1308901116, 2);
