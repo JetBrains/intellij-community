@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -21,6 +20,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +43,14 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
 @ApiStatus.Internal
-public class MavenAnnotationProcessorImporter extends MavenImporter {
+public class MavenAnnotationProcessorImporter extends MavenImporter implements MavenWorkspaceConfigurator {
 
-  public static final String PROFILE_PREFIX = "Annotation profile for ";
+  private static final String PROFILE_PREFIX = "Annotation profile for ";
   public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
   private static final String DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations";
   private static final String DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations";
@@ -70,6 +72,31 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
   }
 
   @Override
+  public boolean isMigratedToConfigurator() {
+    return true;
+  }
+
+  @Override
+  public void beforeModelApplied(@NotNull MavenWorkspaceConfigurator.MutableModelContext context) {
+    Map<MavenId, List<String>> mavenProjectToModuleNamesCache = new HashMap<>();
+    for (MavenProjectWithModules<ModuleEntity> each : SequencesKt.asIterable(context.getMavenProjectsWithModules())) {
+      List<String> moduleNames =
+        ContainerUtil.mapNotNull(each.getModules(), it -> it.getType().getContainsCode() ? it.getModule().getName() : null);
+      mavenProjectToModuleNamesCache.put(each.getMavenProject().getMavenId(), moduleNames);
+    }
+
+    var changedOnlyProjects = SequencesKt.mapNotNull(context.getMavenProjectsWithModules(), it -> {
+      return it.getChanges().hasChanges() ? it.getMavenProject() : null;
+    });
+
+    var map = new HashMap<MavenProject, List<String>>();
+    collectProcessorModuleNames(SequencesKt.asIterable(changedOnlyProjects),
+                                moduleName -> mavenProjectToModuleNamesCache.get(moduleName),
+                                map);
+    ANNOTATION_PROCESSOR_MODULE_NAMES.set(context, map);
+  }
+
+  @Override
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
                       MavenRootModelAdapter rootModel,
@@ -86,26 +113,62 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
     new File(rootModel.toPath(annotationTargetDir).getPath()).mkdirs();
     rootModel.addGeneratedJavaSourceFolder(annotationTargetDir, JavaSourceRootType.SOURCE, false);
 
-    if (!shouldEnableAnnotationProcessors(mavenProject)) return;
+    Map<MavenProject, List<String>> map = ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, new HashMap<>());
+    collectProcessorModuleNames(List.of(mavenProject),
+                                mavenId -> {
+                                  MavenProject mavenArtifact = mavenModel.findProject(mavenId);
+                                  if (mavenArtifact == null) return null;
+                                  String moduleName = mavenProjectToModuleName.get(mavenArtifact);
+                                  if (moduleName == null) return null;
+                                  return List.of(moduleName);
+                                },
+                                map);
+    ANNOTATION_PROCESSOR_MODULE_NAMES.set(modifiableModelsProvider, map);
+  }
 
-    List<MavenArtifactInfo> artifactsInfo = getArtifactsInfo(config);
-    if (artifactsInfo.isEmpty()) {
-      return;
-    }
+  private void collectProcessorModuleNames(Iterable<MavenProject> projects,
+                                           Function<@NotNull MavenId, @Nullable List<String>> moduleNameByProjectId,
+                                           Map<MavenProject, List<String>> result) {
+    for (var mavenProject : projects) {
+      if (!shouldEnableAnnotationProcessors(mavenProject)) continue;
 
-    ArrayList<String> moduleNames = new ArrayList<>();
+      Element config = getConfig(mavenProject, "annotationProcessorPaths");
+      if (config == null) continue;
 
-    for (MavenArtifactInfo info : artifactsInfo) {
-      MavenProject mavenArtifact = mavenModel.findProject(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
-      if (mavenArtifact != null) {
-        ContainerUtil.addIfNotNull(moduleNames, mavenProjectToModuleName.get(mavenArtifact));
+      for (MavenArtifactInfo info : getProcessorArtifactInfos(config)) {
+        var mavenId = new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion());
+
+        var processorModuleNames = moduleNameByProjectId.apply(mavenId);
+        if (processorModuleNames != null) {
+          result.computeIfAbsent(mavenProject, __ -> new ArrayList<>()).addAll(processorModuleNames);
+        }
       }
     }
+  }
 
-    moduleNames.trimToSize();
-    Map<MavenProject, List<String>> map = ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, new HashMap<>());
-    map.put(mavenProject, moduleNames);
-    ANNOTATION_PROCESSOR_MODULE_NAMES.set(modifiableModelsProvider, map);
+  @Override
+  public void afterModelApplied(@NotNull MavenWorkspaceConfigurator.AppliedModelContext context) {
+    Map<String, Module> nameToModuleCache = new HashMap<>();
+    for (MavenProjectWithModules<Module> each : SequencesKt.asIterable(context.getMavenProjectsWithModules())) {
+      for (ModuleWithType<Module> moduleWithType : each.getModules()) {
+        Module module = moduleWithType.getModule();
+        nameToModuleCache.put(module.getName(), module);
+      }
+    }
+    Function<@NotNull String, @Nullable Module> moduleByName = moduleName -> nameToModuleCache.get(moduleName);
+
+    Map<MavenProject, List<String>> perProjectProcessorModuleNames = ANNOTATION_PROCESSOR_MODULE_NAMES.get(context, Map.of());
+
+    var changedOnly = SequencesKt.filter(context.getMavenProjectsWithModules(), it -> it.getChanges().hasChanges());
+    var projectWithModules = SequencesKt.map(changedOnly, it -> {
+      List<String> processorModuleNames = perProjectProcessorModuleNames.getOrDefault(it.getMavenProject(), List.of());
+      return new MavenProjectWithProcessorModules(it.getMavenProject(), it.getModules(), processorModuleNames);
+    });
+
+    configureProfiles(context.getProject(),
+                      context.getMavenProjectsTree(),
+                      SequencesKt.asIterable(projectWithModules),
+                      moduleByName);
   }
 
   @Override
@@ -113,46 +176,88 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
                           MavenProject mavenProject,
                           MavenProjectChanges changes,
                           IdeModifiableModelsProvider modifiableModelsProvider) {
-    if (!isLevelMoreThan6(module)) {
-      return;
-    }
-    Project project = module.getProject();
+    var processorModuleNames =
+      ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, Map.of()).getOrDefault(mavenProject, List.of());
 
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-    final MavenProject rootProject =
-      ObjectUtils.notNull(MavenProjectsManager.getInstance(module.getProject()).findRootProject(mavenProject), mavenProject);
-
-    if (shouldEnableAnnotationProcessors(mavenProject)) {
-      var profileIsDefault = createProfile(mavenProject, module, compilerConfiguration, modifiableModelsProvider);
-
-      if (profileIsDefault != null) {
-        WriteAction.runAndWait(() -> cleanAndMergeModuleProfiles(rootProject,
-                                                                 compilerConfiguration,
-                                                                 profileIsDefault.first,
-                                                                 profileIsDefault.second,
-                                                                 module));
+    var moduleWithType = new ModuleWithType<Module>() {
+      @Override
+      public Module getModule() {
+        return module;
       }
+
+      @NotNull
+      @Override
+      public MavenModuleType getType() {
+        return MavenModuleType.SINGLE_MODULE;
+      }
+    };
+    var projectWithModules = new MavenProjectWithProcessorModules(mavenProject,
+                                                                  List.of(moduleWithType),
+                                                                  processorModuleNames);
+    configureProfiles(module.getProject(),
+                      MavenProjectsManager.getInstance(module.getProject()).getProjectsTree(),
+                      List.of(projectWithModules),
+                      moduleName -> modifiableModelsProvider.findIdeModule(moduleName));
+  }
+
+
+  private static class MavenProjectWithProcessorModules {
+    private final MavenProject mavenProject;
+    private final List<ModuleWithType<Module>> mavenProjectModules;
+    private final List<String> processorModuleNames;
+
+    private MavenProjectWithProcessorModules(MavenProject mavenProject,
+                                             List<ModuleWithType<Module>> mavenProjectModules,
+                                             List<String> processorModuleNames) {
+      this.mavenProject = mavenProject;
+      this.mavenProjectModules = mavenProjectModules;
+      this.processorModuleNames = processorModuleNames;
     }
-    else {
-      WriteAction.runAndWait(() -> cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, null, false, module));
+  }
+
+  private static void configureProfiles(Project project,
+                                        MavenProjectsTree tree,
+                                        Iterable<MavenProjectWithProcessorModules> projectsWithModules,
+                                        Function<@NotNull String, @Nullable Module> moduleByName) {
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+
+    for (var it : projectsWithModules) {
+      MavenProject rootProject = ObjectUtils.notNull(tree.findRootProject(it.mavenProject), it.mavenProject);
+
+      for (var moduleWithType : it.mavenProjectModules) {
+        Module module = moduleWithType.getModule();
+        MavenModuleType moduleType = moduleWithType.getType();
+
+        if (!isLevelMoreThan6(module)) continue;
+
+        if (shouldEnableAnnotationProcessors(it.mavenProject) && moduleType.getContainsCode()) {
+          var processorModules = ContainerUtil.mapNotNull(it.processorModuleNames, eachName -> moduleByName.apply(eachName));
+          var profileIsDefault = createOrUpdateProfile(it.mavenProject, module, processorModules, compilerConfiguration);
+
+          if (profileIsDefault != null) {
+            cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, profileIsDefault.first, profileIsDefault.second, module);
+          }
+        }
+        else {
+          cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, null, false, module);
+        }
+      }
     }
   }
 
   @Nullable
-  private static Pair<@NotNull ProcessorConfigProfile, @NotNull Boolean> createProfile(@NotNull MavenProject mavenProject,
-                                                                                       @NotNull Module module,
-                                                                                       @NotNull CompilerConfigurationImpl compilerConfiguration,
-                                                                                       @NotNull IdeModifiableModelsProvider modifiableModelsProvider) {
+  private static Pair<@NotNull ProcessorConfigProfile, @NotNull Boolean>
+  createOrUpdateProfile(@NotNull MavenProject mavenProject,
+                        @NotNull Module module,
+                        @NotNull List<Module> processorModules,
+                        @NotNull CompilerConfigurationImpl compilerConfiguration) {
     List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
     Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
 
     String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, false, DEFAULT_ANNOTATION_PATH_OUTPUT);
     String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, true, DEFAULT_TEST_ANNOTATION_OUTPUT);
 
-    var moduleNames = ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, Map.of()).getOrDefault(mavenProject, List.of());
-    String annotationProcessorPath = getAnnotationProcessorPath(mavenProject,
-                                                                moduleNames,
-                                                                modifiableModelsProvider);
+    String annotationProcessorPath = getAnnotationProcessorPath(mavenProject, processorModules);
 
     final boolean isDefault;
     final String moduleProfileName;
@@ -204,7 +309,7 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
     Element config = getConfig(mavenProject, "annotationProcessorPaths");
     if (config == null) return;
 
-    List<MavenArtifactInfo> artifactsInfo = getArtifactsInfo(config);
+    List<MavenArtifactInfo> artifactsInfo = getProcessorArtifactInfos(config);
     if (artifactsInfo.isEmpty()) {
       return;
     }
@@ -236,7 +341,7 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
   }
 
   @NotNull
-  private static List<MavenArtifactInfo> getArtifactsInfo(Element config) {
+  private static List<MavenArtifactInfo> getProcessorArtifactInfos(Element config) {
     List<MavenArtifactInfo> artifacts = new ArrayList<>();
     Consumer<Element> addToArtifacts = path -> {
       String groupId = path.getChildTextTrim("groupId");
@@ -317,8 +422,8 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
     return true;
   }
 
-  private static @NotNull String getAnnotationProcessorPath(MavenProject mavenProject, List<String> moduleNames,
-                                                            IdeModifiableModelsProvider modifiableModelsProvider) {
+  private static @NotNull String getAnnotationProcessorPath(@NotNull MavenProject mavenProject,
+                                                            @NotNull List<Module> processorModules) {
     StringJoiner annotationProcessorPath = new StringJoiner(File.pathSeparator);
 
     Consumer<String> resultAppender = path -> annotationProcessorPath.add(FileUtil.toSystemDependentName(path));
@@ -327,14 +432,11 @@ public class MavenAnnotationProcessorImporter extends MavenImporter {
       resultAppender.consume(artifact.getPath());
     }
 
-    for (String moduleName : moduleNames) {
-      Module annotationProcessorModule = modifiableModelsProvider.findIdeModule(moduleName);
-      if (annotationProcessorModule != null) {
-        OrderEnumerator enumerator = orderEntries(annotationProcessorModule).withoutSdk().productionOnly().runtimeOnly().recursively();
+    for (Module module : processorModules) {
+      OrderEnumerator enumerator = orderEntries(module).withoutSdk().productionOnly().runtimeOnly().recursively();
 
-        for (String url : enumerator.classes().getUrls()) {
-          resultAppender.consume(JpsPathUtil.urlToPath(url));
-        }
+      for (String url : enumerator.classes().getUrls()) {
+        resultAppender.consume(JpsPathUtil.urlToPath(url));
       }
     }
 
