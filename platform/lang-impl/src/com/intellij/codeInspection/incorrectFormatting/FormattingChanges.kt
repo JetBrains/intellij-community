@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.incorrectFormatting
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -10,7 +11,7 @@ import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LangBundle
 import com.intellij.lang.LanguageFormatting
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -64,105 +65,108 @@ class ShiftIndentChange(file: PsiFile, range: TextRange, val node: ASTNode?, val
   override fun fixes() = arrayOf(ReformatQuickFix, HideDetailedReportIntention)
 }
 
-object FormattingChanges {
-  /**
-   * Detects whitespace which is not in agreement with formatting rules for given [file]. Returned [ReplaceChange.range]s always encompass
-   * the entirety of the whitespace between tokens for each detected change.
-   *
-   * @param file
-   * @return List of detected changes. `null` if detection could not be performed. Empty list if no changes were detected.
-   */
-  fun detectIn(file: PsiFile): List<ReplaceChange>? {
-    if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
-      return null
-    }
-    val fileDoc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
-    val baseLanguage = file.viewProvider.baseLanguage
+data class FormattingChanges(val preFormatText: CharSequence, val postFormatText: CharSequence, val mismatches: List<WhitespaceMismatch>) {
+  data class WhitespaceMismatch(val preFormatRange: TextRange, val postFormatRange: TextRange)
+}
 
-    val psiCopy = PsiFileFactory.getInstance(file.project).createFileFromText(
-      file.name,
-      file.fileType,
-      fileDoc.text,
-      LocalTimeCounter.currentTime(),
-      false,
-      true
-    )
-    // Necessary if we want to apply the same .editorconfig files
-    psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, file)
-    val copyDoc = psiCopy.viewProvider.document!!
+/**
+ * Detects whitespace which is not in agreement with formatting rules for given [file]. Ranges of the returned
+ * [FormattingChanges.mismatches] always encompass the entirety of the whitespace between tokens for each detected change in both the
+ * original and formatted text.
+ *
+ * Uses code style settings associated with [file]. To detect changes using different [CodeStyleSettings], use
+ * [CodeStyle.doWithTemporarySettings].
+ *
+ * @param file
+ * @return [FormattingChanges] object describing the changes. `null` if detection could not be performed. Empty list if no changes were
+ * detected.
+ */
+fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
+  if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
+    return null
+  }
+  val fileDoc = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
+  val baseLanguage = file.viewProvider.baseLanguage
 
-    val formattingService = FormattingServiceUtil.findService(file, true, true)
-    if (formattingService !is CoreFormattingService) {
-      return null
-    }
-    val copyService = FormattingServiceUtil.findService(psiCopy, true, true)
-    if (formattingService != copyService) {
-      thisLogger().warn("${formattingService::class} cannot format an in-memory copy.")
-      return null
-    }
+  val psiCopy = PsiFileFactory.getInstance(file.project).createFileFromText(
+    file.name,
+    file.fileType,
+    fileDoc.text,
+    LocalTimeCounter.currentTime(),
+    false,
+    true
+  )
+  // Necessary if we want to apply the same .editorconfig files
+  psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, file)
+  val copyDoc = psiCopy.viewProvider.document!!
 
-    //if (formattingService is AbstractDocumentFormattingService) {
-    //  AbstractDocumentFormattingService.setDocument(psiCopy, psiCopy.viewProvider.document)
-    //  psiCopy.viewProvider.document.putUserData(AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY, true)
-    //}
-
-    CodeStyleManager.getInstance(psiCopy.project).reformat(psiCopy, true)
-
-    val preFormat = fileDoc.text
-    val postFormat = copyDoc.text
-
-    return preFormat
-      .diffWhitespaceWith(postFormat,
-                          WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage),
-                          ChangeFactory { preStart, preEnd, postStart, postEnd ->
-                            ReplaceChange(file, TextRange(preStart, preEnd), postFormat.substring(postStart, postEnd))
-                          })
+  val formattingService = FormattingServiceUtil.findService(file, true, true)
+  if (formattingService !is CoreFormattingService) {
+    return null
+  }
+  val copyService = FormattingServiceUtil.findService(psiCopy, true, true)
+  if (formattingService != copyService) {
+    logger<FormattingChanges>().warn("${formattingService::class} cannot format an in-memory copy.")
+    return null
   }
 
-  private fun interface ChangeFactory<T> {
-    fun createChange(preStart: Int, preEnd: Int, postStart: Int, postEnd: Int): T
-  }
+  //if (formattingService is AbstractDocumentFormattingService) {
+  //  AbstractDocumentFormattingService.setDocument(psiCopy, psiCopy.viewProvider.document)
+  //  psiCopy.viewProvider.document.putUserData(AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY, true)
+  //}
 
-  private fun <T> CharSequence.diffWhitespaceWith(other: CharSequence,
-                                          whiteSpaceFormattingStrategy: WhiteSpaceFormattingStrategy,
-                                          changeFactory: ChangeFactory<T>): List<T> {
-    val changes = mutableListOf<T>()
-    val seq = this@diffWhitespaceWith
-    var i = 0
-    var j = 0
-    while (i < seq.length && j < other.length) {
-      val iWsEnd = whiteSpaceFormattingStrategy.check(seq, i, seq.length)
-      val jWsEnd = whiteSpaceFormattingStrategy.check(other, j, other.length)
-      if (iWsEnd > i || jWsEnd > j) {
-        val iWsStart = i
-        val jWsStart = j
-        val iWsLen = iWsEnd - iWsStart
-        val jWsLen = jWsEnd - jWsStart
+  CodeStyleManager.getInstance(psiCopy.project).reformat(psiCopy, true)
 
-        var changeDetected = false
-        if (iWsLen == jWsLen) {
-          while (i < iWsEnd) {
-            if (seq[i] != other[j]) changeDetected = true
-            ++i
-            ++j
-          }
+  val preFormat = fileDoc.text
+  val postFormat = copyDoc.text
+  val changes = diffWhitespace(preFormat,
+                               postFormat,
+                               WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))
+  return FormattingChanges(preFormat, postFormat, changes)
+}
+
+/**
+ * Assumes the following:
+ * 1. `\n` is the line separator for both [pre] and [post]. (Note that [WhiteSpaceFormattingStrategy] implementations also assume this.)
+ * 2. [pre] and [post] are identical up to whitespace, as identified by [whiteSpaceFormattingStrategy] */
+private fun diffWhitespace(pre: CharSequence,
+                           post: CharSequence,
+                           whiteSpaceFormattingStrategy: WhiteSpaceFormattingStrategy): List<FormattingChanges.WhitespaceMismatch> {
+  val changes = mutableListOf<FormattingChanges.WhitespaceMismatch>()
+  var i = 0
+  var j = 0
+  while (i < pre.length && j < post.length) {
+    val iWsEnd = whiteSpaceFormattingStrategy.check(pre, i, pre.length)
+    val jWsEnd = whiteSpaceFormattingStrategy.check(post, j, post.length)
+    if (iWsEnd > i || jWsEnd > j) {
+      val iWsStart = i
+      val jWsStart = j
+      val iWsLen = iWsEnd - iWsStart
+      val jWsLen = jWsEnd - jWsStart
+
+      var changeDetected = false
+      if (iWsLen == jWsLen) {
+        while (i < iWsEnd) {
+          if (pre[i] != post[j]) changeDetected = true
+          ++i
+          ++j
         }
+      }
 
-        if (changeDetected || iWsLen != jWsLen) {
-          changes += changeFactory.createChange(iWsStart, iWsEnd, jWsStart, jWsEnd)
-        }
+      if (changeDetected || iWsLen != jWsLen) {
+        changes += FormattingChanges.WhitespaceMismatch(TextRange(iWsStart, iWsEnd), TextRange(jWsStart, jWsEnd))
+      }
 
-        i = iWsEnd
-        j = jWsEnd
-      }
-      else if (seq[i] != other[j]) {
-        throw IllegalArgumentException("Non-whitespace change")
-      }
-      else {
-        ++i
-        ++j
-      }
+      i = iWsEnd
+      j = jWsEnd
     }
-    return changes
+    else if (pre[i] != post[j]) {
+      throw IllegalArgumentException("Non-whitespace change")
+    }
+    else {
+      ++i
+      ++j
+    }
   }
+  return changes
 }

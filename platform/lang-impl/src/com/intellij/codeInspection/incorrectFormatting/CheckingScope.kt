@@ -30,7 +30,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
   }
 
   // Collect all formatting changes for the file
-  fun getChanges(): List<FormattingChange> = FormattingChanges.detectIn(file) ?: emptyList()
+  fun getChanges(): List<FormattingChange> = /*FormattingChanges.detectIn(file)*/ null ?: emptyList()
 
   fun createGlobalReport() =
     manager.createProblemDescriptor(
