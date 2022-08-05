@@ -5,12 +5,16 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
@@ -21,6 +25,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
@@ -31,25 +36,27 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
 public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter {
 
   public static final String PROFILE_PREFIX = "Annotation profile for ";
   public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
-  public static final String DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations";
-  public static final String DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations";
+  private static final String DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations";
+  private static final String DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations";
 
-  public static final String MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE = PROFILE_PREFIX + "maven-processor-plugin default configuration";
-  public static final String DEFAULT_BSC_ANNOTATION_PATH_OUTPUT = "target/generated-sources/apt";
-  public static final String DEFAULT_BSC_TEST_ANNOTATION_OUTPUT = "target/generated-sources/apt-test";
+  public static final String MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE = getModuleProfileName("maven-processor-plugin default configuration");
+  private static final String DEFAULT_BSC_ANNOTATION_PATH_OUTPUT = "target/generated-sources/apt";
+  private static final String DEFAULT_BSC_TEST_ANNOTATION_OUTPUT = "target/generated-sources/apt-test";
 
-  private final Logger LOG = Logger.getInstance(MavenCompilerAnnotationProcessorPathsImporter.class);
+  private static final Key<Map<MavenProject, List<String>>> ANNOTATION_PROCESSOR_MODULE_NAMES =
+    Key.create("ANNOTATION_PROCESSOR_MODULE_NAMES");
 
   public MavenCompilerAnnotationProcessorPathsImporter() {
     super("org.apache.maven.plugins", "maven-compiler-plugin");
@@ -60,7 +67,6 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     return true;
   }
 
-
   @Override
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
@@ -70,14 +76,15 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
-    if(getConfig(mavenProject, "annotationProcessorPaths") == null) return;
+    Element config = getConfig(mavenProject, "annotationProcessorPaths");
+    if (config == null) return;
+
     String annotationTargetDir = mavenProject.getAnnotationProcessorDirectory(false);
     // directory must exist before compilation start to be recognized as source root
     new File(rootModel.toPath(annotationTargetDir).getPath()).mkdirs();
     rootModel.addGeneratedJavaSourceFolder(annotationTargetDir, JavaSourceRootType.SOURCE, false);
 
-    Element config = getConfig(mavenProject, "annotationProcessorPaths");
-    LOG.assertTrue(config != null);
+    if (!shouldEnableAnnotationProcessors(mavenProject)) return;
 
     List<MavenArtifactInfo> artifactsInfo = getArtifactsInfo(config);
     if (artifactsInfo.isEmpty()) {
@@ -94,7 +101,9 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     }
 
     moduleNames.trimToSize();
-    MavenAnnotationProcessorsModuleService.getInstance(module).setAnnotationProcessorModules(moduleNames);
+    Map<MavenProject, List<String>> map = ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, new HashMap<>());
+    map.put(mavenProject, moduleNames);
+    ANNOTATION_PROCESSOR_MODULE_NAMES.set(modifiableModelsProvider, map);
   }
 
   @Override
@@ -112,38 +121,76 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
       ObjectUtils.notNull(MavenProjectsManager.getInstance(module.getProject()).findRootProject(mavenProject), mavenProject);
 
     if (shouldEnableAnnotationProcessors(mavenProject)) {
+      var profileIsDefault = createProfile(mavenProject, module, compilerConfiguration, modifiableModelsProvider);
 
-      String annotationProcessorDirectory = getAnnotationProcessorDirectory(mavenProject, false, DEFAULT_ANNOTATION_PATH_OUTPUT);
-      String testAnnotationProcessorDirectory = getAnnotationProcessorDirectory(mavenProject, true, DEFAULT_TEST_ANNOTATION_OUTPUT);
-
-      final boolean isDefault;
-      final String moduleProfileName;
-
-      if (isMavenDefaultAnnotationProcessorConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject,
-                                                         project)) {
-        moduleProfileName = MAVEN_DEFAULT_ANNOTATION_PROFILE;
-        isDefault = true;
+      if (profileIsDefault != null) {
+        WriteAction.runAndWait(() -> cleanAndMergeModuleProfiles(rootProject,
+                                                                 compilerConfiguration,
+                                                                 profileIsDefault.first,
+                                                                 profileIsDefault.second,
+                                                                 module));
       }
-      else if (isMavenProcessorPluginDefaultConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject,
-                                                          project)) {
-        moduleProfileName = MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE;
-        isDefault = true;
-      }
-      else {
-        moduleProfileName = PROFILE_PREFIX + module.getName();
-        isDefault = false;
-      }
-
-      ProcessorConfigProfile moduleProfile =
-        getModuleProfile(module, mavenProject, project, compilerConfiguration, moduleProfileName, annotationProcessorDirectory,
-                         testAnnotationProcessorDirectory);
-      if (moduleProfile == null) return;
-      configureAnnotationProcessorPath(moduleProfile, mavenProject, project);
-      WriteAction.runAndWait(() -> cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, moduleProfile, isDefault, module));
     }
     else {
       WriteAction.runAndWait(() -> cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, null, false, module));
     }
+  }
+
+  @Nullable
+  private static Pair<@NotNull ProcessorConfigProfile, @NotNull Boolean> createProfile(@NotNull MavenProject mavenProject,
+                                                                                       @NotNull Module module,
+                                                                                       @NotNull CompilerConfigurationImpl compilerConfiguration,
+                                                                                       @NotNull IdeModifiableModelsProvider modifiableModelsProvider) {
+    List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
+    Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
+
+    String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, false, DEFAULT_ANNOTATION_PATH_OUTPUT);
+    String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, true, DEFAULT_TEST_ANNOTATION_OUTPUT);
+
+    var moduleNames = ANNOTATION_PROCESSOR_MODULE_NAMES.get(modifiableModelsProvider, Map.of()).getOrDefault(mavenProject, List.of());
+    String annotationProcessorPath = getAnnotationProcessorPath(mavenProject,
+                                                                moduleNames,
+                                                                modifiableModelsProvider);
+
+    final boolean isDefault;
+    final String moduleProfileName;
+
+    boolean isDefaultSettings = ContainerUtil.isEmpty(processors)
+                                && options.isEmpty()
+                                && StringUtil.isEmpty(annotationProcessorPath);
+    if (isDefaultSettings
+        && DEFAULT_ANNOTATION_PATH_OUTPUT.equals(FileUtil.toSystemIndependentName(annotationProcessorDirectory))
+        && DEFAULT_TEST_ANNOTATION_OUTPUT.equals(FileUtil.toSystemIndependentName(testAnnotationProcessorDirectory))) {
+      moduleProfileName = MAVEN_DEFAULT_ANNOTATION_PROFILE;
+      isDefault = true;
+    }
+    else if (isDefaultSettings
+             && DEFAULT_BSC_ANNOTATION_PATH_OUTPUT.equals(FileUtil.toSystemIndependentName(annotationProcessorDirectory))
+             && DEFAULT_BSC_TEST_ANNOTATION_OUTPUT.equals(FileUtil.toSystemIndependentName(testAnnotationProcessorDirectory))) {
+      moduleProfileName = MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE;
+      isDefault = true;
+    }
+    else {
+      moduleProfileName = getModuleProfileName(module.getName());
+      isDefault = false;
+    }
+
+    ProcessorConfigProfile moduleProfile =
+      getModuleProfile(module, mavenProject, compilerConfiguration, moduleProfileName, annotationProcessorDirectory,
+                       testAnnotationProcessorDirectory);
+    if (moduleProfile == null) return null;
+
+    if (StringUtil.isNotEmpty(annotationProcessorPath)) {
+      moduleProfile.setObtainProcessorsFromClasspath(false);
+      moduleProfile.setProcessorPath(annotationProcessorPath);
+    }
+
+    return Pair.pair(moduleProfile, isDefault);
+  }
+
+  @NotNull
+  public static String getModuleProfileName(@NotNull @NlsSafe String moduleName) {
+    return PROFILE_PREFIX + moduleName;
   }
 
   @Override
@@ -152,9 +199,8 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
                       NativeMavenProjectHolder nativeMavenProject,
                       MavenEmbedderWrapper embedder,
                       ResolveContext context) throws MavenProcessCanceledException {
-    if(getConfig(mavenProject, "annotationProcessorPaths") == null) return;
     Element config = getConfig(mavenProject, "annotationProcessorPaths");
-    LOG.assertTrue(config != null);
+    if (config == null) return;
 
     List<MavenArtifactInfo> artifactsInfo = getArtifactsInfo(config);
     if (artifactsInfo.isEmpty()) {
@@ -215,18 +261,9 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     return artifacts;
   }
 
-  private String getAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest, String defaultTestAnnotationOutput) {
-    String relativeAnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, isTest);
-    if (relativeAnotationProcessorDirectory == null) {
-      relativeAnotationProcessorDirectory = defaultTestAnnotationOutput;
-    }
-    return relativeAnotationProcessorDirectory;
-  }
-
   @Nullable
   private static ProcessorConfigProfile getModuleProfile(Module module,
                                                          MavenProject mavenProject,
-                                                         Project project,
                                                          CompilerConfigurationImpl compilerConfiguration,
                                                          String moduleProfileName,
                                                          String annotationProcessorDirectory,
@@ -278,12 +315,28 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     return true;
   }
 
-  private static void configureAnnotationProcessorPath(ProcessorConfigProfile profile, MavenProject mavenProject, Project project) {
-    String annotationProcessorPath = mavenProject.getAnnotationProcessorPath(project);
-    if (StringUtil.isNotEmpty(annotationProcessorPath)) {
-      profile.setObtainProcessorsFromClasspath(false);
-      profile.setProcessorPath(annotationProcessorPath);
+  private static @NotNull String getAnnotationProcessorPath(MavenProject mavenProject, List<String> moduleNames,
+                                                            IdeModifiableModelsProvider modifiableModelsProvider) {
+    StringJoiner annotationProcessorPath = new StringJoiner(File.pathSeparator);
+
+    Consumer<String> resultAppender = path -> annotationProcessorPath.add(FileUtil.toSystemDependentName(path));
+
+    for (MavenArtifact artifact : mavenProject.getExternalAnnotationProcessors()) {
+      resultAppender.consume(artifact.getPath());
     }
+
+    for (String moduleName : moduleNames) {
+      Module annotationProcessorModule = modifiableModelsProvider.findIdeModule(moduleName);
+      if (annotationProcessorModule != null) {
+        OrderEnumerator enumerator = orderEntries(annotationProcessorModule).withoutSdk().productionOnly().runtimeOnly().recursively();
+
+        for (String url : enumerator.classes().getUrls()) {
+          resultAppender.consume(JpsPathUtil.urlToPath(url));
+        }
+      }
+    }
+
+    return annotationProcessorPath.toString();
   }
 
   private static void cleanAndMergeModuleProfiles(@NotNull MavenProject rootProject,
@@ -302,7 +355,7 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
 
       if (!isDefault && moduleProfile != null && isSimilarProfiles(p, moduleProfile)) {
         moduleProfile.setEnabled(p.isEnabled());
-        final String mavenProjectRootProfileName = PROFILE_PREFIX + rootProject.getDisplayName();
+        final String mavenProjectRootProfileName = getModuleProfileName(rootProject.getDisplayName());
         ProcessorConfigProfile mergedProfile = compilerConfiguration.findModuleProcessorProfile(mavenProjectRootProfileName);
         if (mergedProfile == null) {
           mergedProfile = new ProcessorConfigProfileImpl(moduleProfile);
@@ -344,34 +397,9 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     return p1.equals(p2);
   }
 
-  private static boolean isMavenDefaultAnnotationProcessorConfiguration(@NotNull String annotationProcessorDirectory,
-                                                                        @NotNull String testAnnotationProcessorDirectory,
-                                                                        @NotNull MavenProject mavenProject,
-                                                                        @NotNull Project project) {
-    Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
-    List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
-    return ContainerUtil.isEmpty(processors)
-           && options.isEmpty()
-           && StringUtil.isEmpty(mavenProject.getAnnotationProcessorPath(project))
-           && DEFAULT_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
-           && DEFAULT_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'));
-  }
-
-  private static boolean isMavenProcessorPluginDefaultConfiguration(@NotNull String annotationProcessorDirectory,
-                                                                    @NotNull String testAnnotationProcessorDirectory,
-                                                                    @NotNull MavenProject mavenProject,
-                                                                    @NotNull Project project) {
-    Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
-    List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
-    return ContainerUtil.isEmpty(processors)
-           && options.isEmpty()
-           && StringUtil.isEmpty(mavenProject.getAnnotationProcessorPath(project))
-           && DEFAULT_BSC_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
-           && DEFAULT_BSC_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'));
-  }
-
-  @Nullable
-  private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest) {
+  @NotNull
+  private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest,
+                                                                String defaultTestAnnotationOutput) {
     String annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
     Path annotationProcessorDirectoryFile = Path.of(annotationProcessorDirectory);
     if (!annotationProcessorDirectoryFile.isAbsolute()) {
@@ -383,7 +411,7 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
       return Path.of(absoluteProjectDirectory).relativize(annotationProcessorDirectoryFile).toString();
     }
     catch (IllegalArgumentException e) {
-      return null;
+      return defaultTestAnnotationOutput;
     }
   }
 

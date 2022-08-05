@@ -3,12 +3,9 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -30,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
@@ -38,13 +34,11 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
@@ -850,34 +844,6 @@ public class MavenProject {
 
   public @NotNull List<MavenArtifact> getExternalAnnotationProcessors() {
     return myState.myAnnotationProcessors;
-  }
-
-  public @NotNull String getAnnotationProcessorPath(Project project) {
-    StringJoiner annotationProcessorPath = new StringJoiner(File.pathSeparator);
-
-    Consumer<String> resultAppender = path -> annotationProcessorPath.add(FileUtil.toSystemDependentName(path));
-
-    for (MavenArtifact artifact : getExternalAnnotationProcessors()) {
-      resultAppender.consume(artifact.getPath());
-    }
-
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Module module =  projectsManager.findModule(this);
-    if (module != null) {
-      MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
-      for (String moduleName : apService.getAnnotationProcessorModules()) {
-        Module annotationProcessorModule = ModuleManager.getInstance(project).findModuleByName(moduleName);
-        if (annotationProcessorModule != null) {
-          OrderEnumerator enumerator = orderEntries(annotationProcessorModule).withoutSdk().productionOnly().runtimeOnly().recursively();
-
-          for (String url : enumerator.classes().getUrls()) {
-            resultAppender.consume(JpsPathUtil.urlToPath(url));
-          }
-        }
-      }
-    }
-
-    return annotationProcessorPath.toString();
   }
 
   public @NotNull List<MavenArtifactNode> getDependencyTree() {

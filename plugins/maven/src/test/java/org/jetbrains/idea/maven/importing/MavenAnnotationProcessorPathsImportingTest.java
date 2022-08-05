@@ -1,16 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.junit.Test;
 
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 /**
  * @author ibessonov
@@ -57,7 +58,11 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
                                                         "2.2".equals(a.getVersion())
     ));
 
-    String path = mavenProject.getAnnotationProcessorPath(myProject);
+    final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    ProcessorConfigProfile projectProfile =
+      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+    assertNotNull(projectProfile);
+    String path = projectProfile.getProcessorPath();
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
   }
 
@@ -101,7 +106,11 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
                                                         "2.2".equals(a.getVersion())
     ));
 
-    String path = mavenProject.getAnnotationProcessorPath(myProject);
+    final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    ProcessorConfigProfile projectProfile =
+      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+    assertNotNull(projectProfile);
+    String path = projectProfile.getProcessorPath();
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
   }
 
@@ -163,10 +172,18 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     List<MavenArtifact> annotationProcessors = mavenProject.getExternalAnnotationProcessors();
     assertEmpty(annotationProcessors);
 
-    MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
-    assertEquals(singletonList("m1"), apService.getAnnotationProcessorModules());
+    final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
 
-    String path = mavenProject.getAnnotationProcessorPath(myProject);
+    ProcessorConfigProfile defaultProfile =
+      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE);
+    assertNotNull(defaultProfile);
+    assertSameElements(defaultProfile.getModuleNames(), "m1");
+
+    ProcessorConfigProfile projectProfile =
+      config.findModuleProcessorProfile(MavenCompilerAnnotationProcessorPathsImporter.getModuleProfileName("project"));
+    assertNotNull(projectProfile);
+    assertSameElements(projectProfile.getModuleNames(), "m2");
+    String path = projectProfile.getProcessorPath();
     assertTrue(path.contains(FileUtil.toSystemDependentName("/m1/target/classes")));
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/guava/guava/19.0/guava-19.0.jar")));
   }
