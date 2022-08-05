@@ -364,7 +364,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   internal class MyProjectPostStartupActivity : ProjectPostStartupActivity {
     init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (ApplicationManager.getApplication().isUnitTestMode ||
+          ApplicationManager.getApplication().isHeadlessEnvironment /* disabling for Fleet */) {
         throw ExtensionNotApplicableException.create()
       }
     }
