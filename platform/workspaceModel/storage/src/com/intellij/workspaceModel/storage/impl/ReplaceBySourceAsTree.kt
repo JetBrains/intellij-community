@@ -343,6 +343,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
           removeWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
+          // TODO test this
           return false to replaceWithEntity.id
         }
         !entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
