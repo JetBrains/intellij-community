@@ -215,7 +215,9 @@ public final class MavenProjectsManagerWatcher {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      if (MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) {
+
+      //  (most likely) removed by the importer, so we should not mark the project as ignored
+      if (MavenProjectImporter.isImportingInProgress()) {
         return;
       }
 

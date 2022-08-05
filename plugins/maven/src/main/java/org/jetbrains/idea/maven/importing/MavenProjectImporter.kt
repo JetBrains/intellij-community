@@ -5,11 +5,14 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
+import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 interface MavenProjectImporter {
   fun importProject(): List<MavenProjectsProcessorTask>?
   fun createdModules(): List<Module>
@@ -31,9 +34,11 @@ interface MavenProjectImporter {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
           val startTime = System.currentTimeMillis()
           try {
+            importingInProgress.incrementAndGet()
             return importer.importProject()
           }
           finally {
+            importingInProgress.decrementAndGet()
             activity.finished()
             MavenLog.LOG.info(
               "[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
@@ -76,6 +81,13 @@ interface MavenProjectImporter {
       else {
         MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
       }
+    }
+
+    private val importingInProgress = AtomicInteger()
+
+    @JvmStatic
+    fun isImportingInProgress(): Boolean {
+      return importingInProgress.get() > 0
     }
 
     @JvmStatic
