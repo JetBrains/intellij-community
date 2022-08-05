@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
@@ -48,6 +49,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -709,6 +711,43 @@ public final class TipUIUtil {
 
     public static @NotNull TipUIUtil.TodImage of(final @NotNull String src) {
       return new TodImage(src);
+    }
+  }
+
+  static class IconWithRoundedBorder implements Icon {
+    private final @NotNull Icon delegate;
+
+    IconWithRoundedBorder(@NotNull Icon delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public int getIconWidth() {
+      return delegate.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return delegate.getIconHeight();
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      Graphics2D g2d = (Graphics2D)g.create();
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      float arcSize = JBUIScale.scale(16);
+      var clipBounds = new RoundRectangle2D.Float(x, y, getIconWidth(), getIconHeight(), arcSize, arcSize);
+      g2d.clip(clipBounds);
+
+      delegate.paintIcon(c, g2d, x, y);
+
+      // TODO: extract color as TipOfTheDay.Image.borderColor key
+      Color color = new JBColor(new Color(0xDFE1E5), new Color(0x393B40));
+      g2d.setPaint(color);
+      g2d.setStroke(new BasicStroke(2f));
+      g2d.draw(clipBounds);
+
+      g2d.dispose();
     }
   }
 }

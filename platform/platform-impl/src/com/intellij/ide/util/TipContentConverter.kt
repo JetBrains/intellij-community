@@ -4,6 +4,7 @@ package com.intellij.ide.util
 import com.intellij.ide.ui.text.paragraph.ListParagraph
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
+import com.intellij.ide.util.TipUIUtil.IconWithRoundedBorder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBFont
 import org.jsoup.nodes.Element
@@ -51,7 +52,8 @@ internal class TipContentConverter(private val tipContent: Element, private val 
         val path = node.attr("src")
         val icon = iconsMap[path]
         if (icon != null) {
-          return TextParagraph(listOf(IllustrationTextPart(icon))).editAttributes {
+          val roundedIcon = IconWithRoundedBorder(icon)
+          return TextParagraph(listOf(IllustrationTextPart(roundedIcon))).editAttributes {
             StyleConstants.setSpaceAbove(this, TextParagraph.BIG_INDENT)
             StyleConstants.setLineSpacing(this, 0f)  // it is required to not add extra space below the image
           }
