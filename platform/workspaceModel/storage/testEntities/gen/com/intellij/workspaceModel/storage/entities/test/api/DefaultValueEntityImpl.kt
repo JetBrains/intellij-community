@@ -81,12 +81,14 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultValueEntity
       this.name = dataSource.name
       this.entitySource = dataSource.entitySource
       this.isGenerated = dataSource.isGenerated
       this.anotherName = dataSource.anotherName
+      if (parents != null) {
+      }
     }
 
 
@@ -173,6 +175,11 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
       this.isGenerated = this@DefaultValueEntityData.isGenerated
       this.anotherName = this@DefaultValueEntityData.anotherName
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

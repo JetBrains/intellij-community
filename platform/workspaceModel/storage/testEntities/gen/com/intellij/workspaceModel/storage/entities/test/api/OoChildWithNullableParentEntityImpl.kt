@@ -78,9 +78,12 @@ open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoChildWithNullableParentEntity
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<OoParentEntity>().singleOrNull()
+      }
     }
 
 
@@ -172,6 +175,11 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
     return OoChildWithNullableParentEntity(entitySource) {
       this.parentEntity = parents.filterIsInstance<OoParentEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

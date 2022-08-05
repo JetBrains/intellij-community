@@ -94,10 +94,13 @@ open class AttachedEntityImpl : AttachedEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AttachedEntity
       this.entitySource = dataSource.entitySource
       this.data = dataSource.data
+      if (parents != null) {
+        this.ref = parents.filterIsInstance<MainEntity>().single()
+      }
     }
 
 
@@ -197,6 +200,12 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
     return AttachedEntity(data, entitySource) {
       this.ref = parents.filterIsInstance<MainEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(MainEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

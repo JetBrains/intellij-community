@@ -144,12 +144,15 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootEntity
       this.entitySource = dataSource.entitySource
       this.url = dataSource.url
       this.excludedUrls = dataSource.excludedUrls.toMutableList()
       this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -380,6 +383,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     return ContentRootEntity(url, excludedUrls, excludedPatterns, entitySource) {
       this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

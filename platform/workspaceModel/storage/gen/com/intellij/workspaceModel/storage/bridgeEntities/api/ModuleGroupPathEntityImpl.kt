@@ -99,10 +99,13 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleGroupPathEntity
       this.entitySource = dataSource.entitySource
       this.path = dataSource.path.toMutableList()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -219,6 +222,12 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
     return ModuleGroupPathEntity(path, entitySource) {
       this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

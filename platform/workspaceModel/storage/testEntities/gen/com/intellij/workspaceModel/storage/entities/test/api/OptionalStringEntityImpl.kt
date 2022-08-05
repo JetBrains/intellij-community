@@ -74,10 +74,12 @@ open class OptionalStringEntityImpl : OptionalStringEntity, WorkspaceEntityBase(
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OptionalStringEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -142,6 +144,11 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
     return OptionalStringEntity(entitySource) {
       this.data = this@OptionalStringEntityData.data
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

@@ -84,10 +84,12 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityToParent
       this.entitySource = dataSource.entitySource
       this.x = dataSource.x
+      if (parents != null) {
+      }
     }
 
 
@@ -187,6 +189,11 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return MainEntityToParent(x, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

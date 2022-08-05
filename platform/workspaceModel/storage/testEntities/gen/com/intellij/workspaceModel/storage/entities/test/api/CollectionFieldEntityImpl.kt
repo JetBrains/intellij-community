@@ -88,11 +88,13 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
       this.versions = dataSource.versions.toMutableSet()
       this.entitySource = dataSource.entitySource
       this.names = dataSource.names.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -194,6 +196,11 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return CollectionFieldEntity(versions, names, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

@@ -89,10 +89,13 @@ open class ModuleSourcePackagingElementEntityImpl : ModuleSourcePackagingElement
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleSourcePackagingElementEntity
       this.module = dataSource.module
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      }
     }
 
 
@@ -252,6 +255,11 @@ class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourceP
       this.module = this@ModuleSourcePackagingElementEntityData.module
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

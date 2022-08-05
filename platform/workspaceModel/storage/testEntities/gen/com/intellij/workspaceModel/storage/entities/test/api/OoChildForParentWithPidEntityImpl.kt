@@ -96,10 +96,13 @@ open class OoChildForParentWithPidEntityImpl : OoChildForParentWithPidEntity, Wo
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoChildForParentWithPidEntity
       this.childProperty = dataSource.childProperty
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<OoParentWithPidEntity>().single()
+      }
     }
 
 
@@ -200,6 +203,12 @@ class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWi
     return OoChildForParentWithPidEntity(childProperty, entitySource) {
       this.parentEntity = parents.filterIsInstance<OoParentWithPidEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(OoParentWithPidEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

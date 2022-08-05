@@ -86,11 +86,13 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NullableVFUEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
       this.fileProperty = dataSource.fileProperty
+      if (parents != null) {
+      }
     }
 
 
@@ -168,6 +170,11 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
     return NullableVFUEntity(data, entitySource) {
       this.fileProperty = this@NullableVFUEntityData.fileProperty
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

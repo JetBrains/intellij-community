@@ -83,12 +83,14 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity2
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
       this.boolData = dataSource.boolData
       this.optionalData = dataSource.optionalData
+      if (parents != null) {
+      }
     }
 
 
@@ -175,6 +177,11 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     return SampleEntity2(data, boolData, entitySource) {
       this.optionalData = this@SampleEntity2Data.optionalData
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

@@ -104,11 +104,14 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryPropertiesEntity
       this.entitySource = dataSource.entitySource
       this.libraryType = dataSource.libraryType
       this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.library = parents.filterIsInstance<LibraryEntity>().single()
+      }
     }
 
 
@@ -220,6 +223,12 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
       this.propertiesXmlTag = this@LibraryPropertiesEntityData.propertiesXmlTag
       this.library = parents.filterIsInstance<LibraryEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

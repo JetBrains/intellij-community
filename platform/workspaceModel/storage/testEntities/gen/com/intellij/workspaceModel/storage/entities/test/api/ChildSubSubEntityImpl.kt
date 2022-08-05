@@ -94,10 +94,13 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildSubSubEntity
       this.entitySource = dataSource.entitySource
       this.childData = dataSource.childData
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<ChildSubEntity>().single()
+      }
     }
 
 
@@ -198,6 +201,12 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
     return ChildSubSubEntity(childData, entitySource) {
       this.parentEntity = parents.filterIsInstance<ChildSubEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ChildSubEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

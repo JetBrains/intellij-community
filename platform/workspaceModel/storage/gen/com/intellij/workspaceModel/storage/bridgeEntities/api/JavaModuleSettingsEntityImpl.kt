@@ -109,7 +109,7 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaModuleSettingsEntity
       this.entitySource = dataSource.entitySource
       this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
@@ -117,6 +117,9 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
       this.compilerOutput = dataSource.compilerOutput
       this.compilerOutputForTests = dataSource.compilerOutputForTests
       this.languageLevelId = dataSource.languageLevelId
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -263,6 +266,12 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
       this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
       this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

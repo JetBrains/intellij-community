@@ -126,13 +126,17 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetEntity
       this.name = dataSource.name
       this.entitySource = dataSource.entitySource
       this.facetType = dataSource.facetType
       this.configurationXmlTag = dataSource.configurationXmlTag
       this.moduleId = dataSource.moduleId
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
+      }
     }
 
 
@@ -352,6 +356,12 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
       this.module = parents.filterIsInstance<ModuleEntity>().single()
       this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

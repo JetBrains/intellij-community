@@ -114,10 +114,13 @@ open class TreeEntityImpl : TreeEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<TreeEntity>().single()
+      }
     }
 
 
@@ -262,6 +265,12 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
     return TreeEntity(data, entitySource) {
       this.parentEntity = parents.filterIsInstance<TreeEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(TreeEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

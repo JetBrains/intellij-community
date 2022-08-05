@@ -134,13 +134,15 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryEntity
       this.name = dataSource.name
       this.entitySource = dataSource.entitySource
       this.tableId = dataSource.tableId
       this.roots = dataSource.roots.toMutableList()
       this.excludedRoots = dataSource.excludedRoots.toMutableList()
+      if (parents != null) {
+      }
     }
 
     private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
@@ -483,6 +485,11 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LibraryEntity(name, tableId, roots, excludedRoots, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

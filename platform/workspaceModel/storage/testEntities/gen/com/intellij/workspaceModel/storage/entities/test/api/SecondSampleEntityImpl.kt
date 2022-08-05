@@ -74,10 +74,12 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondSampleEntity
       this.intProperty = dataSource.intProperty
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -141,6 +143,11 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SecondSampleEntity(intProperty, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

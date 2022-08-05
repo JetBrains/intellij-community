@@ -103,9 +103,13 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildChildEntity
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parent1 = parents.filterIsInstance<XParentEntity>().single()
+        this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+      }
     }
 
 
@@ -239,6 +243,13 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
       this.parent1 = parents.filterIsInstance<XParentEntity>().single()
       this.parent2 = parents.filterIsInstance<XChildEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(XParentEntity::class.java)
+    res.add(XChildEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

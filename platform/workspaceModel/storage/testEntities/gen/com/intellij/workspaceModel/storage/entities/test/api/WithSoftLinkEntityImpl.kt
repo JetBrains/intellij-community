@@ -81,10 +81,12 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithSoftLinkEntity
       this.link = dataSource.link
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -187,6 +189,11 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return WithSoftLinkEntity(link, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

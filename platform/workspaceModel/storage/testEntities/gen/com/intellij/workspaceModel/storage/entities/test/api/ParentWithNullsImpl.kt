@@ -85,10 +85,12 @@ open class ParentWithNullsImpl : ParentWithNulls, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNulls
       this.parentData = dataSource.parentData
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -188,6 +190,11 @@ class ParentWithNullsData : WorkspaceEntityData<ParentWithNulls>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ParentWithNulls(parentData, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

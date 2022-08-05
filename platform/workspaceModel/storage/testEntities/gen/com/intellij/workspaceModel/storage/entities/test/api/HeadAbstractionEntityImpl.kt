@@ -97,10 +97,12 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as HeadAbstractionEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -204,6 +206,11 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return HeadAbstractionEntity(data, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

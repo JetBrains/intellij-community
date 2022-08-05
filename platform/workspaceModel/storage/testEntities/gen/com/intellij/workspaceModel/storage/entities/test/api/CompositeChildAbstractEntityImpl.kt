@@ -118,9 +118,13 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CompositeChildAbstractEntity
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
+      }
     }
 
 
@@ -287,6 +291,12 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
       this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
       this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(CompositeAbstractEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

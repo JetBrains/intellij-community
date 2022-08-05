@@ -114,10 +114,14 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeMultiparentLeafEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.mainParent = parents.filterIsInstance<TreeMultiparentRootEntity>().singleOrNull()
+        this.leafParent = parents.filterIsInstance<TreeMultiparentLeafEntity>().singleOrNull()
+      }
     }
 
 
@@ -301,6 +305,11 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
       this.mainParent = parents.filterIsInstance<TreeMultiparentRootEntity>().singleOrNull()
       this.leafParent = parents.filterIsInstance<TreeMultiparentLeafEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

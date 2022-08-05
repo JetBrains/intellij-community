@@ -90,11 +90,13 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SetVFUEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
       this.fileProperty = dataSource.fileProperty.toMutableSet()
+      if (parents != null) {
+      }
     }
 
 
@@ -187,6 +189,11 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SetVFUEntity(data, fileProperty, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

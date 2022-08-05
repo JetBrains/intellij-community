@@ -97,11 +97,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExtractedDirectoryPackagingElementEntity
       this.filePath = dataSource.filePath
       this.pathInArchive = dataSource.pathInArchive
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      }
     }
 
 
@@ -221,6 +224,11 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

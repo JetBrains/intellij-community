@@ -503,9 +503,9 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
   /**
    * For generated entities
    * Pull information from [dataSource] and puts into the current builder.
-   * Only non-reference fields are moved!
+   * Only non-reference fields are moved from [dataSource]
    */
-  open fun relabel(dataSource: WorkspaceEntity) {
+  open fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
     throw NotImplementedError()
   }
 }
@@ -577,6 +577,10 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
   }
 
   open fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    throw NotImplementedError()
+  }
+
+  open fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     throw NotImplementedError()
   }
 

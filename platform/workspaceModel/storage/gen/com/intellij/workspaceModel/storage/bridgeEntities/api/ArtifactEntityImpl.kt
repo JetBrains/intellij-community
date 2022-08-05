@@ -145,13 +145,15 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactEntity
       this.name = dataSource.name
       this.entitySource = dataSource.entitySource
       this.artifactType = dataSource.artifactType
       this.includeInProjectBuild = dataSource.includeInProjectBuild
       this.outputUrl = dataSource.outputUrl
+      if (parents != null) {
+      }
     }
 
 
@@ -366,6 +368,11 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
       this.outputUrl = this@ArtifactEntityData.outputUrl
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

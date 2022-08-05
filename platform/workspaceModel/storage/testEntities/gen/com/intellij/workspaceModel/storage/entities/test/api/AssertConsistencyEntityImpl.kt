@@ -70,10 +70,12 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AssertConsistencyEntity
       this.passCheck = dataSource.passCheck
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -137,6 +139,11 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return AssertConsistencyEntity(passCheck, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

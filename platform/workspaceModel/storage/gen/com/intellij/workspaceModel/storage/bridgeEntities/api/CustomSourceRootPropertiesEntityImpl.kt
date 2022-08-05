@@ -98,10 +98,13 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CustomSourceRootPropertiesEntity
       this.entitySource = dataSource.entitySource
       this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+      }
     }
 
 
@@ -204,6 +207,12 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
     return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource) {
       this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(SourceRootEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

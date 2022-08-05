@@ -103,11 +103,13 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NamedEntity
       this.myName = dataSource.myName
       this.entitySource = dataSource.entitySource
       this.additionalProperty = dataSource.additionalProperty
+      if (parents != null) {
+      }
     }
 
 
@@ -227,6 +229,11 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
     return NamedEntity(myName, entitySource) {
       this.additionalProperty = this@NamedEntityData.additionalProperty
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

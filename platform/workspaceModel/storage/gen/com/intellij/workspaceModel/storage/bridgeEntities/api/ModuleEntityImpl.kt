@@ -162,12 +162,14 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleEntity
       this.name = dataSource.name
       this.entitySource = dataSource.entitySource
       this.type = dataSource.type
       this.dependencies = dataSource.dependencies.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -637,6 +639,11 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     return ModuleEntity(name, dependencies, entitySource) {
       this.type = this@ModuleEntityData.type
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

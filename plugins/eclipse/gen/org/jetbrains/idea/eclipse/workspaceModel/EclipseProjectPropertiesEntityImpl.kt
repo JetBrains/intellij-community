@@ -137,7 +137,7 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EclipseProjectPropertiesEntity
       this.entitySource = dataSource.entitySource
       this.variablePaths = dataSource.variablePaths.toMutableMap()
@@ -147,6 +147,9 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
       this.forceConfigureJdk = dataSource.forceConfigureJdk
       this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
       this.srcPlace = dataSource.srcPlace.toMutableMap()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -351,6 +354,12 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
                                           srcPlace, entitySource) {
       this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

@@ -117,9 +117,12 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootTestEntity
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+      }
     }
 
 
@@ -287,6 +290,12 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
     return ContentRootTestEntity(entitySource) {
       this.module = parents.filterIsInstance<ModuleTestEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleTestEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

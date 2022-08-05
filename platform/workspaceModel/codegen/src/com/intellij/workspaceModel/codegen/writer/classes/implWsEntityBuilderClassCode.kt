@@ -1,12 +1,13 @@
 package com.intellij.workspaceModel.codegen.classes
 
 import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.fields.implWsBuilderFieldCode
-import com.intellij.workspaceModel.codegen.fields.implWsBuilderIsInitializedCode
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.fields.implWsBuilderFieldCode
+import com.intellij.workspaceModel.codegen.fields.implWsBuilderIsInitializedCode
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -67,7 +68,7 @@ ${
       
       line()
       lineComment("Relabeling code, move information from dataSource to this builder")
-      section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn})") {
+      section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn}, parents: Set<WorkspaceEntity>?)") {
         line("dataSource as $javaFullName")
         list(allFields.noPersistentId().noRefs()) { lineBuilder, field ->
           var type = field.type
@@ -81,6 +82,17 @@ ${
             is ValueType.Set<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
             is ValueType.Map<*, *> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
             else -> lineBuilder.line("this.${field.name} = dataSource.${field.name}")
+          }
+        }
+
+        `if`("parents != null") {
+          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
+            val parentType = it.type
+            if (parentType is ValueType.Optional) {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+            } else {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
+            }
           }
         }
       }

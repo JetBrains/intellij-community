@@ -99,11 +99,14 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaResourceRootEntity
       this.entitySource = dataSource.entitySource
       this.generated = dataSource.generated
       this.relativeOutputPath = dataSource.relativeOutputPath
+      if (parents != null) {
+        this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+      }
     }
 
 
@@ -219,6 +222,12 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
     return JavaResourceRootEntity(generated, relativeOutputPath, entitySource) {
       this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(SourceRootEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

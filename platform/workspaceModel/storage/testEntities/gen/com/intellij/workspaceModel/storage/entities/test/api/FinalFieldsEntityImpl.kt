@@ -82,12 +82,14 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FinalFieldsEntity
       this.descriptor = dataSource.descriptor
       this.entitySource = dataSource.entitySource
       this.description = dataSource.description
       this.anotherVersion = dataSource.anotherVersion
+      if (parents != null) {
+      }
     }
 
 
@@ -175,6 +177,11 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
       this.description = this@FinalFieldsEntityData.description
       this.anotherVersion = this@FinalFieldsEntityData.anotherVersion
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

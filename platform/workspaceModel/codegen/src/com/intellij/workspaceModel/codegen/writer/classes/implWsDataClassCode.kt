@@ -162,6 +162,17 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
       }
 
+      sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
+        line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
+        allRefsFields.filterNot { it.type.getRefType().child }.forEach {
+          val parentType = it.type
+          if (parentType !is ValueType.Optional) {
+            line("res.add(${parentType.javaType}::class.java)")
+          }
+        }
+        line("return res")
+      }
+
       // --- equals
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")

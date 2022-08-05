@@ -127,11 +127,15 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CustomPackagingElementEntity
       this.typeId = dataSource.typeId
       this.entitySource = dataSource.entitySource
       this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+      }
     }
 
 
@@ -320,6 +324,11 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

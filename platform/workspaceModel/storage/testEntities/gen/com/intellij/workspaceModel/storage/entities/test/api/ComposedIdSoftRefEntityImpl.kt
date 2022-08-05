@@ -89,11 +89,13 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ComposedIdSoftRefEntity
       this.myName = dataSource.myName
       this.entitySource = dataSource.entitySource
       this.link = dataSource.link
+      if (parents != null) {
+      }
     }
 
 
@@ -211,6 +213,11 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ComposedIdSoftRefEntity(myName, link, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

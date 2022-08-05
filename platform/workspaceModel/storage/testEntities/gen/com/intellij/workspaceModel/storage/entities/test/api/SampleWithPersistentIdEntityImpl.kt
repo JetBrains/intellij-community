@@ -132,7 +132,7 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleWithPersistentIdEntity
       this.booleanProperty = dataSource.booleanProperty
       this.entitySource = dataSource.entitySource
@@ -141,6 +141,8 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
       this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
       this.fileProperty = dataSource.fileProperty
       this.nullableData = dataSource.nullableData
+      if (parents != null) {
+      }
     }
 
 
@@ -322,6 +324,11 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
                                         entitySource) {
       this.nullableData = this@SampleWithPersistentIdEntityData.nullableData
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

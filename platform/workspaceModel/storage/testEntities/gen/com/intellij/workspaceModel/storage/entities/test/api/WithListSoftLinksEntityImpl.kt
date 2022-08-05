@@ -90,11 +90,13 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithListSoftLinksEntity
       this.myName = dataSource.myName
       this.entitySource = dataSource.entitySource
       this.links = dataSource.links.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -241,6 +243,11 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return WithListSoftLinksEntity(myName, links, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

@@ -86,10 +86,12 @@ open class OoParentWithoutPidEntityImpl : OoParentWithoutPidEntity, WorkspaceEnt
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoParentWithoutPidEntity
       this.parentProperty = dataSource.parentProperty
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -189,6 +191,11 @@ class OoParentWithoutPidEntityData : WorkspaceEntityData<OoParentWithoutPidEntit
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return OoParentWithoutPidEntity(parentProperty, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

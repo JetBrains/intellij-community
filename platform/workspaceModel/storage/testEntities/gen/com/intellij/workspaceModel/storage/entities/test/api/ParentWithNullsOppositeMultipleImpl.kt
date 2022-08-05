@@ -77,10 +77,12 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNullsOppositeMultiple
       this.parentData = dataSource.parentData
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -147,6 +149,11 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ParentWithNullsOppositeMultiple(parentData, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

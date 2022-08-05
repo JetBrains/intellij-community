@@ -95,10 +95,13 @@ open class ChildNullableEntityImpl : ChildNullableEntity, WorkspaceEntityBase() 
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildNullableEntity
       this.childData = dataSource.childData
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<ParentNullableEntity>().single()
+      }
     }
 
 
@@ -199,6 +202,12 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
     return ChildNullableEntity(childData, entitySource) {
       this.parentEntity = parents.filterIsInstance<ParentNullableEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ParentNullableEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

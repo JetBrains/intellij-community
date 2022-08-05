@@ -87,11 +87,13 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LinkedListEntity
       this.myName = dataSource.myName
       this.entitySource = dataSource.entitySource
       this.next = dataSource.next
+      if (parents != null) {
+      }
     }
 
 
@@ -209,6 +211,11 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LinkedListEntity(myName, next, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

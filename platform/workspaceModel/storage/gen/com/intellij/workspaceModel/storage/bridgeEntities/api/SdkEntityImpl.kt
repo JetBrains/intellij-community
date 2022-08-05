@@ -100,10 +100,13 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SdkEntity
       this.entitySource = dataSource.entitySource
       this.homeUrl = dataSource.homeUrl
+      if (parents != null) {
+        this.library = parents.filterIsInstance<LibraryEntity>().single()
+      }
     }
 
 
@@ -206,6 +209,12 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     return SdkEntity(homeUrl, entitySource) {
       this.library = parents.filterIsInstance<LibraryEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

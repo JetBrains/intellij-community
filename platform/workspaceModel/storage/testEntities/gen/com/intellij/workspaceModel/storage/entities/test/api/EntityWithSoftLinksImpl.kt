@@ -190,7 +190,7 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithSoftLinks
       this.link = dataSource.link
       this.entitySource = dataSource.entitySource
@@ -206,6 +206,8 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
       this.justNullableProperty = dataSource.justNullableProperty
       this.justListProperty = dataSource.justListProperty.toMutableList()
       this.deepSealedClass = dataSource.deepSealedClass
+      if (parents != null) {
+      }
     }
 
 
@@ -1117,6 +1119,11 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       this.inOptionalContainer = this@EntityWithSoftLinksData.inOptionalContainer
       this.justNullableProperty = this@EntityWithSoftLinksData.justNullableProperty
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

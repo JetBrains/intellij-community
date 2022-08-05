@@ -102,13 +102,15 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity2
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
       this.filePath = dataSource.filePath
       this.directoryPath = dataSource.directoryPath
       this.notNullRoots = dataSource.notNullRoots.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -227,6 +229,11 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     return VFUEntity2(data, directoryPath, notNullRoots, entitySource) {
       this.filePath = this@VFUEntity2Data.filePath
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

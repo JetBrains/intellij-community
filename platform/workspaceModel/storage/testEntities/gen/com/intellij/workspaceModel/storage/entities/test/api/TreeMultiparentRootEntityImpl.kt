@@ -99,10 +99,12 @@ open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceE
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeMultiparentRootEntity
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -210,6 +212,11 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculablePersiste
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return TreeMultiparentRootEntity(data, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

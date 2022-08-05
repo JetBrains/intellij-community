@@ -98,10 +98,13 @@ open class ArtifactExternalSystemIdEntityImpl : ArtifactExternalSystemIdEntity, 
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactExternalSystemIdEntity
       this.externalSystemId = dataSource.externalSystemId
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.artifactEntity = parents.filterIsInstance<ArtifactEntity>().single()
+      }
     }
 
 
@@ -202,6 +205,12 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
     return ArtifactExternalSystemIdEntity(externalSystemId, entitySource) {
       this.artifactEntity = parents.filterIsInstance<ArtifactEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ArtifactEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

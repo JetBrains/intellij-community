@@ -103,11 +103,14 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleCustomImlDataEntity
       this.entitySource = dataSource.entitySource
       this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
       this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -219,6 +222,12 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
       this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
       this.module = parents.filterIsInstance<ModuleEntity>().single()
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {

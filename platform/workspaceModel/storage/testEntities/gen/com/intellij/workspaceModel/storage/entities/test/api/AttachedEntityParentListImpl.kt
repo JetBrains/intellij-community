@@ -76,10 +76,12 @@ open class AttachedEntityParentListImpl : AttachedEntityParentList, WorkspaceEnt
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AttachedEntityParentList
       this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
 
 
@@ -144,6 +146,11 @@ class AttachedEntityParentListData : WorkspaceEntityData<AttachedEntityParentLis
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return AttachedEntityParentList(data, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {
