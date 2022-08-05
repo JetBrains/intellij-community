@@ -264,8 +264,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
 
       if (targetEntityTrack.parents.isEmpty()) {
-        val (continueProcess, replaceWithRootEntityId) = findAndReplaceRootEntity(
-          targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase)
+        val replaceWithRootEntityId = findAndReplaceRootEntity(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase)
         return replaceWithRootEntityId
       }
       else {
@@ -286,6 +285,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         else {
           val replaceWithSourceMatches = entityFilter(replaceWithEntityData.entitySource)
+          @Suppress("KotlinConstantConditions")
           when {
             targetSourceMatches && replaceWithSourceMatches -> {
               replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
@@ -305,19 +305,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    fun findAndReplaceRootEntity(targetRootEntity: WorkspaceEntityBase): Pair<Boolean, EntityId?> {
+    fun findAndReplaceRootEntity(targetRootEntity: WorkspaceEntityBase): EntityId? {
       val targetRootEntityId = targetRootEntity.id
       val currentTargetState = targetState[targetRootEntityId]
       if (currentTargetState != null) {
         when (currentTargetState) {
           is ReplaceState.NoChange -> {
-            return true to currentTargetState.replaceWithEntityId
+            return currentTargetState.replaceWithEntityId
           }
           is ReplaceState.Relabel -> {
-            return true to currentTargetState.replaceWithEntityId
+            return currentTargetState.replaceWithEntityId
           }
           ReplaceState.Remove -> {
-            return false to null
+            return null
           }
         }
       }
@@ -327,11 +327,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         if (entityFilter(targetRootEntity.entitySource)) {
           targetRootEntityId operation Operation.Remove
           targetRootEntityId.addState(ReplaceState.Remove)
-          return false to null
+          return null
         }
         else {
           targetRootEntityId.addState(ReplaceState.NoChange(null))
-          return false to null
+          return null
         }
       }
 
@@ -339,20 +339,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       when {
         entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
           replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          return true to replaceWithEntity.id
+          return replaceWithEntity.id
         }
         entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
           removeWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          // TODO test this
-          return false to replaceWithEntity.id
+          return null
         }
         !entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
           replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
-          return true to replaceWithEntity.id
+          return replaceWithEntity.id
         }
         !entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
           doNothingOn(targetRootEntity.id, replaceWithEntity.id)
-          return true to replaceWithEntity.id
+          return replaceWithEntity.id
         }
       }
 
