@@ -11,10 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ModuleOrderEntry
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -92,13 +89,13 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         return module
     }
 
-    protected fun Module.addContentRoot(rootPath: Path) {
+    protected fun Module.addContentRoot(rootPath: Path): SourceFolder {
         val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootPath.toFile())!!
         WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
             root.refresh(false, true)
         }
 
-        PsiTestUtil.addSourceContentToRoots(this, root)
+        return PsiTestUtil.addSourceContentToRoots(this, root)
     }
 
     protected data class FileWithText(val name: String, val text: String)

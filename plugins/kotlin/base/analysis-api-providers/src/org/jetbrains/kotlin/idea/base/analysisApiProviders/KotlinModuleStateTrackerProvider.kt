@@ -15,8 +15,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
@@ -76,7 +75,42 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     private inner class ModelChangeListener : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
             handleLibraryChanges(event)
-            handleModuleRootChanges(event)
+            handleModuleChanges(event)
+            handleContentRootInModuleChanges(event)
+        }
+
+        private fun handleContentRootInModuleChanges(event: VersionedStorageChange) {
+            for (changedModule in event.getChangedModules()) {
+                sourceModuleCache[changedModule]?.incModificationCount()
+            }
+        }
+
+        private fun VersionedStorageChange.getChangedModules(): Set<Module> = buildSet {
+            getChanges(ContentRootEntity::class.java).mapNotNullTo(this) {
+                getChangedModule(it.oldEntity, it.newEntity)
+            }
+
+            getChanges(SourceRootEntity::class.java).mapNotNullTo(this) {
+                getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
+            }
+
+            getChanges(JavaSourceRootEntity::class.java).mapNotNullTo(this) {
+                getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
+            }
+        }
+
+        private fun VersionedStorageChange.getChangedModule(
+            contentRootBefore: ContentRootEntity?,
+            contentRootAfter: ContentRootEntity?
+        ): Module? {
+            val oldModule = contentRootBefore?.module?.findModule(storageBefore)
+            val newModule = contentRootAfter?.module?.findModule(storageAfter)
+            if (newModule != null && oldModule != null) {
+                check(oldModule == newModule) {
+                    "$oldModule should be equal to $newModule for ${EntityChange.Replaced::class.java}"
+                }
+            }
+            return oldModule ?: newModule
         }
 
         private fun handleLibraryChanges(event: VersionedStorageChange) {
@@ -98,7 +132,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
             }
         }
 
-        private fun handleModuleRootChanges(event: VersionedStorageChange) {
+        private fun handleModuleChanges(event: VersionedStorageChange) {
             val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
             for (change in moduleEntities) {
                 when (change) {
@@ -118,10 +152,13 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         }
     }
 
-    private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(event: VersionedStorageChange, get: (C, EntityStorage) -> E): E {
+    private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
+        event: VersionedStorageChange,
+        get: (C, EntityStorage) -> E
+    ): E {
         val old = get(oldEntity, event.storageBefore)
         val new = get(newEntity, event.storageAfter)
-        check (old == new) {
+        check(old == new) {
             "$old should be equal to $new for ${EntityChange.Replaced::class.java}"
         }
         return new

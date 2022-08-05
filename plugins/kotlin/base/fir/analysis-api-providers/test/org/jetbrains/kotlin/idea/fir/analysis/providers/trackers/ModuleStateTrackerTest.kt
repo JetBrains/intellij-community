@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.trackers
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -39,6 +40,59 @@ class ModuleStateTrackerTest : AbstractMultiModuleTest() {
             moduleCWithTracker.changed()
         )
     }
+
+    fun testThatModuleModificationTrackedChangedAfterAddingModuleRoots() {
+        val moduleA = createModuleInTmpDir("a")
+        val moduleB = createModuleInTmpDir("b")
+        val moduleC = createModuleInTmpDir("c")
+
+        val moduleAWithTracker = ModuleWithModuleStateTracker(moduleA)
+        val moduleBWithTracker = ModuleWithModuleStateTracker(moduleB)
+        val moduleCWithTracker = ModuleWithModuleStateTracker(moduleC)
+
+        moduleA.addContentRoot(createTempDirectory().toPath())
+
+        Assert.assertTrue(
+            "Root modification count for module A with dependencies added should change, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertFalse(
+            "Root modification count for module B without dependencies added should not change, modification count is ${moduleBWithTracker.modificationCount}",
+            moduleBWithTracker.changed()
+        )
+        Assert.assertFalse(
+            "Root modification count for module C without dependencies added should not change, modification count is ${moduleCWithTracker.modificationCount}",
+            moduleCWithTracker.changed()
+        )
+    }
+
+    fun testThatModuleModificationTrackedChangedAfterRemovingModuleRoots() {
+        val moduleA = createModuleInTmpDir("a")
+        val moduleB = createModuleInTmpDir("b")
+        val moduleC = createModuleInTmpDir("c")
+
+        val root = moduleA.addContentRoot(createTempDirectory().toPath())
+
+        val moduleAWithTracker = ModuleWithModuleStateTracker(moduleA)
+        val moduleBWithTracker = ModuleWithModuleStateTracker(moduleB)
+        val moduleCWithTracker = ModuleWithModuleStateTracker(moduleC)
+
+        PsiTestUtil.removeContentEntry(moduleA, root.file!!)
+
+        Assert.assertTrue(
+            "Root modification count for module A with dependencies added should change, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertFalse(
+            "Root modification count for module B without dependencies added should not change, modification count is ${moduleBWithTracker.modificationCount}",
+            moduleBWithTracker.changed()
+        )
+        Assert.assertFalse(
+            "Root modification count for module C without dependencies added should not change, modification count is ${moduleCWithTracker.modificationCount}",
+            moduleCWithTracker.changed()
+        )
+    }
+
 
     fun testThatModuleModificationTrackedChangedAfterAddingLibraryDependency() {
         val moduleA = createModuleInTmpDir("a")
