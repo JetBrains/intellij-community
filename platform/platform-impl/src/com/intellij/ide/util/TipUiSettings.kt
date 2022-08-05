@@ -20,7 +20,13 @@ internal object TipUiSettings {
     get() = JBUI.scale(16)
   @JvmStatic
   val tipPanelBottomIndent: Int
-    get() = JBUI.scale(14)
+    get() = JBUI.scale(8)
+  @JvmStatic
+  val feedbackPanelTopIndent: Int
+    get() = JBUI.scale(12)
+  @JvmStatic
+  val feedbackIconIndent: Int
+    get() = JBUI.scale(6)
   @JvmStatic
   val tipPanelBorder: Border
     get() = BorderFactory.createEmptyBorder(tipPanelTopIndent, tipPanelLeftIndent, tipPanelBottomIndent, tipPanelRightIndent)
