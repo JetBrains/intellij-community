@@ -256,6 +256,11 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance().setValue(CAN_EXPAND_PROPERTY, state);
       setCanExpand(state);

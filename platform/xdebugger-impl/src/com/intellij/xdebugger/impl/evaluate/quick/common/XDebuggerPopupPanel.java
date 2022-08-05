@@ -232,6 +232,11 @@ public abstract class XDebuggerPopupPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
+    }
+
+    @Override
     public boolean isDumbAware() {
       return myDelegate.isDumbAware();
     }
