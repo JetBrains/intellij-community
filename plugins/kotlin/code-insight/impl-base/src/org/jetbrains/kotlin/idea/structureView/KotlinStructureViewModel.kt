@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structureView
 
@@ -8,15 +8,16 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.java.VisibilitySorter
 import com.intellij.ide.util.treeView.smartTree.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.idea.KotlinIdeaBundle
+import org.jetbrains.kotlin.idea.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
-class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?) :
-    StructureViewModelBase(ktFile, editor, KotlinStructureViewElement(ktFile, false)),
+open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement : StructureViewTreeElement) :
+    StructureViewModelBase(ktFile, editor, rootElement),
     StructureViewModel.ElementInfoProvider {
 
     init {
@@ -28,8 +29,6 @@ class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?) :
             element !is KtFunctionLiteral &&
             !(element is KtProperty && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration) &&
             !(element is KtFunction && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration)
-
-    override fun getNodeProviders() = NODE_PROVIDERS
 
     override fun getFilters() = FILTERS
 
@@ -44,7 +43,6 @@ class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?) :
     }
 
     companion object {
-        private val NODE_PROVIDERS = listOf(KotlinInheritedMembersNodeProvider())
         private val FILTERS = arrayOf(PropertiesFilter, PublicElementsFilter)
     }
 }
@@ -52,7 +50,7 @@ class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?) :
 object KotlinVisibilitySorter : VisibilitySorter() {
     override fun getComparator() = Comparator<Any> { a1, a2 -> a1.accessLevel() - a2.accessLevel() }
 
-    private fun Any.accessLevel() = (this as? KotlinStructureViewElement)?.visibility?.accessLevel ?: Int.MAX_VALUE
+    private fun Any.accessLevel() = (this as? AbstractKotlinStructureViewElement)?.accessLevel ?: Int.MAX_VALUE
 
     override fun getName() = ID
 
@@ -61,11 +59,11 @@ object KotlinVisibilitySorter : VisibilitySorter() {
 
 object PublicElementsFilter : Filter {
     override fun isVisible(treeNode: TreeElement): Boolean {
-        return (treeNode as? KotlinStructureViewElement)?.visibility?.isPublic ?: true
+        return (treeNode as? AbstractKotlinStructureViewElement)?.isPublic ?: true
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinIdeaBundle.message("show.non.public"), null, PlatformIcons.PRIVATE_ICON)
+        return ActionPresentationData(KotlinCodeInsightBundle.message("show.non.public"), null, PlatformIcons.PRIVATE_ICON)
     }
 
     override fun getName() = ID
@@ -77,13 +75,13 @@ object PublicElementsFilter : Filter {
 
 object PropertiesFilter : Filter {
     override fun isVisible(treeNode: TreeElement): Boolean {
-        val element = (treeNode as? KotlinStructureViewElement)?.element
+        val element = (treeNode as? AbstractKotlinStructureViewElement)?.element
         val isProperty = element is KtProperty && element.isMember || element is KtParameter && element.isPropertyParameter()
         return !isProperty
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinIdeaBundle.message("show.properties"), null, PlatformIcons.PROPERTY_ICON)
+        return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, PlatformIcons.PROPERTY_ICON)
     }
 
     override fun getName() = ID
@@ -91,4 +89,13 @@ object PropertiesFilter : Filter {
     override fun isReverted() = true
 
     const val ID = "KOTLIN_SHOW_PROPERTIES"
+}
+
+/**
+ * Required until 2 implementations would be merged
+ */
+interface AbstractKotlinStructureViewElement {
+    val accessLevel : Int?
+    val isPublic : Boolean
+    val element : NavigatablePsiElement
 }

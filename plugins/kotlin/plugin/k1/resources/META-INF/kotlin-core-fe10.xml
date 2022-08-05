@@ -136,6 +136,10 @@
     <lang.psiStructureViewFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
+    <structureViewBuilder
+            order="first"
+            key="CLASS"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
   </extensions>
 
   <!-- Line markers -->

@@ -10,12 +10,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
-import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.UnaryOperator
@@ -165,6 +163,7 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.descriptions",
     "kotlin.code-insight.intentions-k2",
     "kotlin.code-insight.inspections-k2",
+    "kotlin.code-insight.k2",
     "kotlin.fir",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",

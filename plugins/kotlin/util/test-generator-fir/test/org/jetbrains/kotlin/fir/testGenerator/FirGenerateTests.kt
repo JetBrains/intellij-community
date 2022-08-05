@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
+import org.jetbrains.kotlin.idea.structureView.AbstractKotlinFirFileStructureTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -202,6 +203,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+        
+        testClass<AbstractKotlinFirFileStructureTest> {
+            model("structureView/fileStructure", pattern = KT_WITHOUT_DOTS)
         }
     }
 

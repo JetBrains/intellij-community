@@ -166,11 +166,6 @@
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
 
 
-    <structureViewBuilder
-            order="first"
-            key="CLASS"
-            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
-
     <registryKey
             key="kotlin.code-vision.usages"
             description="Enable Code-Vision usages search"

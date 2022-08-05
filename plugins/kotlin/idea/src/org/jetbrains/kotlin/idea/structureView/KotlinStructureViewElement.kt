@@ -21,9 +21,9 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class KotlinStructureViewElement(
-    element: NavigatablePsiElement,
+    val nElement: NavigatablePsiElement,
     private val isInherited: Boolean = false
-) : PsiTreeElementBase<NavigatablePsiElement>(element), Queryable {
+) : PsiTreeElementBase<NavigatablePsiElement>(nElement), Queryable, AbstractKotlinStructureViewElement {
 
     private var kotlinPresentation
             by AssignableLazyProperty {
@@ -43,6 +43,13 @@ class KotlinStructureViewElement(
             visibility = Visibility(descriptor)
         }
     }
+
+    override val accessLevel: Int?
+        get() = visibility.accessLevel
+    override val isPublic: Boolean
+        get() = visibility.isPublic
+    override val element: NavigatablePsiElement
+        get() = nElement
 
     override fun getPresentation(): ItemPresentation = kotlinPresentation
     override fun getLocationString(): String? = kotlinPresentation.locationString

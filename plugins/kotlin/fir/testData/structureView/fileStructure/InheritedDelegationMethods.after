@@ -1,0 +1,7 @@
+-InheritedDelegationMethods.kt
+ -class Test : Some
+  fun equals(other: Any?): Boolean location=→Any
+  fun first(): Unit location=→Some
+  fun hashCode(): Int location=→Any
+  fun second(): Unit location=→Some
+  fun toString(): String location=→Any
