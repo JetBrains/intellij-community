@@ -40,27 +40,51 @@ open class GitRefNameValidatorSettingsTest {
   }
 
   @Test
-  fun `test branchName is transformed when isOn is true`() {
+  fun `test branchName is transformed by cleanUpBranchName when isOn is true`() {
     myFakeSettings.isOn = true
     assertEquals("branchname---", GitRefNameValidator.getInstance().cleanUpBranchName("branchName..**@{"))
   }
 
   @Test
-  fun `test branchName is not transformed when isOn is false`() {
+  fun `test branchName is transformed by cleanUpBranchNameOnTyping when isOn is true`() {
+    myFakeSettings.isOn = true
+    assertEquals("branchname---", GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping("branchName..**@{"))
+  }
+
+  @Test
+  fun `test branchName is not transformed by cleanUpBranchName when isOn is false`() {
     myFakeSettings.isOn = false
     assertEquals("branchName..**@{", GitRefNameValidator.getInstance().cleanUpBranchName("branchName..**@{"))
   }
 
   @Test
-  fun `test branchName is converted to lowercase when isConvertingToLowerCase is true`() {
+  fun `test branchName is not transformed by cleanUpBranchNameOnTyping when isOn is false`() {
+    myFakeSettings.isOn = false
+    assertEquals("branchName..**@{", GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping("branchName..**@{"))
+  }
+
+  @Test
+  fun `test branchName is converted by cleanUpBranchName to lowercase when isConvertingToLowerCase is true`() {
     myFakeSettings.isConvertingToLowerCase = true
     assertEquals("branchname-test", GitRefNameValidator.getInstance().cleanUpBranchName("BRanchNAME-tESt"))
   }
 
   @Test
-  fun `test branchName is not converted to lowercase when isConvertingToLowerCase is false`() {
+  fun `test branchName is converted by cleanUpBranchNameOnTyping to lowercase when isConvertingToLowerCase is true`() {
+    myFakeSettings.isConvertingToLowerCase = true
+    assertEquals("branchname-test", GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping("BRanchNAME-tESt"))
+  }
+
+  @Test
+  fun `test branchName is not converted to lowercase by cleanUpBranchName when isConvertingToLowerCase is false`() {
     myFakeSettings.isConvertingToLowerCase = false
     assertEquals("BRanchNAME-tESt", GitRefNameValidator.getInstance().cleanUpBranchName("BRanchNAME-tESt"))
+  }
+
+  @Test
+  fun `test branchName is not converted to lowercase by cleanUpBranchNameOnTyping when isConvertingToLowerCase is false`() {
+    myFakeSettings.isConvertingToLowerCase = false
+    assertEquals("BRanchNAME-tESt", GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping("BRanchNAME-tESt"))
   }
 
   @Test
