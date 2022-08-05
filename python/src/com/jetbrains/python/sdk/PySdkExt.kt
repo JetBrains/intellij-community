@@ -407,7 +407,8 @@ val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = targetAdd
  * Where "remote_sources" folder for certain SDK is stored
  */
 val Sdk.remoteSourcesLocalPath: Path
-  get() {
-    val sdkUniqueId = (homePath!! + targetEnvConfiguration?.uuid).hashCode().toString()
-    return Path.of(PathManager.getSystemPath()) / PythonSdkUtil.REMOTE_SOURCES_DIR_NAME / sdkUniqueId
-  }
+  get() =
+    Path.of(PathManager.getSystemPath()) /
+    Path.of(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME) /
+    Path.of(targetAdditionalData?.uuid?.toString() ?: "notTargetSdk") /
+    Path.of(homePath?.hashCode()?.toString() ?: "noHomePath")

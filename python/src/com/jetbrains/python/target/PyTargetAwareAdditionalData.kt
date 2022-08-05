@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
 import java.nio.file.Path
+import java.util.*
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
@@ -25,6 +26,11 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
                                                                                   RemoteSdkProperties by b,
                                                                                   PyRemoteSdkAdditionalDataMarker {
 
+  /**
+   * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
+   */
+  var uuid: UUID = UUID.randomUUID()
+    internal set
 
   /**
    * The source of truth for the target configuration.
@@ -58,6 +64,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     b.save(rootElement)
     // store target configuration
     saveTargetBasedSdkAdditionalData(rootElement, targetState)
+    rootElement.setAttribute(SDK_UUID_FIELD_NAME, uuid.toString())
   }
 
   override fun load(element: Element?) {
@@ -82,6 +89,9 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     }
     targetState = loadedState
     _targetEnvironmentConfiguration = loadedConfiguration
+    element.getAttributeValue(SDK_UUID_FIELD_NAME)?.let {
+      uuid = UUID.fromString(it)
+    }
   }
 
   /**
@@ -99,6 +109,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
 
   companion object {
+    private const val SDK_UUID_FIELD_NAME = "SDK_UUID"
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
 
     private val LOG = logger<PyTargetAwareAdditionalData>()
