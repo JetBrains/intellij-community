@@ -86,7 +86,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
         val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
         if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-        addSubtree((entityData as WorkspaceEntityBase).id, it.id)
+        addSubtree(entityData.id, it.id)
       }
     }
   }
@@ -101,6 +101,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       processReplaceWithRootEntity(replaceWithRootEntity, replaceWithPathToRoot)
     }
 
+    @Suppress("MoveVariableDeclarationIntoWhen")
     private fun processReplaceWithRootEntity(replaceWithRootEntity: WorkspaceEntityBase,
                                              replaceWithEntitiesTrack: ArrayList<EntityId>) {
       val (continueProcess, targetRootEntityIdN) = findAndReplaceRootEntity(replaceWithRootEntity)
@@ -112,7 +113,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       for (replaceWithEntity in replaceWithEntitiesTrack.reversed()) {
 
-        @Suppress("MoveVariableDeclarationIntoWhen")
         val replaceWithCurrentState = replaceWithState[replaceWithEntity]
         when (replaceWithCurrentState) {
           ReplaceWithState.SubtreeMoved -> break
@@ -166,9 +166,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
+    @Suppress("MoveVariableDeclarationIntoWhen")
     private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityBase): Pair<Boolean, EntityId?> {
-
-      @Suppress("MoveVariableDeclarationIntoWhen")
       val currentState = replaceWithState[replaceWithRootEntity.id]
       when (currentState) {
         ReplaceWithState.SubtreeMoved -> return false to null
@@ -192,7 +191,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
 
       val targetEntityId = (targetEntity as WorkspaceEntityBase).id
-      @Suppress("MoveVariableDeclarationIntoWhen")
       val targetCurrentState = targetState[targetEntityId]
       when (targetCurrentState) {
         is ReplaceState.NoChange -> return true to targetEntityId
@@ -510,7 +508,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           @Suppress("KotlinConstantConditions")
           when {
             replaceWithSourceMatches -> addWorkspaceData(replaceWithEntityData, targetRootEntityId)
-            !replaceWithSourceMatches -> Unit // TODO Should we also track replaceWith store as we do with the local one using `state`?
+            !replaceWithSourceMatches -> Unit
           }
         }
       }
