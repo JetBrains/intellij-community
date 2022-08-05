@@ -56,9 +56,9 @@ class RepairUtilityBuilder {
     class Binary(
       val os: OsFamily, val arch: JvmArchitecture,
       val relativeSourcePath: String, val relativeTargetPath: String,
-      val integrityManifestUrlVariable: String
+      val distributionUrlVariable: String
     ) {
-      val integrityManifestSuffix: String
+      val distributionSuffix: String
         get() = when (arch) {
                   JvmArchitecture.x64 -> ""
                   JvmArchitecture.aarch64 -> "-" + arch.fileSuffix
@@ -66,7 +66,7 @@ class RepairUtilityBuilder {
                   OsFamily.LINUX -> ".tar.gz"
                   OsFamily.MACOS -> ".dmg"
                   OsFamily.WINDOWS -> ".exe"
-                } + ".manifest"
+                }
     }
 
     @Synchronized
@@ -136,7 +136,7 @@ class RepairUtilityBuilder {
           context.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
         }
         val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-        val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.integrityManifestSuffix}")
+        val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
         return@executeStep
       }
@@ -176,13 +176,13 @@ class RepairUtilityBuilder {
             runProcess(listOf("docker", "--version"), null, buildContext.messages)
             val baseUrl = buildContext.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
             val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-            val manifestUrls = BINARIES.associate {
-              it.integrityManifestUrlVariable to "$baseUrl/$baseName${it.integrityManifestSuffix}"
+            val distributionUrls = BINARIES.associate {
+              it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
             }
-            manifestUrls.forEach { (envVar, url) ->
+            distributionUrls.forEach { (envVar, url) ->
               buildContext.messages.info("$envVar=$url")
             }
-            runProcess(listOf("bash", "build.sh"), projectHome, buildContext.messages, additionalEnvVariables = manifestUrls)
+            runProcess(listOf("bash", "build.sh"), projectHome, buildContext.messages, additionalEnvVariables = distributionUrls)
           }
           catch (e: Throwable) {
             if (TeamCityHelper.isUnderTeamCity) {
