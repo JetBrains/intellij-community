@@ -25,14 +25,14 @@ abstract class GlobalPaths(val checkoutDir: Path) {
     false -> intelliJOutDirectory // Local run
   }
 
-  open val testHomePath:Path = intelliJOutDirectory.resolve("perf-startup").createDirectories()
+  open val testHomePath: Path = intelliJOutDirectory.resolve("perf-startup").createDirectories()
 
   val installersDirectory = (testHomePath / "installers").createDirectories()
 
   val testsDirectory = (testHomePath / "tests").createDirectories()
 
   private val cacheDirectory: Path = if (di.direct.instance<CIServer>().isBuildRunningOnCI &&
-    !System.getProperty("agent.persistent.cache").isNullOrEmpty()
+                                         !System.getProperty("agent.persistent.cache").isNullOrEmpty()
   ) {
     (Paths.get(System.getProperty("agent.persistent.cache"), "perf-tests-cache")).createDirectories()
   }
