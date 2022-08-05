@@ -109,6 +109,10 @@ internal fun convertParentImpl(
         parent = parent.parent
     }
 
+    if (parent is KtUserType &&  parent.parent.parent is KtConstructorCalleeExpression) {
+        parent =  parent.parent.parent.parent
+    } 
+    
     if (psi is KtSuperTypeCallEntry) {
         parent = parent?.parent
     }

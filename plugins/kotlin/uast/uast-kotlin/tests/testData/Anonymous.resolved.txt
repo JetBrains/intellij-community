@@ -23,7 +23,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UTypeReferenceExpression (name = java.io.Closeable) -> USimpleNameReferenceExpression (identifier = Closeable) -> PsiClass:Closeable: Closeable
     ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> PsiMethod:InputStream:
     ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> PsiMethod:InputStream:
-    UTypeReferenceExpression (name = java.io.InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> PsiMethod:InputStream: InputStream
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to PsiMethod:InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> PsiMethod:InputStream: InputStream
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     ULocalVariable (name = runnable) -> UObjectLiteralExpression -> null:
