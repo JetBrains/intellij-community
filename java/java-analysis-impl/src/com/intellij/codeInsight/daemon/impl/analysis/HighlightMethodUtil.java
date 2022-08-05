@@ -576,13 +576,15 @@ public final class HighlightMethodUtil {
     PsiMethod method = resolveResult.getElement();
     HighlightInfo highlightInfo;
     PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
-    PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    PsiType actualType =
+      methodCall instanceof PsiExpression ? ((PsiExpression)methodCall.copy()).getType() :
+      resolveResult.getSubstitutor(false).substitute(method.getReturnType());
     TextRange fixRange = getFixRange(elementToHighlight);
     if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
       highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(
         expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
-      if (methodCall instanceof PsiMethodCallExpression) {
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, (PsiMethodCallExpression)methodCall, expectedTypeByParent);
+      if (methodCall instanceof PsiExpression) {
+        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, (PsiExpression)methodCall, expectedTypeByParent, actualType);
       }
     }
     else {

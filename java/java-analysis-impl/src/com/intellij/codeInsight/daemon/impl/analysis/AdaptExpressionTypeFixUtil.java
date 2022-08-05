@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -15,7 +16,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -38,17 +38,16 @@ class AdaptExpressionTypeFixUtil {
   private static void registerPatchParametersFixes(@NotNull HighlightInfo info,
                                                    @NotNull PsiMethodCallExpression call,
                                                    @NotNull PsiMethod method,
-                                                   @NotNull PsiType expectedTypeByParent) {
+                                                   @NotNull PsiType expectedTypeByParent,
+                                                   @NotNull PsiType actualType) {
     JavaResolveResult result = call.resolveMethodGenerics();
     if (!(result instanceof MethodCandidateInfo)) return;
     PsiType methodType = method.getReturnType();
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutor(false);
-    PsiType actualType = substitutor.substitute(methodType);
     Substitution.TypeParameterSubstitution substitution =
       tryCast(findDesiredSubstitution(expectedTypeByParent, actualType, methodType, 0), Substitution.TypeParameterSubstitution.class);
     if (substitution == null) return;
     PsiTypeParameter typeParameter = substitution.myTypeParameter;
-    PsiType expectedTypeValue = substitution.myType;
+    PsiType expectedTypeValue = substitution.myDesiredType;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     Set<PsiTypeParameter> set = Set.of(typeParameter);
 
@@ -78,12 +77,16 @@ class AdaptExpressionTypeFixUtil {
         QuickFixAction.registerQuickFixAction(info, fix);
       }
     }
+    PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutor(false);
     PsiType expectedArgType = substitutor.put(typeParameter, expectedTypeValue).substitute(parameterType);
     if (arg instanceof PsiLambdaExpression && parameterType instanceof PsiClassType) {
       registerLambdaReturnFixes(info, (PsiLambdaExpression)arg, (PsiClassType)parameterType, expectedArgType, typeParameter);
       return;
     }
-    registerExpectedTypeFixes(info, arg, expectedArgType);
+    PsiType actualArgType = PsiPolyExpressionUtil.isPolyExpression(arg) ?
+                            substitutor.put(typeParameter, substitution.myActualType).substitute(parameterType) :
+                            arg.getType();
+    registerExpectedTypeFixes(info, arg, expectedArgType, actualArgType);
   }
 
   private static void registerPatchQualifierFixes(@NotNull HighlightInfo info,
@@ -106,8 +109,9 @@ class AdaptExpressionTypeFixUtil {
     if (qualifierClass == null) return;
     PsiType expectedQualifierType = JavaPsiFacade.getElementFactory(method.getProject())
       .createType(qualifierClass, classResolveResult.getSubstitutor().put(typeParameter, expectedTypeValue));
-    if (!expectedQualifierType.equals(qualifierCall.getType())) {
-      registerPatchParametersFixes(info, qualifierCall, qualifierMethod, expectedQualifierType);
+    PsiType actualType = qualifierCall.getType();
+    if (actualType != null && !expectedQualifierType.equals(actualType)) {
+      registerPatchParametersFixes(info, qualifierCall, qualifierMethod, expectedQualifierType, actualType);
     }
   }
 
@@ -146,25 +150,40 @@ class AdaptExpressionTypeFixUtil {
   /**
    * Registers fixes (if any) that update code to match the expression type with the desired type.
    *
-   * @param info error highlighting to attach fixes to
-   * @param expression expression whose type is incorrect
+   * @param info         error highlighting to attach fixes to
+   * @param expression   expression whose type is incorrect
    * @param expectedType desired expression type.
    */
   static void registerExpectedTypeFixes(@NotNull HighlightInfo info, @NotNull PsiExpression expression, @Nullable PsiType expectedType) {
-    if (expectedType == null) return;
+    PsiType actualType;
+    if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      actualType = ((PsiExpression)expression.copy()).getType();
+    }
+    else {
+      actualType = expression.getType();
+    }
+    registerExpectedTypeFixes(info, expression, expectedType, actualType);
+  }
+
+  /**
+   * Registers fixes (if any) that update code to match the expression type with the desired type.
+   *
+   * @param info         error highlighting to attach fixes to
+   * @param expression   expression whose type is incorrect
+   * @param expectedType desired expression type
+   * @param actualType   actual expression type
+   */
+  static void registerExpectedTypeFixes(@NotNull HighlightInfo info,
+                                        @NotNull PsiExpression expression,
+                                        @Nullable PsiType expectedType,
+                                        @Nullable PsiType actualType) {
+    if (actualType == null || expectedType == null) return;
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
     TextRange range = expression.getTextRange();
     String role = info.startOffset == range.getStartOffset() && info.endOffset == range.getEndOffset() ? null : getRole(expression);
     QuickFixAction.registerQuickFixAction(info, new WrapWithAdapterMethodCallFix(expectedType, expression, role));
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression));
     QuickFixAction.registerQuickFixAction(info, new WrapExpressionFix(expectedType, expression, role));
-    PsiType actualType = expression.getType();
-    if (expression instanceof PsiMethodCallExpression) {
-      JavaResolveResult result = ((PsiMethodCallExpression)expression).resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo) {
-        actualType = ((MethodCandidateInfo)result).getSubstitutor(false).substitute(actualType);
-      }
-    }
     if (expectedType instanceof PsiArrayType) {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
       if (erasedValueType != null &&
@@ -180,7 +199,7 @@ class AdaptExpressionTypeFixUtil {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod argMethod = ((PsiMethodCallExpression)expression).resolveMethod();
       if (argMethod != null) {
-        registerPatchParametersFixes(info, (PsiMethodCallExpression)expression, argMethod, expectedType);
+        registerPatchParametersFixes(info, (PsiMethodCallExpression)expression, argMethod, expectedType, actualType);
       }
     }
   }
@@ -221,11 +240,13 @@ class AdaptExpressionTypeFixUtil {
 
     class TypeParameterSubstitution implements Substitution {
       final @NotNull PsiTypeParameter myTypeParameter;
-      final @NotNull PsiType myType;
+      final @NotNull PsiType myActualType;
+      final @NotNull PsiType myDesiredType;
 
-      public TypeParameterSubstitution(@NotNull PsiTypeParameter parameter, @NotNull PsiType type) {
+      public TypeParameterSubstitution(@NotNull PsiTypeParameter parameter, @NotNull PsiType actualType, @NotNull PsiType desiredType) {
         myTypeParameter = parameter;
-        myType = type;
+        myActualType = actualType;
+        myDesiredType = desiredType;
       }
 
       @Override
@@ -233,17 +254,17 @@ class AdaptExpressionTypeFixUtil {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TypeParameterSubstitution that = (TypeParameterSubstitution)o;
-        return myTypeParameter.equals(that.myTypeParameter) && myType.equals(that.myType);
+        return myTypeParameter.equals(that.myTypeParameter) && myDesiredType.equals(that.myDesiredType);
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(myTypeParameter, myType);
+        return Objects.hash(myTypeParameter, myDesiredType);
       }
 
       @Override
       public String toString() {
-        return myTypeParameter.getName() + "->" + myType.getCanonicalText();
+        return myTypeParameter.getName() + "->" + myDesiredType.getCanonicalText();
       }
     }
   }
@@ -260,19 +281,6 @@ class AdaptExpressionTypeFixUtil {
                                      ((PsiArrayType)methodType).getComponentType(),
                                      level);
     }
-    if (expected instanceof PsiWildcardType && level == 1) {
-      PsiWildcardType wildcardType = (PsiWildcardType)expected;
-      if (wildcardType.isExtends()) {
-        expected = wildcardType.getExtendsBound();
-      }
-      else if (wildcardType.isSuper()) {
-        expected = wildcardType.getSuperBound();
-      }
-    }
-    if (actual instanceof PsiWildcardType && level == 1 && TypeUtils.isJavaLangObject(expected)) {
-      // workaround for collector accumulator, probably incorrect in general?
-      return Substitution.TOP;
-    }
     if (expected.equals(actual)) return Substitution.TOP;
     if (!(methodType instanceof PsiClassType)) return Substitution.BOTTOM;
     PsiClass methodClass = ((PsiClassType)methodType).resolve();
@@ -283,7 +291,7 @@ class AdaptExpressionTypeFixUtil {
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put((PsiTypeParameter)methodClass, expected);
           if (!substitutor.substitute(superType).isAssignableFrom(expected)) return Substitution.BOTTOM;
         }
-        return new Substitution.TypeParameterSubstitution((PsiTypeParameter)methodClass, expected);
+        return new Substitution.TypeParameterSubstitution((PsiTypeParameter)methodClass, actual, expected);
       }
       return Substitution.BOTTOM;
     }
