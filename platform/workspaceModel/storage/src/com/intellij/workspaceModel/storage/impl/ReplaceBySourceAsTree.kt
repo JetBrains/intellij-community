@@ -62,7 +62,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, id, replaceWithStorage.indexes)
           }
           Operation.Remove -> {
-            targetStorage.removeEntity(id)
+            targetStorage.removeEntityByEntityId(id)
           }
         }
       }
