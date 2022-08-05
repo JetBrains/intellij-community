@@ -689,7 +689,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS
   }
 
-  private static boolean isSynchronousTaskExecution() {
+  public static boolean isSynchronousTaskExecution() {
     Application application = ApplicationManager.getApplication();
     return (application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"));
   }
