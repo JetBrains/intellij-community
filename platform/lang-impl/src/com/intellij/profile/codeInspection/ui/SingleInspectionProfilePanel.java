@@ -1080,7 +1080,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             if (context != null) {
               Settings settings = Settings.KEY.getData(context);
               SearchTextField searchTextField = SearchTextField.KEY.getData(context);
-              String configId = url.getHost();
+              String configId = url.getAuthority(); //using `getAuthority` instead of `getHost` to support white spaces in configId
               String search = url.getQuery();
               if (settings != null) {
                 Configurable configurable = settings.find(configId);
