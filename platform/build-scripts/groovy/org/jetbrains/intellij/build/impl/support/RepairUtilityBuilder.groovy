@@ -50,30 +50,30 @@ final class RepairUtilityBuilder {
     final OsFamily os
     final JvmArchitecture arch
     final String relativeTargetPath
-    final String integrityManifestUrlVariable
-    final String integrityManifestSuffix
+    final String distributionUrlVariable
+    final String distributionSuffix
     private final String relativeSourcePath
 
-    private Binary(OsFamily os, JvmArchitecture arch, String relativeSourcePath, String relativeTargetPath,  String integrityManifestUrlVariable) {
+    private Binary(OsFamily os, JvmArchitecture arch, String relativeSourcePath, String relativeTargetPath,  String distributionUrlVariable) {
       this.os = os
       this.arch = arch
       this.relativeSourcePath = relativeSourcePath
       this.relativeTargetPath = relativeTargetPath
-      this.integrityManifestUrlVariable = integrityManifestUrlVariable
-      String integrityManifestSuffix = ""
+      this.distributionUrlVariable = distributionUrlVariable
+      String distributionSuffix = ""
       if (arch == JvmArchitecture.aarch64) {
-        integrityManifestSuffix = "-" + arch.fileSuffix
+        distributionSuffix = "-" + arch.fileSuffix
       }
       if (os == OsFamily.LINUX) {
-        integrityManifestSuffix += ".tar.gz"
+        distributionSuffix += ".tar.gz"
       }
       else if (os == OsFamily.MACOS) {
-        integrityManifestSuffix += ".dmg"
+        distributionSuffix += ".dmg"
       }
       else if (os == OsFamily.WINDOWS) {
-        integrityManifestSuffix += ".exe"
+        distributionSuffix += ".exe"
       }
-      this.integrityManifestSuffix = integrityManifestSuffix + ".manifest"
+      this.distributionSuffix = distributionSuffix
     }
   }
 
@@ -145,7 +145,7 @@ final class RepairUtilityBuilder {
         }
 
         String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-        Path artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.integrityManifestSuffix}")
+        Path artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
         return Unit.INSTANCE
       }
@@ -201,15 +201,15 @@ final class RepairUtilityBuilder {
          ProcessKt.runProcess(['docker', '--version'], null, buildContext.messages)
          def baseUrl = buildContext.applicationInfo.patchesUrl
          def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-         Map<String, String> manifestUrls = BINARIES.collectEntries {
-           def envVar = it.integrityManifestUrlVariable
-           def url = baseUrl + baseName + it.integrityManifestSuffix
+         Map<String, String> distributionUrls = BINARIES.collectEntries {
+           def envVar = it.distributionUrlVariable
+           def url = baseUrl + baseName + it.distributionSuffix
            buildContext.messages.info("$envVar=$url")
            [(envVar): url]
          }
          ProcessKt.runProcess(['bash', 'build.sh'], projectHome, buildContext.messages,
                               TimeUnit.MINUTES.toMillis(10L),
-                              manifestUrls)
+                              distributionUrls)
        }
         catch (Throwable e) {
           if (TeamCityHelper.isUnderTeamCity) {
