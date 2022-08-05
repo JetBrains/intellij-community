@@ -689,7 +689,7 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       parentEntity assert ReplaceState.Relabel(anotherParent.base.id)
-      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id)
+      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id, setOf(parentEntity.base.id))
     }
 
     replaceWithCheck {
@@ -952,7 +952,7 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       thisRoot assert ReplaceState.NoChange(replaceRoot.base.id)
-      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id)
+      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id, setOf(thisRoot.base.id))
     }
 
     replaceWithCheck {
@@ -1118,6 +1118,204 @@ class ReplaceBySourceAsTreeTest {
     builder.assertConsistency()
     var children = builder.entities(TreeMultiparentRootEntity::class.java).single().children
     assertTrue(children.isEmpty())
+  }
+
+  @Test
+  fun `detach root parent`() {
+    val internalChild = TreeMultiparentLeafEntity("internal", MySource)
+    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", AnotherSource) {
+          this.children = listOf(internalChild)
+        }
+      )
+    }
+    builder add leafsStructure
+    builder.modifyEntity(internalChild) {
+      this.mainParent = leafsStructure
+    }
+
+    val replaceWithEntity = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", AnotherSource) {
+          this.children = listOf(TreeMultiparentLeafEntity ("internal", MySource))
+        }
+      )
+    }
+
+    var rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(2, rootEntity.children.size)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(1, rootEntity.children.size)
+    val childAbove = rootEntity.children.single()
+    assertEquals("data", childAbove.data)
+    val child = childAbove.children.single()
+    assertTrue(child.mainParent == null)
+
+    thisStateCheck {
+      leafsStructure assert ReplaceState.NoChange(replaceWithEntity.base.id)
+      leafsStructure.children.single() assert ReplaceState.NoChange(replaceWithEntity.children.single().base.id)
+      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.single().children.single().base.id, setOf(leafsStructure.children.single().base.id))
+    }
+
+    replaceWithCheck {
+      replaceWithEntity assert ReplaceWithState.NoChange(leafsStructure.base.id)
+      replaceWithEntity.children.single() assert ReplaceWithState.NoChange(leafsStructure.children.single().base.id)
+      replaceWithEntity.children.single().children.single() assert ReplaceWithState.Relabel(leafsStructure.children.single().children.single().base.id)
+    }
+  }
+
+  @Test
+  fun `detach internal parent`() {
+    val internalChild = TreeMultiparentLeafEntity("internal", MySource)
+    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", AnotherSource) {
+          this.children = listOf(internalChild)
+        }
+      )
+    }
+    builder add leafsStructure
+    builder.modifyEntity(internalChild) {
+      this.mainParent = leafsStructure
+    }
+    val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceChild1 = TreeMultiparentLeafEntity("data", AnotherSource)
+    val replaceChild2 = TreeMultiparentLeafEntity("internal", MySource)
+    val replaceWithEntity = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        replaceChild1,
+        replaceChild2,
+      )
+    }
+
+    var rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(2, rootEntity.children.size)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(2, rootEntity.children.size)
+    val childAbove = rootEntity.children.single { it.data == "data" }
+    assertEquals("data", childAbove.data)
+    val noChildren = childAbove.children.isEmpty()
+    assertTrue(noChildren)
+
+    thisStateCheck {
+      root assert ReplaceState.NoChange(replaceWithEntity.base.id)
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceChild1.base.id)
+      internalChild assert ReplaceState.Relabel(replaceChild2.base.id, setOf(root.base.id))
+    }
+
+    replaceWithCheck {
+      replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
+      replaceChild1 assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+      replaceChild2 assert ReplaceWithState.Relabel(internalChild.base.id)
+    }
+  }
+
+  @Test
+  fun `detach both parents`() {
+    val internalChild = TreeMultiparentLeafEntity("internal", MySource)
+    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", AnotherSource) {
+          this.children = listOf(internalChild)
+        }
+      )
+    }
+    builder add leafsStructure
+    builder.modifyEntity(internalChild) {
+      this.mainParent = leafsStructure
+    }
+    val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceWithDataElement = TreeMultiparentLeafEntity("data", AnotherSource)
+    val replaceWithEntity = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        replaceWithDataElement,
+      )
+    }
+
+    var rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(2, rootEntity.children.size)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(1, rootEntity.children.size)
+    val childAbove = rootEntity.children.single { it.data == "data" }
+    assertEquals("data", childAbove.data)
+    val noChildren = childAbove.children.isEmpty()
+    assertTrue(noChildren)
+
+    thisStateCheck {
+      root assert ReplaceState.NoChange(replaceWithEntity.base.id)
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithDataElement.base.id)
+      internalChild assert ReplaceState.Remove
+    }
+
+    replaceWithCheck {
+      replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
+      replaceWithDataElement assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+    }
+  }
+
+  @Test
+  @Ignore
+  fun `attach to root entity`() {
+    val internalChild = TreeMultiparentLeafEntity("internal", MySource)
+    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", AnotherSource) {
+          this.children = listOf(internalChild)
+        }
+      )
+    }
+    builder add leafsStructure
+    val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val replaceWithDataElement = TreeMultiparentLeafEntity("data", AnotherSource)
+    val replaceWithEntity = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        replaceWithDataElement,
+      )
+    }
+    replacement add TreeMultiparentLeafEntity("internal", MySource) {
+      this.mainParent = replaceWithEntity
+      this.leafParent = replaceWithDataElement
+    }
+
+    var rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(1, rootEntity.children.size)
+
+    rbsMySources()
+
+    builder.assertConsistency()
+    rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals(2, rootEntity.children.size)
+    val childAbove = rootEntity.children.single { it.data == "data" }
+    assertEquals("data", childAbove.data)
+    val myInternalChild = childAbove.children.single()
+    assertTrue(myInternalChild.data == "internal")
+
+    thisStateCheck {
+      root assert ReplaceState.NoChange(replaceWithEntity.base.id)
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithDataElement.base.id)
+      internalChild assert ReplaceState.Remove
+    }
+
+    replaceWithCheck {
+      replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
+      replaceWithDataElement assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+    }
   }
 
   @Test

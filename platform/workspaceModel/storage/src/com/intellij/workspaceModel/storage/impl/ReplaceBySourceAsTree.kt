@@ -56,8 +56,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           is Operation.Relabel -> {
             val targetEntity = targetStorage.entityDataByIdOrDie(id).createEntity(targetStorage)
             val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
+            val parents = operation.parents?.mapTo(HashSet()) { targetStorage.entityDataByIdOrDie(it).createEntity(targetStorage) }
             targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
-              (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, null)
+              (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
             }
             targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, id, replaceWithStorage.indexes)
           }
@@ -210,7 +211,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           error("This branch should be already processed because we process 'target' entities first")
         }
         entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          replaceWorkspaceData(targetEntity.id, replaceWithRootEntity.id)
+          replaceWorkspaceData(targetEntity.id, replaceWithRootEntity.id, null)
           return true to targetEntityId
         }
         !entityFilter(replaceWithRootEntity.entitySource) && entityFilter(targetEntity.entitySource) -> {
@@ -267,16 +268,42 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         return replaceWithRootEntityId
       }
       else {
-        require(targetEntityTrack.parents.size == 1)
+        val entriesList = parentsAssociation.entries.toList()
 
-        val replaceWithEntityIds = childrenInReplaceWithStorage(parentsAssociation.values.single(), targetEntityTrack.entity.clazz)
-        val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
-        var replaceWithEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
-        while (replaceWithEntityData != null && replaceWithState[replaceWithEntityData.createEntityId()] != null) {
+        val targetParents = mutableSetOf<EntityId>()
+        var index = 0
+        var replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
+        for (i in entriesList.indices) {
+          index = i
+          val replaceWithEntityIds = childrenInReplaceWithStorage(entriesList[i].value, targetEntityTrack.entity.clazz)
+          val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
           replaceWithEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+          while (replaceWithEntityData != null && replaceWithState[replaceWithEntityData.createEntityId()] != null) {
+            replaceWithEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+          }
+          if (replaceWithEntityData != null) {
+            targetParents += entriesList[i].key.entity
+            break
+          }
         }
+
+        entriesList.drop(index).forEach { tailItem ->
+          val replaceWithEntityIds = childrenInReplaceWithStorage(tailItem.value, targetEntityTrack.entity.clazz)
+          val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
+          var replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+          while (replaceWithMyEntityData != null && replaceWithEntityData!!.createEntityId() != replaceWithMyEntityData.createEntityId()) {
+            replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+          }
+          if (replaceWithMyEntityData != null) {
+            targetParents += tailItem.key.entity
+          }
+        }
+
+        val targetParentClazzes = targetParents.map { it.clazz }
+        val requiredParentMissing = targetEntityData.getRequiredParents().any { it.toClassId() !in targetParentClazzes }
+
         val targetSourceMatches = entityFilter(targetEntityData.entitySource)
-        if (replaceWithEntityData == null) {
+        if (replaceWithEntityData == null || requiredParentMissing) {
           when (targetSourceMatches) {
             true -> removeWorkspaceData(targetEntityTrack.entity, null)
             false -> doNothingOn(targetEntityTrack.entity, null)
@@ -287,14 +314,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           @Suppress("KotlinConstantConditions")
           when {
             targetSourceMatches && replaceWithSourceMatches -> {
-              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
+              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents)
             }
             targetSourceMatches && !replaceWithSourceMatches -> {
               removeWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
               return null
             }
             !targetSourceMatches && replaceWithSourceMatches -> {
-              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
+              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents)
             }
             !targetSourceMatches && !replaceWithSourceMatches -> {
               doNothingOn(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
@@ -338,7 +365,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       replaceWithEntity as WorkspaceEntityBase
       when {
         entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
+          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id, null)
           return replaceWithEntity.id
         }
         entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -346,7 +373,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           return null
         }
         !entityFilter(targetRootEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id)
+          replaceWorkspaceData(targetRootEntity.id, replaceWithEntity.id, null)
           return replaceWithEntity.id
         }
         !entityFilter(targetRootEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -432,9 +459,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
   }
 
-  private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId) {
-    targetEntityId operation Operation.Relabel(replaceWithEntityId)
-    targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId))
+  private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<EntityId>?) {
+    targetEntityId operation Operation.Relabel(replaceWithEntityId, parents)
+    targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId, parents))
     replaceWithEntityId.addState(ReplaceWithState.Relabel(targetEntityId))
   }
 
@@ -487,13 +514,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
 internal sealed interface Operation {
   object Remove : Operation
-  class Relabel(val replaceWithEntityId: EntityId) : Operation
+  class Relabel(val replaceWithEntityId: EntityId, val parents: Set<EntityId>?) : Operation
 }
 
 internal class AddSubtree(val targetParent: EntityId?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
-  data class Relabel(val replaceWithEntityId: EntityId) : ReplaceState
+  data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<EntityId>? = null) : ReplaceState
   data class NoChange(val replaceWithEntityId: EntityId?) : ReplaceState
   object Remove : ReplaceState
 }
