@@ -18,17 +18,16 @@ package org.jetbrains.idea.maven.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter
 import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
-@SuppressWarnings("GroovyPointlessBoolean")
-class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCase {
-
+class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
-  void testImportAnnotationProcessorProfiles() throws Exception {
+  fun testImportAnnotationProcessorProfiles() {
     createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
@@ -111,7 +110,7 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
   </build>
 """)
 
-    importProject """
+    importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -124,27 +123,27 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
   <module>module4</module>
 </modules>
 
-"""
+""")
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert
-      compilerConfiguration
-        .findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE)
-        .getModuleNames() == new HashSet<String>(["module1", "module4"])
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE) == null
+    assertEquals(
+      compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE)?.getModuleNames(),
+      setOf("module1", "module4"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE))
 
-    def projectProfile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + 'project')
-    assert projectProfile.getModuleNames() == new HashSet<String>(["module2"])
-    assert projectProfile.getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + 'module3') == null
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + 'module3_1') == null
-    assert compilerConfiguration.moduleProcessorProfiles.size() == 2
+    val projectProfile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
+    assertNotNull(projectProfile)
+    assertEquals(projectProfile!!.getModuleNames(), setOf("module2"))
+    assertEquals(projectProfile.getProcessors(), setOf("com.test.SourceCodeGeneratingAnnotationProcessor2"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "module3"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "module3_1"))
+    assertEquals(compilerConfiguration.moduleProcessorProfiles.size, 2)
   }
 
   @Test
-  void testOverrideGeneratedOutputDir() {
-    importProject """
+  fun testOverrideGeneratedOutputDir() {
+    importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -160,18 +159,19 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
     </plugin>
   </plugins>
 </build>
-"""
+""")
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project").
-      getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated")
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
+    assertNotNull(profile)
+    assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated"))
   }
 
   @Test
-  void testImportAnnotationProcessorOptions() {
-    importProject """
+  fun testImportAnnotationProcessorOptions() {
+    importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -194,19 +194,19 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
     </plugin>
   </plugins>
 </build>
-"""
+""")
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    def processorOptions =
-      compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project").getProcessorOptions()
-    assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333', 'opt4': '444', 'justKey': '']
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val processorOptions =
+      compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")?.getProcessorOptions()
+    assertEquals(processorOptions, mapOf("opt1" to "111", "opt2" to "222", "opt3" to "333", "opt4" to "444", "justKey" to ""))
   }
 
   @Test
-  void testMavenProcessorPlugin() {
-    importProject """
+  fun testMavenProcessorPlugin() {
+    importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -254,20 +254,21 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
             </plugin>
   </plugins>
 </build>
-"""
+""")
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    def profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
-    assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
-    assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
-    assert new HashMap(profile.getProcessorOptions()) == ['myoption1': 'TRUE', 'myoption2': 'TRUE']
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
+    assertNotNull(profile)
+    assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel"))
+    assertTrue(profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest"))
+    assertEquals(profile.getProcessorOptions(), mapOf("myoption1" to "TRUE", "myoption2" to "TRUE"))
   }
 
   @Test
-  void testMavenProcessorPluginDefault() {
-    importProject """
+  fun testMavenProcessorPluginDefault() {
+    importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -313,18 +314,19 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
             </plugin>
   </plugins>
 </build>
-"""
+""")
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    def profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
-    assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
-    assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")
+    assertNotNull(profile)
+    assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel"))
+    assertTrue(profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest"))
   }
 
   @Test
-  void testProcessorsViaBscMavenPlugin() {
+  fun testProcessorsViaBscMavenPlugin() {
     importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -363,9 +365,10 @@ class AnnotationProcessorImportingTest extends MavenMultiVersionImportingTestCas
   </build>
 """)
 
-    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+    val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + 'project').getProcessors() ==
-           new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"])
+    TestCase.assertEquals(
+      compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorImporter.PROFILE_PREFIX + "project")?.getProcessors(),
+      hashSetOf("com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"))
   }
 }
