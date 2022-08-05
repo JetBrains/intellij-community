@@ -258,7 +258,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         when (targetEntityState) {
           is ReplaceState.NoChange -> return targetEntityState.replaceWithEntityId
           is ReplaceState.Relabel -> return targetEntityState.replaceWithEntityId
-          //is ReplaceState.Relink -> return targetEntityState.replaceWithEntityId
           ReplaceState.Remove -> return null
         }
       }
@@ -292,6 +291,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             }
             targetSourceMatches && !replaceWithSourceMatches -> {
               removeWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
+              return null
             }
             !targetSourceMatches && replaceWithSourceMatches -> {
               replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
