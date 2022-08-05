@@ -298,6 +298,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
 
     if (mySourceDirectory != null) {
+      if (!new File(mySourceDirectory).isAbsolute()) {
+        mySourceDirectory = new File(myProjectPath, mySourceDirectory).getPath();
+      }
       mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
 
       VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
