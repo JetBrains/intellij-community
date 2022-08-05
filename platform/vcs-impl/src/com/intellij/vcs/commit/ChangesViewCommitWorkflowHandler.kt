@@ -242,8 +242,11 @@ internal class ChangesViewCommitWorkflowHandler(
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
 
-  override fun updateWorkflow() {
+  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.commitState = getCommitState()
+    return configureCommitSession(project, sessionInfo,
+                                  workflow.commitState.changes,
+                                  workflow.commitState.commitMessage)
   }
 
   override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {

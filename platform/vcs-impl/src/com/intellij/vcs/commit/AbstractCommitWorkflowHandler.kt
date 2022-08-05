@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
@@ -133,7 +135,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
     refreshChanges {
       workflow.continueExecution {
-        updateWorkflow()
+        updateWorkflow(sessionInfo) &&
         doExecuteSession(sessionInfo)
       }
     }
@@ -146,7 +148,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
                                                           ui.getIncludedUnversionedFiles().size)
   }
 
-  protected open fun updateWorkflow() = Unit
+  protected abstract fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean
 
   /**
    * Check that commit can be performed with given parameters.
@@ -172,12 +174,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   }
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
-    if (sessionInfo.isVcsCommit) {
-      return workflow.executeSession(sessionInfo)
-    }
-    else {
-      return workflow.executeCustom(sessionInfo)
-    }
+    return workflow.executeSession(sessionInfo)
   }
 
   protected open fun saveCommitOptionsOnCommit(): Boolean {
@@ -210,4 +207,17 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
   override fun dispose() = Unit
+
+  companion object {
+    fun configureCommitSession(project: Project,
+                               sessionInfo: CommitSessionInfo,
+                               changes: List<Change>,
+                               commitMessage: String): Boolean {
+      if (sessionInfo is CommitSessionInfo.Custom) {
+        val title = sessionInfo.executor.getPresentableText()
+        return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
+      }
+      return true
+    }
+  }
 }

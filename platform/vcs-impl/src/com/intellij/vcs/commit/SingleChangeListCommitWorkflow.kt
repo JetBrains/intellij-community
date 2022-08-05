@@ -74,9 +74,6 @@ open class SingleChangeListCommitWorkflow(
     }
   }
 
-  override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean =
-    executeCustom(sessionInfo, commitState.changes, commitState.commitMessage)
-
   override fun doRunBeforeCommitChecks(checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
 

@@ -269,7 +269,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
-      return workflow.executeCustom(sessionInfo)
+      return workflow.executeSession(sessionInfo)
     }
 
     if (!isBackgroundCommitChecks()) {

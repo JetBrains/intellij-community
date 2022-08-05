@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
-import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
@@ -282,24 +281,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
     return true
-  }
-
-  abstract fun executeCustom(sessionInfo: CommitSessionInfo): Boolean
-
-  protected fun executeCustom(sessionInfo: CommitSessionInfo, changes: List<Change>, commitMessage: String): Boolean =
-    configureCommitSession(sessionInfo, changes, commitMessage) &&
-    executeSession(sessionInfo)
-
-  private fun configureCommitSession(sessionInfo: CommitSessionInfo,
-                                     changes: List<Change>,
-                                     commitMessage: String): Boolean {
-    if (sessionInfo is CommitSessionInfo.Custom) {
-      val title = sessionInfo.executor.getPresentableText()
-      return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
-    }
-    else {
-      return true
-    }
   }
 
   companion object {

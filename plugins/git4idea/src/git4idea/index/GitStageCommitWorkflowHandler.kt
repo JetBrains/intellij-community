@@ -39,9 +39,10 @@ class GitStageCommitWorkflowHandler(
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
 
-  override fun updateWorkflow() {
+  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.trackerState = state
     workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
+    return true
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
