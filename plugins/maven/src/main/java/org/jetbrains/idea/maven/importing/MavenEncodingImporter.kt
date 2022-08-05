@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.io.URLUtil.urlToPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -25,6 +26,7 @@ import java.nio.charset.UnsupportedCharsetException
 /**
  * @author Sergey Evdokimov
  */
+@ApiStatus.Internal
 class MavenEncodingImporter : MavenImporter("", ""), MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 

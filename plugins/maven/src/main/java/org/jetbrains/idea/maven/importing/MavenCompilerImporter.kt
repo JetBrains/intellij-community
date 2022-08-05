@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
   private val LOG = Logger.getInstance(MavenCompilerImporter::class.java)
 

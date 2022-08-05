@@ -22,6 +22,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SyncBundle;
@@ -44,6 +45,7 @@ import java.util.*;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
+@ApiStatus.Internal
 public class MavenAnnotationProcessorImporter extends MavenImporter {
 
   public static final String PROFILE_PREFIX = "Annotation profile for ";
