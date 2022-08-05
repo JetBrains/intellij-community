@@ -1,3 +1,4 @@
+// WITH_STDLIB
 
 class A
 
@@ -6,5 +7,5 @@ fun <T : A> foo(x: List<T>, f: (T) -> Int) {
 }
 
 fun test() {
-    foo(listOf(A())) { 1 }
+    foo<A>(listOf(A())) { 1 }
 }
