@@ -284,7 +284,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  internal var useNewRbs = true
+  internal var useNewRbs = false
   internal var keepLastRbsEngine = false
   internal var engine: ReplaceBySourceOperation? = null
   private fun getRbsEngine(): ReplaceBySourceOperation {
