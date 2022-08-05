@@ -47,7 +47,7 @@ internal class PopupMenuListItemCellRenderer<T>(
         val itemLabel = itemLabelRenderer(item) + " " // The spaces are to compensate for the lack of padding in the label (yes, I know, it's a hack)
         val label = super.getListCellRendererComponent(list, itemLabel, index, isSelected, cellHasFocus) as JLabel
         label.font = list.font
-        colors.applyTo(label, isSelected)
+        colors.applyColors(label, isSelected)
 
         currentItemIsSelected = item === selectedValue
 

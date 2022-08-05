@@ -64,11 +64,6 @@ class PackagesSmartSearchField(
 
     private val listeners = mutableSetOf<(KeyEvent) -> Unit>()
 
-    fun registerOnKeyPressedListener(action: (KeyEvent) -> Unit): Subscription {
-        listeners.add(action)
-        return Subscription { listeners.remove(action) }
-    }
-
     override fun preprocessEventForTextField(e: KeyEvent?): Boolean {
         e?.let { keyEvent -> listeners.forEach { listener -> listener(keyEvent) } }
         if (e?.keyCode == KeyEvent.VK_DOWN || e?.keyCode == KeyEvent.VK_PAGE_DOWN) {

@@ -1,18 +1,17 @@
-/*******************************************************************************
+/**
+ * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations
+ * under the License.
+ * ****************************************************************************
+ */
 
 package com.jetbrains.packagesearch.intellij.plugin.ui
 
@@ -22,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
@@ -64,7 +64,19 @@ object PackageSearchUI {
     internal val HeaderBackgroundColor = MAIN_BG_COLOR
     internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
     internal val UsualBackgroundColor = MAIN_BG_COLOR
-    internal val ListRowHighlightBackground = JBColor.namedColor("PackageSearch.SearchResult.background", 0xF2F5F9, 0x4C5052)
+
+    internal val SearchResultListRowBackground
+        get() = JBColor.namedColor(
+            "PackageSearch.SearchResult.background",
+            if (isNewUI) {
+                JBColor(0xff0000, 0x00ff00)
+                // JBColor(0xCCE1FF, 0x444B50)
+            } else {
+                JBColor(0x0000FF, 0xFF00FF)
+                // JBColor(0xF2F5F9, 0x4C5052)
+            }
+        )
+
     internal val InfoBannerBackground = JBColor.lazy {
         EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
             ?: JBColor(0xE6EEF7, 0x1C3956)
@@ -72,6 +84,9 @@ object PackageSearchUI {
 
     internal val MediumHeaderHeight = JBValue.Float(30f)
     internal val SmallHeaderHeight = JBValue.Float(24f)
+
+    val isNewUI
+        get() = ExperimentalUI.isNewUI()
 
     @Suppress("MagicNumber") // Thanks, Swing
     internal fun headerPanel(init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
@@ -159,7 +174,7 @@ object PackageSearchUI {
     }
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
-        isSelected -> getTextColorPrimary(isSelected)
+        isSelected -> getTextColorPrimary(true)
         else -> GRAY_COLOR
     }
 

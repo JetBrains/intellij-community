@@ -32,6 +32,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
 import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
@@ -135,4 +136,6 @@ internal class HeaderPanel(
         border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
+
+    override fun getBackground() = PackageSearchUI.SectionHeaderBackgroundColor
 }

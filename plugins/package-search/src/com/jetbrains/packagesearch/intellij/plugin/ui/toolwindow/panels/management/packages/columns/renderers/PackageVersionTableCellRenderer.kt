@@ -47,10 +47,10 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         row: Int,
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
-        table.colors.applyTo(this, isSelected)
+        table.colors.applyColors(this, isSelected)
 
         val bgColor = if (!isSelected && value is UiPackageModel.SearchResult) {
-            PackageSearchUI.ListRowHighlightBackground
+            PackageSearchUI.SearchResultListRowBackground
         } else {
             background
         }
@@ -75,7 +75,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
         add(
             labelComponent.apply {
-                table.colors.applyTo(this, isSelected)
+                table.colors.applyColors(this, isSelected)
                 background = bgColor
             }
         )

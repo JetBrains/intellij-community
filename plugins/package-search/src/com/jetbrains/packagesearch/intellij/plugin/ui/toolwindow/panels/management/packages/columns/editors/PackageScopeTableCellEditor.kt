@@ -47,7 +47,7 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
                 createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope)
             }
         }.apply {
-            table.colors.applyTo(this, isSelected = true)
+            table.colors.applyColors(this, isSelected = true)
             setCell(row, column)
         }
 

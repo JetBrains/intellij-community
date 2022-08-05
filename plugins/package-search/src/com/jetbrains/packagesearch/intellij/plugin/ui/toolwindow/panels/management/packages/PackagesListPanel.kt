@@ -2,17 +2,14 @@
  * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License. You may obtain
- * a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations
+ * under the License.
  * ****************************************************************************
  */
 
@@ -86,6 +83,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -192,10 +190,9 @@ internal class PackagesListPanel(
     private val mainToolbar = ActionManager.getInstance()
         .createActionToolbar("Packages.Manage", createActionGroup(), true)
         .apply {
-            targetComponent = toolbar
-            component.background = PackageSearchUI.HeaderBackgroundColor
-            val paneBackground = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
-            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, paneBackground)
+            component.background = if (PackageSearchUI.isNewUI) PackageSearchUI.UsualBackgroundColor else PackageSearchUI.HeaderBackgroundColor
+            val separatorColor = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
+            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, separatorColor)
         }
 
     private fun createActionGroup() = DefaultActionGroup().apply {
@@ -213,6 +210,19 @@ internal class PackagesListPanel(
                 layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "center")
                 add(searchTextField)
                 add(mainToolbar.component)
+                mainToolbar.targetComponent = this
+                if (PackageSearchUI.isNewUI) {
+                    project.coroutineScope.launch {
+                        // This is a hack — the ActionToolbar will reset its own background colour,
+                        // so we need to wait for the next frame to set it
+                        delay(16)
+                        withContext(Dispatchers.EDT) { mainToolbar.component.background = PackageSearchUI.UsualBackgroundColor }
+                    }
+                }
+
+                if (PackageSearchUI.isNewUI) {
+                    border = BorderFactory.createMatteBorder(0, 0, 1.scaled(), 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+                }
             }
 
             override fun getBackground() = PackageSearchUI.UsualBackgroundColor

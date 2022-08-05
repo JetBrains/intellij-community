@@ -17,10 +17,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
@@ -38,10 +36,10 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         row: Int,
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
-        table.colors.applyTo(this, isSelected)
+        table.colors.applyColors(this, isSelected)
 
         val bgColor = if (!isSelected && value is PackagesTableItem.InstallablePackage) {
-            PackageSearchUI.ListRowHighlightBackground
+            PackageSearchUI.SearchResultListRowBackground
         } else {
             background
         }
@@ -49,7 +47,7 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         background = bgColor
 
         val jbComboBoxLabel = JBComboBoxLabel().apply {
-            table.colors.applyTo(this, isSelected)
+            table.colors.applyColors(this, isSelected)
             background = bgColor
             icon = AllIcons.General.LinkDropTriangle
 
@@ -59,12 +57,5 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
             }
         }
         add(jbComboBoxLabel)
-    }
-
-    @NlsSafe
-    private fun scopesMessage(installedScopes: List<PackageScope>, defaultScope: PackageScope): String {
-        if (installedScopes.isEmpty()) return defaultScope.displayName
-
-        return installedScopes.joinToString { it.displayName }
     }
 }

@@ -1,18 +1,17 @@
-/*******************************************************************************
+/**
+ * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations
+ * under the License.
+ * ****************************************************************************
+ */
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
@@ -24,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.awt.Color
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -171,11 +172,6 @@ internal class PackagesTable(
 
         setShowGrid(false)
         rowHeight = 20.scaled()
-
-        background = UIUtil.getTableBackground()
-        foreground = UIUtil.getTableForeground()
-        selectionBackground = UIUtil.getTableSelectionBackground(true)
-        selectionForeground = UIUtil.getTableSelectionForeground(true)
 
         setExpandableItemsEnabled(false)
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -427,4 +423,16 @@ internal class PackagesTable(
             column.preferredWidth = (weights[column.modelIndex] * tW).roundToInt()
         }
     }
+
+    override fun getBackground(): Color =
+        if (PackageSearchUI.isNewUI) PackageSearchUI.UsualBackgroundColor else UIUtil.getTableBackground()
+
+    override fun getForeground(): Color =
+        if (PackageSearchUI.isNewUI) UIUtil.getListForeground() else UIUtil.getTableForeground()
+
+    override fun getSelectionBackground(): Color =
+        if (PackageSearchUI.isNewUI) UIUtil.getListSelectionBackground(true) else UIUtil.getTableSelectionBackground(true)
+
+    override fun getSelectionForeground(): Color =
+        if (PackageSearchUI.isNewUI) UIUtil.getListSelectionForeground(true) else UIUtil.getTableSelectionForeground(true)
 }

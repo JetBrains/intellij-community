@@ -67,18 +67,18 @@ internal class PackageActionsTableCellRendererAndEditor(
     ): JComponent {
         val isSearchResult = viewModel?.isSearchResult ?: false
         val colors = when {
-            isSearchResult -> table.colors.copy(background = PackageSearchUI.ListRowHighlightBackground)
+            isSearchResult -> table.colors.copy(background = PackageSearchUI.SearchResultListRowBackground)
             else -> table.colors
         }
 
         if (viewModel?.operationType == null) {
             return JPanel().apply {
-                colors.applyTo(this, isSelected)
+                colors.applyColors(this, isSelected)
             }
         }
 
         return JLabel().apply {
-            colors.applyTo(this, isSelected)
+            colors.applyColors(this, isSelected)
             isOpaque = true
             horizontalAlignment = SwingConstants.RIGHT
             border = emptyBorder(right = 10)

@@ -27,7 +27,7 @@ internal data class TableColors(
     val foreground: Color
 ) {
 
-    fun applyTo(component: JComponent, isSelected: Boolean) {
+    fun applyColors(component: JComponent, isSelected: Boolean) {
         component.background = if (isSelected) selectionBackground else background
         component.foreground = if (isSelected) selectionForeground else foreground
     }
