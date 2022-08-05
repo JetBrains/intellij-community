@@ -30,6 +30,7 @@ public final class TipDialog extends DialogWrapper {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
+    setResizable(false);
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel(project, tips, getDisposable());
     myShowActions = tips.size() > 1;
@@ -37,8 +38,6 @@ public final class TipDialog extends DialogWrapper {
       setDoNotAskOption(myTipPanel);
     }
     myShowingOnStartup = myTipPanel.isToBeShown();
-    setHorizontalStretch(1.33f);
-    setVerticalStretch(1.25f);
     init();
   }
 

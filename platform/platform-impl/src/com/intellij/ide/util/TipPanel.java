@@ -17,9 +17,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,11 +35,11 @@ import java.util.List;
 
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.ui.Gray.xD0;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
-  private static final int DEFAULT_WIDTH = 400;
-  private static final int DEFAULT_HEIGHT = 200;
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
@@ -60,10 +60,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myProject = project;
     myTextPane = new StyledTextPane();
     myTextPane.setBackground(UIUtil.getTextFieldBackground());
-    myTextPane.setBorder(JBUI.Borders.empty(16, 24, 20, 24));
+    myTextPane.setBorder(TipUiSettings.getTipPanelBorder());
     Disposer.register(parentDisposable, myTextPane);
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTextPane, true);
+    // scroll will not be shown in a regular case
+    // it is required only for technical writers to test whether the content of the new do not exceed the bounds
+    JBScrollPane scrollPane = new JBScrollPane(myTextPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
 
@@ -91,11 +93,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
    */
   private static boolean isExperiment(String algorithm) {
     return algorithm.endsWith("_SUMMER2020");
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    return new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   }
 
   private void showNext(boolean forward) {
@@ -152,6 +149,30 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     String text = IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName());
     List<TextPart> parts = List.of(new RegularTextPart(text, false));
     myTextPane.setParagraphs(List.of(new TextParagraph(parts)));
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    int width = TipUiSettings.imageWidth + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
+    int height = getDefaultPromoterHeight() + getDefaultTextPaneHeight();
+    return new Dimension(width, height);
+  }
+
+  private int getDefaultPromoterHeight() {
+    int lineHeight = getFontMetrics(JBFont.label()).getHeight();
+    return lineHeight + JBUI.scale(12 + 12);
+  }
+
+  private int getDefaultTextPaneHeight() {
+    int regularFontHeight = myTextPane.getFontMetrics(JBFont.label()).getHeight();
+    int headerFontHeight = myTextPane.getFontMetrics(JBFont.h3()).getHeight();
+    float regularLineSpacing = 1.2f;
+
+    return TipUiSettings.getTipPanelTopIndent() + regularFontHeight                                // subsystem label
+           + (int)TextParagraph.SMALL_INDENT + headerFontHeight                                    // header
+           + (int)TextParagraph.MEDIUM_INDENT + 6 * (int)(regularFontHeight * regularLineSpacing)  // tip content
+           + (int)TextParagraph.LARGE_INDENT + TipUiSettings.imageHeight                           // image
+           + TipUiSettings.getTipPanelBottomIndent();
   }
 
   @Override
