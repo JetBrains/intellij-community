@@ -32,6 +32,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningForPolyConditional() { enableInspectionTool(new UncheckedWarningLocalInspection()); doTest(true, true); }
   public void testUncheckedWarningOnQualifierWithTypeParameterType() { enableInspectionTool(new UncheckedWarningLocalInspection()); doTest(true, true); }
   public void testLambdaExpressions() { doTest(false, true); }
+  public void testComplexStreamTypeMismatch() { doTest(false, false);}
   public void testUnsupportedFeatures() { doTest(false, false); }
   public void testModulesNotSupported() { doTest(false, false); }
 
