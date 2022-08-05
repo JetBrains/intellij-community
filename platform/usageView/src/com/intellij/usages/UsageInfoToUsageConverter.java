@@ -11,6 +11,7 @@ import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
 import com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -126,14 +127,14 @@ public final class UsageInfoToUsageConverter {
       });
       if (!features.isEmpty()) {
         final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
-        final Usage similarUsageAdapter;
+        final SimilarUsage similarUsageAdapter;
         if (readWriteAccess != null) {
           similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session);
         }
         else {
           similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session);
         }
-        return session.clusterUsage(features, similarUsageAdapter);
+        return session.clusterUsage(similarUsageAdapter);
       }
     }
     return convert(primaryElements, usageInfo);

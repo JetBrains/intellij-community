@@ -41,12 +41,12 @@ public class ClusteringSearchSession {
   }
 
   @RequiresBackgroundThread
-  public synchronized Usage clusterUsage(@NotNull Bag usageFeatures, @NotNull Usage similarUsageAdapter) {
-    UsageCluster cluster = getTheMostSimilarCluster(usageFeatures);
+  public synchronized @NotNull SimilarUsage clusterUsage(@NotNull SimilarUsage similarUsageAdapter) {
+    UsageCluster cluster = getTheMostSimilarCluster(similarUsageAdapter.getFeatures());
     if (cluster == null) {
       cluster = createNewCluster();
     }
-    cluster.addUsage((SimilarUsage)similarUsageAdapter);
+    cluster.addUsage(similarUsageAdapter);
     return similarUsageAdapter;
   }
 
