@@ -340,8 +340,8 @@ public final class EnvironmentUtil {
           .start();
         final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
-        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
+        String log = Files.exists(logFile) ? new String(Files.readAllBytes(logFile), Charset.defaultCharset()) : "(no log file)";
         if (exitCode != 0 || envData.isEmpty()) {
           if (!log.isEmpty()) {
             LOG.info("stdout/stderr: " + log);
