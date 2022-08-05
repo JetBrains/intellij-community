@@ -59,6 +59,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
               (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity)
             }
+            targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, id, replaceWithStorage.indexes)
           }
           Operation.Remove -> {
             targetStorage.removeEntity(id)
@@ -79,6 +80,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       val entityData = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
       targetStorage.addEntity(entityData)
+      targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, (entityData as WorkspaceEntityBase).id,
+                                                             replaceWithStorage.indexes)
 
       replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
         val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
