@@ -272,7 +272,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return fileIdsInner;
       });
 
-      trace.lookupResultSize(fileIds != null ? 0 : fileIds.size());
+      trace.lookupResultSize(fileIds != null ? fileIds.size() : 0);
 
       return createLazyFileIterator(fileIds, scope);
     }
@@ -609,7 +609,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
       final IntSet ids = processExceptions(indexId, null, scope, convertor);
 
-      trace.lookupResultSize(ids != null ? 0 : ids.size());
+      trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
     }
   }
@@ -637,7 +637,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       };
 
       final IntSet ids = processExceptions(indexId, null, filter, convertor);
-      trace.lookupResultSize(ids != null ? 0 : ids.size());
+      trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
     }
   }
