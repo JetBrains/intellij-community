@@ -96,22 +96,28 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     fun processEntity(replaceWithEntity: WorkspaceEntity) {
       replaceWithEntity as WorkspaceEntityBase
 
-      val (replaceWithRootEntity, replaceWithPathToRoot) = buildRootTrack(replaceWithEntity.id, replaceWithStorage)
+      val trackToParents = TrackToParents(replaceWithEntity.id)
+      buildRootTrack(trackToParents, replaceWithStorage)
 
-      processReplaceWithRootEntity(replaceWithRootEntity, replaceWithPathToRoot)
+      processReplaceWithRootEntity(trackToParents)
     }
 
     @Suppress("MoveVariableDeclarationIntoWhen")
-    private fun processReplaceWithRootEntity(replaceWithRootEntity: WorkspaceEntityBase,
-                                             replaceWithEntitiesTrack: ArrayList<EntityId>) {
+    private fun processReplaceWithRootEntity(trackToParents: TrackToParents) {
+      val trackRoot = trackToParents.singleRoot()
+      val replaceWithRootEntity = replaceWithStorage
+        .entityDataByIdOrDie(trackRoot.entity)
+        .createEntity(replaceWithStorage) as WorkspaceEntityBase
       val (continueProcess, targetRootEntityIdN) = findAndReplaceRootEntity(replaceWithRootEntity)
       if (!continueProcess) return
-      replaceWithEntitiesTrack.remove(replaceWithRootEntity.id).also { require(it) }
 
       assert(targetRootEntityIdN != null)
       var targetRootEntityId: EntityId = targetRootEntityIdN!!
 
-      for (replaceWithEntity in replaceWithEntitiesTrack.reversed()) {
+      var replaceWithEntityTrack = trackRoot
+      while (replaceWithEntityTrack.child != null) {
+        replaceWithEntityTrack = replaceWithEntityTrack.child!!
+        val replaceWithEntity = replaceWithEntityTrack.entity
 
         val replaceWithCurrentState = replaceWithState[replaceWithEntity]
         when (replaceWithCurrentState) {
@@ -244,20 +250,24 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     fun processEntity(targetEntityToReplace: WorkspaceEntity) {
       targetEntityToReplace as WorkspaceEntityBase
 
-      val (targetRootEntity, targetPathToRoot) = buildRootTrack(targetEntityToReplace.id, targetStorage)
-      processRoot(targetRootEntity, targetPathToRoot)
+      val trackToParents = TrackToParents(targetEntityToReplace.id)
+      buildRootTrack(trackToParents, targetStorage)
+      processRoot(trackToParents)
     }
 
-    private fun processRoot(targetRootEntity: WorkspaceEntityBase, targetRootTrack: MutableList<EntityId>) {
-      var (continueProcess, replaceWithRootEntityId) = findAndReplaceRootEntity(targetRootEntity)
-      targetRootTrack.remove(targetRootEntity.id).also { require(it) }
+    private fun processRoot(trackToParents: TrackToParents) {
+      val rootTrack = trackToParents.singleRoot()
+      var (continueProcess, replaceWithRootEntityId) = findAndReplaceRootEntity(
+        targetStorage.entityDataByIdOrDie(rootTrack.entity).createEntity(targetStorage) as WorkspaceEntityBase)
 
       if (!continueProcess) {
-        if (targetState[targetRootEntity.id] == ReplaceState.Remove) {
-          targetRootTrack.forEach {
-            val currentState = targetState[it]
+        if (targetState[rootTrack.entity] == ReplaceState.Remove) {
+          var trackItem = rootTrack
+          while (trackItem.child != null) {
+            trackItem = trackItem.child!!
+            val currentState = targetState[trackItem.entity]
             if (currentState == null) {
-              it.addState(ReplaceState.Remove)
+              trackItem.entity.addState(ReplaceState.Remove)
             } else if (currentState !is ReplaceState.Remove) {
               error("Unexpected state: $currentState")
             }
@@ -266,9 +276,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         return
       }
 
-      var targetRootEntityId = targetRootEntity.id
+      var targetRootEntityId = rootTrack.entity
       var markOtherToRemove = false
-      for (targetWorkspaceEntityBase in targetRootTrack.reversed()) {
+      var trackItem = rootTrack
+      while (trackItem.child != null) {
+        trackItem = trackItem.child!!
+        val targetWorkspaceEntityBase = trackItem.entity
         if (markOtherToRemove) {
           targetWorkspaceEntityBase.addState(ReplaceState.Remove)
           continue
@@ -614,23 +627,17 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   companion object {
-    private fun buildRootTrack(entity: EntityId,
-                               storage: AbstractEntityStorage): Pair<WorkspaceEntityBase, ArrayList<EntityId>> {
-      val pathToRoot = ArrayList<EntityId>()
-      val parents = storage.refs.getParentRefsOfChild(entity.asChild())
+    private fun buildRootTrack(entity: TrackToParents,
+                               storage: AbstractEntityStorage) {
+      val parents = storage.refs.getParentRefsOfChild(entity.entity.asChild())
       if (parents.size > 1) {
         error("Multiple Parents are not yet supported")
       }
-      else if (parents.size == 1) {
-        pathToRoot += entity
-        val parentEntity = storage.entityDataByIdOrDie(parents.values.single().id)
-        val deeperResult = buildRootTrack(parentEntity.createEntityId(), storage)
-        pathToRoot.addAll(deeperResult.second)
-        return deeperResult.first to pathToRoot
-      }
-      else {
-        pathToRoot += entity
-        return storage.entityDataByIdOrDie(entity).createEntity(storage) as WorkspaceEntityBase to pathToRoot
+      parents.values.forEach { parentEntityId ->
+        val parentTrack = TrackToParents(parentEntityId.id)
+        buildRootTrack(parentTrack, storage)
+        entity.parents += parentTrack
+        parentTrack.child = entity
       }
     }
   }
@@ -670,4 +677,15 @@ internal sealed interface ReplaceWithState {
   data class NoChange(val targetEntityId: EntityId) : ReplaceWithState
   data class Relabel(val targetEntityId: EntityId) : ReplaceWithState
   object NoChangeTraceLost : ReplaceWithState
+}
+
+class TrackToParents(
+  val entity: EntityId,
+  var child: TrackToParents? = null,
+  val parents: MutableList<TrackToParents> = ArrayList(),
+) {
+  fun singleRoot(): TrackToParents {
+    if (parents.isEmpty()) return this
+    return parents.single().singleRoot()
+  }
 }
