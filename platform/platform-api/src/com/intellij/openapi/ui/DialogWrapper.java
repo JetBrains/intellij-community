@@ -1371,6 +1371,11 @@ public abstract class DialogWrapper {
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root, disposable);
   }
 
