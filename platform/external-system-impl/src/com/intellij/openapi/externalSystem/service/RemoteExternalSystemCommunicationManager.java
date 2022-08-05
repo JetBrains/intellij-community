@@ -48,7 +48,6 @@ import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +60,7 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.util.PathUtil.getJarPathForClass;
+import static com.intellij.openapi.application.PathManager.getJarPathForClass;
 
 @Service(Service.Level.APP)
 public final class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
@@ -163,7 +162,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
             params.getClassPath().add(getJarPathForClass(manager.getProjectResolverClass()));
-            params.getClassPath().add(getJarPathForClassOrNull(manager.getClass().getSuperclass()));
+            params.getClassPath().add(getJarPathForClass(manager.getClass().getSuperclass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getTaskManagerClass().getName());
             manager.enhanceRemoteProcessing(params);
@@ -189,15 +188,6 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         return processHandler;
       }
     };
-  }
-
-  @Nullable
-  @Contract("null -> null")
-  private static String getJarPathForClassOrNull(@Nullable Class<?> aClass) {
-    if (aClass == null || aClass == Object.class) {
-      return null;
-    }
-    return getJarPathForClass(aClass);
   }
 
   @Nullable
