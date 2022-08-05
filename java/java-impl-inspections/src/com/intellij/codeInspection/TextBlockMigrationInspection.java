@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -116,7 +116,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(tryCast(descriptor.getPsiElement(), PsiExpression.class));
       if (expression == null) return;
-      Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
+      Document document = expression.getContainingFile().getViewProvider().getDocument();
       if (document == null) return;
       PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
       if (literalExpression != null) {
