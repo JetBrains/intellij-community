@@ -4116,39 +4116,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     @TestMetadata("testData/inspectionsLocal/coroutines")
     public abstract static class Coroutines extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/coroutines/deferredIsResult")
-        public static class DeferredIsResult extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("abstract.kt")
-            public void testAbstract() throws Exception {
-                runTest("testData/inspectionsLocal/coroutines/deferredIsResult/abstract.kt");
-            }
-
-            @TestMetadata("complex.kt")
-            public void testComplex() throws Exception {
-                runTest("testData/inspectionsLocal/coroutines/deferredIsResult/complex.kt");
-            }
-
-            @TestMetadata("lambda.kt")
-            public void testLambda() throws Exception {
-                runTest("testData/inspectionsLocal/coroutines/deferredIsResult/lambda.kt");
-            }
-
-            @TestMetadata("rename.kt")
-            public void testRename() throws Exception {
-                runTest("testData/inspectionsLocal/coroutines/deferredIsResult/rename.kt");
-            }
-
-            @TestMetadata("simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/inspectionsLocal/coroutines/deferredIsResult/simple.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/directUseOfResultType")
         public static class DirectUseOfResultType extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
