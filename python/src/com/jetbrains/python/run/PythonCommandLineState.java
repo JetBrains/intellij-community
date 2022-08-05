@@ -632,10 +632,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
-    Charset charset = commandLine.getCharset();
-    if (charset != null) {
-      setupEncodingEnvs(commandLine, charset);
-    }
+    setupEncodingEnvs(commandLine, commandLine.getCharset());
 
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
