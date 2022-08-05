@@ -243,7 +243,11 @@ interface MutableEntityStorage : EntityStorage {
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
-  fun removeEntity(e: WorkspaceEntity)
+  /**
+   * Remove the entity from the builder.
+   * Returns true if the entity was removed, false if the entity was not in the storage
+   */
+  fun removeEntity(e: WorkspaceEntity): Boolean
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
