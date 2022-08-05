@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager

@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.ui.codereview
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -7,24 +7,21 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.ui.BaseButtonBehavior
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.*
 import java.awt.event.*
-import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
 import kotlin.properties.Delegates.observable
 
-class InlineIconButton(icon: Icon,
-                       hoveredIcon: Icon? = null,
-                       disabledIcon: Icon? = null,
-                       @NlsContexts.Tooltip val tooltip: String? = null,
-                       var shortcut: ShortcutSet? = null)
+class InlineIconButton @JvmOverloads constructor(icon: Icon,
+                                                 hoveredIcon: Icon? = null,
+                                                 disabledIcon: Icon? = null,
+                                                 @NlsContexts.Tooltip val tooltip: String? = null,
+                                                 var shortcut: ShortcutSet? = null)
   : JComponent() {
 
   var actionListener: ActionListener? by observable(null) { _, old, new ->

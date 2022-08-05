@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
