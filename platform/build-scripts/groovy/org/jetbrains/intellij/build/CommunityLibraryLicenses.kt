@@ -28,6 +28,8 @@ object CommunityLibraryLicenses {
     androidDependency(name = "android-test-plugin-host-retention-proto", libraryName = "libstudio.android-test-plugin-host-retention-proto"),
     androidDependency(name = "android-test-plugin-result-listener-gradle-proto", libraryName = "libstudio.android-test-plugin-result-listener-gradle-proto"),
     androidDependency(name = "Android ADB Lib", libraryName = "precompiled-adblib"),
+    androidDependency(name = "Android ADB Lib (ddmlib compatibility)", libraryName = "precompiled-adblib.ddmlibcompatibility"),
+    androidDependency(name = "Android ADB Lib (tools)", libraryName = "precompiled-adblib.tools"),
     androidDependency(name = "Android AIA Protos", libraryName = "aia-proto"),
     androidDependency(name = "Android Analytics Crash", libraryName = "precompiled-analytics-crash"),
     androidDependency(name = "Android Analytics Protos", libraryName = "studio-analytics-proto"),
@@ -36,6 +38,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Annotations", libraryName = "precompiled-android-annotations"),
     androidDependency(name = "Android Apk Analyzer", libraryName = "precompiled-analyzer"),
     androidDependency(name = "Android Apk Binary Resources", libraryName = "precompiled-binary-resources"),
+    androidDependency(name = "Android Apk Sig", libraryName = "apksig"),
     androidDependency(name = "Android Apk ZLib", libraryName = "apkzlib"),
     androidDependency(name = "Android App Inspector (Background Task, proto)", libraryName = "background-inspector-proto"),
     androidDependency(name = "Android App Inspector (Network, proto)", libraryName = "network_inspector_java_proto"),
@@ -70,7 +73,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
     androidDependency(name = "Android Layout Api Library", libraryName = "precompiled-layoutlib-api"),
-    androidDependency(name = "Android Layout Inspector", libraryName = "precompiled-layoutinspector"),
     androidDependency(name = "Android Layout Inspector (Compose Proto)", libraryName = "layout_inspector_compose_java_proto"),
     androidDependency(name = "Android Layout Inspector (Skia Proto)", libraryName = "layoutinspector-skia-proto"),
     androidDependency(name = "Android Layout Inspector (Snapshot Proto)", libraryName = "layout_inspector_snapshot_java_proto"),
@@ -81,6 +83,7 @@ object CommunityLibraryLicenses {
                    version = LibraryLicense.CUSTOM_REVISION).newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
     androidDependency(name = "Android Lint Api", libraryName = "precompiled-lint-api"),
     androidDependency(name = "Android Lint Checks", libraryName = "precompiled-lint-checks"),
+    androidDependency(name = "Android Lint Checks (proto)", libraryName = "liblint-checks-proto"),
     androidDependency(name = "Android Lint Model", libraryName = "precompiled-lint-model"),
     androidDependency(name = "Android Manifest Merger", libraryName = "precompiled-manifest-merger"),
     androidDependency(name = "Android Manifest Parser", libraryName = "precompiled-manifest-parser"),
@@ -95,11 +98,13 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Sdk Common", libraryName = "precompiled-sdk-common"),
     androidDependency(name = "Android Sdk Lib", libraryName = "precompiled-sdklib"),
     androidDependency(name = "Android STracer", libraryName = "precompiled-tracer"),
+    androidDependency(name = "Android Studio Driver (proto)", libraryName = "asdriver_proto"),
+    androidDependency(name = "Android Threading Agent Callback", libraryName = "precompiled-threading-agent-callback"),
     androidDependency(name = "Android USB Devices", libraryName = "precompiled-usb-devices"),
     androidDependency(name = "Android Wizard Template", libraryName = "precompiled-wizardTemplate.impl"),
     androidDependency(name = "Android Wizard Template Plugin", libraryName = "precompiled-wizardTemplate.plugin"),
     androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
-    LibraryLicense(name = "AndroidX Compose Compiler (Hosted)", libraryName = "compiler-hosted-1.1.0-SNAPSHOT.jar", version = "1.1.0-SNAPSHOT",
+    LibraryLicense(name = "AndroidX Compose Compiler (Hosted)", libraryName = "compiler-hosted-1.2.0-SNAPSHOT.jar", version = "1.1.0-SNAPSHOT",
                        url = "https://source.android.com/").apache("https://source.android.com/setup/start/licenses"),
     androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto"),
     // for androidx-test-core-proto module library in intellij.android.core
@@ -264,6 +269,16 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
                    url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0"),
+    //LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
+    //               url = "https://github.com/FFmpeg/FFmpeg",
+    //               license = "???", licenseUrl = "???"),
+    //LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
+    //               url = "https://github.com/FFmpeg/FFmpeg",
+    //               license = "???", licenseUrl = "???"),
+    //https://github.com/bytedeco/javacpp-presets/blob/master/ffmpeg/LICENSE.md
+    //https://github.com/bytedeco/javacpp/blob/master/LICENSE.txt
+    // TODO: javacpp: GPL 2.0 + classpath
+
     LibraryLicense(name = "FiraCode", attachedTo = "intellij.platform.resources", version = "1.206", license = "OFL",
                    url = "https://github.com/tonsky/FiraCode", licenseUrl = "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     // for flatbuffers-java module library in android.sdktools.mlkit-common
