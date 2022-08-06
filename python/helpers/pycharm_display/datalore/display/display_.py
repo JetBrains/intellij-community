@@ -72,7 +72,7 @@ def _send_display_message(message_spec):
     serialized = json.dumps(message_spec)
     buffer = serialized.encode()
     try:
-        debug("Sending display message to %s:%s\n" % (HOST, PORT))
+        debug("Sending display message to %s:%s" % (HOST, PORT))
         url = HOST + ":" + str(PORT) + "/api/python.scientific"
 
         if PYCHARM_DISPLAY_HTTP_PROXY is not None:
