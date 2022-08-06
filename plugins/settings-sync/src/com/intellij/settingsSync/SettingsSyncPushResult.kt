@@ -1,8 +1,10 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
-internal sealed class SettingsSyncPushResult {
+@ApiStatus.Internal
+sealed class SettingsSyncPushResult {
   object Success : SettingsSyncPushResult() {
     override fun toString(): String = "SUCCESS"
   }

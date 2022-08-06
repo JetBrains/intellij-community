@@ -8,6 +8,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
@@ -16,7 +17,8 @@ import java.util.concurrent.TimeUnit
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
  * and provides the combined data to clients: both to the IDE and to the server.
  */
-internal class SettingsSyncBridge(parentDisposable: Disposable,
+@ApiStatus.Internal
+class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
                                   private val ideMediator: SettingsSyncIdeMediator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
@@ -37,7 +39,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   @RequiresBackgroundThread
-  fun initialize(initMode: InitMode) {
+  internal fun initialize(initMode: InitMode) {
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -76,7 +78,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.setCloudPosition(masterPosition)
   }
 
-  sealed class InitMode {
+  internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
     object PushToServer : InitMode()

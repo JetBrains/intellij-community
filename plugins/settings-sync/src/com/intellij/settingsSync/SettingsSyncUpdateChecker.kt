@@ -2,8 +2,10 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
-internal class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
+@ApiStatus.Internal
+class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
 
   companion object {
     private val LOG = logger<SettingsSyncUpdateChecker>()

@@ -1,4 +1,4 @@
-package com.intellij.settingsSync
+package com.intellij.settingsSync.git
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,6 +6,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.settingsSync.SettingsSyncBundle
+import com.intellij.settingsSync.SettingsSyncMain
+import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import git4idea.GitVcs
 import git4idea.log.showExternalGitLogInToolwindow
 import java.util.function.Supplier

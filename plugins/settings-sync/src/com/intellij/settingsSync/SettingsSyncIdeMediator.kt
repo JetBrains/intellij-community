@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -7,7 +8,8 @@ import java.nio.file.Path
  * when a setting is changed in the IDE, sends it to the Settings Sync to log and push;
  * when the settings sync log gets changed, applies the change to the IDE.
  */
-internal interface SettingsSyncIdeMediator {
+@ApiStatus.Internal
+interface SettingsSyncIdeMediator {
 
   fun applyToIde(snapshot: SettingsSnapshot)
 

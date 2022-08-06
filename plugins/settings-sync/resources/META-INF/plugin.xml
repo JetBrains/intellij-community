@@ -8,7 +8,9 @@
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
 
-  <depends optional="true" config-file="settingsSyncWithGit.xml">Git4Idea</depends>
+  <content>
+    <module name="intellij.settingsSync.git"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>

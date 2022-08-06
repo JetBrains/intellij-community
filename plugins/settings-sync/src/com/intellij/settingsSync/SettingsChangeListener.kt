@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import java.net.InetAddress
 import java.time.Instant
 import java.util.*
@@ -24,7 +25,8 @@ internal sealed class SyncSettingsEvent {
   object PingRequest : SyncSettingsEvent()
 }
 
-internal data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {
+@ApiStatus.Internal
+data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {
 
   data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?)
 

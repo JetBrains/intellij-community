@@ -235,7 +235,9 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.copyright"),
     simplePlugin("intellij.editorconfig"),
     simplePlugin("intellij.settingsRepository"),
-    simplePlugin("intellij.settingsSync"),
+    plugin("intellij.settingsSync") {
+      withModule("intellij.settingsSync.git")
+    },
     simplePlugin("intellij.configurationScript"),
     simplePlugin("intellij.yaml"),
     simplePlugin("intellij.repository.search"),
