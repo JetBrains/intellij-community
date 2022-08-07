@@ -150,7 +150,7 @@
 
     <attachSourcesProvider implementation="org.jetbrains.idea.maven.utils.MavenAttachSourcesProvider"/>
 
-    <liveTemplateContext implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplateContextType"/>
+    <liveTemplateContext contextId="MAVEN" implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplateContextType"/>
     <defaultLiveTemplates file="liveTemplates/maven_xml.xml"/>
     <projectTemplateFileProcessor implementation="org.jetbrains.idea.maven.utils.MavenTemplateFileProcessor"/>
 

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.liveTemplates;
 
-import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,22 +13,17 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlighter;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 
 public abstract class KotlinTemplateContextType extends TemplateContextType {
-    private KotlinTemplateContextType(
-            @NotNull @NonNls String id,
-            @NotNull @NlsContexts.Label String presentableName,
-            @Nullable java.lang.Class<? extends TemplateContextType> baseContextType
-    ) {
-        super(id, presentableName, baseContextType);
+    private KotlinTemplateContextType(@NotNull @NlsContexts.Label String presentableName) {
+        super(presentableName);
     }
 
     @Override
@@ -82,7 +76,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Generic extends KotlinTemplateContextType {
         public Generic() {
-            super("KOTLIN", KotlinBundle.message("template.context.type.generic"), EverywhereContextType.class);
+            super(KotlinBundle.message("template.context.type.generic"));
         }
 
         @Override
@@ -98,7 +92,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class TopLevel extends KotlinTemplateContextType {
         public TopLevel() {
-            super("KOTLIN_TOPLEVEL", KotlinBundle.message("template.context.type.top.level"), Generic.class);
+            super(KotlinBundle.message("template.context.type.top.level"));
         }
 
         @Override
@@ -127,7 +121,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class ObjectDeclaration extends KotlinTemplateContextType {
         public ObjectDeclaration() {
-            super("KOTLIN_OBJECT_DECLARATION", KotlinBundle.message("object.declaration"), Generic.class);
+            super(KotlinBundle.message("object.declaration"));
         }
 
         @Override
@@ -139,7 +133,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Class extends KotlinTemplateContextType {
         public Class() {
-            super("KOTLIN_CLASS", KotlinBundle.message("class"), Generic.class);
+            super(KotlinBundle.message("class"));
         }
 
         @Override
@@ -150,7 +144,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Statement extends KotlinTemplateContextType {
         public Statement() {
-            super("KOTLIN_STATEMENT", KotlinBundle.message("statement"), Generic.class);
+            super(KotlinBundle.message("statement"));
         }
 
         @Override
@@ -167,7 +161,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Expression extends KotlinTemplateContextType {
         public Expression() {
-            super("KOTLIN_EXPRESSION", KotlinBundle.message("expression"), Generic.class);
+            super(KotlinBundle.message("expression"));
         }
 
         @Override
@@ -180,7 +174,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Comment extends KotlinTemplateContextType {
         public Comment() {
-            super("KOTLIN_COMMENT", KotlinBundle.message("comment"), Generic.class);
+            super(KotlinBundle.message("comment"));
         }
 
         @Override

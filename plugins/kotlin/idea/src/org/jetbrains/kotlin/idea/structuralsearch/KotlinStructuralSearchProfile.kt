@@ -68,7 +68,7 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
 
     override fun isMyLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
-    override fun getTemplateContextTypeClass(): Class<KotlinTemplateContextType> = KotlinTemplateContextType::class.java
+    override fun getTemplateContextTypeClass(): Class<KotlinTemplateContextType.Generic> = KotlinTemplateContextType.Generic::class.java
 
     override fun getPredefinedTemplates(): Array<Configuration> = KotlinPredefinedConfigurations.createPredefinedTemplates()
 

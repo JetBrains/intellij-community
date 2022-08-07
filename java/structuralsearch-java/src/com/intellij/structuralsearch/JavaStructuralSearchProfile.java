@@ -427,7 +427,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
-    return JavaCodeContextType.class;
+    return JavaCodeContextType.Generic.class;
   }
 
   @NotNull
