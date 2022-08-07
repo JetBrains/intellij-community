@@ -332,7 +332,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
         }
 
-        val resolvedTargetElement = resolvedTargetSymbol.psiForUast(ktExpression.project)
+        val resolvedTargetElement = analyzeForUast(ktExpression) {
+            psiForUast(resolvedTargetSymbol, ktExpression.project)
+        }
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
         //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
