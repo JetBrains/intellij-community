@@ -73,18 +73,22 @@ object JdkDownloaderFacade {
   }
 
   private fun downloadJdkItem(jdk: JdkItem, predicate: JdkPredicate): JdkItemPaths {
-    val targetJdkHome = when (predicate) {
-      JdkPredicate.forWSL() -> {
-        if (SystemInfo.isWindows && WslDistributionManager.getInstance().installedDistributions.isNotEmpty()) {
-          val wslDistribution = WslDistributionManager.getInstance().installedDistributions[0]
-          Path.of(wslDistribution.getWindowsPath("/tmp/jdks/${jdk.installFolderName}"))
-        }
-        else {
-          throw WslDistributionNotFoundException()
-        }
+    val targetJdkHome: Path
+
+    // hack for wsl on windows
+    if (predicate == JdkPredicate.forWSL() && SystemInfo.isWindows && WslDistributionManager.getInstance().installedDistributions.isNotEmpty()) {
+      try {
+        val wslDistribution = WslDistributionManager.getInstance().installedDistributions[0]
+        targetJdkHome = Path.of(wslDistribution.getWindowsPath("/tmp/jdks/${jdk.installFolderName}"))
       }
-      else -> di.direct.instance<GlobalPaths>().getCacheDirectoryFor("jdks").resolve(jdk.installFolderName)
+      catch (_: Exception) {
+        throw WslDistributionNotFoundException(predicate)
+      }
     }
+    else {
+      targetJdkHome = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("jdks").resolve(jdk.installFolderName)
+    }
+
     val targetHomeMarker = targetJdkHome.resolve("home.link")
     logOutput("Checking JDK at $targetJdkHome")
 

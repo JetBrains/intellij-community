@@ -1,5 +1,7 @@
 package com.intellij.ide.starter.runner
 
+import com.intellij.ide.starter.bus.EventState
+import com.intellij.ide.starter.bus.StarterBus
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.*
@@ -22,13 +24,11 @@ import kotlin.io.path.div
 interface TestContainer<T> : Closeable {
   val ciServer: CIServer
   var useLatestDownloadedIdeBuild: Boolean
-  val allContexts: MutableList<IDETestContext>
+  var testContext: IDETestContext
   val setupHooks: MutableList<IDETestContext.() -> IDETestContext>
 
   override fun close() {
-    for (context in allContexts) {
-      catchAll { context.paths.close() }
-    }
+    catchAll { testContext.paths.close() }
 
     logOutput("TestContainer $this disposed")
   }
@@ -48,6 +48,9 @@ interface TestContainer<T> : Closeable {
     useLatestDownloadedIdeBuild = true
   } as T
 
+  /**
+   * @return <Build Number, InstalledIde>
+   */
   fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     return di.direct.factory<IdeInfo, IdeInstallator>().invoke(ideInfo).install(ideInfo)
   }
@@ -63,10 +66,8 @@ interface TestContainer<T> : Closeable {
   }
 
   /** Starting point to run your test */
-  fun initializeTestRunner(testName: String, testCase: TestCase): IDETestContext {
-    check(allContexts.none { it.testName == testName }) { "Test $testName is already initialized. Use another name." }
+  fun initializeTestContext(testName: String, testCase: TestCase): IDETestContext {
     logOutput("Resolving IDE build for $testName...")
-
     val (buildNumber, ide) = resolveIDE(testCase.ideInfo)
 
     require(ide.productCode == testCase.ideInfo.productCode) { "Product code of $ide must be the same as for $testCase" }
@@ -78,16 +79,15 @@ interface TestContainer<T> : Closeable {
     logOutput("IDE to run for $testName: $ide")
 
     val projectHome = testCase.projectInfo?.downloadAndUnpackProject()
-    val context = IDETestContext(paths, ide, testCase, testName, projectHome, patchVMOptions = { this }, ciServer = ciServer)
-    allContexts += context
+    testContext = IDETestContext(paths, ide, testCase, testName, projectHome, patchVMOptions = { this }, ciServer = ciServer)
 
-    val baseContext = when (testCase.ideInfo == IdeProductProvider.AI) {
-      true -> context
+    testContext = when (testCase.ideInfo == IdeProductProvider.AI) {
+      true -> testContext
         .addVMOptionsPatch {
           overrideDirectories(paths)
             .withEnv("STUDIO_VM_OPTIONS", ide.patchedVMOptionsFile.toString())
         }
-      false -> context
+      false -> testContext
         .disableInstantIdeShutdown()
         .disableFusSendingOnIdeClose()
         .disableJcef()
@@ -101,8 +101,12 @@ interface TestContainer<T> : Closeable {
         }
     }
 
-    return setupHooks
-      .fold(baseContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
+    val contextWithAppliedHooks = setupHooks
+      .fold(testContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
       .apply { installPerformanceTestingPluginIfMissing(this) }
+
+    StarterBus.post(TestContextInitializedEvent(EventState.AFTER, contextWithAppliedHooks))
+
+    return contextWithAppliedHooks
   }
 }

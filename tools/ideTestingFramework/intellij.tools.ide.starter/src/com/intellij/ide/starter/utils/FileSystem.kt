@@ -2,7 +2,7 @@ package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.exec
+import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.system.SystemInfo
 import org.kodein.di.instance
@@ -129,13 +129,13 @@ object FileSystem {
       }
       else if (SystemInfo.isLinux || SystemInfo.isMac) {
         Files.createDirectories(targetDir)
-        exec(
-          presentablePurpose = "extract-tar",
+        ProcessExecutor(
+          presentableName = "extract-tar",
           workDir = targetDir,
           timeout = 10.minutes,
           stderrRedirect = ExecOutputRedirect.ToStdOut("tar"),
           args = listOf("tar", "-z", "-x", "-f", tarFile.toAbsolutePath().toString(), "-C", targetDir.toAbsolutePath().toString())
-        )
+        ).start()
       }
     }
     catch (e: Exception) {
