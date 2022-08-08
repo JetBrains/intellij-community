@@ -97,12 +97,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, (entityData as WorkspaceEntityBase).id,
                                                              replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = entityData.id
-      //
-      //replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
-      //  val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
-      //  if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-      //  addSubtree(entityData.id, it.id, replaceToTarget)
-      //}
     }
   }
 
@@ -152,10 +146,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithEntity)
         if (entityFilter(replaceWithEntityData.entitySource)) {
-
           addSubtree(setOf(ParentsRef.TargetRef(targetRootEntityId)), replaceWithEntity)
-
-
           break
         } else {
           // Searching for the associated entity
@@ -255,11 +246,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .firstOrNull()
       }
     }
-  }
-
-  private fun addElementOperation(targetParentEntity: Set<ParentsRef>?, replaceWithEntity: EntityId) {
-    addOperations += AddElement(targetParentEntity, replaceWithEntity)
-    replaceWithEntity.addState(ReplaceWithState.ElementMoved)
   }
 
   // This class is just a wrapper to combine functions logically
@@ -445,6 +431,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       this[key] = existingValue.drop(1)
       firstElement
     }
+  }
+
+  private fun addElementOperation(targetParentEntity: Set<ParentsRef>?, replaceWithEntity: EntityId) {
+    addOperations += AddElement(targetParentEntity, replaceWithEntity)
+    replaceWithEntity.addState(ReplaceWithState.ElementMoved)
   }
 
   private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<ParentsRef>?) {
