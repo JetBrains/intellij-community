@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -215,9 +216,11 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                         val contextRepository = dataContextRepository
                                         contextRepository.clearContext(repository)
                                         loadingModel.future = contextRepository.acquireContext(repository, remote, account, requestExecutor)
-                                      }).create { parent, result ->
+                                      }).create { parent, ctx ->
       val wrapper = Wrapper()
-      ComponentController(result, wrapper, disposable).also {
+      ComponentController(project, repositoryManager, projectSettings, ctx, wrapper, disposable, initialView) {
+        tab.displayName = it
+      }.also {
         UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, it)
       }
       initialView = GHPRToolWindowViewType.LIST
@@ -251,9 +254,14 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     resetRequestFlow.tryEmit(Unit)
   }
 
-  private inner class ComponentController(private val dataContext: GHPRDataContext,
-                                          private val wrapper: Wrapper,
-                                          private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
+  private class ComponentController(private val project: Project,
+                                    private val repositoryManager: GHHostedRepositoriesManager,
+                                    private val projectSettings: GithubPullRequestsProjectUISettings,
+                                    private val dataContext: GHPRDataContext,
+                                    private val wrapper: Wrapper,
+                                    private val parentDisposable: Disposable,
+                                    initialView: GHPRToolWindowViewType,
+                                    private val onTitleChange: (@Nls String) -> Unit) : GHPRToolWindowTabComponentController {
 
     private val listComponent by lazy { createListPanel() }
     private val createComponentHolder = ClearableLazyValue.create {
@@ -281,9 +289,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     override fun createPullRequest(requestFocus: Boolean) {
       val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::ghRepositoryCoordinates)
-      tab.displayName = GithubBundle.message("tab.title.pull.requests.new",
-                                             GHUIUtil.getRepositoryDisplayName(allRepos,
-                                                                               dataContext.repositoryDataService.repositoryCoordinates))
+      onTitleChange(GithubBundle.message("tab.title.pull.requests.new",
+                                         GHUIUtil.getRepositoryDisplayName(allRepos,
+                                                                           dataContext.repositoryDataService.repositoryCoordinates)))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
       currentView = GHPRToolWindowViewType.NEW
@@ -298,9 +306,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     override fun viewList(requestFocus: Boolean) {
       val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::ghRepositoryCoordinates)
-      tab.displayName = GithubBundle.message("tab.title.pull.requests.at",
+      onTitleChange(GithubBundle.message("tab.title.pull.requests.at",
                                              GHUIUtil.getRepositoryDisplayName(allRepos,
-                                                                               dataContext.repositoryDataService.repositoryCoordinates))
+                                                                               dataContext.repositoryDataService.repositoryCoordinates)))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
       currentView = GHPRToolWindowViewType.LIST
@@ -315,7 +323,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
     override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean, onShown: ((GHPRViewComponentController?) -> Unit)?) {
-      tab.displayName = GithubBundle.message("pull.request.num", id.number)
+      onTitleChange(GithubBundle.message("pull.request.num", id.number))
       if (currentPullRequest != id) {
         currentDisposable?.let { Disposer.dispose(it) }
         currentDisposable = Disposer.newDisposable("Pull request component disposable").also {
