@@ -97,6 +97,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     fun processEntity(replaceWithEntity: WorkspaceEntity) {
       replaceWithEntity as WorkspaceEntityBase
 
+      if (replaceWithState[replaceWithEntity.id] != null) return
+
       val trackToParents = TrackToParents(replaceWithEntity.id)
       buildRootTrack(trackToParents, replaceWithStorage)
 
@@ -250,6 +252,44 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       findSameEntity(trackToParents)
     }
 
+    private fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents): EntityId? {
+      val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it) }
+      val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithTrack.entity)
+
+      val replaceWithCurrentState = replaceWithState[replaceWithTrack.entity]
+      when (replaceWithCurrentState) {
+        is ReplaceWithState.NoChange -> return replaceWithCurrentState.targetEntityId
+        ReplaceWithState.NoChangeTraceLost -> return null
+        is ReplaceWithState.Relabel -> return replaceWithCurrentState.targetEntityId
+        ReplaceWithState.SubtreeMoved -> TODO()
+        null -> Unit
+      }
+
+      if (replaceWithTrack.parents.isEmpty()) {
+        val targetRootEntityId = findAndReplaceRootEntityInTargetStore(
+          replaceWithEntityData.createEntity(replaceWithStorage) as WorkspaceEntityBase)
+        return targetRootEntityId
+      } else {
+        val entriesList = parentsAssociation.entries.toList()
+
+        val targetParents = mutableSetOf<EntityId>()
+        var targetEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
+        for (i in entriesList.indices) {
+          val targetEntityIds = childrenInStorage(entriesList[i].value, replaceWithTrack.entity.clazz, targetStorage)
+          val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
+          targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
+          while (targetEntityData != null && replaceWithState[targetEntityData.createEntityId()] != null) {
+            targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
+          }
+          if (targetEntityData != null) {
+            targetParents += entriesList[i].key.entity
+            break
+          }
+        }
+        return targetEntityData?.createEntityId()
+      }
+    }
+
     private fun findSameEntity(targetEntityTrack: TrackToParents): EntityId? {
       val parentsAssociation = targetEntityTrack.parents.associateWith { findSameEntity(it) }
       val targetEntityData = targetStorage.entityDataByIdOrDie(targetEntityTrack.entity)
@@ -275,7 +315,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         var replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
         for (i in entriesList.indices) {
           index = i
-          val replaceWithEntityIds = childrenInReplaceWithStorage(entriesList[i].value, targetEntityTrack.entity.clazz)
+          val replaceWithEntityIds = childrenInStorage(entriesList[i].value, targetEntityTrack.entity.clazz, replaceWithStorage)
           val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
           replaceWithEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
           while (replaceWithEntityData != null && replaceWithState[replaceWithEntityData.createEntityId()] != null) {
@@ -288,7 +328,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
 
         entriesList.drop(index).forEach { tailItem ->
-          val replaceWithEntityIds = childrenInReplaceWithStorage(tailItem.value, targetEntityTrack.entity.clazz)
+          val replaceWithEntityIds = childrenInStorage(tailItem.value, targetEntityTrack.entity.clazz, replaceWithStorage)
           val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
           var replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
           while (replaceWithMyEntityData != null && replaceWithEntityData!!.createEntityId() != replaceWithMyEntityData.createEntityId()) {
@@ -297,6 +337,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           if (replaceWithMyEntityData != null) {
             targetParents += tailItem.key.entity
           }
+        }
+
+        if (replaceWithEntityData != null) {
+          val replaceWithTrackToParents = TrackToParents(replaceWithEntityData.createEntityId())
+          buildRootTrack(replaceWithTrackToParents, replaceWithStorage)
+          val alsoTargetParents = replaceWithTrackToParents.parents.map { findSameEntityInTargetStore(it) }
+          targetParents.addAll(alsoTargetParents.filterNotNull())
         }
 
         val targetParentClazzes = targetParents.map { it.clazz }
@@ -332,6 +379,41 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
+    fun findAndReplaceRootEntityInTargetStore(replaceWithRootEntity: WorkspaceEntityBase): EntityId? {
+      val replaceRootEntityId = replaceWithRootEntity.id
+      val replaceWithCurrentState = replaceWithState[replaceRootEntityId]
+      when (replaceWithCurrentState) {
+        is ReplaceWithState.NoChange -> return replaceWithCurrentState.targetEntityId
+        ReplaceWithState.NoChangeTraceLost -> return null
+        is ReplaceWithState.Relabel -> return replaceWithCurrentState.targetEntityId
+        ReplaceWithState.SubtreeMoved -> TODO()
+        null -> Unit
+      }
+
+      val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage)
+      if (targetEntity == null) {
+        if (entityFilter(replaceWithRootEntity.entitySource)) {
+          TODO()
+          return null
+        } else {
+          replaceRootEntityId.addState(ReplaceWithState.NoChangeTraceLost)
+        }
+      }
+
+      targetEntity as WorkspaceEntityBase
+      when {
+        !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithRootEntity.entitySource) -> {
+          TODO()
+          return targetEntity.id
+        }
+        !entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithRootEntity.entitySource) -> {
+          TODO()
+          return targetEntity.id
+        }
+        else -> error("Unexpected branch")
+      }
+    }
+
     fun findAndReplaceRootEntity(targetRootEntity: WorkspaceEntityBase): EntityId? {
       val targetRootEntityId = targetRootEntity.id
       val currentTargetState = targetState[targetRootEntityId]
@@ -349,7 +431,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
       }
 
-      val replaceWithEntity = findEntityInReplaceWithStorage(targetRootEntity)
+      val replaceWithEntity = findEntityInStorage(targetRootEntity, replaceWithStorage, targetStorage)
       if (replaceWithEntity == null) {
         if (entityFilter(targetRootEntity.entitySource)) {
           targetRootEntityId operation Operation.Remove
@@ -385,19 +467,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       error("Unexpected branch")
     }
 
-    fun findEntityInReplaceWithStorage(targetRootEntity: WorkspaceEntityBase): WorkspaceEntity? {
-      return if (targetRootEntity is WorkspaceEntityWithPersistentId) {
-        val persistentId = targetRootEntity.persistentId
-        replaceWithStorage.resolve(persistentId)
-      } else {
-        replaceWithStorage.entities(targetRootEntity.id.clazz.findWorkspaceEntity())
-          .filter {
-            replaceWithStorage.entityDataByIdOrDie((it as WorkspaceEntityBase).id) == targetStorage.entityDataByIdOrDie(targetRootEntity.id)
-          }
-          .firstOrNull()
-      }
-    }
-
     private fun makeEntityDataCollection(targetChildEntityIds: List<ChildEntityId>, storage: AbstractEntityStorage): Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>> {
       val targetChildrenMap = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(
         EntityDataStrategy())
@@ -407,30 +476,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         targetChildrenMap[value] = if (existingValue != null) existingValue + value else listOf(value)
       }
       return targetChildrenMap
-    }
-
-    private fun childrenInReplaceWithStorage(replaceWithRootId: EntityId?,
-                                             childrenClass: Int): List<ChildEntityId> {
-      val replaceWithEntityIds = if (replaceWithRootId != null) {
-        val replaceWithChildren = replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithRootId.asParent())
-
-        val replaceWithFoundChildren = replaceWithChildren.filterKeys {
-          sameClass(it.childClass, childrenClass, it.connectionType)
-        }
-        require(replaceWithFoundChildren.size < 2) { "Got unexpected amount of children" }
-
-        if (replaceWithFoundChildren.isEmpty()) {
-          emptyList()
-        }
-        else {
-          val (_, replaceWithChildEntityIds) = replaceWithFoundChildren.entries.single()
-          replaceWithChildEntityIds
-        }
-      }
-      else {
-        emptyList()
-      }
-      return replaceWithEntityIds
     }
   }
 
@@ -507,6 +552,42 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         buildRootTrack(parentTrack, storage)
         entity.parents += parentTrack
         parentTrack.child = entity
+      }
+    }
+
+    private fun childrenInStorage(entityId: EntityId?, childrenClass: Int, storage: AbstractEntityStorage): List<ChildEntityId> {
+      val targetEntityIds = if (entityId != null) {
+        val targetChildren = storage.refs.getChildrenRefsOfParentBy(entityId.asParent())
+
+        val targetFoundChildren = targetChildren.filterKeys {
+          sameClass(it.childClass, childrenClass, it.connectionType)
+        }
+        require(targetFoundChildren.size < 2) { "Got unexpected amount of children" }
+
+        if (targetFoundChildren.isEmpty()) {
+          emptyList()
+        }
+        else {
+          val (_, targetChildEntityIds) = targetFoundChildren.entries.single()
+          targetChildEntityIds
+        }
+      }
+      else {
+        emptyList()
+      }
+      return targetEntityIds
+    }
+
+    private fun findEntityInStorage(rootEntity: WorkspaceEntityBase, goalStorage: AbstractEntityStorage, oppositeStorage: AbstractEntityStorage): WorkspaceEntity? {
+      return if (rootEntity is WorkspaceEntityWithPersistentId) {
+        val persistentId = rootEntity.persistentId
+        goalStorage.resolve(persistentId)
+      } else {
+        goalStorage.entities(rootEntity.id.clazz.findWorkspaceEntity())
+          .filter {
+            goalStorage.entityDataByIdOrDie((it as WorkspaceEntityBase).id) == oppositeStorage.entityDataByIdOrDie(rootEntity.id)
+          }
+          .firstOrNull()
       }
     }
   }

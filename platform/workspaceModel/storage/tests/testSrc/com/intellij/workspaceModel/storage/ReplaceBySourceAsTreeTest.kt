@@ -1269,7 +1269,6 @@ class ReplaceBySourceAsTreeTest {
   }
 
   @Test
-  @Ignore
   fun `attach to root entity`() {
     val internalChild = TreeMultiparentLeafEntity("internal", MySource)
     val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
@@ -1288,7 +1287,7 @@ class ReplaceBySourceAsTreeTest {
         replaceWithDataElement,
       )
     }
-    replacement add TreeMultiparentLeafEntity("internal", MySource) {
+    val internalReplacement = replacement add TreeMultiparentLeafEntity("internal", MySource) {
       this.mainParent = replaceWithEntity
       this.leafParent = replaceWithDataElement
     }
@@ -1302,6 +1301,7 @@ class ReplaceBySourceAsTreeTest {
     rootEntity = builder.entities(TreeMultiparentRootEntity::class.java).single()
     assertEquals(2, rootEntity.children.size)
     val childAbove = rootEntity.children.single { it.data == "data" }
+    rootEntity.children.single { it.data == "internal" }
     assertEquals("data", childAbove.data)
     val myInternalChild = childAbove.children.single()
     assertTrue(myInternalChild.data == "internal")
@@ -1309,7 +1309,10 @@ class ReplaceBySourceAsTreeTest {
     thisStateCheck {
       root assert ReplaceState.NoChange(replaceWithEntity.base.id)
       root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithDataElement.base.id)
-      internalChild assert ReplaceState.Remove
+      internalChild assert ReplaceState.Relabel(
+        internalReplacement.base.id,
+        parents = setOf(ParentsRef.TargetRef(leafsStructure.base.id), ParentsRef.TargetRef(root.children.single().base.id))
+      )
     }
 
     replaceWithCheck {
