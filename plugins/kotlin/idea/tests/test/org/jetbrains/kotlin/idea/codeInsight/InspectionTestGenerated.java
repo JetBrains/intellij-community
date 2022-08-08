@@ -123,11 +123,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
-        @TestMetadata("coroutines/directUseOfResultType/inspectionData/inspections.test")
-        public void testCoroutines_directUseOfResultType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/coroutines/directUseOfResultType/inspectionData/inspections.test");
-        }
-
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
