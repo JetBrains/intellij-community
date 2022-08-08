@@ -38,6 +38,10 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testRefsFromAnotherModule() {
+    doTest()
+  }
+
   fun testRefsSetNotSupported() {
     assertThrows(IllegalStateException::class.java) { doTest() }
   }

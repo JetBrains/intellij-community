@@ -31,7 +31,8 @@ fun convertToObjModules(typeDefs: List<DefType>, simpleTypes: List<DefType>, ext
 private fun findReferencedTypes(defTypes: List<DefType>): Map<Int, DefType> {
   val result = defTypes.flatMap { defType ->
     defType.structure.declaredFields.mapNotNull {
-      (it.type as? TRef)?.targetObjType as? DefType
+      val originType = (it.type as? TOptional)?.type ?: it.type
+      (originType as? TRef)?.targetObjType as? DefType
     }
   }.associateByTo(HashMap()) { it.id }
   result.keys.removeAll(defTypes.map { it.id }.toSet())
