@@ -1033,7 +1033,11 @@ private fun fireProjectClosing(project: Project) {
   if (LOG.isDebugEnabled) {
     LOG.debug("enter: fireProjectClosing()")
   }
-  publisher.projectClosing(project)
+  try {
+    publisher.projectClosing(project)
+  } catch (e: Throwable) {
+    LOG.warn("Failed to publish projectClosing(project) event", e)
+  }
 }
 
 private fun fireProjectClosed(project: Project) {
