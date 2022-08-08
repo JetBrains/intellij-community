@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use crate::{canonical_non_unc, err_from_string, LaunchConfiguration, LauncherError, ProductInfo};
 use crate::errors::{Result};
-use crate::utils::{get_path_from_env_var, get_readable_file_from_env_var, is_env_var_set, is_readable, PathExt, read_file_to_end};
+use crate::utils::{get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -87,9 +87,12 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
         // TODO: in real launchers -> let current_exe = env::current_exe().unwrap();
-        let current_exe = match is_env_var_set("XPLAT_LAUNCHER_USE_HARDCODED_EXE_PATH") {
-            true => { PathBuf::from(get_local_hardcoded_exe_path()) }
-            false => { env::current_dir()?.join("xplat_launcher.exe") }
+        let current_exe = match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
+            Ok(x) => {
+                debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
+                x
+            }
+            Err(_) => { env::current_dir()?.join("xplat_launcher.exe") }
         };
 
         debug!("Resolved current executable path as '{current_exe:?}'");
