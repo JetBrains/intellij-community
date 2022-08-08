@@ -74,7 +74,9 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
           val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
           LOG.debug("Auto-linked ${projectId.debugName} project")
         }
-        unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+        withContext(Dispatchers.EDT) {
+          unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+        }
         return
       }
       for ((unlinkedProjectAware, buildFiles) in unlinkedProjects) {
