@@ -118,7 +118,9 @@ internal sealed class BaseComponentAdapter(
                                        componentManager: ComponentManagerImpl,
                                        activityCategory: ActivityCategory?): T {
     check(!deferred.isCompleted)
-    check(INITIALIZING.compareAndSet(this, false, true)) { PluginException("Cyclic service initialization: ${toString()}", pluginId) }
+    check(INITIALIZING.compareAndSet(this, false, true)) {
+      PluginException("Cyclic service initialization: ${toString()}", pluginId)
+    }
 
     return Cancellation.computeInNonCancelableSection<T, RuntimeException> {
       doCreateInstance(keyClass, componentManager, activityCategory)
