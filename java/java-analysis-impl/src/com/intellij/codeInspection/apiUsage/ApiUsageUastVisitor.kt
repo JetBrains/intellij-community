@@ -43,37 +43,40 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
       return true
     }
     val resolved = node.resolve()
-    if (resolved is PsiMethod) {
-      if (isClassReferenceInConstructorInvocation(node)) {
-        /*
-          Suppose a code:
-          ```
-             object : SomeClass(42) { }
-
-             or
-
-             new SomeClass(42)
-          ```
-          with USimpleNameReferenceExpression pointing to `SomeClass`.
-
-          We want ApiUsageProcessor to notice two events: 1) reference to `SomeClass` and 2) reference to `SomeClass(int)` constructor.
-
-          But Kotlin UAST resolves this simple reference to the PSI constructor of the class SomeClass.
-          So we resolve it manually to the class because the constructor will be handled separately
-          in "visitObjectLiteralExpression" or "visitCallExpression".
-        */
-        val resolvedClass = resolved.containingClass
-        if (resolvedClass != null) {
-          apiUsageProcessor.processReference(node, resolvedClass, null)
-        }
-        return true
-      }
-    }
+    if (processClassReferenceInConstructorInvocation(node, resolved)) return true
     if (resolved is PsiModifierListOwner) {
       apiUsageProcessor.processReference(node, resolved, null)
       return true
     }
     return true
+  }
+
+  private fun processClassReferenceInConstructorInvocation(node: UReferenceExpression, resolved: PsiElement?): Boolean {
+    if (resolved is PsiMethod && isClassReferenceInConstructorInvocation(node)) {
+      /*
+          Suppose a code:
+          ```
+             object : SomeClass(42) { }
+  
+             or
+  
+             new SomeClass(42)
+          ```
+          with USimpleNameReferenceExpression pointing to `SomeClass`.
+  
+          We want ApiUsageProcessor to notice two events: 1) reference to `SomeClass` and 2) reference to `SomeClass(int)` constructor.
+  
+          But Kotlin UAST resolves this simple reference to the PSI constructor of the class SomeClass.
+          So we resolve it manually to the class because the constructor will be handled separately
+          in "visitObjectLiteralExpression" or "visitCallExpression".
+        */
+      val resolvedClass = resolved.containingClass
+      if (resolvedClass != null) {
+        apiUsageProcessor.processReference(node, resolvedClass, null)
+      }
+      return true
+    }
+    return false
   }
 
   override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
@@ -89,6 +92,7 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
     if (resolved == null) {
       resolved = node.selector.tryResolve()
     }
+    if (processClassReferenceInConstructorInvocation(node, resolved)) return true
     if (resolved is PsiModifierListOwner) {
       apiUsageProcessor.processReference(node.selector, resolved, node.receiver)
     }
