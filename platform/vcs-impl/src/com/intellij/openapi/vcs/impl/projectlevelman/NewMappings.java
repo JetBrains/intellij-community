@@ -358,43 +358,12 @@ public final class NewMappings implements Disposable {
     try {
       if (vcs.needsLegacyDefaultMappings()) return projectRoots;
 
-      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
 
-      Map<VirtualFile, Boolean> checkedDirs = new HashMap<>();
+      Collection<VirtualFile> checkerFiles = rootChecker.detectProjectMappings(myProject, projectRoots, mappedDirs);
+      if (checkerFiles != null) return checkerFiles;
 
-      Set<VirtualFile> vcsRoots = new HashSet<>();
-      for (VirtualFile f : projectRoots) {
-        while (f != null) {
-          if (vcsRoots.contains(f) || mappedDirs.contains(f)) break;
-
-          if (isVcsRoot(rootChecker, checkedDirs, f)) {
-            vcsRoots.add(f);
-            break;
-          }
-
-          VirtualFile parent = f.getParent();
-          if (parent != null && !isUnderProject(directoryIndex, parent)) {
-            if (rootChecker.areChildrenValidMappings()) {
-              while (parent != null) {
-                if (vcsRoots.contains(parent) || mappedDirs.contains(parent)) break;
-
-                if (isVcsRoot(rootChecker, checkedDirs, parent)) {
-                  vcsRoots.add(f);
-                  break;
-                }
-
-                parent = parent.getParent();
-              }
-            }
-
-            break;
-          }
-
-          f = parent;
-        }
-      }
-      return vcsRoots;
+      return defaultCollectProjectMappings(rootChecker, projectRoots, mappedDirs);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -403,6 +372,47 @@ public final class NewMappings implements Disposable {
       LOG.error(e);
       return Collections.emptyList();
     }
+  }
+
+  @NotNull
+  private Set<VirtualFile> defaultCollectProjectMappings(@NotNull VcsRootChecker rootChecker,
+                                                         @NotNull Collection<VirtualFile> projectRoots,
+                                                         @NotNull Set<VirtualFile> mappedDirs) {
+    DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
+    Map<VirtualFile, Boolean> checkedDirs = new HashMap<>();
+
+    Set<VirtualFile> vcsRoots = new HashSet<>();
+    for (VirtualFile f : projectRoots) {
+      while (f != null) {
+        if (vcsRoots.contains(f) || mappedDirs.contains(f)) break;
+
+        if (isVcsRoot(rootChecker, checkedDirs, f)) {
+          vcsRoots.add(f);
+          break;
+        }
+
+        VirtualFile parent = f.getParent();
+        if (parent != null && !isUnderProject(directoryIndex, parent)) {
+          if (rootChecker.areChildrenValidMappings()) {
+            while (parent != null) {
+              if (vcsRoots.contains(parent) || mappedDirs.contains(parent)) break;
+
+              if (isVcsRoot(rootChecker, checkedDirs, parent)) {
+                vcsRoots.add(f);
+                break;
+              }
+
+              parent = parent.getParent();
+            }
+          }
+
+          break;
+        }
+
+        f = parent;
+      }
+    }
+    return vcsRoots;
   }
 
   private static boolean isVcsRoot(@NotNull VcsRootChecker rootChecker,
