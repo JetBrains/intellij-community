@@ -20,7 +20,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private lateinit var entityFilter: (EntitySource) -> Boolean
 
   internal val operations = HashMap<EntityId, Operation>()
-  internal val addOperations = HashSet<AddSubtree>()
+  internal val addOperations = ArrayList<AddSubtree>()
   internal val targetState = HashMap<EntityId, ReplaceState>()
   internal val replaceWithState = HashMap<EntityId, ReplaceWithState>()
 
@@ -51,6 +51,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   // This class is just a wrapper to combine functions logically
   private inner class OperationsApplier {
     fun apply() {
+      for (addOperation in addOperations) {
+        addSubtree(addOperation.targetParent, addOperation.replaceWithSource)
+      }
+
       for ((id, operation) in operations) {
         when (operation) {
           is Operation.Relabel -> {
@@ -66,10 +70,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             targetStorage.removeEntityByEntityId(id)
           }
         }
-      }
-
-      for (addOperation in addOperations) {
-        addSubtree(addOperation.targetParent, addOperation.replaceWithSource)
       }
     }
 
