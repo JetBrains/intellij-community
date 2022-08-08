@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
@@ -425,7 +424,7 @@ internal class PackagesTable(
     }
 
     override fun getBackground(): Color =
-        if (PackageSearchUI.isNewUI) PackageSearchUI.UsualBackgroundColor else UIUtil.getTableBackground()
+        if (PackageSearchUI.isNewUI) PackageSearchUI.panelBackgroundColor else UIUtil.getTableBackground()
 
     override fun getForeground(): Color =
         if (PackageSearchUI.isNewUI) UIUtil.getListForeground() else UIUtil.getTableForeground()

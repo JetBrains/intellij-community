@@ -20,7 +20,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SearchTextField
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -74,7 +73,7 @@ class PackagesSmartSearchField(
         return super.preprocessEventForTextField(e)
     }
 
-    override fun getBackground() = PackageSearchUI.HeaderBackgroundColor
+    override fun getBackground() = PackageSearchUI.headerBackgroundColor
 
     override fun onFocusLost() {
         super.onFocusLost()

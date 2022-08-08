@@ -540,6 +540,15 @@
 
     "Lesson": {
       "shortcutBackground": "Grey5"
+    },
+
+    "PackageSearch": {
+      "SearchResult.background": "#1c2433",
+      "PackageTag.background": "Grey4",
+      "PackageTag.foreground": "Grey9",
+      "PackageTagSelected.background": "Blue4",
+      "PackageTagSelected.foreground": "Grey10",
+      "TableItem.hoveredBackground": "#FFFFFFED"
     }
   },
 

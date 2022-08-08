@@ -33,6 +33,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.JPanel
 
 @Suppress("MagicNumber") // Swing dimension constants
@@ -76,7 +77,7 @@ internal class GitHubInfoPanel : JPanel() {
         }
 
     init {
-        background = PackageSearchUI.UsualBackgroundColor
+        background = PackageSearchUI.panelBackgroundColor
         border = emptyBorder(0)
         layout = MigLayout(
             LC().skipInvisibleComponents()

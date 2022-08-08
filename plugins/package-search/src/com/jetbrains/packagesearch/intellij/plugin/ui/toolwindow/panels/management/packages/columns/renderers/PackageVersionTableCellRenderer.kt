@@ -50,7 +50,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         table.colors.applyColors(this, isSelected)
 
         val bgColor = if (!isSelected && value is UiPackageModel.SearchResult) {
-            PackageSearchUI.SearchResultListRowBackground
+            PackageSearchUI.searchResultListRowBackground
         } else {
             background
         }

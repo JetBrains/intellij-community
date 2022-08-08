@@ -39,7 +39,7 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         table.colors.applyColors(this, isSelected)
 
         val bgColor = if (!isSelected && value is PackagesTableItem.InstallablePackage) {
-            PackageSearchUI.SearchResultListRowBackground
+            PackageSearchUI.searchResultListRowBackground
         } else {
             background
         }

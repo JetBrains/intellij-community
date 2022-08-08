@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
@@ -96,7 +97,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
                     table.colors.applyColors(this, isSelected)
 
-                    if (!isSelected) background = PackageSearchUI.SearchResultListRowBackground
+                    if (!isSelected) background = PackageSearchUI.searchResultListRowBackground
                 }
             }
         }
@@ -168,6 +169,9 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 translate(tagX, tagY)
                 tagComponent.apply {
                     isVisible = true
+                    val tagBackground = if (isSelected) PackageSearchUI.tagBackgroundSelected else PackageSearchUI.tagBackground
+                    background = ColorUtil.mix(this@TagPaintingJPanel.background, tagBackground, 0.5)
+                    foreground = if (isSelected) PackageSearchUI.tagForegroundSelected else PackageSearchUI.tagForeground
                     paint(g)
                 }
             }

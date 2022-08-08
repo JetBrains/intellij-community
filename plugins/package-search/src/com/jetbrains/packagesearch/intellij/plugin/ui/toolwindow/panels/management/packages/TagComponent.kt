@@ -15,8 +15,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.ui.AntialiasingType
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
@@ -32,23 +30,6 @@ import javax.swing.JLabel
 @Suppress("MagicNumber") // Swing dimension constants
 class TagComponent(@Nls name: String) : JLabel() {
 
-    private val tagForeground = JBColor.namedColor(
-        "PackageSearch.PackageTag.foreground",
-        JBColor.namedColor("Plugins.tagForeground", 0x808080, 0x9C9C9C)
-    )
-    private val tagBackground
-        get() = JBColor.namedColor(
-        "PackageSearch.PackageTag.background",
-        if (PackageSearchUI.isNewUI) {
-            JBColor(0xEBEBEB, 0x2B2D30)
-        } else {
-            JBColor.namedColor("Plugins.tagBackground", JBColor(0xEBEBEB, 0x4C5052))
-        }
-    )
-
-    private val tagForegroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.foreground", 0xFFFFFF, 0xFFFFFF)
-    private val tagBackgroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.background", 0x4395E2, 0x78ADE2)
-
     init {
         isOpaque = false
         border = emptyBorder(vSize = 1, hSize = 8)
@@ -56,6 +37,8 @@ class TagComponent(@Nls name: String) : JLabel() {
         text = name
         toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
         GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+        background = PackageSearchUI.tagBackground
+        foreground = PackageSearchUI.tagForeground
     }
 
     @ScaledPixels
@@ -70,10 +53,6 @@ class TagComponent(@Nls name: String) : JLabel() {
             field = value
             invalidate()
         }
-
-    override fun getBackground() = if (isSelected) tagBackgroundSelected else tagBackground
-
-    override fun getForeground() = if (isSelected) tagForegroundSelected else tagForeground
 
     override fun paintComponent(g: Graphics) {
         val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)

@@ -3,6 +3,12 @@
     "fixed": false,
     "ui": [
         {
+            "key": "PackageSearch.TableItem.hoveredBackground",
+            "description": "Hovered row highlight color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
+            "since": "2022.3"
+        },
+        {
             "key": "PackageSearch.SearchResult.background",
             "description": "Search results row background color",
             "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",

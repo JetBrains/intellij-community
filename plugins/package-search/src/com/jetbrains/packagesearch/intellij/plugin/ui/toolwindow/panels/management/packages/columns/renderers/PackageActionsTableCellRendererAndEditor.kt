@@ -67,7 +67,7 @@ internal class PackageActionsTableCellRendererAndEditor(
     ): JComponent {
         val isSearchResult = viewModel?.isSearchResult ?: false
         val colors = when {
-            isSearchResult -> table.colors.copy(background = PackageSearchUI.SearchResultListRowBackground)
+            isSearchResult -> table.colors.copy(background = PackageSearchUI.searchResultListRowBackground)
             else -> table.colors
         }
 

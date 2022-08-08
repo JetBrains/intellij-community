@@ -57,33 +57,53 @@ import javax.swing.Scrollable
 
 object PackageSearchUI {
 
-    private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
+    private val mainBackgroundColor: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
-    internal val GRAY_COLOR: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
+    internal val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
-    internal val HeaderBackgroundColor = MAIN_BG_COLOR
-    internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
-    internal val UsualBackgroundColor = MAIN_BG_COLOR
+    internal val headerBackgroundColor = mainBackgroundColor
+    internal val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
 
-    internal val SearchResultListRowBackground
+    private val oldBackgroundColor = mainBackgroundColor
+    private val newBackgroundColor = JBColor.namedColor("Panel.background")
+
+    internal val panelBackgroundColor
+        get() = if (isNewUI) newBackgroundColor else oldBackgroundColor
+
+    internal val searchResultListRowBackground
         get() = JBColor.namedColor(
             "PackageSearch.SearchResult.background",
             if (isNewUI) {
-                JBColor(0xff0000, 0x00ff00)
-                // JBColor(0xCCE1FF, 0x444B50)
+                JBColor(0xE8EEFA, 0x1C2433)
             } else {
-                JBColor(0x0000FF, 0xFF00FF)
-                // JBColor(0xF2F5F9, 0x4C5052)
+                JBColor(0xF2F5F9, 0x4C5052)
             }
         )
 
-    internal val InfoBannerBackground = JBColor.lazy {
+    internal val infoBannerBackground = JBColor.lazy {
         EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
             ?: JBColor(0xE6EEF7, 0x1C3956)
     }
 
-    internal val MediumHeaderHeight = JBValue.Float(30f)
-    internal val SmallHeaderHeight = JBValue.Float(24f)
+    internal val tagForeground = JBColor.namedColor(
+        "PackageSearch.PackageTag.foreground",
+        JBColor.namedColor("Plugins.tagForeground", 0x808080, 0x9C9C9C)
+    )
+    internal val tagBackground
+        get() = JBColor.namedColor(
+            "PackageSearch.PackageTag.background",
+            if (PackageSearchUI.isNewUI) {
+                JBColor(0xEBEBEB, 0x2B2D30)
+            } else {
+                JBColor.namedColor("Plugins.tagBackground", JBColor(0xEBEBEB, 0x4C5052))
+            }
+        )
+
+    internal val tagForegroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.foreground", 0xFFFFFF, 0xFFFFFF)
+    internal val tagBackgroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.background", 0x4395E2, 0x78ADE2)
+
+    internal val mediumHeaderHeight = JBValue.Float(30f)
+    internal val smallHeaderHeight = JBValue.Float(24f)
 
     val isNewUI
         get() = ExperimentalUI.isNewUI()
@@ -95,10 +115,10 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = HeaderBackgroundColor
+        override fun getBackground() = headerBackgroundColor
     }
 
-    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = CardLayout()
@@ -109,7 +129,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun borderPanel(backgroundColor: Color = UsualBackgroundColor, init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
+    internal fun borderPanel(backgroundColor: Color = panelBackgroundColor, init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
 
         init {
             init()
@@ -118,7 +138,7 @@ object PackageSearchUI {
         override fun getBackground() = backgroundColor
     }
 
-    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = BoxLayout(this, axis)
@@ -128,7 +148,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun flowPanel(backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
+    internal fun flowPanel(backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
         init {
             layout = FlowLayout(FlowLayout.LEFT)
             init()
@@ -143,7 +163,7 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = UsualBackgroundColor
+        override fun getBackground() = panelBackgroundColor
     }
 
     fun textField(init: JTextField.() -> Unit): JTextField = JTextField().apply {
@@ -175,7 +195,7 @@ object PackageSearchUI {
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
         isSelected -> getTextColorPrimary(true)
-        else -> GRAY_COLOR
+        else -> infoLabelColor
     }
 
     internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
@@ -197,7 +217,7 @@ object PackageSearchUI {
     ) {
         init {
             border = BorderFactory.createEmptyBorder()
-            viewport.background = UsualBackgroundColor
+            viewport.background = panelBackgroundColor
         }
     }
 
@@ -227,7 +247,7 @@ object PackageSearchUI {
         override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int) = 100
         override fun getScrollableTracksViewportWidth() = true
         override fun getScrollableTracksViewportHeight() = false
-        override fun getBackground() = UsualBackgroundColor
+        override fun getBackground() = panelBackgroundColor
     }
 }
 

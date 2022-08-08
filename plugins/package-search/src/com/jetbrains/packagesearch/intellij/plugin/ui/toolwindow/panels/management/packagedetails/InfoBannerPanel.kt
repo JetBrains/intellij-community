@@ -30,7 +30,7 @@ import javax.swing.JPanel
 @Suppress("MagicNumber") // Swing dimension constants
 class InfoBannerPanel(
     @Nls text: String = "",
-    backgroundColor: JBColor = PackageSearchUI.InfoBannerBackground,
+    backgroundColor: JBColor = PackageSearchUI.infoBannerBackground,
     icon: Icon? = AllIcons.General.BalloonInformation
 ) : JPanel() {
 

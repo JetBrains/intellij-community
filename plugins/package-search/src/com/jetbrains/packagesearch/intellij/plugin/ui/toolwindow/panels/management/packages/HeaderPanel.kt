@@ -32,7 +32,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
 import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
@@ -47,7 +46,7 @@ internal class HeaderPanel(
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.GRAY_COLOR
+        foreground = PackageSearchUI.infoLabelColor
         border = emptyBorder(right = 8)
     }
 
@@ -67,12 +66,12 @@ internal class HeaderPanel(
     private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     init {
-        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
-        background = PackageSearchUI.SectionHeaderBackgroundColor
+        background = PackageSearchUI.sectionHeaderBackgroundColor
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.sectionHeaderBackgroundColor) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -83,7 +82,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.sectionHeaderBackgroundColor) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -137,5 +136,5 @@ internal class HeaderPanel(
         updateAndRepaint()
     }
 
-    override fun getBackground() = PackageSearchUI.SectionHeaderBackgroundColor
+    override fun getBackground() = PackageSearchUI.sectionHeaderBackgroundColor
 }
