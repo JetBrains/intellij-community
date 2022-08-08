@@ -744,7 +744,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     };
     DefaultActionGroup pinGroup = new DefaultActionGroup();
     ActiveComponent pin = createPinButton(project, popupRef, pinGroup, table, actionHandler::findUsages);
-    builder.setCommandButton(new CompositeActiveComponent(statusComponent, pin));
+    CompositeActiveComponent commandButton = new CompositeActiveComponent(statusComponent, pin);
+    builder.setCommandButton(commandButton);
 
     DefaultActionGroup filteringGroup = new DefaultActionGroup();
     usageView.addFilteringActions(filteringGroup);
@@ -916,11 +917,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Disposer.register(popup, contentDisposable);
 
     if (ExperimentalUI.isNewUI()) {
-      Insets insets = JBUI.CurrentTheme.Popup.headerInsets();
+      Insets insets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+      int minTopBottom = Math.min(insets.top, insets.bottom);
       //noinspection UseDPIAwareBorders
-      statusPanel.getLabel().setBorder(new EmptyBorder(insets.top, 0, insets.bottom, JBUI.scale(10)));
-      popup.getTitle().setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
-      popup.getTitle().setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+      commandButton.getComponent().setBorder(new EmptyBorder(insets.top - minTopBottom, 0, insets.bottom - minTopBottom, insets.right));
+      CaptionPanel popupTitle = popup.getTitle();
+      popupTitle.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+      popupTitle.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+      if (popupTitle instanceof TitlePanel) {
+        //noinspection UseDPIAwareBorders
+        ((TitlePanel)popupTitle).getLabel().setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, 0));
+      }
+
       // Cannot use opaque: TitlePanel ignores it
       statusPanel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       northPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
