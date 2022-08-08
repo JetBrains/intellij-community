@@ -172,8 +172,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UISettings uiSettings = UISettings.getInstance();
     Font result;
     if (useInterFont()) {
-      float userScaleFactor = getDefaultUserScaleFactor();
-      result = StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, JBUIScale.scaleFontSize(INTER_SIZE, userScaleFactor));
+      result = getDefaultInterFont();
     }
     else if (uiSettings.getOverrideLafFonts()) {
       result = getStoredLafFont();
@@ -1061,9 +1060,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
-      float userScaleFactor = getDefaultUserScaleFactor();
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, (int)(INTER_SIZE * userScaleFactor)));
-      JBUIScale.setUserScaleFactor(userScaleFactor);
+      StartupUiUtil.initFontDefaults(uiDefaults, getDefaultInterFont());
+      JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -1080,6 +1078,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       font = JBFont.label();
     }
     return JBUIScale.getFontScale(font.getSize());
+  }
+
+  private @NotNull FontUIResource getDefaultInterFont() {
+    float userScaleFactor = getDefaultUserScaleFactor();
+    return StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, JBUIScale.scaleFontSize(INTER_SIZE, userScaleFactor));
   }
 
   @Nullable
