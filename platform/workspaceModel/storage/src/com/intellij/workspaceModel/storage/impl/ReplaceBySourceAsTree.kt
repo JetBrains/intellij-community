@@ -56,7 +56,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           is Operation.Relabel -> {
             val targetEntity = targetStorage.entityDataByIdOrDie(id).createEntity(targetStorage)
             val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
-            val parents = operation.parents?.mapTo(HashSet()) { targetStorage.entityDataByIdOrDie(it).createEntity(targetStorage) }
+            val parents = operation.parents?.mapTo(HashSet()) { targetStorage.entityDataByIdOrDie((it as ParentsRef.TargetRef).targetEntityId).createEntity(targetStorage) }
             targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
               (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
             }
@@ -314,14 +314,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           @Suppress("KotlinConstantConditions")
           when {
             targetSourceMatches && replaceWithSourceMatches -> {
-              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents)
+              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents.mapTo(HashSet()) { ParentsRef.TargetRef(it) })
             }
             targetSourceMatches && !replaceWithSourceMatches -> {
               removeWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
               return null
             }
             !targetSourceMatches && replaceWithSourceMatches -> {
-              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents)
+              replaceWorkspaceData(targetEntityTrack.entity, replaceWithEntityData.createEntityId(), targetParents.mapTo(HashSet()) { ParentsRef.TargetRef(it) })
             }
             !targetSourceMatches && !replaceWithSourceMatches -> {
               doNothingOn(targetEntityTrack.entity, replaceWithEntityData.createEntityId())
@@ -459,7 +459,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
   }
 
-  private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<EntityId>?) {
+  private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<ParentsRef.TargetRef>?) {
     targetEntityId operation Operation.Relabel(replaceWithEntityId, parents)
     targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId, parents))
     replaceWithEntityId.addState(ReplaceWithState.Relabel(targetEntityId))
@@ -514,13 +514,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
 internal sealed interface Operation {
   object Remove : Operation
-  class Relabel(val replaceWithEntityId: EntityId, val parents: Set<EntityId>?) : Operation
+  class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) : Operation
 }
 
 internal class AddSubtree(val targetParent: EntityId?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
-  data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<EntityId>? = null) : ReplaceState
+  data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>? = null) : ReplaceState
   data class NoChange(val replaceWithEntityId: EntityId?) : ReplaceState
   object Remove : ReplaceState
 }
@@ -530,6 +530,11 @@ internal sealed interface ReplaceWithState {
   data class NoChange(val targetEntityId: EntityId) : ReplaceWithState
   data class Relabel(val targetEntityId: EntityId) : ReplaceWithState
   object NoChangeTraceLost : ReplaceWithState
+}
+
+sealed interface ParentsRef {
+  data class TargetRef(val targetEntityId: EntityId): ParentsRef
+  data class AddedElement(val replaceWithEntityId: EntityId): ParentsRef
 }
 
 class TrackToParents(

@@ -689,7 +689,7 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       parentEntity assert ReplaceState.Relabel(anotherParent.base.id)
-      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id, setOf(parentEntity.base.id))
+      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id, setOf(ParentsRef.TargetRef(parentEntity.base.id)))
     }
 
     replaceWithCheck {
@@ -952,7 +952,7 @@ class ReplaceBySourceAsTreeTest {
 
     thisStateCheck {
       thisRoot assert ReplaceState.NoChange(replaceRoot.base.id)
-      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id, setOf(thisRoot.base.id))
+      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id, setOf(ParentsRef.TargetRef(thisRoot.base.id)))
     }
 
     replaceWithCheck {
@@ -1159,7 +1159,7 @@ class ReplaceBySourceAsTreeTest {
     thisStateCheck {
       leafsStructure assert ReplaceState.NoChange(replaceWithEntity.base.id)
       leafsStructure.children.single() assert ReplaceState.NoChange(replaceWithEntity.children.single().base.id)
-      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.single().children.single().base.id, setOf(leafsStructure.children.single().base.id))
+      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.single().children.single().base.id, setOf(ParentsRef.TargetRef(leafsStructure.children.single().base.id)))
     }
 
     replaceWithCheck {
@@ -1210,7 +1210,7 @@ class ReplaceBySourceAsTreeTest {
     thisStateCheck {
       root assert ReplaceState.NoChange(replaceWithEntity.base.id)
       root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceChild1.base.id)
-      internalChild assert ReplaceState.Relabel(replaceChild2.base.id, setOf(root.base.id))
+      internalChild assert ReplaceState.Relabel(replaceChild2.base.id, setOf(ParentsRef.TargetRef(root.base.id)))
     }
 
     replaceWithCheck {
