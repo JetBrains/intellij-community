@@ -585,7 +585,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public String getName() {
-    return IdeUICustomization.getInstance().getProjectViewTitle();
+    return IdeUICustomization.getInstance().getProjectViewTitle(myProject);
   }
 
   @NotNull

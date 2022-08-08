@@ -538,7 +538,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       canWorkInDumbMode = DumbService.isDumbAware(factory),
       shouldBeAvailable = factory.shouldBeAvailable(project),
       contentFactory = factory,
-      stripeTitle = getStripeTitleSupplier(bean.id, plugin)
+      stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
     ), toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 

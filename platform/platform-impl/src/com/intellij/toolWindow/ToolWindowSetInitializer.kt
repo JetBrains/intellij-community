@@ -216,7 +216,7 @@ private fun beanToTask(project: Project,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
     contentFactory = factory,
-    stripeTitle = getStripeTitleSupplier(bean.id, plugin),
+    stripeTitle = getStripeTitleSupplier(bean.id, project, plugin),
   )
   task.pluginDescriptor = bean.pluginDescriptor
   return task
