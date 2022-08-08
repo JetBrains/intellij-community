@@ -244,6 +244,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
 
+    assertEquals("Find empty array initializers", 2, findMatchesCount(s9, "new Object[] {}"));
+
     String arrays = "class X {{" +
                     "int[] a = new int[20];\n" +
                     "byte[] b = new @Q byte[30];" +
@@ -3030,7 +3032,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    new <String>X();" +
                     "    new <String>X();" +
                     "    new X();" +
-                    "    new X(s);" +
+                    "    new X() {};" +
+                    "    new <String>X(\"\") {};" +
+                    "    new <String>X(s);" +
+                    "    new <String, Integer>X(s);" +
                     "  }" +
                     "}";
     assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
@@ -3040,7 +3045,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("find parameterized constructor calls 1", 2, findMatchesCount(source, "new <String>X()"));
     assertEquals("find parameterized constructor calls 2", 1, findMatchesCount(source, "new <String>X(s)"));
-    assertEquals("find constructor calls 3", 3, findMatchesCount(source, "new X()"));
+    assertEquals("find parameterized constructor calls 3", 5, findMatchesCount(source, "new <'_a+>'_b('_c*)"));
+    assertEquals("find parameterized constructor calls 4", 4, findMatchesCount(source, "new <'_a>'_b('_c*)"));
+    assertEquals("find parameterized anonymous class", 1, findMatchesCount(source, "new <'_a>'_b('_c*) {}"));
+    assertEquals("find constructor calls 3", 7, findMatchesCount(source, "new X('_a*)"));
   }
 
   public void testFindDiamondTypes() {
@@ -3246,8 +3254,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find code ignoring comments 2", 2,
                  findMatchesCount(source2, "new int['_a]"));
-    assertEquals("find code ignoring comments 2a", 1,
-                 findMatchesCount(source2, "new int/*1*/['_a]"));
 
     String source3 = "class X {{" +
                      "  new java.util.ArrayList(/**/1);" +
