@@ -1375,6 +1375,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val right = expr.right
         val endOffset = DeferredOffset()
         processExpression(left)
+        val targetType = expr.getKotlinType() // Boolean
+        addImplicitConversion(left, targetType)
         val nextOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), left))
         val anchor = KotlinExpressionAnchor(expr)
@@ -1383,6 +1385,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(nextOffset)
         addInstruction(FinishElementInstruction(null))
         processExpression(right)
+        addImplicitConversion(right, targetType)
         setOffset(endOffset)
         addInstruction(ResultOfInstruction(anchor))
     }

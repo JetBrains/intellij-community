@@ -39,6 +39,18 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testMath() = doTest()
     fun testMembers() = doTest()
     fun testNothingType() = doTest()
+    fun testPlatformType() {
+        // KTIJ-22430
+        myFixture.addClass(
+            "public class SomeJavaUtil {\n" +
+                    "\n" +
+                    "    public static Boolean b() {\n" +
+                    "        return false;\n" +
+                    "    }\n" +
+                    "}"
+        )
+        doTest()
+    }
     fun testPrimitiveAndNull() = doTest()
     fun testProperty() = doTest()
     fun testQualifier() = doTest()
