@@ -102,7 +102,7 @@ class ReplaceBySourceAsTreeTest {
     thisStateCheck {
       parent1 assert ReplaceState.Remove
     }
-    replaceWithCheck { parent3 assert ReplaceWithState.SubtreeMoved }
+    replaceWithCheck { parent3 assert ReplaceWithState.ElementMoved }
   }
 
   @Test
@@ -181,7 +181,7 @@ class ReplaceBySourceAsTreeTest {
     }
 
     replaceWithCheck {
-      modified assert ReplaceWithState.SubtreeMoved
+      modified assert ReplaceWithState.ElementMoved
     }
   }
 
@@ -290,7 +290,7 @@ class ReplaceBySourceAsTreeTest {
       child assert ReplaceState.Remove
     }
     replaceWithCheck {
-      child assert ReplaceWithState.SubtreeMoved
+      child assert ReplaceWithState.ElementMoved
       parent2 assert ReplaceWithState.Relabel(parent2.base.id)
     }
   }
@@ -845,7 +845,7 @@ class ReplaceBySourceAsTreeTest {
     replaceWithCheck {
       replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
       replaceRoot.children.single() assert ReplaceWithState.NoChange(thisRoot.children.single().base.id)
-      replaceRoot.children.single().children.single() assert ReplaceWithState.SubtreeMoved
+      replaceRoot.children.single().children.single() assert ReplaceWithState.ElementMoved
     }
   }
 
@@ -883,7 +883,7 @@ class ReplaceBySourceAsTreeTest {
     replaceWithCheck {
       replaceRoot assert ReplaceWithState.NoChange(thisRoot.base.id)
       replaceRoot.children.single() assert ReplaceWithState.NoChange(thisRoot.children.single().base.id)
-      replaceRoot.children.single().children.single() assert ReplaceWithState.SubtreeMoved
+      replaceRoot.children.single().children.single() assert ReplaceWithState.ElementMoved
     }
   }
 
@@ -1319,6 +1319,42 @@ class ReplaceBySourceAsTreeTest {
       replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
       replaceWithDataElement assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
     }
+  }
+
+  @Test
+  fun `add new root`() {
+    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        TreeMultiparentLeafEntity("data", MySource)
+      )
+    }
+    builder add leafsStructure
+    val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
+
+    val doubleRooted = TreeMultiparentLeafEntity("data", MySource)
+    replacement add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        doubleRooted
+      )
+    }
+    replacement add TreeMultiparentRootEntity("data2", MySource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("SomeEntity", MySource) {
+          this.children = listOf(doubleRooted)
+        }
+      )
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    val parents = builder.entities(TreeMultiparentRootEntity::class.java).toList()
+    assertEquals(2, parents.size)
+    val targetLeaf = parents.single { it.data == "data" }.children.single()
+    val targetLeafFromOtherSide = parents.single { it.data == "data2" }.children.single().children.single()
+    assertEquals(targetLeaf.base.id, targetLeafFromOtherSide.base.id)
+    assertEquals("data", targetLeaf.data)
   }
 
   @Test

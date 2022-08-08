@@ -20,7 +20,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private lateinit var entityFilter: (EntitySource) -> Boolean
 
   internal val operations = HashMap<EntityId, Operation>()
-  internal val addOperations = ArrayList<AddSubtree>()
+  internal val addOperations = ArrayList<AddElement>()
   internal val targetState = HashMap<EntityId, ReplaceState>()
   internal val replaceWithState = HashMap<EntityId, ReplaceWithState>()
 
@@ -51,8 +51,15 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   // This class is just a wrapper to combine functions logically
   private inner class OperationsApplier {
     fun apply() {
+      val replaceToTarget = HashMap<EntityId, EntityId>()
       for (addOperation in addOperations) {
-        addSubtree((addOperation.targetParent as? ParentsRef.TargetRef)?.targetEntityId, addOperation.replaceWithSource)
+        val parents = addOperation.parents?.mapTo(HashSet()) {
+          when (it) {
+            is ParentsRef.AddedElement -> replaceToTarget.getValue(it.replaceWithEntityId)
+            is ParentsRef.TargetRef -> it.targetEntityId
+          }
+        }
+        addElement(parents, addOperation.replaceWithSource, replaceToTarget)
       }
 
       for ((id, operation) in operations) {
@@ -60,7 +67,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           is Operation.Relabel -> {
             val targetEntity = targetStorage.entityDataByIdOrDie(id).createEntity(targetStorage)
             val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
-            val parents = operation.parents?.mapTo(HashSet()) { targetStorage.entityDataByIdOrDie((it as ParentsRef.TargetRef).targetEntityId).createEntity(targetStorage) }
+            val parents = operation.parents?.mapTo(HashSet()) {
+              val targetEntityId = when (it) {
+                is ParentsRef.AddedElement -> replaceToTarget.getValue(it.replaceWithEntityId)
+                is ParentsRef.TargetRef -> it.targetEntityId
+              }
+              targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
+            }
             targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
               (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
             }
@@ -73,9 +86,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    private fun addSubtree(parent: EntityId?, replaceWithDataSource: EntityId) {
+    private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashMap<EntityId, EntityId>) {
       val targetParents = mutableListOf<WorkspaceEntity>()
-      if (parent != null) {
+      parents?.forEach { parent ->
         targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
       }
 
@@ -83,12 +96,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       targetStorage.addEntity(entityData)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, (entityData as WorkspaceEntityBase).id,
                                                              replaceWithStorage.indexes)
-
-      replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
-        val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
-        if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-        addSubtree(entityData.id, it.id)
-      }
+      replaceToTarget[replaceWithDataSource] = entityData.id
+      //
+      //replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithDataSource.asParent()).values.flatten().forEach {
+      //  val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
+      //  if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
+      //  addSubtree(entityData.id, it.id, replaceToTarget)
+      //}
     }
   }
 
@@ -124,7 +138,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
         val replaceWithCurrentState = replaceWithState[replaceWithEntity]
         when (replaceWithCurrentState) {
-          ReplaceWithState.SubtreeMoved -> break
+          ReplaceWithState.ElementMoved -> break
           is ReplaceWithState.NoChange -> {
             targetRootEntityId = replaceWithCurrentState.targetEntityId
             continue
@@ -138,7 +152,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithEntity)
         if (entityFilter(replaceWithEntityData.entitySource)) {
-          addSubtreeOperation(ParentsRef.TargetRef(targetRootEntityId), replaceWithEntity)
+
+          addSubtree(setOf(ParentsRef.TargetRef(targetRootEntityId)), replaceWithEntity)
+
+
           break
         } else {
           // Searching for the associated entity
@@ -178,7 +195,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityBase): Pair<Boolean, EntityId?> {
       val currentState = replaceWithState[replaceWithRootEntity.id]
       when (currentState) {
-        ReplaceWithState.SubtreeMoved -> return false to null
+        ReplaceWithState.ElementMoved -> return false to null
         is ReplaceWithState.NoChange -> return true to currentState.targetEntityId
         ReplaceWithState.NoChangeTraceLost -> return false to null
         is ReplaceWithState.Relabel -> return true to currentState.targetEntityId
@@ -188,7 +205,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val targetEntity = findEntityInTargetStorage(replaceWithRootEntity)
       if (targetEntity == null) {
         if (entityFilter(replaceWithRootEntity.entitySource)) {
-          addSubtreeOperation(null, replaceWithRootEntity.id)
+          addSubtree(null, replaceWithRootEntity.id)
           return false to null
         }
         else {
@@ -240,9 +257,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     }
   }
 
-  private fun addSubtreeOperation(targetParentEntity: ParentsRef?, replaceWithEntity: EntityId) {
-    addOperations += AddSubtree(targetParentEntity, replaceWithEntity)
-    replaceWithEntity.addState(ReplaceWithState.SubtreeMoved)
+  private fun addElementOperation(targetParentEntity: Set<ParentsRef>?, replaceWithEntity: EntityId) {
+    addOperations += AddElement(targetParentEntity, replaceWithEntity)
+    replaceWithEntity.addState(ReplaceWithState.ElementMoved)
   }
 
   // This class is just a wrapper to combine functions logically
@@ -264,7 +281,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
         ReplaceWithState.NoChangeTraceLost -> return null
         is ReplaceWithState.Relabel -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
-        ReplaceWithState.SubtreeMoved -> TODO()
+        ReplaceWithState.ElementMoved -> TODO()
         null -> Unit
       }
 
@@ -278,15 +295,24 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         val targetParents = mutableSetOf<EntityId>()
         var targetEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
         for (i in entriesList.indices) {
-          val targetEntityIds = childrenInStorage((entriesList[i].value as ParentsRef.TargetRef).targetEntityId, replaceWithTrack.entity.clazz, targetStorage)
-          val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
-          targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
-          while (targetEntityData != null && replaceWithState[targetEntityData.createEntityId()] != null) {
+          val value = entriesList[i].value
+          if (value is ParentsRef.TargetRef) {
+            val targetEntityIds = childrenInStorage(value.targetEntityId, replaceWithTrack.entity.clazz, targetStorage)
+            val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
             targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
+            while (targetEntityData != null && replaceWithState[targetEntityData.createEntityId()] != null) {
+              targetEntityData = targetChildrenMap.removeSome(replaceWithEntityData)
+            }
+            if (targetEntityData != null) {
+              targetParents += entriesList[i].key.entity
+              break
+            }
           }
-          if (targetEntityData != null) {
-            targetParents += entriesList[i].key.entity
-            break
+        }
+        for (entry in entriesList) {
+          val value = entry.value
+          if (value is ParentsRef.AddedElement) {
+            return ParentsRef.AddedElement(replaceWithTrack.entity)
           }
         }
         return targetEntityData?.createEntityId()?.let { ParentsRef.TargetRef(it) }
@@ -394,14 +420,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
         ReplaceWithState.NoChangeTraceLost -> return null
         is ReplaceWithState.Relabel -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
-        ReplaceWithState.SubtreeMoved -> TODO()
+        ReplaceWithState.ElementMoved -> TODO()
         null -> Unit
       }
 
       val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage)
       if (targetEntity == null) {
         if (entityFilter(replaceWithRootEntity.entitySource)) {
-          addSubtreeOperation(null, replaceRootEntityId)
+          addSubtree(null, replaceRootEntityId)
           return ParentsRef.AddedElement(replaceRootEntityId)
         } else {
           replaceRootEntityId.addState(ReplaceWithState.NoChangeTraceLost)
@@ -552,6 +578,16 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     operations[this] = state
   }
 
+  private fun addSubtree(parents: Set<ParentsRef>?, replaceWithEntityId: EntityId) {
+    addElementOperation(parents, replaceWithEntityId)
+
+    replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithEntityId.asParent()).values.flatten().forEach {
+      val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
+      if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
+      addSubtree(setOf(ParentsRef.AddedElement(replaceWithEntityId)), it.id)
+    }
+  }
+
   companion object {
     private fun buildRootTrack(entity: TrackToParents,
                                storage: AbstractEntityStorage) {
@@ -607,7 +643,7 @@ internal sealed interface Operation {
   class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) : Operation
 }
 
-internal class AddSubtree(val targetParent: ParentsRef?, val replaceWithSource: EntityId)
+internal class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
   data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>? = null) : ReplaceState
@@ -616,7 +652,7 @@ internal sealed interface ReplaceState {
 }
 
 internal sealed interface ReplaceWithState {
-  object SubtreeMoved : ReplaceWithState
+  object ElementMoved : ReplaceWithState
   data class NoChange(val targetEntityId: EntityId) : ReplaceWithState
   data class Relabel(val targetEntityId: EntityId) : ReplaceWithState
   object NoChangeTraceLost : ReplaceWithState
