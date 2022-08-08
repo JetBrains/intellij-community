@@ -77,7 +77,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
                                                  UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()),
                                                  myRefreshAction,
                                                  SaveClusteringResultActionLink.getInternalSaveClusteringResultsLink(myProject, mySession,
-                                                                                                                     usageView.getTargets()[0].toString())));
+                                                                                                                     usageView.getTargets()[0].getName())));
           addMostCommonUsagesForSelectedGroups();
           setContent(myMostCommonUsageScrollPane);
         }
@@ -89,7 +89,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       };
     myMostCommonUsagesToolbar =
       new MostCommonUsagesToolbar(this, UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()), myRefreshAction,
-                                  SaveClusteringResultActionLink.getInternalSaveClusteringResultsLink(myProject, mySession, usageView.getTargets()[0].toString()));
+                                  SaveClusteringResultActionLink.getInternalSaveClusteringResultsLink(myProject, mySession, usageView.getTargets()[0].getName()));
     setToolbar(myMostCommonUsagesToolbar);
     addMostCommonUsagesForSelectedGroups();
     revalidate();
