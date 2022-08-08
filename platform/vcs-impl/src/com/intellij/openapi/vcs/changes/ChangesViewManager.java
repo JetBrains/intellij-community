@@ -920,4 +920,9 @@ public class ChangesViewManager implements ChangesViewEx,
   public static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
     return isCommitToolWindowShown(project) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
   }
+
+  @Override
+  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();
+  }
 }
