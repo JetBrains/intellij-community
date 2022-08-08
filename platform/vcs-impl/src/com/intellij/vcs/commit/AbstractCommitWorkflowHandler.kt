@@ -121,9 +121,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun executionStarted() = Unit
   override fun executionEnded() = Unit
 
-  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) =
-    ui.endBeforeCommitChecks(result)
+  override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = ui.startBeforeCommitChecks()
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
   @RequiresEdt
   private fun executeSession(sessionInfo: CommitSessionInfo): Boolean {

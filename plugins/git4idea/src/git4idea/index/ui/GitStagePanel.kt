@@ -16,8 +16,11 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
@@ -41,10 +44,7 @@ import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitChecksResult
-import com.intellij.vcs.commit.CommitStatusPanel
-import com.intellij.vcs.commit.CommitWorkflowListener
-import com.intellij.vcs.commit.EditedCommitNode
+import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -476,8 +476,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun vcsesChanged() = Unit
     override fun executionStarted() = Unit
-    override fun beforeCommitChecksStarted() = Unit
-    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) = Unit
+    override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = Unit
+    override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = Unit
   }
 
   companion object {

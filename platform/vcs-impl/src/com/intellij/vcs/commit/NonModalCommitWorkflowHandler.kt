@@ -223,19 +223,20 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     hideCommitChecksFailureNotification()
   }
 
-  override fun beforeCommitChecksStarted() {
-    super.beforeCommitChecksStarted()
+  override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) {
+    super.beforeCommitChecksStarted(sessionInfo)
     hideCommitChecksFailureNotification()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) {
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
     hideCommitChecksFailureNotification()
-    super.beforeCommitChecksEnded(isDefaultCommit, executor, result)
+    super.beforeCommitChecksEnded(sessionInfo, result)
     if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
     }
     if (result is CommitChecksResult.Failed ||
         result is CommitChecksResult.ExecutionError) {
+      val executor = sessionInfo.executor
       val commitActionText = getCommitActionTextForNotification(executor, false)
       val commitAnywayActionText = getCommitActionTextForNotification(executor, true)
       val messageText = ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }

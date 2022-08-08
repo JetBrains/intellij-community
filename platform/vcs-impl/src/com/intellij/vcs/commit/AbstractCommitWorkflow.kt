@@ -56,8 +56,8 @@ interface CommitWorkflowListener : EventListener {
   fun executionStarted()
   fun executionEnded()
 
-  fun beforeCommitChecksStarted()
-  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult)
+  fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo)
+  fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult)
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
@@ -174,17 +174,18 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected abstract fun performCommit(sessionInfo: CommitSessionInfo)
 
   protected fun runBeforeCommitChecksWithEvents(sessionInfo: CommitSessionInfo): CommitChecksResult {
-    fireBeforeCommitChecksStarted()
+    fireBeforeCommitChecksStarted(sessionInfo)
     val result = runBeforeCommitChecks(sessionInfo)
     fireBeforeCommitChecksEnded(sessionInfo, result)
 
     return result
   }
 
-  protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
+  protected fun fireBeforeCommitChecksStarted(sessionInfo: CommitSessionInfo) =
+    eventDispatcher.multicaster.beforeCommitChecksStarted(sessionInfo)
 
   protected fun fireBeforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
-    eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo.isVcsCommit, sessionInfo.executor, result)
+    eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo, result)
 
   private fun runBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitChecksResult {
     var result: CommitChecksResult? = null

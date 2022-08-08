@@ -31,7 +31,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   private suspend fun checkCommit(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult): CommitChecksResult {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
-    fireBeforeCommitChecksStarted()
+    fireBeforeCommitChecksStarted(sessionInfo)
     try {
       result = checker()
     }
