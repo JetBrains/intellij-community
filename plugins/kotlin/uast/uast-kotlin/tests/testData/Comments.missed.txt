@@ -26,7 +26,7 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Illeg
 org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (identifier = ClassCastException) <- UComment <- UMethod (name = getName) <- UClass (name = Pizza) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (ClassCastException)) <- USimpleNameReferenceExpression (identifier = ClassCastException) <- UComment <- UMethod (name = getName) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (getName)) <- UMethod (name = getName) <- UClass (name = Pizza) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = getName) <- UClass (name = Pizza)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Pizza) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = java) <- UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Pizza) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (java)) <- USimpleNameReferenceExpression (identifier = java) <- UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Pizza)
@@ -50,7 +50,7 @@ org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (ide
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Margherita)) <- USimpleNameReferenceExpression (identifier = Margherita) <- UQualifiedReferenceExpression <- UComment <- UMethod (name = contains)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (contains)) <- USimpleNameReferenceExpression (identifier = contains) <- UQualifiedReferenceExpression <- UComment <- UMethod (name = contains)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (contains)) <- UMethod (name = contains) <- UClass (name = Pizza) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = contains) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (ingredient)) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Pizza) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Pizza) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Ingredient) <- UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Pizza)
@@ -99,7 +99,7 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (ingre
 org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (identifier = P) <- UComment <- UMethod (name = addIngredient) <- UClass (name = Builder) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (P)) <- USimpleNameReferenceExpression (identifier = P) <- UComment <- UMethod (name = addIngredient) <- UClass (name = Builder)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (addIngredient)) <- UMethod (name = addIngredient) <- UClass (name = Builder) <- UClass (name = Pizza) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = addIngredient) <- UClass (name = Builder)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (ingredient)) <- UParameter (name = ingredient) <- UMethod (name = addIngredient) <- UClass (name = Builder) <- UClass (name = Pizza)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = addIngredient) <- UClass (name = Builder) <- UClass (name = Pizza)
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Pizza) <- UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = addIngredient) <- UClass (name = Builder)
@@ -110,12 +110,12 @@ org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = P) <-
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = P) <- UTypeReferenceExpression (name = P) <- UMethod (name = addIngredient) <- UClass (name = Builder) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (P)) <- USimpleNameReferenceExpression (identifier = P) <- UTypeReferenceExpression (name = P) <- UMethod (name = addIngredient) <- UClass (name = Builder)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (build)) <- UMethod (name = build) <- UClass (name = Builder) <- UClass (name = Pizza) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = build) <- UClass (name = Builder)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = Pizza) <- UMethod (name = build) <- UClass (name = Builder) <- UClass (name = Pizza) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Pizza) <- UTypeReferenceExpression (name = Pizza) <- UMethod (name = build) <- UClass (name = Builder) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Pizza)) <- USimpleNameReferenceExpression (identifier = Pizza) <- UTypeReferenceExpression (name = Pizza) <- UMethod (name = build) <- UClass (name = Builder)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (self)) <- UMethod (name = self) <- UClass (name = Builder) <- UClass (name = Pizza) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = self) <- UClass (name = Builder)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = P) <- UMethod (name = self) <- UClass (name = Builder) <- UClass (name = Pizza) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = P) <- UTypeReferenceExpression (name = P) <- UMethod (name = self) <- UClass (name = Builder) <- UClass (name = Pizza)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (P)) <- USimpleNameReferenceExpression (identifier = P) <- UTypeReferenceExpression (name = P) <- UMethod (name = self) <- UClass (name = Builder)
@@ -127,7 +127,7 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (size)
 org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (identifier = Margherita) <- UComment <- UClass (name = Margherita) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Margherita)) <- USimpleNameReferenceExpression (identifier = Margherita) <- UComment <- UClass (name = Margherita) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Margherita)) <- UClass (name = Margherita) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UMethod (name = Margherita) <- UClass (name = Margherita) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (size)) <- UParameter (name = size) <- UMethod (name = Margherita) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = int) <- UParameter (name = size) <- UMethod (name = Margherita) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Int) <- UTypeReferenceExpression (name = int) <- UParameter (name = size) <- UMethod (name = Margherita) <- UClass (name = Margherita)
@@ -137,7 +137,7 @@ org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpressi
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Pizza)) <- USimpleNameReferenceExpression (identifier = Pizza) <- UTypeReferenceExpression (name = Pizza)
 org.jetbrains.kotlin.psi.KtClassBody: UExpressionList (class_body) <- UClass (name = Margherita) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (getName)) <- UMethod (name = getName) <- UClass (name = Margherita) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = getName) <- UClass (name = Margherita)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = java) <- UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Margherita) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (java)) <- USimpleNameReferenceExpression (identifier = java) <- UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Margherita)
@@ -161,7 +161,7 @@ org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (ide
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Pizza)) <- USimpleNameReferenceExpression (identifier = Pizza) <- UQualifiedReferenceExpression <- UComment <- UMethod (name = contains)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Ingredient)) <- USimpleNameReferenceExpression (identifier = Ingredient) <- UQualifiedReferenceExpression <- UComment <- UMethod (name = contains)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (contains)) <- UMethod (name = contains) <- UClass (name = Margherita) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = contains) <- UClass (name = Margherita)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (ingredient)) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Pizza) <- UTypeReferenceExpression (name = Pizza.Ingredient) <- UParameter (name = ingredient) <- UMethod (name = contains) <- UClass (name = Margherita)

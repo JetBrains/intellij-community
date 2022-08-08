@@ -6,7 +6,7 @@ org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpressi
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Suppress)) <- UAnnotation (fqName = kotlin.Suppress) <- UMethod (name = method) <- UClass (name = SimpleAnnotated) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtStringTemplateExpression: ULiteralExpression (value = "abc") <- UNamedExpression (name = names) <- UAnnotation (fqName = kotlin.Suppress) <- UMethod (name = method) <- UClass (name = SimpleAnnotated)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (method)) <- UMethod (name = method) <- UClass (name = SimpleAnnotated) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = method) <- UClass (name = SimpleAnnotated)
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = println) <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) <- UBlockExpression <- UMethod (name = method) <- UClass (name = SimpleAnnotated)
 org.jetbrains.kotlin.psi.KtStringTemplateExpression: ULiteralExpression (value = "Hello, world!") <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) <- UBlockExpression <- UMethod (name = method) <- UClass (name = SimpleAnnotated)
 org.jetbrains.kotlin.psi.KtConstructorCalleeExpression: [!] UnknownKotlinExpression (CONSTRUCTOR_CALLEE) <- UAnnotation (fqName = kotlin.SinceKotlin) <- UField (name = property) <- UClass (name = SimpleAnnotated) <- UFile (package = )

@@ -616,7 +616,7 @@ interface BaseKotlinConverter {
             when (element) {
                 is KtParameterList -> {
                     el<UDeclarationsExpression> {
-                        val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, null)
+                        val declarationsExpression = KotlinUDeclarationsExpression(element, givenParent, null)
                         declarationsExpression.apply {
                             declarations = element.parameters.mapIndexed { i, p ->
                                 KotlinUParameter(UastKotlinPsiParameter.create(p, element, declarationsExpression, i), p, this)

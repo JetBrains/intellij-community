@@ -5,7 +5,7 @@ org.jetbrains.kotlin.psi.KtStringTemplateExpression: ULiteralExpression (value =
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (get)) <- UMethod (name = getWithSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (field)) <- USimpleNameReferenceExpression (identifier = field) <- UReturnExpression <- UBlockExpression <- UMethod (name = getWithSetter)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (set)) <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (p)) <- UParameter (name = p) <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (field)) <- USimpleNameReferenceExpression (identifier = field) <- UBinaryExpression (operator = =) <- UBlockExpression <- UMethod (name = setWithSetter)
 org.jetbrains.kotlin.psi.KtOperationReferenceExpression: USimpleNameReferenceExpression (identifier = =) <- UBinaryExpression (operator = =) <- UBlockExpression <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer)

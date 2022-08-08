@@ -1,20 +1,20 @@
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (A)) <- UClass (name = A) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtClassBody: UExpressionList (class_body) <- UClass (name = A) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (invoke)) <- UMethod (name = invoke) <- UClass (name = A) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = invoke) <- UClass (name = A)
 org.jetbrains.kotlin.psi.KtThisExpression: UThisExpression (label = null) <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) <- UBlockExpression <- UMethod (name = invoke) <- UClass (name = A)
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = this) <- UThisExpression (label = null) <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) <- UBlockExpression <- UMethod (name = invoke)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (this)) <- USimpleNameReferenceExpression (identifier = this) <- UThisExpression (label = null) <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) <- UBlockExpression
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (invoke)) <- UMethod (name = invoke) <- UClass (name = A) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = invoke) <- UClass (name = A)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (f)) <- UParameter (name = f) <- UMethod (name = invoke) <- UClass (name = A) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = kotlin.jvm.functions.Function0<? extends kotlin.Unit>) <- UParameter (name = f) <- UMethod (name = invoke) <- UClass (name = A) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UTypeReferenceExpression (name = kotlin.jvm.functions.Function0<? extends kotlin.Unit>) <- UParameter (name = f) <- UMethod (name = invoke) <- UClass (name = A)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = kotlin.Unit) <- UTypeReferenceExpression (name = kotlin.jvm.functions.Function0<? extends kotlin.Unit>) <- UParameter (name = f) <- UMethod (name = invoke) <- UClass (name = A)
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Unit) <- UTypeReferenceExpression (name = kotlin.Unit) <- UTypeReferenceExpression (name = kotlin.jvm.functions.Function0<? extends kotlin.Unit>) <- UParameter (name = f) <- UMethod (name = invoke)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Unit)) <- USimpleNameReferenceExpression (identifier = Unit) <- UTypeReferenceExpression (name = kotlin.Unit) <- UTypeReferenceExpression (name = kotlin.jvm.functions.Function0<? extends kotlin.Unit>) <- UParameter (name = f)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (main)) <- UMethod (name = main) <- UClass (name = NonTrivialIdentifiersKt) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = main) <- UClass (name = NonTrivialIdentifiersKt)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (a)) <- UParameter (name = a) <- UMethod (name = main) <- UClass (name = NonTrivialIdentifiersKt) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = A) <- UParameter (name = a) <- UMethod (name = main) <- UClass (name = NonTrivialIdentifiersKt) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = A) <- UTypeReferenceExpression (name = A) <- UParameter (name = a) <- UMethod (name = main) <- UClass (name = NonTrivialIdentifiersKt)
