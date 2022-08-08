@@ -20,6 +20,29 @@ import org.junit.runner.RunWith;
 @TestMetadata("../testData/inspectionsLocal")
 public abstract class SharedK2LocalInspectionTestGenerated extends AbstractSharedK2LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
+    public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/empty.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/hasComment.kt");
+        }
+
+        @TestMetadata("notEmpty.kt")
+        public void testNotEmpty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/notEmpty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
     public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -44,29 +67,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("withStatement.kt")
         public void testWithStatement() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/withStatement.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
-    public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("empty.kt")
-        public void testEmpty() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/empty.kt");
-        }
-
-        @TestMetadata("hasComment.kt")
-        public void testHasComment() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/hasComment.kt");
-        }
-
-        @TestMetadata("notEmpty.kt")
-        public void testNotEmpty() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/notEmpty.kt");
         }
     }
 
