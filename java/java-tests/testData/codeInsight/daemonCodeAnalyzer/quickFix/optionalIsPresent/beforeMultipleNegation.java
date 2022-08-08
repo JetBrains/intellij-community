@@ -5,15 +5,11 @@ import java.util.*;
 public class Main {
   public void testOptional(Optional<String> str) {
     String val;
-    if (str.isPrese<caret>nt()) {
-      val = str.get().trim();
+    if (!!str.isPrese<caret>nt()) {
+      val = str.get();
     } else {
-      val = getDefault();
+      val = "";
     }
     System.out.println(val);
-  }
-
-  public String getDefault() {
-    return "";
   }
 }

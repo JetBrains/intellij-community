@@ -34,6 +34,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
 
+  private static final CallMatcher OPTIONAL_IS_EMPTY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0);
+
   private static final OptionalIsPresentCase[] CASES = OptionalIsPresentCase.values();
 
   private enum ProblemType {
@@ -64,16 +67,11 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitConditionalExpression(expression);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        boolean[] invert = new boolean[]{false};
+        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition, invert);
         if (optionalRef == null) return;
-        PsiExpression thenExpression = invert ? expression.getElseExpression() : expression.getThenExpression();
-        PsiExpression elseExpression = invert ? expression.getThenExpression() : expression.getElseExpression();
+        PsiExpression thenExpression = invert[0] ? expression.getElseExpression() : expression.getThenExpression();
+        PsiExpression elseExpression = invert[0] ? expression.getThenExpression() : expression.getElseExpression();
         check(condition, optionalRef, thenExpression, elseExpression);
       }
 
@@ -82,16 +80,11 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitIfStatement(statement);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        boolean[] invert = new boolean[]{false};
+        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition, invert);
         if (optionalRef == null) return;
-        PsiStatement thenStatement = extractThenStatement(statement, invert);
-        PsiStatement elseStatement = extractElseStatement(statement, invert);
+        PsiStatement thenStatement = extractThenStatement(statement, invert[0]);
+        PsiStatement elseStatement = extractElseStatement(statement, invert[0]);
         check(condition, optionalRef, thenStatement, elseStatement);
       }
 
@@ -131,10 +124,20 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  @Contract("null -> null")
-  static PsiReferenceExpression extractOptionalFromIsPresentCheck(PsiExpression expression) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
-    if (!OPTIONAL_IS_PRESENT.matches(call)) return null;
+  @Contract("null, _ -> null")
+  private static PsiReferenceExpression extractOptionalFromIsPresentCheck(PsiExpression condition, boolean[] invert) {
+    while (condition != null && BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+      invert[0] = !invert[0];
+    }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(condition, PsiMethodCallExpression.class);
+    if (!OPTIONAL_IS_PRESENT.matches(call)) {
+      if (!OPTIONAL_IS_EMPTY.matches(call)) {
+        return null;
+      } else {
+        invert[0] = !invert[0];
+      }
+    }
     PsiReferenceExpression qualifier =
       ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
     if (qualifier == null) return null;
@@ -263,23 +266,19 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiExpression)) return;
       PsiExpression condition = (PsiExpression)element;
-      boolean invert = false;
-      if (BoolUtils.isNegation(condition)) {
-        condition = BoolUtils.getNegated(condition);
-        invert = true;
-      }
-      PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition);
+      boolean[] invert = new boolean[]{false};
+      PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition, invert);
       if (optionalRef == null) return;
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
       PsiElement thenElement;
       PsiElement elseElement;
       if (cond instanceof PsiIfStatement) {
-        thenElement = extractThenStatement((PsiIfStatement)cond, invert);
-        elseElement = extractElseStatement((PsiIfStatement)cond, invert);
+        thenElement = extractThenStatement((PsiIfStatement)cond, invert[0]);
+        elseElement = extractElseStatement((PsiIfStatement)cond, invert[0]);
       }
       else if (cond instanceof PsiConditionalExpression) {
-        thenElement = invert ? ((PsiConditionalExpression)cond).getElseExpression() : ((PsiConditionalExpression)cond).getThenExpression();
-        elseElement = invert ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
+        thenElement = invert[0] ? ((PsiConditionalExpression)cond).getElseExpression() : ((PsiConditionalExpression)cond).getThenExpression();
+        elseElement = invert[0] ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
       }
       else {
         return;
