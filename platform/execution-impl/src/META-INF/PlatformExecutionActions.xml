@@ -47,6 +47,8 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetResizeController"/>
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetWidthHelper"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />

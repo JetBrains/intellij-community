@@ -8,10 +8,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeFrame
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
-import javax.swing.SwingUtilities
 
 class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
   FixWidthSegmentedActionToolbarComponent(place, group) {
@@ -110,18 +108,17 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   override fun addNotify() {
     super.addNotify()
 
-    (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
+    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
       project = it
 
-      RUN_CONFIG_WIDTH = RunToolbarSettings.getInstance(it).getRunConfigWidth()
-
+      RunWidgetWidthHelper.getInstance(it).runConfig = RunToolbarSettings.getInstance(it).getRunConfigWidth()
     }
   }
 
   override fun updateWidthHandler() {
     super.updateWidthHandler()
     project?.let {
-      RunToolbarSettings.getInstance(it).setRunConfigWidth(RUN_CONFIG_WIDTH)
+      RunToolbarSettings.getInstance(it).setRunConfigWidth(RunWidgetWidthHelper.getInstance(it).runConfig)
     }
   }
 
