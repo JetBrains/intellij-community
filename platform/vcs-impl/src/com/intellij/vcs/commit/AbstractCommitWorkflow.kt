@@ -18,13 +18,11 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
@@ -238,9 +236,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo, handlers: List<CheckinHandler>): CommitChecksResult {
     handlers.forEachLoggingErrors(LOG) { handler ->
       try {
-        val result = runBeforeCommitHandler(handler, sessionInfo)
+        val executor = sessionInfo.executor
+        if (!handler.acceptExecutor(executor)) return@forEachLoggingErrors // continue
+        LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
         when (result) {
-          CheckinHandler.ReturnResult.COMMIT -> Unit // continue
+          null, CheckinHandler.ReturnResult.COMMIT -> Unit // continue
           CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
           CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
         }
@@ -252,14 +254,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
 
     return CommitChecksResult.Passed(toCommit = true)
-  }
-
-  protected open fun runBeforeCommitHandler(handler: CheckinHandler, sessionInfo: CommitSessionInfo): CheckinHandler.ReturnResult {
-    val executor = sessionInfo.executor
-    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
-    LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
   open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
