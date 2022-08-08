@@ -25,8 +25,10 @@ static INIT: Once = Once::new();
 pub fn initialize() {
     //TODO: refactoring, add other OS
     INIT.call_once(|| {
+        let project_root = env::current_dir().expect("Failed to get project root");
+
         // download java and resolve absolute it's path for subsequent layout
-        let jbrsdk = download_java();
+        let jbrsdk = &download_java();
         let mut jbr_absolute_path = env::current_dir().unwrap();
         jbr_absolute_path.push(jbrsdk);
 
@@ -54,6 +56,7 @@ pub fn initialize() {
         env::set_current_dir(test_dir_path).expect("Failed to set current dir");
 
         layout_into_test_dir(
+            &project_root,
             jbr_absolute_path,
             jar_absolute_path,
             product_info_absolute_path,
@@ -63,6 +66,7 @@ pub fn initialize() {
 
 #[cfg(target_os = "macos")]
 fn layout_into_test_dir(
+    project_root: &Path,
     jbr_absolute_path: PathBuf,
     jar_absolute_path: PathBuf,
     product_info_absolute_path: PathBuf,
@@ -88,6 +92,12 @@ fn layout_into_test_dir(
         "Contents/Resources/product-info.json",
     )
     .expect("Failed to move product_info.json");
+
+    let launcher = project_root.join("target").join("debug").join("xplat_launcher");
+    assert!(launcher.exists());
+
+    fs::copy(launcher, "Contents/bin/xplat_launcher").expect("Failed to copy launcher");
+
     fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
     copy_dir::copy_dir(jbr_absolute_path, "Contents/jbr").expect("Filed to copy jbr");
     File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
@@ -95,9 +105,13 @@ fn layout_into_test_dir(
 
 #[cfg(test)]
 mod tests {
+    use std::{env, mem, thread, time};
     use crate::initialize;
     use crate::tests_util::{get_java_parameter_from_output, package_jar, run_java};
     use std::env::{current_dir, set_current_dir};
+    use std::io::{BufRead, BufReader};
+    use std::process::{Command, ExitStatus, Stdio};
+    use std::time::Duration;
     use xplat_launcher::main_lib;
 
     #[test]
@@ -118,8 +132,52 @@ mod tests {
             .join("Contents")
             .join("bin");
 
-        set_current_dir(test_dir).unwrap();
-        main_lib();
+        let mut launcher_process = Command::new(test_dir.join("xplat_launcher"))
+            .current_dir(test_dir)
+            .spawn()
+            .expect("Failed to spawn launcher process");
+
+        let started = time::Instant::now();
+
+        loop {
+            let elapsed = time::Instant::now() - started;
+            if elapsed > Duration::from_secs(60) {
+                panic!("Launcher has been running for more than 60 seconds, terminating")
+            }
+
+            match launcher_process.try_wait() {
+                Ok(opt) => match opt {
+                    None => {
+                        println!("Waiting for launcher process to exit");
+                    }
+                    Some(es) => {
+                        match es.code() {
+                            None => {
+                                panic!("No exit code for launcher process, probably terminated by signal")
+                            }
+                            Some(c) => {
+                                match c {
+                                    0 => {
+                                        println!("Launcher exited with exit code 0")
+                                    }
+                                    x => {
+                                        panic!("Launcher exited with non-zero exit code {x}");
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    panic!("Failed to get launcher process status: {e:?}")
+                }
+            };
+
+            thread::sleep(Duration::from_secs(1))
+        }
+
         assert_eq!(2, 2);
     }
 }

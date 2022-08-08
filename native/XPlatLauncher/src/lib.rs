@@ -33,17 +33,17 @@ pub fn main_lib() {
 fn main_impl() -> Result<()> {
     println!("Initializing logger");
 
+    let term_logger = TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto);
+
+    // TODO: do not crash if failed to create a log file?
+    let file_logger = WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log")?);
+
     // TODO: set agreed configuration (probably simple logger instead of pretty colors for terminal) or replace the lib with our own code
-    let loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![
-        TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
-        // TODO: do not crash here?
-        WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log")?),
-    ];
+    let loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![ term_logger, file_logger ];
 
     CombinedLogger::init(loggers)?;
 
-
-    // let's the panic on JVM thread crash the launcher
+    // lets the panic on JVM thread crash the launcher (or not?)
     let orig_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
         error!("{panic_info:?}");
@@ -62,6 +62,7 @@ fn main_impl() -> Result<()> {
 
     debug!("Preparing runtime");
     let java_home = &configuration.prepare_for_launch()?;
+    debug!("Resolved runtime: {java_home:?}");
 
     debug!("Resolving vm options");
     let vm_options = get_full_vm_options(configuration)?;
@@ -69,7 +70,11 @@ fn main_impl() -> Result<()> {
     debug!("Resolving args for vm launch");
     let args = configuration.get_args();
 
-    java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec())
+    let result = java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec());
+
+    log::logger().flush();
+
+    result
 }
 
 #[allow(non_snake_case)]
@@ -180,7 +185,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     full_vm_options.push(class_path_vm_option);
 
     // 4. TODO: find out if that's still needed
-    full_vm_options.push("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader".to_string());
+    // full_vm_options.push("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader".to_string());
     full_vm_options.push("-XX:+StartAttachListener".to_string());
 
     // TODO: shouldn't this already be in .vmoptions?

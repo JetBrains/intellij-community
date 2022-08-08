@@ -1,9 +1,13 @@
 use std::{mem, panic, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
+use std::thread::JoinHandle;
+use core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef};
+use core_foundation::date::{CFAbsoluteTime, CFTimeInterval};
+use core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
-use log::{debug, error};
+use log::{debug, error, info, Log};
 use crate::{err_from_string, errors};
 use crate::errors::{LauncherError, Result};
 
@@ -25,13 +29,19 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
     // JNI docs says that JVM should not be created on primordial thread
     // See Chapter 5: The Invocation API
-    thread::spawn(move || {
+    let join_handle = thread::spawn(move || {
         unsafe {
             debug!("Trying to spin up VM and call IntelliJ main from non-primordial thread");
             match intellij_main_thread(&java_home, vm_options, args) {
-                Ok(_) => {}
+                Ok(_) => {
+                    info!("JVM thread has exited.");
+                    log::logger().flush();
+                    std::process::exit(0);
+                }
                 Err(e) => {
-                    error!("{e:?}")
+                    error!("{e:?}");
+                    log::logger().flush();
+                    std::process::exit(1);
                 }
             }
         }
@@ -39,7 +49,9 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
     // Using the primordial thread as at least Mac OS X needs it for GUI loop according to JBR
     // https://github.com/JetBrains/JetBrainsRuntime/blob/363650bbf48789e4c5f68840b66372442d3e481f/src/java.base/macosx/native/libjli/java_md_macosx.c#L328
-    run_event_loop()?;
+    unsafe {
+        run_event_loop()?
+    };
 
     return Ok(());
 }
@@ -171,13 +183,18 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs>
 }
 
 fn get_libjvm(java_home: &Path) -> Result<PathBuf> {
+    debug!("Resolving libjvm from java home: {java_home:?}");
+
     let libjvm = get_libjvm_path(java_home);
     if !libjvm.exists() {
         let message = format!("libvjm not found at path {libjvm:?}");
         return err_from_string(message);
     }
+    debug!("Found libjvm at {libjvm:?}");
 
     let path = std::fs::canonicalize(libjvm)?;
+    debug!("Canonical libvjm: {path:?}");
+
     Ok(path)
 }
 
@@ -229,9 +246,36 @@ fn run_event_loop() -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-fn run_event_loop() -> Result<()> {
-    unsafe {
-        core_foundation::runloop::CFRunLoopRun();
+unsafe fn run_event_loop() -> Result<()> {
+    #[allow(non_snake_case)]
+    let FOREVER = 1e20;
+
+    extern "C" fn timer_empty(_timer: CFRunLoopTimerRef, _info: *mut c_void) {}
+
+    let timer = CFRunLoopTimerCreate(
+        kCFAllocatorDefault,
+        FOREVER,
+        0.0 as CFTimeInterval,
+        0,
+        0,
+        timer_empty,
+        std::ptr::null_mut()
+    );
+
+    CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
+    CFRelease(timer.as_void_ptr());
+
+    loop {
+        let result = CFRunLoopRunInMode(
+            kCFRunLoopDefaultMode,
+            FOREVER,
+            0 as core_foundation::base::Boolean
+        );
+
+        if result == kCFRunLoopRunFinished {
+            info!("Core foundation loop has exited");
+            break;
+        }
     }
 
     Ok(())

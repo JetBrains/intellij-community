@@ -5,26 +5,34 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-pub fn download_java() -> & 'static Path {
+pub fn download_java() -> PathBuf {
     let download_link = if cfg!(target_os = "linux") {
         "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-linux-x64-b469.37.tar.gz"
     } else if cfg!(target_os = "macos") {
-        "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-x64-b469.37.tar.gz"
+        if cfg!(target_arch = "x86_64") {
+            "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-x64-b469.37.tar.gz"
+        } else
+        {
+            "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-aarch64-b469.37.tar.gz"
+        }
     } else {
-        ""
+        todo!("")
     };
 
     let jbr_archive = "jbr.tar.gz";
-    let install_java_command = Command::new("curl")
-        .args([
-            "-fsSL",
-            "-o",
-            jbr_archive,
-            download_link])
-        .output()
-        .expect("failed to download Java");
 
-    command_handler(&install_java_command);
+    if !PathBuf::from(jbr_archive).exists() {
+        let install_java_command = Command::new("curl")
+            .args([
+                "-fsSL",
+                "-o",
+                jbr_archive,
+                download_link])
+            .output()
+            .expect("failed to download Java");
+
+        command_handler(&install_java_command);
+    }
 
     let jbr_dir = unpack_jbr_tar(jbr_archive);
     return jbr_dir;
@@ -54,9 +62,9 @@ pub fn download_java() -> & 'static Path {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn unpack_jbr_tar(archive: &str) -> &Path {
+fn unpack_jbr_tar(archive: &str) -> PathBuf {
     create_dir("jbr").expect("Failed to create jbr dir");
-    let jbrsdk_dir = Path::new("jbr");
+    let jbrsdk_dir = PathBuf::from("jbr");
     let archive = Command::new("tar")
         .args(["-C", "jbr", "-xzvf", archive, "--strip-components", "1"])
         .output()
@@ -75,8 +83,8 @@ pub fn resolve_java_command(jbrsdk_dir: &Path, java_command: &str) -> PathBuf {
 }
 
 #[cfg(target_os = "macos")]
-pub fn resolve_java_command(jbrsdk_dir: &Path, java_command: &str) -> PathBuf {
-    return jbrsdk_dir
+pub fn resolve_java_command<P: AsRef<Path>>(jbrsdk_dir: P, java_command: &str) -> PathBuf {
+    return jbrsdk_dir.as_ref()
         .join("Contents")
         .join("Home")
         .join("bin")
