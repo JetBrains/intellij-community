@@ -477,21 +477,6 @@ fn get_lib_path(ide_home: &Path) -> PathBuf {
     ide_home.join("lib")
 }
 
-#[cfg(target_os = "windows")]
-fn get_local_hardcoded_exe_path() -> String {
-    "C:\\tmp\\ideaIU-223.SNAPSHOT\\bin\\launcher.exe".to_string()
-}
-
-#[cfg(target_os = "macos")]
-fn get_local_hardcoded_exe_path() -> String {
-    "/Applications/IntelliJ IDEA 2022.3 EAP.app/Contents/bin/launcher.exe".to_string()
-}
-
-#[cfg(target_os = "linux")]
-fn get_local_hardcoded_exe_path() -> String {
-    "/home/haze/tmp/1/idea-IU-222.SNAPSHOT/bin/launcher.exe".to_string()
-}
-
 fn get_product_info_home(ide_home: &Path) -> Result<PathBuf> {
     let parent = match env::consts::OS {
         "linux" => { ide_home.to_path_buf() }

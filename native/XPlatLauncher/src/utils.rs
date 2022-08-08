@@ -31,7 +31,7 @@ pub fn get_readable_file_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result
 pub fn get_path_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {
     let env_var_value = env::var(env_var_name)?;
 
-    if !env_var_value.is_empty() {
+    if env_var_value.is_empty() {
         let message = format!("Env var {env_var_value} is not set, skipping resolving path from it");
         return err_from_string(message);
     }
