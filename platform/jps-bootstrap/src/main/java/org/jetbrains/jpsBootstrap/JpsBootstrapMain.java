@@ -159,6 +159,10 @@ public class JpsBootstrapMain {
     if (JpsBootstrapUtil.underTeamCity) {
       jdkHome = Jdk11Downloader.getJdkHome(communityHome);
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.home", jdkHome.toString()
+      );
+      System.out.println(setParameterServiceMessage.asString());
+      setParameterServiceMessage = new SetParameterServiceMessage(
         "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
