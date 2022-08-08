@@ -572,6 +572,15 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   private fun addSubtree(parents: Set<ParentsRef>?, replaceWithEntityId: EntityId) {
+    val currentState = replaceWithState[replaceWithEntityId]
+    when (currentState) {
+      ReplaceWithState.ElementMoved -> return
+      is ReplaceWithState.NoChange -> error("Unexpected state")
+      ReplaceWithState.NoChangeTraceLost -> error("Unexpected state")
+      is ReplaceWithState.Relabel -> error("Unexpected state")
+      null -> Unit
+    }
+
     addElementOperation(parents, replaceWithEntityId)
 
     replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithEntityId.asParent()).values.flatten().forEach {
@@ -581,10 +590,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       buildRootTrack(trackToParents, replaceWithStorage)
       val sameEntity = findSameEntityInTargetStore(trackToParents)
       if (sameEntity is ParentsRef.TargetRef) {
-        //TODO()
         return@forEach
       }
-      addSubtree(setOf(ParentsRef.AddedElement(replaceWithEntityId)), it.id)
+      val otherParents = trackToParents.parents.mapNotNull { findSameEntityInTargetStore(it) }
+      addSubtree((otherParents + ParentsRef.AddedElement(replaceWithEntityId)).toSet(), it.id)
     }
   }
 
@@ -655,7 +664,7 @@ internal sealed interface Operation {
   class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) : Operation
 }
 
-internal class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId)
+internal data class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
   data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>? = null) : ReplaceState
