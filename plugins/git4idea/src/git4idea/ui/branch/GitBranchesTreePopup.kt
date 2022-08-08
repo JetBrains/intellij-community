@@ -3,6 +3,10 @@ package git4idea.ui.branch
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
@@ -10,8 +14,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.TreeActions
-import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.popup.NextStepHandler
+import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
@@ -38,12 +42,11 @@ import kotlinx.coroutines.flow.drop
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
+import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
@@ -65,6 +68,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     setMinimumSize(JBDimension(200, 200))
     dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
     setSpeedSearchAlwaysShown()
+    installShortcutActions(step.treeModel)
   }
 
   override fun createContent(): JComponent {
@@ -89,6 +93,27 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       }
     }
     return tree
+  }
+
+  private fun installShortcutActions(model: TreeModel) {
+    val root = model.root
+    (0 until model.getChildCount(root))
+      .asSequence()
+      .map { model.getChild(root, it) }
+      .filterIsInstance<PopupFactoryImpl.ActionItem>()
+      .map(PopupFactoryImpl.ActionItem::getAction)
+      .forEach { action ->
+        registerAction(ActionManager.getInstance().getId(action), KeymapUtil.getKeyStroke(action.shortcutSet), createShortcutAction(action))
+      }
+  }
+
+  private fun createShortcutAction(action: AnAction) = object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      cancel()
+      ActionUtil.invokeAction(action,
+                              GitBranchesTreePopupStep.createDataContext(project, treeStep.repository),
+                              GitBranchesTreePopupStep.ACTION_PLACE, null, null)
+    }
   }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
@@ -305,7 +330,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       }
       private val secondaryLabel = JLabel().apply {
         font = FontUtil.minusOne(font)
-        border = JBUI.Borders.empty(0, 10, 1, 0)
+        border = JBUI.Borders.empty(0, 10, 1, 5)
         horizontalAlignment = SwingConstants.RIGHT
       }
       private val arrowLabel = JLabel().apply {

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
@@ -33,7 +34,7 @@ import javax.swing.Icon
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
-class GitBranchesTreePopupStep(private val project: Project, private val repository: GitRepository) : PopupStep<Any> {
+class GitBranchesTreePopupStep(private val project: Project, internal val repository: GitRepository) : PopupStep<Any> {
 
   private var finalRunnable: Runnable? = null
 
@@ -155,8 +156,11 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
   }
 
   fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
-    if (treeNode !is GitLocalBranch) return null
-    return treeNode.findTrackedBranch(repository)?.name
+    return when (treeNode) {
+      is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
+      is GitLocalBranch -> treeNode.findTrackedBranch(repository)?.name
+      else -> null
+    }
   }
 
   override fun canceled() {}
@@ -180,7 +184,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
-    private val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")
+    internal val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")
 
     private fun createActionItems(actionGroup: ActionGroup,
                                   project: Project,
@@ -199,7 +203,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         .createActionsStep(actionGroup, dataContext, ACTION_PLACE, false, true, null, null, true, 0, false)
     }
 
-    private fun createDataContext(project: Project, repository: GitRepository, branch: GitBranch? = null): DataContext =
+    internal fun createDataContext(project: Project, repository: GitRepository, branch: GitBranch? = null): DataContext =
       SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, project)
         .add(GitBranchActionsUtil.REPOSITORIES_KEY, listOf(repository))
