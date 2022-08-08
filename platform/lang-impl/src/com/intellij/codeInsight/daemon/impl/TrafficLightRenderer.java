@@ -43,6 +43,7 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,14 +141,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return getPsiFile() != null;
   }
 
-  protected static final class DaemonCodeAnalyzerStatus {
+  @ApiStatus.Internal
+  public static final class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished;  // all passes are done
     List<ProgressableTextEditorHighlightingPass> passes = Collections.emptyList();
     public int[] errorCounts = ArrayUtilRt.EMPTY_INT_ARRAY;
     public @Nls String reasonWhyDisabled;
     public @Nls String reasonWhySuspended;
 
-    private HeavyProcessLatch.Type heavyProcessType;
+    public HeavyProcessLatch.Type heavyProcessType;
     private FileHighlightingSetting minimumLevel = FileHighlightingSetting.FORCE_HIGHLIGHTING;  // by default, full inspect mode is expected
 
     DaemonCodeAnalyzerStatus() {
@@ -169,6 +171,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
       return s;
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+    return getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
   }
 
   protected @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
