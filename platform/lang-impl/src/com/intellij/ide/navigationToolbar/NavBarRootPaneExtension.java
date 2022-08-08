@@ -238,9 +238,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     }
 
     @Override
-    public void updateScrollToSelectedLimit(Limit limit) {
+    public void updateAutoscrollLimit(InfoAndProgressPanel.AutoscrollLimit limit) {
       if (myNavigationBar != null) {
-        myNavigationBar.updateScrollToSelectedLimit(limit);
+        myNavigationBar.updateAutoscrollLimit(limit);
       }
     }
   }

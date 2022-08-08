@@ -60,12 +60,14 @@ import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
 
-  public interface ScrollableToSelected {
-    enum Limit {
-      UNLIMITED, LIMIT_ONCE;
-    }
+  @ApiStatus.Internal
+  public enum AutoscrollLimit {
+    NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
+  }
 
-    void updateScrollToSelectedLimit(Limit limit);
+  @ApiStatus.Internal
+  public interface ScrollableToSelected {
+    void updateAutoscrollLimit(AutoscrollLimit limit);
   }
 
   public static final Object FAKE_BALLOON = new Object();
@@ -262,9 +264,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private void updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit navBarScrollToSelectedLimit) {
+  private void updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit autoscrollLimit) {
     if (myCentralComponent instanceof ScrollableToSelected) {
-      ((ScrollableToSelected)myCentralComponent).updateScrollToSelectedLimit(navBarScrollToSelectedLimit);
+      ((ScrollableToSelected)myCentralComponent).updateAutoscrollLimit(autoscrollLimit);
     }
   }
 
@@ -273,7 +275,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     synchronized (myOriginals) {
       if (myOriginals.isEmpty()) {
-        updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit.LIMIT_ONCE);
+        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE);
       }
 
       myOriginals.add(original);
@@ -334,7 +336,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
 
       if (last) {
-        updateNavBarScrollToSelectedLimit(ScrollableToSelected.Limit.UNLIMITED);
+        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED);
         myInlinePanel.updateState(null);
         if (myShouldClosePopupAndOnProcessFinish) {
           hideProcessPopup();

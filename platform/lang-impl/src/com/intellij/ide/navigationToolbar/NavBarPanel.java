@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel;
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.AutoscrollLimit;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -103,7 +104,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
   private Selection mySelection = null;
-  private int scrollingLimit = -1;
+  private AutoscrollLimit myAutoscrollLimit = AutoscrollLimit.UNLIMITED;
 
   private static class Selection {
     private final int myBarIndex;
@@ -401,22 +402,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-
   @Override
-  public void updateScrollToSelectedLimit(Limit limit) {
-    switch (limit) {
-      case LIMIT_ONCE:
-        scrollingLimit = 1;
-        break;
-      case UNLIMITED:
-        scrollingLimit = -1;
-    }
+  public void updateAutoscrollLimit(AutoscrollLimit limit) {
+    myAutoscrollLimit = limit;
   }
 
   protected void scrollSelectionToVisible(boolean isOnSelectionChange) {
     if (!isOnSelectionChange
         && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
-        && scrollingLimit == 0) {
+        && myAutoscrollLimit == AutoscrollLimit.NOT_ALLOWED) {
       return;
     }
 
@@ -424,7 +418,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
     scrollRectToVisible(myList.get(selectedIndex).getBounds());
 
-    if (scrollingLimit > 0) scrollingLimit--;
+    if (myAutoscrollLimit == AutoscrollLimit.ALLOW_ONCE) myAutoscrollLimit = AutoscrollLimit.NOT_ALLOWED;
   }
 
   @Nullable
