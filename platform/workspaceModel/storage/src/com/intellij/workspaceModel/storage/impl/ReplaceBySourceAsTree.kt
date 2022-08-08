@@ -52,7 +52,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private inner class OperationsApplier {
     fun apply() {
       for (addOperation in addOperations) {
-        addSubtree(addOperation.targetParent, addOperation.replaceWithSource)
+        addSubtree((addOperation.targetParent as? ParentsRef.TargetRef)?.targetEntityId, addOperation.replaceWithSource)
       }
 
       for ((id, operation) in operations) {
@@ -138,8 +138,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
         val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithEntity)
         if (entityFilter(replaceWithEntityData.entitySource)) {
-          addOperations += AddSubtree(targetRootEntityId, replaceWithEntity)
-          replaceWithEntity.addState(ReplaceWithState.SubtreeMoved)
+          addSubtreeOperation(ParentsRef.TargetRef(targetRootEntityId), replaceWithEntity)
           break
         } else {
           // Searching for the associated entity
@@ -189,8 +188,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val targetEntity = findEntityInTargetStorage(replaceWithRootEntity)
       if (targetEntity == null) {
         if (entityFilter(replaceWithRootEntity.entitySource)) {
-          addOperations += AddSubtree(null, replaceWithRootEntity.id)
-          replaceWithRootEntity.id.addState(ReplaceWithState.SubtreeMoved)
+          addSubtreeOperation(null, replaceWithRootEntity.id)
           return false to null
         }
         else {
@@ -240,6 +238,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .firstOrNull()
       }
     }
+  }
+
+  private fun addSubtreeOperation(targetParentEntity: ParentsRef?, replaceWithEntity: EntityId) {
+    addOperations += AddSubtree(targetParentEntity, replaceWithEntity)
+    replaceWithEntity.addState(ReplaceWithState.SubtreeMoved)
   }
 
   // This class is just a wrapper to combine functions logically
@@ -397,6 +400,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           return null
         } else {
           replaceRootEntityId.addState(ReplaceWithState.NoChangeTraceLost)
+          return null
         }
       }
 
@@ -598,7 +602,7 @@ internal sealed interface Operation {
   class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) : Operation
 }
 
-internal class AddSubtree(val targetParent: EntityId?, val replaceWithSource: EntityId)
+internal class AddSubtree(val targetParent: ParentsRef?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {
   data class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>? = null) : ReplaceState
