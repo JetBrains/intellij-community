@@ -2,8 +2,11 @@
 package com.intellij.openapi.util
 
 import com.intellij.openapi.application.impl.assertReferenced
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.testFramework.LeakHunter
+import com.intellij.util.LazyRecursionPreventedException
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.*
@@ -243,5 +246,59 @@ class SuspendingLazyTest {
       lazy.getValue()
     }
     Assertions.assertSame(t, thrown.cause)
+  }
+
+  @RepeatedTest(100)
+  fun `recursive lazy`(): Unit = timeoutRunBlocking {
+    fun test(lazy: SuspendingLazy<Any>) = launch(Dispatchers.Default) {
+      val caught = assertThrows<LazyRecursionPreventedException> { lazy.getValue() }
+      Assertions.assertTrue(lazy.isInitialized())
+      Assertions.assertTrue(caught.message!!.contains("lazy1name"))
+      Assertions.assertTrue(caught.message!!.contains("lazy2name"))
+      Assertions.assertTrue(caught.message!!.contains("lazy3name"))
+      Assertions.assertSame(caught, assertThrows<LazyRecursionPreventedException> { lazy.getValue() })
+    }
+
+    lateinit var lazy2: SuspendingLazy<Int>
+    lateinit var lazy3: SuspendingLazy<Int>
+    val lazy1: SuspendingLazy<Int> = suspendingLazy(CoroutineName("lazy1name")) {
+      lazy2.getValue()
+    }
+    lazy2 = suspendingLazy(CoroutineName("lazy2name")) {
+      lazy3.getValue()
+    }
+    lazy3 = suspendingLazy(CoroutineName("lazy3name")) {
+      lazy1.getValue()
+    }
+
+    test(lazy1)
+    test(lazy2)
+    test(lazy3)
+  }
+
+  @Test
+  fun `recursive lazy via blockingContext and runBlockingCancellable`(): Unit = timeoutRunBlocking {
+    lateinit var lazy2: SuspendingLazy<Int>
+    val lazy1: SuspendingLazy<Int> = suspendingLazy(CoroutineName("lazy1name")) {
+      blockingContext {
+        runBlockingCancellable {
+          lazy2.getValue()
+        }
+      }
+    }
+    lazy2 = suspendingLazy(CoroutineName("lazy2name")) {
+      blockingContext {
+        runBlockingCancellable {
+          lazy1.getValue()
+        }
+      }
+    }
+    assertThrows<LazyRecursionPreventedException> {
+      blockingContext {
+        runBlockingCancellable {
+          lazy1.getValue()
+        }
+      }
+    }
   }
 }

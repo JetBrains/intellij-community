@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 import kotlin.coroutines.*
@@ -83,6 +86,10 @@ internal class SuspendingLazyImpl<out T>(
         waiter.resume(null) // loop again
         return@suspendCancellableCoroutine
       }
+      if (!checkRecursion(waiter)) {
+        initJob.cancel()
+        return@suspendCancellableCoroutine
+      }
       @OptIn(InternalCoroutinesApi::class)
       initJob.invokeOnCompletion(true) { throwable ->
         initializationJobCompleted(throwable, initCs)
@@ -98,7 +105,8 @@ internal class SuspendingLazyImpl<out T>(
 
   private fun launch(state: InitialState): Job {
     val initializer = state.initializer
-    return state.initCs.launch(start = CoroutineStart.LAZY, context = state.initCtx) {
+    val recursionTracker = LazyRecursionTrackerElement(this)
+    return state.initCs.launch(start = CoroutineStart.LAZY, context = state.initCtx + recursionTracker) {
       try {
         complete(initializer())
       }
@@ -139,6 +147,9 @@ internal class SuspendingLazyImpl<out T>(
       val newState = state.copy(waiters = state.waiters.add(waiter))
       if (!stateHandle.compareAndSet(this, state, newState)) {
         waiter.resume(null) // loop again
+        return@suspendCancellableCoroutine
+      }
+      if (!checkRecursion(waiter)) {
         return@suspendCancellableCoroutine
       }
       waiter.invokeOnCancellation {
@@ -184,6 +195,30 @@ internal class SuspendingLazyImpl<out T>(
         }
       }
     }
+  }
+
+  private fun checkRecursion(waiter: CancellableContinuation<Result<Any?>>): Boolean {
+    val cycle = findCycle(waiter.context)
+    if (cycle != null) {
+      completeWithException(LazyRecursionPreventedException(cycle.toString()))
+      return false
+    }
+    return true
+  }
+
+  private fun findCycle(context: CoroutineContext): List<SLazy>? {
+    val paths = LazyRecursionTrackerElement.traverseCallers(context) { callingLazy: SLazy ->
+      val state = stateHandle.getVolatile(callingLazy) as InProgress
+      state.waiters.map {
+        it.context
+      }
+    }
+    for (path: List<SLazy> in paths) {
+      if (path.last() === this) {
+        return path.asReversed()
+      }
+    }
+    return null
   }
 
   private fun complete(value: Any?) {
@@ -240,6 +275,42 @@ internal class SuspendingLazyImpl<out T>(
     fun resumeWaiters(result: Result<Any?>) {
       for (waiter in waiters) {
         waiter.resume(result)
+      }
+    }
+  }
+}
+
+@Internal
+class LazyRecursionPreventedException(pathString: String) : Throwable("Recursion prevented: ${pathString}")
+
+private typealias SLazy = SuspendingLazyImpl<*>
+
+/**
+ * @param currentLazy lazy instance which is being currently initialized
+ */
+private class LazyRecursionTrackerElement(private val currentLazy: SLazy) : AbstractCoroutineContextElement(Key) {
+
+  private object Key : CoroutineContext.Key<LazyRecursionTrackerElement>
+
+  companion object {
+
+    fun traverseCallers(callingContext: CoroutineContext, callingContexts: (SLazy) -> List<CoroutineContext>): Sequence<List<SLazy>> {
+      return sequence {
+        traverseCallersInner(persistentListOf(), callingContext, callingContexts)
+      }
+    }
+
+    private suspend fun SequenceScope<List<SLazy>>.traverseCallersInner(
+      parentPath: PersistentList<SLazy>,
+      currentContext: CoroutineContext,
+      callingContexts: (SLazy) -> List<CoroutineContext>,
+    ) {
+      val currentLazy = currentContext[Key]?.currentLazy
+                        ?: return
+      val currentPath = parentPath.add(currentLazy)
+      yield(currentPath)
+      for (callingContext in callingContexts(currentLazy)) {
+        traverseCallersInner(currentPath, callingContext, callingContexts)
       }
     }
   }
