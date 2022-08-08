@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -911,7 +912,7 @@ public class SwitchBlockHighlightingModel {
       }
       else if (caseElement instanceof PsiPatternGuard) {
         PsiPatternGuard guarded = (PsiPatternGuard)caseElement;
-        Object constVal = JavaPsiPatternUtil.evaluateConstant(guarded.getGuardingExpression());
+        Object constVal = ExpressionUtils.computeConstantExpression(guarded.getGuardingExpression());
         if (!Boolean.TRUE.equals(constVal)) return null;
         return findUnconditionalDeconstruction(((PsiPatternGuard)caseElement).getPattern());
       }
