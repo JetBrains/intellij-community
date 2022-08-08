@@ -1,32 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-@Suppress("DEPRECATION")
-class RemoveEmptyClassBodyInspection : IntentionBasedInspection<KtClassBody>(RemoveEmptyClassBodyIntention::class),
+class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
                                        CleanupLocalInspectionTool {
-    override fun inspectionProblemText(element: KtClassBody): String {
+    override fun inspectionText(element: KtClassBody): String {
         return KotlinBundle.message("redundant.empty.class.body")
     }
-}
 
-class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<KtClassBody>(
-    KtClassBody::class.java,
-    KotlinBundle.lazyMessage("remove.redundant.empty.class.body")
-) {
-    override fun applyTo(element: KtClassBody, editor: Editor?) {
+    override val defaultFixText: String
+        get() = KotlinBundle.message("remove.redundant.empty.class.body")
+
+    override fun applyTo(element: KtClassBody, project: Project, editor: Editor?) {
         val parent = element.parent
         element.delete()
         addSemicolonIfNeeded(parent, editor)
@@ -65,7 +61,7 @@ class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<Kt
         }
     }
 
-    override fun isApplicableTo(element: KtClassBody): Boolean {
+    override fun isApplicable(element: KtClassBody): Boolean {
         element.getStrictParentOfType<KtObjectDeclaration>()?.let {
             if (it.isObjectLiteral()) return false
         }

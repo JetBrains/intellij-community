@@ -20,6 +20,134 @@ import org.junit.runner.RunWith;
 @TestMetadata("../testData/inspectionsLocal")
 public abstract class SharedK2LocalInspectionTestGenerated extends AbstractSharedK2LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/removeEmptyClassBody")
+    public static class RemoveEmptyClassBody extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousInterfaceObject.kt")
+        public void testAnonymousInterfaceObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/anonymousInterfaceObject.kt");
+        }
+
+        @TestMetadata("anonymousObject.kt")
+        public void testAnonymousObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/anonymousObject.kt");
+        }
+
+        @TestMetadata("companionBeforeFun.kt")
+        public void testCompanionBeforeFun() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeFun.kt");
+        }
+
+        @TestMetadata("companionBeforeInit.kt")
+        public void testCompanionBeforeInit() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeInit.kt");
+        }
+
+        @TestMetadata("companionBeforePrivateFun.kt")
+        public void testCompanionBeforePrivateFun() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforePrivateFun.kt");
+        }
+
+        @TestMetadata("companionBeforeVal.kt")
+        public void testCompanionBeforeVal() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeVal.kt");
+        }
+
+        @TestMetadata("companionInLast.kt")
+        public void testCompanionInLast() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionInLast.kt");
+        }
+
+        @TestMetadata("companionWithName.kt")
+        public void testCompanionWithName() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionWithName.kt");
+        }
+
+        @TestMetadata("companionWithSemicolon.kt")
+        public void testCompanionWithSemicolon() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionWithSemicolon.kt");
+        }
+
+        @TestMetadata("emptyClass.kt")
+        public void testEmptyClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyClass.kt");
+        }
+
+        @TestMetadata("emptyDataClass.kt")
+        public void testEmptyDataClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyDataClass.kt");
+        }
+
+        @TestMetadata("emptyInterface.kt")
+        public void testEmptyInterface() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyInterface.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/enumEntry.kt");
+        }
+
+        @TestMetadata("innerClass.kt")
+        public void testInnerClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/innerClass.kt");
+        }
+
+        @TestMetadata("lastEnumEntry.kt")
+        public void testLastEnumEntry() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry.kt");
+        }
+
+        @TestMetadata("lastEnumEntry2.kt")
+        public void testLastEnumEntry2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry2.kt");
+        }
+
+        @TestMetadata("lastEnumEntry3.kt")
+        public void testLastEnumEntry3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry3.kt");
+        }
+
+        @TestMetadata("nestedAnonymous.kt")
+        public void testNestedAnonymous() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedAnonymous.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedByFunction.kt")
+        public void testNestedClassFollowedByFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedByFunction.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedByMember.kt")
+        public void testNestedClassFollowedByMember() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedByMember.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedBySecondaryConstructor.kt")
+        public void testNestedClassFollowedBySecondaryConstructor() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedBySecondaryConstructor2.kt")
+        public void testNestedClassFollowedBySecondaryConstructor2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor2.kt");
+        }
+
+        @TestMetadata("noneEmptyClass.kt")
+        public void testNoneEmptyClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/noneEmptyClass.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/object.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
     public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
