@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -285,8 +286,13 @@ internal class MutableEntityStorageImpl(
   }
 
   internal var useNewRbs = false
+
+  @TestOnly
   internal var keepLastRbsEngine = false
   internal var engine: ReplaceBySourceOperation? = null
+
+  @set:TestOnly
+  internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
   private fun getRbsEngine(): ReplaceBySourceOperation {
     if (useNewRbs) {
       return ReplaceBySourceAsTree()
@@ -307,6 +313,7 @@ internal class MutableEntityStorageImpl(
       if (keepLastRbsEngine) {
         engine = rbsEngine
       }
+      upgradeEngine?.let { it(rbsEngine) }
       rbsEngine.replace(this, replaceWith, sourceFilter)
     }
     finally {

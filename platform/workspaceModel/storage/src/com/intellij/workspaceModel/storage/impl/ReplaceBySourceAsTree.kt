@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.*
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import org.jetbrains.annotations.TestOnly
+import java.util.*
 
 /**
  * # Replace By Source as a tree
@@ -24,6 +26,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   internal val targetState = HashMap<EntityId, ReplaceState>()
   internal val replaceWithState = HashMap<EntityId, ReplaceWithState>()
 
+  @set:TestOnly
+  internal var shuffleEntities: Long = -1L
 
   override fun replace(
     targetStorage: MutableEntityStorageImpl,
@@ -37,11 +41,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
 
-    for (targetEntityToReplace in targetEntitiesToReplace.values.flatMap { it.values }.flatten()) {
+    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
+    if (shuffleEntities != -1L && targetEntities.size > 1) {
+      targetEntities.shuffleHard(Random(shuffleEntities))
+    }
+    for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
     }
 
-    for (replaceWithEntityToReplace in replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten()) {
+    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
+    if (shuffleEntities != -1L && replaceWithEntities.size > 1) {
+      replaceWithEntities.shuffleHard(Random(shuffleEntities))
+    }
+    for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
 
@@ -648,6 +660,21 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .firstOrNull()
       }
     }
+
+    // I DON'T KNOW WHY KOTLIN SHUFFLE DOESN'T WORK, I JUST DON'T UNDERSTAND WHY
+    private fun <T> MutableList<T>.shuffleHard(rng: Random): MutableList<T> {
+      for (index in 0 until this.size) {
+        val randomIndex = rng.nextInt(index + 1)
+
+        // Swap with the random position
+        val temp = this[index]
+        this[index] = this[randomIndex]
+        this[randomIndex] = temp
+      }
+
+      return this
+    }
+
   }
 }
 
