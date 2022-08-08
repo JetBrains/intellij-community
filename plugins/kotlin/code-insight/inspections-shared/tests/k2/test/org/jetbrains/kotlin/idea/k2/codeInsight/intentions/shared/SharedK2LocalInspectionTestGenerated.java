@@ -20,6 +20,79 @@ import org.junit.runner.RunWith;
 @TestMetadata("../testData/inspectionsLocal")
 public abstract class SharedK2LocalInspectionTestGenerated extends AbstractSharedK2LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantGetter")
+    public static class RedundantGetter extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/annotation.kt");
+        }
+
+        @TestMetadata("default.kt")
+        public void testDefault() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/default.kt");
+        }
+
+        @TestMetadata("external.kt")
+        public void testExternal() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/external.kt");
+        }
+
+        @TestMetadata("fieldExpression.kt")
+        public void testFieldExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/fieldExpression.kt");
+        }
+
+        @TestMetadata("hasType.kt")
+        public void testHasType() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/hasType.kt");
+        }
+
+        @TestMetadata("hasTypeWithPropertyExplicitType.kt")
+        public void testHasTypeWithPropertyExplicitType() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/hasTypeWithPropertyExplicitType.kt");
+        }
+
+        @TestMetadata("hasTypeWithPropertyInitializer.kt")
+        public void testHasTypeWithPropertyInitializer() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/hasTypeWithPropertyInitializer.kt");
+        }
+
+        @TestMetadata("notFieldExpression.kt")
+        public void testNotFieldExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/notFieldExpression.kt");
+        }
+
+        @TestMetadata("notOnlyReturnFieldBody.kt")
+        public void testNotOnlyReturnFieldBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/notOnlyReturnFieldBody.kt");
+        }
+
+        @TestMetadata("onlyReturnFieldBody.kt")
+        public void testOnlyReturnFieldBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/onlyReturnFieldBody.kt");
+        }
+
+        @TestMetadata("withAnnotaionAndNonTrivialBlockBody.kt")
+        public void testWithAnnotaionAndNonTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndNonTrivialBlockBody.kt");
+        }
+
+        @TestMetadata("withAnnotaionAndTrivialBlockBody.kt")
+        public void testWithAnnotaionAndTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialBlockBody.kt");
+        }
+
+        @TestMetadata("withAnnotaionAndTrivialExpressionBody.kt")
+        public void testWithAnnotaionAndTrivialExpressionBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialExpressionBody.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
     public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

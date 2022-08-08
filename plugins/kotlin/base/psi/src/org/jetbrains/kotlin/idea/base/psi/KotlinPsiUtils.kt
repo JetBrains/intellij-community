@@ -12,11 +12,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
@@ -133,3 +129,8 @@ fun KtDeclaration.isExpectDeclaration(): Boolean =
         hasExpectModifier() -> true
         else -> containingClassOrObject?.isExpectDeclaration() == true
     }
+
+fun KtPropertyAccessor.deleteBody() {
+    val leftParenthesis = leftParenthesis ?: return
+    deleteChildRange(leftParenthesis, lastChild)
+}
