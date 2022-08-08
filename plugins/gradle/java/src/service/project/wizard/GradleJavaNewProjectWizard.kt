@@ -36,7 +36,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     BuildSystemJavaNewProjectWizardData by parent,
     GradleJavaNewProjectWizardData {
 
-    override val addSampleCodeProperty = propertyGraph.property(false)
+    override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
     override var addSampleCode by addSampleCodeProperty
