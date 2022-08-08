@@ -53,12 +53,12 @@ public final class JvmDeclarationSearch {
       if (((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
         return parent;
       }
-      else {
-        for (JvmDeclarationSearcher searcher : JvmDeclarationSearcher.EP.allForLanguage(potentiallyIdentifyingElement.getLanguage())) {
-          PsiElement declaringElement = searcher.adjustIdentifierElement(potentiallyIdentifyingElement);
-          if (declaringElement != null) {
-            return declaringElement;
-          }
+    }
+    else {
+      for (JvmDeclarationSearcher searcher : JvmDeclarationSearcher.EP.allForLanguage(potentiallyIdentifyingElement.getLanguage())) {
+        PsiElement declaringElement = searcher.adjustIdentifierElement(potentiallyIdentifyingElement);
+        if (declaringElement != null) {
+          return declaringElement;
         }
       }
     }
