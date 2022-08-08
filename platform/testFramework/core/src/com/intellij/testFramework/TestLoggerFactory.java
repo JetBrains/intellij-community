@@ -166,19 +166,20 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
-    StringWriter writer = new StringWriter(t == null ? 256 : 4096);
-
     String source = category.substring(Math.max(category.length() - 30, 0));
-    writer.write(String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source));
-    writer.write(message != null ? message : "");
-    writer.write(System.lineSeparator());
-    if (t != null) {
-      t.printStackTrace(new PrintWriter(writer));
-      writer.write(System.lineSeparator());
-    }
-
+    String format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source);
     synchronized (myBuffer) {
-      myBuffer.append(writer.getBuffer());
+      myBuffer.append(format);
+      if (message != null) {
+        myBuffer.append(message);
+      }
+      myBuffer.append(System.lineSeparator());
+      if (t != null) {
+        StringWriter writer = new StringWriter(4096);
+        t.printStackTrace(new PrintWriter(writer));
+        myBuffer.append(writer.getBuffer());
+        myBuffer.append(System.lineSeparator());
+      }
       if (myBuffer.length() > MAX_BUFFER_LENGTH) {
         myBuffer.delete(0, myBuffer.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
       }
