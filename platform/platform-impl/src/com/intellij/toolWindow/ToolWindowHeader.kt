@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -101,11 +102,26 @@ abstract class ToolWindowHeader internal constructor(
           val hideCommonActions = if (nearestDecorator is Component) ClientProperty.get(
             nearestDecorator as Component?, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
           else null
+
+          val extraActions = mutableListOf<AnAction>(actionGroup)
+          if (ExperimentalUI.isNewUI()) {
+            val singleContentLayout = contentUi.currentLayout as? SingleContentLayout
+            if (singleContentLayout != null) {
+              val contentActions = singleContentLayout.getSupplier()?.getContentActions()
+              if (!contentActions.isNullOrEmpty()) {
+                extraActions.addAll(0, contentActions)
+              }
+
+              extraActions.add(0, Separator.create())
+              extraActions.add(0, singleContentLayout.CloseCurrentContentAction())
+            }
+          }
+
           val tabListAction = e.actionManager.getAction("TabList")
           if (hideCommonActions == true) {
-            return arrayOf(tabListAction, actionGroup)
+            return arrayOf(tabListAction, *extraActions.toTypedArray())
           }
-          return arrayOf(tabListAction, actionGroup, commonActionsGroup)
+          return arrayOf(tabListAction, *extraActions.toTypedArray(), commonActionsGroup)
         }
       },
       true

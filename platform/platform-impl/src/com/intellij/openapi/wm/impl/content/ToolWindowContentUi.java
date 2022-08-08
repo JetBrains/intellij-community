@@ -235,7 +235,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @NotNull
-  private ContentLayout getCurrentLayout() {
+   public ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
     }

@@ -78,6 +78,8 @@ internal class SingleContentLayout(
     return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
   }
 
+  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+
   private fun getSingleContentOrNull(): Content? {
     return findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
   }
@@ -138,20 +140,22 @@ internal class SingleContentLayout(
       )
     }
 
-    let {
-      val contentActions = DefaultActionGroup()
-      contentActions.add(CloseCurrentContentAction())
-      contentActions.add(Separator.create())
-      contentActions.addAll(supplier.getContentActions())
-      contentActions.add(MyInvisibleAction())
+    if (!isNewUI()) {
+      let {
+        val contentActions = DefaultActionGroup()
+        contentActions.add(CloseCurrentContentAction())
+        contentActions.add(Separator.create())
+        contentActions.addAll(supplier.getContentActions())
+        contentActions.add(MyInvisibleAction())
 
-      toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
-        supplier.getContentToolbarPlace(),
-        contentActions,
-        content.component
-      ).apply {
-        setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
+          supplier.getContentToolbarPlace(),
+          contentActions,
+          content.component
+        ).apply {
+          setReservePlaceAutoPopupIcon(false)
+          layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        }
       }
     }
 
@@ -535,7 +539,7 @@ internal class SingleContentLayout(
       }
   }
 
-  private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
+  inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
     override fun actionPerformed(e: AnActionEvent) {
       val content = getSingleContentOrNull()
       if (content != null && content.isPinned) {
