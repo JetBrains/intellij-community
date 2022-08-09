@@ -532,6 +532,9 @@
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
         <action
+                id="DebugTypeResolutionAction"
+                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
+        <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
         <action
