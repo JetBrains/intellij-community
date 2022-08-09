@@ -431,10 +431,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
-      setFinalRunnable(myStep.getFinalRunnable());
-      setOk(true);
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
+      disposePopup(e);
       return true;
     }
 
@@ -443,6 +440,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
       myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e);
+      disposePopup(e);
       return true;
     }
 
@@ -459,6 +457,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+  }
+
+  private void disposePopup(@Nullable InputEvent e) {
+    setFinalRunnable(myStep.getFinalRunnable());
+    setOk(true);
+    disposeAllParents(e);
+    setIndexForShowingChild(-1);
   }
 
   private void valuesSelected(Object[] values) {
@@ -484,10 +489,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return false;
     }
     else {
-      setOk(true);
-      setFinalRunnable(myStep.getFinalRunnable());
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
+      disposePopup(e);
       return true;
     }
   }
