@@ -60,14 +60,13 @@ class KtObjModule(
     }
 
     require()
-    return Built(this, types, simpleTypes, extFields)
+    return Built(types, simpleTypes, extFields)
   }
 
   private var nextTypeId = 1
   fun nextTypeId() = nextTypeId++
 
   class Built(
-    val src: KtObjModule,
     val typeDefs: List<DefType>,
     val simpleTypes: List<DefType>,
     val extFields: MutableList<ExtField<*, *>>
