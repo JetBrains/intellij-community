@@ -83,11 +83,13 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ReferredEntity
       this.version = dataSource.version
       this.entitySource = dataSource.entitySource
       this.name = dataSource.name
+      if (parents != null) {
+      }
     }
 
 
@@ -198,6 +200,11 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ReferredEntity(version, name, entitySource) {
     }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
   }
 
   override fun equals(other: Any?): Boolean {
