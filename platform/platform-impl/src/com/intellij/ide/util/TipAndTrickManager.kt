@@ -17,9 +17,16 @@ import org.jetbrains.annotations.ApiStatus
 class TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
-  fun showTipDialog(project: Project) {
+  fun showTipDialog(project: Project) = showTipDialog(project, TipAndTrickBean.EP_NAME.extensionList)
+
+  /**
+   * Show the dialog with one tip without "Next tip" and "Previous tip" buttons
+   */
+  fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project, listOf(tip))
+
+  private fun showTipDialog(project: Project, tips: List<TipAndTrickBean>) {
     closeTipDialog()
-    openedDialog = TipDialog(project).also { dialog ->
+    openedDialog = TipDialog(project, tips).also { dialog ->
       Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
       dialog.show()
     }

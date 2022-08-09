@@ -19,18 +19,23 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 public final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
+  private final boolean myShowActions;
 
-  TipDialog(@NotNull final Project project) {
+  TipDialog(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips) {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myTipPanel = new TipPanel(project, getDisposable());
-    setDoNotAskOption(myTipPanel);
+    myTipPanel = new TipPanel(project, tips, getDisposable());
+    myShowActions = tips.size() > 1;
+    if (myShowActions) {
+      setDoNotAskOption(myTipPanel);
+    }
     myShowingOnStartup = myTipPanel.isToBeShown();
     setHorizontalStretch(1.33f);
     setVerticalStretch(1.25f);
@@ -58,10 +63,15 @@ public final class TipDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    if (Registry.is("ide.show.open.button.in.tip.dialog")) {
-      return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+    if (myShowActions) {
+      if (Registry.is("ide.show.open.button.in.tip.dialog")) {
+        return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+      }
+      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
     }
-    return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+    else {
+      return new Action[]{getCancelAction()};
+    }
   }
 
   @Override

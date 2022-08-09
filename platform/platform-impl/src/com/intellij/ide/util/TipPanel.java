@@ -23,7 +23,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
 
-  public TipPanel(@NotNull final Project project, @NotNull Disposable parentDisposable) {
+  public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
@@ -71,11 +70,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myPreviousTipAction = new PreviousTipAction();
     myNextTipAction = new NextTipAction();
 
-    setTips(TipAndTrickBean.EP_NAME.getExtensionList());
+    setTips(tips);
   }
 
-  @ApiStatus.Internal
-  public void setTips(@NotNull List<TipAndTrickBean> list) {
+  void setTips(@NotNull List<TipAndTrickBean> list) {
     RecommendationDescription recommendation = ApplicationManager.getApplication().getService(TipsOrderUtil.class).sort(list);
     myTips = new ArrayList<>(recommendation.getTips());
     myAlgorithm = recommendation.getAlgorithm();
