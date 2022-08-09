@@ -23,6 +23,7 @@ fun taxa(init: ReportingDescriptor.() -> Unit): ReportingDescriptor {
   taxa.init()
   return taxa
 }
+
 fun invocation(init: Invocation.() -> Unit): Invocation {
   val invocation = Invocation()
   invocation.init()

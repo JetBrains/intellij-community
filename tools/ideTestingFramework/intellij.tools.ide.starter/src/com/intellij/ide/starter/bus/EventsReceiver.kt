@@ -2,7 +2,6 @@ package com.intellij.ide.starter.bus
 
 import com.intellij.ide.starter.utils.catchAll
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 

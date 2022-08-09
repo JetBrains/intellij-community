@@ -3,8 +3,9 @@ package com.intellij.ide.starter.wsl
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 
-class WslDistributionNotFoundException() : Exception() {
+class WslDistributionNotFoundException(val jdkPredicate: JdkPredicate? = null) : Exception() {
   override val message: String
     get() {
       val red = "\u001b[31m"
@@ -31,6 +32,7 @@ class WslDistributionNotFoundException() : Exception() {
         appendLine("Can't run test on WSL")
         appendLine("Current OS: ${SystemInfo.OS_NAME} ${SystemInfo.OS_VERSION}")
         appendLine("WSL distributions installed: ${WslDistributionManager.getInstance().installedDistributions}")
+        jdkPredicate?.let { appendLine(jdkPredicate) }
       }
     }
 }

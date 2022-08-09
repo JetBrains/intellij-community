@@ -1,0 +1,85 @@
+{
+  "language": "Kotlin",
+  "projectPath": "EVALUATION_PROJECT",
+  "outputDir": "EVALUATION_OUTPUT",
+  "actions": {
+    "evaluationRoots": [
+      "platform/vcs-api/src/com/intellij/openapi/vcs/ui/cloneDialog/VcsCloneDialogComponentStateListener.kt",
+      "plugins/groovy/src/org/jetbrains/plugins/groovy/ext/logback/LogbackDelegatesToProvider.kt",
+      "plugins/groovy/groovy-psi/src/org/jetbrains/plugins/groovy/util/FlatCollection.kt",
+      "jvm/jvm-analysis-kotlin-tests/testSrc/com/intellij/codeInspection/tests/kotlin/UnstableApiUsageInspectionTest.kt",
+      "java/compiler/impl/src/com/intellij/compiler/impl/CleanStaleModuleOutputsActivity.kt",
+      "plugins/git4idea/tests/git4idea/rebase/GitRebaseBaseTest.kt",
+      "platform/vcs-api/src/com/intellij/openapi/vcs/changes/committed/CommittedChangesFilterKey.kt",
+      "platform/platform-impl/src/com/intellij/codeInsight/hints/filtering/StringMatcherBuilder.kt",
+      "plugins/groovy/groovy-psi/src/org/jetbrains/plugins/groovy/annotator/GroovyAnnotatorPre30.kt",
+      "platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/BooleanCommitOption.kt",
+      "plugins/stats-collector/src/com/intellij/stats/storage/factors/MutableLookupStorage.kt",
+      "plugins/svn4idea/testSource/org/jetbrains/idea/svn/status/CmdStatusClientTest.kt",
+      "plugins/github/test/org/jetbrains/plugins/github/GithubCreateGistContentTest.kt",
+      "plugins/editorconfig/src/org/editorconfig/language/psi/base/EditorConfigOptionBase.kt",
+      "plugins/github/src/org/jetbrains/plugins/github/pullrequest/ui/GHCompletableFutureLoadingModel.kt",
+      "platform/external-system-impl/src/com/intellij/openapi/externalSystem/importing/AbstractOpenProjectProvider.kt",
+      "platform/object-serializer/src/MapBinding.kt",
+      "platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesViewExtensionsManager.kt",
+      "plugins/stream-debugger/test/com/intellij/debugger/streams/exec/streamex/MappingOperationsTest.kt",
+      "platform/script-debugger/protocol/protocol-reader/src/LazyCachedMethodHandler.kt",
+      "plugins/svn4idea/src/org/jetbrains/idea/svn/IdeaSVNConfigFile.kt",
+      "platform/platform-impl/src/com/intellij/ide/cds/CDSFUSCollector.kt",
+      "platform/lang-impl/src/com/intellij/codeInsight/navigation/actions/GotoDeclarationOnlyHandler2.kt",
+      "community-guitests/testSrc/com/intellij/ide/projectWizard/kotlin/createProject/CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest.kt",
+      "platform/testGuiFramework/src/com/intellij/testGuiFramework/cellReader/ExtendedCellReaders.kt",
+      "plugins/groovy/src/org/jetbrains/plugins/groovy/runner/ScriptRunConfigurationProducer.kt",
+      "plugins/github/src/org/jetbrains/plugins/github/ui/cloneDialog/GHRepositoryListCellRenderer.kt",
+      "plugins/stats-collector/src/com/intellij/stats/completion/CompletionPopupListener.kt",
+      "plugins/git4idea/src/git4idea/conflicts/GitConflictsView.kt",
+      "platform/platform-impl/src/com/intellij/codeInsight/hints/filtering/MethodMatcher.kt",
+      "platform/platform-tests/testSrc/com/intellij/util/concurrency/QueueProcessorTest.kt",
+      "plugins/editorconfig/test/org/editorconfig/language/codeinsight/actions/EditorConfigIntentionTest.kt",
+      "uast/uast-common/src/org/jetbrains/uast/values/UValueBase.kt",
+      "plugins/editorconfig/src/org/editorconfig/language/codeinsight/quickfixes/EditorConfigReplaceWithValidRootDeclarationQuickFix.kt",
+      "plugins/gradle/tooling-extension-impl/testSources/org/jetbrains/plugins/gradle/tooling/serialization/ToolingSerializerTest.kt",
+      "plugins/maven/src/main/java/org/jetbrains/idea/maven/importing/ExternalAnnotationsImporter.kt",
+      "java/java-tests/testSrc/com/intellij/codeInspection/ex/ProjectInspectionManagerTest.kt",
+      "plugins/git4idea/src/git4idea/revert/GitRevertAction.kt",
+      "platform/platform-impl/src/com/intellij/ide/cds/CDSManager.kt",
+      "platform/vcs-impl/src/com/intellij/vfs/AsyncVfsEventsPostProcessorImpl.kt",
+      "platform/platform-tests/testSrc/com/intellij/openapi/diff/impl/patch/PatchReaderTest.kt",
+      "plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GithubAccountInformationProvider.kt",
+      "platform/script-debugger/debugger-ui/src/RemoteVmConnection.kt",
+      "plugins/editorconfig/src/org/editorconfig/language/filetype/EditorConfigFileConstants.kt",
+      "plugins/editorconfig/test/org/editorconfig/language/EditorConfigTestingUtils.kt",
+      "java/execution/impl/src/com/intellij/execution/ui/DefaultJreSelector.kt",
+      "platform/credential-store/test/PgpTest.kt",
+      "python/src/com/jetbrains/python/testing/pyTestParametrized/PyTestParameterFromParametrizeProvider.kt",
+      "platform/vcs-impl/src/com/intellij/util/progress/ComponentVisibilityProgressManager.kt",
+      "platform/lang-impl/testSources/com/intellij/ide/actions/runAnything/activity/RunAnythingCommandLineProviderTest.kt"
+    ],
+    "strategy": {
+      "completeAllTokens": true,
+      "codeGolf": true,
+      "context": "ALL",
+      "prefix": {
+        "name": "NoPrefix"
+      }
+    }
+  },
+  "interpret": {
+    "codeGolfSettings": {
+      "topN": 5,
+      "checkToken": "CHECK_TOKEN",
+      "checkLine": "CHECK_LINE",
+      "source": "SUGGESTION_SOURCE"
+    },
+    "completionType": "EVAL_TYPE",
+    "saveLogs": false,
+    "completeTokenProbability": 1.0,
+    "completeTokenSeed": null,
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "EVAL_TITLE: BS=@beam_size, NI=@num_iterations, DG=@diversity_groups, DS=@diversity_strength, M=@model, OFL=@only_full_lines, LP=@len_power, LB=@len_base",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.exec
+import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.callJavaVersion
@@ -18,9 +18,10 @@ class LinuxIdeDistribution : IdeDistribution() {
       val toolName = "xvfb-run"
 
       val homePath = Path(System.getProperty("user.home")).toAbsolutePath()
-      exec("xvfb-run", homePath, timeout = 5.seconds, args = listOf("which", toolName),
-           stdoutRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-out"),
-           stderrRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-err"))
+      ProcessExecutor("xvfb-run", homePath, timeout = 5.seconds, args = listOf("which", toolName),
+                      stdoutRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-out"),
+                      stderrRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-err")
+      ).start()
       toolName
     }
 
