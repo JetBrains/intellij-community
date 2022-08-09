@@ -192,14 +192,14 @@ fun start(isHeadless: Boolean,
     }
 
     if (!isHeadless && !Main.isLightEdit()) {
-      async(asyncDispatcher) {
+      launch(asyncDispatcher) {
         // A splash instance must not be created before base LaF is created.
         // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
         // https://youtrack.jetbrains.com/issue/IDEA-286544
         initUiJob.join()
 
         // before showEuaIfNeededJob to prepare during showing EUA dialog
-        val runnable = prepareSplash(args) ?: return@async
+        val runnable = prepareSplash(args) ?: return@launch
         showEuaIfNeededJob.join()
         withContext(SwingDispatcher) {
           runnable.run()
