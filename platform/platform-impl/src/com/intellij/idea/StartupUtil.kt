@@ -174,7 +174,20 @@ fun start(isHeadless: Boolean,
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
     val mainScope = this@runBlocking
-    val initUiJob = async(asyncDispatcher) { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = mainScope) }
+    val initUiJob = async(asyncDispatcher) {
+      initUi(busyThread = busyThread, isHeadless = isHeadless)
+    }
+    if (!isHeadless) {
+      launch {
+        initUiJob.await()
+        launch(Dispatchers.Default) {
+          updateFrameClassAndWindowIcon()
+        }
+        launch(Dispatchers.IO) {
+          loadSystemFontsAndDnDCursors()
+        }
+      }
+    }
 
     Main.mainScope = mainScope
 
@@ -482,7 +495,7 @@ private fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
   }
 }
 
-private suspend fun initUi(busyThread: Thread, isHeadless: Boolean, mainScope: CoroutineScope): Any {
+private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
   // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
   // only non-logging tasks can be executed before `setupLogger`
   val activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)")
@@ -537,14 +550,6 @@ and thus will effectively disable auto shutdown behavior for this application.
     AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
     activity.end()
     patchSystem(isHeadless)
-    if (!isHeadless) {
-      mainScope.launch(Dispatchers.Default) {
-        updateFrameClassAndWindowIcon()
-      }
-      mainScope.launch(Dispatchers.IO) {
-        loadSystemFontsAndDnDCursors()
-      }
-    }
     baseLaF
   }
 
