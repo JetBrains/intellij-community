@@ -147,8 +147,12 @@ fun start(isHeadless: Boolean,
       ApplicationInfoImpl.getShadowInstance()
     }
 
+    // On startup 2 dialogs must be shown:
+    // - gdpr agreement
+    // - eu(l)a
     val euaDocumentFuture = if (isHeadless) null else async(Dispatchers.IO) { loadEuaDocument(appInfoDeferred) }
 
+    // This must happen before LaF loading
     if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
       activity = activity.endAndStart("cwm host init")
       val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
@@ -220,7 +224,7 @@ fun start(isHeadless: Boolean,
     }
 
     activity = activity.endAndStart("system dirs checking")
-    if (!checkSystemDirs(configPath, systemPath)) {
+    if (!checkSystemDirs(configPath, systemPath)) { // this must happen after locking system dirs
       exitProcess(Main.DIR_CHECK_FAILED)
     }
 
@@ -501,6 +505,7 @@ private fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
   }
 }
 
+// return type (LookAndFeel) is not specified to avoid class loading
 private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
   // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
   // only non-logging tasks can be executed before `setupLogger`
@@ -517,6 +522,7 @@ private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
   }
   activityQueue.updateThreadName()
 
+  // SwingDispatcher must be used after Toolkit init
   val baseLaF = withContext(SwingDispatcher) {
     activityQueue.end()
     var activity: Activity? = null
