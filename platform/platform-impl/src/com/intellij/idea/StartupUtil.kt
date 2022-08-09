@@ -241,7 +241,16 @@ fun start(isHeadless: Boolean,
       })
     }
 
-    val setBaseLafJob = launch(asyncDispatcher) { setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob, initUiJob, mainScope) }
+    val setBaseLafJob = launch(asyncDispatcher) {
+      setBaseLaF(showEuaIfNeededJob, initUiJob)
+    }
+    if (!isHeadless) {
+      launch {
+        setBaseLafJob.join()
+        patchHtmlStyle()
+      }
+    }
+
     if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
       launchAndMeasure("coroutine debug probes init", Dispatchers.Default) {
         enableCoroutineDump()
@@ -322,28 +331,25 @@ fun start(isHeadless: Boolean,
   }
 }
 
-private suspend fun setBaseLaFAndPatchHtmlStyle(showEuaIfNeededJob: Deferred<Boolean>,
-                                                initUiJob: Deferred<Any>,
-                                                mainScope: CoroutineScope) {
+private suspend fun setBaseLaF(showEuaIfNeededJob: Deferred<Boolean>, initUiJob: Deferred<Any>) {
   showEuaIfNeededJob.join()
   val baseLaF = initUiJob.await() as LookAndFeel
   runActivity("base laf passing") {
     DarculaLaf.setPreInitializedBaseLaf(baseLaF)
   }
+}
 
-  if (!Main.isHeadless()) {
-    mainScope.launchAndMeasure("html style patching", SwingDispatcher) {
-      // patch html styles
-      val uiDefaults = UIManager.getDefaults()
-      // create a separate copy for each case
-      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
-    }
-
-    mainScope.launch(SwingDispatcher) {
-      WeakFocusStackManager.getInstance()
-    }
+private fun CoroutineScope.patchHtmlStyle() {
+  launchAndMeasure("html style patching", SwingDispatcher) {
+    // patch html styles
+    val uiDefaults = UIManager.getDefaults()
+    // create a separate copy for each case
+    val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+    uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+    uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+  }
+  launch(SwingDispatcher) {
+    WeakFocusStackManager.getInstance()
   }
 }
 
