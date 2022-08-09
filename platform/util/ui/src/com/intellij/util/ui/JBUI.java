@@ -1330,6 +1330,10 @@ public final class JBUI {
         return result <= 0 ? defaultHeight : result;
       }
 
+      static int buttonLeftRightInsets() {
+        return getInt("List.Button.leftRightInset", 8);
+      }
+
       final class Selection {
         private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
         private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));

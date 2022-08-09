@@ -257,7 +257,8 @@
 
     "List": {
       "rowHeight": "24",
-      "border": "4,0,4,0"
+      "border": "4,0,4,0",
+      "Button.leftRightInset": 8
     },
 
     "Menu": {

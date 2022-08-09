@@ -1125,6 +1125,11 @@
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
     },
     {
+      "key": "List.Button.leftRightInset",
+      "since": "2022.3",
+      "description": "An insets for popup inline actions buttons"
+    },
+    {
       "key": "TabbedPane.tabSelectionArc",
       "since": "2022.2",
       "description": "Selection border corners radius of TabbedPane underline"
