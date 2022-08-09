@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -159,9 +157,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       final PsiElement scope = variable.getDeclarationScope();
       if (!(scope instanceof PsiMethod)) return Collections.emptyList();
       final PsiMethod method = (PsiMethod)scope;
-      if (!IntentionPreviewUtils.isPreviewElement(variable)
-          && !FileModificationService.getInstance().preparePsiElementsForWrite(method)
-      ) return Collections.emptyList();
+      if (!IntentionPreviewUtils.prepareElementForWrite(method)) return Collections.emptyList();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final List<ParameterInfoImpl> info = new ArrayList<>();
       for (int i = 0; i < parameters.length; i++) {
@@ -171,12 +167,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       }
       final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
       final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      PsiElement moved;
-      if (IntentionPreviewUtils.isPreviewElement(variable)) {
-        moved = copyVariableToMethodBody(variable, references);
-      } else {
-        moved = WriteAction.compute(() -> copyVariableToMethodBody(variable, references));
-      }
+      PsiElement moved = IntentionPreviewUtils.writeAndCompute(() -> copyVariableToMethodBody(variable, references));
       if (moved == null) return Collections.emptyList();
       SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moved);
       if (IntentionPreviewUtils.isPreviewElement(variable)) {
