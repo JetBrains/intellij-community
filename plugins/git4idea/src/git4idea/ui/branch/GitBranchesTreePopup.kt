@@ -43,6 +43,7 @@ import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.*
+import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.tree.TreeCellRenderer
@@ -119,6 +120,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   private fun configureTreePresentation(tree: JTree) = with(tree) {
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
+
+    ClientProperty.put(this, RenderingUtil.SEPARATOR_ABOVE_PREDICATE, Predicate { treeStep.isSeparatorAboveRequired(it) })
 
     selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -33,6 +34,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -277,6 +279,18 @@ public class DefaultTreeUI extends BasicTreeUI {
             }
             if (selectedControl && !dark && !isDark(background)) selectedControl = false;
           }
+
+          Predicate<TreePath> separatorAbovePredicate = ClientProperty.get(c, RenderingUtil.SEPARATOR_ABOVE_PREDICATE);
+
+          if (separatorAbovePredicate != null && separatorAbovePredicate.test(path)) {
+            Rectangle rowBounds = getPathBounds(tree, path);
+            if (rowBounds != null) {
+              int offset = JBUI.scale(3);
+              paintHorizontalLine(g, paintBounds.x + offset, rowBounds.y,
+                                  paintBounds.x + paintBounds.width - offset, rowBounds.y);
+            }
+          }
+
           int offset = painter.getRendererOffset(control, depth, leaf);
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selectedControl);
           // TODO: editingComponent, editingRow ???
@@ -325,6 +339,20 @@ public class DefaultTreeUI extends BasicTreeUI {
       painting.set(false);
       removeCachedRenderers();
     }
+  }
+
+  private static void paintHorizontalLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
+    Color usedColor = g.getColor();
+    g.setColor(JBUI.CurrentTheme.Popup.separatorColor());
+    if (g instanceof Graphics2D g2) {
+      LinePainter2D.paint(g2, x1, y1, x2, y2,
+                          LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    else {
+      g.drawLine(x1, y1, x2, y2);
+    }
+
+    g.setColor(usedColor);
   }
 
   // BasicTreeUI
