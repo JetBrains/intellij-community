@@ -2,7 +2,7 @@ package com.intellij.ide.starter
 
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.exec
+import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.system.SystemInfo
@@ -71,32 +71,32 @@ fun downloadLatestAndroidSdk(javaHome: Path): Path {
     home.toFile().mkdirs()
     /// https://stackoverflow.com/questions/38096225/automatically-accept-all-sdk-licences
     /// sending "yes" to the process in the STDIN :(
-    exec(presentablePurpose = "android-sdk-licenses",
-         workDir = home,
-         environmentVariables = envVariablesWithJavaHome,
-         args = listOf(sdkManager.toString(), "--sdk_root=$home", "--licenses"),
-         stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
-         stdInBytes = "yes\n".repeat(10).toByteArray(), // it asks the confirmation at least two times
-         timeout = 15.minutes
-    )
+    ProcessExecutor(presentableName = "android-sdk-licenses",
+                    workDir = home,
+                    environmentVariables = envVariablesWithJavaHome,
+                    args = listOf(sdkManager.toString(), "--sdk_root=$home", "--licenses"),
+                    stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                    stdInBytes = "yes\n".repeat(10).toByteArray(), // it asks the confirmation at least two times
+                    timeout = 15.minutes
+    ).start()
 
     //loading SDK
-    exec(presentablePurpose = "android-sdk-loading",
-         workDir = home,
-         environmentVariables = envVariablesWithJavaHome,
-         args = listOf(sdkManager.toString(), "--sdk_root=$home", "--list"),
-         stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
-         timeout = 15.minutes
-    )
+    ProcessExecutor(presentableName = "android-sdk-loading",
+                    workDir = home,
+                    environmentVariables = envVariablesWithJavaHome,
+                    args = listOf(sdkManager.toString(), "--sdk_root=$home", "--list"),
+                    stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                    timeout = 15.minutes
+    ).start()
 
     //loading SDK
-    exec(presentablePurpose = "android-sdk-installing",
-         workDir = home,
-         environmentVariables = envVariablesWithJavaHome,
-         args = listOf(sdkManager.toString(), "--sdk_root=$home", "--install", "--verbose") + packages,
-         stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
-         timeout = 15.minutes
-    )
+    ProcessExecutor(presentableName = "android-sdk-installing",
+                    workDir = home,
+                    environmentVariables = envVariablesWithJavaHome,
+                    args = listOf(sdkManager.toString(), "--sdk_root=$home", "--install", "--verbose") + packages,
+                    stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                    timeout = 15.minutes
+    ).start()
     return home
   }
   catch (t: Throwable) {
@@ -148,13 +148,15 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
 
     val stdout = ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToString()
-    exec(
+
+    ProcessExecutor(
       "git-clone-android-plugin",
       workDir = projectHome, timeout = 10.minutes,
       args = scriptContent.split(" "),
       stdoutRedirect = stdout,
       stderrRedirect = stderr
-    )
+    ).start()
+
     logOutput(stdout.read().trim())
   }
   return this

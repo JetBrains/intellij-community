@@ -21,6 +21,7 @@ import org.kodein.di.newInstance
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.FileOutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
@@ -202,6 +203,14 @@ data class IDETestContext(
     paths.logsDir.toFile().deleteRecursively()
   }
 
+  fun wipeReportDir() = apply {
+    logOutput("Cleaning report dir for $this at $paths")
+    Files.walk(paths.reportsDir)
+      .filter { Files.isRegularFile(it) }
+      .map { it.toFile() }
+      .forEach { it.delete() }
+  }
+
   fun wipeProjectsDir() = apply {
     val path = paths.systemDir / "projects"
     logOutput("Cleaning project cache dir for $this at $path")
@@ -336,19 +345,19 @@ data class IDETestContext(
   ): IDEStartResult {
     val updatedContext = this.copy(testName = "${this.testName}/warmup")
     val result = updatedContext.runIDE(
-        patchVMOptions = {
-          val warmupReports = IDEStartupReports(paths.reportsDir)
+      patchVMOptions = {
+        this.run {
           if (storeClassReport) {
-            this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(
-              paths.reportsDir / "class-report.txt").patchVMOptions()
+            this.enableClassLoadingReport(paths.reportsDir / "class-report.txt")
           }
           else {
             this
           }
-        },
-        commands = testCase.commands.plus(commands),
-        runTimeout = runTimeout
-      )
+        }.patchVMOptions()
+      },
+      commands = testCase.commands.plus(commands),
+      runTimeout = runTimeout
+    )
     updatedContext.publishArtifact(this.paths.reportsDir)
     return result
   }
