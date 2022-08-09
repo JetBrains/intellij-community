@@ -81,7 +81,7 @@ fn main_impl() -> Result<()> {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ProductInfo {
     pub productCode: String,
-    pub classPathJars: Vec<String>,
+    pub bootClassPathJarNames: Vec<String>,
     pub productVendor: String,
     pub dataDirectoryName: String,
     pub vmOptionsBaseFileName: String

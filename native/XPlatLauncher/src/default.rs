@@ -41,7 +41,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.product_info.classPathJars;
+        let class_path = &self.product_info.bootClassPathJarNames;
         let lib_path = get_lib_path(&self.ide_home);
 
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
