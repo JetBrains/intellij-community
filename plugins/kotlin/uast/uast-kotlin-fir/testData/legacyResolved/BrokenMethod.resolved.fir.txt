@@ -3,5 +3,5 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
     UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> Decompiled_Class: CharSequence
     UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object
     UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor:Used) -> USimpleNameReferenceExpression (identifier = Used) -> SymbolLightConstructor:Used: Used
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Used) -> Kotlin_Light_Method: Used
     UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> TYPE_REFERENCE: null

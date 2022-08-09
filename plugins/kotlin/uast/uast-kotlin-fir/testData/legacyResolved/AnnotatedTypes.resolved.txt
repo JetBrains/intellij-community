@@ -6,14 +6,14 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = kotlin.annotation.AnnotationTarget) -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> Decompiled_Class: AnnotationTarget
 UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightAnnotationClassSymbol:@Target(AnnotationTarget.TYPE)
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:@Target(AnnotationTarget.TYPE)
 annotation class MyAnnotation(val a: Int, val b: String, val c: AnnotationTarget): MyAnnotation
 UNamedExpression (name = c) -> UQualifiedReferenceExpression -> Decompiled_Variable: TYPE
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> Decompiled_Class: AnnotationTarget
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = TYPE) -> Decompiled_Variable: TYPE
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UArrayAccessExpression -> USimpleNameReferenceExpression (identifier = list) -> SymbolLightParameter:list: list
-    UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightAnnotationClassSymbol:@Target(AnnotationTarget.TYPE)
+    UArrayAccessExpression -> USimpleNameReferenceExpression (identifier = list) -> Kotlin_Light_Value_Parameter: list
+    UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:@Target(AnnotationTarget.TYPE)
 annotation class MyAnnotation(val a: Int, val b: String, val c: AnnotationTarget): MyAnnotation
     UNamedExpression (name = c) -> UQualifiedReferenceExpression -> Decompiled_Variable: FILE
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> Decompiled_Class: AnnotationTarget

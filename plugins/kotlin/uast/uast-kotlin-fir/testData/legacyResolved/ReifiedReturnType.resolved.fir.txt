@@ -1,17 +1,17 @@
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
-UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> SymbolLightParameter:t: t
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
 UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> Decompiled_Class: CharSequence
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
-UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> SymbolLightParameter:t: t
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
@@ -73,18 +73,18 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
 UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
 UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
 UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
-UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> SymbolLightTypeParameter:B: B
-UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> SymbolLightTypeParameter:B: B
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
+UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
 null -> USimpleNameReferenceExpression (identifier = T) -> null: null
 UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> Decompiled_Class: CharSequence
 null -> USimpleNameReferenceExpression (identifier = T) -> null: null
 UTypeReferenceExpression (name = java.lang.Comparable<? super T>) -> USimpleNameReferenceExpression (identifier = Comparable) -> Decompiled_Class: Comparable
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 null -> USimpleNameReferenceExpression (identifier = B) -> null: null
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
-    UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> SymbolLightParameter:threshold2: threshold2
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> Kotlin_Light_Value_Parameter: threshold2
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = Z) -> USimpleNameReferenceExpression (identifier = Z) -> Kotlin_Light_Type_Parameter: Z
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
