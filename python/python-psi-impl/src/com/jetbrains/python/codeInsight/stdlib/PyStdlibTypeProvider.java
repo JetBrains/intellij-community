@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -122,6 +123,23 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
         return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
+      }
+    }
+    @Nullable PyType enumAutoType = getEnumAutoConstructorType(referenceTarget, context, anchor);
+    if (enumAutoType != null) {
+      return enumAutoType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getEnumAutoConstructorType(@NotNull PsiElement target,
+                                                   @NotNull TypeEvalContext context,
+                                                   @Nullable PsiElement anchor) {
+    if (target instanceof PyClass && "enum.auto".equals(((PyClass)target).getQualifiedName()) && anchor instanceof PyCallExpression) {
+      PyClassLikeType classType = as(context.getType((PyTypedElement)target), PyClassLikeType.class);
+      if (classType != null) {
+        return new PyCallableTypeImpl(Collections.emptyList(), classType.toInstance());
       }
     }
     return null;
