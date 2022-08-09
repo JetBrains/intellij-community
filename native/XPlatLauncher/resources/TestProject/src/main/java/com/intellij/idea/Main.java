@@ -12,7 +12,7 @@ public class Main {
         List<String> arguments = runtimeMxBean.getInputArguments();
         System.out.printf("VMoptions: %s\n", arguments);
         System.out.printf("Class path: %s", System.getProperty("java.class.path"));
-        File file = new File("kek.mem");
+        File file = new File("test.txt");
         file.createNewFile();
     }
 }

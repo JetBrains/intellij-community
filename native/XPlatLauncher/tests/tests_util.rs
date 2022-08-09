@@ -1,149 +1,16 @@
-use std::env::current_dir;
-use jni_sys::jvalue;
-use std::fs::{canonicalize, create_dir};
+use std::{fs, io};
+use std::fs::{create_dir, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-pub fn download_java() -> PathBuf {
-    let download_link = if cfg!(target_os = "linux") {
-        "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-linux-x64-b469.37.tar.gz"
-    } else if cfg!(target_os = "macos") {
-        if cfg!(target_arch = "x86_64") {
-            "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-x64-b469.37.tar.gz"
-        } else
-        {
-            "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-aarch64-b469.37.tar.gz"
-        }
-    } else {
-        todo!("")
-    };
-
-    let jbr_archive = "jbr.tar.gz";
-
-    if !PathBuf::from(jbr_archive).exists() {
-        let install_java_command = Command::new("curl")
-            .args([
-                "-fsSL",
-                "-o",
-                jbr_archive,
-                download_link])
-            .output()
-            .expect("failed to download Java");
-
-        command_handler(&install_java_command);
-    }
-
-    let jbr_dir = unpack_jbr_tar(jbr_archive);
-    return jbr_dir;
-}
-
-#[cfg(target_os = "windows")]
-pub fn download_java() -> & 'static Path {
-    let jbr_archive = "jbr.tar.gz";
-    let mut current_dir_name = current_dir().unwrap().into_os_string().into_string().unwrap();
-    let mut jbr_file = Path::new(&*current_dir_name);
-    jbr_file.join(jbr_archive);
-
-    let download_java_command = Command::new("powershell.exe")
-        .args([
-            "Invoke-WebRequest",
-            "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-windows-x64-b469.37.tar.gz",
-            "-OutFile ",
-            jbr_file.to_str().unwrap(),
-        ])
+pub fn gradle_command_wrapper(gradle_command: &str) {
+    let command_to_ecxecute = Command::new("./gradlew")
+        .arg(gradle_command)
+        .current_dir("resources/TestProject")
         .output()
-        .expect("failed to download Java");
+        .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
 
-    command_handler(&download_java_command);
-
-    let jbr_dir = unpack_jbr_tar(jbr_archive);
-    return jbr_dir;
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn unpack_jbr_tar(archive: &str) -> PathBuf {
-    create_dir("jbr").expect("Failed to create jbr dir");
-    let jbrsdk_dir = PathBuf::from("jbr");
-    let archive = Command::new("tar")
-        .args(["-C", "jbr", "-xzvf", archive, "--strip-components", "1"])
-        .output()
-        .expect("Failed to unpack tar archive");
-
-    command_handler(&archive);
-
-    return jbrsdk_dir;
-}
-
-#[cfg(target_os = "linux")]
-pub fn resolve_java_command(jbrsdk_dir: &Path, java_command: &str) -> PathBuf {
-    return jbrsdk_dir
-        .join("bin")
-        .join(java_command);
-}
-
-#[cfg(target_os = "macos")]
-pub fn resolve_java_command<P: AsRef<Path>>(jbrsdk_dir: P, java_command: &str) -> PathBuf {
-    return jbrsdk_dir.as_ref()
-        .join("Contents")
-        .join("Home")
-        .join("bin")
-        .join(java_command);
-}
-
-#[cfg(target_os = "windows")]
-pub fn resolve_java_command(jbrsdk_dir: &Path, java_command: &str) -> PathBuf {
-    let windiws_java_command = java_command.to_string() + ".exe";
-    return jbrsdk_dir
-        .join("bin")
-        .join(windiws_java_command);
-}
-
-pub fn compile_java(javac: PathBuf, java_name: &str) {
-    create_dir("resources/classes").expect("Failed to create classes dir");
-
-    let compile_command = Command::new(javac)
-        .arg(java_name)
-        .arg("-d")
-        .arg("resources/classes")
-        .output()
-        .expect("failed to compile test class");
-
-    command_handler(&compile_command);
-}
-
-pub fn package_jar(jar: PathBuf, package: &str) -> &Path {
-    let jar_command = Command::new(jar)
-        .arg("-cfe")
-        .arg("app.jar")
-        .arg(package)
-        .arg("-C")
-        .arg("resources/classes")
-        .arg(".")
-        .output()
-        .expect("failed to build jar");
-
-    command_handler(&jar_command);
-
-    let jar_path = Path::new("app.jar");
-    return jar_path;
-}
-
-pub fn run_java(class_name: &str) -> String {
-    let run_java_command = Command::new("java")
-        .arg(class_name)
-        .current_dir("resources")
-        .output()
-        .expect("failed to run java class");
-
-    let exit_status = run_java_command.status;
-    let stdout = String::from_utf8_lossy(&run_java_command.stdout);
-
-    command_handler(&run_java_command);
-    if !exit_status.success() {
-        return "".to_string();
-    }
-    return stdout.to_string();
+    command_handler(&command_to_ecxecute);
 }
 
 fn command_handler(command: &Output) {
@@ -166,4 +33,136 @@ pub fn get_java_parameter_from_output(java_output: &str, parameter: String) -> S
     }
 
     return "".to_string();
+}
+
+
+pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
+    let read_dir = fs::read_dir(parent)?;
+
+    for dir_entry in read_dir {
+        let dir_entry_ok = dir_entry?;
+        if dir_entry_ok
+            .file_name()
+            .to_string_lossy()
+            .starts_with(prefix)
+        {
+            return Ok(dir_entry_ok.path());
+        }
+    }
+
+    return Err(io::Error::new(
+        io::ErrorKind::NotFound,
+        "Child dir not found",
+    ));
+}
+
+#[cfg(target_os = "linux")]
+pub fn layout_into_test_dir(
+    project_root: &Path,
+    jbr_absolute_path: PathBuf,
+    jar_absolute_path: PathBuf,
+    product_info_absolute_path: PathBuf,
+) {
+    // linux:
+    // .
+    // ├── bin/
+    // │   └── xplat_launcher
+    // │   └── idea64.vmoptions
+    // ├── lib/
+    // │   └── app.jar
+    // ├── jbr/  TODO: <-- can be symlinked to java we've already downloaded for now
+    // └── product-info.json
+    create_dir("lib").expect("Failed to create lib dir");
+    create_dir("bin").expect("Failed to create bin dir");
+
+    fs::copy(product_info_absolute_path, "product-info.json")
+        .expect("Failed to move product_info.json");
+
+    let launcher = project_root
+        .join("target")
+        .join("debug")
+        .join("xplat_launcher");
+    assert!(launcher.exists());
+
+    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+
+    fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
+    copy_dir::copy_dir(jbr_absolute_path, "jbr/").expect("Failed to copy jbr");
+    File::create("bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+}
+
+#[cfg(target_os = "macos")]
+pub fn layout_into_test_dir(
+    project_root: &Path,
+    jbr_absolute_path: PathBuf,
+    jar_absolute_path: PathBuf,
+    product_info_absolute_path: PathBuf,
+) {
+    // macos:
+    // .
+    // └── Contents
+    //     ├── bin/
+    //     │   └── xplat_launcher
+    //     │   └── idea.vmoptions
+    //     ├── Resources/
+    //     │   └── product-info.json
+    //     ├── lib/
+    //     │   └── app.jar
+    //     └── jbr/  <-- can be symlinked to java we've already downloaded for now
+    create_dir("Contents").expect("Failed to create contents dir");
+    create_dir("Contents/Resources").expect("Failed to create resources dir");
+    create_dir("Contents/lib").expect("Failed to create lib dir");
+    create_dir("Contents/bin").expect("Failed to create bin dir");
+
+    fs::copy(
+        product_info_absolute_path,
+        "Contents/Resources/product-info.json",
+    )
+        .expect("Failed to move product_info.json");
+
+    let launcher = project_root
+        .join("target")
+        .join("debug")
+        .join("xplat_launcher");
+    assert!(launcher.exists());
+
+    fs::copy(launcher, "Contents/bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
+    copy_dir::copy_dir(jbr_absolute_path, "Contents/jbr/").expect("Failed to copy jbr");
+    File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+}
+
+#[cfg(target_os = "windows")]
+pub fn layout_into_test_dir(
+    project_root: &Path,
+    jbr_absolute_path: PathBuf,
+    jar_absolute_path: PathBuf,
+    product_info_absolute_path: PathBuf,
+) {
+    // windows:
+    // .
+    // ├── bin/
+    // │   └── xplat_launcher
+    // │   └── idea64.exe.vmoptions
+    // ├── lib/
+    // │   └── app.jar
+    // ├── jbr/  TODO: <-- can be symlinked to java we've already downloaded for now
+    // └── product-info.json
+
+    create_dir("lib").expect("Failed to create lib dir");
+    create_dir("bin").expect("Failed to create bin dir");
+
+    fs::copy(product_info_absolute_path, "product-info.json")
+        .expect("Failed to move product_info.json");
+
+    let launcher = project_root
+        .join("target")
+        .join("debug")
+        .join("xplat_launcher");
+    assert!(launcher.exists());
+
+    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
+    copy_dir::copy_dir(jbr_absolute_path, "jbr/").expect("Failed to copy jbr");
+    File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
 }
