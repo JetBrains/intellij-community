@@ -73,7 +73,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -288,12 +287,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
+    //noinspection removal
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
            (activeToolWindowId == null
             || activeToolWindowId.equals(ProblemsView.ID)
             // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
             // see RIDER-59000
-            //noinspection deprecation
             || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
 
@@ -644,10 +643,19 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null || paths.length == 0) return null;
 
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      return paths[0].getLastPathComponent();
+    }
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
     }
-      
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return Collections.<DataProvider>singletonList(slowId -> getSlowData(slowId, paths));
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @NotNull [] paths) {
     if (paths.length > 1) {
       if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         RefEntity[] refElements = myTree.getSelectedElements();
@@ -666,10 +674,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
     TreePath path = paths[0];
     InspectionTreeNode selectedNode = (InspectionTreeNode)path.getLastPathComponent();
-
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return selectedNode;
-    }
 
     if (!CommonDataKeys.NAVIGATABLE.is(dataId) && !CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return null;
@@ -705,7 +709,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         return item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
       }
     }
-
     return null;
   }
 
@@ -845,7 +848,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
 
   @TestOnly
-  public void dispatchTreeUpdate() throws ExecutionException, InterruptedException {
+  public void dispatchTreeUpdate() throws InterruptedException {
     CountDownLatch latch = new CountDownLatch(1);
     myTreeUpdater.execute(()-> latch.countDown());
     latch.await();
