@@ -84,12 +84,6 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     val pluginId = descriptor.pluginId
-    if (java.lang.Boolean.getBoolean("ide.per.project.instance")
-        && !PathManager.getPluginsDir().name.startsWith("perProject_")
-        && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
-      return
-    }
-
     descriptor.isIncomplete?.let { error ->
       addIncompletePlugin(descriptor, error.takeIf { !it.isDisabledError })
       return
