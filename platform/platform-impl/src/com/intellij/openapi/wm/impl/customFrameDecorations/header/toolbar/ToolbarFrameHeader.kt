@@ -56,13 +56,18 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
-    val buttonsView = buttonPanes.getView()
+    val buttonsView = wrap(buttonPanes.getView())
     if (SystemInfo.isWindows) buttonsView.border = JBUI.Borders.emptyLeft(8)
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
 
     Disposer.register(this, mainMenuButton.menuShortcutHandler)
+  }
+
+  private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
+    override fun getPreferredSize(): Dimension = comp.preferredSize
+    override fun getMinimumSize(): Dimension = comp.preferredSize
   }
 
   override fun updateToolbar() {
