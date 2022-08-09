@@ -1,1 +1,1 @@
-<error>a</error> + <error>b</error> + c + a1
+<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: a">a</error> + b + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL] Cannot access 'c' before superclass constructor has been called">c</error> + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL] Cannot access 'a1' before superclass constructor has been called">a1</error>
