@@ -23,10 +23,10 @@ import java.util.Collections;
  *    <li>In the second case all events are fed into {@link IndexableEntityProvider} extension points to get {@link IndexableIteratorBuilder}s
  * again.
  *    <ul><li>
- *     For some entities, like {@link com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity},
- * creation of an entity is not visible via listener, only its addition/removal from {@link ModuleEntity}, so to catch them we should check all
- * {@link com.intellij.workspaceModel.storage.EntityChange.Replaced} changes on {@link ModuleEntity}.
- * For such cases implementing {@link ModuleEntityDependent} is useful.
+ *     For entities with bidirectional reference between, like {@link ModuleEntity} and
+ *     {@link com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity}, Workspace model allows changing that reference
+ *     on any of the sides, but issues Replace event only for that side. To enforce handling both cases, consider using
+ *     {@link ParentEntityDependent} interface for such entities.
  *    </li></ul>
  *    </li>
  *   </ul></il>
@@ -70,16 +70,21 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   }
 
   /**
-   * Should be used, when change related to desired WorkspaceEntity is visible as ModuleEntity change,
-   * for example, adding content root is visible as ModuleEntityChange, see {@link ContentRootIndexableEntityProvider}.
+   * Currently for entities with bidirectional reference between (for example, {@link ModuleEntity} and
+   * {@link com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity}) Workspace Model allows
+   * editing this reference on any side, and Replaced event would happen for that side only.
+   * To support both ways of changing, consider using this interface.
+   *
+   * @param <E> entity class
+   * @param <P> parent entity class
    */
-  interface ModuleEntityDependent<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
-    /**
-     * Provides iterators to index files after {@code oldEntity} was replaced with {@code newEntity}
-     */
+  interface ParentEntityDependent<E extends WorkspaceEntity, P extends WorkspaceEntity> extends IndexableEntityProvider<E> {
     @NotNull
-    Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
-                                                                                          @NotNull ModuleEntity newEntity,
+    Class<P> getParentEntityClass();
+
+    @NotNull
+    Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull P oldEntity,
+                                                                                          @NotNull P newEntity,
                                                                                           @NotNull Project project);
   }
 

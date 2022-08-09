@@ -22,7 +22,6 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
@@ -192,15 +191,11 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         builders.addAll(
           ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity));
       }
-    }
-    if (oldEntity instanceof ModuleEntity) {
-      ModuleEntity oldModule = (ModuleEntity)oldEntity;
-      ModuleEntity newModule = (ModuleEntity)newEntity;
-      for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-        if (provider instanceof IndexableEntityProvider.ModuleEntityDependent) {
-          builders.addAll(((IndexableEntityProvider.ModuleEntityDependent<?>)provider).
-                            getReplacedModuleEntityIteratorBuilder(oldModule, newModule, project));
-        }
+      if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
+          entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {
+        //noinspection unchecked
+        builders.addAll(((IndexableEntityProvider.ParentEntityDependent<?, E>)provider).
+                          getReplacedParentEntityIteratorBuilder(oldEntity, newEntity, project));
       }
     }
   }
