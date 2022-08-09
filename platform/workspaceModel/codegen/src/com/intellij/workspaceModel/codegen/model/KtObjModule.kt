@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.codegen.deft.ObjModule
 import com.intellij.workspaceModel.codegen.deft.ExtField
-import com.intellij.workspaceModel.codegen.patcher.KotlinReader
 import com.intellij.workspaceModel.codegen.patcher.PsiKotlinReader
 
 class KtObjModule(
@@ -21,14 +20,6 @@ class KtObjModule(
       getOrCreatePackage(packageToImport.fqn)
         .scope.importedScopes.add(packageToImport.scope)
     }
-  }
-
-  fun addFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
-    val file = KtFile(this, content, name, virtualFile)
-    val reader = KotlinReader(file)
-    reader.read()
-    files.add(file)
-    return file
   }
 
   fun addPsiFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
