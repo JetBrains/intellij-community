@@ -44,9 +44,6 @@ class ReplaceChange(file: PsiFile, range: TextRange, val replacement: String) : 
     LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.incorrect.whitespace")
   }
 
-  fun isIndentChange(document: Document): Boolean =
-    range.startOffset == 0 || document.text[range.startOffset] == '\n'
-
   override fun fixes(): Array<LocalQuickFix>? {
     val doc: Document = file.viewProvider.document
     val original = doc.text
