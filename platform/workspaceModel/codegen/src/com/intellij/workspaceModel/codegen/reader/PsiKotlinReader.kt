@@ -34,14 +34,11 @@ class PsiKotlinReader(val file: KtFile) {
     blockContents(ktFile)
   }
 
-  fun head() {
+  private fun head() {
     var pkg: String? = null
-    var importsStart = 0
-    var importsEnd = 0
 
     val packageDirective = ktFile.packageDirective
     if (packageDirective != null) {
-      importsEnd = packageDirective.textRange.endOffset
       pkg = packageDirective.qualifiedName
     }
     file.setPackage(pkg)
@@ -49,18 +46,14 @@ class PsiKotlinReader(val file: KtFile) {
 
     val imports = mutableSetOf<String>()
     val importList = ktFile.importList
-    if (importList != null) {
-      importList.imports.forEach { ktImportDirective ->
-        val importPath = ktImportDirective.importPath?.pathStr
-        if (importPath != null) imports.add(importPath)
-      }
-      importsStart = importList.textRange.startOffset
-      importsEnd = importList.textRange.endOffset
+    importList?.imports?.forEach { ktImportDirective ->
+      val importPath = ktImportDirective.importPath?.pathStr
+      if (importPath != null) imports.add(importPath)
     }
-    file.setImports(KtImports(importsStart..importsEnd, imports))
+    file.setImports(imports)
   }
 
-  fun blockContents(psiBlock: PsiElement) {
+  private fun blockContents(psiBlock: PsiElement) {
     var psiElement = psiBlock.firstChild
     while (psiElement != null) {
       when (psiElement) {
@@ -91,7 +84,7 @@ class PsiKotlinReader(val file: KtFile) {
     }
   }
 
-  fun `interface`(ktClass: KtClassOrObject, predefinedInterfaceKind: KtInterfaceKind? = null) {
+  private fun `interface`(ktClass: KtClassOrObject, predefinedInterfaceKind: KtInterfaceKind? = null) {
     val nameRange = ktClass.nameIdentifier?.textRange ?: return
     val src = Src(ktClass.name!!) { ktClass.containingFile.text }
     val name = SrcRange(src, nameRange.startOffset until nameRange.endOffset)
@@ -110,7 +103,7 @@ class PsiKotlinReader(val file: KtFile) {
     leafScope = outer
   }
 
-  fun type(ktTypeReference: KtTypeReference?): KtType? {
+  private fun type(ktTypeReference: KtTypeReference?): KtType? {
     if (ktTypeReference == null) return null
     val ktAnnotations = `annotation`(ktTypeReference.annotationEntries, ktTypeReference)
 
@@ -139,7 +132,7 @@ class PsiKotlinReader(val file: KtFile) {
     return null
   }
 
-  fun maybeBlock(ktClass: KtClassOrObject, iface: KtScope? = null): KtBlock {
+  private fun maybeBlock(ktClass: KtClassOrObject, iface: KtScope? = null): KtBlock {
     val outer = leafBlock
     val classBody = ktClass.body
     if (classBody == null) {
