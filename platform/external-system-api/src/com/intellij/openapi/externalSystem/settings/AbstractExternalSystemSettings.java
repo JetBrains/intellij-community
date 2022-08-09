@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,10 +74,10 @@ public abstract class AbstractExternalSystemSettings<
    *
    * @param listener         target generic listener to wrap to external system-specific implementation
    * @param parentDisposable is a disposable to unsubscribe from external system settings events
-   * @implNote lifetime of parentDisposable must be shorter of project lifetime
-   * @abstract at 2021
    */
   public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
+    Logger.getInstance(AbstractExternalSystemSettings.class)
+      .error("Unimplemented subscribe method for " + getClass());
     subscribe(listener); // Api backward compatibility
   }
 
@@ -86,7 +86,9 @@ public abstract class AbstractExternalSystemSettings<
    * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
    */
   @Deprecated(forRemoval = true)
-  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener) {
+    subscribe(listener, this);
+  }
 
   /**
    * Generic subscribe implementation
