@@ -236,6 +236,11 @@ public final class CommonActionsPanel extends JPanel {
         }
         removeButton.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), removeButton.getContextComponent());
   }
 
@@ -297,6 +302,11 @@ public final class CommonActionsPanel extends JPanel {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     protected abstract boolean isEnabled(int size, int min, int max);
   }
 
@@ -310,6 +320,10 @@ public final class CommonActionsPanel extends JPanel {
       return true;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myListener.doAdd();

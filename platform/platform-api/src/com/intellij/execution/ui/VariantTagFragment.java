@@ -153,6 +153,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         setSelectedVariant(s);
         fireEditorStateChanged();
@@ -172,6 +177,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         super.update(e);
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
         e.getPresentation().setVisible(isRemovable());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

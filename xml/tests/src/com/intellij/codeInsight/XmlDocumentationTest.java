@@ -207,6 +207,10 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
   }
 
+  public void testClassAttribute() throws Exception {
+    doQuickDocGenerationTestWithCheckExpectedResult("class.xml");
+  }
+
   public void testXslCompletion() throws Exception {
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
   }

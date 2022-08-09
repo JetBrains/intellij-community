@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated use {@link CollapseAllAction} instead
  */
+@SuppressWarnings("MissingActionUpdateThread")
 @Deprecated(forRemoval = true)
 public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
   private TreeExpander myTreeExpander;

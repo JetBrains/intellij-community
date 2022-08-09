@@ -2995,6 +2995,10 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     protected boolean borderIndex(List<TabInfo> infos, int index) {
       return index == infos.size() - 1;
     }
@@ -3061,6 +3065,10 @@ public class JBTabsImpl extends JComponent
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
       e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex, true) != null);
@@ -4014,6 +4022,11 @@ public class JBTabsImpl extends JComponent
       myLabel.setIcon(pair.first);
       //noinspection HardCodedStringLiteral
       myLabel.setText(pair.second);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
