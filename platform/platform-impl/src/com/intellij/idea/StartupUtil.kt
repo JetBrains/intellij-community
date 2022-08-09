@@ -596,7 +596,9 @@ private fun loadSystemFontsAndDnDCursors() {
 private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
   val activity = StartUpMeasurer.startActivity("eua showing")
   val document = euaDocument as EndUserAgreement.Document?
-  EndUserAgreement.updateCachedContentToLatestBundledVersion()
+  withContext(Dispatchers.IO) {
+    EndUserAgreement.updateCachedContentToLatestBundledVersion()
+  }
   val result = if (document != null) {
     withContext(SwingDispatcher) {
       setLafToShowPreAppStartUpDialogIfNeeded(baseLaF)
