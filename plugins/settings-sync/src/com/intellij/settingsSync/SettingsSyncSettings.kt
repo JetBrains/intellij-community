@@ -10,14 +10,21 @@ internal interface SettingsSyncEnabledStateListener : EventListener {
 }
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
-internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(
-  SettingsSyncSettingsState()) {
+internal class SettingsSyncSettings :
+  SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(SettingsSyncSettingsState())
+{
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
 
     const val FILE_SPEC = "settingsSync.xml"
   }
+
+  var migrationFromOldStorageChecked: Boolean
+    get() = state.migrationFromOldStorageChecked
+    set(value) {
+      state.migrationFromOldStorageChecked = value
+    }
 
   var syncEnabled
     get() = state.syncEnabled
@@ -79,5 +86,7 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
 
     var disabledCategories by list<SettingsCategory>()
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
+
+    var migrationFromOldStorageChecked by property(false)
   }
 }

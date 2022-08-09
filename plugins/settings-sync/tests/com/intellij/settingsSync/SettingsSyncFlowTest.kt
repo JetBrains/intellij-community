@@ -7,13 +7,13 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -143,6 +143,37 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
       assertEquals("Unexpected content in the 'copy existing settings' commit", initialContent, getContent(repository, copyExistingSettings, fileName))
       assertEquals("Unexpected content in the 'apply from cloud' commit", cloudContent, getContent(repository, applyCloud, fileName))
+    }
+  }
+
+  @Test fun `enable settings with migration`() {
+    val migration = migrationFromLafXml()
+
+    initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
+
+    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+  }
+
+  @Test fun `enable settings with migration and data on server should prefer server data`() {
+    val migration = migrationFromLafXml()
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/laf.xml", "Server Data")
+    })
+
+    initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
+
+    assertEquals("Incorrect content", "Server Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+  }
+
+  private fun migrationFromLafXml() = object : SettingsSyncMigration {
+    override fun isLocalDataAvailable(appConfigDir: Path): Boolean {
+      TODO("Not yet implemented")
+    }
+
+    override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot {
+      return settingsSnapshot {
+        fileState("options/laf.xml", "Migration Data")
+      }
     }
   }
 

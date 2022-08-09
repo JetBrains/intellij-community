@@ -45,6 +45,10 @@
               activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.settingsSyncMigration" interface="com.intellij.settingsSync.SettingsSyncMigration" dynamic="true"/>
+  </extensionPoints>
+
   <actions>
     <group id="SettingsSync">
       <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>

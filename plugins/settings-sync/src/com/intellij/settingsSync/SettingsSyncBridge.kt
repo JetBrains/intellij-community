@@ -11,6 +11,7 @@ import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit
  */
 @ApiStatus.Internal
 class SettingsSyncBridge(parentDisposable: Disposable,
+                                  private val appConfigPath: Path,
                                   private val settingsLog: SettingsLog,
                                   private val ideMediator: SettingsSyncIdeMediator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
@@ -64,6 +66,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent.snapshot)
       InitMode.PushToServer -> mergeAndPush(previousIdePosition, previousCloudPosition, FORCE_PUSH)
       InitMode.JustInit -> mergeAndPush(previousIdePosition, previousCloudPosition, PUSH_IF_NEEDED)
+      is InitMode.MigrateFromOldStorage -> migrateFromOldStorage(initMode.migration)
     }
   }
 
@@ -78,9 +81,56 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.setCloudPosition(masterPosition)
   }
 
+  private fun migrateFromOldStorage(migration: SettingsSyncMigration) {
+    val migrationSnapshot = migration.getLocalDataIfAvailable(appConfigPath)
+    if (migrationSnapshot != null) {
+      settingsLog.applyIdeState(migrationSnapshot, "Migrate from old settings sync")
+      LOG.info("Migration from old storage applied.")
+      var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
+
+      // if there is already a version on the server, then it should be preferred over migration
+      val updateResult = remoteCommunicator.receiveUpdates()
+      if (updateResult is UpdateResult.Success) {
+        val snapshot = updateResult.settingsSnapshot
+        masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
+      }
+      else {
+        // otherwise we place our migrated data to the cloud
+        forcePushToCloud(masterPosition)
+      }
+      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+      settingsLog.setCloudPosition(masterPosition)
+    }
+    else {
+      LOG.warn("Migration from old storage didn't happen, although it was identified as possible: no data to migrate")
+      settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
+    }
+  }
+
+  private fun forcePushToCloud(masterPosition: SettingsLog.Position) {
+    val pushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force = true)
+    LOG.info("Result of pushing settings to the cloud: $pushResult")
+    when (pushResult) {
+      SettingsSyncPushResult.Success -> {
+        settingsLog.setCloudPosition(masterPosition)
+        SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+      }
+      is SettingsSyncPushResult.Error -> {
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
+      }
+      SettingsSyncPushResult.Rejected -> {
+        LOG.error("Reject shouldn't happen when force push is used")
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult)
+      }
+    }
+  }
+
   internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration): InitMode()
     object PushToServer : InitMode()
   }
 
