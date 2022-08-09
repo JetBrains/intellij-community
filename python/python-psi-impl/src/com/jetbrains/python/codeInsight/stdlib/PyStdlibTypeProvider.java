@@ -45,9 +45,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       return Ref.create(type);
     }
-    type = getEnumType(referenceTarget, context, anchor);
-    if (type != null) {
-      return Ref.create(type);
+    Ref<PyType> enumType = getEnumType(referenceTarget, context, anchor);
+    if (enumType != null) {
+      return enumType;
     }
     return null;
   }
@@ -78,9 +78,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
-                                    @Nullable PsiElement anchor) {
+  private static @Nullable Ref<PyType> getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
+                                                   @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
@@ -91,7 +90,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
             final PyType classType = context.getType(cls);
             if (classType instanceof PyClassType) {
-              return ((PyClassType)classType).toInstance();
+              return Ref.create(((PyClassType)classType).toInstance());
             }
           }
         }
@@ -101,11 +100,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
       final String name = qualifiedNameOwner.getQualifiedName();
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
-        return PyBuiltinCache.getInstance(referenceTarget).getStrType();
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
         final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
         final PyExpression qualifier = anchorExpr.getQualifier();
+        // A specific enum item is used as a qualifier, e.g. MyEnum.FOO.value  
         if (qualifier instanceof PyReferenceExpression) {
           final PyReferenceExpression qualifierExpr = (PyReferenceExpression)qualifier;
           final PsiElement resolvedQualifier = qualifierExpr.getReference().resolve();
@@ -115,11 +115,15 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             if (context.maySwitchToAST(enumItem)) {
               final PyExpression value = enumItem.findAssignedValue();
               if (value != null) {
-                return context.getType(value);
+                return Ref.create(context.getType(value));
               }
+            }
+            else {
+              return Ref.create();
             }
           }
         }
+        // An enum value is retrieved programmatically, e.g. MyEnum[name].value
         else if (qualifier != null) {
           PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
           if (enumType != null) {
@@ -128,19 +132,22 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             if (firstEnumItem != null && context.maySwitchToAST(firstEnumItem)) {
               final PyExpression value = firstEnumItem.findAssignedValue();
               if (value != null) {
-                return context.getType(value);
+                return Ref.create(context.getType(value));
               }
+            }
+            else {
+              return Ref.create();
             }
           }
         }
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
-        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
+        return Ref.create(PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context));
       }
     }
     @Nullable PyType enumAutoType = getEnumAutoConstructorType(referenceTarget, context, anchor);
     if (enumAutoType != null) {
-      return enumAutoType;
+      return Ref.create(enumAutoType);
     }
     return null;
   }
