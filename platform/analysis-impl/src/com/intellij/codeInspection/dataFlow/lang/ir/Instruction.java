@@ -36,7 +36,7 @@ public abstract class Instruction {
    */
   public void setIndex(int index) {
     if (myIndex != -1) {
-      throw new IllegalStateException("Index is already set");
+      throw new IllegalStateException("Index is already set: old = " + myIndex + "; new = " + index);
     }
     myIndex = index;
   }
