@@ -33,9 +33,9 @@ public abstract class IconWithOverlay extends LayeredIcon {
     Shape clip = g.getClip();
     Area newClip = new Area(clip);
     newClip.subtract(new Area(dontPaintHere));
-    ((Graphics2D)g).setClip(newClip);
+    g.setClip(newClip);
     super.paintIcon(c, g, x, y);
-    ((Graphics2D)g).setClip(clip);
+    g.setClip(clip);
     if (scale != 1f) {
       overlay = IconUtil.scale(overlay, null, scale);
     }

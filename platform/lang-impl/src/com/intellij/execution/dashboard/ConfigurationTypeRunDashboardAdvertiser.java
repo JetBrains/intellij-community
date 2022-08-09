@@ -49,7 +49,7 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
     }
   }
 
-  public final void subscribe(Supplier<? extends Disposable> parentDisposableSupplier) {
+  public void subscribe(Supplier<? extends Disposable> parentDisposableSupplier) {
     if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode() || myProject.isDisposed()) {
       return;
     }
@@ -64,7 +64,7 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
   }
 
   @Override
-  public final void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+  public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
     if (!isEnabled(myProject)) return;
 
     if (myRunConfigurationTypeId.equals(settings.getType().getId())) {
