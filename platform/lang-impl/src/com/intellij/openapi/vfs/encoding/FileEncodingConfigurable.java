@@ -182,7 +182,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
     boolean same = Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), myPropsCharset)
                    && encodingManager.isNative2AsciiForPropertiesFiles() == ui.transparentNativeToAsciiCheckBox.isSelected()
-                   && encodingManager.getBOMForNewUTF8Files() == ui.bomForUTF8Combo.getSelectedItem()      ;
+                   && encodingManager.getBOMForNewUTF8Files() == ui.bomForUTF8Combo.getSelectedItem();
     return !same;
   }
 
