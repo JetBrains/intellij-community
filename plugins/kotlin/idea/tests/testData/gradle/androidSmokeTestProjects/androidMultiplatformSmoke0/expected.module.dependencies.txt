@@ -204,7 +204,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     -> project.multiplatformAndroidJvmIosLibrary2.jvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary2.jvmMain(Runtime)
     -> project.multiplatformJvmLibrary.commonMain(Test)
-    -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.jvmMain(Test)
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
