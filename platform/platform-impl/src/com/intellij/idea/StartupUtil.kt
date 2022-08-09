@@ -173,7 +173,6 @@ fun start(isHeadless: Boolean,
     activity = activity.endAndStart("LaF init scheduling")
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
-    val mainScope = this@runBlocking
     val initUiJob = async(asyncDispatcher) {
       initUi(busyThread = busyThread, isHeadless = isHeadless)
     }
@@ -189,7 +188,7 @@ fun start(isHeadless: Boolean,
       }
     }
 
-    Main.mainScope = mainScope
+    Main.mainScope = this@runBlocking
 
     activity = activity.endAndStart("console logger configuration")
     configureJavaUtilLogging()
@@ -233,7 +232,7 @@ fun start(isHeadless: Boolean,
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = Java11ShimImpl()
     if (!configImportNeeded) {
-      PluginManagerCore.scheduleDescriptorLoading(mainScope, async(Dispatchers.IO) {
+      PluginManagerCore.scheduleDescriptorLoading(this@runBlocking, async(Dispatchers.IO) {
         // ZipFilePoolImpl uses Guava for Striped lock - load in parallel
         val result = ZipFilePoolImpl()
         ZipFilePool.POOL = result
@@ -325,7 +324,7 @@ fun start(isHeadless: Boolean,
         baseLaf = baseLaf,
       )
       if (imported) {
-        PluginManagerCore.scheduleDescriptorLoading(mainScope)
+        PluginManagerCore.scheduleDescriptorLoading(this@runBlocking)
       }
     }
 
