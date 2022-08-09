@@ -63,7 +63,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * different event schema _version_.
    */
   public static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
-    Integer.getInteger("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE", 10);
+    Integer.getInteger("IndexOperationFusStatisticsCollector.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 10);
 
 
   private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 1);
