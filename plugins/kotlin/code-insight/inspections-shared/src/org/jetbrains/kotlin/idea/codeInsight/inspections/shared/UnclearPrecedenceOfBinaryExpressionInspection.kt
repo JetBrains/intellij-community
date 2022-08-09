@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -14,9 +14,9 @@ import com.intellij.psi.util.siblings
 import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.CheckBox
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
-import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
-import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
 import org.jetbrains.kotlin.psi.*

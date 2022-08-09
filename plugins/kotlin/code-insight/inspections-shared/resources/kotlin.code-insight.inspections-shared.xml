@@ -16,14 +16,15 @@
                      language="kotlin"
                      key="inspection.data.class.private.constructor.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptySecondaryConstructorBodyInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.empty.secondary.constructor.body.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptySecondaryConstructorBodyInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WEAK WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="inspection.remove.empty.secondary.constructor.body.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantEmptyInitializerBlockInspection"
                      groupPath="Kotlin"
@@ -33,5 +34,13 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.empty.initializer.block.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="WARNING"
+            language="kotlin"
+            key="unclear.precedence.of.binary.expression.inspection.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -59,8 +60,8 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     )
 
     fun `test top level presented parentheses`() = doTest(
-      "fun foo() = <warning>(if (true) 1 else null) ?: <caret>1 xor 2</warning>",
-      "fun foo() = (if (true) 1 else null) ?: (1 xor 2)"
+        "fun foo() = <warning>(if (true) 1 else null) ?: <caret>1 xor 2</warning>",
+        "fun foo() = (if (true) 1 else null) ?: (1 xor 2)"
     )
 
     fun `test eq elvis`() = doTest("fun test(i: Int?): Int { val y: Int; y = i <caret>?: 1; return y}")
@@ -110,4 +111,6 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
             myFixture.disableInspections(unclearPrecedenceOfBinaryExpressionInspection)
         }
     }
+
+    override fun isFirPlugin(): Boolean = false
 }
