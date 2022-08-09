@@ -1364,8 +1364,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // assume roots have the FS default case sensitivity
     attributes = attributes.withCaseSensitivity(fs.isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
     // avoid creating gazillions of roots which are not actual roots
-    String parentPath = fs instanceof LocalFileSystem ? PathUtil.getParentPath(rootPath) : "";
-    if (!parentPath.isEmpty()) {
+    String parentPath;
+    if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
       FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
         throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "'." +
