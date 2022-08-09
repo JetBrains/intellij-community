@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
+import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
@@ -43,7 +44,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -62,6 +62,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.DefaultTableCellRenderer
@@ -79,6 +80,9 @@ internal class PackagesTable(
     private val operationExecutor: OperationExecutor,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
+
+    val hoverBackground: Color
+        get() = PackageSearchUI.Colors.hoverBackground
 
     private var lastSelectedDependency: UnifiedDependency? = null
 
@@ -233,21 +237,22 @@ internal class PackagesTable(
             }
         })
 
-        onMouseMotion(
-            onMouseMoved = { mouseEvent ->
-                val point = mouseEvent.point
-                val hoverColumn = columnAtPoint(point)
-                val hoverRow = rowAtPoint(point)
-
-                if (tableModel.items.isEmpty() || hoverRow < 0) {
-                    cursor = Cursor.getDefaultCursor()
-                    return@onMouseMotion
+        val hoverListener = object : TableHoverListener() {
+            override fun onHover(table: JTable, row: Int, column: Int) {
+                invalidate()
+                val currentCursor = cursor
+                if (tableModel.items.isEmpty() || row < 0) {
+                    if (currentCursor != Cursor.getDefaultCursor()) cursor = Cursor.getDefaultCursor()
+                    return
                 }
 
-                val isHoveringActionsColumn = hoverColumn == actionsColumnIndex
-                cursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+                val isHoveringActionsColumn = column == actionsColumnIndex
+                val desiredCursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+                if (currentCursor != desiredCursor) cursor = desiredCursor
             }
-        )
+        }
+        hoverListener.addTo(this)
+
         project.uiStateSource.selectedDependencyFlow.onEach { lastSelectedDependency = it }
             .onEach { setSelection(it) }
             .flowOn(Dispatchers.EDT)
@@ -424,7 +429,7 @@ internal class PackagesTable(
     }
 
     override fun getBackground(): Color =
-        if (PackageSearchUI.isNewUI) PackageSearchUI.panelBackgroundColor else UIUtil.getTableBackground()
+        if (PackageSearchUI.isNewUI) PackageSearchUI.Colors.panelBackgroundColor else UIUtil.getTableBackground()
 
     override fun getForeground(): Color =
         if (PackageSearchUI.isNewUI) UIUtil.getListForeground() else UIUtil.getTableForeground()
@@ -434,4 +439,6 @@ internal class PackagesTable(
 
     override fun getSelectionForeground(): Color =
         if (PackageSearchUI.isNewUI) UIUtil.getListSelectionForeground(true) else UIUtil.getTableSelectionForeground(true)
+
+    override fun getHoveredRowBackground() = null // Renderers will take care of it
 }

@@ -137,7 +137,7 @@ internal class PackageDetailsHeaderPanel(
         add(copyMenuItem)
     }
 
-    private val infoPanel = PackageSearchUI.borderPanel(PackageSearchUI.panelBackgroundColor) {
+    private val infoPanel = PackageSearchUI.borderPanel(PackageSearchUI.Colors.panelBackgroundColor) {
         border = emptyBorder(12.scaled())
         layout = HeaderLayout()
 

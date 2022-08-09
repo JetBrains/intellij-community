@@ -73,7 +73,7 @@ class PackagesSmartSearchField(
         return super.preprocessEventForTextField(e)
     }
 
-    override fun getBackground() = PackageSearchUI.headerBackgroundColor
+    override fun getBackground() = PackageSearchUI.Colors.headerBackgroundColor
 
     override fun onFocusLost() {
         super.onFocusLost()

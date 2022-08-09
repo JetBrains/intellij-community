@@ -77,7 +77,7 @@ internal class GitHubInfoPanel : JPanel() {
         }
 
     init {
-        background = PackageSearchUI.panelBackgroundColor
+        background = PackageSearchUI.Colors.panelBackgroundColor
         border = emptyBorder(0)
         layout = MigLayout(
             LC().skipInvisibleComponents()

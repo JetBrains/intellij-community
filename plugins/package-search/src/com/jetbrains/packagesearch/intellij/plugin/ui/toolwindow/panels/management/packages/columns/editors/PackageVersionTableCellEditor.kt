@@ -48,7 +48,7 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
 
         val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion.originalVersion)
             .apply {
-                table.colors.applyColors(this, isSelected = true)
+                table.colors.applyColors(this, isSelected = true, isHover = false)
                 setCell(row, column)
             }
 

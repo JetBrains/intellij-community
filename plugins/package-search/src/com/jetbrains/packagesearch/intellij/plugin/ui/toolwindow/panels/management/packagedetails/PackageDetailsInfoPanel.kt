@@ -49,7 +49,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
     @ScaledPixels private val maxRowHeight = 180.scaled()
 
     private val noDataLabel = PackageSearchUI.createLabel {
-        foreground = PackageSearchUI.infoLabelColor
+        foreground = PackageSearchUI.Colors.infoLabelColor
         text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.noData")
             .withHtmlStyling(wordWrap = true)
     }.withMaxHeight(maxRowHeight)
@@ -93,7 +93,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
                 .fill().gap()
                 .fill().gap()
         )
-        background = PackageSearchUI.panelBackgroundColor
+        background = PackageSearchUI.Colors.panelBackgroundColor
         alignmentX = Component.LEFT_ALIGNMENT
 
         val horizontalBorder = 12
@@ -120,7 +120,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
 
     fun display(viewModel: ViewModel) {
         clearPanelContents()
-        background = PackageSearchUI.panelBackgroundColor
+        background = PackageSearchUI.Colors.panelBackgroundColor
         displayUsagesIfAny(viewModel.packageModel)
         if (viewModel.packageModel.remoteInfo == null) {
             return

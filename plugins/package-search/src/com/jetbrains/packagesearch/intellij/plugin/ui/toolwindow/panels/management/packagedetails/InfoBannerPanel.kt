@@ -49,7 +49,7 @@ class InfoBannerPanel(
         }
 
     init {
-        background = PackageSearchUI.infoBannerBackground
+        background = PackageSearchUI.Colors.infoBannerBackground
 
         PackageSearchUI.setHeight(this, 28)
 
@@ -62,7 +62,7 @@ class InfoBannerPanel(
         add(bannerLabel)
     }
 
-    override fun getBorder() = JBUI.Borders.customLineBottom(PackageSearchUI.infoBannerBorder)
+    override fun getBorder() = JBUI.Borders.customLineBottom(PackageSearchUI.Colors.infoBannerBorder)
 
-    override fun getBackground() = PackageSearchUI.infoBannerBackground
+    override fun getBackground() = PackageSearchUI.Colors.infoBannerBackground
 }

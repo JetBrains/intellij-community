@@ -18,8 +18,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
@@ -56,61 +54,205 @@ import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
 object PackageSearchUI {
+    object Colors {
 
-    private val mainBackgroundColor: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
+        private val mainBackgroundColor: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
-    internal val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
+        internal val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
-    internal val headerBackgroundColor = mainBackgroundColor
-    internal val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
+        internal val headerBackgroundColor = mainBackgroundColor
+        internal val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
 
-    private val oldBackgroundColor = mainBackgroundColor
-    private val newBackgroundColor = JBColor.namedColor("Panel.background")
+        internal val panelBackgroundColor
+            get() = if (isNewUI) JBColor.namedColor("Panel.background") else mainBackgroundColor
 
-    internal val panelBackgroundColor
-        get() = if (isNewUI) newBackgroundColor else oldBackgroundColor
+        internal val hoverBackground: Color
+            get() = color(
+                propertyName = "Table.hoverBackground",
+                newUILight = 0xE7EFFD, newUIDark = 0x393B40,
+                oldUILight = 0xEDF5FC, oldUIDark = 0x464A4D
+            )
 
-    internal val searchResultListRowBackground
-        get() = JBColor.namedColor(
-            "PackageSearch.SearchResult.background",
-            if (isNewUI) {
-                JBColor(0xE8EEFA, 0x1C2433)
-            } else {
-                JBColor(0xF2F5F9, 0x4C5052)
-            }
-        )
+        internal interface StatefulColor {
 
-    internal val infoBannerBackground
-        get() = if (isNewUI) {
-            JBColor.namedColor("PackageSearch.PackageDetails.infoBanner.background", 0xCFDEFC, 0x35538F)
-        } else {
-            EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
-                ?: JBColor(0xE6EEF7, 0x1C3956)
+            fun background(isSelected: Boolean, isHover: Boolean): Color
+            fun foreground(isSelected: Boolean, isHover: Boolean): Color
         }
 
-    internal val infoBannerBorder
-        get() = if (isNewUI) {
-            JBColor.namedColor("PackageSearch.PackageDetails.infoBanner.border", 0xCFDEFC, 0x35538F)
-        } else {
-            JBColor.namedColor("Separator.background", 0xD1D1D1, 0x323232)
+        object PackagesTable : StatefulColor {
+
+            private val foreground = JBColor.namedColor("Table.foreground")
+            private val background = JBColor.namedColor("Table.background") // TODO newUI vs oldUI?
+
+            private val selectedBackground = JBColor.namedColor("Table.selectionBackground")
+
+            private val selectedForeground = JBColor.namedColor("Table.selectionForeground")
+
+            private val hoverBackground
+                get() = color(
+                    propertyName = "PackageSearch.SearchResult.hoverBackground",
+                    newUILight = 0x2C3341, newUIDark = 0xDBE1EC,
+                    oldUILight = 0xF2F5F9, oldUIDark = 0x4C5052
+                )
+
+            override fun background(isSelected: Boolean, isHover: Boolean) =
+                when {
+                    isSelected -> selectedBackground
+                    isHover -> hoverBackground
+                    else -> background
+                }
+
+            override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                when {
+                    isSelected -> selectedForeground
+                    else -> foreground
+                }
+
+            object SearchResult : StatefulColor {
+
+                override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> selectedForeground
+                        else -> foreground
+                    }
+
+                override fun background(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> selectedBackground
+                        isHover -> hoverBackground
+                        else -> background
+                    }
+
+                private val foreground = JBColor.namedColor("Table.foreground")
+
+                private val background
+                    get() = color(
+                        propertyName = "PackageSearch.SearchResult.background",
+                        newUILight = 0xE8EEFA, newUIDark = 0x1C2433,
+                        oldUILight = 0xF2F5F9, oldUIDark = 0x4C5052
+                    )
+
+                private val selectedBackground = JBColor.namedColor("Table.selectionBackground")
+
+                private val selectedForeground = JBColor.namedColor("Table.selectionForeground")
+
+                private val hoverBackground
+                    get() = color(
+                        propertyName = "PackageSearch.SearchResult.hoverBackground",
+                        newUILight = 0xDBE1EC, newUIDark = 0x2C3341,
+                        oldUILight = 0xF2F5F9, oldUIDark = 0x4C5052
+                    )
+
+                object Tag : StatefulColor {
+
+                    override fun background(isSelected: Boolean, isHover: Boolean) =
+                        when {
+                            isSelected -> PackagesTable.selectedBackground
+                            isHover -> hoverBackground
+                            else -> background
+                        }
+
+                    override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                        when {
+                            isSelected -> PackagesTable.selectedForeground
+                            else -> foreground
+                        }
+
+                    private val foreground
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.foreground",
+                            newUILight = 0xE3E4E6, newUIDark = 0xDFE1E5,
+                            oldUILight = 0x000000, oldUIDark = 0x8E8F8F
+                        )
+
+                    private val background
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.background",
+                            newUILight = 0xD5DBE6, newUIDark = 0x2E3643,
+                            oldUILight = 0xD2E6EB, oldUIDark = 0x4E5658
+                        )
+
+                    private val hoverBackground
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.hoverBackground",
+                            newUILight = 0xC9CFD9, newUIDark = 0x3D4350,
+                            oldUILight = 0xBFD0DB, oldUIDark = 0x55585B
+                        )
+                }
+            }
+
+            object Tag : StatefulColor {
+
+                internal val foreground
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.foreground",
+                        newUILight = 0x5A5D6B, newUIDark = 0x9DA0A8,
+                        oldUILight = 0x000000, oldUIDark = 0x9C9C9C
+                    )
+
+                internal val background
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.background",
+                        newUILight = 0xDFE1E5, newUIDark = 0x43454A,
+                        oldUILight = 0xEBEBEB, oldUIDark = 0x4C4E50
+                    )
+
+                internal val hoverBackground
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.hoverBackground",
+                        newUILight = 0xF7F8FA, newUIDark = 0x4A4C4E,
+                        oldUILight = 0xC9D2DB, oldUIDark = 0x55585B
+                    )
+
+                override fun background(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> selectedBackground
+                        isHover -> hoverBackground
+                        else -> background
+                    }
+
+                override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> selectedForeground
+                        else -> foreground
+                    }
+            }
         }
 
-    internal val tagForeground = JBColor.namedColor(
-        "PackageSearch.PackageTag.foreground",
-        JBColor.namedColor("Plugins.tagForeground", 0x808080, 0x9C9C9C)
-    )
-    internal val tagBackground
-        get() = JBColor.namedColor(
-            "PackageSearch.PackageTag.background",
-            if (PackageSearchUI.isNewUI) {
-                JBColor(0xEBEBEB, 0x2B2D30)
-            } else {
-                JBColor.namedColor("Plugins.tagBackground", JBColor(0xEBEBEB, 0x4C5052))
-            }
-        )
+        internal val infoBannerBackground
+            get() = color(
+                propertyName = "PackageSearch.PackageDetails.infoBanner.background",
+                newUILight = 0xCFDEFC, newUIDark = 0x35538F,
+                oldUILight = 0xE6EEF7, oldUIDark = 0x1C3956
+            )
 
-    internal val tagForegroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.foreground", 0xFFFFFF, 0xFFFFFF)
-    internal val tagBackgroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.background", 0x4395E2, 0x78ADE2)
+        internal val infoBannerBorder
+            get() = color(
+                propertyName = "PackageSearch.PackageDetails.infoBanner.border",
+                newUILight = 0xCFDEFC, newUIDark = 0x35538F,
+                oldUILight = 0xD1D1D1, oldUIDark = 0x323232
+            )
+
+        private fun color(
+            propertyName: String? = null,
+            newUILight: Int,
+            newUIDark: Int,
+            oldUILight: Int,
+            oldUIDark: Int
+        ) =
+            if (propertyName != null) {
+                JBColor.namedColor(
+                    propertyName,
+                    if (isNewUI) newUILight else oldUILight,
+                    if (isNewUI) newUIDark else oldUIDark
+                )
+            } else {
+                JBColor(
+                    if (isNewUI) newUILight else oldUILight,
+                    if (isNewUI) newUIDark else oldUIDark
+                )
+            }
+    }
 
     internal val mediumHeaderHeight = JBValue.Float(30f)
     internal val smallHeaderHeight = JBValue.Float(24f)
@@ -125,10 +267,10 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = headerBackgroundColor
+        override fun getBackground() = Colors.headerBackgroundColor
     }
 
-    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = CardLayout()
@@ -139,16 +281,17 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun borderPanel(backgroundColor: Color = panelBackgroundColor, init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
+    internal fun borderPanel(backgroundColor: Color = Colors.panelBackgroundColor, init: BorderLayoutPanel.() -> Unit) =
+        object : BorderLayoutPanel() {
 
-        init {
-            init()
+            init {
+                init()
+            }
+
+            override fun getBackground() = backgroundColor
         }
 
-        override fun getBackground() = backgroundColor
-    }
-
-    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = BoxLayout(this, axis)
@@ -158,7 +301,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun flowPanel(backgroundColor: Color = panelBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
+    internal fun flowPanel(backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
         init {
             layout = FlowLayout(FlowLayout.LEFT)
             init()
@@ -173,7 +316,7 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = panelBackgroundColor
+        override fun getBackground() = Colors.panelBackgroundColor
     }
 
     fun textField(init: JTextField.() -> Unit): JTextField = JTextField().apply {
@@ -205,7 +348,7 @@ object PackageSearchUI {
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
         isSelected -> getTextColorPrimary(true)
-        else -> infoLabelColor
+        else -> Colors.infoLabelColor
     }
 
     internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
@@ -227,7 +370,7 @@ object PackageSearchUI {
     ) {
         init {
             border = BorderFactory.createEmptyBorder()
-            viewport.background = panelBackgroundColor
+            viewport.background = Colors.panelBackgroundColor
         }
     }
 
@@ -257,7 +400,7 @@ object PackageSearchUI {
         override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int) = 100
         override fun getScrollableTracksViewportWidth() = true
         override fun getScrollableTracksViewportHeight() = false
-        override fun getBackground() = panelBackgroundColor
+        override fun getBackground() = Colors.panelBackgroundColor
     }
 }
 

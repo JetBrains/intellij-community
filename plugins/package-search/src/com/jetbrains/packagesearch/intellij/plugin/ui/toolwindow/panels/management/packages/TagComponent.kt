@@ -37,8 +37,8 @@ class TagComponent(@Nls name: String) : JLabel() {
         text = name
         toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
         GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-        background = PackageSearchUI.tagBackground
-        foreground = PackageSearchUI.tagForeground
+        background = PackageSearchUI.Colors.PackagesTable.Tag.background(isSelected = false, isHover = false)
+        foreground = PackageSearchUI.Colors.PackagesTable.Tag.foreground(isSelected = false, isHover = false)
     }
 
     @ScaledPixels

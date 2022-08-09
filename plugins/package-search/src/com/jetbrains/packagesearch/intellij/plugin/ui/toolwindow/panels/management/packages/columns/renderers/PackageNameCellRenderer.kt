@@ -1,29 +1,27 @@
-/*******************************************************************************
+/**
+ * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations
+ * under the License.
+ * ****************************************************************************
+ */
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.ColorUtil
+import com.intellij.ui.hover.TableHoverListener
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.TagComponent
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledInsets
 import net.miginfocom.layout.AC
@@ -33,6 +31,7 @@ import net.miginfocom.layout.DimConstraint
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
 import net.miginfocom.swing.MigLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import javax.swing.JLabel
@@ -76,6 +75,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         column: Int
     ): JPanel {
         val columnWidth = table.tableHeader.columnModel.getColumn(0).width
+        val isHover = TableHoverListener.getHoveredRow(table) == row
 
         return when (value as PackagesTableItem<*>) {
             is PackagesTableItem.InstalledPackage -> {
@@ -84,9 +84,21 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
-                createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
-                    table.colors.applyColors(this, isSelected)
-                }
+                val colors = CellColors(
+                    background = PackageSearchUI.Colors.PackagesTable.background(isSelected, isHover),
+                    foreground = PackageSearchUI.Colors.PackagesTable.foreground(isSelected, isHover),
+                    secondaryForeground = PackageSearchUI.getTextColorSecondary(isSelected),
+                    tagBackground = PackageSearchUI.Colors.PackagesTable.Tag.background(isSelected, isHover),
+                    tagForeground = PackageSearchUI.Colors.PackagesTable.Tag.foreground(isSelected, isHover),
+                )
+
+                createNamePanel(
+                    columnWidth = columnWidth,
+                    name = name,
+                    identifier = rawIdentifier,
+                    isKotlinMultiplatform = packageModel.isKotlinMultiplatform,
+                    colors = colors
+                )
             }
             is PackagesTableItem.InstallablePackage -> {
                 val packageModel = value.packageModel
@@ -94,11 +106,21 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
-                createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
-                    table.colors.applyColors(this, isSelected)
+                val colors = CellColors(
+                    background = PackageSearchUI.Colors.PackagesTable.SearchResult.background(isSelected, isHover),
+                    foreground = PackageSearchUI.Colors.PackagesTable.SearchResult.foreground(isSelected, isHover),
+                    secondaryForeground = PackageSearchUI.getTextColorSecondary(isSelected),
+                    tagBackground = PackageSearchUI.Colors.PackagesTable.SearchResult.Tag.background(isSelected, isHover),
+                    tagForeground = PackageSearchUI.Colors.PackagesTable.SearchResult.Tag.foreground(isSelected, isHover),
+                )
 
-                    if (!isSelected) background = PackageSearchUI.searchResultListRowBackground
-                }
+                createNamePanel(
+                    columnWidth = columnWidth,
+                    name = name,
+                    identifier = rawIdentifier,
+                    isKotlinMultiplatform = packageModel.isKotlinMultiplatform,
+                    colors = colors
+                )
             }
         }
     }
@@ -108,36 +130,41 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         @NlsSafe name: String?,
         @NlsSafe identifier: String,
         isKotlinMultiplatform: Boolean,
-        isSelected: Boolean
+        colors: CellColors
     ) = TagPaintingJPanel(columnWidth).apply {
+        background = colors.background
+        foreground = colors.foreground
+
         if (!name.isNullOrBlank() && name != identifier) {
             add(
                 JLabel(name).apply {
-                    foreground = PackageSearchUI.getTextColorPrimary(isSelected)
+                    foreground = colors.foreground
                 },
                 componentConstraint(gapAfter = componentGapX)
             )
             add(
                 JLabel(identifier).apply {
-                    foreground = PackageSearchUI.getTextColorSecondary(isSelected)
+                    foreground = colors.secondaryForeground
                 },
                 componentConstraint().gapAfter("0:push")
             )
         } else {
             add(
                 JLabel(identifier).apply {
-                    foreground = PackageSearchUI.getTextColorPrimary(isSelected)
+                    foreground = colors.foreground
                 },
                 componentConstraint()
             )
         }
 
         if (isKotlinMultiplatform) {
-            add(
-                TagComponent(PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform"))
-                    .apply { isVisible = false },
-                componentConstraint(1, 0)
-            )
+            val tagComponent = TagComponent(PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform"))
+                .apply { isVisible = false }
+
+            add(tagComponent, componentConstraint(1, 0))
+
+            tagComponent.background = colors.tagBackground
+            tagComponent.foreground = colors.tagForeground
         }
     }
 
@@ -153,8 +180,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             maximumSize = Dimension(columnWidth, Int.MAX_VALUE)
         }
 
-        override fun paintChildren(g: Graphics) {
-            super.paintChildren(g)
+        override fun paint(g: Graphics) {
+            super.paint(g)
 
             val tagComponent = components.find { it is TagComponent } as? TagComponent ?: return
             val tagX = columnWidth - tagComponent.width
@@ -169,12 +196,17 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 translate(tagX, tagY)
                 tagComponent.apply {
                     isVisible = true
-                    val tagBackground = if (isSelected) PackageSearchUI.tagBackgroundSelected else PackageSearchUI.tagBackground
-                    background = ColorUtil.mix(this@TagPaintingJPanel.background, tagBackground, 0.5)
-                    foreground = if (isSelected) PackageSearchUI.tagForegroundSelected else PackageSearchUI.tagForeground
                     paint(g)
                 }
             }
         }
     }
+
+    private data class CellColors(
+        val background: Color,
+        val foreground: Color,
+        val secondaryForeground: Color,
+        val tagBackground: Color,
+        val tagForeground: Color,
+    )
 }

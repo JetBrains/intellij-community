@@ -18,9 +18,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBComboBoxLabel
-import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.intellij.ui.hover.TableHoverListener
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
 import javax.swing.JPanel
 import javax.swing.JTable
@@ -36,19 +35,17 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         row: Int,
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
-        table.colors.applyColors(this, isSelected)
+        val isHover = TableHoverListener.getHoveredRow(table) == row
+        val isSearchResult = value is PackagesTableItem.InstallablePackage
 
-        val bgColor = if (!isSelected && value is PackagesTableItem.InstallablePackage) {
-            PackageSearchUI.searchResultListRowBackground
-        } else {
-            background
-        }
+        val colors = computeColors(isSelected, isHover, isSearchResult)
 
-        background = bgColor
+        background = colors.background
+        foreground = colors.foreground
 
         val jbComboBoxLabel = JBComboBoxLabel().apply {
-            table.colors.applyColors(this, isSelected)
-            background = bgColor
+            background = colors.background
+            foreground = colors.foreground
             icon = AllIcons.General.LinkDropTriangle
 
             text = when (value) {
