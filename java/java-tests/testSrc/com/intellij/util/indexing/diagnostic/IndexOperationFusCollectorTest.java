@@ -85,15 +85,26 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   public void reportingThrowExceptionIfStartedCalledTwice_with_THROW_ON_INCORRECT_USAGE() {
     assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
                THROW_ON_INCORRECT_USAGE);
-    //check for 'allKeys' only because all them have same superclass
+
+    //check for 'allKeys' only, because the logic is in a shared superclass for all variants
     var trace = lookupAllKeysStarted(INDEX_ID);
+
+    boolean subsequentStartFails;
     try {
       trace.lookupStarted(INDEX_ID);
-      fail("Subsequent .started() without finish should throw exception if THROW_ON_INCORRECT_USAGE=true");
+      subsequentStartFails = false;
     }
     catch (AssertionError e) {
+      subsequentStartFails = true;
+    }
+    finally {
       trace.lookupFinished();//without finishing -> legit tests run after will start to fail
     }
+    
+    assertTrue(
+      "Subsequent .started() without finish should throw exception if THROW_ON_INCORRECT_USAGE=true",
+      subsequentStartFails
+    );
   }
 
   @Test
@@ -102,12 +113,18 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
                THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     var trace = TRACE_OF_ALL_KEYS_LOOKUP.get();
+    boolean finishWithoutStartFails;
     try {
       trace.lookupFinished();
-      fail(".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true");
+      finishWithoutStartFails = false;
     }
     catch (AssertionError e) {
-
+      finishWithoutStartFails = true;
     }
+
+    assumeTrue(
+      ".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true",
+      finishWithoutStartFails
+    );
   }
 }
