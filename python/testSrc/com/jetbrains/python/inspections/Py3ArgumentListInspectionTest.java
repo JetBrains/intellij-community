@@ -74,4 +74,14 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                  "\n" +
                  "random.randint(1, 2)");
   }
+
+  // PY-53388
+  public void testEnumAuto() {
+    doTestByText("import enum\n" +
+                 "\n" +
+                 "class MyEnum(enum.Enum):\n" +
+                 "    FOO = enum.auto()\n" +
+                 "    BAR = enum.auto()\n" +
+                 "");
+  }
 }
