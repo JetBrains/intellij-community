@@ -7,10 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -45,3 +42,9 @@ fun <T1, T2, R> combineState(scope: CoroutineScope,
                              transform: (T1, T2) -> R): StateFlow<R> =
   combine(state1, state2, transform)
     .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value))
+
+@ApiStatus.Experimental
+fun <T, M> StateFlow<T>.mapState(
+  scope: CoroutineScope,
+  mapper: (value: T) -> M
+): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))

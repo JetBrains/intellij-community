@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -162,13 +163,23 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     contentDisposable = disposable
     tab.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
 
-    val component = GHPRRepositorySelectorComponentFactory(project, authManager, repositoryManager).create(disposable) { repo, account ->
-      currentRepository = repo
-      currentAccount = account
-      val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@create
-      projectSettings.selectedRepoAndAccount = repo to account
-      showPullRequestsComponent(repo, account, requestExecutor, false)
-      GHUIUtil.focusPanel(mainPanel)
+    val selectorVm = GHPRRepositorySelectorViewModelImpl(project, repositoryManager, authManager).also {
+      Disposer.register(disposable, it)
+    }
+
+    val uiScope = DisposingMainScope(disposable)
+
+    val component = GHPRRepositorySelectorComponentFactory(selectorVm).create(uiScope)
+
+    uiScope.launch {
+      selectorVm.selectionFlow.collect { (repo, account) ->
+        currentRepository = repo
+        currentAccount = account
+        val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@collect
+        projectSettings.selectedRepoAndAccount = repo to account
+        showPullRequestsComponent(repo, account, requestExecutor, false)
+        GHUIUtil.focusPanel(mainPanel)
+      }
     }
     with(mainPanel) {
       removeAll()

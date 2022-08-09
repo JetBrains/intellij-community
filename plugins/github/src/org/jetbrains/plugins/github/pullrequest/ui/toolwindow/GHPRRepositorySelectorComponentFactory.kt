@@ -1,25 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.collaboration.async.DisposingMainScope
-import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
-import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.ComboBoxWithActionsModel
@@ -27,56 +24,71 @@ import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFacto
 import org.jetbrains.plugins.github.ui.component.GHRepositorySelectorComponentFactory
 import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRRepositorySelectorComponentFactory(private val project: Project,
-                                             private val authManager: GithubAuthenticationManager,
-                                             private val repositoryManager: GHHostedRepositoriesManager) {
-  fun create(disposable: Disposable, onSelected: (GHGitRepositoryMapping, GithubAccount) -> Unit): JComponent {
+class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelectorViewModel) {
+
+  fun create(scope: CoroutineScope): JComponent {
     val repositoriesModel = ComboBoxWithActionsModel<GHGitRepositoryMapping>().apply {
-      //todo: add remote action
+      //todo: add remote actions
+      sync(scope, vm.repositoriesState, vm.repoSelectionState)
     }
-    val accountsModel = ComboBoxWithActionsModel<GithubAccount>()
+
+    val accountsModel = ComboBoxWithActionsModel<GithubAccount>().apply {
+      sync(scope, vm.accountsState, vm.accountSelectionState)
+    }
+
+    scope.launch {
+      vm.repoSelectionState.map { repo ->
+        createPopupLoginActions(repo)
+      }.collect {
+        accountsModel.actions = it
+      }
+    }
 
     val applyAction = object : AbstractAction(GithubBundle.message("pull.request.view.list")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val repo = repositoriesModel.selectedItem ?: return
-        val account = accountsModel.selectedItem ?: return
-        onSelected(repo.wrappee, account.wrappee)
+        vm.trySubmitSelection()
       }
     }
     val githubLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
       override fun actionPerformed(e: ActionEvent?) {
-        authManager.requestNewAccountForDefaultServer(project)?.run {
-          applyAction.actionPerformed(e)
-        }
+        vm.loginToGithub()?.run { vm.trySubmitSelection() }
       }
     }
     val tokenLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
       override fun actionPerformed(e: ActionEvent?) {
-        authManager.requestNewAccountForDefaultServer(project, true)?.run {
-          applyAction.actionPerformed(e)
-        }
+        vm.loginToGithub(false)?.run { vm.trySubmitSelection() }
       }
     }
     val gheLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val server = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath ?: return
-        authManager.requestNewAccountForServer(server, project)?.run {
-          applyAction.actionPerformed(e)
-        }
+        vm.loginToGhe()?.run { vm.trySubmitSelection() }
       }
     }
 
-    Controller(project = project, authManager = authManager, repositoriesManager = repositoryManager,
-               repositoriesModel = repositoriesModel, accountsModel = accountsModel,
-               applyAction = applyAction, githubLoginAction = githubLoginAction, tokenLoginAction = tokenLoginAction,
-               gheLoginActon = gheLoginAction,
-               disposable = disposable)
+    scope.launch {
+      combine(vm.accountsState, vm.repoSelectionState) { accounts, repo ->
+        accounts.isNotEmpty() to (repo?.ghRepositoryCoordinates?.serverPath?.isGithubDotCom ?: false)
+      }.collect { (hasAccounts, isDotCom) ->
+        applyAction.visible = hasAccounts
+        githubLoginAction.visible = !hasAccounts && isDotCom
+        tokenLoginAction.visible = !hasAccounts && isDotCom
+        gheLoginAction.visible = !hasAccounts && !isDotCom
+      }
+    }
+
+    scope.launch {
+      combine(vm.repoSelectionState, vm.accountSelectionState) { repo, account ->
+        repo != null && account != null
+      }.collect {
+        applyAction.isEnabled = it
+      }
+    }
+
 
     val repoCombo = GHRepositorySelectorComponentFactory().create(repositoriesModel).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
@@ -124,118 +136,24 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     }
   }
 
-  private class Controller(private val project: Project,
-                           private val authManager: GithubAuthenticationManager,
-                           private val repositoriesManager: GHHostedRepositoriesManager,
-                           private val repositoriesModel: ComboBoxWithActionsModel<GHGitRepositoryMapping>,
-                           private val accountsModel: ComboBoxWithActionsModel<GithubAccount>,
-                           private val applyAction: Action,
-                           private val githubLoginAction: Action,
-                           private val tokenLoginAction: Action,
-                           private val gheLoginActon: Action,
-                           disposable: Disposable) {
-
-    private val scope = DisposingMainScope(disposable)
-
-    init {
-      repositoriesModel.addSelectionChangeListener(::updateAccounts)
-      repositoriesModel.addSelectionChangeListener(::updateActions)
-      accountsModel.addSelectionChangeListener(::updateActions)
-
-      scope.launch {
-        repositoriesManager.knownRepositoriesState.collect {
-          repositoriesModel.items = it.toList()
-          repositoriesModel.preSelect()
+  private fun createPopupLoginActions(repo: GHGitRepositoryMapping?): List<AbstractAction> {
+    val isDotComServer = repo?.ghRepositoryCoordinates?.serverPath?.isGithubDotCom ?: false
+    return if (isDotComServer)
+      listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          vm.loginToGithub()?.let { vm.accountSelectionState.value = it }
         }
-      }
-
-      authManager.addListener(disposable, object : AccountsListener<GithubAccount> {
-        override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-          invokeAndWaitIfNeeded(runnable = ::updateAccounts)
+      }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          vm.loginToGithub(false)?.let { vm.accountSelectionState.value = it }
         }
       })
-
-      updateAccounts()
-      updateActions()
-    }
-
-    private fun updateAccounts() {
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
-      if (serverPath == null) {
-        accountsModel.items = emptyList()
-        accountsModel.actions = emptyList()
-        return
-      }
-
-      val accounts = authManager.getAccounts()
-      val matchingAccounts = accounts.filter { it.server.equals(serverPath, true) }
-
-      accountsModel.items = matchingAccounts
-      accountsModel.actions = getAccountsPopupActions(serverPath)
-      preselectAccount()
-    }
-
-    private fun getAccountsPopupActions(server: GithubServerPath): List<Action> {
-      return if (server.isGithubDotCom)
-        listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-          override fun actionPerformed(e: ActionEvent?) {
-            authManager.requestNewAccountForDefaultServer(project)?.let(::trySelectAccount)
-          }
-        }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-          override fun actionPerformed(e: ActionEvent?) {
-            authManager.requestNewAccountForDefaultServer(project, true)?.let(::trySelectAccount)
-          }
-        })
-      else listOf(
-        object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-          override fun actionPerformed(e: ActionEvent?) {
-            authManager.requestNewAccountForServer(server, project)?.let(::trySelectAccount)
-          }
-        })
-    }
-
-    private fun trySelectAccount(account: GithubAccount) {
-      with(accountsModel) {
-        if (size > 0) {
-          for (i in 0 until size) {
-            val item = getElementAt(i) as? ComboBoxWithActionsModel.Item.Wrapper<GithubAccount>
-            if (item != null && item.wrappee.castSafelyTo<GithubAccount>() == account) {
-              selectedItem = item
-              break
-            }
-          }
+    else listOf(
+      object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          vm.loginToGhe()?.let { vm.accountSelectionState.value = it }
         }
-      }
-    }
-
-    private fun preselectAccount() {
-      with(accountsModel) {
-        if (selectedItem == null && size > 0) {
-          val defaultAccount = authManager.getDefaultAccount(project)
-          var newSelection = getElementAt(0) as? ComboBoxWithActionsModel.Item.Wrapper
-          for (i in 0 until size) {
-            val item = getElementAt(i) as? ComboBoxWithActionsModel.Item.Wrapper
-            if (item != null && item.wrappee.castSafelyTo<GithubAccount>() == defaultAccount) {
-              newSelection = item
-              break
-            }
-          }
-          selectedItem = newSelection
-        }
-      }
-    }
-
-    private fun updateActions() {
-      val hasAccounts = accountsModel.items.isNotEmpty()
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
-      val isGithubServer = serverPath?.isGithubDotCom ?: false
-
-      applyAction.isEnabled = accountsModel.selectedItem != null
-      applyAction.visible = hasAccounts
-      githubLoginAction.visible = !hasAccounts && isGithubServer
-      tokenLoginAction.visible = !hasAccounts && isGithubServer
-      gheLoginActon.visible = !hasAccounts && !isGithubServer
-    }
+      })
   }
 
   companion object {
@@ -255,7 +173,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       get() = getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
       set(value) = putValue(ACTION_VISIBLE_KEY, value)
 
-    fun createLinkLabel(action: Action): ActionLink {
+    private fun createLinkLabel(action: Action): ActionLink {
       val label = ActionLink(action.getName()) {
         action.actionPerformed(it)
       }
@@ -281,10 +199,24 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       })
     }
 
-    private fun ComboBoxWithActionsModel<GHGitRepositoryMapping>.preSelect() {
-      if (selectedItem != null) return
-      if (size == 0) return
-      selectedItem = getElementAt(0) as? ComboBoxWithActionsModel.Item.Wrapper
+    private fun <T> ComboBoxWithActionsModel<T>.sync(scope: CoroutineScope,
+                                                     listState: StateFlow<List<T>>,
+                                                     selectionState: MutableStateFlow<T?>) {
+      scope.launch {
+        listState.collect {
+          items = it
+        }
+      }
+      addSelectionChangeListener {
+        selectionState.value = selectedItem?.wrappee
+      }
+      scope.launch {
+        selectionState.collect { item ->
+          if (selectedItem?.wrappee != item) {
+            selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
+          }
+        }
+      }
     }
   }
 }
