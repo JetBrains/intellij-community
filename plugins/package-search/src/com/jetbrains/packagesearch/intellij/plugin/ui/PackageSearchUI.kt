@@ -80,10 +80,20 @@ object PackageSearchUI {
             }
         )
 
-    internal val infoBannerBackground = JBColor.lazy {
-        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
-            ?: JBColor(0xE6EEF7, 0x1C3956)
-    }
+    internal val infoBannerBackground
+        get() = if (isNewUI) {
+            JBColor.namedColor("PackageSearch.PackageDetails.infoBanner.background", 0xCFDEFC, 0x35538F)
+        } else {
+            EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
+                ?: JBColor(0xE6EEF7, 0x1C3956)
+        }
+
+    internal val infoBannerBorder
+        get() = if (isNewUI) {
+            JBColor.namedColor("PackageSearch.PackageDetails.infoBanner.border", 0xCFDEFC, 0x35538F)
+        } else {
+            JBColor.namedColor("Separator.background", 0xD1D1D1, 0x323232)
+        }
 
     internal val tagForeground = JBColor.namedColor(
         "PackageSearch.PackageTag.foreground",

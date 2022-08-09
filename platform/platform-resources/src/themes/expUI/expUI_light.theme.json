@@ -581,7 +581,10 @@
       "PackageTag.foreground": "Grey5",
       "PackageTagSelected.background": "Blue10",
       "PackageTagSelected.foreground": "Grey13",
-      "TableItem.hoveredBackground": "#000000F1"
+      "PackageDetails.infoBanner": {
+        "background": "Blue15",
+        "border": "Blue13"
+      }
     }
   },
 

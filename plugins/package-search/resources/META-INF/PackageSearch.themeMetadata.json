@@ -3,16 +3,16 @@
     "fixed": false,
     "ui": [
         {
-            "key": "PackageSearch.TableItem.hoveredBackground",
-            "description": "Hovered row highlight color",
+            "key": "PackageSearch.PackageDetails.infoBanner.background",
+            "description": "Color of the information banner background in the details panel",
             "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
             "since": "2022.3"
         },
         {
-            "key": "PackageSearch.SearchResult.background",
-            "description": "Search results row background color",
+            "key": "PackageSearch.PackageDetails.infoBanner.border",
+            "description": "Color of the information banner border in the details panel",
             "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
-            "since": "2022.1"
+            "since": "2022.3"
         },
         {
             "key": "PackageSearch.PackageTag.background",
@@ -36,6 +36,12 @@
             "key": "PackageSearch.PackageTagSelected.foreground",
             "description": "Dependency tag (e.g., 'multiplatform') selected foreground color",
             "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.SearchResult.background",
+            "description": "Search results row background color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
             "since": "2022.1"
         }
     ]
