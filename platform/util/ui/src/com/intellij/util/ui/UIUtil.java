@@ -3348,7 +3348,19 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    return isShowing(component, true);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
+      return true;
+    }
+    if (component.isShowing()) {
       return true;
     }
 
