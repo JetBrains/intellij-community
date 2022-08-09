@@ -72,12 +72,16 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("options/editor.xml", "ideEditorContent")
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "cloudEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
 
     settingsLog.advanceMaster()
 
@@ -94,12 +98,16 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState(FileState.Deleted("options/editor.xml"))
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "cloudEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState(FileState.Deleted("options/editor.xml"))
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
     settingsLog.advanceMaster()
 
     assertEquals("Incorrect content", "cloudEditorContent", (settingsSyncStorage / "options" / "editor.xml").readText())
@@ -116,12 +124,16 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "moreCloudEditorContent")
-    })
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState(FileState.Deleted("options/editor.xml"))
-    })
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState(FileState.Deleted("options/editor.xml"))
+      }, "Local changes"
+    )
     settingsLog.advanceMaster()
 
     assertEquals("Incorrect deleted file content", DELETED_FILE_MARKER, (settingsSyncStorage / "options" / "editor.xml").readText())
@@ -138,9 +150,11 @@ internal class GitSettingsLogTest {
     settingsLog.initialize()
 
     val instant = Instant.ofEpochSecond(100500)
-    settingsLog.applyCloudState(settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), "", "", ""))) {
-      fileState("options/editor.xml", "moreCloudEditorContent")
-    })
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), "", "", ""))) {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
     settingsLog.advanceMaster()
 
     val snapshot = settingsLog.collectCurrentSnapshot()
@@ -160,18 +174,26 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("editor.xml", "ideEditorContent")
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("laf.xml", "cloudLafContent")
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("editor.xml", "cloudEditorContent")
-    })
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("laf.xml", "ideEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("laf.xml", "cloudLafContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("laf.xml", "ideEditorContent")
+      }, "Local changes"
+    )
 
     settingsLog.advanceMaster()
 

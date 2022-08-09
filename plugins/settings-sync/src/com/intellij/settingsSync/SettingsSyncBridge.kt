@@ -70,7 +70,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   private fun applySnapshotFromServer(settingsSnapshot: SettingsSnapshot) {
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
-    val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot)
+    val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot, "Remote changes to initialize settings by data from cloud")
     pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
 
     // normally we set cloud position only after successful push to cloud, but in this case we already take all settings from the cloud,
@@ -93,10 +93,10 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
       if (event is SyncSettingsEvent.IdeChange) {
-        settingsLog.applyIdeState(event.snapshot)
+        settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
       }
       else if (event is SyncSettingsEvent.CloudChange) {
-        settingsLog.applyCloudState(event.snapshot)
+        settingsLog.applyCloudState(event.snapshot, "Remote changes")
       }
       else if (event is SyncSettingsEvent.LogCurrentSettings) {
         settingsLog.logExistingSettings()
