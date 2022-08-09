@@ -3979,6 +3979,36 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-54503
+  public void testEnumGetItemResultValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "expr = MyEnum['ONE'].value")
+    );
+  }
+
+  // PY-54503
+  public void testEnumDunderCallResultValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "expr = MyEnum(1).value")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

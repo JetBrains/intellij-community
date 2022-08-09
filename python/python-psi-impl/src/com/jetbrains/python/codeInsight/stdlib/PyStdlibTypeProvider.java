@@ -110,10 +110,23 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           final PyReferenceExpression qualifierExpr = (PyReferenceExpression)qualifier;
           final PsiElement resolvedQualifier = qualifierExpr.getReference().resolve();
           if (resolvedQualifier instanceof PyTargetExpression) {
-            final PyTargetExpression qualifierTarget = (PyTargetExpression)resolvedQualifier;
-            // Requires switching to AST, we cannot use getType(qualifierTarget) here, because its type is overridden by this type provider
-            if (context.maySwitchToAST(qualifierTarget)) {
-              final PyExpression value = qualifierTarget.findAssignedValue();
+            final PyTargetExpression enumItem = (PyTargetExpression)resolvedQualifier;
+            // Requires switching to AST, we cannot use getType(enumItem) here, because its type is overridden by this type provider
+            if (context.maySwitchToAST(enumItem)) {
+              final PyExpression value = enumItem.findAssignedValue();
+              if (value != null) {
+                return context.getType(value);
+              }
+            }
+          }
+        }
+        else if (qualifier != null) {
+          PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
+          if (enumType != null) {
+            PyClass enumClass = enumType.getPyClass();
+            PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
+            if (firstEnumItem != null && context.maySwitchToAST(firstEnumItem)) {
+              final PyExpression value = firstEnumItem.findAssignedValue();
               if (value != null) {
                 return context.getType(value);
               }
