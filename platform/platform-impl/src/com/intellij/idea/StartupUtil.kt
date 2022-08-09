@@ -125,7 +125,8 @@ fun start(isHeadless: Boolean,
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
   runBlocking {
-    val asyncDispatcher = Dispatchers.Default + StartupAbortedExceptionHandler()
+    val exceptionHandler = StartupAbortedExceptionHandler()
+    val asyncDispatcher = Dispatchers.Default + exceptionHandler
     launch(asyncDispatcher) {
       val activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
@@ -141,7 +142,7 @@ fun start(isHeadless: Boolean,
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
 
-    val appInfoDeferred = async(Dispatchers.IO) {
+    val appInfoDeferred = async(Dispatchers.IO + exceptionHandler) {
       // required for DisabledPluginsState and EUA
       ApplicationInfoImpl.getShadowInstance()
     }
