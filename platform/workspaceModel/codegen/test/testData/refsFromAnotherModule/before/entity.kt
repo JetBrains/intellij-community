@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 interface ReferredEntity : WorkspaceEntity {
   val version: Int
   val name: String
-  val contentRoot: ContentRootEntity?
+  val contentRoot: @Child ContentRootEntity?
 }
 
-val ContentRootEntity.ref: @Child ReferredEntity
+val ContentRootEntity.ref: ReferredEntity
   by WorkspaceEntity.extension()

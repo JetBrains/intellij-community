@@ -8,12 +8,11 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 
 interface ReferredEntity : WorkspaceEntity {
   val version: Int
   val name: String
-  val contentRoot: ContentRootEntity?
+  val contentRoot: @Child ContentRootEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -41,9 +40,9 @@ interface ReferredEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ReferredEntity, modification: ReferredEntity.Builder.() -> Unit) = modifyEntity(
   ReferredEntity.Builder::class.java, entity, modification)
 
-var ContentRootEntity.Builder.ref: @Child ReferredEntity
+var ContentRootEntity.Builder.ref: ReferredEntity
   by WorkspaceEntity.extension()
 //endregion
 
-val ContentRootEntity.ref: @Child ReferredEntity
+val ContentRootEntity.ref: ReferredEntity
   by WorkspaceEntity.extension()

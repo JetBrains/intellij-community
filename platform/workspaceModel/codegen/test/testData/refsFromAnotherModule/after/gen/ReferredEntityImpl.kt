@@ -14,16 +14,16 @@ import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
 open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, ReferredEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -38,7 +38,7 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
     get() = _name!!
 
   override val contentRoot: ContentRootEntity?
-    get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)
+    get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -120,11 +120,11 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                      CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+          _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
         }
       }
       set(value) {
@@ -132,21 +132,21 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
+          _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
       }
@@ -197,7 +197,6 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ReferredEntity(version, name, entitySource) {
-      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().singleOrNull()
     }
   }
 
