@@ -37,5 +37,3 @@ enum class Enum2(val a: Int) { /// M
 object Obj1
 
 object Obj2 {}
-
-// IGNORE_K2
