@@ -9,8 +9,13 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Register implementation of this class as 'com.intellij.codeInsight.unresolvedReferenceQuickFixProvider' extension to provide additional
- * quick fixes for 'Unresolved reference' problems.
+ * Register implementation of this class as {@code com.intellij.codeInsight.unresolvedReferenceQuickFixProvider} extension to provide additional
+ * quick fixes for 'Unresolved reference' problems.<p>
+ * For example, this line in the {@code plugin.xml} file:
+ * <p>
+ *   {@code <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>}
+ * </p>
+ * registers class {@code com.intellij.jarFinder.FindJarQuickFixProvider"} as an unresolved reference quick fix.
  *
  * @param <T> type of element you want register quick fixes for; for example, in Java language it may be {@link com.intellij.psi.PsiJavaCodeReferenceElement}
  */
