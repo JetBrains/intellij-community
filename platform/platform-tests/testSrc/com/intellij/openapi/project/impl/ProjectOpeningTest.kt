@@ -3,7 +3,6 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -53,27 +52,20 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun cancelOnLoadingModules() {
-    var job: Job? = null
-    ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(
-      ProjectLifecycleListener.TOPIC,
-      object : ProjectLifecycleListener {
-        @Suppress("OVERRIDE_DEPRECATION", "removal")
-        override fun projectComponentsInitialized(project: Project) {
+    runBlocking {
+      var job: Job? = null
+      job = launch {
+        assertThat(doOpenProject(createTestOpenProjectOptions().copy(beforeOpen = {
           job!!.cancel("test")
           job!!
-        }
-      }
-    )
-
-    runBlocking {
-      job = launch {
-        assertThat(doOpenProject()).isNull()
+          true
+        }))).isNull()
       }
     }
   }
 
-  private suspend fun doOpenProject() {
-    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), createTestOpenProjectOptions())
+  private suspend fun doOpenProject(options: OpenProjectTask = createTestOpenProjectOptions()) {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), options)
     if (project != null) {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }

@@ -787,7 +787,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * "connected" state then the exception is rethrown. If the debugger is not
    * connected at this moment then the exception is ignored.
    *
-   * @param command
    */
   private <T extends AbstractCommand<?>> T executeCommand(@NotNull T command) throws PyDebuggerException {
     try {
@@ -809,7 +808,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * "connected" state then the error is logged. If the debugger is not
    * connected at this moment then the exception is ignored.
    *
-   * @param command
    */
   private <T extends AbstractCommand<?>> void executeCommandSafely(@NotNull T command) {
     try {

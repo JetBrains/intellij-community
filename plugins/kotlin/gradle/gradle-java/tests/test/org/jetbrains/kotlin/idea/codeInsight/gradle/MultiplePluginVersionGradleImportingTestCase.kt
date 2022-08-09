@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
  * This TestCase implements possibility to test import with different versions of gradle and different
@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinPluginVersionParam.Companion.toKotlinGradlePluginVersionParam
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -34,12 +33,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         val name: String = version.toString()
     ) {
         override fun toString(): String = name
-
-        companion object {
-            fun KotlinToolingVersion.toKotlinGradlePluginVersionParam(
-                name: String = this.toString()
-            ) = KotlinPluginVersionParam(this, name)
-        }
     }
 
     @Rule
@@ -92,20 +85,24 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            return if (IS_UNDER_SAFE_PUSH) listOf(
-                /* Safe push tested with latest released versions */
-                arrayOf("7.3.3", V_1_6_21.toKotlinGradlePluginVersionParam())
-            ) else listOf(
-                /* Progressively updated Gradle and KGP versions */
-                arrayOf("6.8.3", V_1_4_32.toKotlinGradlePluginVersionParam()),
-                arrayOf("6.9.2", V_1_5_32.toKotlinGradlePluginVersionParam()),
-                arrayOf("7.3.3", V_1_6_21.toKotlinGradlePluginVersionParam()),
-                arrayOf(
-                    "7.4.2", KotlinGradlePluginVersions.latest.toKotlinGradlePluginVersionParam(
-                        "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
-                    )
-                )
+            val parameters = mutableListOf<Array<Any>>()
+
+            fun addVersions(
+                gradleVersion: String, kotlinVersion: KotlinToolingVersion, kotlinVersionName: String = kotlinVersion.toString()
+            ) = parameters.add(arrayOf(gradleVersion, KotlinPluginVersionParam(kotlinVersion, kotlinVersionName)))
+
+            if (!IS_UNDER_SAFE_PUSH) {
+                addVersions("6.8.3", V_1_4_32)
+                addVersions("6.9.2", V_1_5_32)
+                addVersions("7.3.3", V_1_6_21)
+            }
+
+            addVersions(
+                "7.4.2", KotlinGradlePluginVersions.latest,
+                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
             )
+
+            return parameters
         }
     }
 
@@ -179,8 +176,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    fun checkHighlightingOnAllModules() {
-        createHighlightingCheck().invokeOnAllModules()
+    fun checkHighlightingOnAllModules(testLineMarkers: Boolean = true) {
+        createHighlightingCheck(testLineMarkers).invokeOnAllModules()
     }
 }
 

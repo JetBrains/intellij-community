@@ -92,3 +92,5 @@ fun main() {
     testOrdinaryFunctionCallFiltering()
     testInlineFunctionCallFiltering()
 }
+
+// IGNORE_K2

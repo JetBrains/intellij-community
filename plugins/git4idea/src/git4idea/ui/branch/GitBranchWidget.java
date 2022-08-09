@@ -140,7 +140,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     @Override
     public boolean isEnabledByDefault() {
       return !ExperimentalUI.isNewUI() && // Disabled by default in ExperimentalUI per designers request.
-             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
+             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isAvailable());
     }
 
     @Override

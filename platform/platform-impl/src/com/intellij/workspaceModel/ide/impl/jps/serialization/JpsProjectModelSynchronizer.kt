@@ -9,7 +9,10 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -44,7 +47,14 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for workspace model in IDE.
  */
+@Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
+  companion object {
+    fun getInstance(project: Project): JpsProjectModelSynchronizer = project.service()
+
+    private val LOG = logger<JpsProjectModelSynchronizer>()
+  }
+
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
@@ -62,7 +72,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun reloadProjectEntities() {
+  suspend fun reloadProjectEntities() {
     if (StoreReloadManager.getInstance().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return
@@ -86,8 +96,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
 
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
@@ -96,10 +106,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
         sourcesToSave.removeAll(changedSources)
       }
-    })
+    }
   }
 
-  private fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
+  private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
     val reporter = IdeErrorReporter(project)
     val result = action(reporter)
     val errors = reporter.errors
@@ -175,8 +185,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
-    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
+  suspend fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
+    val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
     childActivity = activity?.startChild("serializers creation")
@@ -237,8 +247,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   // IDEA-288703
-  fun hasNoSerializedJpsModules(): Boolean = !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
-                                             !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+  fun hasNoSerializedJpsModules(): Boolean {
+    return !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
+           !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+  }
 
   private fun prepareSerializers(): JpsProjectSerializers {
     val existingSerializers = this.serializers.get()
@@ -341,10 +353,5 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @TestOnly
   fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
-
-  companion object {
-    fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
-    private val LOG = logger<JpsProjectModelSynchronizer>()
-  }
 }
 

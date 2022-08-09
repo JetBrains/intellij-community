@@ -133,6 +133,10 @@ abstract class ChangeCallableReturnTypeFix(
         }
     }
 
+    override fun startInWriteAction(): Boolean {
+        return changeFunctionLiteralReturnTypeFix == null || changeFunctionLiteralReturnTypeFix.startInWriteAction()
+    }
+
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
         if (changeFunctionLiteralReturnTypeFix != null) {
             return changeFunctionLiteralReturnTypeFix.generatePreview(project, editor, file)

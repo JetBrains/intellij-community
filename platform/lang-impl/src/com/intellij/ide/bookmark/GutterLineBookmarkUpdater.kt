@@ -1,19 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import kotlinx.coroutines.launch
 
 internal class GutterLineBookmarkUpdater : EditorFactoryListener {
-
   override fun editorCreated(event: EditorFactoryEvent) {
     val file = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
-    ApplicationManager.getApplication().executeOnPooledThread {
-      ProjectManager.getInstanceIfCreated()?.openProjects?.forEach {
-        (BookmarksManager.getInstance(it) as? BookmarksManagerImpl)?.refreshRenderers(file)
+    (event.editor.project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch {
+      for (project in ProjectManagerEx.getOpenProjects()) {
+        (BookmarksManager.getInstance(project) as? BookmarksManagerImpl)?.refreshRenderers(file)
       }
     }
   }

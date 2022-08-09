@@ -204,21 +204,29 @@ class DistributionJARsBuilder {
     }
 
     /**
-     * @return predicate to test if a given plugin should be auto-published
+     * @see [[build/plugins-autoupload.txt]] for the specification.
+     *
+     * @return predicate to test if the given plugin should be auto-published
      */
     private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
       val file = getPluginAutoUploadFile(buildContext.paths.communityHomeDir)
       val config = readPluginAutoUploadFile(file)
 
       val productCode = buildContext.applicationInfo.productCode
-      return Predicate<PluginLayout> { plugin -> //see the specification in the plugins-autoupload.txt. Supported rules:
-        //   <plugin main module name> ## include the plugin
-        //   +<product code>:<plugin main module name> ## include the plugin
-        //   -<product code>:<plugin main module name> ## exclude the plugin
-        val module = plugin.mainModule
-        val excludeRule = "-$productCode:$module"
-        val includeRule = "+$productCode:$module"
-        if (config.contains(excludeRule)) false else config.contains(module) || config.contains(includeRule)
+      return Predicate<PluginLayout> { plugin ->
+        val mainModuleName = plugin.mainModule
+
+        val includeInAllProducts = config.contains(mainModuleName)
+        val includeInProduct = config.contains("+$productCode:$mainModuleName")
+        val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
+
+        if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
+          buildContext.messages.error("Unsupported rules combination: " + config.filter {
+            it == mainModuleName || it.endsWith(":$mainModuleName")
+          })
+        }
+
+        !excludedFromProduct && (includeInAllProducts || includeInProduct)
       }
     }
 

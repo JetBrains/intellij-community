@@ -126,7 +126,6 @@ public final class DevkitActionsUtil {
   }
 
   /**
-   * @throws IncorrectOperationException
    */
   public static void checkCanCreateClass(@NotNull PsiDirectory directory, String name) {
     PsiDirectory currentDir = directory;

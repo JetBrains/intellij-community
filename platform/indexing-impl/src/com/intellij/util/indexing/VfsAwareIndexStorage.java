@@ -7,6 +7,6 @@ import com.intellij.util.indexing.impl.IndexStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface VfsAwareIndexStorage<Key, Value> extends IndexStorage<Key, Value> {
+public interface VfsAwareIndexStorage<Key, Value> extends IndexStorage<Key, Value>, com.intellij.util.io.MeasurableIndexStore {
   boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 }

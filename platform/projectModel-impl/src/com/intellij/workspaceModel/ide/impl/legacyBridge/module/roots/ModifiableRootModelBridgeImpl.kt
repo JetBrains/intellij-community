@@ -323,7 +323,7 @@ internal class ModifiableRootModelBridgeImpl(
     mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = dependencies + dependency
+      dependencies.add(dependency)
     }
   }
 
@@ -333,7 +333,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      this.dependencies = this.dependencies + dependencies
+      this.dependencies.addAll(dependencies)
     }
   }
 
@@ -351,8 +351,16 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = if (last) dependencies + dependency
-      else dependencies.subList(0, position) + dependency + dependencies.subList(position, dependencies.size)
+      if (last) {
+        dependencies.add(dependency)
+      }
+      else {
+        val result = mutableListOf<ModuleDependencyItem>()
+        result.addAll(dependencies.subList(0, position))
+        result.add(dependency)
+        result.addAll(dependencies.subList(position, dependencies.size))
+        dependencies = result
+      }
     }
     return newEntry
   }
@@ -427,7 +435,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = newEntities
+      dependencies = newEntities.toMutableList()
     }
   }
 

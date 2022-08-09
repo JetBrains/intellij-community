@@ -1145,7 +1145,6 @@
       <separator/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
-      <reference ref="ForceStepInto"/>
       <reference ref="StepOut"/>
       <reference ref="RunToCursor"/>
       <separator/>
@@ -1647,6 +1646,7 @@
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
+      <action id="SelectAndDumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.SelectAndDumpInvalidTipsAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>

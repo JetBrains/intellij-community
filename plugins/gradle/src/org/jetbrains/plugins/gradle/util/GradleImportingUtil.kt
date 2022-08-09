@@ -5,7 +5,6 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -136,12 +135,10 @@ private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: Str
   val connection = project.messageBus.connect(parentDisposable)
 
   connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-    override fun onImportFinished(projectPath: String?) {
+    override fun onFinalTasksFinished(projectPath: String?) {
       if (expectedProjectPath == null || expectedProjectPath == projectPath) {
         Disposer.dispose(parentDisposable)
-        invokeLater {
-          promise.setResult(project)
-        }
+        promise.setResult(project)
       }
     }
 

@@ -15,10 +15,24 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   private var visible = true
   private var enabled = true
 
-  var component: JComponent? = null
+  private var componentField: JComponent? = null
+
+  var component: JComponent?
+    get() = componentField
     set(value) {
-      reinstallComponent(field, value)
-      field = value
+      if (componentField !== value) {
+        removeComponent()
+        if (value != null) {
+          value.isVisible = value.isVisible && visible && parent.isVisible()
+          value.isEnabled = value.isEnabled && enabled && parent.isEnabled()
+
+          componentField = value
+
+          if (placeholderCellData != null) {
+            initInstalledComponent()
+          }
+        }
+      }
     }
 
   override fun enabledFromParent(parentEnabled: Boolean) {
@@ -42,48 +56,49 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     if (parent.isVisible()) {
       doVisible(visible)
     }
-    component?.isVisible = isVisible
     return this
   }
 
   open fun init(panel: DialogPanel, constraints: Constraints, spacing: SpacingConfiguration) {
     placeholderCellData = PlaceholderCellData(panel, constraints, spacing)
-
-    if (component != null) {
-      reinstallComponent(null, component)
+    if (componentField != null) {
+      initInstalledComponent()
     }
   }
 
-  private fun reinstallComponent(oldComponent: JComponent?, newComponent: JComponent?) {
-    var invalidate = false
-    if (oldComponent != null) {
-      placeholderCellData?.let {
-        if (oldComponent is DialogPanel) {
-          it.panel.unregisterIntegratedPanel(oldComponent)
-        }
-        it.panel.remove(oldComponent)
-        invalidate = true
-      }
+  private fun removeComponent() {
+    val installedComponent = componentField
+
+    if (installedComponent == null) {
+      return
     }
 
-    if (newComponent != null) {
-      newComponent.isVisible = visible && parent.isVisible()
-      newComponent.isEnabled = enabled && parent.isEnabled()
-      placeholderCellData?.let {
-        val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, newComponent, it.spacing)
-        it.constraints = it.constraints.copy(
-          gaps = gaps,
-          visualPaddings = prepareVisualPaddings(newComponent.origin)
-        )
-        it.panel.add(newComponent, it.constraints)
-        if (newComponent is DialogPanel) {
-          it.panel.registerIntegratedPanel(newComponent)
-        }
-        invalidate = true
-      }
-    }
+    componentField = null
 
-    if (invalidate) {
+    placeholderCellData?.let {
+      if (installedComponent is DialogPanel) {
+        it.panel.unregisterIntegratedPanel(installedComponent)
+      }
+      it.panel.remove(installedComponent)
+      invalidate()
+    }
+  }
+
+  private fun initInstalledComponent() {
+    checkNotNull(placeholderCellData)
+    val installedComponent = checkNotNull(componentField)
+
+    placeholderCellData?.let {
+      val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
+      it.constraints = it.constraints.copy(
+        gaps = gaps,
+        visualPaddings = prepareVisualPaddings(installedComponent.origin)
+      )
+      it.panel.add(installedComponent, it.constraints)
+      if (installedComponent is DialogPanel) {
+        it.panel.registerIntegratedPanel(installedComponent)
+      }
+
       invalidate()
     }
   }
@@ -112,5 +127,4 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   }
 }
 
-@ApiStatus.Internal
-internal data class PlaceholderCellData(val panel: DialogPanel, var constraints: Constraints, val spacing: SpacingConfiguration)
+private data class PlaceholderCellData(val panel: DialogPanel, var constraints: Constraints, val spacing: SpacingConfiguration)

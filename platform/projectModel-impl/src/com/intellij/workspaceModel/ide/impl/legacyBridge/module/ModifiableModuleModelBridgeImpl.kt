@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -26,12 +27,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.IOException
 import java.nio.file.Path
 
@@ -112,7 +109,14 @@ internal class ModifiableModuleModelBridgeImpl(
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = isNew, null)
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity = moduleEntity,
+                                                            versionedStorage = entityStorageOnDiff,
+                                                            diff = diff,
+                                                            isNew = isNew,
+                                                            precomputedExtensionModel = null,
+                                                            plugins = plugins,
+                                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     myModulesToAdd[moduleEntity.name] = moduleInstance
     currentModulesSet.add(moduleInstance)
@@ -297,7 +301,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val storage = entityStorageOnDiff.current
     val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
-    val groupPathList = groupPath?.toList()
+    val groupPathList = groupPath?.toMutableList()
 
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {

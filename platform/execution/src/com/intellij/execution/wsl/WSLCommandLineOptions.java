@@ -88,8 +88,6 @@ public final class WSLCommandLineOptions {
    * Executes command in default shell. Please note that shell expansion is enabled in this case,
    * so it's not suitable for running arbitrary command lines.
    *
-   * @param executeCommandInDefaultShell
-   * @return
    */
   @SuppressWarnings("SameParameterValue")
   @ApiStatus.Experimental

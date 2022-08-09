@@ -5,6 +5,7 @@ import com.intellij.execution.runToolbar.data.RWActiveListener
 import com.intellij.execution.runToolbar.data.RWSlotListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
@@ -95,15 +96,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
       super.removeNotify()
     }
 
-/*    override fun getPreferredSize(): Dimension {
-      val d = super.getPreferredSize()
-      return baseWidth()?.let {
-        val w = it + insets.left + insets.right
-        println("getPreferredSize: $it ${w}")
-        return Dimension(w, d.height)
-      } ?: d
-
-    }*/
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
     background = JBColor.namedColor("Panel.background", Gray.xCD)
@@ -124,7 +116,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
       add(JLabel(AllIcons.Toolbar.AddSlot).apply {
         val d = preferredSize
-        d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+        d.width = RunWidgetWidthHelper.getInstance(project).arrow
         preferredSize = d
 
         addMouseListener(object : MouseAdapter() {
@@ -147,7 +139,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
           }
         })
 
-        isVisible = RunToolbarProcess.isSettingsAvailable
+        isVisible = ToolbarSettings.getInstance().isAvailable && RunToolbarProcess.isSettingsAvailable
       })
 
       add(newSlotDetails, "skip")
@@ -226,7 +218,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize
-      d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+      d.width = RunWidgetWidthHelper.getInstance(project).arrow
       preferredSize = d
      })
 

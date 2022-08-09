@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -112,7 +112,7 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     return offsets
 }
 
-internal fun checkPluginIsCorrect(isFirPlugin: Boolean){
+fun checkPluginIsCorrect(isFirPlugin: Boolean){
     if (isFirPlugin) {
         checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
     } else {

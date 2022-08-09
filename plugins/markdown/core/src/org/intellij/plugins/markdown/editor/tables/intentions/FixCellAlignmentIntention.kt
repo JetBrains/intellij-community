@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -32,8 +31,6 @@ internal class FixCellAlignmentIntention: PsiElementBaseIntentionAction() {
     requireNotNull(editor)
     val cell = TableUtils.findCell(element) ?: return
     val expectedAlignment = cell.parentTable?.getColumnAlignment(cell.columnIndex) ?: return
-    executeCommand(project) {
-      cell.updateAlignment(editor.document, expectedAlignment)
-    }
+    cell.updateAlignment(editor.document, expectedAlignment)
   }
 }

@@ -165,7 +165,11 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
       return new FlatteningIterator<>(base) {
         @Override
         protected @NotNull Iterator<LookupElement> createValueIterator(LookupElement element) {
-          List<LookupElement> shorter = addShorterElements(myToLift.get(element));
+          List<LookupElement> toLift;
+          synchronized (LiftShorterItemsClassifier.this) {
+            toLift = new ArrayList<>(myToLift.get(element));
+          }
+          List<LookupElement> shorter = addShorterElements(toLift);
           List<LookupElement> singleton = Collections.singletonList(element);
           if (shorter != null) {
             if (myLifted != null) {

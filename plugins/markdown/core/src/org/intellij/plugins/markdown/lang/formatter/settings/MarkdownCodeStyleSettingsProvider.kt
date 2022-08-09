@@ -49,6 +49,12 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           MarkdownBundle.message("markdown.style.settings.insert.quote.arrows"),
           MarkdownBundle.message("markdown.style.settings.group.when.reformatting")
         )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::FORMAT_TABLES.name,
+          MarkdownBundle.message("markdown.style.settings.format.tables"),
+          MarkdownBundle.message("markdown.style.settings.group.when.reformatting")
+        )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(

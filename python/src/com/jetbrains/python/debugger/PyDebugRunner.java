@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.HostPort;
+import com.intellij.execution.target.ResolvedPortBinding;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
@@ -21,6 +22,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -31,10 +33,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -53,6 +57,8 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +67,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -83,6 +91,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
+
+  private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
   @Override
   @NotNull
@@ -124,10 +134,18 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
-      .thenAsync(ignored ->
-                   Registry.get("python.use.targets.api").asBoolean()
-                   ? createSessionUsingTargetsApi(state, environment)
-                   : createSessionLegacy(state, environment));
+      .thenAsync(ignored -> {
+        if (Registry.is("python.use.targets.api")) {
+          return createSessionUsingTargetsApi(state, environment);
+        }
+        if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
+          Project project = environment.getProject();
+          Module module = PyRunnerUtil.getModule(state);
+          throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
+                                                  () -> showPythonInterpreterSettings(project, module));
+        }
+        return createSessionLegacy(state, environment);
+      });
   }
 
   @NotNull
@@ -137,12 +155,17 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     RunProfile profile = environment.getRunProfile();
     return Promises
       .runAsync(() -> {
+        int serverLocalPort = findAvailableSocketPort();
         try {
-          ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
-          int serverLocalPort = serverSocket.getLocalPort();
           PythonDebuggerScriptTargetedCommandLineBuilder debuggerScriptCommandLineBuilder =
             new PythonDebuggerScriptTargetedCommandLineBuilder(environment.getProject(), pyState, profile, serverLocalPort);
           ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
+          ServerSocket serverSocket = debuggerScriptCommandLineBuilder.getServerSocketForDebugging();
+          if (serverSocket == null) {
+            LOG.error("The server socket has not been created after the target environment preparation" +
+                      ", trying to fallback and create the server socket on the loopback address");
+            serverSocket = createServerSocketOnLoopbackAddress(serverLocalPort);
+          }
           return Pair.create(serverSocket, result);
         }
         catch (ExecutionException err) {
@@ -154,6 +177,24 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         ExecutionResult result = pair.getSecond();
         return createXDebugSession(environment, pyState, serverSocket, result);
       }));
+  }
+
+  private static @NotNull ServerSocket createServerSocketOnLoopbackAddress(int serverLocalPort) {
+    try {
+      return new ServerSocket(serverLocalPort, 0, InetAddress.getLoopbackAddress());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  private static int findAvailableSocketPort() {
+    try {
+      return NetUtils.findAvailableSocketPort();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
+    }
   }
 
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
@@ -776,6 +817,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     private @NotNull final PythonCommandLineState myPyState;
     private @NotNull final RunProfile myProfile;
     private final int myIdeDebugServerLocalPort;
+    private volatile @Nullable ServerSocket myServerSocketForDebugging;
 
     private PythonDebuggerScriptTargetedCommandLineBuilder(@NotNull Project project,
                                                            @NotNull PythonCommandLineState pyState,
@@ -794,6 +836,16 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(myIdeDebugServerLocalPort, null);
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(ideServerPortBinding);
 
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
+        try {
+          myServerSocketForDebugging = createServerSocketForDebugging(environment, ideServerPortBinding);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to create server socket for debugging", e);
+        }
+        return null;
+      });
+
       Function<TargetEnvironment, HostPort> ideServerPortBindingValue =
         TargetEnvironmentFunctions.getTargetEnvironmentValue(ideServerPortBinding);
 
@@ -810,6 +862,33 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       }
 
       return debuggerScript;
+    }
+
+    private @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
+                                                                 @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding)
+      throws IOException {
+      ResolvedPortBinding localPortBinding = environment.getLocalPortBindings().get(ideServerPortBinding);
+      int port = ideServerPortBinding.getLocal();
+      InetAddress hostInetAddress;
+      if (localPortBinding != null) {
+        hostInetAddress = InetAddress.getByName(localPortBinding.getLocalEndpoint().getHost());
+      }
+      else {
+        LOG.error("The resolution of the local port binding for \"" + port + "\" port cannot be found in the prepared environment" +
+                  ", falling back to \"localhost\" for the server socket binding on the local machine");
+        hostInetAddress = InetAddress.getLoopbackAddress();
+      }
+      LOG.debug("Creating server socket for debugging at " + hostInetAddress + ":" + port);
+      return new ServerSocket(port, 0, hostInetAddress);
+    }
+
+    /**
+     * Returns the server socket allocated after creation of the environment and before starting the process.
+     *
+     * @return the allocated server socket or {@code null} if the allocation failed
+     */
+    public @Nullable ServerSocket getServerSocketForDebugging() {
+      return myServerSocketForDebugging;
     }
   }
 }

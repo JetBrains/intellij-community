@@ -4,6 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -25,6 +26,8 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
       else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
   }
+
+  override fun createBorder() = JBUI.Borders.customLine(getBorderColor(), 1, 0, 0, 1)
 
   fun initMoreButton() {
     if (isPrimary) topStripe.parent?.add(moreButton, BorderLayout.CENTER)

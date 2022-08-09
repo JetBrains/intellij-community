@@ -56,7 +56,7 @@ class TestApplicationManager private constructor() {
 
     @JvmStatic
     fun getInstance(): TestApplicationManager {
-      initTestApplication()
+      initTestApplication().getOrThrow()
       return ourInstance
     }
 

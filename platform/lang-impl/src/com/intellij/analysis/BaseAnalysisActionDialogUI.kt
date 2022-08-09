@@ -25,18 +25,20 @@ internal class BaseAnalysisActionDialogUI {
 
     return panel {
       group(scopeTitle) {
-        for (item in viewItems) {
-          row {
-            buttons.add(item.button)
-            cell(item.button).apply {
-              if (item.additionalComponents.any()) gap(RightGap.SMALL)
-            }
-            for (component in item.additionalComponents) {
-              if (component is Disposable) {
-                Disposer.register(disposable, component)
+        buttonsGroup {
+          for (item in viewItems) {
+            row {
+              buttons.add(item.button)
+              cell(item.button).apply {
+                if (item.additionalComponents.any()) gap(RightGap.SMALL)
               }
-              cell(component)
-                .horizontalAlign(HorizontalAlign.FILL)
+              for (component in item.additionalComponents) {
+                if (component is Disposable) {
+                  Disposer.register(disposable, component)
+                }
+                cell(component)
+                  .horizontalAlign(HorizontalAlign.FILL)
+              }
             }
           }
         }

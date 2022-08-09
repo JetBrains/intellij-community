@@ -50,11 +50,7 @@ object ContentRootCollector {
           // don't add sub source folders
           return@forEach
         }
-        else if (prev is UserOrGeneratedSourceFolder && curr is AnnotationSourceFolder) {
-          // don't add optional generated folder under another source folder (including generated)
-          return@forEach
-        }
-        else if (prev is BaseGeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
+        else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
@@ -95,7 +91,7 @@ object ContentRootCollector {
 
     return result.map { root ->
       val sourceFolders = root.folders.asSequence().filterIsInstance<UserOrGeneratedSourceFolder>().map { folder ->
-        SourceFolderResult(folder.path, folder.type, folder is BaseGeneratedSourceFolder)
+        SourceFolderResult(folder.path, folder.type, folder is GeneratedSourceFolder)
       }
       val excludeFolders = root.folders.asSequence().filterIsInstance<BaseExcludedFolder>().map { folder ->
         ExcludedFolderResult(folder.path)
@@ -138,15 +134,11 @@ object ContentRootCollector {
   }
 
   abstract class BaseExcludedFolder(path: String, rank: Int) : ImportedFolder(path, rank)
-  abstract class BaseGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>, rank: Int)
-    : UserOrGeneratedSourceFolder(path, type, rank)
-
   class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
   class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
-  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 3)
-  class AnnotationSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 4)
-  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 5)
+  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 3)
+  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
 
   class ContentRootResult(val path: String,
                           val sourceFolders: List<SourceFolderResult>,

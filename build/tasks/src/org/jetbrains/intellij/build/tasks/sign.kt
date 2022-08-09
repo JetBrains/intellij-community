@@ -110,7 +110,6 @@ fun signMacApp(
       .setAttribute("host", host)
       .use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
-        @Suppress("SpellCheckingInspection")
         for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py", "codesign.sh")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
@@ -140,7 +139,6 @@ fun signMacApp(
                 ?.joinToString(separator = " ", postfix = " ") {
                   "${it.first}=${it.second}"
                 } ?: ""
-    @Suppress("SpellCheckingInspection")
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
@@ -165,7 +163,6 @@ fun signMacApp(
       val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
       tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
-        @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
                     commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",

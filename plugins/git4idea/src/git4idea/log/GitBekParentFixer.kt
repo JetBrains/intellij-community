@@ -98,7 +98,7 @@ fun getIncorrectCommits(project: Project, root: VirtualFile): Set<Hash> {
 fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
                                  dataGetter: IndexDataGetter,
                                  root: VirtualFile): MutableSet<Hash> {
-  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from index").setAttribute("root name",
+  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from index").setAttribute("rootName",
                                                                                                 root.name).useWithScope {
     val commits = dataGetter.filter(listOf(MAGIC_FILTER)).asSequence()
     return commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
@@ -107,7 +107,7 @@ fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
 
 @Throws(VcsException::class)
 fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<Hash> {
-  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from git").setAttribute("root name", root.name).useWithScope {
+  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from git").setAttribute("rootName", root.name).useWithScope {
     val filterParameters = mutableListOf<String>()
 
     filterParameters.addAll(GitLogUtil.LOG_ALL)

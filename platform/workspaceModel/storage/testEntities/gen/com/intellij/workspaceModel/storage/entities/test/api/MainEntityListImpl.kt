@@ -18,145 +18,171 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class MainEntityListImpl: MainEntityList, WorkspaceEntityBase() {
-    
-    companion object {
-        
-        
-        val connections = listOf<ConnectionId>(
-        )
+open class MainEntityListImpl : MainEntityList, WorkspaceEntityBase() {
 
+  companion object {
+
+
+    val connections = listOf<ConnectionId>(
+    )
+
+  }
+
+  @JvmField
+  var _x: String? = null
+  override val x: String
+    get() = _x!!
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
+    constructor() : this(MainEntityListData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity MainEntityList is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _x: String? = null
-    override val x: String
-        get() = _x!!
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isXInitialized()) {
+        error("Field MainEntityList#x should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field MainEntityList#entitySource should be initialized")
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: MainEntityListData?): ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
-        constructor(): this(MainEntityListData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity MainEntityList is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isXInitialized()) {
-                error("Field MainEntityList#x should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field MainEntityList#entitySource should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var x: String
-            get() = getEntityData().x
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().x = value
-                changedProperty.add("x")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-        
-        override fun getEntityData(): MainEntityListData = result ?: super.getEntityData() as MainEntityListData
-        override fun getEntityClass(): Class<MainEntityList> = MainEntityList::class.java
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as MainEntityList
+      this.x = dataSource.x
+      this.entitySource = dataSource.entitySource
+      if (parents != null) {
+      }
     }
+
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override fun getEntityData(): MainEntityListData = result ?: super.getEntityData() as MainEntityListData
+    override fun getEntityClass(): Class<MainEntityList> = MainEntityList::class.java
+  }
 }
-    
+
 class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
-    lateinit var x: String
+  lateinit var x: String
 
-    fun isXInitialized(): Boolean = ::x.isInitialized
+  fun isXInitialized(): Boolean = ::x.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MainEntityList> {
-        val modifiable = MainEntityListImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MainEntityList> {
+    val modifiable = MainEntityListImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): MainEntityList {
-        val entity = MainEntityListImpl()
-        entity._x = x
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): MainEntityList {
+    val entity = MainEntityListImpl()
+    entity._x = x
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return MainEntityList::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return MainEntityList::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as MainEntityListData
-        
-        if (this.x != other.x) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return MainEntityList(x, entitySource) {
     }
+  }
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as MainEntityListData
-        
-        if (this.x != other.x) return false
-        return true
-    }
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + x.hashCode()
-        return result
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as MainEntityListData
+
+    if (this.x != other.x) return false
+    if (this.entitySource != other.entitySource) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as MainEntityListData
+
+    if (this.x != other.x) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + x.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + x.hashCode()
+    return result
+  }
 }

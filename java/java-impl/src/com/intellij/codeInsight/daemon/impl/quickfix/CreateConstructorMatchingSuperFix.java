@@ -50,6 +50,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   public CreateConstructorMatchingSuperFix(@NotNull PsiClass aClass) {
     myClass = aClass;
+    setText(QuickFixBundle.message("create.constructor.matching.super"));
   }
 
   @Override
@@ -71,7 +72,6 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
         LOG.assertTrue(className != null);
         derived.setName(className);
         if (myClass.findMethodBySignature(derived, false) == null) {
-          setText(QuickFixBundle.message("create.constructor.matching.super"));
           return true;
         }
       }

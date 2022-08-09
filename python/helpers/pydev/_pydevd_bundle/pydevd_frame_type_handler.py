@@ -11,7 +11,7 @@ DUMMY_SPECIAL_VAR = '_dummy_special_var'
 DO_NOT_PROCESS_VARS = (DUMMY_SPECIAL_VAR, DUMMY_RET_VAL, DUMMY_IPYTHON_HIDDEN)
 
 
-class Handler:
+class Handler(object):
     def __init__(self, fun):
         self.lst = []
         self.fun = fun
@@ -119,7 +119,7 @@ class DefaultVarHandler(Handler):
 
 class DummyVarHandler(Handler):
     def __init__(self, fun, cls):
-        super().__init__(fun)
+        super(DummyVarHandler, self).__init__(fun)
         self.cls = cls
         self.added_var = False
 
@@ -130,7 +130,7 @@ class DummyVarHandler(Handler):
             self.lst.append(self.fun())
             self.added_var = True
         else:
-            super().handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
+            super(DummyVarHandler, self).handle(key, value, hidden_ns, evaluate_full_value, user_type_renderers)
 
 
 def is_special_var(key, value):
@@ -171,12 +171,11 @@ def get_vars_handler(func, handler_type, group_type):
     if handler_type == XML_COMMUNICATION_VARS_HANDLER:
         if VarsHandlerContainer._instance_xml_handler is None:
             VarsHandlerContainer._instance_xml_handler = VarsHandler(func, handler_type)
-        return VarsHandlerContainer._instance_xml_handler._get_instance(group_type)
+        return VarsHandlerContainer._instance_xml_handler.get_instance(group_type)
     elif handler_type == THRIFT_COMMUNICATION_VARS_HANDLER:
         if VarsHandlerContainer._instance_thrift_handler is None:
-            VarsHandlerContainer._instance_thrift_handler = VarsHandler(func,
-                                                                        handler_type)
-        return VarsHandlerContainer._instance_thrift_handler._get_instance(group_type)
+            VarsHandlerContainer._instance_thrift_handler = VarsHandler(func, handler_type)
+        return VarsHandlerContainer._instance_thrift_handler.get_instance(group_type)
 
 
 class VarsHandler:
@@ -187,7 +186,7 @@ class VarsHandler:
         self._instance_return = None
         self.handler_type = handler_type
 
-    def _get_instance(self, group_type):
+    def get_instance(self, group_type):
         if group_type == GET_FRAME_NORMAL_GROUP:
             if self._instance_normal is None:
                 self._init_normal()
@@ -233,30 +232,29 @@ class VarsHandler:
             )
         )
 
-    def _init_special(self):
+    def _get_lambda_for_special(self, is_special_lambda=False):
         if self.handler_type == XML_COMMUNICATION_VARS_HANDLER:
-            initial_lambda = lambda key, var, hidden_ns, eval, type_renderers: self.func(var,
-                                                                                         str(key),
-                                                                                         additional_in_xml=' isIPythonHidden="True"',
-                                                                                         evaluate_full_value=eval,
-                                                                                         user_type_renderers=type_renderers)
-            special_lambda = lambda key, var, hidden_ns, eval, type_renderers: self.func(var,
-                                                                                         str(key),
-                                                                                         additional_in_xml=' isSpecialVal="True"',
-                                                                                         evaluate_full_value=eval,
-                                                                                         user_type_renderers=type_renderers)
-        elif self.handler_type == THRIFT_COMMUNICATION_VARS_HANDLER:
-            initial_lambda = lambda key, var, hidden_ns, eval, type_renderers: self.func(var,
-                                                                                         str(key),
-                                                                                         evaluate_full_value=eval,
-                                                                                         user_type_renderers=type_renderers)
-            special_lambda = lambda key, var, hidden_ns, eval, type_renderers: self.func(var,
-                                                                                         str(key),
-                                                                                         evaluate_full_value=eval,
-                                                                                         user_type_renderers=type_renderers)
+            if is_special_lambda:
+                additional_in_xml = ' isSpecialVal="True"'
+            else:
+                additional_in_xml = ' isIPythonHidden="True"'
 
+            return lambda key, var, hidden_ns, eval_full, type_renderers: self.func(var,
+                                                                                    str(key),
+                                                                                    additional_in_xml=additional_in_xml,
+                                                                                    evaluate_full_value=eval_full,
+                                                                                    user_type_renderers=type_renderers)
+        elif self.handler_type == THRIFT_COMMUNICATION_VARS_HANDLER:
+            return lambda key, var, hidden_ns, eval_full, type_renderers: self.func(var,
+                                                                                    str(key),
+                                                                                    evaluate_full_value=eval_full,
+                                                                                    user_type_renderers=type_renderers)
         else:
             raise ValueError('Handler type is incorrect')
+
+    def _init_special(self):
+        initial_lambda = self._get_lambda_for_special(is_special_lambda=False)
+        special_lambda = self._get_lambda_for_special(is_special_lambda=True)
 
         self._instance_special = DunderVarsHandler(initial_lambda)
         self._instance_special.set_next(
@@ -267,15 +265,16 @@ class VarsHandler:
             AnotherVarsHandler(special_lambda)
         )
 
-    def _init_return(self):
+    def _get_lambda_for_return(self):
         if self.handler_type == XML_COMMUNICATION_VARS_HANDLER:
-            initial_lambda = lambda name, val, hidden_ns, eval, user_type_renderers: self.func(val,
-                                                                                               name,
-                                                                                               additional_in_xml=' isRetVal="True"',
-                                                                                               user_type_renderers=user_type_renderers)
+            return lambda name, val, hidden_ns, eval_full, type_renderers: self.func(val,
+                                                                                     name,
+                                                                                     additional_in_xml=' isRetVal="True"',
+                                                                                     user_type_renderers=type_renderers)
         elif self.handler_type == THRIFT_COMMUNICATION_VARS_HANDLER:
-            initial_lambda = lambda name, val, hidden_ns, eval, user_type_renderers: self.func(val, name)
+            return lambda name, val, hidden_ns, eval_full, type_renderers: self.func(val, name)
         else:
-            initial_lambda = None
+            return None
 
-        self._instance_return = ReturnVarsHandler(initial_lambda)
+    def _init_return(self):
+        self._instance_return = ReturnVarsHandler(self._get_lambda_for_return())

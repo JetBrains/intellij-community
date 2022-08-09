@@ -621,7 +621,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
-    boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
+    boolean canBeExternalUsages = !scope.isTotalScope();
     InspectListener eventPublisher = getEventPublisher();
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {

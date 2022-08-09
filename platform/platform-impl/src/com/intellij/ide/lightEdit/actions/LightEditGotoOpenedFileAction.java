@@ -3,7 +3,6 @@ package com.intellij.ide.lightEdit.actions;
 
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.FileChooserAction;
@@ -23,11 +22,6 @@ public final class LightEditGotoOpenedFileAction extends FileChooserAction imple
     if (project != null && file != null) {
       fileSystemTree.select(file, () -> fileSystemTree.expand(file, null));
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 
   @Override

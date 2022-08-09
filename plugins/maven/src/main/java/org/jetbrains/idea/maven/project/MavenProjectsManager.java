@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
@@ -216,15 +217,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    Runnable runnable = () -> {
+    //noinspection deprecation
+    ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       boolean wasMavenized = !myState.originalFiles.isEmpty();
       if (!wasMavenized) {
         return;
       }
       initMavenized();
-    };
-
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    });
   }
 
   private void initMavenized() {
@@ -473,7 +473,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
                                               @NotNull List<MavenProject> unignored,
                                               boolean fromImport) {
-        if (!fromImport) scheduleImport();
+        if (!fromImport) scheduleImportChangedProjects();
       }
 
       @Override
@@ -1055,7 +1055,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       final ResolveContext context = new ResolveContext();
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
-          scheduleImport().processed(result);
+          scheduleImportChangedProjects().processed(result);
         }
         else {
           result.setResult(Collections.emptyList());
@@ -1146,7 +1146,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         MavenProject each = it.next();
         Runnable onCompletion = it.hasNext() ? null : () -> {
           result.setResult(null);
-          if (hasScheduledProjects()) scheduleImport();
+          if (hasScheduledProjects()) scheduleImportChangedProjects();
         };
         myFoldersResolvingProcessor.scheduleTask(
           new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
@@ -1183,11 +1183,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     synchronized (myImportingDataLock) {
       myImportModuleGroupsRequired = importModuleGroupsRequired;
     }
-    scheduleImport();
+    scheduleImportChangedProjects();
   }
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)
-  private Promise<List<Module>> scheduleImport() {
+  private Promise<List<Module>> scheduleImportChangedProjects() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
@@ -1224,7 +1224,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }
     scheduleForNextImport(toImport);
-    scheduleImport();
+    scheduleImportChangedProjects();
   }
 
   private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
@@ -1234,8 +1234,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
     synchronized (myImportingDataLock) {
       for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
-        myProjectsToImport.put(each.first, changes);
+        myProjectsToImport.compute(each.first, (__, previousChanges) ->
+          previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
+        );
       }
     }
   }
@@ -1445,7 +1446,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   /**
-   * @param listener
    * @deprecated use addManagerListener(Listener, Disposable) instead
    */
   @Deprecated

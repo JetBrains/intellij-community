@@ -199,9 +199,6 @@ public final class GitChangeUtils {
    * @param project           the project file
    * @param root              the git root
    * @param revisionName      the name of revision (might be tag)
-   * @param skipDiffsForMerge
-   * @param local
-   * @param revertable
    * @return change list for the respective revision
    * @throws VcsException in case of problem with running git
    */
@@ -226,12 +223,10 @@ public final class GitChangeUtils {
    * @param project           the project
    * @param root              the git root
    * @param s                 the scanner for log or show command output
-   * @param skipDiffsForMerge
    * @param handler           the handler that produced the output to parse. - for debugging purposes.
    * @param local             pass {@code true} to indicate that this revision should be an editable
    *                          {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
    *                          Pass {@code false} for
-   * @param revertable
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
@@ -454,13 +449,10 @@ public final class GitChangeUtils {
   /**
    * Calls {@code git diff} on the given range.
    *
-   * @param project
-   * @param root
    * @param diffRange  range or just revision (will be compared with current working tree).
    * @param dirtyPaths limit the command by paths if needed or pass null.
    * @param reverse    swap two revision; that is, show differences from index or on-disk file to tree contents.
    * @return output of the 'git diff' command.
-   * @throws VcsException
    */
   @NotNull
   private static String getDiffOutput(@NotNull Project project,

@@ -3,10 +3,12 @@ package git4idea.actions
 
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value.SYNC
 import com.intellij.dvcs.getCommonCurrentBranch
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitSelection.Companion.isEmpty
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.VcsRef
 import git4idea.GitRemoteBranch
@@ -20,6 +22,9 @@ import git4idea.ui.branch.createOrCheckoutNewBranch
 import org.jetbrains.annotations.Nls
 
 internal class GitCreateNewBranchAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     when (val data = collectData(e)) {
@@ -59,10 +64,9 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
 
     val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     if (selection != null) {
-      val commits = selection.commits
-      if (commits.isEmpty()) return Data.Invisible
-      if (commits.size > 1) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.several.commits.description"))
-      val commit = commits.first()
+      if (selection.isEmpty()) return Data.Invisible
+      if (selection.size > 1) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.several.commits.description"))
+      val commit = selection.commits.first()
       val repository = manager.getRepositoryForRootQuick(commit.root)
       if (repository != null) {
         val initialName = suggestBranchName(repository, e.getData(VcsLogDataKeys.VCS_LOG_BRANCHES))

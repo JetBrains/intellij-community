@@ -1,11 +1,11 @@
 package org.intellij.plugins.markdown.editor.toc
 
 import com.intellij.codeInspection.*
-import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -32,19 +32,16 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
       if (text != expectedToc) {
         holder.registerProblem(
           file,
-          "This TOC section does not correspond to the actual structure of the document",
+          MarkdownBundle.message("markdown.outdated.table.of.contents.inspection.description"),
           ProblemHighlightType.WARNING,
           range,
-          UpdateTocSectionQuickFix(expectedToc, document)
+          UpdateTocSectionQuickFix(expectedToc)
         )
       }
     }
   }
 
-  private class UpdateTocSectionQuickFix(
-    private val expectedToc: String,
-    private val document: Document
-  ): LocalQuickFix {
+  private class UpdateTocSectionQuickFix(private val expectedToc: String): LocalQuickFix {
     override fun getName(): String {
       return MarkdownBundle.message("markdown.outdated.table.of.contents.quick.fix.name")
     }
@@ -54,10 +51,15 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val range = descriptor.textRangeInElement
-      executeCommand(project) {
-        document.replaceString(range.startOffset, range.endOffset, expectedToc)
+      val file = descriptor.psiElement as? PsiFile
+      checkNotNull(file)
+      val document = file.viewProvider.document
+      if (document == null) {
+        thisLogger().error("Failed to find document for the quick fix")
+        return
       }
+      val range = descriptor.textRangeInElement
+      document.replaceString(range.startOffset, range.endOffset, expectedToc)
     }
   }
 }

@@ -88,7 +88,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    * @param project     a context project
    * @param gitRoots    a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
    * @param defaultRoot a guessed default root (based on the currently selected file list)
-   * @throws VcsException if there is a problem with running git (this exception is considered to be added to the end of the exception list)
    */
   protected abstract void perform(@NotNull Project project,
                                   @NotNull List<VirtualFile> gitRoots,

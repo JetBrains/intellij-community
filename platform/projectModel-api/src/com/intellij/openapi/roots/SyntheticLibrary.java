@@ -110,16 +110,7 @@ public abstract class SyntheticLibrary {
   public final Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
     if (myConstantExcludeCondition == null) return null;
     Collection<VirtualFile> allRoots = getAllRoots();
-    return file -> myConstantExcludeCondition.shouldExclude(file.isDirectory(), file.getName(),
-                                                            () -> allRoots.contains(file),
-                                                            () -> {
-                                                              VirtualFile parent = file.getParent();
-                                                              return parent != null && allRoots.contains(parent);
-                                                            },
-                                                            () -> {
-                                                              VirtualFile parent = file.getParent();
-                                                              return parent == null || parent.getParent() != null;
-                                                            });
+    return myConstantExcludeCondition.transformToCondition(allRoots);
   }
 
   public boolean isShowInExternalLibrariesNode() {
@@ -187,8 +178,8 @@ public abstract class SyntheticLibrary {
    * Providing comparisonId in constructor and constant ExcludeFileCondition instead of getExcludeFileCondition
    * allows rescanning changes in library incrementally. Consider this method as the best of all newImmutableLibrary.
    *
-   * @param comparisonId should be different for all libraries returned by the same {@link AdditionalLibraryRootsProvider},
-   *                     and retained for the same library between its invocations to enable rescan its changes incrementally
+   * @param comparisonId     should be different for all libraries returned by the same {@link AdditionalLibraryRootsProvider},
+   *                         and retained for the same library between its invocations to enable rescan its changes incrementally
    * @param excludeCondition should depend only on its parameters
    */
   @NotNull
@@ -260,5 +251,19 @@ public abstract class SyntheticLibrary {
                           @NotNull BooleanSupplier isRoot,
                           @NotNull BooleanSupplier isStrictRootChild,
                           @NotNull BooleanSupplier hasParentNotGrandparent);
+
+    @NotNull
+    default Condition<VirtualFile> transformToCondition(@NotNull Collection<VirtualFile> allRoots) {
+      return file -> shouldExclude(file.isDirectory(), file.getName(),
+                                   () -> allRoots.contains(file),
+                                   () -> {
+                                     VirtualFile parent = file.getParent();
+                                     return parent != null && allRoots.contains(parent);
+                                   },
+                                   () -> {
+                                     VirtualFile parent = file.getParent();
+                                     return parent == null || parent.getParent() != null;
+                                   });
+    }
   }
 }

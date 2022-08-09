@@ -285,7 +285,7 @@ class PluginDescriptorTest {
       buildNumber = PluginManagerCore.getBuildNumber(),
       disabledPlugins = setOf("foo"),
     )
-    val incompletePlugins = result.getIncompletePlugins()
+    val incompletePlugins = result.getIncompleteIdMap().values
     assertThat(incompletePlugins).hasSize(1)
     val foo = incompletePlugins.single()
     assertThat(foo.version).isEqualTo("2.0")
@@ -316,7 +316,7 @@ class PluginDescriptorTest {
     val plugins = result.enabledPlugins.toList()
     assertThat(plugins).hasSize(1)
     assertThat(result.duplicateModuleMap).isNull()
-    assertThat(result.getIncompletePlugins()).isEmpty()
+    assertThat(result.getIncompleteIdMap()).isEmpty()
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")

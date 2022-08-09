@@ -17,29 +17,30 @@ interface DefaultValueEntity: WorkspaceEntity {
     @Default get() = true
   val anotherName: String
     @Default get() = "Another Text"
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: DefaultValueEntity, ModifiableWorkspaceEntity<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
-      override var name: String
-      override var entitySource: EntitySource
-      override var isGenerated: Boolean
-      override var anotherName: String
+  interface Builder : DefaultValueEntity, ModifiableWorkspaceEntity<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
+    override var name: String
+    override var entitySource: EntitySource
+    override var isGenerated: Boolean
+    override var anotherName: String
   }
-  
-  companion object: Type<DefaultValueEntity, Builder>() {
-      operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultValueEntity {
-          val builder = builder()
-          builder.name = name
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<DefaultValueEntity, Builder>() {
+    operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultValueEntity {
+      val builder = builder()
+      builder.name = name
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DefaultValueEntity, modification: DefaultValueEntity.Builder.() -> Unit) = modifyEntity(DefaultValueEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: DefaultValueEntity, modification: DefaultValueEntity.Builder.() -> Unit) = modifyEntity(
+  DefaultValueEntity.Builder::class.java, entity, modification)
 //endregion

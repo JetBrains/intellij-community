@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -21,29 +22,29 @@ interface FacetsOrderEntity : WorkspaceEntity {
   val moduleEntity: ModuleEntity
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
-      override var orderOfFacets: List<String>
-      override var entitySource: EntitySource
-      override var moduleEntity: ModuleEntity
+  interface Builder : FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
+    override var orderOfFacets: MutableList<String>
+    override var entitySource: EntitySource
+    override var moduleEntity: ModuleEntity
   }
-  
-  companion object: Type<FacetsOrderEntity, Builder>() {
-      operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
-          val builder = builder()
-          builder.orderOfFacets = orderOfFacets
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<FacetsOrderEntity, Builder>() {
+    operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
+      val builder = builder()
+      builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit) = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit) = modifyEntity(
+  FacetsOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
@@ -57,29 +58,32 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
   val facet: FacetEntity
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: FacetExternalSystemIdEntity, ModifiableWorkspaceEntity<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
-      override var externalSystemId: String
-      override var entitySource: EntitySource
-      override var facet: FacetEntity
+  interface Builder : FacetExternalSystemIdEntity, ModifiableWorkspaceEntity<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
+    override var externalSystemId: String
+    override var entitySource: EntitySource
+    override var facet: FacetEntity
   }
-  
-  companion object: Type<FacetExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetExternalSystemIdEntity {
-          val builder = builder()
-          builder.externalSystemId = externalSystemId
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<FacetExternalSystemIdEntity, Builder>() {
+    operator fun invoke(externalSystemId: String,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): FacetExternalSystemIdEntity {
+      val builder = builder()
+      builder.externalSystemId = externalSystemId
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetExternalSystemIdEntity, modification: FacetExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(FacetExternalSystemIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FacetExternalSystemIdEntity,
+                                      modification: FacetExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(
+  FacetExternalSystemIdEntity.Builder::class.java, entity, modification)
 //endregion
 
 val FacetEntity.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
@@ -91,30 +95,34 @@ val FacetEntity.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
 interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   val externalSystemId: String
   val artifactEntity: ArtifactEntity
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ArtifactExternalSystemIdEntity, ModifiableWorkspaceEntity<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
-      override var externalSystemId: String
-      override var entitySource: EntitySource
-      override var artifactEntity: ArtifactEntity
+  interface Builder : ArtifactExternalSystemIdEntity, ModifiableWorkspaceEntity<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
+    override var externalSystemId: String
+    override var entitySource: EntitySource
+    override var artifactEntity: ArtifactEntity
   }
-  
-  companion object: Type<ArtifactExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactExternalSystemIdEntity {
-          val builder = builder()
-          builder.externalSystemId = externalSystemId
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ArtifactExternalSystemIdEntity, Builder>() {
+    operator fun invoke(externalSystemId: String,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): ArtifactExternalSystemIdEntity {
+      val builder = builder()
+      builder.externalSystemId = externalSystemId
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactExternalSystemIdEntity, modification: ArtifactExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(ArtifactExternalSystemIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ArtifactExternalSystemIdEntity,
+                                      modification: ArtifactExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(
+  ArtifactExternalSystemIdEntity.Builder::class.java, entity, modification)
 //endregion
 
 val ArtifactEntity.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
@@ -126,30 +134,34 @@ val ArtifactEntity.artifactExternalSystemIdEntity: @Child ArtifactExternalSystem
 interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   val externalSystemId: String
   val library: LibraryEntity
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: LibraryExternalSystemIdEntity, ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
-      override var externalSystemId: String
-      override var entitySource: EntitySource
-      override var library: LibraryEntity
+  interface Builder : LibraryExternalSystemIdEntity, ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
+    override var externalSystemId: String
+    override var entitySource: EntitySource
+    override var library: LibraryEntity
   }
-  
-  companion object: Type<LibraryExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryExternalSystemIdEntity {
-          val builder = builder()
-          builder.externalSystemId = externalSystemId
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<LibraryExternalSystemIdEntity, Builder>() {
+    operator fun invoke(externalSystemId: String,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): LibraryExternalSystemIdEntity {
+      val builder = builder()
+      builder.externalSystemId = externalSystemId
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryExternalSystemIdEntity, modification: LibraryExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(LibraryExternalSystemIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: LibraryExternalSystemIdEntity,
+                                      modification: LibraryExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(
+  LibraryExternalSystemIdEntity.Builder::class.java, entity, modification)
 //endregion
 
 val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
@@ -161,27 +173,30 @@ val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
  */
 interface ArtifactsOrderEntity : WorkspaceEntity {
   val orderOfArtifacts: List<String>
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
-      override var orderOfArtifacts: List<String>
-      override var entitySource: EntitySource
+  interface Builder : ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
+    override var orderOfArtifacts: MutableList<String>
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<ArtifactsOrderEntity, Builder>() {
-      operator fun invoke(orderOfArtifacts: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
-          val builder = builder()
-          builder.orderOfArtifacts = orderOfArtifacts
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ArtifactsOrderEntity, Builder>() {
+    operator fun invoke(orderOfArtifacts: List<String>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
+      val builder = builder()
+      builder.orderOfArtifacts = orderOfArtifacts.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(
+  ArtifactsOrderEntity.Builder::class.java, entity, modification)
 //endregion

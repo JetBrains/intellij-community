@@ -8,7 +8,6 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -26,7 +25,8 @@ public abstract class ConfigurationFactory {
     myType = type;
   }
 
-  ConfigurationFactory() {
+  @ApiStatus.Internal
+  protected ConfigurationFactory() {
     myType = null;
   }
 

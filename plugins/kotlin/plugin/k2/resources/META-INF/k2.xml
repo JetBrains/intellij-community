@@ -21,6 +21,7 @@
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
@@ -95,6 +96,10 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
+    <lang.psiDocumentation id="KotlinDocumentationTargetProvider"
+                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <lang.documentation id="KotlinDocumentationTargetProvider"
+                        implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -226,5 +231,7 @@
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.intentions-k2"/>
     <module name="kotlin.code-insight.inspections-k2"/>
+
+    <module name="kotlin.navigation"/>
   </content>
 </idea-plugin>

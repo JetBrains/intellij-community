@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -129,13 +131,27 @@ class ActionStepBuilder {
     }
 
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
+    List<PopupFactoryImpl.InlineActionItem> inlineItems = action instanceof InlineActionsHolder
+                                                          ? createInlineActionsItems(((InlineActionsHolder)action).getInlineActions())
+                                                          : Collections.emptyList();
     PopupFactoryImpl.ActionItem actionItem = new PopupFactoryImpl.ActionItem(
       action, mnemonic, myShowNumbers, myHonorActionMnemonics,
-      myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText);
+      myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText, inlineItems);
     actionItem.updateFromPresentation(presentation, myActionPlace);
     myListModel.add(actionItem);
     myPrependWithSeparator = false;
     mySeparatorText = null;
+  }
+
+  private List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<AnAction> inlineActions) {
+    List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
+    for (AnAction action : inlineActions) {
+      Presentation presentation = myPresentationFactory.getPresentation(action);
+      PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(action, myMaxIconWidth, myMaxIconHeight);
+      item.updateFromPresentation(presentation, myActionPlace);
+      res.add(item);
+    }
+    return res;
   }
 
   static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation, boolean forceChecked) {

@@ -52,20 +52,20 @@ class MixedResultsSearcher implements SESearcher {
                                   @NotNull String pattern) {
     LOG.debug("Search started for pattern [", pattern, "]");
 
-    Collection<? extends SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
     if (pattern.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        contributors = Collections.emptySet(); //empty search string is not allowed for tests
+        contributorsAndLimits = Collections.emptyMap(); //empty search string is not allowed for tests
       }
       else {
-        contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
+        contributorsAndLimits = ContainerUtil.filter(contributorsAndLimits, c -> c.isEmptyPatternSupported());
       }
     }
 
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = contributorsAndLimits;
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
-      new ResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
+      new ResultsAccumulator(map, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributors, pattern, accumulatorSupplier);
+    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
   }
 
   @Override

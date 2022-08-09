@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
@@ -33,7 +34,7 @@ public class IdeUICustomization {
   /**
    * Returns the title of the Project view toolwindow.
    */
-  public @Nls String getProjectViewTitle() {
+  public @Nls String getProjectViewTitle(@NotNull Project project) {
     return projectMessage("toolwindow.title.project.view");
   }
 

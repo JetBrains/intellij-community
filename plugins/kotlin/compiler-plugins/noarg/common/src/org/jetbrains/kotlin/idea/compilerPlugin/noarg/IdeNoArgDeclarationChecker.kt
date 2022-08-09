@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 val NO_ARG_ANNOTATION_OPTION_PREFIX =
     "plugin:$PLUGIN_ID:$ANNOTATION_OPTION_NAME="
 
-class IdeNoArgDeclarationChecker(project: Project) : AbstractNoArgDeclarationChecker(false) {
+class IdeNoArgDeclarationChecker(project: Project) : AbstractNoArgDeclarationChecker(useIr = true) {
 
     private val cachedAnnotationNames = CachedAnnotationNames(project, NO_ARG_ANNOTATION_OPTION_PREFIX)
 

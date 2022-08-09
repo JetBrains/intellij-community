@@ -55,11 +55,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -67,7 +69,9 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -230,7 +234,7 @@ public final class HighlightUtil {
     PsiPrimaryPattern pattern = expression.getPattern();
     if (pattern instanceof PsiDeconstructionPattern) {
       PsiDeconstructionPattern deconstruction = (PsiDeconstructionPattern)pattern;
-      return SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.createDeconstructionErrors(deconstruction);
+      return PatternHighlightingModel.createDeconstructionErrors(deconstruction);
     }
     return Collections.emptyList();
   }
@@ -568,10 +572,7 @@ public final class HighlightUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createAddTypeCastFix(lType, expression));
     }
     if (expression != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithOptionalFix(lType, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapExpressionFix(lType, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithAdapterFix(lType, expression));
-      HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, expression, lType, rType);
       if (!(expression.getParent() instanceof PsiConditionalExpression && PsiType.VOID.equals(lType))) {
         HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
       }
@@ -619,18 +620,10 @@ public final class HighlightUtil {
           TextRange textRange = statement.getTextRange();
           errorResult = checkAssignability(returnType, valueType, returnValue, textRange, returnValue.getStartOffsetInParent());
           if (errorResult != null && valueType != null) {
-            if (returnType instanceof PsiArrayType) {
-              PsiType erasedValueType = TypeConversionUtil.erasure(valueType);
-              if (erasedValueType != null &&
-                  TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), erasedValueType)) {
-                QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createSurroundWithArrayFix(null, returnValue));
-              }
-            }
             if (!PsiType.VOID.equals(valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, valueType, true));
             }
             HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, errorResult);
-            HighlightFixUtil.registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
           }
         }
       }
@@ -1301,7 +1294,7 @@ public final class HighlightUtil {
           int p = expression.getTextRange().getEndOffset();
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
         }
-        else {
+        else if (text.length() > 3) {
           int i = 3;
           char c = text.charAt(i);
           while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
@@ -2714,8 +2707,8 @@ public final class HighlightUtil {
         .create());
     });
   }
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  private static String parseUnicodeEscapes(String text, BiConsumer<Integer, Integer> illegalEscapeConsumer) {
+
+  private static @NotNull String parseUnicodeEscapes(@NotNull String text, BiConsumer<? super Integer, ? super Integer> illegalEscapeConsumer) {
     // JLS 3.3
     if (!text.contains("\\u")) return text;
     StringBuilder result = new StringBuilder();
@@ -3083,8 +3076,14 @@ public final class HighlightUtil {
   @NotNull
   static @NlsSafe HtmlChunk redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
     if (type == null) return HtmlChunk.empty();
-    String color = ColorUtil.toHtmlColor(matches ? UIUtil.getToolTipForeground() : UIUtil.getErrorForeground());
-    return HtmlChunk.tag("font").attr("color", color)
+    Color color;
+    if (matches) {
+      color = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground();
+    }
+    else {
+      color = UIUtil.getErrorForeground();
+    }
+    return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color))
       .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
   }
 
@@ -3277,19 +3276,17 @@ public final class HighlightUtil {
 
     if (newExpression.getArgumentList() == null) {
       PsiField field = clazz.findFieldByName(memberName.getText(), true);
-      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) return true;
+      return field != null && field.hasModifierProperty(PsiModifier.STATIC);
     }
-    else {
-      PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-      if (methods.length == 0) return false;
-      for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass containingClass = method.getContainingClass();
-          assert containingClass != null;
-          if (!containingClass.isInterface() || containingClass == clazz) {
-            // a static method in an interface is not resolvable from its subclasses
-            return true;
-          }
+    PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
+    if (methods.length == 0) return false;
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
+        if (!containingClass.isInterface() || containingClass == clazz) {
+          // a static method in an interface is not resolvable from its subclasses
+          return true;
         }
       }
     }

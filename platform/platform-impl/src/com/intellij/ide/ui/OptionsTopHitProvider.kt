@@ -11,7 +11,6 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -22,7 +21,9 @@ import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.VisibleForTesting
@@ -103,20 +104,23 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     }
   }
 
-  internal class Activity : PreloadingActivity(), ProjectPostStartupActivity {
+  internal class Activity : ProjectPostStartupActivity {
+    private val appJob: Job
+
     init {
       val app = ApplicationManager.getApplication()
       if (app.isUnitTestMode || app.isHeadlessEnvironment) {
         throw ExtensionNotApplicableException.create()
       }
-    }
 
-    override suspend fun execute() {
-      // for application
-      cacheAll(null)
+      appJob = app.coroutineScope.launch {
+        // for application
+        cacheAll(null)
+      }
     }
 
     override suspend fun execute(project: Project) {
+      appJob.join()
       // for given project
       cacheAll(project)
     }

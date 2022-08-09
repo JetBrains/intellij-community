@@ -162,7 +162,7 @@ abstract class RestService : HttpRequestHandler() {
   private val trustedOrigins = Caffeine.newBuilder()
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
-    .build<String, Boolean>()
+    .build<Pair<String, String>, Boolean>()
   private val hostLocks = ContainerUtil.createConcurrentWeakKeyWeakValueMap<String, Any>()
 
   private var isBlockUnknownHosts = false
@@ -261,8 +261,13 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     val referrer = request.origin ?: request.referrer
-    val host = try {
-      if (referrer == null) null else URI(referrer).host.nullize()
+    val (host, scheme) = try {
+      if (referrer == null)
+        null to ""
+      else
+        with(URI(referrer)) {
+          host.nullize() to scheme
+        }
     }
     catch (ignored: URISyntaxException) {
       return false
@@ -275,7 +280,7 @@ abstract class RestService : HttpRequestHandler() {
           return true
         }
         else {
-          trustedOrigins.getIfPresent(host)?.let {
+          trustedOrigins.getIfPresent(host to scheme)?.let {
             return it
           }
         }
@@ -294,7 +299,7 @@ abstract class RestService : HttpRequestHandler() {
           }
           isTrusted = showYesNoDialog(message, "title.use.rest.api")
           if (host != null) {
-            trustedOrigins.put(host, isTrusted)
+            trustedOrigins.put(host to scheme, isTrusted)
           }
           else {
             if (!isTrusted) {

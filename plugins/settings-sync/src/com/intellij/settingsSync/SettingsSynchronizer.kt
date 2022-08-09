@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -17,7 +18,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, FrameState
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
-  override suspend fun execute() {
+  override suspend fun execute(asyncScope: CoroutineScope) {
     if (!isSettingsSyncEnabledByKey()) {
       return
     }

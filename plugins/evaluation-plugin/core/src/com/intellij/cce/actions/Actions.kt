@@ -18,7 +18,7 @@ sealed class Action(val type: ActionType) {
         ActionType.PRINT_TEXT -> context.deserialize(json, PrintText::class.java)
         ActionType.DELETE_RANGE -> context.deserialize(json, DeleteRange::class.java)
         ActionType.EMULATE_USER_SESSION -> context.deserialize(json, EmulateUserSession::class.java)
-        ActionType.CODE_GOLF -> context.deserialize(json, CodeGolfSession::class.java)
+        ActionType.CODE_GOLF -> context.deserialize(json, CompletionGolfSession::class.java)
       }
     }
 
@@ -38,4 +38,4 @@ class FinishSession : Action(ActionType.FINISH_SESSION)
 data class PrintText(val text: String, val completable: Boolean = false) : Action(ActionType.PRINT_TEXT)
 data class DeleteRange(val begin: Int, val end: Int, val completable: Boolean = false) : Action(ActionType.DELETE_RANGE)
 data class EmulateUserSession(val expectedText: String, val nodeProperties: TokenProperties) : Action(ActionType.EMULATE_USER_SESSION)
-data class CodeGolfSession(val expectedText: String, val nodeProperties: TokenProperties) : Action(ActionType.CODE_GOLF)
+data class CompletionGolfSession(val expectedText: String, val nodeProperties: TokenProperties) : Action(ActionType.CODE_GOLF)

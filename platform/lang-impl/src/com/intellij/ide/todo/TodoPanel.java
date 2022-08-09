@@ -51,10 +51,7 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -479,7 +476,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
-        return node.getChildCount() > 0;
+        TreeModel model = myTree.getModel();
+        return !model.isLeaf(node);
       }
     }
 
@@ -582,6 +580,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         pointer = myTodoTreeBuilder.getLastPointerForElement(sibling);
       }
       return pointer;
+    }
+
+    @Override
+    public @Nullable ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

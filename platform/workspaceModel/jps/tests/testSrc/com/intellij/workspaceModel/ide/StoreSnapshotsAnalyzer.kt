@@ -27,7 +27,7 @@ fun main(args: Array<String>) {
   if (file.isFile) {
     val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
     val storage = file.inputStream().use {
-      serializer.deserializeCache(it)
+      serializer.deserializeCache(it).getOrThrow()
     }
 
     // Set a breakpoint and check
@@ -45,12 +45,12 @@ fun main(args: Array<String>) {
 
   serializer.deserializeClassToIntConverter(converterFile.inputStream())
 
-  val resStore = serializer.deserializeCache(resFile.inputStream())!!
+  val resStore = serializer.deserializeCache(resFile.inputStream()).getOrThrow()!!
 
-  val leftStore = serializer.deserializeCache(leftFile.inputStream()) ?: throw IllegalArgumentException("Cannot load cache")
+  val leftStore = serializer.deserializeCache(leftFile.inputStream()).getOrThrow() ?: throw IllegalArgumentException("Cannot load cache")
 
   if (file.resolve("Replace_By_Source").exists()) {
-    val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
+    val rightStore = serializer.deserializeCache(rightFile.inputStream()).getOrThrow()!!
 
     val allEntitySources = leftStore.entitiesBySource { true }.map { it.key }.toHashSet()
     allEntitySources.addAll(rightStore.entitiesBySource { true }.map { it.key })

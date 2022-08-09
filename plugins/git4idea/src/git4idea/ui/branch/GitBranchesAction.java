@@ -53,7 +53,7 @@ public class GitBranchesAction extends DumbAwareAction {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed() &&
                                              !GitRepositoryManager.getInstance(project).getRepositories().isEmpty() &&
-                                             !ToolbarSettings.getInstance().isEnabled());
+                                             !ToolbarSettings.getInstance().isAvailable());
   }
 
   @Override

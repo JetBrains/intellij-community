@@ -70,7 +70,6 @@ final class KotlinPluginBuilder {
     "kotlin.base.fe10.plugin",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.analysis-api-providers",
-    "kotlin.base.analysis-api-helpers",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
@@ -170,6 +169,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
+    "kotlin.navigation",
   )
 
   @SuppressWarnings('SpellCheckingInspection')

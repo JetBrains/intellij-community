@@ -222,21 +222,25 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists,
                                                    @NotNull ChangesBrowserNode<?> parentNode) {
-      shelvedLists.forEach(changeList -> {
+      for (ShelvedChangeList changeList : shelvedLists) {
+        ShelvedListNode shelvedListNode = new ShelvedListNode(changeList);
+        insertSubtreeRoot(shelvedListNode, parentNode);
+
+        List<ShelvedChange> changes = changeList.getChanges();
+        if (changes == null) continue;
+
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
-        requireNonNull(changeList.getChanges()).stream().map(change -> new ShelvedWrapper(change, changeList)).forEach(shelvedChanges::add);
+        changes.stream().map(change -> new ShelvedWrapper(change, changeList)).forEach(shelvedChanges::add);
         changeList.getBinaryFiles().stream().map(binaryChange -> new ShelvedWrapper(binaryChange, changeList)).forEach(shelvedChanges::add);
 
         shelvedChanges.sort(comparing(s -> s.getChangeWithLocal(myProject), CHANGE_COMPARATOR));
 
-        ShelvedListNode shelvedListNode = new ShelvedListNode(changeList);
-        insertSubtreeRoot(shelvedListNode, parentNode);
         for (ShelvedWrapper shelved : shelvedChanges) {
           Change change = shelved.getChangeWithLocal(myProject);
           FilePath filePath = ChangesUtil.getFilePath(change);
           insertChangeNode(change, shelvedListNode, new ShelvedChangeNode(shelved, filePath, change.getOriginText(myProject)));
         }
-      });
+      }
     }
   }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.ui.*;
@@ -161,7 +161,7 @@ public final class IdeBackgroundUtil {
 
   public static @NotNull Color getIdeBackgroundColor() {
     return JBColor.lazy(() -> {
-      Color light = ColorUtil.darker(UIUtil.getPanelBackground(), 3);
+      Color light = ColorUtil.darker(JBColor.PanelBackground, 3);
       return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
     });
   }
@@ -201,7 +201,7 @@ public final class IdeBackgroundUtil {
   }
 
   public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
-    return StringUtil.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
+    return Strings.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
   }
 
   public static void repaintAllWindows() {

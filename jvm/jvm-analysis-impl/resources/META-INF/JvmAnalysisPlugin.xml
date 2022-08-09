@@ -42,7 +42,7 @@
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestInProductSource"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
-                     key="jvm.inspections.junit.test.case.in.product.source.display.name"
+                     key="jvm.inspections.test.case.in.product.source.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestInProductSourceInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.test.TestInProductSourceInspectionMerger"/>
 

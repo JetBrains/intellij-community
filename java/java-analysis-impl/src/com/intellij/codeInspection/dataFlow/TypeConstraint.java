@@ -126,7 +126,6 @@ public interface TypeConstraint {
   /**
    * @param otherType          other type
    * @param expectedAssignable whether other type is expected to be assignable from this, or not
-   * @param elementTitle
    * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
    * explanation cannot be found.
    */
@@ -217,7 +216,6 @@ public interface TypeConstraint {
   /**
    * Convert type constraint to another factory based on fully-qualified names of classes
    *
-   * @param factory
    * @return converted type constraint that uses a supplied factory
    */
   default @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {

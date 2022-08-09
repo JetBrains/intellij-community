@@ -1,4 +1,4 @@
-// "Remove 'CloneDoesntCallSuperClone' suppression" "true"
+// "Remove 'CloneDoesntCallSuperClone' suppression" "true-preview"
 
 class NoSuperCall {
   @Override

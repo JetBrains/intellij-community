@@ -15,6 +15,7 @@ import org.hamcrest.CoreMatchers.isA
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
@@ -65,6 +66,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `add entity`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     val replacement = createEmptyBuilder()
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
@@ -75,6 +78,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `remove entity`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
@@ -85,6 +90,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `remove and add entity`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
@@ -97,6 +104,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `multiple sources`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val sourceB = SampleEntitySource("b")
@@ -111,6 +120,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `work with different entity sources`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val parentEntity = builder.addParentEntity(source = sourceA1)
@@ -124,6 +135,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `empty storages`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val builder2 = createEmptyBuilder()
 
     builder.replaceBySource({ true }, builder2)
@@ -134,6 +147,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace with empty storage`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     builder.addSampleEntity("data1")
     builder.addSampleEntity("data2")
     resetChanges()
@@ -150,6 +165,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `add entity with false source`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     resetChanges()
     val replacement = createEmptyBuilder()
@@ -163,6 +180,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `entity modification`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val entity = builder.addSampleEntity("hello2")
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(entity) {
@@ -175,6 +194,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `adding entity in builder`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val replacement = createBuilderFrom(builder)
     replacement.addSampleEntity("myEntity")
     builder.replaceBySource({ true }, replacement)
@@ -184,6 +205,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `removing entity in builder`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val entity = builder.addSampleEntity("myEntity")
     val replacement = createBuilderFrom(builder)
     replacement.removeEntity(entity)
@@ -194,6 +217,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - modify parent`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity("myProperty")
     builder.addChildEntity(parent, "myChild")
 
@@ -212,6 +237,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - modify child`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -230,6 +257,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - remove parent`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -245,6 +274,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - change parent for child`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity("myProperty")
     val parent2 = builder.addParentEntity("anotherProperty")
     val child = builder.addChildEntity(parent, "myChild")
@@ -264,6 +295,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - change parent for child - 2`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     expectedException.expectCause(isA(ReplaceBySourceException::class.java))
 
     val parent = builder.addParentEntity("myProperty", source = AnotherSource)
@@ -280,6 +313,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - change parent for child - 3`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     // Difference with the test above: different initial parent
     val parent = builder.addParentEntity("myProperty", source = AnotherSource)
     val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
@@ -300,6 +335,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - remove child`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -316,6 +353,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `fail - child and parent - different source for parent`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     expectedException.expectCause(isA(ReplaceBySourceException::class.java))
 
     val replacement = createBuilderFrom(builder)
@@ -327,6 +366,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - two children of different sources`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity(source = AnotherSource)
     builder.addChildEntity(parent, "MySourceChild", source = MySource)
     val replacement = createBuilderFrom(builder)
@@ -342,6 +383,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - trying to remove parent and leave child`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addParentEntity("prop", AnotherSource)
     builder.addChildEntity(parentEntity)
     val replacement = createBuilderFrom(builder)
@@ -356,6 +399,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - different source for child`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val replacement = createBuilderFrom(builder)
     val parent = replacement.addParentEntity("myProperty")
     val child = replacement.addChildEntity(parent, "myChild", source = AnotherSource)
@@ -370,6 +415,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `remove child of different source`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parent = builder.addParentEntity(source = AnotherSource)
     val child = builder.addChildEntity(parent, source = MySource)
 
@@ -381,6 +428,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `entity with soft reference`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithSoftLinkEntity(named.persistentId)
     resetChanges()
@@ -402,6 +451,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `entity with soft reference remove reference`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId))
     resetChanges()
@@ -409,7 +460,7 @@ class ReplaceBySourceTest {
 
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(linked) {
-      this.links = emptyList()
+      this.links = mutableListOf()
     }
 
     replacement.assertConsistency()
@@ -421,6 +472,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace by source with composite id`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val replacement = createEmptyBuilder()
     val namedEntity = replacement.addNamedEntity("MyName")
     val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId)
@@ -439,6 +492,8 @@ class ReplaceBySourceTest {
     Not sure if this should work this way. We can track persistentId changes in builder, but what if we perform replaceBySource with storage?
     @Test
     fun `entity with soft reference - linked has wrong source`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
       val builder = PEntityStorageBuilder.create()
       val named = builder.addNamedEntity("MyName")
       val linked = builder.addWithSoftLinkEntity(named.persistentId, AnotherSource)
@@ -463,6 +518,8 @@ class ReplaceBySourceTest {
   @Ignore("Not supported yet")
   @Test
   fun `trying to create two similar persistent ids`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
     val replacement = createBuilderFrom(builder)
     replacement.modifyEntity(namedEntity) {
@@ -476,6 +533,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `changing parent`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addParentEntity()
     val childEntity = builder.addChildEntity(parentEntity, source = AnotherSource)
 
@@ -491,6 +550,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace same entity with persistent id and different sources`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val name = "Hello"
     builder.addNamedEntity(name, source = MySource)
     val replacement = createEmptyBuilder()
@@ -504,6 +565,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace dummy parent entity by real entity`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val namedParent = builder.addNamedEntity("name", "foo", MyDummyParentSource)
     builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
 
@@ -519,6 +582,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `do not replace real parent entity by dummy entity`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val namedParent = builder.addNamedEntity("name", "foo", MySource)
     builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
 
@@ -534,6 +599,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `do not replace real parent entity by dummy entity but replace children`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val namedParent = builder.addNamedEntity("name", "foo", MySource)
     builder.addNamedChildEntity(namedParent, "fooChild", MySource)
 
@@ -550,6 +617,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace parents with completely different children`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addNamedEntity("PrimaryParent", source = AnotherSource)
     builder.addNamedChildEntity(parentEntity, "PrimaryChild", source = MySource)
     builder.addNamedEntity("SecondaryParent", source = AnotherSource)
@@ -568,6 +637,8 @@ class ReplaceBySourceTest {
   @Test
   @Ignore("Well, this case is explicetely not supported yet")
   fun `replace oneToOne connection with partial move`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addOoParentEntity()
     builder.addOoChildEntity(parentEntity)
 
@@ -582,6 +653,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace oneToOne connection with partial move and pid`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
     builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
 
@@ -596,6 +669,8 @@ class ReplaceBySourceTest {
 
   @Test
   fun `replace oneToOne connection with partial move and pid directly via replacer`() {
+    Assume.assumeFalse(builder.useNewRbs)
+
     val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
     builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
 
@@ -603,7 +678,7 @@ class ReplaceBySourceTest {
     val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
     replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
 
-    ReplaceBySourceAsGraph.replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
+    ReplaceBySourceAsGraph().replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
 
     builder.assertConsistency()
   }

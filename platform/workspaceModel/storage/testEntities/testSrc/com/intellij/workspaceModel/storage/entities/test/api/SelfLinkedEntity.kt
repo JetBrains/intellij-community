@@ -16,30 +16,30 @@ interface SelfLinkedEntity : WorkspaceEntity {
   val parentEntity: SelfLinkedEntity?
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
-      override var parentEntity: SelfLinkedEntity?
-      override var entitySource: EntitySource
+  interface Builder : SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
+    override var parentEntity: SelfLinkedEntity?
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<SelfLinkedEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SelfLinkedEntity {
-          val builder = builder()
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<SelfLinkedEntity, Builder>() {
+    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SelfLinkedEntity {
+      val builder = builder()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: SelfLinkedEntity, modification: SelfLinkedEntity.Builder.() -> Unit) = modifyEntity(SelfLinkedEntity.Builder::class.java, entity, modification)
-var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
-    by WorkspaceEntity.extension()
 
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SelfLinkedEntity, modification: SelfLinkedEntity.Builder.() -> Unit) = modifyEntity(
+  SelfLinkedEntity.Builder::class.java, entity, modification)
+
+var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
+  by WorkspaceEntity.extension()
 //endregion
 
 val SelfLinkedEntity.children: List<@Child SelfLinkedEntity>

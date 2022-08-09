@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -37,6 +38,11 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setPopupGroup(!myGroup.isExpanded());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public @NotNull ProjectGroup getGroup() {

@@ -5,12 +5,14 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -25,6 +27,9 @@ import java.nio.file.Path
 
 class GradleVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler {
   override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
+    if (!Registry.`is`(CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
+      return null
+    }
     if (sourceElement == null) {
       return null
     }

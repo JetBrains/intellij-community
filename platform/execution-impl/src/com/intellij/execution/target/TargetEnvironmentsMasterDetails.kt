@@ -4,6 +4,7 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.ui.InvalidRunConfigurationIcon
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -324,7 +325,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       catch (e: RuntimeConfigurationException) {
         false
       }
-      return if (valid) rawIcon else LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer)
+      return if (valid) rawIcon else InvalidRunConfigurationIcon(rawIcon)
     }
   }
 

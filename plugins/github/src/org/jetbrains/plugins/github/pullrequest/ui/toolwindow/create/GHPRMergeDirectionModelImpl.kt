@@ -7,11 +7,11 @@ import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import git4idea.ui.branch.MergeDirectionModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
 class GHPRMergeDirectionModelImpl(override val baseRepo: GHGitRepositoryMapping,
-                                  private val repositoriesManager: GHProjectRepositoriesManager) : MergeDirectionModel<GHGitRepositoryMapping> {
+                                  private val repositoriesManager: GHHostedRepositoriesManager) : MergeDirectionModel<GHGitRepositoryMapping> {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 

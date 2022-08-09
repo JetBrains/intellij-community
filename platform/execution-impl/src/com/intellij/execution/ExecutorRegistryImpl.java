@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,7 +144,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
-    if (RunToolbarProcess.isAvailable()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 

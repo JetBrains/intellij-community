@@ -435,13 +435,15 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     var fsExtText = "<virtualFileSystem implementationClass='" + CorruptedJarFileSystemTestWrapper.class.getName() + "' key='corrupted-jar' physical='true'/>";
     EdtTestUtil.runInEdtAndWait(() -> {
+      assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(copiedJar));
+
       var fsRegistration = DynamicPluginsTestUtil.loadExtensionWithText(fsExtText, "com.intellij");
       try {
         Disposer.register(fsRegistration, ZipHandler::clearFileAccessorCache);
 
         CorruptedJarFileSystemTestWrapper.corrupted = true;
-        var root = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
-        assertNotNull(root);
+        var root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(rootUrl);
+        assertNotNull("not found: " + rootUrl, root);
         assertTrue(root.isValid());
         assertNull(VirtualFileManager.getInstance().findFileByUrl(fileUrl));
 
@@ -460,8 +462,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     });
   }
 
-  static class CorruptedJarFileSystemTestWrapper extends JarFileSystemImpl {
-    static volatile boolean corrupted = false;
+  private static final class CorruptedJarFileSystemTestWrapper extends JarFileSystemImpl {
+    private static volatile boolean corrupted = false;
 
     @Override
     public @NotNull String getProtocol() {

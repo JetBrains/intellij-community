@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.lang.Language
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.vfs.VirtualFile
@@ -72,10 +74,6 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
     return text
   }
 
-  override fun onLaFChanged() {
-    values.clear()
-  }
-
   private fun cleanup() {
     val time = System.currentTimeMillis()
 
@@ -139,4 +137,14 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
   private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->
     CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
   } ?: ""
+
+  internal class InvalidateCacheLafListener: LafManagerListener {
+    override fun lookAndFeelChanged(source: LafManager) {
+      val providers = CodeFenceGeneratingProvider.collectProviders()
+      val highlighters = providers.filterIsInstance<MarkdownCodeFencePreviewHighlighter>()
+      for (highlighter in highlighters) {
+        highlighter.values.clear()
+      }
+    }
+  }
 }

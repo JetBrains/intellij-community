@@ -10,15 +10,13 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 
-class CodeFencePluginFlavourDescriptor : CommonMarkFlavourDescriptor() {
-
+class CodeFencePluginFlavourDescriptor: CommonMarkFlavourDescriptor() {
   fun createHtmlGeneratingProviders(collector: MarkdownCodeFencePluginCacheCollector, project: Project? = null, file: VirtualFile? = null): Map<IElementType, GeneratingProvider> {
-    return mapOf(
-      CODE_FENCE to DefaultCodeFenceGeneratingProvider(
-        CodeFenceGeneratingProvider.all
-          .also { all -> all.forEach { if (it is MarkdownCodeFenceCacheableProvider) it.collector = collector } }
-          .toTypedArray()
-        , project, file)
-    )
+    val providers = CodeFenceGeneratingProvider.collectProviders()
+    for (provider in providers.asSequence().filterIsInstance<MarkdownCodeFenceCacheableProvider>()) {
+      provider.collector = collector
+    }
+    val defaultProvider = DefaultCodeFenceGeneratingProvider(providers.toTypedArray(), project, file)
+    return mapOf(CODE_FENCE to defaultProvider)
   }
 }

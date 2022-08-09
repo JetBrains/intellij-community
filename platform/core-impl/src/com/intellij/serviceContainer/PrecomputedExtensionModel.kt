@@ -55,7 +55,7 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
   )
 }
 
-private inline fun executeRegisterTask(modules: Sequence<IdeaPluginDescriptorImpl>, crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+private inline fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (module in modules) {
     task(module)
     executeRegisterTaskForOldContent(mainPluginDescriptor = module, task = task)

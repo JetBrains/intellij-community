@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structureView
 
@@ -62,9 +62,8 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
 
     protected fun checkResult() {
         val printInfo = Queryable.PrintInfo(arrayOf("text"), arrayOf("location"))
-        TreeUtil.expandAll(popupFixture.tree) {
-            val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }
-            UsefulTestCase.assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
-        }
+        PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(popupFixture.tree, Integer.MAX_VALUE))
+        val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }
+        UsefulTestCase.assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
     }
 }

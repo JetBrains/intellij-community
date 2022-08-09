@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
@@ -177,6 +178,11 @@ public final class SpecialAnnotationsUtil {
       @Override
       public boolean startInWriteAction() {
         return false;
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+        return new IntentionPreviewInfo.Html(JavaBundle.message("special.annotations.annotations.preview", qualifiedName));
       }
     };
   }

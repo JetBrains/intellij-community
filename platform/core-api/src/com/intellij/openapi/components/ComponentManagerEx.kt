@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -10,4 +11,10 @@ interface ComponentManagerEx {
    * Light service is not supported.
    */
   fun <T : Any> getServiceByClassName(serviceClassName: String): T?
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  suspend fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
+    throw AbstractMethodError()
+  }
 }

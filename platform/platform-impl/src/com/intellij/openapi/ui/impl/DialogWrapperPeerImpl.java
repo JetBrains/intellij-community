@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.AntialiasingType;
@@ -17,6 +18,7 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -424,7 +426,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
-    boolean perProjectModality = Registry.is("ide.perProjectModality", false);
+    boolean perProjectModality = isPerProjectModality();
     if (changeModalityState) {
       commandProcessor.enterModal();
       if (perProjectModality && project != null) {
@@ -439,7 +441,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus((getOwner()!=null && getOwner().isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
+    myDialog.getWindow().setAutoRequestFocus((getOwner() != null && getOwner().isActive()) || !isDisableAutoRequestFocus());
 
     if (SystemInfo.isMac) {
       final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
@@ -499,6 +501,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;
@@ -562,7 +568,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, (owner!=null && owner.isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
+      UIUtil.setAutoRequestFocus(this, (owner != null && owner.isActive()) || !isDisableAutoRequestFocus());
     }
 
     @Override
@@ -1037,5 +1043,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
+  }
+
+  private static boolean isPerProjectModality() {
+    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
+      return false;
+    }
+
+    RegistryManager registryManager = getRegistryManager();
+    return registryManager != null && registryManager.is("ide.perProjectModality");
+  }
+
+  public static boolean isDisableAutoRequestFocus() {
+    RegistryManager registryManager = getRegistryManager();
+    return (registryManager == null || registryManager.is("suppress.focus.stealing.disable.auto.request.focus"))
+           && !(SystemInfo.isXfce || SystemInfo.isI3);
+  }
+
+  private static @Nullable RegistryManager getRegistryManager() {
+    Application application = ApplicationManager.getApplication();
+    return application != null ? application.getServiceIfCreated(RegistryManager.class) : null;
   }
 }

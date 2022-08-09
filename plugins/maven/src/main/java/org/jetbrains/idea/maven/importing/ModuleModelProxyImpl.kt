@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -15,8 +16,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
@@ -111,7 +112,14 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
     }
     diff.addEntity(moduleEntity)
     val moduleManager = getInstance(project)
-    val module = moduleManager.createModuleInstance(moduleEntity, versionedStorage, diff, true, null)
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val module = moduleManager.createModuleInstance(moduleEntity = moduleEntity,
+                                                    versionedStorage = versionedStorage,
+                                                    diff = diff,
+                                                    isNew = true,
+                                                    precomputedExtensionModel = null,
+                                                    plugins = plugins,
+                                                    corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
     diff.getMutableExternalMapping<Module>("intellij.modules.bridge").addMapping(moduleEntity, module)
     return module
   }
@@ -121,7 +129,7 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
 
     val moduleEntity = diff.findModuleEntity(module) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
-    val groupPathList = groupPath?.toList()
+    val groupPathList = groupPath?.toMutableList()
 
     if (moduleGroupEntity?.path != groupPathList) {
       when {

@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Contract;
@@ -127,7 +128,7 @@ public class PatternParser {
     }
 
     final boolean hasIdentifier;
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) { // pattern variable after the record structure pattern
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && !PsiKeyword.WHEN.equals(builder.getTokenText())) { // pattern variable after the record structure pattern
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();
         builder.advanceLexer();

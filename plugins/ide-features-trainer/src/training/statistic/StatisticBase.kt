@@ -3,6 +3,7 @@ package training.statistic
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -58,7 +59,6 @@ import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
 import training.statistic.FeatureUsageStatisticConsts.TIP_FILENAME
-import training.util.KeymapUtil
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
@@ -306,7 +306,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private fun completedCount(): Int = CourseManager.instance.lessonsForModules.count { it.passed }
 
     private fun createInputEvent(actionId: String): FusInputEvent? {
-      val keyStroke = KeymapUtil.getShortcutByActionId(actionId)?.firstKeyStroke ?: return null
+      val keyStroke = ShortcutsRenderingUtil.getShortcutByActionId(actionId)?.firstKeyStroke ?: return null
       val inputEvent = KeyEvent(JOptionPane.getRootFrame(),
                                 KeyEvent.KEY_PRESSED,
                                 System.currentTimeMillis(),

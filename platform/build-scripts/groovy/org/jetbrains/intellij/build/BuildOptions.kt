@@ -53,14 +53,22 @@ class BuildOptions {
     /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
     const val MAC_DMG_STEP = "mac_dmg"
 
+    /**
+     * Publish .sit file for macOS. If skipped, only .dmg archive will be produced.
+     * If skipped together with [MAC_DMG_STEP], only .zip archive will be produced.
+     *
+     * Note: .sit is required to build patches.
+     */
+    const val MAC_SIT_PUBLICATION_STEP = "mac_sit"
+
     /** Sign macOS distribution.  */
     const val MAC_SIGN_STEP = "mac_sign"
 
     /** Build Linux artifacts.  */
     const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
 
-    /** Build Linux tar.gz artifact without bundled JRE.  */
-    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+    /** Build Linux tar.gz artifact without bundled Runtime.  */
+    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP = "linux_tar_gz_without_jre"
 
     /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
     const val WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
@@ -275,7 +283,7 @@ class BuildOptions {
   val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from gradle.properties will be used.
+   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from dependencies.properties will be used.
    */
   var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
 

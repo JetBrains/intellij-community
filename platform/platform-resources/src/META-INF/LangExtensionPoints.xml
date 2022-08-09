@@ -393,6 +393,13 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter"/>
     </extensionPoint>
 
+    <extensionPoint name="codeInsight.codeVisionSettingsPreviewLanguage"
+                    beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
+                    dynamic="true">
+      <with attribute="modelId"/>
+      <with attribute="language"/>
+    </extensionPoint>
+
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
@@ -632,10 +639,12 @@
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
     <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
                     interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
+    <extensionPoint name="lang.documentation" dynamic="true"
+                    interface="com.intellij.lang.documentation.DocumentationTargetProvider"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
+                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
+                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
   </extensionPoints>

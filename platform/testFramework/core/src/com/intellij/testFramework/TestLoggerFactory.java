@@ -3,15 +3,13 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.diagnostic.JulLogger;
-import com.intellij.openapi.diagnostic.LogLevel;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -27,7 +25,12 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
@@ -46,11 +49,17 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final int MAX_BUFFER_LENGTH = 10_000_000;
 
   private final StringBuilder myBuffer = new StringBuilder();
+  private long myTestStartedMillis;
   private boolean myInitialized;
   // when {@code true}, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout
   private boolean mySplitTestLogs = Boolean.getBoolean("idea.split.test.logs");
 
   private TestLoggerFactory() { }
+
+  private static @Nullable TestLoggerFactory getTestLoggerFactory() {
+    Logger.Factory factory = Logger.getFactory();
+    return factory instanceof TestLoggerFactory ? (TestLoggerFactory)factory : null;
+  }
 
   @Override
   public synchronized @NotNull Logger getLoggerInstance(@NotNull String category) {
@@ -58,23 +67,41 @@ public final class TestLoggerFactory implements Logger.Factory {
       myInitialized = true;
     }
 
-    return new TestLogger(category, this);
+    java.util.logging.Logger julLogger = java.util.logging.Logger.getLogger(category);
+    configureLogToStdoutIfDebug(julLogger);
+    return new TestLogger(julLogger, this);
+  }
+
+  /**
+   * If the logger has the "FINE" level, add a LogToStdoutJulHandler that streams its log records
+   * to STDOUT with a timestamp relative to the test started timestamp.
+   */
+  private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
+    if (julLogger.isLoggable(Level.FINE) &&
+        ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
+      julLogger.addHandler(new LogToStdoutJulHandler());
+    }
   }
 
   public static boolean reconfigure() {
     try {
-      var customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
-      var logProperties = customConfigPath != null ? Path.of(customConfigPath) : Path.of(PathManager.getHomePath(), "test-log.properties");
+      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+      Path logProperties = customConfigPath != null ? Path.of(customConfigPath)
+                                                    : Path.of(PathManager.getHomePath(), "test-log.properties");
       if (Files.exists(logProperties)) {
+        if (customConfigPath != null) System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
         try (InputStream in = new BufferedInputStream(Files.newInputStream(logProperties))) {
           LogManager.getLogManager().readConfiguration(in);
         }
       }
+      else {
+        System.err.println("Configuration file for j.u.l.LogManager does not exist: " + logProperties);
+      }
 
-      var logDir = getTestLogDir();
+      Path logDir = getTestLogDir();
       Files.createDirectories(logDir);
 
-      var logFile = logDir.resolve(LOG_FILE_NAME);
+      Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
       JulLogger.configureLogFileAndConsole(logFile, false, false, true, null);
 
@@ -91,22 +118,22 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static @NotNull Path getTestLogDir() {
-    var property = System.getProperty(PROPERTY_LOG_PATH);
+    String property = System.getProperty(PROPERTY_LOG_PATH);
     return property != null ? Path.of(property) : Path.of(PathManager.getSystemPath(), LOG_DIR);
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
-    var logFile = getTestLogDir().resolve(LOG_FILE_NAME);
+    Path logFile = getTestLogDir().resolve(LOG_FILE_NAME);
     if (Files.exists(logFile)) {
       try {
-        var length = Files.size(logFile);
+        long length = Files.size(logFile);
         String logText;
 
         if (length > LOG_SEEK_WINDOW) {
-          try (var file = new RandomAccessFile(logFile.toFile(), "r")) {
+          try (RandomAccessFile file = new RandomAccessFile(logFile.toFile(), "r")) {
             file.seek(length - LOG_SEEK_WINDOW);
-            var bytes = new byte[(int)LOG_SEEK_WINDOW];
-            var read = file.read(bytes);
+            byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
+            int read = file.read(bytes);
             logText = new String(bytes, 0, read, StandardCharsets.UTF_8);
           }
         }
@@ -115,10 +142,10 @@ public final class TestLoggerFactory implements Logger.Factory {
         }
 
         System.out.println("\n\nIdea Log:");
-        var logStart = Pattern.compile("[\\d\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
-        for (var line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
-          var matcher = logStart.matcher(line);
-          var lineStart = matcher.lookingAt() ? matcher.end() : 0;
+        Pattern logStart = Pattern.compile("[\\d\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
+        for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
+          Matcher matcher = logStart.matcher(line);
+          int lineStart = matcher.lookingAt() ? matcher.end() : 0;
           System.out.println(line.substring(lineStart));
         }
       }
@@ -129,8 +156,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
-    for (var category : categories) {
-      var logger = Logger.getInstance(category);
+    for (String category : categories) {
+      Logger logger = Logger.getInstance(category);
       if (!logger.isDebugEnabled()) {
         logger.setLevel(LogLevel.DEBUG);
         Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
@@ -138,20 +165,21 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private void buffer(LogLevel level, String category, @Nullable String message, @Nullable Throwable t) {
-    var writer = new StringWriter(t == null ? 256 : 4096);
-
-    var source = category.substring(Math.max(category.length() - 30, 0));
-    writer.write(String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-5s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source));
-    writer.write(message != null ? message : "");
-    writer.write(System.lineSeparator());
-    if (t != null) {
-      t.printStackTrace(new PrintWriter(writer));
-      writer.write(System.lineSeparator());
-    }
-
+  private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
+    String source = category.substring(Math.max(category.length() - 30, 0));
+    String format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source);
     synchronized (myBuffer) {
-      myBuffer.append(writer.getBuffer());
+      myBuffer.append(format);
+      if (message != null) {
+        myBuffer.append(message);
+      }
+      myBuffer.append(System.lineSeparator());
+      if (t != null) {
+        StringWriter writer = new StringWriter(4096);
+        t.printStackTrace(new PrintWriter(writer));
+        myBuffer.append(writer.getBuffer());
+        myBuffer.append(System.lineSeparator());
+      }
       if (myBuffer.length() > MAX_BUFFER_LENGTH) {
         myBuffer.delete(0, myBuffer.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
       }
@@ -209,9 +237,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
-      ((TestLoggerFactory)factory).clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+    TestLoggerFactory factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+      factory.myTestStartedMillis = System.currentTimeMillis();
     }
   }
 
@@ -234,19 +263,20 @@ public final class TestLoggerFactory implements Logger.Factory {
    * @param testName used for the log file name
    */
   public static void onTestFinished(boolean success, @NotNull String testName) {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
-      ((TestLoggerFactory)factory).dumpLogBuffer(success, testName);
+    TestLoggerFactory factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.myTestStartedMillis = 0;
+      factory.dumpLogBuffer(success, testName);
     }
   }
 
   public static void logTestFailure(@NotNull Throwable t) {
-    var factory = Logger.getFactory();
-    if (factory instanceof TestLoggerFactory) {
+    TestLoggerFactory factory = getTestLoggerFactory();
+    if (factory != null) {
       String comparisonFailures = dumpComparisonFailures(t);
       String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
 
-      ((TestLoggerFactory)factory).buffer(LogLevel.ERROR, "#TestFramework", message, t);
+      factory.buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
   }
 
@@ -256,7 +286,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private void dumpLogBuffer(boolean success, String testName) {
+  private void dumpLogBuffer(boolean success, @NotNull String testName) {
     String buffer;
     synchronized (myBuffer) {
       buffer = success || myBuffer.length() == 0 ? null : myBuffer.toString();
@@ -265,8 +295,8 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     if (buffer != null) {
       if (mySplitTestLogs) {
-        var logDir = getTestLogDir().resolve(SPLIT_LOGS_SUBDIR);
-        var logFile = FileUtil.findSequentNonexistentFile(logDir.toFile(), FileUtil.sanitizeFileName(testName), "log").toPath();
+        Path logDir = getTestLogDir().resolve(SPLIT_LOGS_SUBDIR);
+        Path logFile = FileUtil.findSequentNonexistentFile(logDir.toFile(), FileUtil.sanitizeFileName(testName), "log").toPath();
         try {
           Files.createDirectories(logDir);
           Files.writeString(logFile, buffer);
@@ -291,7 +321,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
-        var lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
+        List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
         if (!lines.get(0).startsWith("\n")) lines.set(0, "\n" + lines.get(0));
         System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
@@ -332,14 +362,15 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final class TestLogger extends JulLogger {
     private final TestLoggerFactory myFactory;
 
-    private TestLogger(String category, TestLoggerFactory factory) {
-      super(java.util.logging.Logger.getLogger(category));
+    private TestLogger(@NotNull java.util.logging.Logger julLogger, @NotNull TestLoggerFactory factory) {
+      super(julLogger);
       myFactory = factory;
     }
 
     @Override
     public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-      var actions = LoggedErrorProcessor.getInstance().processError(myLogger.getName(), requireNonNullElse(message, ""), details, t);
+      Set<LoggedErrorProcessor.Action>
+        actions = LoggedErrorProcessor.getInstance().processError(myLogger.getName(), requireNonNullElse(message, ""), details, t);
 
       if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
         if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && details.length == 0) {
@@ -437,7 +468,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       private static MethodHandle getMethodHandle() {
         try {
-          var clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
+          Class<?> clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
           return MethodHandles.publicLookup().findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
         }
         catch (ReflectiveOperationException e) {
@@ -454,6 +485,26 @@ public final class TestLoggerFactory implements Logger.Factory {
           return false;
         }
       }
+    }
+  }
+
+  private static class LogToStdoutJulHandler extends ConsoleHandler {
+    LogToStdoutJulHandler() {
+      setFormatter(new WithTimeSinceTestStartedJulFormatter());
+      setOutputStream(System.out);
+      setLevel(Level.ALL);
+    }
+  }
+
+  private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
+    WithTimeSinceTestStartedJulFormatter() {
+      super(false);
+    }
+
+    @Override
+    protected long getStartedMillis() {
+      TestLoggerFactory factory = getTestLoggerFactory();
+      return factory == null ? 0L : factory.myTestStartedMillis;
     }
   }
 }

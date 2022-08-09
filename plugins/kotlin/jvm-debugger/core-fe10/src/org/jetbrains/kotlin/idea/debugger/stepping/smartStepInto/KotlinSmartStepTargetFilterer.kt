@@ -5,7 +5,7 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction

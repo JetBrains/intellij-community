@@ -8,6 +8,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.tasks.prepareMacZip
 import org.jetbrains.intellij.build.tasks.signMacApp
@@ -18,6 +19,8 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 
+internal val BuildContext.publishSitArchive get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
+
 internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                                                     context: BuildContext,
                                                     customizer: MacDistributionCustomizer,
@@ -25,6 +28,7 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
                                                     macZip: Path,
                                                     isRuntimeBundled: Boolean,
                                                     suffix: String,
+                                                    arch: JvmArchitecture,
                                                     notarize: Boolean) {
   require(macZip.exists()) {
     "Missing $macZip"
@@ -42,7 +46,7 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
   validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
 
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  val sitFile = (if (customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
+  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
 
   prepareMacZip(macZip, sitFile, productJson, zipRoot)
 
@@ -68,6 +72,22 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
     "$sitFile wasn't created"
   }
   checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
+  if (isRuntimeBundled) {
+    generateIntegrityManifest(sitFile, zipRoot, context, arch)
+  }
+}
+
+private fun generateIntegrityManifest(sitFile: Path, sitRoot: String, context: BuildContext, arch: JvmArchitecture) {
+  if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+    val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
+    try {
+      runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit, logger = context.messages)
+      RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
+    }
+    finally {
+      NioFiles.deleteRecursively(tempSit)
+    }
+  }
 }
 
 private fun buildAndSignWithMacBuilderHost(sitFile: Path,
@@ -96,7 +116,7 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
-    publishAppArchive = customizer.publishArchive,
+    publishAppArchive = context.publishSitArchive,
     jetSignClient = jetSignClient
   )
 }
@@ -113,11 +133,16 @@ private fun buildLocally(sitFile: Path,
       Files.createDirectories(tempDir)
       signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
     }
-  if (customizer.publishArchive) {
+  if (context.publishSitArchive) {
     context.notifyArtifactBuilt(sitFile)
   }
   context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP) {
-    buildDmgLocally(tempDir, targetName, customizer, context)
+    if (SystemInfoRt.isMac) {
+      buildDmgLocally(tempDir, targetName, customizer, context)
+    }
+    else {
+      Span.current().addEvent("DMG can be built only on macOS")
+    }
   }
 
   NioFiles.deleteRecursively(tempDir)
@@ -154,7 +179,7 @@ private fun signSitLocally(sourceFile: Path,
       context.proprietaryBuildTools.macHostProperties?.codesignString?.takeIf { sign } ?: "",
       if (notarize) "yes" else "no",
       customizer.bundleIdentifier,
-      customizer.publishArchive.toString(), // compress-input
+      context.publishSitArchive.toString(), // compress-input
       context.proprietaryBuildTools.signTool?.takeIf { sign }
         ?.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
         ?.toString() ?: "null"

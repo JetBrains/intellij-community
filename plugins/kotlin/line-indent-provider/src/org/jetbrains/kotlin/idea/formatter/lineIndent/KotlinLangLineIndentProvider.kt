@@ -140,14 +140,17 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
     private enum class KotlinElement : SemanticEditorPosition.SyntaxElement {
         TemplateEntryOpen,
         TemplateEntryClose,
+
         Arrow,
         WhenKeyword,
         WhileKeyword,
         RegularStringPart,
         KDoc,
         Identifier,
+
         OpenTypeBrace,
         CloseTypeBrace,
+
         FunctionKeyword,
         Dot,
         Quest,
@@ -155,6 +158,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         Eq,
 
         Val, Var,
+
+        OpenQuote, ClosingQuote,
+
+        Literal,
     }
 
     companion object {
@@ -167,6 +174,9 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
 
             KtTokens.LONG_TEMPLATE_ENTRY_START to TemplateEntryOpen,
             KtTokens.LONG_TEMPLATE_ENTRY_END to TemplateEntryClose,
+
+            KtTokens.OPEN_QUOTE to OpenQuote,
+            KtTokens.CLOSING_QUOTE to ClosingQuote,
 
             KtTokens.LBRACE to BlockOpeningBrace,
             KtTokens.RBRACE to BlockClosingBrace,
@@ -207,6 +217,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
 
             KtTokens.VAL_KEYWORD to Val,
             KtTokens.VAR_KEYWORD to Var,
+
+            KtTokens.INTEGER_LITERAL to Literal,
+            KtTokens.FLOAT_LITERAL to Literal,
+            KtTokens.CHARACTER_LITERAL to Literal,
         )
 
         private val CONTROL_FLOW_KEYWORDS: HashSet<SemanticEditorPosition.SyntaxElement> = hashSetOf(
@@ -271,7 +285,21 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             //   abc()|.call()
             //   abc[]|.call()
             //   abc{}|.call()
-            val calleeOrReference = findCalleeOrReference(beforeDotPosition) ?: return null
+            val calleeOrReference = when {
+                beforeDotPosition.isAt(Literal) -> beforeDotPosition
+                beforeDotPosition.isAt(ClosingQuote) ->
+                    beforeDotPosition.before().findLeftParenthesisBackwardsSkippingNested(
+                        OpenQuote,
+                        ClosingQuote,
+                    )
+
+                else -> findCalleeOrReference(beforeDotPosition)
+            }
+
+            if (calleeOrReference?.isAtEnd != false) {
+                return null
+            }
+
             val copyOfCalleeOrReference = calleeOrReference.copy()
             // calleeOrReference is 'abc'
             calleeOrReference.moveBefore()

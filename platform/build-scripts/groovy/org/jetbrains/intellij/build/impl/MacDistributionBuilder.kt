@@ -117,7 +117,8 @@ class MacDistributionBuilder(override val context: BuildContext,
     doCopyExtraFiles(macDistDir = osAndArchSpecificDistPath, arch = arch, copyDistFiles = false)
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-      val publishArchive = !SystemInfoRt.isMac && context.proprietaryBuildTools.macHostProperties?.host == null
+      val publishSit = context.publishSitArchive
+      val publishZipOnly = !publishSit && context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       val binariesToSign = customizer.getBinariesToSign(context, arch)
       if (!binariesToSign.isEmpty()) {
         context.executeStep(spanBuilder("sign binaries for macOS distribution")
@@ -129,15 +130,14 @@ class MacDistributionBuilder(override val context: BuildContext,
           ))
         }
       }
-      val macZip = (if (publishArchive || customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir)
+      val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir)
         .resolve("$baseName.mac.${arch.name}.zip")
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
       val zipRoot = getMacZipRoot(customizer, context)
       val runtimeDist = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
       val extraFiles = context.getDistFiles()
-      val compressionLevel = if (publishArchive) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
-      val errorsConsumer = context.messages::warning
+      val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
           targetFile = macZip,
@@ -147,8 +147,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           directories = directories,
           extraFiles = extraFiles,
           executableFilePatterns = generateExecutableFilesPatterns(true),
-          compressionLevel = compressionLevel,
-          errorsConsumer = errorsConsumer
+          compressionLevel = compressionLevel
         )
       }
       if (context.options.buildMacArtifactsWithoutRuntime) {
@@ -159,13 +158,14 @@ class MacDistributionBuilder(override val context: BuildContext,
           directories = directories - runtimeDist,
           extraFiles = extraFiles,
           executableFilePatterns = generateExecutableFilesPatterns(false),
-          compressionLevel = compressionLevel,
-          errorsConsumer = errorsConsumer
+          compressionLevel = compressionLevel
         )
       }
-      if (publishArchive) {
-        Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
-        context.notifyArtifactBuilt(macZip)
+      if (publishZipOnly) {
+        Span.current().addEvent("skip DMG and SIT artifacts producing")
+        if (context.options.buildMacArtifactsWithRuntime) {
+          context.notifyArtifactBuilt(macZip)
+        }
         if (context.options.buildMacArtifactsWithoutRuntime) {
           context.notifyArtifactBuilt(macZipWithoutRuntime)
         }
@@ -374,6 +374,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                         macZip = macZip,
                         isRuntimeBundled = true,
                         suffix = suffix,
+                        arch = arch,
                         notarize = notarize)
       })
     }
@@ -391,6 +392,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                         macZip = macZipWithoutRuntime,
                         isRuntimeBundled = false,
                         suffix = "-no-jdk$suffix",
+                        arch = arch,
                         notarize = notarize)
       })
     }
@@ -446,23 +448,18 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
                                                directories: List<Path>,
                                                extraFiles: Collection<Map.Entry<Path, String>>,
                                                executableFilePatterns: List<String>,
-                                               compressionLevel: Int,
-                                               errorsConsumer: (String) -> Unit) {
+                                               compressionLevel: Int) {
   spanBuilder("build zip archive for macOS")
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
     .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
     .use {
-      val fs = targetFile.fileSystem
-      val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
-
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePath ->
-        when {
-          patterns.any { it.matches(Path.of(relativePath)) } -> entry.unixMode = executableFileUnixMode
-          SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
-            errorsConsumer("Executable permissions of $relativePath won't be set in $targetFile. " +
-                           "Please make sure that executable file patterns are updated.")
-          }
+      for (dir in directories) {
+        updateExecutablePermissions(dir, executableFilePatterns)
+      }
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
+        if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+          entry.unixMode = executableFileUnixMode
         }
       }
 

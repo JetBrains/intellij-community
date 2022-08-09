@@ -22,5 +22,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>

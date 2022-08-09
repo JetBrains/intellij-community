@@ -1,4 +1,4 @@
-// "Replace with 'findStaticVarHandle'" "true"
+// "Replace with 'findStaticVarHandle'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

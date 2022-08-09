@@ -142,16 +142,15 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       myWidgetIdsMap.put(widget.ID(), factory);
       String anchor = getAnchor(factory, availableFactories);
 
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!myProject.isDisposed()) {
-          StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-          if (statusBar == null) {
-            LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
-            return;
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar == null) {
+          LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
+        }
+        else {
           statusBar.addWidget(widget, anchor, this);
         }
-      });
+      }, myProject.getDisposed());
     }
   }
 

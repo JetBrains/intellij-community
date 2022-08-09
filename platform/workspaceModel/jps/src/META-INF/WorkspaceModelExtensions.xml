@@ -26,5 +26,7 @@
                  description="Enable checking FS sensitivity for paths stored at VFU index"/>
     <registryKey key="ide.new.project.model.artifacts.sync.initialization" defaultValue="true" restartRequired="false"
                  description="Enable locks during artifacts initialization"/>
+    <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
+                 description="Enable workspace model consistency checking after every update"/>
   </extensions>
 </idea-plugin>

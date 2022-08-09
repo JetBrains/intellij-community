@@ -91,5 +91,5 @@ class RunToolbarState : BaseState() {
 
   var moveNewOnTop by property(defaultValue = true)
   var updateMainBySelected by property(defaultValue = true)
-  var runConfigWidth by property(defaultValue = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH_UNSCALED_MIN)
+  var runConfigWidth by property(defaultValue = RunWidgetWidthHelper.RUN_CONFIG_WIDTH_UNSCALED_MIN)
 }

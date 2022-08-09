@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
@@ -420,16 +421,21 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Must be called on write thread without write action");
     }
 
+    Thread currentThread = Thread.currentThread();
+    String initialThreadName = currentThread.getName();
     while (!(myState.get() == State.SMART ||
-             myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS)
+             myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS ||
+             myState.get() == State.WAITING_FOR_FINISH)
            && !myProject.isDisposed()) {
-      PingProgress.interactWithEdtProgress();
-      LockSupport.parkNanos(50_000_000);
-      // polls next dumb mode task
-      myTrackedEdtActivityService.executeAllQueuedActivities();
-      // cancels all scheduled and running tasks
-      myTaskQueue.cancelAllTasks();
-      myHeavyActivities.resumeProgressIfPossible();
+      ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.get() + ")]", () -> {
+        PingProgress.interactWithEdtProgress();
+        LockSupport.parkNanos(50_000_000);
+        // polls next dumb mode task
+        myTrackedEdtActivityService.executeAllQueuedActivities();
+        // cancels all scheduled and running tasks
+        myTaskQueue.cancelAllTasks();
+        myHeavyActivities.resumeProgressIfPossible();
+      });
     }
   }
 
@@ -689,7 +695,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS
   }
 
-  private static boolean isSynchronousTaskExecution() {
+  public static boolean isSynchronousTaskExecution() {
     Application application = ApplicationManager.getApplication();
     return (application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"));
   }

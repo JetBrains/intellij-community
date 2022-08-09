@@ -338,7 +338,11 @@ public final class JBUIScale {
   }
 
   public static int scaleFontSize(float fontSize) {
-    float userScaleFactor = getOrComputeUserScaleFactor();
+    return scaleFontSize(fontSize, getOrComputeUserScaleFactor());
+  }
+
+  @ApiStatus.Internal
+  public static int scaleFontSize(float fontSize, float userScaleFactor) {
     if (userScaleFactor == 1.25f) {
       return (int)(fontSize * 1.34f);
     }
@@ -346,7 +350,7 @@ public final class JBUIScale {
       return (int)(fontSize * 1.67f);
     }
     else {
-      return (int)scale(fontSize);
+      return (int)(fontSize * userScaleFactor);
     }
   }
 

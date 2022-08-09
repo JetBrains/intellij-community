@@ -1,4 +1,4 @@
-// "Adapt argument using 'List.of()'" "true"
+// "Adapt argument using 'List.of()'" "true-preview"
 import java.util.List;
 
 public class Test {

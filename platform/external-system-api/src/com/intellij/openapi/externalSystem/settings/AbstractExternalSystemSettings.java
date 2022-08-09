@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public abstract class AbstractExternalSystemSettings<
    *
    * @param listener         target generic listener to wrap to external system-specific implementation
    * @param parentDisposable is a disposable to unsubscribe from external system settings events
-   * @note lifetime of parentDisposable must be shorter of project lifetime
+   * @implNote lifetime of parentDisposable must be shorter of project lifetime
    * @abstract at 2021
    */
   public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
@@ -81,11 +82,10 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   /**
-   * @remove at 2021
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
 
   /**

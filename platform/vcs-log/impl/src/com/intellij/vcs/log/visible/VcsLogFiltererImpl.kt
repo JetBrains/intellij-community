@@ -53,8 +53,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
         val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
         if (hashFilterResult != null) {
-          it.setAttribute("Filters", hashFilterResult.first.filters.toString())
-          it.setAttribute("Sort type", sortType.toString())
+          it.setAttribute("filters", hashFilterResult.first.filters.toString())
+          it.setAttribute("sortType", sortType.toString())
           return hashFilterResult
         }
       }
@@ -114,8 +114,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
         val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
-        it.setAttribute("Filters", filters.toString())
-        it.setAttribute("Sort type", sortType.toString())
+        it.setAttribute("filters", filters.toString())
+        it.setAttribute("sortType", sortType.toString())
         return Pair(visiblePack, filterResult.commitCount)
       }
       catch (e: VcsException) {

@@ -137,7 +137,4 @@ class KtInterface(
 
     return suspend
   }
-
-  fun resolveObjTypeId(name: String) =
-    scope.resolve(name)?.ktInterface?.objType?.id
 }

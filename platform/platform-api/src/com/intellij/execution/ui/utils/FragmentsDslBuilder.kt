@@ -168,17 +168,10 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
       private val validator = if (validation != null) ComponentValidator(this) else null
 
-      override fun applyEditorTo(s: Settings) {
-        super.applyEditorTo(s)
-
+      override fun validate(s: Settings) {
         ApplicationManager.getApplication().executeOnPooledThread {
           if (validator != null) {
-            val validationInfo = (validation!!)(s, this.component())?.let {
-              if (it.component == null) {
-                it.forComponent(editorComponent)
-              }
-              else it
-            }
+            val validationInfo = (validation!!)(s, this.component())?.setComponentIfNeeded()
 
             validationInfo?.component?.let {
               if (ComponentValidator.getInstance(it).isEmpty) {
@@ -201,6 +194,10 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
       override fun toggle(selected: Boolean, e: AnActionEvent?) {
         onToggle(selected)
         super.toggle(selected, e)
+      }
+
+      private fun ValidationInfo.setComponentIfNeeded(): ValidationInfo {
+        return if (component == null) forComponent(editorComponent) else this
       }
     }.also {
       it.isRemovable = isRemovable

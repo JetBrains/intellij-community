@@ -111,7 +111,7 @@ public final class GetterDescriptor extends PsiVarDescriptor {
   public boolean alwaysEqualsToItself(@NotNull DfType type) {
     if (!super.alwaysEqualsToItself(type)) return false;
     if (type instanceof DfPrimitiveType || type instanceof DfConstantType) return true;
-    if (PropertyUtilBase.isSimplePropertyGetter(myGetter)) return true;
+    if (PropertyUtilBase.isSimplePropertyGetter(myGetter) || myGetter instanceof LightRecordMethod) return true;
     return false;
   }
 

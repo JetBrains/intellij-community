@@ -150,6 +150,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
+    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
+      delegate.newTypingStarted(charTyped, originalEditor, dataContext);
+    }
     originalEditor.getCaretModel().runForEachCaret(caret -> {
       if (psiDocumentManager.isDocumentBlockedByPsi(originalDocument)) {
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(originalDocument); // to clean up after previous caret processing

@@ -19,10 +19,7 @@ import java.util.HashSet;
  */
 public class LombokInspection extends LombokJavaInspectionBase {
 
-  private final ValProcessor valProcessor;
-
   public LombokInspection() {
-    valProcessor = new ValProcessor();
   }
 
   @NotNull
@@ -31,8 +28,8 @@ public class LombokInspection extends LombokJavaInspectionBase {
     return new LombokElementVisitor(holder);
   }
 
-  private class LombokElementVisitor extends JavaElementVisitor {
-
+  private static class LombokElementVisitor extends JavaElementVisitor {
+    private static final ValProcessor valProcessor = new ValProcessor();
     private final ProblemsHolder holder;
 
     LombokElementVisitor(ProblemsHolder holder) {

@@ -117,23 +117,25 @@ internal fun runJavaWithOutputToFile(mainClass: String,
           .redirectOutput(outputFile.toFile())
           .start()
 
-        fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (pid=${process.pid()}, args=$args, vmOptions=$jvmArgs): $reason"
+        fun javaRunFailed(exception: (String) -> Exception = ::RuntimeException) {
+          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts), exitCode=${process.exitValue()}, pid=${process.pid()}, args=$args, vmOptions=$jvmArgs"
           span.setStatus(StatusCode.ERROR, message)
           if (Files.exists(outputFile)) {
             span.setAttribute("processOutput", Files.readString(outputFile))
           }
-          throw RuntimeException(message)
+          throw exception(message)
         }
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
-          javaRunFailed("$timeout timeout")
+          javaRunFailed { message ->
+            ProcessRunTimedOut("$message: $timeout timeout")
+          }
         }
 
         val exitCode = process.exitValue()
         if (exitCode != 0) {
-          javaRunFailed("exitCode=${process.exitValue()}")
+          javaRunFailed()
         }
       }
       finally {

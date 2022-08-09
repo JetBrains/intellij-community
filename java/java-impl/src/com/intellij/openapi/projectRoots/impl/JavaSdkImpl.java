@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -7,12 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
@@ -58,15 +56,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
-
-  public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
   private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
@@ -197,13 +192,6 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
     return JavaHomeFinder.suggestHomePaths();
-  }
-
-  @Override
-  public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
-    FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
-    descriptor.putUserData(KEY, Boolean.TRUE);
-    return descriptor;
   }
 
   @Override
@@ -464,7 +452,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  private static List<String> findClasses(Path jdkHome, boolean isJre) {
+  private static @NotNull List<String> findClasses(Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome)) {
@@ -505,13 +493,15 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @ApiStatus.Internal
-  public static void addSources(@NotNull Path jdkHome, @NotNull SdkModificator sdkModificator) {
+  private static void addSources(@NotNull Path jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");
     if (jdkSrc != null) {
       if (jdkSrc.findChild("java.base") != null) {
-        Stream.of(jdkSrc.getChildren())
-          .filter(VirtualFile::isDirectory)
-          .forEach(root -> sdkModificator.addRoot(root, OrderRootType.SOURCES));
+        for (VirtualFile root : jdkSrc.getChildren()) {
+          if (root.isDirectory()) {
+            sdkModificator.addRoot(root, OrderRootType.SOURCES);
+          }
+        }
       }
       else {
         sdkModificator.addRoot(jdkSrc, OrderRootType.SOURCES);
@@ -524,7 +514,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  private static @Nullable VirtualFile findSources(Path jdkHome, String srcName) {
+  private static @Nullable VirtualFile findSources(@NotNull Path jdkHome, @NotNull String srcName) {
     Path srcArc = jdkHome.resolve(srcName + ".jar");
     if (!Files.exists(srcArc)) srcArc = jdkHome.resolve(srcName + ".zip");
     if (!Files.exists(srcArc)) srcArc = jdkHome.resolve("lib").resolve(srcName + ".zip");

@@ -15,31 +15,30 @@ interface ParentMultipleEntity : WorkspaceEntity {
   val parentData: String
   val children: List<@Child ChildMultipleEntity>
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ParentMultipleEntity, ModifiableWorkspaceEntity<ParentMultipleEntity>, ObjBuilder<ParentMultipleEntity> {
-      override var parentData: String
-      override var entitySource: EntitySource
-      override var children: List<ChildMultipleEntity>
+  interface Builder : ParentMultipleEntity, ModifiableWorkspaceEntity<ParentMultipleEntity>, ObjBuilder<ParentMultipleEntity> {
+    override var parentData: String
+    override var entitySource: EntitySource
+    override var children: List<ChildMultipleEntity>
   }
-  
-  companion object: Type<ParentMultipleEntity, Builder>() {
-      operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentMultipleEntity {
-          val builder = builder()
-          builder.parentData = parentData
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ParentMultipleEntity, Builder>() {
+    operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentMultipleEntity {
+      val builder = builder()
+      builder.parentData = parentData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentMultipleEntity, modification: ParentMultipleEntity.Builder.() -> Unit) = modifyEntity(ParentMultipleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ParentMultipleEntity, modification: ParentMultipleEntity.Builder.() -> Unit) = modifyEntity(
+  ParentMultipleEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ChildMultipleEntity : WorkspaceEntity {
@@ -47,29 +46,28 @@ interface ChildMultipleEntity : WorkspaceEntity {
 
   val parentEntity: ParentMultipleEntity
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: ChildMultipleEntity, ModifiableWorkspaceEntity<ChildMultipleEntity>, ObjBuilder<ChildMultipleEntity> {
-      override var childData: String
-      override var entitySource: EntitySource
-      override var parentEntity: ParentMultipleEntity
+  interface Builder : ChildMultipleEntity, ModifiableWorkspaceEntity<ChildMultipleEntity>, ObjBuilder<ChildMultipleEntity> {
+    override var childData: String
+    override var entitySource: EntitySource
+    override var parentEntity: ParentMultipleEntity
   }
-  
-  companion object: Type<ChildMultipleEntity, Builder>() {
-      operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildMultipleEntity {
-          val builder = builder()
-          builder.childData = childData
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<ChildMultipleEntity, Builder>() {
+    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildMultipleEntity {
+      val builder = builder()
+      builder.childData = childData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(
+  ChildMultipleEntity.Builder::class.java, entity, modification)
 //endregion

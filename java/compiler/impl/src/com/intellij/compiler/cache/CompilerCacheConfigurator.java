@@ -94,6 +94,10 @@ public class CompilerCacheConfigurator {
     }
     LOG.info("Project contains " + commitsCountBetweenCompilation + " non compiled commits. Cache will be downloaded for " + commitsBehind + " commits before the current master." +
              " The rest commits will be build locally. Commit hash for download: " + commitToDownload);
+    if (!forceUpdate && commitsBehind >= commitsCountBetweenCompilation) {
+      LOG.info("Caches available for already compiled commit. Skipping download");
+      return null;
+    }
     if (!forceUpdate && commitToDownload.equals(latestDownloadedCommit)) {
       LOG.info("The system contains up-to-date caches");
       return null;

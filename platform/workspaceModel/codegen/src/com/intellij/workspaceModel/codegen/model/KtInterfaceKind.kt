@@ -22,7 +22,7 @@ open class WsEntityInterface : KtInterfaceKind() {
                           keepUnknownFields: Boolean) {
     field.toMemberField(scope, type, diagnostics, keepUnknownFields)
     if (fieldNumber == 0) {
-      val entitySource = Field(type, "entitySource", TBlob<Any>("EntitySource"))
+      val entitySource = Field(type, "entitySource", TBlob<Any>("com.intellij.workspaceModel.storage.EntitySource"))
       entitySource.exDef = field
       entitySource.open = field.open
       if (field.expr) {

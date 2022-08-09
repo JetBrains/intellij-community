@@ -1,8 +1,8 @@
-UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
+UAnnotation (fqName = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
+UAnnotation (fqName = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
+UAnnotation (fqName = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> Kotlin_Light_Method: setProp3
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null

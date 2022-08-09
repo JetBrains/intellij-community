@@ -3,7 +3,7 @@ public class NegativeIntConstant {
 
   public static void main(String[] args) {
     long mask = <warning descr="Negative int hexadecimal constant in long context">0xFFFF_FFFF</warning>;
-    long mask1 = <warning descr="Negative int hexadecimal constant in long context">0x8000_0000</warning>;
+    long mask1 = <warning descr="Negative int hexadecimal constant in long context">0X8000_0000</warning>;
     long mask2 = 0x7FFF_FFFF;
     long mask3 = 0xFFFF_FFFFL;
     long mask4 = -1;

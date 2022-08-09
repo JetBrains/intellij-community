@@ -70,8 +70,13 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
 
   protected void configFacets(List<MavenLegacyModuleImporter> importers,
                               List<MavenProjectsProcessorTask> postTasks,
-                              boolean isLegacyImport) {
-    if (!importers.isEmpty()) {
+                              boolean isWorkspaceImport) {
+    List<MavenLegacyModuleImporter> toRun =
+      ContainerUtil.filter(importers, it -> !it.isModuleDisposed()
+                                            && !it.isAggregatorMainTestModule()
+                                            && it.initFacetsImporters(isWorkspaceImport));
+
+    if (!toRun.isEmpty()) {
       IdeModifiableModelsProvider provider;
       if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
         provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
@@ -81,12 +86,9 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       }
 
       try {
-        List<MavenLegacyModuleImporter> toRun =
-          ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
-
         Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.CountAndTime> counters = new HashMap<>();
 
-        toRun.forEach(importer -> importer.prepareForImporters(provider, isLegacyImport));
+        toRun.forEach(importer -> importer.prepareForFacets(provider));
         toRun.forEach(importer -> importer.preConfigFacets(counters));
         toRun.forEach(importer -> importer.configFacets(postTasks, counters));
         toRun.forEach(importer -> importer.postConfigFacets(counters));

@@ -55,6 +55,8 @@ class WindowDeactivationManager {
         // Currently, in WSLg environment dialog showing generates focus events corresponding to dialog getting focus,
         // then losing it to main frame, then getting it again immediately. As a workaround, we track focus/activation events only after
         // 'window opened' event is received.
+        // Another case when such delaying can make sense is when the dialog is showing at the same time some popup is closing
+        // (e.g. invoking 'Find in Files...' from a quick list).
         wasOpened = true
 
         Frame.getFrames().asSequence().filter { it is IdeFrame && it.project === project }.forEach {

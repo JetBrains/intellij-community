@@ -419,8 +419,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     @Override
     public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
-      //noinspection unchecked
       e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -457,7 +461,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
      * For a mouse click event it tries to find {@link XDebuggerFrameListRenderer}
      * and call {@link XDebuggerFrameListRenderer#onMouseEvent(MouseEvent, int)}.
      *
-     * @param list
      */
     private void installListeners(@NotNull XDebuggerFramesList list) {
       addTo(list);

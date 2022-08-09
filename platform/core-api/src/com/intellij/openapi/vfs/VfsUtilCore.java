@@ -34,7 +34,7 @@ public class VfsUtilCore {
 
   private static final @NonNls String MAILTO = "mailto";
 
-  public static final @NonNls String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  private static final @NonNls String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
   public static final String VFS_SEPARATOR = "/";
 
@@ -265,7 +265,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull VirtualFile root,
                                                    @Nullable VirtualFileFilter filter,
                                                    @NotNull ContentIterator iterator,
-                                                   VirtualFileVisitor.@NotNull Option... options) {
+                                                   VirtualFileVisitor.Option @NotNull ... options) {
     VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @Override
       public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
@@ -333,9 +333,10 @@ public class VfsUtilCore {
     }
   }
 
+  @NotNull
   public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                                         @NotNull VirtualFileVisitor<?> visitor,
-                                                                                         @NotNull Class<E> eClass) throws E {
+                                                                                                  @NotNull VirtualFileVisitor<?> visitor,
+                                                                                                  @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
     }
@@ -442,7 +443,7 @@ public class VfsUtilCore {
         return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
       else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
-        // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
+        // sometimes (e.g., in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
         return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
       }
       else {

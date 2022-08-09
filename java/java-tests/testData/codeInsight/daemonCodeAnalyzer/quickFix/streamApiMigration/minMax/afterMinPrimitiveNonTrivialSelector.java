@@ -1,4 +1,4 @@
-// "Replace with min()" "true"
+// "Replace with min()" "true-preview"
 
 import java.util.Arrays;
 

@@ -123,6 +123,10 @@ class ProjectIconUI(val projectPath: @SystemIndependent String) {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = pathToIcon != null || (Files.exists(pathToIcon()) && !iconRemoved)
       }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
     }
     return ActionManager.getInstance().createActionToolbar("ProjectIconDialog", DefaultActionGroup(removeIconAction), true)
       .apply { targetComponent = iconLabel }

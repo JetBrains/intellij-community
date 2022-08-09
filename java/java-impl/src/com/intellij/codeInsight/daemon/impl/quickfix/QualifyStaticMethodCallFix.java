@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,18 +26,16 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
-                                                                             @NotNull Project project,
-                                                                             Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
+                                                @NotNull Project project,
+                                                Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiMethod>(project, editor, methodsToImport, myReferencePointer) {
       @Override
-      protected void doImport(PsiMethod toImport) {
-        PsiMethodCallExpression element = myRef.getElement();
+      protected void doImport(@NotNull PsiMethod toImport) {
+        PsiMethodCallExpression element = myReferencePointer.getElement();
         if (element == null) return;
-        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null, () -> {
-                                                   qualifyStatically(toImport, project, element.getMethodExpression());
-                                                 }
-        );
+        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"),
+                                                 null, () -> qualifyStatically(toImport, project, element.getMethodExpression()));
       }
     };
   }
@@ -47,13 +46,13 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return false;
   }
 
-  public static void qualifyStatically(@NotNull PsiMember toImport,
-                                       @NotNull Project project,
-                                       @NotNull PsiReferenceExpression qualifiedExpression) {
+  static void qualifyStatically(@NotNull PsiMember toImport,
+                                @NotNull Project project,
+                                @NotNull PsiReferenceExpression qualifiedExpression) {
     PsiClass containingClass = toImport.getContainingClass();
     if (containingClass == null) return;
     PsiReferenceExpression qualifier = JavaPsiFacade.getElementFactory(project).createReferenceExpression(containingClass);

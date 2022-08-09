@@ -39,7 +39,7 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
                                    parentDisposable: Disposable) :
   EditorTabPreviewBase(tree.project, parentDisposable) {
 
-  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, false, parentDisposable)
+  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, true, parentDisposable)
 
   override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(tree.id) }
 

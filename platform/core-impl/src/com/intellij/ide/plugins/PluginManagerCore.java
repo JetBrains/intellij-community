@@ -70,8 +70,6 @@ public final class PluginManagerCore {
 
   public static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
 
-  static final String PROPERTY_PLUGIN_PATH = "plugin.path";
-
   static final @NonNls String DISABLE = "disable";
   static final @NonNls String ENABLE = "enable";
   static final @NonNls String EDIT = "edit";
@@ -313,7 +311,7 @@ public final class PluginManagerCore {
     }
 
     IdeaPluginDescriptorImpl result = null;
-    for (IdeaPluginDescriptorImpl descriptor : pluginSet.getRawListOfEnabledModules()) {
+    for (IdeaPluginDescriptorImpl descriptor : pluginSet.getEnabledModules()) {
       ClassLoader classLoader = descriptor.getPluginClassLoader();
       if (classLoader instanceof UrlClassLoader && ((UrlClassLoader)classLoader).hasLoadedClass(className)) {
         result = descriptor;
@@ -808,7 +806,7 @@ public final class PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap);
     }
 
-    PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompletePlugins());
+    PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompleteIdMap().values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
   }
@@ -830,7 +828,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
+  public static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
     Boolean result = thirdPartyPluginsNoteAccepted;
     thirdPartyPluginsNoteAccepted = null;
     return result;
@@ -1124,15 +1122,6 @@ public final class PluginManagerCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /**
-   * @deprecated Use {@link #isDisabled(PluginId)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isDisabled(@NotNull String pluginId) {
-    return isDisabled(PluginId.getId(pluginId));
-  }
 
   /** @deprecated Use {@link #disablePlugin(PluginId)} */
   @Deprecated

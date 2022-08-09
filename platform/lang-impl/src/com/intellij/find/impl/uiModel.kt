@@ -38,21 +38,21 @@ internal class SearchEverywhereItem(
   val usage: UsageInfo2UsageAdapter,
   val presentation: UsagePresentation,
 ) {
+  val presentableText: String
+    get() = presentation.text.joinToString("")
 
   fun withPresentation(presentation: UsagePresentation): SearchEverywhereItem {
     return SearchEverywhereItem(usage, presentation)
   }
 
   override fun equals(other: Any?): Boolean {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    return usage.plainText == (other as SearchEverywhereItem).usage.plainText
+    return presentableText == ((other as SearchEverywhereItem).presentableText)
   }
 
-  override fun hashCode() = usage.plainText.hashCode()
+  override fun hashCode(): Int = presentableText.hashCode()
 }
 
 @ApiStatus.Internal

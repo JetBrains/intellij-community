@@ -21,32 +21,31 @@ interface OoParentEntity : WorkspaceEntity {
 
   val anotherChild: @Child OoChildWithNullableParentEntity?
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoParentEntity, ModifiableWorkspaceEntity<OoParentEntity>, ObjBuilder<OoParentEntity> {
-      override var parentProperty: String
-      override var entitySource: EntitySource
-      override var child: OoChildEntity?
-      override var anotherChild: OoChildWithNullableParentEntity?
+  interface Builder : OoParentEntity, ModifiableWorkspaceEntity<OoParentEntity>, ObjBuilder<OoParentEntity> {
+    override var parentProperty: String
+    override var entitySource: EntitySource
+    override var child: OoChildEntity?
+    override var anotherChild: OoChildWithNullableParentEntity?
   }
-  
-  companion object: Type<OoParentEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentEntity {
-          val builder = builder()
-          builder.parentProperty = parentProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoParentEntity, Builder>() {
+    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentEntity {
+      val builder = builder()
+      builder.parentProperty = parentProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(OoParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(
+  OoParentEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoParentEntity(
@@ -67,29 +66,29 @@ interface OoChildEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoChildEntity, ModifiableWorkspaceEntity<OoChildEntity>, ObjBuilder<OoChildEntity> {
-      override var childProperty: String
-      override var entitySource: EntitySource
-      override var parentEntity: OoParentEntity
+  interface Builder : OoChildEntity, ModifiableWorkspaceEntity<OoChildEntity>, ObjBuilder<OoChildEntity> {
+    override var childProperty: String
+    override var entitySource: EntitySource
+    override var parentEntity: OoParentEntity
   }
-  
-  companion object: Type<OoChildEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildEntity {
-          val builder = builder()
-          builder.childProperty = childProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoChildEntity, Builder>() {
+    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildEntity {
+      val builder = builder()
+      builder.childProperty = childProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit) = modifyEntity(OoChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit) = modifyEntity(
+  OoChildEntity.Builder::class.java, entity, modification)
 //endregion
 
 
@@ -109,29 +108,29 @@ fun MutableEntityStorage.addOoChildEntity(
 interface OoChildWithNullableParentEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity?
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoChildWithNullableParentEntity, ModifiableWorkspaceEntity<OoChildWithNullableParentEntity>, ObjBuilder<OoChildWithNullableParentEntity> {
-      override var parentEntity: OoParentEntity?
-      override var entitySource: EntitySource
+  interface Builder : OoChildWithNullableParentEntity, ModifiableWorkspaceEntity<OoChildWithNullableParentEntity>, ObjBuilder<OoChildWithNullableParentEntity> {
+    override var parentEntity: OoParentEntity?
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<OoChildWithNullableParentEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithNullableParentEntity {
-          val builder = builder()
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoChildWithNullableParentEntity, Builder>() {
+    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithNullableParentEntity {
+      val builder = builder()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildWithNullableParentEntity, modification: OoChildWithNullableParentEntity.Builder.() -> Unit) = modifyEntity(OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoChildWithNullableParentEntity,
+                                      modification: OoChildWithNullableParentEntity.Builder.() -> Unit) = modifyEntity(
+  OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoChildWithNullableParentEntity(
@@ -163,30 +162,30 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
   val childThree: @Child OoChildAlsoWithPidEntity?
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoParentWithPidEntity, ModifiableWorkspaceEntity<OoParentWithPidEntity>, ObjBuilder<OoParentWithPidEntity> {
-      override var parentProperty: String
-      override var entitySource: EntitySource
-      override var childOne: OoChildForParentWithPidEntity?
-      override var childThree: OoChildAlsoWithPidEntity?
+  interface Builder : OoParentWithPidEntity, ModifiableWorkspaceEntity<OoParentWithPidEntity>, ObjBuilder<OoParentWithPidEntity> {
+    override var parentProperty: String
+    override var entitySource: EntitySource
+    override var childOne: OoChildForParentWithPidEntity?
+    override var childThree: OoChildAlsoWithPidEntity?
   }
-  
-  companion object: Type<OoParentWithPidEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithPidEntity {
-          val builder = builder()
-          builder.parentProperty = parentProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoParentWithPidEntity, Builder>() {
+    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithPidEntity {
+      val builder = builder()
+      builder.parentProperty = parentProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(
+  OoParentWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoParentWithPidEntity(
@@ -206,29 +205,32 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   val parentEntity: OoParentWithPidEntity
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoChildForParentWithPidEntity, ModifiableWorkspaceEntity<OoChildForParentWithPidEntity>, ObjBuilder<OoChildForParentWithPidEntity> {
-      override var childProperty: String
-      override var entitySource: EntitySource
-      override var parentEntity: OoParentWithPidEntity
+  interface Builder : OoChildForParentWithPidEntity, ModifiableWorkspaceEntity<OoChildForParentWithPidEntity>, ObjBuilder<OoChildForParentWithPidEntity> {
+    override var childProperty: String
+    override var entitySource: EntitySource
+    override var parentEntity: OoParentWithPidEntity
   }
-  
-  companion object: Type<OoChildForParentWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildForParentWithPidEntity {
-          val builder = builder()
-          builder.childProperty = childProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoChildForParentWithPidEntity, Builder>() {
+    operator fun invoke(childProperty: String,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): OoChildForParentWithPidEntity {
+      val builder = builder()
+      builder.childProperty = childProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildForParentWithPidEntity, modification: OoChildForParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoChildForParentWithPidEntity,
+                                      modification: OoChildForParentWithPidEntity.Builder.() -> Unit) = modifyEntity(
+  OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoChildForParentWithPidEntity(
@@ -252,29 +254,30 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
   override val persistentId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoChildAlsoWithPidEntity, ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity>, ObjBuilder<OoChildAlsoWithPidEntity> {
-      override var childProperty: String
-      override var entitySource: EntitySource
-      override var parentEntity: OoParentWithPidEntity
+  interface Builder : OoChildAlsoWithPidEntity, ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity>, ObjBuilder<OoChildAlsoWithPidEntity> {
+    override var childProperty: String
+    override var entitySource: EntitySource
+    override var parentEntity: OoParentWithPidEntity
   }
-  
-  companion object: Type<OoChildAlsoWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildAlsoWithPidEntity {
-          val builder = builder()
-          builder.childProperty = childProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoChildAlsoWithPidEntity, Builder>() {
+    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildAlsoWithPidEntity {
+      val builder = builder()
+      builder.childProperty = childProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildAlsoWithPidEntity, modification: OoChildAlsoWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoChildAlsoWithPidEntity,
+                                      modification: OoChildAlsoWithPidEntity.Builder.() -> Unit) = modifyEntity(
+  OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
@@ -297,29 +300,30 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   val childOne: @Child OoChildWithPidEntity?
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoParentWithoutPidEntity, ModifiableWorkspaceEntity<OoParentWithoutPidEntity>, ObjBuilder<OoParentWithoutPidEntity> {
-      override var parentProperty: String
-      override var entitySource: EntitySource
-      override var childOne: OoChildWithPidEntity?
+  interface Builder : OoParentWithoutPidEntity, ModifiableWorkspaceEntity<OoParentWithoutPidEntity>, ObjBuilder<OoParentWithoutPidEntity> {
+    override var parentProperty: String
+    override var entitySource: EntitySource
+    override var childOne: OoChildWithPidEntity?
   }
-  
-  companion object: Type<OoParentWithoutPidEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithoutPidEntity {
-          val builder = builder()
-          builder.parentProperty = parentProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoParentWithoutPidEntity, Builder>() {
+    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithoutPidEntity {
+      val builder = builder()
+      builder.parentProperty = parentProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity, modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity,
+                                      modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(
+  OoParentWithoutPidEntity.Builder::class.java, entity, modification)
 //endregion
 
 
@@ -345,31 +349,30 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
 
   override val persistentId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: OoChildWithPidEntity, ModifiableWorkspaceEntity<OoChildWithPidEntity>, ObjBuilder<OoChildWithPidEntity> {
-      override var childProperty: String
-      override var entitySource: EntitySource
-      override var parentEntity: OoParentWithoutPidEntity
+  interface Builder : OoChildWithPidEntity, ModifiableWorkspaceEntity<OoChildWithPidEntity>, ObjBuilder<OoChildWithPidEntity> {
+    override var childProperty: String
+    override var entitySource: EntitySource
+    override var parentEntity: OoParentWithoutPidEntity
   }
-  
-  companion object: Type<OoChildWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithPidEntity {
-          val builder = builder()
-          builder.childProperty = childProperty
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<OoChildWithPidEntity, Builder>() {
+    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithPidEntity {
+      val builder = builder()
+      builder.childProperty = childProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity, modification: OoChildWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity, modification: OoChildWithPidEntity.Builder.() -> Unit) = modifyEntity(
+  OoChildWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addOoChildWithPidEntity(

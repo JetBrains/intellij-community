@@ -25,13 +25,21 @@ internal class StatisticsJobsScheduler : ApplicationInitializedListener {
     }
   }
 
-  override suspend fun execute() {
-    val notificationManager = ApplicationManager.getApplication().getService(StatisticsNotificationManager::class.java)
-    notificationManager?.showNotificationIfNeeded()
-    checkPreviousExternalUploadResult()
-    runEventLogStatisticsService()
-    runValidationRulesUpdate()
-    ApplicationManager.getApplication().coroutineScope.launch {
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      val notificationManager = ApplicationManager.getApplication().getService(StatisticsNotificationManager::class.java)
+      notificationManager?.showNotificationIfNeeded()
+    }
+    asyncScope.launch {
+      checkPreviousExternalUploadResult()
+    }
+    asyncScope.launch {
+      runEventLogStatisticsService()
+    }
+    asyncScope.launch {
+      runValidationRulesUpdate()
+    }
+    asyncScope.launch {
       delay(5.minutes)
       withContext(Dispatchers.IO) {
         StatisticsEventLogMigration.performMigration()
@@ -40,52 +48,46 @@ internal class StatisticsJobsScheduler : ApplicationInitializedListener {
   }
 }
 
-private fun runValidationRulesUpdate() {
-  ApplicationManager.getApplication().coroutineScope.launch {
-    if (!System.getProperty("fus.internal.reduce.initial.delay").toBoolean()) {
-      delay(3.minutes)
+private suspend fun runValidationRulesUpdate() {
+  if (!System.getProperty("fus.internal.reduce.initial.delay").toBoolean()) {
+    delay(3.minutes)
+  }
+
+  while (true) {
+    val providers = getEventLogProviders()
+    for (provider in providers) {
+      if (provider.isRecordEnabled()) {
+        IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+      }
     }
 
-    while (true) {
-      val providers = getEventLogProviders()
-      for (provider in providers) {
-        if (provider.isRecordEnabled()) {
-          IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
-        }
+    delay(180.minutes)
+  }
+}
+
+private suspend fun checkPreviousExternalUploadResult() {
+  delay(3.minutes)
+  val providers = getEventLogProviders().filter(StatisticsEventLoggerProvider::sendLogsOnIdeClose)
+  EventLogExternalUploader.logPreviousExternalUploadResult(providers)
+}
+
+private suspend fun runEventLogStatisticsService() {
+  delay(1.minutes)
+
+  val providers = getEventLogProviders()
+  coroutineScope {
+    for (provider in providers) {
+      if (!provider.isSendEnabled()) {
+        continue
       }
 
-      delay(180.minutes)
-    }
-  }
-}
+      val statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId)
+      launch {
+        delay((5 * 60).seconds)
 
-private fun checkPreviousExternalUploadResult() {
-  ApplicationManager.getApplication().coroutineScope.launch {
-    delay(3.minutes)
-    val providers = getEventLogProviders().filter(StatisticsEventLoggerProvider::sendLogsOnIdeClose)
-    EventLogExternalUploader.logPreviousExternalUploadResult(providers)
-  }
-}
-
-private fun runEventLogStatisticsService() {
-  ApplicationManager.getApplication().coroutineScope.launch {
-    delay(1.minutes)
-
-    val providers = getEventLogProviders()
-    coroutineScope {
-      for (provider in providers) {
-        if (!provider.isSendEnabled()) {
-          continue
-        }
-
-        val statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId)
-        launch {
-          delay((5 * 60).seconds)
-
-          while (true) {
-            statisticsService.send()
-            delay(provider.sendFrequencyMs.milliseconds)
-          }
+        while (true) {
+          statisticsService.send()
+          delay(provider.sendFrequencyMs.milliseconds)
         }
       }
     }

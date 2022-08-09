@@ -375,7 +375,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
   /**
    * See {@link #checkInconsistency(PsiReferenceList, String)}
-   * @param throwsList
    */
   private static void checkInconsistency(@NotNull PsiReferenceList throwsList) {
     checkInconsistency(throwsList, null);

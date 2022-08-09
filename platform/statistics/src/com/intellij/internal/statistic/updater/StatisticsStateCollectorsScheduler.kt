@@ -5,12 +5,12 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,15 +29,15 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
     private val allowExecution = AtomicBoolean(true)
   }
 
-  override fun componentsInitialized() {
-    if (!StatisticsUploadAssistant.isSendAllowed()) {
-      return
-    }
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      if (!StatisticsUploadAssistant.isSendAllowed()) {
+        return@launch
+      }
 
-    allowExecution.set(true)
+      // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
+      allowExecution.set(true)
 
-    // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
-    ApplicationManager.getApplication().coroutineScope.launch {
       delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
       allowExecution.set(false)
       FUStateUsagesLogger.create().logApplicationStates()

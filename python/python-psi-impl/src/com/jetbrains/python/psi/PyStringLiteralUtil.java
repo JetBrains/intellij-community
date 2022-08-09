@@ -81,7 +81,6 @@ public final class PyStringLiteralUtil {
   /**
    * Handles unicode and raw strings
    *
-   * @param text
    * @return false if no quotes found, true otherwise
    *         sdfs -> false
    *         ur'x' -> true

@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
@@ -116,5 +117,6 @@
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
   </component>
 </module>

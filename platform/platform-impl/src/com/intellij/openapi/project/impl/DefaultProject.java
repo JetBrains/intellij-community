@@ -205,7 +205,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public CoroutineScope getCoroutineScope() {
-    throw new IllegalStateException("Default project doesn't have coroutineScope");
+    return ApplicationManager.getApplication().getCoroutineScope();
   }
 
   @Override
@@ -283,10 +283,6 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @Override
   public boolean isParentLazyListenersIgnored() {
     return true;
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
   }
 
   @Override

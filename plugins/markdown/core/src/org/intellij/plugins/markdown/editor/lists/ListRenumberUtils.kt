@@ -18,12 +18,17 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 
 internal object ListRenumberUtils {
-  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean) {
+  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean, inWriteAction: Boolean = true) {
     val replacementList = collectReplacements(document, recursive, restart).toList()
-    runWriteAction {
+    if (inWriteAction) {
+      runWriteAction {
+        replacementList.replaceAllInBulk(document)
+      }
+    } else {
       replacementList.replaceAllInBulk(document)
     }
   }
+
 
   private fun MarkdownList.collectReplacements(document: Document, recursive: Boolean, restart: Boolean): Sequence<Replacement> {
     val line = document.getLineNumber(this.startOffset)

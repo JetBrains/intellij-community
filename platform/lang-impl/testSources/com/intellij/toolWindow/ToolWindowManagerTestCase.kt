@@ -38,7 +38,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
         frame
       }
 
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project))
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project).component)
     }
   }
 

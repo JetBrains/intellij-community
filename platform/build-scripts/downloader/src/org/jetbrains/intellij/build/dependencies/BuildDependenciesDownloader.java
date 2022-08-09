@@ -31,17 +31,27 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
 final public class BuildDependenciesDownloader {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
+
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
     .version(HttpClient.Version.HTTP_1_1).build();
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
+
+  // increment on semantic changes in extract code to invalidate all current caches
+  private static final int EXTRACT_CODE_VERSION = 3;
+
+  // increment on semantic changes in download code to invalidate all current caches
+  // e.g. when some issues in extraction code were fixed
+  private static final int DOWNLOAD_CODE_VERSION = 1;
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
@@ -50,23 +60,8 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static void debug(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void info(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void warn(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println("WARNING: " + message);
-  }
-
   public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("gradle.properties");
+    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
     return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
   }
 
@@ -127,7 +122,7 @@ final public class BuildDependenciesDownloader {
     String uriString = uri.toString();
     try {
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
-      String fileName = hashString(uriString).substring(0, 10) + "-" + lastNameFromUri;
+      String fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri;
       Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
 
       downloadFile(uri, targetFile);
@@ -168,16 +163,13 @@ final public class BuildDependenciesDownloader {
 
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
     throws IOException {
-    // Increment this number to force all clients to extract content again
-    // e.g. when some issues in extraction code were fixed
-    int codeVersion = 2;
 
     long numberOfTopLevelEntries;
     try (Stream<Path> stream = Files.list(targetDirectory)) {
       numberOfTopLevelEntries = stream.count();
     }
 
-    return (codeVersion + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
+    return (EXTRACT_CODE_VERSION + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
             "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
             "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
   }
@@ -199,7 +191,7 @@ final public class BuildDependenciesDownloader {
                                                       BuildDependenciesExtractOptions[] options)
     throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
+      LOG.fine("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
@@ -218,7 +210,7 @@ final public class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    LOG.info(" * Extracting " + archiveFile + " to " + targetDirectory);
     extractCount.incrementAndGet();
 
     Files.createDirectories(targetDirectory);
@@ -341,7 +333,7 @@ final public class BuildDependenciesDownloader {
             .setHeader("User-Agent", "Build Script Downloader")
             .build();
 
-          info(" * Downloading " + uri + " -> " + target);
+          LOG.info(" * Downloading " + uri + " -> " + target);
 
           HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
@@ -421,7 +413,7 @@ final public class BuildDependenciesDownloader {
       StringWriter writer = new StringWriter();
       t.printStackTrace(new PrintWriter(writer));
 
-      warn("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
+      LOG.warning("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
     }
   }
 

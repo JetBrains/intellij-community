@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -17,9 +16,7 @@ abstract class KotlinPsiOnlyQuickFixAction<out T : PsiElement>(element: T) : Qui
     }
 
     final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-        val element = element ?: return
-        if (file is KtFile &&
-            (!file.isPhysical || FileModificationService.getInstance().prepareFileForWrite(element.containingFile))) {
+        if (file is KtFile) {
             invoke(project, editor, file)
         }
     }

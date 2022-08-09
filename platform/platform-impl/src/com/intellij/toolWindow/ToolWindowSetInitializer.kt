@@ -17,7 +17,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -59,7 +58,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       initFuture = CompletableDeferred(value = Ref())
     }
     else {
-      initFuture = (project as ProjectEx).coroutineScope.async {
+      initFuture = project.coroutineScope.async {
         Ref(runActivity("toolwindow init command creation") {
           computeToolWindowBeans(project)
         })
@@ -217,7 +216,7 @@ private fun beanToTask(project: Project,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
     contentFactory = factory,
-    stripeTitle = getStripeTitleSupplier(bean.id, plugin),
+    stripeTitle = getStripeTitleSupplier(bean.id, project, plugin),
   )
   task.pluginDescriptor = bean.pluginDescriptor
   return task

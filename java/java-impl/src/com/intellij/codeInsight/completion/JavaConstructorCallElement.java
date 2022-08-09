@@ -104,7 +104,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
 
     String tailText = StringUtil.notNullize(presentation.getTailText());

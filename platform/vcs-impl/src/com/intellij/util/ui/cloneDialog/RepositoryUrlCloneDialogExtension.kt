@@ -35,10 +35,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       .joinToString { it.replace("_", "") }
   }
 
-  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
-    throw AssertionError("Shouldn't be called") // NON-NLS
-  }
-
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
     return RepositoryUrlMainExtensionComponent(project, modalityState)
   }

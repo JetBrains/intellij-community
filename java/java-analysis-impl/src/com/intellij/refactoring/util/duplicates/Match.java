@@ -85,8 +85,6 @@ public final class Match {
 
   /**
    * Returns either local variable declaration or expression
-   * @param outputParameter
-   * @return
    */
   public ReturnValue getOutputVariableValue(PsiVariable outputParameter) {
     final PsiElement decl = myDeclarationCorrespondence.get(outputParameter);

@@ -1,0 +1,53 @@
+<idea-plugin>
+  <!-- Core/FE10 -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
+
+
+    <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
+    <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
+
+    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
+    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
+    <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.core.DiagnosticSuppressorForDebugger"/>
+  </extensions>
+
+  <!-- Coroutines -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
+
+    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
+  </extensions>
+
+  <!-- Evaluation -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
+
+    <debugger.dfaAssistProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.debugger.dfaassist.KotlinDfaAssistProvider"/>
+
+    <lang.surroundDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.surroundWith.KotlinDebuggerExpressionSurroundDescriptor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <syntheticScopeProviderExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldSyntheticScopeProvider"/>
+    <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldExpressionCodegenExtension"/>
+    <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
+    <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
+  </extensions>
+</idea-plugin>

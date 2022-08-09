@@ -20,6 +20,57 @@ import org.junit.runner.RunWith;
 @TestMetadata("../testData/inspectionsLocal")
 public abstract class SharedK2LocalInspectionTestGenerated extends AbstractSharedK2LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
+    public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/empty.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/hasComment.kt");
+        }
+
+        @TestMetadata("notEmpty.kt")
+        public void testNotEmpty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantEmptyInitializerBlock/notEmpty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
+    public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/comment.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/primaryConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/simple.kt");
+        }
+
+        @TestMetadata("withStatement.kt")
+        public void testWithStatement() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/withStatement.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeRedundantBackticks")
     public static class RemoveRedundantBackticks extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -79,6 +130,54 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("yield.kt")
         public void testYield() throws Exception {
             runTest("../testData/inspectionsLocal/removeRedundantBackticks/yield.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/sortModifiers")
+    public static class SortModifiers extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotatedBefore.kt")
+        public void testAnnotatedBefore() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore.kt");
+        }
+
+        @TestMetadata("annotatedBefore2.kt")
+        public void testAnnotatedBefore2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore2.kt");
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation.kt");
+        }
+
+        @TestMetadata("annotation2.kt")
+        public void testAnnotation2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation2.kt");
+        }
+
+        @TestMetadata("annotationGroup.kt")
+        public void testAnnotationGroup() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationGroup.kt");
+        }
+
+        @TestMetadata("annotationOverrideFinal.kt")
+        public void testAnnotationOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
+        }
+
+        @TestMetadata("overrideFinal.kt")
+        public void testOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/simple.kt");
         }
     }
 }

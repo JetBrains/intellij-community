@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public class DefaultGradleProperty implements GradleProperty {
+  private static final long serialVersionUID = 1L;
+
   @NotNull
   private final String name;
   @NotNull

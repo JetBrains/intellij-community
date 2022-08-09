@@ -81,7 +81,7 @@ final class VariableExtractor {
 
   @NotNull
   SmartPsiElementPointer<PsiVariable> extractVariable() {
-    if (myExpression.getUserData(IntentionPreviewIntroduceVariableHandler.INTENTION_PREVIEW_INTRODUCER) == null) {
+    if (myExpression.getUserData(IntroduceVariableOnPreviewHandler.INTENTION_PREVIEW_INTRODUCER) == null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);

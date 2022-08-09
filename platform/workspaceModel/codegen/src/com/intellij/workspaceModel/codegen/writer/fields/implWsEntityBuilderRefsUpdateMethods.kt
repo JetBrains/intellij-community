@@ -3,35 +3,30 @@ package com.intellij.workspaceModel.codegen.fields
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.utils.fqn1
-import com.intellij.workspaceModel.codegen.utils.fqn2
-import com.intellij.workspaceModel.codegen.utils.fqn3
-import com.intellij.workspaceModel.codegen.utils.fqn4
-import com.intellij.workspaceModel.codegen.deft.TList
-import com.intellij.workspaceModel.codegen.deft.TOptional
-import com.intellij.workspaceModel.codegen.deft.TRef
-import com.intellij.workspaceModel.codegen.deft.ValueType
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.writer.owner
 
-data class RefMethods(val getter: String, val setter: String)
+data class RefMethods(val getter: QualifiedName, val setter: QualifiedName)
 
-infix fun String.getterWithSetter(setter: String): RefMethods = RefMethods(this, setter)
+infix fun QualifiedName.getterWithSetter(setter: QualifiedName): RefMethods = RefMethods(this, setter)
 
-fun Field<*, *>.refNames(): RefMethods {
-  if (!type.isRefType()) error("Call this on ref field")
-  return when (type) {
-    is TRef -> constructCode(type)
-    is TOptional -> constructCode((this.type as TOptional<*>).type)
-    is TList<*> -> fqn2(EntityStorage::extractOneToManyChildren) getterWithSetter fqn4(EntityStorage::updateOneToManyChildrenOfParent)
+fun ObjProperty<*, *>.refNames(): RefMethods {
+  if (!valueType.isRefType()) error("Call this on ref field")
+  return when (valueType) {
+    is ValueType.ObjRef -> constructCode(valueType)
+    is ValueType.Optional -> constructCode((this.valueType as ValueType.Optional<*>).type)
+    is ValueType.List<*> -> fqn2(EntityStorage::extractOneToManyChildren) getterWithSetter fqn4(EntityStorage::updateOneToManyChildrenOfParent)
     else -> error("Call this on ref field")
   }
 }
 
-private fun Field<*, *>.constructCode(type: ValueType<*>): RefMethods {
-  type as TRef<*>
+private fun ObjProperty<*, *>.constructCode(type: ValueType<*>): RefMethods {
+  type as ValueType.ObjRef<*>
 
   return if (type.child) {
-    if (type.targetObjType.abstract) {
+    if (type.target.openness.extendable) {
       fqn1(EntityStorage::extractOneToAbstractOneChild) getterWithSetter fqn3(EntityStorage::updateOneToAbstractOneChildOfParent)
     }
     else {
@@ -39,21 +34,21 @@ private fun Field<*, *>.constructCode(type: ValueType<*>): RefMethods {
     }
   }
   else {
-    var valueType = referencedField.type
-    if (valueType is TOptional<*>) {
-      valueType = valueType.type as ValueType<Any?>
+    var valueType = referencedField.valueType
+    if (valueType is ValueType.Optional<*>) {
+      valueType = valueType.type
     }
     when (valueType) {
-      is TList<*> -> {
-        if (owner.abstract) {
+      is ValueType.List<*> -> {
+        if (owner.openness.extendable) {
           fqn1(EntityStorage::extractOneToAbstractManyParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractManyParentOfChild)
         }
         else {
           fqn1(EntityStorage::extractOneToManyParent) getterWithSetter fqn3(EntityStorage::updateOneToManyParentOfChild)
         }
       }
-      is TRef<*> -> {
-        if (owner.abstract) {
+      is ValueType.ObjRef<*> -> {
+        if (owner.openness.extendable) {
           fqn1(EntityStorage::extractOneToAbstractOneParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractOneParentOfChild)
         }
         else {

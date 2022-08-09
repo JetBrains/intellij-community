@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ModuleBasedConfiguration
@@ -26,7 +27,11 @@ import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfiguration>(JUnitConfigurationType.getInstance()) {
+class KotlinJUnitRunConfigurationProducer : LazyRunConfigurationProducer<JUnitConfiguration>() {
+    override fun getConfigurationFactory(): ConfigurationFactory {
+        return JUnitConfigurationType.getInstance().configurationFactories[0]
+    }
+
     override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return other.isProducedBy(JUnitConfigurationProducer::class.java)
                 || other.isProducedBy(AbstractPatternBasedConfigurationProducer::class.java)

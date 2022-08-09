@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
@@ -32,10 +33,8 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -48,7 +47,9 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.lang.annotation.Inherited
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.Consumer
 
 private var sharedModule: Module? = null
 
@@ -200,7 +201,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
   }
 
   private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
-  
+
   override fun before(description: Description) {
     super.before(description)
 
@@ -237,7 +238,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
 @Suppress("DEPRECATION")
 class ProjectExtension(runPostStartUpActivities: Boolean = false, preloadServices: Boolean = false) : ApplicationExtension() {
   private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null)
-  
+
   override fun beforeAll(context: ExtensionContext) {
     super.beforeAll(context)
     projectObject.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
@@ -485,6 +486,26 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
                                 loadComponentState: Boolean = false,
                                 useDefaultProjectSettings: Boolean = true,
                                 task: suspend (Project) -> Unit) {
+  var options = createTestOpenProjectOptions().copy(
+    useDefaultProjectAsTemplate = useDefaultProjectSettings,
+    isNewProject = projectCreator == null
+  )
+  if (loadComponentState) {
+    options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
+  }
+  createOrLoadProject(tempDirManager = tempDirManager,
+                      projectCreator = projectCreator,
+                      directoryBased = directoryBased,
+                      options = options,
+                      task = task)
+}
+
+suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
+                                projectCreator: ((VirtualFile) -> Path)? = null,
+                                directoryBased: Boolean = true,
+                                loadComponentState: Boolean = false,
+                                options: OpenProjectTask,
+                                task: suspend (Project) -> Unit) {
   val file = if (projectCreator == null) {
     tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = false)
   }
@@ -497,22 +518,13 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     }
   }
 
-  createOrLoadProject(file, useDefaultProjectSettings, projectCreator == null, loadComponentState, task)
+  createOrLoadProject(projectPath = file, loadComponentState = loadComponentState, options = options, task = task)
 }
 
 private suspend fun createOrLoadProject(projectPath: Path,
-                                        useDefaultProjectSettings: Boolean,
-                                        isNewProject: Boolean,
                                         loadComponentState: Boolean,
+                                        options: OpenProjectTask,
                                         task: suspend (Project) -> Unit) {
-  var options = createTestOpenProjectOptions().copy(
-    useDefaultProjectAsTemplate = useDefaultProjectSettings,
-    isNewProject = isNewProject
-  )
-  if (loadComponentState) {
-    options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
-  }
-
   ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!.useProjectAsync { project ->
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
@@ -526,22 +538,25 @@ private suspend fun createOrLoadProject(projectPath: Path,
 }
 
 suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
-  createOrLoadProject(projectPath = projectPath,
-                      useDefaultProjectSettings = false,
-                      isNewProject = false,
-                      loadComponentState = true,
-                      task = task)
+  val options = createTestOpenProjectOptions()
+    .copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
+  createOrLoadProject(projectPath = projectPath, loadComponentState = true, options = options, task = task)
 }
 
 /**
  * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
  */
-fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
+suspend fun loadProjectAndCheckResults(projectPaths: List<Path>,
+                                       tempDirectory: TemporaryDirectory,
+                                       beforeOpen: Consumer<Project>? = null,
+                                       checkProject: suspend (Project) -> Unit) {
   fun copyProjectFiles(targetDir: VirtualFile): Path {
     val projectDir = targetDir.toNioPath()
     var projectFileName: String? = null
     for (projectPath in projectPaths) {
-      val dir = if (projectPath.isDirectory()) projectPath
+      val dir = if (Files.isDirectory(projectPath)) {
+        projectPath
+      }
       else {
         projectFileName = projectPath.fileName.toString()
         projectPath.parent
@@ -549,14 +564,20 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
       FileUtil.copyDir(dir.toFile(), projectDir.toFile())
     }
     VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
-    return if (projectFileName != null) projectDir.resolve(projectFileName) else projectDir
+    return if (projectFileName == null) projectDir else projectDir.resolve(projectFileName)
   }
-  runBlocking {
-    createOrLoadProject(tempDirectory, ::copyProjectFiles, directoryBased = projectPaths.all { it.isDirectory() },
-                        loadComponentState = true, useDefaultProjectSettings = false) {
-      checkProject(it)
-    }
-  }
+
+  val options = createTestOpenProjectOptions(beforeOpen = beforeOpen).copy(
+    useDefaultProjectAsTemplate = false,
+    isNewProject = false,
+    beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
+  )
+  createOrLoadProject(tempDirManager = tempDirectory,
+                      projectCreator = ::copyProjectFiles,
+                      directoryBased = projectPaths.all { Files.isDirectory(it) },
+                      loadComponentState = true,
+                      options = options,
+                      task = checkProject)
 }
 
 open class DisposableRule : ExternalResource() {

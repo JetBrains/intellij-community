@@ -8,6 +8,7 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -143,7 +144,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       return true
     }
 
-
     override fun visitMethod(node: UMethod): Boolean {
       if (node.isConstructor) {
         checkImplicitCallOfSuperEmptyConstructor(node)
@@ -165,6 +165,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         LanguageLevelUtil.getLastIncompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
+      val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
+      if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
       registerError(toHighlight, sinceLanguageLevel, holder, isOnTheFly)
     }
   }
@@ -178,6 +180,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
       val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
+      val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
+      if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
       registerError(sourcePsi, sinceLanguageLevel, holder, isOnTheFly)
     }
 
@@ -188,6 +192,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val languageLevel = getEffectiveLanguageLevel(module)
       val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
       if (sinceLanguageLevel != null) {
+        val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(sourcePsi) ?: return
+        if (checkSdkLevel(sinceLanguageLevel, jdkVersion)) return
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -232,6 +238,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       return qualifiedName != null && ignored6ClassesApi.contains(qualifiedName)
     }
   }
+
+  /** Only runs in production because tests have incorrect SDKs when no mock SDK is available. */
+  private fun checkSdkLevel(sinceLanguageLevel: LanguageLevel, jdkVersion: JavaSdkVersion) =
+    sinceLanguageLevel.isAtLeast(jdkVersion.maxLanguageLevel) && !ApplicationManager.getApplication().isUnitTestMode
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
     val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {

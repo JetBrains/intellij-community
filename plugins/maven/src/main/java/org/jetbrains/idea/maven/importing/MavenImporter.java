@@ -42,10 +42,16 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
+    return getSuitableImporters(p, false);
+  }
+
+  public static List<MavenImporter> getSuitableImporters(MavenProject p, boolean isWorkspaceImport) {
     List<MavenImporter> result = null;
     Set<ModuleType<?>> moduleTypes = null;
 
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
+      if (isWorkspaceImport && importer.isMigratedToConfigurator()) continue;
+
       if (importer.isApplicable(p)) {
         if (result == null) {
           result = new ArrayList<>();
@@ -121,7 +127,11 @@ public abstract class MavenImporter {
     resolve(project, mavenProject, nativeMavenProject, embedder);
   }
 
+  /**
+   * This is 'work in progress' API and must not be used directly until further notice
+   */
   @ApiStatus.Experimental
+  @ApiStatus.Internal
   public boolean isMigratedToConfigurator() { return false; }
 
   /**

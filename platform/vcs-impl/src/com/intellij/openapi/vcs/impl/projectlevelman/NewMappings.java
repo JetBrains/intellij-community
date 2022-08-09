@@ -341,7 +341,7 @@ public final class NewMappings implements Disposable {
     try {
       if (vcs == null) return false;
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-      return rootChecker.validateRoot(vcsRoot.getPath());
+      return rootChecker.validateRoot(vcsRoot);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -409,7 +409,7 @@ public final class NewMappings implements Disposable {
                                    @NotNull Map<VirtualFile, Boolean> checkedDirs,
                                    @NotNull VirtualFile file) {
     ProgressManager.checkCanceled();
-    return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key.getPath()));
+    return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key));
   }
 
   private boolean isUnderProject(@NotNull DirectoryIndex directoryIndex, @NotNull VirtualFile f) {

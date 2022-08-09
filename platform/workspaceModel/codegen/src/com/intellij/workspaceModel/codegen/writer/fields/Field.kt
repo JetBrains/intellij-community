@@ -1,49 +1,20 @@
 package com.intellij.workspaceModel.codegen
 
-import com.intellij.workspaceModel.codegen.deft.TBoolean
-import com.intellij.workspaceModel.codegen.deft.TInt
-import com.intellij.workspaceModel.codegen.deft.TOptional
-import com.intellij.workspaceModel.codegen.deft.Field
-import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
-import java.util.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.writer.javaName
+import com.intellij.workspaceModel.codegen.writer.type
 
-val MemberOrExtField<*, *>.javaName: String
-  get() = name
-
-val MemberOrExtField<*, *>.implFieldName: String
+val ObjProperty<*, *>.implFieldName: String
   get() = when (type) {
-    is TInt, is TBoolean -> javaName
+    is ValueType.Int, is ValueType.Boolean -> javaName
 
-    is TOptional<*> -> {
-      when (type.type) {
-        is TInt, is TBoolean -> javaName
+    is ValueType.Optional<*> -> {
+      when ((type as ValueType.Optional<*>).type) {
+        is ValueType.Int, is ValueType.Boolean -> javaName
         else -> "_$javaName"
       }
     }
 
     else -> "_$javaName"
   }
-
-val Field<*, *>.suspendableGetterName: String
-  get() = "get${javaName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}"
-
-val Field<*, *>.javaMetaName: String
-  get() = if (javaName in reservedObjTypeNames) "${javaName}Field" else javaName
-
-val Field<*, *>.isOverride: Boolean
-  get() = base != null
-          || name == "parent"
-          || name == "name"
-
-val reservedObjTypeNames = mutableSetOf(
-  "factory",
-  "name",
-  "parent",
-  "inheritanceAllowed",
-  "module",
-  "fullId",
-  "structure",
-  "ival",
-  "ivar",
-  "module"
-)

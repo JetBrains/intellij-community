@@ -37,7 +37,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildStepsToSkip.addAll(listOf(
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
-    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
+    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
   ))

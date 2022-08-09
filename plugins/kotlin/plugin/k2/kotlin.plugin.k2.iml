@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api-helpers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="RUNTIME" />
@@ -79,5 +78,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
   </component>
 </module>

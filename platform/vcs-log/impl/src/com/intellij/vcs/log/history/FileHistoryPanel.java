@@ -102,12 +102,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return Unit.INSTANCE;
       });
     });
-    myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this,
                                                     new VcsLogColorManagerImpl(Collections.singleton(myRoot)));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
+    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, 0),
                                                                 logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
@@ -116,6 +115,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
 
     JComponent actionsToolbar = createActionsToolbar();
+    actionsToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {

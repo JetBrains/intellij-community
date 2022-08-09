@@ -49,7 +49,7 @@ class SimplePropertiesInStorageTest {
     val original = builder.addSampleEntity("hello")
     val modified = builder.modifyEntity(original) {
       stringProperty = "foo"
-      stringListProperty = stringListProperty + "first"
+      stringListProperty.add("first")
       booleanProperty = true
       fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }

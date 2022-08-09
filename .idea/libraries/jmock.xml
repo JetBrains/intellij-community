@@ -1,15 +1,10 @@
 <component name="libraryTable">
-  <library name="jmock">
+  <library name="jmock" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jmock:jmock:2.5.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jmock/jmock/2.5.1/jmock-2.5.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

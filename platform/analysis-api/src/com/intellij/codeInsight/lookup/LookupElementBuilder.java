@@ -380,7 +380,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     if (myRenderer != null) {
       myRenderer.renderElement(this, presentation);
     }

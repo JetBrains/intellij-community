@@ -61,7 +61,7 @@ fun dumpCoroutines(): String? {
  * but [CoroutineInfo.lastObservedStackTrace] doesn't enhance the trace with dump of last thread,
  * which is crucial for detecting stuck [runBlocking] coroutines.
  */
-fun dumpCoroutines(out: PrintStream) {
+private fun dumpCoroutines(out: PrintStream) {
   val jobTree = jobTree().toList()
   for ((job: Job, info: DebugCoroutineInfo?, level: Int) in jobTree) {
     if (level == 0) {

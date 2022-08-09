@@ -2,6 +2,7 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -61,7 +62,11 @@ class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interp
     val module = ModuleUtil.findModuleForFile(file, project) ?: return
 
     val dataContext = e.dataContext
-    PySdkPopupFactory(project, module).createPopup(dataContext)?.showInBestPositionFor(dataContext)
+    PySdkPopupFactory(project, module).createPopup(dataContext).showInBestPositionFor(dataContext)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

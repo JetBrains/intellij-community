@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -Xopt-in=kotlin.time.ExperimentalTime" />
+          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=kotlin.time.ExperimentalTime" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />
@@ -28,8 +28,6 @@
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.performanceTesting.commands" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.performancePlugin.extended.maven.commands" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.performancePlugin.extended.gradle.commands" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />

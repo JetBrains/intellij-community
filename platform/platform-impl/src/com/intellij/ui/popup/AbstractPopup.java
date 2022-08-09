@@ -9,6 +9,7 @@ import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -1099,6 +1100,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     final String data = getUserData(String.class);
     final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
     myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
+
+    if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+      PopupCornerType cornerType = getUserData(PopupCornerType.class);
+      if (cornerType == null) {
+        cornerType = PopupCornerType.RoundedWindow;
+      }
+      if (cornerType != PopupCornerType.None) {
+        JBValue radius =
+          cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
+        myContent.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(radius.getFloat()));
+        myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+      }
+    }
 
     myWindow = window;
     if (myNormalWindowLevel) {

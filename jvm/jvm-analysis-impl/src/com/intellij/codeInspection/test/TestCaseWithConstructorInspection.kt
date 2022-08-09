@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -29,7 +30,7 @@ private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder)
   override fun visitInitializer(node: UClassInitializer): Boolean {
     if (node.isStatic) return true
     val containingClass = node.castSafelyTo<UClassInitializerEx>()?.javaPsi?.containingClass ?: return true
-    if (!TestUtils.isTestClass(containingClass)) return true
+    if (!TestFrameworks.getInstance().isTestClass(containingClass)) return true
     if (MethodUtils.isTrivial(node)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.test.case.with.constructor.problem.descriptor.initializer")
     holder.registerUProblem(node, message)
@@ -40,7 +41,7 @@ private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder)
     val method = node.javaPsi
     if (!node.isConstructor) return true
     val containingClass = method.containingClass ?: return true
-    if (!TestUtils.isTestClass(containingClass)) return true
+    if (!TestFrameworks.getInstance().isTestClass(containingClass)) return true
     if (TestUtils.isParameterizedTest(containingClass)) return true
     if (MethodUtils.isTrivial(node, ::isAssignmentToFinalField)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.test.case.with.constructor.problem.descriptor")

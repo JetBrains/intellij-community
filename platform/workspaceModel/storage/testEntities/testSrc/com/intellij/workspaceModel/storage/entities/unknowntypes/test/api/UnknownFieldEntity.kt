@@ -13,27 +13,28 @@ import org.jetbrains.deft.Type
 
 interface UnknownFieldEntity : WorkspaceEntity {
   val data: Date
+
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: UnknownFieldEntity, ModifiableWorkspaceEntity<UnknownFieldEntity>, ObjBuilder<UnknownFieldEntity> {
-      override var data: Date
-      override var entitySource: EntitySource
+  interface Builder : UnknownFieldEntity, ModifiableWorkspaceEntity<UnknownFieldEntity>, ObjBuilder<UnknownFieldEntity> {
+    override var data: Date
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<UnknownFieldEntity, Builder>() {
-      operator fun invoke(data: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownFieldEntity {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<UnknownFieldEntity, Builder>() {
+    operator fun invoke(data: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownFieldEntity {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: UnknownFieldEntity, modification: UnknownFieldEntity.Builder.() -> Unit) = modifyEntity(UnknownFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: UnknownFieldEntity, modification: UnknownFieldEntity.Builder.() -> Unit) = modifyEntity(
+  UnknownFieldEntity.Builder::class.java, entity, modification)
 //endregion

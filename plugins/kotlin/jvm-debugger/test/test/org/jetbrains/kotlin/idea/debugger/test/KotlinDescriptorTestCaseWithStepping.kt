@@ -30,8 +30,8 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker

@@ -696,7 +696,6 @@ public class JoiningMigration extends BaseStreamApiMigration {
        * @param firstAppendSuccessor - statement before which expected prefix append and possibly some declarations used in loop
        * @param targetBuilder - string builder used
        * @param possibleVariablesBeforeLoop - variable, which declarations that can be before loop
-       * @param allowedReferencePlaces
        * @return prefix and suffix data
        */
       @Nullable

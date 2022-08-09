@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
@@ -28,12 +29,11 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
-import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -87,7 +87,7 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path)
     if (repository == null) return null
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, fileRevision.revisionNumber.asString()) }
@@ -105,7 +105,7 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, commit.hash.asString()) }
@@ -118,7 +118,7 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val changeListManager = ChangeListManager.getInstance(project)
@@ -244,7 +244,7 @@ object GHPathUtil {
       builder.append(path.toUrl()).append("/tree/").append(branch)
     }
     else {
-      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URLUtil.encodePath(relativePath))
     }
 
     if (editor != null && editor.document.lineCount >= 1) {

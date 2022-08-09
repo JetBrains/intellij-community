@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.SUSPEND_LAMBDA_CLASSES
+import org.jetbrains.kotlin.idea.debugger.base.util.SUSPEND_LAMBDA_CLASSES
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread

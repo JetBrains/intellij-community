@@ -1,4 +1,4 @@
-// "Move switch branch 'Integer i' before 'Number n'" "true"
+// "Move switch branch 'Integer i' before 'Number n'" "true-preview"
 class Main {
   void test(Object o) {
     switch (o) {

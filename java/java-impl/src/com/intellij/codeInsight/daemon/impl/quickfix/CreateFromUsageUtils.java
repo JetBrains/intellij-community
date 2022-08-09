@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -1013,8 +1014,11 @@ public final class CreateFromUsageUtils {
     public LookupElement @NotNull [] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+      Editor editor = context.getEditor();
+      assert editor != null;
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
       Set<String> parameterNames = getPeerNames(elementAt);

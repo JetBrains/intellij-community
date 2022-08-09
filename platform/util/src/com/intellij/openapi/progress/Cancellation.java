@@ -68,4 +68,33 @@ public final class Cancellation {
       throw e.getCause();
     }
   }
+
+  /**
+   * {@code true} if running in non-cancelable section started with {@link #computeInNonCancelableSection)} in this thread,
+   * otherwise {@code false}
+   */
+  // do not supply initial value to conserve memory
+  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>();
+
+  public static boolean isInNonCancelableSection() {
+    return isInNonCancelableSection.get() != null;
+  }
+
+  public static <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
+    try {
+      if (isInNonCancelableSection()) {
+        return computable.compute();
+      }
+      try {
+        isInNonCancelableSection.set(Boolean.TRUE);
+        return computable.compute();
+      }
+      finally {
+        isInNonCancelableSection.remove();
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
+    }
+  }
 }

@@ -360,8 +360,7 @@ public class JpsOutputLoaderManager {
       long contextInitializationTime = System.currentTimeMillis() - startTime;
       LOG.info("Time spend to context initialization: " + contextInitializationTime);
       CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
-      long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
-                                                                       compilationScope);
+      long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, t -> compilationScope.isAffected(t));
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
       if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
         LOG.info("Project rebuild enabled, caches will not be download");

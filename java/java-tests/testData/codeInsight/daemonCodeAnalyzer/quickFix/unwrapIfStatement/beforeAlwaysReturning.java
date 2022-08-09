@@ -1,4 +1,4 @@
-// "Unwrap 'if' statement" "true"
+// "Unwrap 'if' statement" "true-preview"
 class X {
     boolean f(int[] a) {
         if (a.length == 0) return false;

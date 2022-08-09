@@ -4,6 +4,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -17,31 +18,31 @@ interface SampleEntity2 : WorkspaceEntity {
   val optionalData: String?
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: SampleEntity2, ModifiableWorkspaceEntity<SampleEntity2>, ObjBuilder<SampleEntity2> {
-      override var data: String
-      override var entitySource: EntitySource
-      override var boolData: Boolean
-      override var optionalData: String?
+  interface Builder : SampleEntity2, ModifiableWorkspaceEntity<SampleEntity2>, ObjBuilder<SampleEntity2> {
+    override var data: String
+    override var entitySource: EntitySource
+    override var boolData: Boolean
+    override var optionalData: String?
   }
-  
-  companion object: Type<SampleEntity2, Builder>() {
-      operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          builder.boolData = boolData
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<SampleEntity2, Builder>() {
+    operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
+      val builder = builder()
+      builder.data = data
+      builder.boolData = boolData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit) = modifyEntity(SampleEntity2.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit) = modifyEntity(
+  SampleEntity2.Builder::class.java, entity, modification)
 //endregion
 
 interface VFUEntity2 : WorkspaceEntity {
@@ -51,31 +52,35 @@ interface VFUEntity2 : WorkspaceEntity {
   val notNullRoots: List<VirtualFileUrl>
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: VFUEntity2, ModifiableWorkspaceEntity<VFUEntity2>, ObjBuilder<VFUEntity2> {
-      override var data: String
-      override var entitySource: EntitySource
-      override var filePath: VirtualFileUrl?
-      override var directoryPath: VirtualFileUrl
-      override var notNullRoots: List<VirtualFileUrl>
+  interface Builder : VFUEntity2, ModifiableWorkspaceEntity<VFUEntity2>, ObjBuilder<VFUEntity2> {
+    override var data: String
+    override var entitySource: EntitySource
+    override var filePath: VirtualFileUrl?
+    override var directoryPath: VirtualFileUrl
+    override var notNullRoots: MutableList<VirtualFileUrl>
   }
-  
-  companion object: Type<VFUEntity2, Builder>() {
-      operator fun invoke(data: String, directoryPath: VirtualFileUrl, notNullRoots: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): VFUEntity2 {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          builder.directoryPath = directoryPath
-          builder.notNullRoots = notNullRoots
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<VFUEntity2, Builder>() {
+    operator fun invoke(data: String,
+                        directoryPath: VirtualFileUrl,
+                        notNullRoots: List<VirtualFileUrl>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): VFUEntity2 {
+      val builder = builder()
+      builder.data = data
+      builder.directoryPath = directoryPath
+      builder.notNullRoots = notNullRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(VFUEntity2.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(
+  VFUEntity2.Builder::class.java, entity, modification)
 //endregion

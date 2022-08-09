@@ -41,6 +41,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
 
   private val foundBinaries: MutableSet<String> = HashSet()
 
+  @Deprecated("There should be no difference in your code between local and remote")
   private fun isLocalTarget() = targetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {
@@ -93,6 +94,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter(myTargetModulePath)
         }
       }
+      // TODO: Unify code
       if (!isLocalTarget()) {
         val existingStateFile = Paths.get(skeletonsPath) / STATE_MARKER_FILE
         if (existingStateFile.exists()) {

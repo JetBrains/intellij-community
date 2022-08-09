@@ -2,12 +2,16 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyGenericType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyClassVarInspection : PyInspection() {
@@ -27,6 +31,14 @@ class PyClassVarInspection : PyInspection() {
         }
         else {
           checkClassVarDeclaration(node)
+        }
+      }
+      if (node.isClassVar()) {
+        val typeExpression = node.typeCommentAnnotation?.let { toExpression(it, node) }
+                             ?: node.annotation?.value
+
+        if (typeExpression != null) {
+          checkDoesNotIncludeTypeVars(typeExpression, node.typeComment)
         }
       }
     }
@@ -102,6 +114,39 @@ class PyClassVarInspection : PyInspection() {
           return
         }
       }
+    }
+
+    private fun checkDoesNotIncludeTypeVars(expression: PyExpression?, typeComment: PsiComment?): Boolean {
+      var element = expression
+
+      while (element is PySubscriptionExpression) {
+        element = element.indexExpression
+      }
+
+      when (element) {
+        is PyTupleExpression -> {
+          element.forEach { tupleElement ->
+            val reported = checkDoesNotIncludeTypeVars(tupleElement, typeComment)
+            if (reported && typeComment != null) {
+              return true
+            }
+          }
+        }
+        is PyReferenceExpression -> {
+          val type = PyTypingTypeProvider.getType(element, myTypeEvalContext)?.get()
+          if (type is PyGenericType) {
+            registerProblem(typeComment ?: element,
+                            PyPsiBundle.message("INSP.class.var.can.not.include.type.variables"))
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    private fun toExpression(contents: String, anchor: PsiElement): PyExpression? {
+      val file = FileContextUtil.getContextFile(anchor) ?: return null
+      return PyUtil.createExpressionFromFragment(contents, file)
     }
 
     private fun PyTargetExpression.hasExplicitType(): Boolean =

@@ -5,7 +5,6 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -17,10 +16,8 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
   @Override
   protected void setUp() throws Exception {
     // test for workspace 'tree' importer are moved to the corresponding test classes (FoldersImportingTest, DependenciesImportingTest etc)
-    Assume.assumeFalse(MavenProjectImporter.isImportToWorkspaceModelEnabled());
-
+    Assume.assumeTrue(MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject));
     super.setUp();
-    MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
   }
 
   @Test

@@ -128,7 +128,9 @@ class OpenProjectTaskBuilder internal constructor() {
   var projectToClose: Project? = null
   var isRefreshVfsNeeded: Boolean = true
 
+  @Internal
   var beforeOpen: (suspend (Project) -> Boolean)? = null
+  @Internal
   var beforeInit: ((Project) -> Unit)? = null
   var preparedToOpen: (suspend (Module) -> Unit)? = null
   var callback: ProjectOpenedCallback? = null

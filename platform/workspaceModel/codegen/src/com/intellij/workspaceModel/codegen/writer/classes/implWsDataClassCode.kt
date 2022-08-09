@@ -1,59 +1,56 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.classes
 
-import com.intellij.workspaceModel.codegen.InterfaceTraverser
-import com.intellij.workspaceModel.codegen.InterfaceVisitor
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
+import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
+import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.fqn7
+import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.implFieldName
-import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.javaImplBuilderName
-import com.intellij.workspaceModel.codegen.javaImplName
-import org.jetbrains.deft.Obj
-import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
-import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.sups
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.model.WsEntityWithPersistentId
-import com.intellij.workspaceModel.codegen.utils.LinesBuilder
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.TOptional
-import com.intellij.workspaceModel.codegen.deft.ValueType
-import com.intellij.workspaceModel.codegen.deft.Field
-import org.jetbrains.kotlin.utils.addToStdlib.popLast
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 
 /**
  * - Soft links
  * - with PersistentId
  */
 
-val ObjType<*, *>.javaDataName
+val ObjClass<*>.javaDataName
   get() = "${name.replace(".", "")}Data"
 
-val ObjType<*, *>.isEntityWithPersistentId: Boolean
-  get() = (this as? DefType)?.def?.kind is WsEntityWithPersistentId
+val ObjClass<*>.isEntityWithPersistentId: Boolean
+  get() = superTypes.any { 
+    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName
+    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
+  }
 
-fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
+fun ObjClass<*>.implWsDataClassCode(): String {
   val entityDataBaseClass = if (isEntityWithPersistentId) {
     "${WorkspaceEntityData::class.fqn}.WithCalculablePersistentId<$javaFullName>()"
   }
   else {
     "${WorkspaceEntityData::class.fqn}<$javaFullName>()"
   }
-  val hasSoftLinks = hasSoftLinks(simpleTypes)
+  val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
   return lines {
-    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@{
-      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
+    section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
+      listNl(allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
 
-      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
+      listNl(allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
-      softLinksCode(this@label, hasSoftLinks, simpleTypes)
+      this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
 
       sectionNl(
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
@@ -71,9 +68,15 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       // --- createEntity
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         line("val entity = $javaImplName()")
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           if (hasSetter) {
-            "entity.$implFieldName = $name"
+            if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
+              "entity.$implFieldName = $name.toSet()"
+            } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
+              "entity.$implFieldName = $name.toList()"
+            } else {
+              "entity.$implFieldName = $name"
+            }
           } else {
             "entity.$name = $name"
           }
@@ -84,10 +87,27 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return entity")
       }
 
+      val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*, *> }
+      if (collectionFields.isNotEmpty()) {
+        sectionNl("override fun clone(): $javaDataName") {
+          val fieldName = "clonedEntity"
+          line("val $fieldName = super.clone()")
+          line("$fieldName as $javaDataName")
+          collectionFields.forEach { field ->
+            if (field.valueType is ValueType.Set<*>) {
+              line("$fieldName.${field.name} = $fieldName.${field.name}.${fqn7(Collection<*>::toMutableWorkspaceSet)}()")
+            } else {
+              line("$fieldName.${field.name} = $fieldName.${field.name}.${fqn7(Collection<*>::toMutableWorkspaceList)}()")
+            }
+          }
+          line("return $fieldName")
+        }
+      }
+
       if (isEntityWithPersistentId) {
-        val persistentIdField = structure.declaredFields.first { it.name == "persistentId" }
-        assert(persistentIdField.hasDefault == Field.Default.plain)
-        val methodBody = persistentIdField.defaultValue!!
+        val persistentIdField = fields.first { it.name == "persistentId" }
+        val valueKind = persistentIdField.valueKind
+        val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
         if (methodBody.contains("return")) {
           if (methodBody.startsWith("{")) {
             line("override fun persistentId(): ${PersistentEntityId::class.fqn}<*> $methodBody \n")
@@ -121,6 +141,38 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
+      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity::class.fqn}>): ${WorkspaceEntity::class.fqn}") {
+        val noRefs = allFields.noRefs().noPersistentId()
+        val mandatoryFields = allFields.mandatoryFields()
+        val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
+        val optionalFields = noRefs.filterNot { it in mandatoryFields }
+
+        section("return $javaFullName$constructor") {
+          optionalFields.forEach {
+            line("this.${it.name} = this@$javaDataName.${it.name}")
+          }
+          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
+            val parentType = it.type
+            if (parentType is ValueType.Optional) {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+            } else {
+              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
+            }
+          }
+        }
+      }
+
+      sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
+        line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
+        allRefsFields.filterNot { it.type.getRefType().child }.forEach {
+          val parentType = it.type
+          if (parentType !is ValueType.Optional) {
+            line("res.add(${parentType.javaType}::class.java)")
+          }
+        }
+        line("return res")
+      }
+
       // --- equals
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
@@ -128,7 +180,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
         lineWrapped("other as $javaDataName")
 
-        list(structure.allFields.noRefs().noPersistentId()) {
+        list(allFields.noRefs().noPersistentId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -142,7 +194,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
         lineWrapped("other as $javaDataName")
 
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -152,7 +204,16 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       // --- hashCode
       section("override fun hashCode(): Int") {
         line("var result = entitySource.hashCode()")
-        list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
+          "result = 31 * result + $name.hashCode()"
+        }
+        line("return result")
+      }
+
+      // --- hashCodeIgnoringEntitySource
+      section("override fun hashCodeIgnoringEntitySource(): Int") {
+        line("var result = javaClass.hashCode()")
+        list(allFields.noRefs().noEntitySource().noPersistentId()) {
           "result = 31 * result + $name.hashCode()"
         }
         line("return result")
@@ -161,245 +222,8 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
   }
 }
 
-class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
-  private val builders: ArrayDeque<LinesBuilder> = ArrayDeque<LinesBuilder>().also { it.add(linesBuilder) }
-  private val builder: LinesBuilder
-    get() = builders.last()
-
-  private var countersCounter = 0
-
-  override fun visitBoolean(varName: String): Boolean {
-    builder.line("$varName = de.readBoolean()")
-    return true
-  }
-
-  override fun visitInt(varName: String): Boolean {
-    builder.line("$varName = de.readInt()")
-    return true
-  }
-
-  override fun visitString(varName: String): Boolean {
-    builder.line("$varName = de.readString()")
-    return true
-  }
-
-  override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
-    if (listArgumentType.isRefType()) return true
-
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
-    builders.add(sub)
-    return true
-  }
-
-  override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
-    if (listArgumentType.isRefType()) return true
-
-    val myInListBuilder = builders.popLast()
-    if (myInListBuilder.result.isNotBlank()) {
-      val varCounter = "counter" + counter()
-      val varCollector = "collector" + counter()
-      builder.line("val $varCounter = de.readInt()")
-      builder.line("val $varCollector = ArrayList<${listArgumentType.javaType}>()")
-      builder.line("var $itemVarName: ${listArgumentType.javaType}")
-      builder.line("repeat($varCounter) {")
-      myInListBuilder.line("$varCollector.add($itemVarName)")
-      builder.result.append(myInListBuilder.result)
-      builder.line("}")
-      builder.line("$varName = $varCollector")
-    }
-    return true
-  }
-
-  override fun visitMapStart(varName: String,
-                             keyVarName: String,
-                             valueVarName: String,
-                             keyType: ValueType<*>,
-                             valueType: ValueType<*>): Boolean {
-    return false
-  }
-
-  override fun visitMapEnd(varName: String,
-                           keyVarName: String,
-                           valueVarName: String,
-                           keyType: ValueType<*>,
-                           valueType: ValueType<*>,
-                           traverseResult: Boolean): Boolean {
-    return false
-  }
-
-  override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
-    if (type.isRefType()) return true
-
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
-    builders.add(sub)
-    return true
-  }
-
-  override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
-    if (type.isRefType()) return true
-
-    val popLast = builders.popLast()
-    builder.section("if (de.acceptNull())") {
-      line("$varName = null")
-    }
-    builder.section("else") {
-      if (popLast.result.isNotBlank()) {
-        line("val $notNullVarName: ${type.javaType}")
-        result.append(popLast.result)
-        line("$varName = $notNullVarName")
-      }
-    }
-    return true
-  }
-
-  override fun visitUnknownBlob(varName: String, javaSimpleName: String): Boolean {
-    return false
-  }
-
-  override fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean {
-    return false
-  }
-
-  override fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean {
-    return false
-  }
-
-  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  private fun counter(): Int {
-    return countersCounter++
-  }
-}
-
-class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeque<LinesBuilder>) : InterfaceVisitor {
-
-  constructor(linesBuilder: LinesBuilder) : this(ArrayDeque<LinesBuilder>().also { it.add(linesBuilder) })
-
-  val builder: LinesBuilder
-    get() = linesBuilder.last()
-
-  override fun visitBoolean(varName: String): Boolean {
-    builder.line("ser.saveBoolean($varName)")
-    return true
-  }
-
-  override fun visitInt(varName: String): Boolean {
-    builder.line("ser.saveInt($varName)")
-    return true
-  }
-
-  override fun visitString(varName: String): Boolean {
-    builder.line("ser.saveString($varName)")
-    return true
-  }
-
-  override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
-    if (listArgumentType.isRefType()) return true
-
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
-    linesBuilder.add(sub)
-    return true
-  }
-
-  override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
-    if (listArgumentType.isRefType()) return true
-
-    val myInListBuilder = linesBuilder.popLast()
-    if (myInListBuilder.result.isNotBlank()) {
-      builder.line("ser.saveInt($varName.size)")
-      builder.line("for ($itemVarName in $varName) {")
-      builder.result.append(myInListBuilder.result)
-      builder.line("}")
-    }
-    return true
-  }
-
-  override fun visitMapStart(varName: String,
-                             keyVarName: String,
-                             valueVarName: String,
-                             keyType: ValueType<*>,
-                             valueType: ValueType<*>): Boolean {
-    if (keyType.isRefType() || valueType.isRefType()) return true
-
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
-    linesBuilder.add(sub)
-    return true
-  }
-
-  override fun visitMapEnd(varName: String,
-                           keyVarName: String,
-                           valueVarName: String,
-                           keyType: ValueType<*>,
-                           valueType: ValueType<*>,
-                           traverseResult: Boolean): Boolean {
-    if (keyType.isRefType() || valueType.isRefType()) return true
-
-    val inMapBuilder = linesBuilder.popLast()
-    if (inMapBuilder.result.isNotBlank()) {
-      builder.line("ser.saveInt($varName.size)")
-      builder.line("for (($keyVarName, $valueVarName) in $varName) {")
-      builder.result.append(inMapBuilder.result)
-      builder.line("}")
-    }
-    return true
-  }
-
-  override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
-    if (type.isRefType()) return true
-
-    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
-    linesBuilder.add(sub)
-    return true
-  }
-
-  override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
-    if (type.isRefType()) return true
-
-    val inMapBuilder = linesBuilder.popLast()
-    if (inMapBuilder.result.isNotBlank()) {
-      builder.line("val $notNullVarName = $varName")
-      builder.line("if ($notNullVarName != null) {")
-      builder.result.append(inMapBuilder.result)
-      builder.line("} else {")
-      builder.line("    ser.saveNull()")
-      builder.line("}")
-    }
-    return true
-  }
-
-  override fun visitUnknownBlob(varName: String, javaSimpleName: String): Boolean {
-    if (javaSimpleName == "EntitySource") return true
-    builder.line("ser.saveBlob($varName, \"$javaSimpleName\")")
-    return true
-  }
-
-  override fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean {
-    return true
-  }
-
-  override fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean {
-    return true
-  }
-
-  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
-    TODO("Not yet implemented")
-  }
-}
-
-fun List<Field<out Obj, Any?>>.noRefs(): List<Field<out Obj, Any?>> = this.filterNot { it.type.isRefType() }
-fun List<Field<out Obj, Any?>>.noEntitySource() = this.filter { it.name != "entitySource" }
-fun List<Field<out Obj, Any?>>.noPersistentId() = this.filter { it.name != "persistentId" }
-fun List<Field<out Obj, Any?>>.noOptional() = this.filter { it.type !is TOptional<*> }
-fun List<Field<out Obj, Any?>>.noDefaultValue() = this.filter { it.defaultValue == null }
-fun List<Field<out Obj, Any?>>.noId() = this.filter { it.name != "id" }
-fun List<Field<out Obj, Any?>>.noSnapshot() = this.filter { it.name != "snapshot" }
+fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
+fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
+fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
+fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
+fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }

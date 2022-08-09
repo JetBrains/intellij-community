@@ -112,7 +112,7 @@ public class LanguageLevelUtil {
    * @param languageLevel The effective language level
    * @return The last compatible language level for a {@link PsiMember} as annotated by the @since javadoc
    */
-  public static LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
+  public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;

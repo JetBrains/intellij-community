@@ -34,7 +34,6 @@ public enum DfaHint {
 
   /**
    * Merges two states for the same code location
-   * @param other
    * @return merged state
    */
   @NotNull

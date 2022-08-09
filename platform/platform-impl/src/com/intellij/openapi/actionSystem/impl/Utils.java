@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.*;
@@ -61,6 +63,7 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class Utils {
+  private static final Key<Boolean> IS_MODAL_CONTEXT = Key.create("Component.isModalContext");
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
@@ -592,6 +595,38 @@ public final class Utils {
     return icon != null && icon != ActionMenuItem.EMPTY_ICON;
   }
 
+  /**
+   * Check if the {@code component} represents a modal context in a general sense,
+   * i.e., whether any of its parents is either a modal {@link Window}
+   * or explicitly marked to be treated like a modal context.
+   * @see Utils#markAsModalContext(JComponent, Boolean)
+   */
+  @ApiStatus.Internal
+  public static boolean isModalContext(@NotNull Component component) {
+    Boolean implicitValue = IdeKeyEventDispatcher.isModalContextOrNull(component);
+    if (implicitValue != null) {
+      return implicitValue;
+    }
+    do {
+      Boolean explicitValue = ClientProperty.get(component, IS_MODAL_CONTEXT);
+      if (explicitValue != null) {
+        return explicitValue;
+      }
+      component = component.getParent();
+    } while (component != null);
+    return true;
+  }
+
+  /**
+   * Mark the {@code component} to be treated like a modal context (or not) when it cannot be deduced implicitly from UI hierarchy.
+   * @param isModalContext {@code null} to clear a mark, to set a new one otherwise.
+   * @see Utils#isModalContext(Component)
+   */
+  @ApiStatus.Internal
+  public static void markAsModalContext(@NotNull JComponent component, @Nullable Boolean isModalContext) {
+    ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext);
+  }
+
   public static @NotNull UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
     UpdateSession updater = e.getUpdateSession();
     if (updater == null) {
@@ -698,7 +733,7 @@ public final class Utils {
     List<ActionPromoter> promoters = ContainerUtil.concat(
       ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
     for (ActionPromoter promoter : promoters) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
         List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
         if (promoted != null && !promoted.isEmpty()) {
           actions.removeAll(promoted);

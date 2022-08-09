@@ -287,7 +287,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public void checkPreviewAndInvoke(@NotNull IntentionAction action, String previewFilePath) {
+      public void checkPreviewAndInvoke(@NotNull IntentionAction action, @NotNull String previewFilePath) {
         // Run in background thread to catch accidental write-actions during preview generation
         String previewContent;
         try {
@@ -303,6 +303,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         if (Files.exists(path)) {
           assertSameLinesWithFile(path.toString(), previewContent);
         } else {
+          if (previewContent.isEmpty()) {
+            fail("No preview was generated for '" + action.getText() + "'");
+          }
           assertEquals(getFile().getText(), previewContent);
         }
       }

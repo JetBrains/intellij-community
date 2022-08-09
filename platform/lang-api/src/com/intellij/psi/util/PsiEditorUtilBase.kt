@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.logger
@@ -36,6 +37,9 @@ object PsiEditorUtilBase : PsiEditorUtil {
    */
   override fun findEditorByPsiElement(element: PsiElement): Editor? {
     val psiFile = element.containingFile
+    if (IntentionPreviewUtils.isPreviewElement(psiFile)) {
+      return IntentionPreviewUtils.getPreviewEditor()
+    }
     val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
     val project = psiFile.project
     if (virtualFile.isInLocalFileSystem || virtualFile.fileSystem is NonPhysicalFileSystem) { // Try to find editor for the real file.

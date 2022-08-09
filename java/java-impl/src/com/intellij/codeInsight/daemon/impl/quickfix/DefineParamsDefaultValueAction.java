@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
@@ -124,7 +125,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       return;
     }
 
-    if (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(element)) return;
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);

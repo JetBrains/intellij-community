@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
@@ -79,4 +80,5 @@ object TraceManager {
    * We do not provide default tracer - we enforce using of separate scopes for subsystems.
    */
   fun getTracer(scopeName: String): Tracer = sdk.getTracer(scopeName)
+  fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
 }

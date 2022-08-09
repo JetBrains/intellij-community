@@ -24,6 +24,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
 
@@ -1765,6 +1766,14 @@ public final class UIUtil {
   public static boolean isActionClick(@NotNull MouseEvent e, int effectiveType, boolean allowShift) {
     if (!allowShift && isCloseClick(e) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON1;
+  }
+
+  /**
+   * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
+   */
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  public static int getAllModifiers(@NotNull InputEvent event) {
+    return event.getModifiers() | event.getModifiersEx();
   }
 
   public static @NotNull Color getBgFillColor(@NotNull Component c) {

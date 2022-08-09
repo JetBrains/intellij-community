@@ -169,7 +169,6 @@ public interface IFilterEditor {
      * <p>It also affects to how the content is rendered<br>
      * If not null, the content cannot be text-edited anymore</p>
      *
-     * @param  renderer
      */
     void setRenderer(ChoiceRenderer renderer);
 

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 3)
+    val GROUP = EventLogGroup("maven.import", 4)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -25,7 +25,10 @@ class MavenImportCollector : CounterUsagesCollector() {
     val TOTAL_DURATION_MS = EventFields.Long("total_duration_ms")
 
     @JvmField
-    val CONFIG_MODULES_DURATION_MS = EventFields.Long("config_duration_ms")
+    val COLLECT_FOLDERS_DURATION_MS = EventFields.Long("collect_folders_duration_ms")
+
+    @JvmField
+    val CONFIG_MODULES_DURATION_MS = EventFields.Long("config_modules_duration_ms")
 
     @JvmField
     val BEFORE_APPLY_DURATION_MS = EventFields.Long("before_apply_duration_ms")
@@ -47,6 +50,7 @@ class MavenImportCollector : CounterUsagesCollector() {
                                                      CONFIGURATOR_CLASS,
                                                      NUMBER_OF_MODULES,
                                                      TOTAL_DURATION_MS,
+                                                     COLLECT_FOLDERS_DURATION_MS,
                                                      CONFIG_MODULES_DURATION_MS,
                                                      BEFORE_APPLY_DURATION_MS,
                                                      AFTER_APPLY_DURATION_MS)

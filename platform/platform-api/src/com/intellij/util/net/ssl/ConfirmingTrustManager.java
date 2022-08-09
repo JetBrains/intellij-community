@@ -186,7 +186,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     UntrustedCertificateStrategy initialStrategy = myUntrustedCertificateStrategy.get();
     if (initialStrategy != null) {
       block.consume(new UntrustedCertificateStrategyWithReason(initialStrategy, null));
-    } else {
+    }
+    else {
       UntrustedCertificateStrategyWithReason strategy = ApplicationManager.getApplication().getService(InitialUntrustedCertificateStrategyProvider.class).getStrategy();
       block.consume(strategy);
     }
@@ -248,19 +249,25 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
     boolean accepted = false;
     if (parameters.myAskUser) {
-      if (parameters.myAskUserReason != null) {
-        LOG.info(parameters.myAskUserReason);
+
+      String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
+                       ", issuer: " + endPoint.getIssuerDN().toString();
+      if (parameters.myAskOrRejectReason != null) {
+        acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
-      LOG.info("Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
-               ", issuer: " + endPoint.getIssuerDN().toString());
+      LOG.info(acceptLogMessage);
       accepted = CertificateManager.Companion.showAcceptDialog(() -> {
         // TODO may be another kind of warning, if default trust store is missing
         return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
       });
-    } else {
-      if (parameters.myAskUserReason != null) {
-        LOG.warn(parameters.myAskUserReason);
+    }
+    else {
+      String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectDN().toString() +
+                       ", issuer: " + endPoint.getIssuerDN().toString();
+      if (parameters.myAskOrRejectReason != null) {
+        rejectLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
+      LOG.warn(rejectLogMessage);
     }
     if (accepted) {
       LOG.info("Certificate was accepted by user");
@@ -384,6 +391,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         }
         myKeyStore.setCertificateEntry(createAlias(certificate), certificate);
         flushKeyStore();
+        LOG.info("Added certificate for '" + certificate.getSubjectDN().toString() + "' to " + myPath);
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
         myDispatcher.getMulticaster().certificateAdded(certificate);
@@ -610,7 +618,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   public static final class CertificateConfirmationParameters {
     private final boolean myAskUser;
-    private final @Nullable String myAskUserReason;
+    private final @Nullable String myAskOrRejectReason;
     private final boolean myAddToKeyStore;
     private final @Nullable @NlsContexts.DialogMessage String myCertificateDetails;
     private final @Nullable Runnable myOnUserAcceptCallback;
@@ -644,12 +652,12 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
                                               boolean addToKeyStore,
                                               @Nullable @NlsContexts.DialogMessage String certificateDetails,
                                               @Nullable Runnable onUserAcceptCallback,
-                                              @Nullable String askUserReason) {
+                                              @Nullable String askOrRejectReason) {
       myAskUser = askUser;
       myAddToKeyStore = addToKeyStore;
       myCertificateDetails = certificateDetails;
       myOnUserAcceptCallback = onUserAcceptCallback;
-      myAskUserReason = askUserReason;
+      myAskOrRejectReason = askOrRejectReason;
     }
 
     @Override

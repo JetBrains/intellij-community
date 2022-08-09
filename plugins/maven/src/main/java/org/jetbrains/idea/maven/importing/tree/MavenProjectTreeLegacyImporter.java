@@ -28,7 +28,6 @@ import static org.jetbrains.idea.maven.importing.MavenModuleType.*;
 public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectTreeLegacyImporter.class);
 
-  private final LegacyMavenProjectImportContextProvider contextProvider;
   private volatile MavenModuleImportContext myContext;
 
   public MavenProjectTreeLegacyImporter(@NotNull Project p,
@@ -39,20 +38,28 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
 
     myContext = new MavenModuleImportContext();
-    contextProvider =
-      new LegacyMavenProjectImportContextProvider(p, projectsTree, projectsToImportWithChanges, myModuleModel, importingSettings);
   }
 
+  @Nullable
   @Override
-  @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    List<MavenProjectsProcessorTask> tasks = importProjectTree();
-    return tasks;
-  }
+    LegacyMavenProjectImportContextProvider contextProvider =
+      new LegacyMavenProjectImportContextProvider(myProject, myProjectsTree, myModuleModel, myImportingSettings);
 
-  @Nullable
-  private List<MavenProjectsProcessorTask> importProjectTree() {
-    myContext = contextProvider.getContext(ContainerUtil.filter(myProjectsTree.getProjects(), it -> !myProjectsTree.isIgnored(it)));
+    Map<MavenProject, MavenProjectChanges> allProjectsWithChanges = new HashMap<>();
+
+    for (var each : myProjectsToImportWithChanges.entrySet()) {
+      if (!myProjectsTree.isIgnored(each.getKey())) {
+        allProjectsWithChanges.put(each.getKey(), each.getValue());
+      }
+    }
+    for (MavenProject eachProject : myProjectsTree.getProjects()) {
+      if (!myProjectsTree.isIgnored(eachProject) && !allProjectsWithChanges.containsKey(eachProject)) {
+        allProjectsWithChanges.put(eachProject, MavenProjectChanges.NONE);
+      }
+    }
+
+    myContext = contextProvider.getContext(allProjectsWithChanges);
     boolean hasChanges = false;
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
 
@@ -90,7 +97,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
         });
       });
 
-      configFacets(importers, postTasks, true);
+      configFacets(importers, postTasks, false);
     }
     else {
       finalizeImport(obsoleteModules);
@@ -133,7 +140,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
         MavenLegacyModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
         importers.add(moduleImporter);
 
-        if (!importData.hasChanges()) continue;
+        if (!importData.getChanges().hasChanges()) continue;
 
         MavenProject mavenProject = importData.getMavenProject();
         MavenId mavenId = mavenProject.getMavenId();

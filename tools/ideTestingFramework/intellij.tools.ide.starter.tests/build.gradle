@@ -44,9 +44,6 @@ dependencies {
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.dynamicPlugins:dynamic-plugins-performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
@@ -63,7 +60,9 @@ dependencies {
 }
 
 configurations {
-  testImplementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
+  implementation.exclude(group: 'io.ktor')
+  implementation.exclude(group: 'com.jetbrains.infra')
+  implementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
 }
 
 compileKotlin {

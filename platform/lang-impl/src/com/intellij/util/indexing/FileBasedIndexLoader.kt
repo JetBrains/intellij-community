@@ -2,11 +2,12 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.ApplicationInitializedListener
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class FileBasedIndexLoader : ApplicationInitializedListener {
-  override suspend fun execute() {
+  override suspend fun execute(asyncScope: CoroutineScope) {
     withContext(Dispatchers.IO) {
       (FileBasedIndex.getInstance() as FileBasedIndexImpl).loadIndexes()
     }

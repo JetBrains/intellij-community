@@ -22,7 +22,8 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
-    <extensionPoint name="configurator" interface="org.jetbrains.idea.maven.importing.MavenConfigurator" dynamic="true"/>
+    <extensionPoint name="importing.workspaceConfigurator" interface="org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator"
+                    dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
@@ -36,18 +37,27 @@
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
-    <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
-    <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser" dynamic="true"/>
-    <extensionPoint name="log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser" dynamic="true"/>
-    <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory" dynamic="true"/>
-    <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory" dynamic="true"/>
-    <extensionPoint name="log.import.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser" dynamic="true"/>
+    <extensionPoint name="targetConfigurationExtension"
+                    interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
+    <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint name="log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory"
+                    dynamic="true"/>
+    <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory"
+                    dynamic="true"/>
+    <extensionPoint name="log.import.parser"
+                    interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>org.jetbrains.idea.reposearch</depends>
   <depends>org.jetbrains.idea.maven.model</depends>
+  <depends>org.jetbrains.idea.maven.server.api</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
@@ -68,7 +78,6 @@
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
-    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
@@ -106,7 +115,8 @@
                     id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="messages.MavenProjectBundle"
                     nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
-                    id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="messages.MavenIndicesBundle"
+                    id="reference.settings.project.maven.repository.indices" key="maven.repositories.title"
+                    bundle="messages.MavenIndicesBundle"
                     nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable"
                     id="reference.settings.project.maven.archetype.catalogs"/>
@@ -120,7 +130,7 @@
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
-    <executionTargetLanguageRuntimeType implementation="org.jetbrains.idea.maven.execution.target.MavenRuntimeType" />
+    <executionTargetLanguageRuntimeType implementation="org.jetbrains.idea.maven.execution.target.MavenRuntimeType"/>
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher"/>
 
@@ -159,23 +169,29 @@
 
     <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
 
-    <localInspection language="XML" shortName="MavenModelInspection" bundle="messages.MavenDomBundle" key="inspection.name" groupKey="inspection.group"
+    <localInspection language="XML" shortName="MavenModelInspection" bundle="messages.MavenDomBundle" key="inspection.name"
+                     groupKey="inspection.group"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModelInspection"/>
-    <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.dependencies.name"
+    <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="messages.MavenDomBundle"
+                     key="inspection.duplicate.dependencies.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
 
-    <localInspection language="XML" shortName="MavenParentMissedVersionInspection" bundle="messages.MavenDomBundle" key="inspection.missed.parent.version"
+    <localInspection language="XML" shortName="MavenParentMissedVersionInspection" bundle="messages.MavenDomBundle"
+                     key="inspection.missed.parent.version"
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection"/>
-    <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.plugin.declaration"
+    <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle"
+                     key="inspection.duplicate.plugin.declaration"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection"/>
-    <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="messages.MavenDomBundle" key="inspection.redundant.groupId.name"
+    <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="messages.MavenDomBundle"
+                     key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
-    <localInspection language="XML" shortName="MavenPropertyInParent" bundle="messages.MavenDomBundle" key="inspection.property.in.parent.name"
+    <localInspection language="XML" shortName="MavenPropertyInParent" bundle="messages.MavenDomBundle"
+                     key="inspection.property.in.parent.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection"/>
     <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
@@ -216,10 +232,12 @@
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenExtensionCompletionContributor"/>
 
-    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.dom.references.MavenXmlPropertyPsiReferenceContributor"/>
+    <psi.referenceContributor language="XML"
+                              implementation="org.jetbrains.idea.maven.dom.references.MavenXmlPropertyPsiReferenceContributor"/>
 
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
-    <psi.referenceContributor language="Properties" implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
+    <psi.referenceContributor language="Properties"
+                              implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginParamReferenceContributor"/>
 
@@ -242,7 +260,7 @@
     <problemHighlightFilter implementation="org.jetbrains.idea.maven.utils.ArchetypeResourceHighlightFilter"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
-        implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
+      implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
 
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
@@ -270,9 +288,6 @@
 
     <registryKey key="maven.linear.import" defaultValue="false"
                  description="linear maven import process"/>
-
-    <registryKey key="maven.import.to.workspace.model" defaultValue="false"
-                 description="Enable experimental implementation of Maven import which writes to workspace model directly. Only basic features are supported for now, this mode may work incorrecly for many projects. See IDEA-284414 for details."/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -320,7 +335,8 @@
     <notificationGroup id="Maven" displayType="BALLOON" bundle="messages.MavenProjectBundle" key="notification.group.maven"/>
     <toolWindowAllowlist id="Maven"/>
     <toolWindowExtractorMode id="Maven" mode="mirror"/>
-    <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix" />
+    <compiler.buildIssueContributor
+      implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix"/>
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
 
@@ -473,15 +489,19 @@
 
     <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
+    <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
+
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
-    <configurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
-    <configurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
-    <configurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
 
@@ -496,8 +516,10 @@
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadJvmConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadConfigEventParser"/>
-    <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
-    <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
+    <log.import.parser
+      implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
+    <log.import.parser
+      implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
@@ -637,7 +659,8 @@
     <action id="Maven.ProjectViewDependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.ProjectViewDependencyAnalyzerAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
     </action>
-    <action id="Maven.DependencyAnalyzer.OpenConfig" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerOpenConfigAction">
+    <action id="Maven.DependencyAnalyzer.OpenConfig"
+            class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerOpenConfigAction">
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>

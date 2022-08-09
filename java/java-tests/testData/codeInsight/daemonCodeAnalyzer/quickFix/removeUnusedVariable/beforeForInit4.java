@@ -1,4 +1,4 @@
-// "Remove local variable 'problematic'" "true"
+// "Remove local variable 'problematic'" "true-preview"
 class C {
     Object foo() {return null;}
 

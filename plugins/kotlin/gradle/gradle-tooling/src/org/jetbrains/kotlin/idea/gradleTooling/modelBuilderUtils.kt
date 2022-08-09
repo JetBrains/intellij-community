@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Named
@@ -6,9 +6,8 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-private val kotlinSingleTargetExtensionClassNames = listOf(
+private val kotlinExtensionsImportedBySingleTarget = listOf(
     "org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension_Decorated",
-    "org.jetbrains.kotlin.gradle.dsl.KotlinJsProjectExtension_Decorated",
     "org.jetbrains.kotlin.gradle.dsl.KotlinCommonProjectExtension_Decorated",
     "org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension_Decorated",
     "org.jetbrains.kotlin.gradle.dsl.Kotlin2JsProjectExtension_Decorated",
@@ -25,7 +24,7 @@ operator fun Any?.get(methodName: String, paramTypes: List<Class<*>>, params: Li
 }
 
 fun Project.getTarget(): Named? = project.extensions.findByName("kotlin")?.let { kotlinExt ->
-    if (kotlinExt.javaClass.name in kotlinSingleTargetExtensionClassNames) kotlinExt["getTarget"] as? Named
+    if (kotlinExt.javaClass.name in kotlinExtensionsImportedBySingleTarget) kotlinExt["getTarget"] as? Named
     else null
 }
 

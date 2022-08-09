@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -373,21 +374,72 @@ public final class PyPsiUtils {
 
   @NotNull
   public static List<PsiComment> getPrecedingComments(@NotNull PsiElement element, boolean stopAtBlankLine) {
+    return getPrecedingCommentsAndAnchor(element, stopAtBlankLine, true).getFirst();
+  }
+
+  @NotNull
+  private static Pair<List<PsiComment>, PsiElement> getPrecedingCommentsAndAnchor(PsiElement element, boolean stopAtBlankLine,
+                                                                                  boolean strict) {
     final ArrayList<PsiComment> result = new ArrayList<>();
+    PsiElement cursor = element instanceof PsiComment && !strict ? element : element.getPrevSibling();
     while (true) {
       int newLinesCount = 0;
-      for (element = element.getPrevSibling(); element instanceof PsiWhiteSpace; element = element.getPrevSibling()) {
-        newLinesCount += StringUtil.getLineBreakCount(element.getText());
+      while (cursor instanceof PsiWhiteSpace) {
+        newLinesCount += StringUtil.getLineBreakCount(cursor.getText());
+        cursor = cursor.getPrevSibling();
       }
-      if ((stopAtBlankLine && newLinesCount > 1) || !(element instanceof PsiComment)) {
+      if ((stopAtBlankLine && newLinesCount > 1) || !(cursor instanceof PsiComment)) {
         break;
       }
       else {
-        result.add((PsiComment)element);
+        result.add((PsiComment)cursor);
       }
+      cursor = cursor.getPrevSibling();
     }
     Collections.reverse(result);
-    return result;
+    return Pair.create(result, cursor);
+  }
+
+  /**
+   * Return blank-line-separated blocks of consecutive comments preceding the given element.
+   * <p>
+   * For instance, for the following fragment, it will return two blocks of one and two comments.
+   *
+   * <pre>{@code
+   * # comment
+   *
+   * # comment
+   * # comment
+   * def func():
+   *     pass
+   * }</pre>
+   *
+   * Note that in the following case it will additionally return an empty list of comments as the last element
+   * to distinguish between the cases when there is a blank line above the provided element and when there is not.
+   *
+   * <pre>{@code
+   * # comment
+   *
+   * def func():
+   *     pass
+   * }</pre>
+   *
+   */
+  @NotNull
+  public static List<List<PsiComment>> getPrecedingCommentBlocks(@NotNull PsiElement element) {
+    List<List<PsiComment>> blocks = new ArrayList<>();
+    PsiElement anchor = element;
+    do {
+      Pair<List<PsiComment>, PsiElement> blockAndAnchor = getPrecedingCommentsAndAnchor(anchor, true, false);
+      anchor = blockAndAnchor.getSecond();
+      List<PsiComment> block = blockAndAnchor.getFirst();
+      if (block.size() != 0 || anchor instanceof PsiComment) {
+        blocks.add(block);
+      }
+    }
+    while (anchor instanceof PsiComment);
+    Collections.reverse(blocks);
+    return blocks;
   }
 
   @NotNull
@@ -617,9 +669,9 @@ public final class PyPsiUtils {
     final QualifiedName sourceQName = QualifiedName.fromDottedString(source);
 
     return Stream.concat(
-      file.getFromImports().stream().map(PyFromImportStatement::getImportSourceQName),
-      file.getImportTargets().stream().map(PyImportElement::getImportedQName)
-    )
+        file.getFromImports().stream().map(PyFromImportStatement::getImportSourceQName),
+        file.getImportTargets().stream().map(PyImportElement::getImportedQName)
+      )
       .filter(Objects::nonNull)
       .anyMatch(name -> name.matchesPrefix(sourceQName));
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,6 +32,7 @@ internal class FileTestFixtureImpl(
   private var isSuppressedErrors: Boolean = false
   private lateinit var errors: MutableList<Throwable>
   private lateinit var snapshots: MutableMap<Path, Optional<String>>
+  private lateinit var excludedFiles: Set<Path>
 
   private lateinit var testRootDisposable: Disposable
   private lateinit var fixtureRoot: VirtualFile
@@ -51,15 +53,20 @@ internal class FileTestFixtureImpl(
 
     installFixtureFilesWatcher()
 
+    val configuration = createFixtureConfiguration()
+
+    excludedFiles = configuration.excludedFiles
+      .map { root.getAbsoluteNioPath(it) }
+      .toSet()
+
     withSuppressedErrors {
       repairFixtureCaches()
       dumpFixtureState()
     }
 
+
     withSuppressedErrors {
-      runCatching { configureFixtureCaches() }
-        .onFailureCatching { invalidateFixtureCaches() }
-        .getOrThrow()
+      configureFixtureCaches(configuration)
       root.refreshAndWait()
     }
 
@@ -136,14 +143,20 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun configureFixtureCaches() {
-    val builder = Builder()
-    builder.configure()
-    if (!areContentsEqual(builder.files)) {
-      invalidateFixtureCaches()
-      createFiles(builder.files)
-      builder.builders.forEach { it(root) }
+  private fun createFixtureConfiguration(): Configuration {
+    return Configuration().apply(configure)
+  }
+
+  private fun configureFixtureCaches(configuration: Configuration) {
+    runCatching {
+      if (!areContentsEqual(configuration.files)) {
+        invalidateFixtureCaches()
+        createFiles(configuration.files)
+        configuration.builders.forEach { it(root) }
+      }
     }
+      .onFailureCatching { invalidateFixtureCaches() }
+      .getOrThrow()
   }
 
   private fun areContentsEqual(files: Map<String, String>): Boolean {
@@ -249,10 +262,13 @@ internal class FileTestFixtureImpl(
       override fun isProcessRecursively(): Boolean = true
 
       override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
+        val path = file.toNioPath()
         return !file.isDirectory &&
                file != fixtureStateFile &&
                VfsUtil.isAncestor(root, file, false) &&
-               file.toNioPath() !in snapshots
+               path !in snapshots &&
+               path !in excludedFiles &&
+               excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
       }
 
       override fun updateFile(file: VirtualFile, event: VFileEvent) {
@@ -262,10 +278,15 @@ internal class FileTestFixtureImpl(
     installBulkVirtualFileListener(listener, testRootDisposable)
   }
 
-  private class Builder : FileTestFixture.Builder {
+  private class Configuration : FileTestFixture.Builder {
 
     val files = HashMap<String, String>()
     val builders = ArrayList<(VirtualFile) -> Unit>()
+    val excludedFiles = HashSet<String>()
+
+    override fun excludeFiles(vararg relativePath: String) {
+      excludedFiles.addAll(relativePath)
+    }
 
     override fun withFile(relativePath: String, content: String) {
       files[relativePath] = content

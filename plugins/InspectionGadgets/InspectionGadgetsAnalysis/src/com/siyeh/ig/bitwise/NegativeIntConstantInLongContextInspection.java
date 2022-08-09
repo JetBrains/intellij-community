@@ -1,29 +1,20 @@
-/*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.LiteralFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -51,7 +42,14 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
       private void checkLongContext(@NotNull PsiExpression expression) {
         if (!PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(expression, true))) return;
         if (isInAssertEqualsLong(expression)) return;
-        holder.registerProblem(expression, InspectionGadgetsBundle.message("negative.int.constant.in.long.context.display.name"));
+        LocalQuickFix[] fixes = null;
+        if (expression instanceof PsiLiteralExpression) {
+          fixes = new LocalQuickFix[]{
+            new AddLongSuffixFix(),
+            new ConvertToLongFix()
+          };
+        }
+        holder.registerProblem(expression, InspectionGadgetsBundle.message("negative.int.constant.in.long.context.display.name"), fixes);
       }
     };
   }
@@ -69,8 +67,43 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
 
   private static boolean isNegativeHexLiteral(@NotNull PsiLiteralExpression literal) {
     if (!PsiType.INT.equals(literal.getType())) return false;
-    if (!literal.getText().startsWith("0x")) return false;
+    String text = literal.getText();
+    if (!text.startsWith("0x") && !text.startsWith("0X")) return false;
     Integer value = tryCast(literal.getValue(), Integer.class);
     return value != null && value < 0;
+  }
+
+  private static class AddLongSuffixFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.add.suffix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+      if (literal == null) return;
+      PsiType type = literal.getType();
+      if (!PsiType.INT.equals(type)) return;
+      new CommentTracker().replaceAndRestoreComments(literal, literal.getText() + "L");
+    }
+  }
+
+  private static class ConvertToLongFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.convert");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+      if (literal == null) return;
+      Integer value = tryCast(literal.getValue(), Integer.class);
+      if (value == null || value >= 0) return;
+      String longLiteral = Long.toHexString(value);
+      String result = LiteralFormatUtil.format(literal.getText().substring(0, 2) + longLiteral + "L", PsiType.LONG);
+      new CommentTracker().replaceAndRestoreComments(literal, result);
+    }
   }
 }

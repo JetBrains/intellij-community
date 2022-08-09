@@ -78,7 +78,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       final PackageAnnotator.PackageCoverageInfo info = entry.getValue().toPackageCoverageInfo();
       myAnnotator.annotatePackage(packageFQName, info, true);
 
-      while (true) {
+      while (!packageFQName.isEmpty()) {
         packages.computeIfAbsent(packageFQName, k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
         final int index = packageFQName.lastIndexOf('.');
         if (index < 0) break;

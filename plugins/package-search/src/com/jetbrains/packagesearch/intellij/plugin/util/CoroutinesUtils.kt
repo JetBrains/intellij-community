@@ -44,7 +44,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -180,11 +179,10 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
         it.value
     }
 
-internal fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackValue: T, retryChannel: SendChannel<Unit>? = null) =
+internal fun <T> Flow<T>.catchAndLog(context: String, message: String? = null) =
     catch {
-        logWarn(context, it) { message }
-        retryChannel?.send(Unit)
-        emit(fallbackValue)
+        if (message!= null) { logDebug(context, it) { message } }
+        else logDebug(context, it)
     }
 
 internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {

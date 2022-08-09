@@ -29,6 +29,7 @@ private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
   "intellij.platform.lang.core",
   "intellij.platform.lang",
   "intellij.platform.lvcs",
+  "intellij.platform.ml",
   "intellij.platform.ide",
   "intellij.platform.ide.core",
   "intellij.platform.projectModel",
@@ -73,7 +74,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.workspaceModel.storage",
   "intellij.platform.workspaceModel.jps",
   "intellij.platform.lvcs.impl",
-  "intellij.platform.vfs.impl",
   "intellij.platform.ide.impl",
   "intellij.platform.projectModel.impl",
   "intellij.platform.macro",
@@ -107,6 +107,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.buildScripts.downloader",
   "intellij.idea.community.build.dependencies",
   "intellij.platform.usageView.impl",
+  "intellij.platform.ml.impl",
 )
 
 object PlatformModules {

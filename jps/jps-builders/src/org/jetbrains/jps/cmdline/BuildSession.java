@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -260,7 +259,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     finally {
       logStorageDiagnostic();
       finishBuild(error, hasErrors.get(), doneSomething.get());
-      Disposer.dispose(memWatcher);
+      memWatcher.shutdown();
     }
   }
 

@@ -89,7 +89,7 @@ private val centerRightGap: Int get() = JBUI.scale(4)
 open class IconCompCompPanel<C1 : JComponent, C2 : JComponent>(val center: C1, val right: C2) : IconPanel() {
 
   init {
-    resetInsets(center, right)
+    resetHorizontalInsets(center, right)
 
     createBuilder(this)
       .cell(iconLabel, baselineAlign = false, gaps = Gaps(right = RendererPanelsUtils.iconTextGap))
@@ -115,7 +115,7 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
       }
 
       if (value != null) {
-        resetInsets(value)
+        resetHorizontalInsets(value)
         add(value, Constraints((layout as GridLayout).rootGrid, 2, 0, baselineAlign = true, gaps = Gaps(left = centerRightGap)))
       }
 
@@ -123,7 +123,7 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
     }
 
   init {
-    resetInsets(center)
+    resetHorizontalInsets(center)
 
     createBuilder(this)
       .cell(iconLabel, baselineAlign = false, gaps = Gaps(right = RendererPanelsUtils.iconTextGap))
@@ -136,7 +136,7 @@ open class IconPanel : SelectablePanel() {
   protected val iconLabel = JLabel()
 
   init {
-    resetInsets(iconLabel)
+    resetHorizontalInsets(iconLabel)
   }
 
   open fun reset() {
@@ -154,9 +154,9 @@ open class IconPanel : SelectablePanel() {
 }
 
 /**
- * Resets any horizontal insets/EmptyBorder/ipads
+ * Resets any horizontal insets ([EmptyBorder], [JBEmptyBorder]) and ipads ([SimpleColoredComponent.getIpad])
  */
-private fun resetInsets(vararg components: JComponent) {
+fun resetHorizontalInsets(vararg components: JComponent) {
   for (component in components) {
     component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
 

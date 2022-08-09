@@ -95,7 +95,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val state: ToolWindowManagerState
     get() = project.service()
 
-  private var layoutState
+  var layoutState
     get() = state.layout
     set(value) { state.layout = value }
 
@@ -470,21 +470,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper, fileEditorManager: FileEditorManagerEx) {
+  suspend fun init(frameHelper: ProjectFrameHelper, editorComponent: JComponent) {
     // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
     // registered differently, but we shouldn't have the main pane yet
     LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
-    doInit(frameHelper, project.messageBus.connect(this), fileEditorManager)
+    doInit(frameHelper, project.messageBus.connect(this), editorComponent)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, fileEditorManager: FileEditorManagerEx) {
+  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, editorComponent: JComponent) {
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
 
       val toolWindowPane = frameHelper.rootPane!!.toolWindowPane
-      toolWindowPane.setDocumentComponent(fileEditorManager.component)
+      toolWindowPane.setDocumentComponent(editorComponent)
 
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
       // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
@@ -538,7 +538,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       canWorkInDumbMode = DumbService.isDumbAware(factory),
       shouldBeAvailable = factory.shouldBeAvailable(project),
       contentFactory = factory,
-      stripeTitle = getStripeTitleSupplier(bean.id, plugin)
+      stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
     ), toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 

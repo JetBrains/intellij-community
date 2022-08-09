@@ -58,7 +58,7 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     } else {
       final RangeMarker rangeMarker = expr.getUserData(ElementToWorkOn.TEXT_RANGE);
       if (rangeMarker == null) return null;
-      range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+      range = rangeMarker.getTextRange();
     }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());

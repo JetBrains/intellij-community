@@ -9,28 +9,28 @@ import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @State(name = "Trusted.Paths", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
-class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State()) {
+class TrustedPaths : SerializablePersistentStateComponent<TrustedPaths.State>(State()) {
   companion object {
     @JvmStatic
     fun getInstance(): TrustedPaths = service()
   }
 
-  class State : BaseState() {
-    @get:OptionTag("TRUSTED_PROJECT_PATHS")
-    val trustedPaths by map<String, Boolean>()
-  }
+  data class State(
+    @JvmField
+    @field:OptionTag("TRUSTED_PROJECT_PATHS")
+    val trustedPaths: Map<String, Boolean> = emptyMap()
+  )
 
   @ApiStatus.Internal
   fun getProjectPathTrustedState(path: Path): ThreeState {
     val trustedPaths = state.trustedPaths
     val ancestors = trustedPaths.keys.asSequence().map { path.fileSystem.getPath(it) }.filter { it.isAncestor(path) }
     val closestAncestor = ancestors.maxByOrNull { it.nameCount } ?: return ThreeState.UNSURE
-    return when (trustedPaths[closestAncestor.pathString]) {
+    return when (trustedPaths[closestAncestor.toString()]) {
       true -> ThreeState.YES
       false -> ThreeState.NO
       null -> ThreeState.UNSURE
@@ -39,9 +39,8 @@ class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State())
 
   @ApiStatus.Internal
   fun setProjectPathTrusted(path: Path, value: Boolean) {
-    val newState = State()
-    newState.trustedPaths.putAll(state.trustedPaths)
-    newState.trustedPaths.put(path.pathString, value)
-    loadState(newState)
+    updateState { currentState ->
+      State(currentState.trustedPaths + (path.toString() to value))
+    }
   }
 }

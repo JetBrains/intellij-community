@@ -131,8 +131,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
       return;
     }
 
-    setIntervalStart(pair.first.getStartOffset());
-    setIntervalEnd(pair.first.getEndOffset());
+    setRange(pair.first.toScalarRange());
     myLinesCols = pair.second;
   }
 

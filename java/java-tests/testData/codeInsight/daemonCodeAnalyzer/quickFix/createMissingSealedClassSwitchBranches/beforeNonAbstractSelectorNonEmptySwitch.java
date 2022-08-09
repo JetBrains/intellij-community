@@ -1,4 +1,4 @@
-// "Create missing branches: 'Ab', and 'A'" "true"
+// "Create missing branches: 'Ab', and 'A'" "true-preview"
 sealed class A {}
 abstract sealed class Aa extends A {}
 final class Aaa extends Aa {}

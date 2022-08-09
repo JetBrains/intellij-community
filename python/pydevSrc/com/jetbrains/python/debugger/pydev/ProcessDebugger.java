@@ -41,6 +41,7 @@ public interface ProcessDebugger {
     RETURN
   }
 
+  @Nullable
   XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE group_type) throws PyDebuggerException;
 
   List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)

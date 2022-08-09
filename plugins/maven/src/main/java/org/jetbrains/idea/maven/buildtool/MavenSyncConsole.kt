@@ -228,15 +228,23 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   private fun MavenProjectProblem.getFilePosition(): FilePosition {
-    val (line, columns) = getPosition() ?: (-1 to -1)
-    return FilePosition(File(path), line, columns)
+    val (line, column) = getPositionFromDescription() ?: getPositionFromPath() ?: (-1 to -1)
+    val pathWithoutPosition = path.substringBeforeLast(":${line + 1}:$column")
+    return FilePosition(File(pathWithoutPosition), line, column)
   }
 
-  private fun MavenProjectProblem.getPosition(): Pair<Int, Int>? {
-    val description = description ?: return null
+  private fun MavenProjectProblem.getPositionFromDescription(): Pair<Int, Int>? {
+    return getPosition(description, Regex("@(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPositionFromPath(): Pair<Int, Int>? {
+    return getPosition(path, Regex(":(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPosition(source : String?, pattern: Regex): Pair<Int, Int>? {
+    if (source == null) return null
     if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
-      val pattern = Regex("@(\\d+):(\\d+)")
-      val matchResults = pattern.findAll(description)
+      val matchResults = pattern.findAll(source)
       val matchResult = matchResults.lastOrNull() ?: return null
       val (_, line, offset) = matchResult.groupValues
       return line.toInt() - 1 to offset.toInt()

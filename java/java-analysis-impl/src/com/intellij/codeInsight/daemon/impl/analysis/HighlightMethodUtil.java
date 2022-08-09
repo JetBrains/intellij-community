@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -573,17 +574,19 @@ public final class HighlightMethodUtil {
                                                            @NotNull PsiElement elementToHighlight) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return null;
+    if (favorParentReport(methodCall, errorMessage)) return null;
     PsiMethod method = resolveResult.getElement();
     HighlightInfo highlightInfo;
     PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
-    PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    PsiType actualType =
+      methodCall instanceof PsiExpression ? ((PsiExpression)methodCall.copy()).getType() :
+      resolveResult.getSubstitutor(false).substitute(method.getReturnType());
     TextRange fixRange = getFixRange(elementToHighlight);
     if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
       highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(
         expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
-      if (methodCall instanceof PsiMethodCallExpression) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createWrapWithAdapterFix(expectedTypeByParent, (PsiExpression)methodCall));
+      if (methodCall instanceof PsiExpression) {
+        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, (PsiExpression)methodCall, expectedTypeByParent, actualType);
       }
     }
     else {
@@ -595,6 +598,25 @@ public final class HighlightMethodUtil {
       registerTargetTypeFixesBasedOnApplicabilityInference((PsiMethodCallExpression)methodCall, resolveResult, method, highlightInfo);
     }
     return highlightInfo;
+  }
+
+  private static boolean favorParentReport(@NotNull PsiCall methodCall, String errorMessage) {
+    if (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument"))) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+      if (parent instanceof PsiExpressionList) {
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiCallExpression) {
+          JavaResolveResult parentResolveResult = ((PsiCallExpression)grandParent).resolveMethodGenerics();
+          if (parentResolveResult instanceof MethodCandidateInfo &&
+              ((MethodCandidateInfo)parentResolveResult).getInferenceErrorMessage() != null) {
+            // Parent resolve failed as well, and it's likely more informative.
+            // Suppress this error to allow reporting from parent
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
@@ -946,16 +968,6 @@ public final class HighlightMethodUtil {
       QualifySuperArgumentFix.registerQuickFixAction((PsiSuperExpression)qualifierExpression, highlightInfo);
     }
 
-    PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
-    if (expectedTypeByParent != null) {
-      PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null &&
-          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) &&
-          !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
-      }
-    }
-
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
 
@@ -1072,7 +1084,7 @@ public final class HighlightMethodUtil {
   }
 
   @NotNull
-  public static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
+  static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
     return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", expected, actual))
       .wrapWith("html").toString();
   }
@@ -1485,7 +1497,7 @@ public final class HighlightMethodUtil {
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true);
       if (info != null) return info;
       info = checkSuperMethodIsFinal(method, superMethod);
-      if (info != null) return info;
+      return info;
     }
     return null;
   }
@@ -1644,13 +1656,10 @@ public final class HighlightMethodUtil {
 
   @NotNull
   public static TextRange getFixRange(@NotNull PsiElement element) {
-    TextRange range = element.getTextRange();
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-
     PsiElement nextSibling = element.getNextSibling();
+    TextRange range = element.getTextRange();
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
-      return new TextRange(start, end + 1);
+      return range.grown(1);
     }
     return range;
   }

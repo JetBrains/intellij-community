@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
@@ -39,7 +40,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.InputEvent
-import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
 import kotlin.properties.Delegates
@@ -56,11 +56,10 @@ internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
   override fun getPosition(): Position = Position.Center
 }
 
-private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
+private class ProjectWidgetUpdater(private val proj: Project,
+                                   private val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
   private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
   private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
-
-  private val swingExecutor: Executor = Executor(SwingUtilities::invokeLater)
 
   init {
     file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
@@ -92,8 +91,9 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
     return name.substring(0, maxLength - extension.length) + "..." + extension
   }
 
-  private fun cutProject(value: String, maxLength: Int): String =
-    if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+  private fun cutProject(value: String, maxLength: Int): String {
+    return if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+  }
 
   fun subscribe() {
     ApplicationManager.getApplication().messageBus.connect(widget).subscribe(UISettingsListener.TOPIC, this)
@@ -101,11 +101,11 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    swingExecutor.execute { settings = uiSettings }
+    SwingUtilities.invokeLater { settings = uiSettings }
   }
 
   override fun selectionChanged(event: FileEditorManagerEvent) {
-    swingExecutor.execute { file = event.newFile }
+    SwingUtilities.invokeLater { file = event.newFile }
   }
 }
 
@@ -116,7 +116,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
 
-    val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
+    val widgetRenderer = ProjectWidgetRenderer()
 
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
@@ -159,13 +159,20 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private class ProjectWidgetRenderer(val separatorSupplier: (PopupFactoryImpl.ActionItem) -> ListSeparator?): ListCellRenderer<PopupFactoryImpl.ActionItem> {
+  private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
                                               value: PopupFactoryImpl.ActionItem?,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, separatorSupplier.invoke(value))
+      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value))
+    }
+
+    private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
+      val model = list?.model as? ListPopupModel<*> ?: return null
+      val hasSeparator = model.isSeparatorAboveOf(value)
+      if (!hasSeparator) return null
+      return ListSeparator(model.getCaptionAboveOf(value))
     }
 
     private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {

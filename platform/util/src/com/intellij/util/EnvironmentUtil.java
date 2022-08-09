@@ -123,7 +123,7 @@ public final class EnvironmentUtil {
       activity.end();
     }
 
-    // execution time of 'envFuture' handlers should not be included into load env activity
+    // execution time of 'envFuture' handlers should not be included in the "load environment" activity
     if (result == Boolean.FALSE) {
       envFuture.complete(getSystemEnv());
     }
@@ -331,17 +331,16 @@ public final class EnvironmentUtil {
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
 
-      Path logFile = null;
+      Path logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
       try {
-        logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
-        final Process process = builder
+        Process process = builder
           .redirectErrorStream(true)
           .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
           .start();
-        final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
+        int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
-        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
+        String log = Files.exists(logFile) ? new String(Files.readAllBytes(logFile), Charset.defaultCharset()) : "(no log file)";
         if (exitCode != 0 || envData.isEmpty()) {
           if (!log.isEmpty()) {
             LOG.info("stdout/stderr: " + log);

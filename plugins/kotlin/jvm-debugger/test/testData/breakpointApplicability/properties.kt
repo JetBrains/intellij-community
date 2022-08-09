@@ -7,3 +7,5 @@ class Foo2 { /// M
     val x: String = "foo" /// F, L
         get() = field + "x" /// M
 }
+
+// IGNORE_K2

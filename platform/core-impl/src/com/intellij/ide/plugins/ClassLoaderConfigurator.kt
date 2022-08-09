@@ -85,7 +85,7 @@ class ClassLoaderConfigurator(
   }
 
   fun configure() {
-    for (module in pluginSet.getRawListOfEnabledModules()) {
+    for (module in pluginSet.getEnabledModules()) {
       configureModule(module)
     }
   }

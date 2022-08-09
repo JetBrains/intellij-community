@@ -3,10 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -21,11 +18,6 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -53,9 +45,7 @@ import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.coroutineContext
 
 @Internal
 open class ProjectImpl(filePath: Path, projectName: String?)
@@ -72,10 +62,22 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
 
-    @JvmField
-    var ourClassesAreLoaded = false
-
     private val CREATION_TRACE = Key.create<String>("ProjectImpl.CREATION_TRACE")
+
+    internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
+      if (preloadServices) {
+        // for light projects, preload only services that are essential
+        // ("await" means "project component loading activity is completed only when all such services are completed")
+        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                activityPrefix = "project ",
+                                syncScope = this,
+                                onlyIfAwait = project.isLight)
+      }
+
+      launch {
+        project.createComponentsNonBlocking()
+      }
+    }
   }
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
@@ -103,6 +105,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     cachedName = projectName
     // light project may be changed later during test, so we need to remember its initial state
+    @Suppress("TestOnlyProblems")
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
 
@@ -199,39 +202,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   @Internal
   final override fun activityNamePrefix() = "project "
-
-  internal suspend fun init(preloadServices: Boolean) {
-    val container = this
-    coroutineScope {
-      if (preloadServices) {
-        launch {
-          // for light projects, preload only services that are essential
-          // ("await" means "project component loading activity is completed only when all such services are completed")
-          container.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                    activityPrefix = "project ",
-                                    syncScope = this,
-                                    onlyIfAwait = isLight)
-        }
-      }
-      createComponents()
-    }
-
-    coroutineContext.ensureActive()
-
-    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling",
-                                                                                  ActivityCategory.DEFAULT)
-    else null
-    @Suppress("DEPRECATION", "removal")
-    val app = ApplicationManager.getApplication()
-    app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
-
-    activity = activity?.endAndStart("projectComponentCreated")
-    runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>(
-      "com.intellij.projectServiceContainerInitializedListener")) {
-      it.serviceCreated(this)
-    }
-    activity?.end()
-  }
 
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
@@ -356,10 +326,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
 
-  override fun setProgressDuringInit(indicator: ProgressIndicator) {
-    indicator.fraction = getPercentageOfComponentsLoaded() / if (LoadingState.PROJECT_OPENED.isOccurred) 10 else 2
-  }
-
   override fun save() {
     val app = ApplicationManagerEx.getApplicationEx()
     if (!app.isSaveAllowed) {
@@ -387,32 +353,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
-    }
-  }
-}
-
-private suspend inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: suspend (T) -> Unit) {
-  for (adapter in ep.sortedAdapters) {
-    val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
-      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-      continue
-    }
-
-    try {
-      executor(adapter.createInstance(ep.componentManager) ?: continue)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: PluginException) {
-      logger<ProjectImpl>().error(e)
-    }
-    catch (e: Throwable) {
-      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
     }
   }
 }

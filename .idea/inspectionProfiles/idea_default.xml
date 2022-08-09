@@ -310,6 +310,9 @@
     <inspection_tool class="InvalidImplementedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidProvidedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidRequestParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavadocDeclaration" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="IGNORE_DEPRECATED_ELEMENTS" value="true" />
+    </inspection_tool>
     <inspection_tool class="JBoss" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="JSDeprecatedSymbols" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="JSDuplicatedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -795,6 +798,9 @@
       <replaceConfiguration name="@ScheduledForRemoval with version" text="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = $version$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval">
         <constraint name="__context__" within="" contains="" />
         <constraint name="version" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Alarm constructor can be simplified" text="new Alarm(Alarm.ThreadToUse.SWING_THREAD)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="false" replacement="new Alarm()">
+        <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />

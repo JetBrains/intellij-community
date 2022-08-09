@@ -9,16 +9,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 import java.nio.file.Path
 
 class KotlinJpsBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getClassPath(): List<String> {
-        val jpsPluginClasspath = KotlinJpsPluginSettings.jpsVersion(project)
-            ?.let { LazyKotlinJpsPluginClasspathDownloader(it).getDownloadedIfUpToDateOrEmpty() }
-            ?: KotlinPluginLayout.jpsPluginClasspath
-
+        val version = KotlinJpsPluginSettings.jpsVersion(project)
+        val jpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(version).getDownloadedIfUpToDateOrEmpty()
         return jpsPluginClasspath.map { it.canonicalPath } + listOf(PathUtil.getJarPathForClass(com.intellij.util.PathUtil::class.java))
     }
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
@@ -31,7 +32,7 @@ class ProviderWithSettings<T: Any>(
   val info: ProviderInfo<T>,
   var settings: T
 ) {
-  val configurable by lazy { provider.createConfigurable(settings) }
+  val configurable: ImmediateConfigurable by lazy { provider.createConfigurable(settings) }
 
   val provider: InlayHintsProvider<T>
   get() = info.provider
@@ -283,9 +284,8 @@ object InlayHintsUtils {
 
   @JvmStatic
   fun isFirstInLine(element: PsiElement): Boolean {
-    val prevSibling = element.prevSibling
-    return prevSibling is PsiWhiteSpace &&
-           (prevSibling.textContains('\n') || prevSibling.getTextRange().startOffset == 0) ||
-           element.textRange.startOffset == 0
+    val prevLeaf = PsiTreeUtil.prevLeaf(element, true)
+    return prevLeaf == null ||
+           prevLeaf is PsiWhiteSpace && (prevLeaf.textContains('\n') || prevLeaf.textRange.startOffset == 0)
   }
 }

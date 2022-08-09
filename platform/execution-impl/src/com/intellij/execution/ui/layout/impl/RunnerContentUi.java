@@ -12,6 +12,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -1040,7 +1041,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
       TopToolbarContextActions topToolbarContextActions = myContextActions.get(entry.getKey());
 
-      DefaultActionGroup leftGroupToBuild = new DefaultActionGroup();
+      DefaultActionGroup leftGroupToBuild = new DefaultActionGroupWithDelegate(myTopLeftActions);
       if (myTopLeftActionsVisible) {
         leftGroupToBuild.addAll(myTopLeftActions);
       }

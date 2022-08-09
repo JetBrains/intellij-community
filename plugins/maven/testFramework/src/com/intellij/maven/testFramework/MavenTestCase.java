@@ -44,7 +44,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Assume;
 
 import java.awt.*;
 import java.io.File;
@@ -510,10 +509,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void createStdProjectFolders() {
-    createProjectSubDirs("src/main/java",
-                         "src/main/resources",
-                         "src/test/java",
-                         "src/test/resources");
+    createStdProjectFolders("");
+  }
+
+  protected void createStdProjectFolders(String subdir) {
+    if (!subdir.isEmpty()) subdir += "/";
+    createProjectSubDirs(subdir + "src/main/java",
+                         subdir + "src/main/resources",
+                         subdir + "src/test/java",
+                         subdir + "src/test/resources");
   }
 
   protected void createProjectSubDirs(String... relativePaths) {

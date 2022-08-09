@@ -1,33 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.codegen.*
-import com.intellij.workspaceModel.codegen.fields.javaMutableType
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.fields.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.classes.*
-import com.intellij.workspaceModel.codegen.classes.`else`
-import com.intellij.workspaceModel.codegen.classes.`for`
-import com.intellij.workspaceModel.codegen.classes.`if`
-import com.intellij.workspaceModel.codegen.classes.ifElse
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.getRefType
 import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.utils.*
-import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.ExtField
-import com.intellij.workspaceModel.codegen.deft.Field
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.full.memberProperties
+import com.intellij.workspaceModel.codegen.writer.javaName
+import com.intellij.workspaceModel.codegen.writer.owner
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
-val Field<*, *>.implWsBuilderFieldCode: String
-  get() = type.implWsBuilderBlockingCode(this)
+val ObjProperty<*, *>.implWsBuilderFieldCode: String
+  get() = valueType.implWsBuilderBlockingCode(this)
 
-private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalSuffix: String = ""): String = when (this) {
-  TBoolean, TInt -> """
-            override var ${field.javaName}: ${field.type.javaMutableType}$optionalSuffix
+private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, optionalSuffix: String = ""): String = when (this) {
+  ValueType.Boolean, ValueType.Int -> """
+            override var ${field.javaName}: ${field.valueType.javaMutableType}$optionalSuffix
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
@@ -36,8 +28,8 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                 }
                 
         """.trimIndent()
-  TString -> """
-            override var ${field.javaName}: ${field.type.javaMutableType}
+  ValueType.String -> """
+            override var ${field.javaName}: ${field.valueType.javaMutableType}
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
@@ -46,7 +38,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                 }
                 
         """.trimIndent()
-  is TRef -> {
+  is ValueType.ObjRef -> {
     val connectionName = field.refsConnectionId
     val getterSetterNames = field.refNames()
 
@@ -58,45 +50,45 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
         section("get()") {
           line("val _diff = diff")
           line("return if (_diff != null) {")
-          line("    _diff.${getterSetterNames.getter}($connectionName, this) ?: this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
+          line("    _diff.${getterSetterNames.getter}($connectionName, this) ?: this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
           line("} else {")
-          line("    this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
+          line("    this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
           line("}")
         }
         section("set(value)") {
           line("checkModificationAllowed()")
           line("val _diff = diff")
           `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && value.diff == null") {
-            backrefSetup(this@implWsBuilderBlockingCode, field)
+            backrefSetup(field)
             line("_diff.addEntity(value)")
           }
           section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase::class.fqn}<*> || value.diff != null))") {
             line("_diff.${getterSetterNames.setter}($connectionName, this, value)")
           }
           section("else") {
-            backrefSetup(this@implWsBuilderBlockingCode, field)
+            backrefSetup(field)
             line()
-            line("this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] = value")
+            line("this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
           }
           line("changedProperty.add(\"${field.javaName}\")")
         }
       }
     }
   }
-  is TList<*> -> {
+  is ValueType.List<*> -> {
     val elementType = this.elementType
     if (this.isRefType()) {
       val connectionName = field.refsConnectionId
       val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
-      if ((elementType as TRef<*>).targetObjType.abstract) {
-        lines(indent = "    ") {
+      if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
+        lines(level = 1) {
           sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
+              line("    _diff.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
               line("} else {")
-              line("    this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] as $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+              line("    this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -113,9 +105,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                 line("_diff.${fqn5(EntityStorage::updateOneToAbstractManyChildrenOfParent)}($connectionName, this, value.asSequence())")
               }
               `else` {
-                backrefListSetup(elementType, field)
+                backrefListSetup(field)
                 line()
-                line("this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] = value")
+                line("this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
               }
               line("changedProperty.add(\"${field.javaName}\")")
             }
@@ -131,10 +123,10 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
               lineComment("Getter of the list of non-abstract referenced types")
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
+              line("    _diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
               line("} else {")
               line(
-                "    this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] as? $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+                "    this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -150,9 +142,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                 line("_diff.${fqn4(EntityStorage::updateOneToManyChildrenOfParent)}($connectionName, this, value)")
               }
               `else` {
-                backrefListSetup(elementType, field)
+                backrefListSetup(field)
                 line()
-                line("this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] = value")
+                line("this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
               }
               line("changedProperty.add(\"${field.javaName}\")")
             }
@@ -162,37 +154,53 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
     }
     else {
       """
-            override var ${field.javaName}: List<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: List<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableList<${wsFqn(elementType.javaType)}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()
     }
   }
-  is TSet<*> -> {
+  is ValueType.Set<*> -> {
     val elementType = this.elementType
     if (this.isRefType()) {
       error("Set of references is not supported")
     } else {
       """
-            override var ${field.javaName}: Set<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: Set<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableSet<${wsFqn(elementType.javaType)}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()
     }
   }
-  is TMap<*, *> -> """
+  is ValueType.Map<*, *> -> """
             override var ${field.javaName}: $javaType
                 get() = getEntityData().${field.javaName}
                 set(value) {
@@ -202,9 +210,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                 }
                 
     """.trimIndent()
-  is TOptional<*> -> type.implWsBuilderBlockingCode(field, "?")
-  is TStructure<*, *> -> "//TODO: ${field.javaName}"
-  is TBlob<*> -> """
+  is ValueType.Optional<*> -> type.implWsBuilderBlockingCode(field, "?")
+  is ValueType.Structure<*> -> "//TODO: ${field.javaName}"
+  is ValueType.JvmClass -> """
             override var ${field.javaName}: ${wsFqn(javaType)}$optionalSuffix
                 get() = getEntityData().${field.javaName}
                 set(value) {
@@ -212,7 +220,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                     getEntityData().${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                     ${
-    if (javaType == "VirtualFileUrl")
+    if (javaType.decoded == "VirtualFileUrl")
       """val _diff = diff
       |                    if (_diff != null) index(this, "${field.javaName}", value)
                         """.trimMargin()
@@ -225,15 +233,14 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
 }
 
 private fun LinesBuilder.backrefSetup(
-  valueType: TRef<*>,
-  field: Field<*, *>,
+  field: ObjProperty<*, *>,
   varName: String = "value",
 ) {
   val referencedField = field.referencedField
-  val type = referencedField.type
+  val type = referencedField.valueType
   val isChild = type.getRefType().child
   when (type) {
-    is TList<*> -> {
+    is ValueType.List<*> -> {
       lineComment("Setting backref of the list")
       `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
         line("val data = ($varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] as? List<Any> ?: emptyList()) + this")
@@ -241,7 +248,7 @@ private fun LinesBuilder.backrefSetup(
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
-    is TSet<*> -> {
+    is ValueType.Set<*> -> {
       lineComment("Setting backref of the set")
       `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
         line("val data = ($varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] as? Set<Any> ?: emptySet()) + this")
@@ -249,13 +256,13 @@ private fun LinesBuilder.backrefSetup(
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
-    is TOptional<*> -> {
+    is ValueType.Optional<*> -> {
       `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = this")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
-    is TRef<*> -> {
+    is ValueType.ObjRef<*> -> {
       `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = this")
       }
@@ -266,43 +273,42 @@ private fun LinesBuilder.backrefSetup(
 }
 
 private fun LinesBuilder.backrefListSetup(
-  valueType: TRef<*>,
-  field: Field<*, *>,
+  field: ObjProperty<*, *>,
   varName: String = "value",
 ) {
   val itemName = "item_$varName"
   `for`("$itemName in $varName") {
-    backrefSetup(valueType, field, itemName)
+    backrefSetup(field, itemName)
   }
 }
 
-fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
+fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
   val javaName = field.javaName
-  when (field.type) {
-    is TCollection<*, *> -> if (field.type.isRefType()) {
-      lineComment("Check initialization for collection with ref type")
+  when (field.valueType) {
+    is ValueType.List<*> -> if (field.valueType.isRefType()) {
+      lineComment("Check initialization for list with ref type")
       ifElse("_diff != null", {
         `if`("_diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
         }
       }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] == null")
+        isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
       }
     }
     else {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       isInitializedBaseCode(field, "!getEntityData().is${capitalizedFieldName}Initialized()")
     }
-    is TRef<*> -> {
+    is ValueType.ObjRef<*> -> {
       ifElse("_diff != null", {
         `if`("_diff.${field.refsConnectionMethodCode("<${WorkspaceEntityBase::class.fqn}>")} == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
         }
       }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.type.getRefType().child}, ${field.refsConnectionId})] == null")
+        isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
       }.toString()
     }
-    is TInt, is TBoolean -> return
+    is ValueType.Int, is ValueType.Boolean -> return
     else -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       isInitializedBaseCode(field, "!getEntityData().is${capitalizedFieldName}Initialized()")
@@ -310,20 +316,19 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
   }
 }
 
-private fun LinesBuilder.isInitializedBaseCode(field: Field<*, *>, expression: String) {
+private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, expression: String) {
   section("if ($expression)") {
     line("error(\"Field ${field.owner.name}#${field.javaName} should be initialized\")")
   }
 }
 
-private fun ValueType<*>.addVirtualFileIndex(field: Field<*, *>): String {
-  if (this !is TBlob) return ""
-  return when (javaType) {
-    "VirtualFileUrl" ->
+private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
+  return when {
+    this is ValueType.Blob && javaClassName == "VirtualFileUrl" ->
       """val _diff = diff
 |                    if (_diff != null) index(this, "${field.javaName}", value.toHashSet())
         """.trimMargin()
-    "LibraryRoot" -> """
+    this is ValueType.JvmClass && javaClassName == "LibraryRoot" -> """
                     val _diff = diff
                     if (_diff != null) {
                         indexLibraryRoots(value)

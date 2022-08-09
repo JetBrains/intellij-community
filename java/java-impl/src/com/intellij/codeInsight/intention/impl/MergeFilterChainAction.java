@@ -147,21 +147,19 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiElement nameElement = callToStay.getMethodExpression().getReferenceNameElement();
     LOG.assertTrue(nameElement != null);
-    if(!resultingOperation.equals(nameElement.getText())) {
+    if (!resultingOperation.equals(nameElement.getText())) {
       nameElement.replace(factory.createIdentifier(resultingOperation));
     }
 
-    PsiElement targetBody = targetLambda.getBody();
-    LOG.assertTrue(targetBody instanceof PsiExpression);
-    final PsiElement sourceLambdaBody = sourceLambda.getBody();
+    PsiExpression targetBody = LambdaUtil.extractSingleExpressionFromBody(targetLambda.getBody());
+    LOG.assertTrue(targetBody != null);
+    final PsiExpression sourceLambdaBody = LambdaUtil.extractSingleExpressionFromBody(sourceLambda.getBody());
+    LOG.assertTrue(sourceLambdaBody != null);
 
-    LOG.assertTrue(sourceLambdaBody instanceof PsiExpression);
-
-    final PsiExpression compoundExpression = factory
-      .createExpressionFromText(
-        ParenthesesUtils.getText((PsiExpression)targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
-        ParenthesesUtils.getText((PsiExpression)sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE), sourceLambda);
-    targetBody = targetBody.replace(compoundExpression);
+    String newFilter = ParenthesesUtils.getText(targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
+                       ParenthesesUtils.getText(sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE);
+    final PsiExpression compoundExpression = factory.createExpressionFromText(newFilter, sourceLambda);
+    targetBody = (PsiExpression)targetBody.replace(compoundExpression);
     CodeStyleManager.getInstance(project).reformat(targetBody);
 
     final PsiExpression qualifierExpression = callToEliminate.getMethodExpression().getQualifierExpression();

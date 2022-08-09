@@ -62,6 +62,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
+import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
@@ -86,7 +87,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -421,12 +421,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       throw new ServiceNotReadyException();
     }
     myRegisteredIndexes.waitUntilIndicesAreInitialized();
-  }
-
-  @Override
-  public @Nullable Deferred<?> untilIndicesAreInitialized() {
-    RegisteredIndexes registeredIndexes = myRegisteredIndexes;
-    return registeredIndexes == null ? null : registeredIndexes.getStateFuture();
   }
 
   static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension,
@@ -1122,6 +1116,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                 @NotNull GlobalSearchScope scope,
                                                 @Nullable IdFilter idFilter,
                                                 @NotNull ValueProcessor<? super V> processor) {
+    //There are (optional) alternative implementation for few indexes:
     Boolean scanResult =
       FileBasedIndexScanUtil.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
     if (scanResult != null) return scanResult;

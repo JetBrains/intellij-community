@@ -3,9 +3,12 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.ParentEntity
+import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 /**
@@ -46,6 +49,48 @@ class ParentAndChildTest {
 
     val single = builder.entities(ParentEntity::class.java).single()
     assertEquals("ChildData", single.child.childData)
+  }
+
+  @Test
+  fun `parent with child in builder 2`() {
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
+    }
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(entity)
+
+    val snapshot = builder.toSnapshot()
+    val parentSnapshot = snapshot.entities(ParentEntity::class.java).single()
+
+    val builder1 = snapshot.toBuilder()
+    builder1.removeEntity(parentSnapshot)
+    builder1.removeEntity(parentSnapshot.child)
+
+    val newSnapshot = builder1.toSnapshot()
+    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
+  }
+
+  @Test
+  fun `remove entity twice`() {
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
+    }
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(entity)
+
+    val snapshot = builder.toSnapshot()
+    val parentSnapshot = snapshot.entities(ParentEntity::class.java).single()
+
+    val builder1 = snapshot.toBuilder()
+    builder1.removeEntity(parentSnapshot)
+    builder1.removeEntity(parentSnapshot)
+
+    val newSnapshot = builder1.toSnapshot()
+    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
   }
 
   @Test

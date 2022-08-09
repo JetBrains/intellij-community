@@ -1,4 +1,4 @@
-// "Move condition to loop" "true"
+// "Move condition to loop" "true-preview"
 class Main {
   private int variableWithSameName = 1;
   public static void main(String[] args) {

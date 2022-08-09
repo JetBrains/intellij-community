@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -107,6 +107,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         ) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
+                val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
                         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
@@ -116,14 +117,15 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                                 files.add(it)
                                 true
                             }, project.allScope())
-                            getTemplateClassPath(files)
+                            getTemplateClassPath(files, indicator)
                         })
                     })
-                        .expireWith(KotlinPluginDisposable.getInstance(project))
+                        .expireWith(pluginDisposable)
                         .wrapProgress(indicator)
                         .executeSynchronously() ?: return onEarlyEnd()
                 try {
-                    if (!inProgress.get() || templates.isEmpty()) return onEarlyEnd()
+                    indicator.checkCanceled()
+                    if (pluginDisposable.disposed || !inProgress.get() || templates.isEmpty()) return onEarlyEnd()
 
                     val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
                     if (!inProgress.get() || newTemplates == oldTemplates) return onEarlyEnd()
@@ -147,7 +149,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                         templateClasspath = newTemplates.classpath,
                         baseHostConfiguration = hostConfiguration,
                     )
-
+                    indicator.checkCanceled()
                     if (logger.isDebugEnabled) {
                         logger.debug("script definitions found: ${newDefinitions.joinToString()}")
                     }
@@ -184,7 +186,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     }
 
     // public for tests
-    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<Path>> {
+    fun getTemplateClassPath(files: Collection<VirtualFile>, indicator: ProgressIndicator): Pair<Collection<String>, Collection<Path>> {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) {
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
@@ -201,6 +203,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
 
             val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root)
                 .filter {
+                    indicator.checkCanceled()
                     if (it is ModuleSourceOrderEntry) {
                         if (ModuleRootManager.getInstance(it.ownerModule).fileIndex.isInTestSourceContent(root)) {
                             return@filter false
@@ -224,6 +227,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             // the other has properly configured classpath, so assuming that the dependencies are set correctly everywhere
             for (orderEntry in orderEntriesForFile) {
                 for (virtualFile in OrderEnumerator.orderEntries(orderEntry.ownerModule).withoutSdk().classesRoots) {
+                    indicator.checkCanceled()
                     val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
                     localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.let(classpath::add)
                 }

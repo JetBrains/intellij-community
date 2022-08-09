@@ -42,7 +42,7 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setIcon(myExpr.getIcon(0));
     String pkg = StringUtil.getPackageName(myCanonicalText);

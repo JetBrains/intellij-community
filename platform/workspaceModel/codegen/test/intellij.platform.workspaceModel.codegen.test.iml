@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
   </component>
 </module>

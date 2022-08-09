@@ -215,9 +215,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
             override fun rootsChanged(event: ModuleRootEvent) {
                 // SDK could be changed (esp in tests) out of message bus subscription
-                val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+                val sdks = project.allSdks()
                 invalidateEntries(
-                    { k, _ -> k.safeAs<SdkInfo>()?.let { it.sdk !in jdks } == true  },
+                    { k, _ -> k.safeAs<SdkInfo>()?.let { it.sdk !in sdks } == true  },
                     // unable to check entities properly: an event could be not the last
                     validityCondition = null
                 )

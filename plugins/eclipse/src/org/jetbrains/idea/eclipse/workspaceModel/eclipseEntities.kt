@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -37,45 +38,53 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val srcPlace: Map<String, Int>
 
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: EclipseProjectPropertiesEntity, ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
-      override var module: ModuleEntity
-      override var entitySource: EntitySource
-      override var variablePaths: Map<String, String>
-      override var eclipseUrls: List<VirtualFileUrl>
-      override var unknownCons: List<String>
-      override var knownCons: List<String>
-      override var forceConfigureJdk: Boolean
-      override var expectedModuleSourcePlace: Int
-      override var srcPlace: Map<String, Int>
+  interface Builder : EclipseProjectPropertiesEntity, ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
+    override var module: ModuleEntity
+    override var entitySource: EntitySource
+    override var variablePaths: Map<String, String>
+    override var eclipseUrls: MutableList<VirtualFileUrl>
+    override var unknownCons: MutableList<String>
+    override var knownCons: MutableList<String>
+    override var forceConfigureJdk: Boolean
+    override var expectedModuleSourcePlace: Int
+    override var srcPlace: Map<String, Int>
   }
-  
-  companion object: Type<EclipseProjectPropertiesEntity, Builder>() {
-      operator fun invoke(variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
-          val builder = builder()
-          builder.entitySource = entitySource
-          builder.variablePaths = variablePaths
-          builder.eclipseUrls = eclipseUrls
-          builder.unknownCons = unknownCons
-          builder.knownCons = knownCons
-          builder.forceConfigureJdk = forceConfigureJdk
-          builder.expectedModuleSourcePlace = expectedModuleSourcePlace
-          builder.srcPlace = srcPlace
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<EclipseProjectPropertiesEntity, Builder>() {
+    operator fun invoke(variablePaths: Map<String, String>,
+                        eclipseUrls: List<VirtualFileUrl>,
+                        unknownCons: List<String>,
+                        knownCons: List<String>,
+                        forceConfigureJdk: Boolean,
+                        expectedModuleSourcePlace: Int,
+                        srcPlace: Map<String, Int>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
+      val builder = builder()
+      builder.variablePaths = variablePaths
+      builder.eclipseUrls = eclipseUrls.toMutableWorkspaceList()
+      builder.unknownCons = unknownCons.toMutableWorkspaceList()
+      builder.knownCons = knownCons.toMutableWorkspaceList()
+      builder.forceConfigureJdk = forceConfigureJdk
+      builder.expectedModuleSourcePlace = expectedModuleSourcePlace
+      builder.srcPlace = srcPlace
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
-var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-    by WorkspaceEntity.extension()
+fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity,
+                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+  EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 
+var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
+  by WorkspaceEntity.extension()
 //endregion
 
 val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?

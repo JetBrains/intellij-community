@@ -98,8 +98,8 @@ fun <T, V : Enum<*>> addEnumIfDiffers(set: MutableSet<in MetricEvent>, settingsB
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newMetric(eventId, it, null) }
 }
 
-fun <T, V> addMetricIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                              valueFunction: (T) -> V, eventIdFunc: (V) -> MetricEvent) {
+inline fun <T, V> addMetricIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
+                                     crossinline valueFunction: (T) -> V, crossinline eventIdFunc: (V) -> MetricEvent) {
   val value = valueFunction(settingsBean)
   val defaultValue = valueFunction(defaultSettingsBean)
   if (!Comparing.equal(value, defaultValue)) {
@@ -131,16 +131,16 @@ fun <T> addMetricsIfDiffers(set: MutableSet<in MetricEvent>,
 }
 
 @JvmOverloads
-fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                         valueFunction: (T) -> Boolean, eventId: VarargEventId, data: MutableList<EventPair<*>>? = null) {
+inline fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
+                                crossinline valueFunction: (T) -> Boolean, eventId: VarargEventId, data: List<EventPair<*>>? = null) {
   addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, EventFields.Enabled, data)
 }
 
 @JvmOverloads
-fun <T, V> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                        valueFunction: (T) -> V, eventId: VarargEventId, field: EventField<V>, data: MutableList<EventPair<*>>? = null) {
+inline fun <T, V> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
+                               crossinline valueFunction: (T) -> V, eventId: VarargEventId, field: EventField<V>, data: List<EventPair<*>>? = null) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
-    val fields = data ?: mutableListOf()
+    val fields = data?.toMutableList() ?: mutableListOf()
     fields.add(field.with(it))
     eventId.metric(fields)
   }

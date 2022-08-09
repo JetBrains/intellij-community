@@ -278,7 +278,6 @@ public final class TypeInfo {
   }
 
   /**
-   * @param typeInfo
    * @return type text without annotations
    */
   @Nullable

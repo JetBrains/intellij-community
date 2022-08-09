@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.deft.api.annotations.Default
@@ -18,175 +19,207 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DefaultValueEntityImpl: DefaultValueEntity, WorkspaceEntityBase() {
-    
-    companion object {
-        
-        
-        val connections = listOf<ConnectionId>(
-        )
+open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
 
+  companion object {
+
+
+    val connections = listOf<ConnectionId>(
+    )
+
+  }
+
+  @JvmField
+  var _name: String? = null
+  override val name: String
+    get() = _name!!
+
+  override var isGenerated: Boolean = super<DefaultValueEntity>.isGenerated
+
+  override var anotherName: String = super<DefaultValueEntity>.anotherName
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
+    constructor() : this(DefaultValueEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity DefaultValueEntity is already created in a different builder")
+        }
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
-        
-    @JvmField var _name: String? = null
-    override val name: String
-        get() = _name!!
-                        
-    override var isGenerated: Boolean = super<DefaultValueEntity>.isGenerated
-    
-    override var anotherName: String = super<DefaultValueEntity>.anotherName
-    
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isNameInitialized()) {
+        error("Field DefaultValueEntity#name should be initialized")
+      }
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field DefaultValueEntity#entitySource should be initialized")
+      }
+    }
+
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+      return connections
     }
 
-    class Builder(val result: DefaultValueEntityData?): ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
-        constructor(): this(DefaultValueEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity DefaultValueEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isNameInitialized()) {
-                error("Field DefaultValueEntity#name should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field DefaultValueEntity#entitySource should be initialized")
-            }
-        }
-        
-        override fun connectionIdList(): List<ConnectionId> {
-            return connections
-        }
-    
-        
-        override var name: String
-            get() = getEntityData().name
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().name = value
-                changedProperty.add("name")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-            
-        override var isGenerated: Boolean
-            get() = getEntityData().isGenerated
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().isGenerated = value
-                changedProperty.add("isGenerated")
-            }
-            
-        override var anotherName: String
-            get() = getEntityData().anotherName
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().anotherName = value
-                changedProperty.add("anotherName")
-            }
-        
-        override fun getEntityData(): DefaultValueEntityData = result ?: super.getEntityData() as DefaultValueEntityData
-        override fun getEntityClass(): Class<DefaultValueEntity> = DefaultValueEntity::class.java
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as DefaultValueEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.isGenerated = dataSource.isGenerated
+      this.anotherName = dataSource.anotherName
+      if (parents != null) {
+      }
     }
+
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
+      }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override var isGenerated: Boolean
+      get() = getEntityData().isGenerated
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().isGenerated = value
+        changedProperty.add("isGenerated")
+      }
+
+    override var anotherName: String
+      get() = getEntityData().anotherName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().anotherName = value
+        changedProperty.add("anotherName")
+      }
+
+    override fun getEntityData(): DefaultValueEntityData = result ?: super.getEntityData() as DefaultValueEntityData
+    override fun getEntityClass(): Class<DefaultValueEntity> = DefaultValueEntity::class.java
+  }
 }
-    
+
 class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
-    lateinit var name: String
-    var isGenerated: Boolean = true
-    var anotherName: String = "Another Text"
+  lateinit var name: String
+  var isGenerated: Boolean = true
+  var anotherName: String = "Another Text"
 
-    fun isNameInitialized(): Boolean = ::name.isInitialized
+  fun isNameInitialized(): Boolean = ::name.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DefaultValueEntity> {
-        val modifiable = DefaultValueEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        modifiable.changedProperty.clear()
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DefaultValueEntity> {
+    val modifiable = DefaultValueEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): DefaultValueEntity {
-        val entity = DefaultValueEntityImpl()
-        entity._name = name
-        entity.isGenerated = isGenerated
-        entity.anotherName = anotherName
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
-    }
+  override fun createEntity(snapshot: EntityStorage): DefaultValueEntity {
+    val entity = DefaultValueEntityImpl()
+    entity._name = name
+    entity.isGenerated = isGenerated
+    entity.anotherName = anotherName
+    entity.entitySource = entitySource
+    entity.snapshot = snapshot
+    entity.id = createEntityId()
+    return entity
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return DefaultValueEntity::class.java
-    }
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return DefaultValueEntity::class.java
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as DefaultValueEntityData
-        
-        if (this.name != other.name) return false
-        if (this.entitySource != other.entitySource) return false
-        if (this.isGenerated != other.isGenerated) return false
-        if (this.anotherName != other.anotherName) return false
-        return true
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DefaultValueEntity(name, entitySource) {
+      this.isGenerated = this@DefaultValueEntityData.isGenerated
+      this.anotherName = this@DefaultValueEntityData.anotherName
     }
+  }
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as DefaultValueEntityData
-        
-        if (this.name != other.name) return false
-        if (this.isGenerated != other.isGenerated) return false
-        if (this.anotherName != other.anotherName) return false
-        return true
-    }
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + isGenerated.hashCode()
-        result = 31 * result + anotherName.hashCode()
-        return result
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as DefaultValueEntityData
+
+    if (this.name != other.name) return false
+    if (this.entitySource != other.entitySource) return false
+    if (this.isGenerated != other.isGenerated) return false
+    if (this.anotherName != other.anotherName) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as DefaultValueEntityData
+
+    if (this.name != other.name) return false
+    if (this.isGenerated != other.isGenerated) return false
+    if (this.anotherName != other.anotherName) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isGenerated.hashCode()
+    result = 31 * result + anotherName.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isGenerated.hashCode()
+    result = 31 * result + anotherName.hashCode()
+    return result
+  }
 }

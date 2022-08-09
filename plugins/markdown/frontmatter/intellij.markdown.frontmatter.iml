@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />

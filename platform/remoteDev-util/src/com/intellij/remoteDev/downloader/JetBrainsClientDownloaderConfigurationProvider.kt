@@ -164,6 +164,10 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     return server.address
   }
 
+  fun serveFiles(files: Array<Path>) {
+    files.forEach { serveFile(it) }
+  }
+
   fun serveFile(file: Path) {
     require(file.exists())
     require(file.isFile())

@@ -81,7 +81,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   public CustomActionsSchema() {
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
-    if (ToolbarSettings.getInstance().isEnabled()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin());
     }
@@ -476,7 +476,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   /**
    * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
-   * @throws IOException
    */
   @ApiStatus.Internal
   public static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {

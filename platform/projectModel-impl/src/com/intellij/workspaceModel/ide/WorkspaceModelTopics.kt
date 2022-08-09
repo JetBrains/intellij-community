@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
@@ -29,6 +29,7 @@ interface WorkspaceModelChangeListener : EventListener {
  *
  * Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes
  */
+@Service(Service.Level.PROJECT)
 class WorkspaceModelTopics : Disposable {
   companion object {
     /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
@@ -104,7 +105,7 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   suspend fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("postponed events sending", ActivityCategory.DEFAULT)
+    val activity = StartUpMeasurer.startActivity("postponed events sending")
     sendToQueue = false
 
     if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {

@@ -38,8 +38,7 @@ class GradlePluginDslStructureInspection : GroovyLocalInspectionTool() {
   }
 
   private fun checkPluginsStatement(holder: ProblemsHolder, pluginsStatement: GrMethodCall) {
-    val closure = pluginsStatement.closureArguments.singleOrNull() ?: pluginsStatement.expressionArguments.firstOrNull()?.castSafelyTo<GrFunctionalExpression>() ?: return
-    val statements = getStatements(closure)
+    val statements = getStatements(pluginsStatement)
     for (statement in statements) {
       if (statement !is GrMethodCall) {
         holder.registerProblem(statement, GradleInspectionBundle.message("inspection.message.only.method.calls.to.id.alias.are.available.in.plugins.block"))
@@ -96,17 +95,7 @@ class GradlePluginDslStructureInspection : GroovyLocalInspectionTool() {
     return false
   }
 
-  private fun getStatements(funExpr: GrFunctionalExpression) : List<GrStatement> {
-    return when (funExpr) {
-      is GrClosableBlock -> return funExpr.statements.asList()
-      is GrLambdaExpression -> when (val body = funExpr.body) {
-        is GrBlockLambdaBody -> body.statements.asList()
-        is GrExpressionLambdaBody -> listOf(body.expression)
-        else -> emptyList()
-      }
-      else -> emptyList()
-    }
-  }
+
 
   private val allowedStrings = setOf("buildscript", "pluginManagement", "plugins")
 
@@ -118,6 +107,25 @@ class GradlePluginDslStructureInspection : GroovyLocalInspectionTool() {
       return suspiciousStatement.invokedExpression
     }
     return null
+  }
+
+  companion object {
+    fun getStatements(call: GrMethodCall) : Array<GrStatement> {
+      val closure = call.closureArguments.singleOrNull() ?: call.expressionArguments.firstOrNull()?.castSafelyTo<GrFunctionalExpression>() ?: return emptyArray()
+      return getStatements(closure)
+    }
+
+    private fun getStatements(funExpr: GrFunctionalExpression) : Array<GrStatement> {
+      return when (funExpr) {
+        is GrClosableBlock -> return funExpr.statements
+        is GrLambdaExpression -> when (val body = funExpr.body) {
+          is GrBlockLambdaBody -> body.statements
+          is GrExpressionLambdaBody -> arrayOf(body.expression)
+          else -> emptyArray()
+        }
+        else -> emptyArray()
+      }
+    }
   }
 
 

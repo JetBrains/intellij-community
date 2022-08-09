@@ -24,8 +24,10 @@ class ReportPublisherTest {
 
   @Mock
   lateinit var ideDataPaths: IDEDataPaths
+
   @Mock
   lateinit var installedIDE: InstalledIde
+
   @Mock
   lateinit var ideStartResult: IDEStartResult
 
@@ -59,10 +61,9 @@ class ReportPublisherTest {
     doReturn(ideStartResult).`when`(spyIdeRunContext).runIDE()
 
     //THEN
-    spyTestContext.runIDE (commands = commandChain, patchVMOptions = patchVMOptions)
+    spyTestContext.runIDE(commands = commandChain, patchVMOptions = patchVMOptions)
 
     //ASSERT
     verify(publisherSpy, times(1)).publish(ideStartResult)
   }
-
 }

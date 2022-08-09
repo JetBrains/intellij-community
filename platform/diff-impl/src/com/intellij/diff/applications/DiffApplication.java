@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 final class DiffApplication extends DiffApplicationBase {
   DiffApplication() {
@@ -59,7 +58,7 @@ final class DiffApplication extends DiffApplicationBase {
 
   @NotNull
   @Override
-  public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
+  public CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = args.subList(1, args.size());
     List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
     Project project = guessProject(files);

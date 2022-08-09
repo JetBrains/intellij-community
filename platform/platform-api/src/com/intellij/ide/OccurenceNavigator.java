@@ -15,9 +15,11 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface OccurenceNavigator {
   OccurenceNavigator EMPTY = new OccurenceNavigator() {
@@ -96,4 +98,7 @@ public interface OccurenceNavigator {
   @ActionText
   @NotNull
   String getPreviousOccurenceActionName();
+  default @Nullable ActionUpdateThread getActionUpdateThread() {
+    return null;
+  }
 }

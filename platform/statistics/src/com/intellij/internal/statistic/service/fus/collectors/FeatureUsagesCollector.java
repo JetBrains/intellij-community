@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * <p>Use it to create a collector which records IDE/project state or user/IDE internal actions.</p>
@@ -36,7 +36,14 @@ public abstract class FeatureUsagesCollector {
     if (invoker.getClass().getClassLoader() instanceof PluginAwareClassLoader) {
       return Collections.emptySet();
     }
-    return ep.getExtensionList().stream().filter(u -> u.isValid()).collect(Collectors.toSet());
+
+    Set<T> set = new HashSet<>();
+    for (T t : ep.getExtensionList()) {
+      if (t.isValid()) {
+        set.add(t);
+      }
+    }
+    return set;
   }
 
   /**

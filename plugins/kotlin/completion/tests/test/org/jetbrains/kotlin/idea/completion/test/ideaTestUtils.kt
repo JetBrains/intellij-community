@@ -22,9 +22,9 @@ fun CodeInsightTestFixture.configureWithExtraFile(path: String, vararg extraName
 
 inline fun <reified T : Any> Any?.assertInstanceOf() = UsefulTestCase.assertInstanceOf(this, T::class.java)
 
-inline fun <reified T : Any, R> ComponentManager.withServiceRegistered(instance: T, body: () -> R): R {
+inline fun <reified T : Any, R> ComponentManager.withComponentRegistered(instance: T, body: () -> R): R {
     val picoContainer = this as ComponentManagerImpl
-    val key = T::class.java.name
+    val key = T::class.java
     try {
         picoContainer.unregisterComponent(key)
         picoContainer.registerComponentInstance(key, instance)

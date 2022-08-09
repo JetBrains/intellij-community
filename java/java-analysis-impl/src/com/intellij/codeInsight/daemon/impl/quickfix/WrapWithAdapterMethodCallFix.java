@@ -240,18 +240,23 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
   }
 
   @SafeFieldForPreview
-  @Nullable private final PsiType myType;
+  private final @Nullable PsiType myType;
   @SafeFieldForPreview
-  @Nullable private final AbstractWrapper myWrapper;
+  private final @Nullable AbstractWrapper myWrapper;
+  private final @Nullable String myRole;
 
-  public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    this(type, expression, ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type)));
+  public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression, @Nullable String role) {
+    this(type, expression, ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type)), role);
   }
-  
-  private WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression, @Nullable AbstractWrapper wrapper) {
+
+  private WrapWithAdapterMethodCallFix(@Nullable PsiType type,
+                                       @NotNull PsiExpression expression,
+                                       @Nullable AbstractWrapper wrapper,
+                                       @Nullable String role) {
     super(expression);
     myType = type;
     myWrapper = wrapper;
+    myRole = role;
   }
 
   @Nls
@@ -262,7 +267,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     if (wrapperText == null) {
       return getFamilyName();
     }
-    return QuickFixBundle.message("wrap.with.adapter.text", wrapperText);
+    return myRole == null ?
+           QuickFixBundle.message("wrap.with.adapter.text", wrapperText) :
+           QuickFixBundle.message("wrap.with.adapter.text.role", wrapperText, myRole);
   }
 
   @Nls
@@ -278,7 +285,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement);
+    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement) &&
+           getModifiedExpression(startElement) != null;
   }
 
   @Override

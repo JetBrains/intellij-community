@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
@@ -109,13 +110,19 @@ class ChangeFunctionLiteralReturnTypeFix(
         )
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        functionLiteralReturnTypeRef?.let {
-            val newTypeRef = it.replace(KtPsiFactory(file).createType(typeSourceCode)) as KtTypeReference
-            ShortenReferences.DEFAULT.process(newTypeRef)
+        ApplicationManager.getApplication().runWriteAction {
+            functionLiteralReturnTypeRef?.let {
+                val newTypeRef = it.replace(KtPsiFactory(file).createType(typeSourceCode)) as KtTypeReference
+                ShortenReferences.DEFAULT.process(newTypeRef)
+            }
         }
         if (appropriateQuickFix != null && appropriateQuickFix.isAvailable(project, editor!!, file)) {
             appropriateQuickFix.invoke(project, editor, file)
         }
+    }
+    
+    override fun startInWriteAction(): Boolean {
+        return appropriateQuickFix == null || appropriateQuickFix.startInWriteAction()
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

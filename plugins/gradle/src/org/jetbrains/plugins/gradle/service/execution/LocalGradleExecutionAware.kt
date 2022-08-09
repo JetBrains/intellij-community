@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.impl.*
@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CA
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CANCELING
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
@@ -103,15 +104,19 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   ): SdkInfo? {
     val settings = use(project) { GradleSettings.getInstance(it) }
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
-    val gradleJvm = projectSettings.gradleJvm
 
+    val originalGradleJvm = projectSettings.gradleJvm
     val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
-    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, gradleJvm) }
-    if (sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
+    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, originalGradleJvm) }
+    if (sdkInfo is SdkInfo.Undefined || sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
       waitForGradleJvmResolving(provider, task, taskNotificationListener)
-      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, gradleJvm) }
+      if (projectSettings.gradleJvm == null) {
+        projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
+      }
+      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, projectSettings.gradleJvm) }
     }
 
+    val gradleJvm = projectSettings.gradleJvm
     if (sdkInfo !is SdkInfo.Resolved) {
       LOG.warn("Gradle JVM ($gradleJvm) isn't resolved: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")

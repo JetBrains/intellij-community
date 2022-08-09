@@ -71,7 +71,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
-              target.removeEntity(sourceEntityId.id)
+              target.removeEntityByEntityId(sourceEntityId.id)
             }
           }
         }

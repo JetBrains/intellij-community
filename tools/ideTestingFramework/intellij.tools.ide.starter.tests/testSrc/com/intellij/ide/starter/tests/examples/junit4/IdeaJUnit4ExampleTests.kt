@@ -24,7 +24,7 @@ class IdeaJUnit4ExampleTests {
   @Test
   fun `open gradle project on the latest EAP IJ Community`() {
     val context = testContextFactory
-      .initializeTestRunner(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple)
+      .initializeTestContext(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple)
       .setupSdk(sdk17)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
@@ -36,7 +36,7 @@ class IdeaJUnit4ExampleTests {
   @Test
   fun `open gradle project on the latest Release IJ Community`() {
     val context = testContextFactory
-      .initializeTestRunner(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple.useRelease())
+      .initializeTestContext(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple.useRelease())
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)

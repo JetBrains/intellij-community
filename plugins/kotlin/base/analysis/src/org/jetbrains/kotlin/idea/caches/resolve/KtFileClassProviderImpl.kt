@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -17,13 +19,19 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileClassProvider
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
     override fun getFileClasses(file: KtFile): Array<PsiClass> {
         if (file.project.isInDumbMode) return emptyArray()
 
+        if (file.isCompiled) {
+            return file.safeAs<KtClsFile>()?.let {
+                DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(it, project)
+            }?.let { arrayOf(it) } ?: emptyArray()
+        }
         // TODO We don't currently support finding light classes for scripts
-        if (file.isCompiled || runReadAction { file.isScript() }) return emptyArray()
+        if (runReadAction { file.isScript() }) return emptyArray()
 
         val moduleInfo = file.moduleInfoOrNull ?: return emptyArray()
 

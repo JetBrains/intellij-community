@@ -30,8 +30,6 @@ public class EditorTabColorProviderImpl implements EditorTabColorProvider, DumbA
 
   @Override
   public @Nullable ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
-    FileEditorManager manger = FileEditorManager.getInstance(project);
-    if (!(manger instanceof FileEditorManagerImpl)) return null;
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
     return fileStatusManager.getStatus(file).getColorKey();
   }

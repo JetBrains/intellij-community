@@ -6,6 +6,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
@@ -401,7 +402,8 @@ public class HelpTooltip {
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).
         setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
-        setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true);
+        setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true).
+        addUserData(PopupCornerType.RoundedTooltip);
   }
 
   protected void initPopupBuilder(@NotNull HelpTooltip instance) {

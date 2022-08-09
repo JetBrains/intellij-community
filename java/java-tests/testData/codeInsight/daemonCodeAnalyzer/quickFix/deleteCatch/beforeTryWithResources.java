@@ -1,4 +1,4 @@
-// "Delete catch for 'java.lang.ClassNotFoundException'" "true"
+// "Delete catch for 'java.lang.ClassNotFoundException'" "true-preview"
 import java.io.*;
 
 class Cl implements AutoCloseable {

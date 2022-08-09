@@ -2,16 +2,18 @@
 package com.intellij.idea
 
 import com.intellij.util.PlatformUtils
-import kotlinx.coroutines.Deferred
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
-class MainImpl : AppStarter {
+internal class MainImpl : AppStarter {
   init {
     PlatformUtils.setDefaultPrefixForCE()
   }
 
-  override fun start(args: List<String>, prepareUiFuture: Deferred<Any>): CompletableFuture<*> {
-    initApplication(args, prepareUiFuture)
-    return CompletableFuture.completedFuture(null)
+  override suspend fun start(args: List<String>, setBaseLafJob: Job, telemetryInitJob: Job) {
+    withContext(Dispatchers.Default) {
+      doInitApplication(args, setBaseLafJob, telemetryInitJob)
+    }
   }
 }

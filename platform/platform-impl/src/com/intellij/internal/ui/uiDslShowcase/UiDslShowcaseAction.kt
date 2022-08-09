@@ -23,9 +23,9 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
-const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
+private const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
 
-val DEMOS = arrayOf(
+private val DEMOS = arrayOf(
   ::demoBasics,
   ::demoRowLayout,
   ::demoComponentLabels,

@@ -50,7 +50,7 @@ public final class MavenLegacyModuleImporter {
   private final MavenProjectsTree myMavenTree;
   private final MavenProject myMavenProject;
 
-  @Nullable
+  @NotNull
   private final MavenProjectChanges myMavenProjectChanges;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
@@ -60,12 +60,12 @@ public final class MavenLegacyModuleImporter {
   private MavenRootModelAdapter myRootModelAdapter;
 
   private IdeModifiableModelsProvider myProviderForExtensions;
-  private List<MavenImporter> mySuitableImporters;
+  private List<MavenImporter> mySuitableFacetsImporters;
 
   public MavenLegacyModuleImporter(Module module,
                                    MavenProjectsTree mavenTree,
                                    MavenProject mavenProject,
-                                   @Nullable MavenProjectChanges changes,
+                                   @NotNull MavenProjectChanges changes,
                                    Map<MavenProject, String> mavenProjectToModuleName,
                                    MavenImportingSettings settings,
                                    ModifiableModelsProviderProxy modifiableModelsProvider,
@@ -82,16 +82,6 @@ public final class MavenLegacyModuleImporter {
     if (!FileUtil.namesEqual("pom", pomFile.getNameWithoutExtension())) {
       MavenPomPathModuleService.getInstance(module).setPomFileUrl(pomFile.getUrl());
     }
-  }
-
-  public MavenLegacyModuleImporter(Module module,
-                                   MavenProjectsTree mavenTree,
-                                   MavenProject mavenProject,
-                                   @Nullable MavenProjectChanges changes,
-                                   Map<MavenProject, String> mavenProjectToModuleName,
-                                   MavenImportingSettings settings,
-                                   ModifiableModelsProviderProxy modifiableModelsProvider) {
-    this(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, settings, modifiableModelsProvider, null);
   }
 
   public ModifiableRootModel getRootModel() {
@@ -139,26 +129,17 @@ public final class MavenLegacyModuleImporter {
     configLanguageLevel(level);
   }
 
-  public void preConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void preConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : mySuitableImporters) {
+      for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
-
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, true, () -> {
-              importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+              importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
             });
           }
         }
@@ -169,23 +150,14 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void configFacets(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void configFacets(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        for (final MavenImporter importer : mySuitableImporters) {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
-
+        for (final MavenImporter importer : mySuitableFacetsImporters) {
           if (importer.getModuleType() == moduleType) {
             try {
               measureImporterTime(importer, counters, false, () -> {
@@ -194,7 +166,7 @@ public final class MavenLegacyModuleImporter {
                                  myRootModelAdapter,
                                  myMavenTree,
                                  myMavenProject,
-                                 changes,
+                                 myMavenProjectChanges,
                                  myMavenProjectToModuleName,
                                  postTasks);
               });
@@ -208,26 +180,17 @@ public final class MavenLegacyModuleImporter {
     });
   }
 
-  public void postConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+  void postConfigFacets(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
     MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
       if (myModule.isDisposed()) return;
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : mySuitableImporters) {
+      for (final MavenImporter importer : mySuitableFacetsImporters) {
         try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
-
           if (importer.getModuleType() == moduleType) {
             measureImporterTime(importer, counters, false, () -> {
-              importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
+              importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myProviderForExtensions);
             });
           }
         }
@@ -451,18 +414,26 @@ public final class MavenLegacyModuleImporter {
     }
   }
 
-  public IdeModifiableModelsProvider getModifiableModelsProvider() {
-    return myProviderForExtensions;
+  boolean initFacetsImporters(boolean isWorkspaceImport) {
+    mySuitableFacetsImporters = MavenImporter.getSuitableImporters(myMavenProject, isWorkspaceImport);
+
+    // We must run all importers when we import into Workspace Model:
+    //  in Workspace model the project is recreated from scratch. But for the importers for which processChangedModulesOnly = true,
+    //  we don't know whether they rely on the fact, that previously imported data is kept in the project model on reimport.
+    if (!isWorkspaceImport) {
+      if (!myMavenProjectChanges.hasChanges()) {
+        mySuitableFacetsImporters = ContainerUtil.filter(mySuitableFacetsImporters, (it) -> !it.processChangedModulesOnly());
+      }
+    }
+
+    return !mySuitableFacetsImporters.isEmpty();
   }
 
-  public void prepareForImporters(IdeModifiableModelsProvider providerForExtensions, boolean isLegacyImport) {
+  void prepareForFacets(IdeModifiableModelsProvider providerForExtensions) {
     myProviderForExtensions = providerForExtensions;
     MavenRootModelAdapter mavenRootModelAdapter = new MavenRootModelAdapter(
       new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, new ModifiableModelsProviderProxyWrapper(myProviderForExtensions)));
     setRootModelAdapter(mavenRootModelAdapter);
-
-    mySuitableImporters = ContainerUtil.filter(myMavenProject.getSuitableImporters(),
-                                               importer -> isLegacyImport || !importer.isMigratedToConfigurator());
   }
 
   @NotNull

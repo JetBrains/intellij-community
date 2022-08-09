@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.ide.plugins.advertiser.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -35,6 +36,27 @@ internal class XmlSerializerMapTest {
             </map>
           </option>
         </bean>""", data)
+  }
+
+
+  @Test
+  fun `empty map in data class`() {
+    @Tag("bean")
+    data class Bean(
+      @JvmField
+      @field:OptionTag("TRUSTED_PROJECT_PATHS")
+      val trustedPaths: Map<String, Boolean> = emptyMap()
+    )
+
+    val o = JDOMUtil.load("""
+    <bean>
+      <option name="TRUSTED_PROJECT_PATHS">
+        <map>
+        </map>
+      </option>
+    </bean>
+    """.trimIndent()).deserialize(Bean::class.java)
+    assertThat(o.trustedPaths).isNotNull
   }
 
   @Test fun mapAtTopLevel() {

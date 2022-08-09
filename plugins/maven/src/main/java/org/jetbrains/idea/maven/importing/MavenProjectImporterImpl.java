@@ -37,8 +37,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.idea.maven.project.MavenProjectChanges.ALL;
-
 class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectImporterImpl.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
@@ -130,7 +128,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         });
       });
 
-      configFacets(importers, postTasks, true);
+      configFacets(importers, postTasks, false);
     }
     else {
       finalizeImport(obsoleteModules);
@@ -168,7 +166,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) {
-        result.put(each, ALL);
+        result.put(each, MavenProjectChanges.ALL);
       }
     }
 
@@ -370,7 +368,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         Module module = myMavenProjectToModule.get(project);
         if (module == null) continue;
 
-        importers.add(createModuleImporter(module, project, null));
+        importers.add(createModuleImporter(module, project, MavenProjectChanges.NONE));
       }
     }
 
@@ -438,14 +436,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     });
   }
 
-  private MavenLegacyModuleImporter createModuleImporter(Module module, MavenProject mavenProject, @Nullable MavenProjectChanges changes) {
-    return new MavenLegacyModuleImporter(module,
-                                         myProjectsTree,
-                                         mavenProject,
-                                         changes,
-                                         myMavenProjectToModuleName,
-                                         myImportingSettings,
-                                         myModelsProvider);
+  private MavenLegacyModuleImporter createModuleImporter(Module module, MavenProject mavenProject, @NotNull MavenProjectChanges changes) {
+    return new MavenLegacyModuleImporter(module, myProjectsTree, mavenProject, changes, myMavenProjectToModuleName, myImportingSettings,
+                                         myModelsProvider, null);
   }
 
   private void configModuleGroups() {

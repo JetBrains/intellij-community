@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
@@ -97,7 +98,8 @@ class WorkspaceModelTest {
         }
       })
 
-    val model = WorkspaceModel.getInstance(projectModel.project)
+    val model = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
+    model.userWarningLoggingLevel = true
 
     runWriteActionAndWait {
       model.updateProjectModel {

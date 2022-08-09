@@ -1,11 +1,13 @@
 package com.intellij.settingsSync
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Records changes in the settings, merges changes made locally and remotely.
  */
-internal interface SettingsLog {
+@ApiStatus.Internal
+interface SettingsLog {
   interface Position {
     val id: String
   }

@@ -16,48 +16,94 @@
 package org.jetbrains.idea.maven.project;
 
 public class MavenProjectChanges {
-  public static final MavenProjectChanges NONE = new MavenProjectChanges();
+  public static final MavenProjectChanges NONE = createNoneChanges();
   public static final MavenProjectChanges ALL = createAllChanges();
   public static final MavenProjectChanges DEPENDENCIES = createDependenciesChanges();
 
+  /**
+   * @deprecated Use MavenProjectChangesBuilder instead
+   */
+  @Deprecated
+  MavenProjectChanges() {
+  }
+
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean packaging;
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean output;
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean sources;
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean dependencies;
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean plugins;
+  /**
+   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
+   */
+  @Deprecated
   public boolean properties;
 
+  public boolean hasPackagingChanges() {
+    return packaging;
+  }
+
+  public boolean hasOutputChanges() {
+    return output;
+  }
+
+  public boolean hasSourceChanges() {
+    return sources;
+  }
+
+  public boolean hasDependencyChanges() {
+    return dependencies;
+  }
+
+  public boolean hasPluginsChanges() {
+    return plugins;
+  }
+
+  public boolean hasPropertyChanges() {
+    return properties;
+  }
+
+  public boolean hasChanges() {
+    return hasPackagingChanges() ||
+           hasOutputChanges() ||
+           hasSourceChanges() ||
+           hasDependencyChanges() ||
+           hasPluginsChanges() ||
+           hasPropertyChanges();
+  }
+
+  private static MavenProjectChanges createNoneChanges() {
+    return new MavenProjectChangesBuilder();
+  }
+
   private static MavenProjectChanges createAllChanges() {
-    MavenProjectChanges result = new MavenProjectChanges();
-    result.packaging = true;
-    result.output = true;
-    result.sources = true;
-    result.dependencies = true;
-    result.plugins = true;
-    result.properties = true;
+    MavenProjectChangesBuilder result = new MavenProjectChangesBuilder();
+    result.setAllChanges(true);
     return result;
   }
 
   private static MavenProjectChanges createDependenciesChanges() {
-    MavenProjectChanges result = new MavenProjectChanges();
-    result.dependencies = true;
+    MavenProjectChangesBuilder result = new MavenProjectChangesBuilder();
+    result.setHasDependencyChanges(true);
     return result;
-  }
-
-  public MavenProjectChanges mergedWith(MavenProjectChanges other) {
-    if (other == null) return this;
-
-    MavenProjectChanges result = new MavenProjectChanges();
-    result.packaging = packaging || other.packaging;
-    result.output = output || other.output;
-    result.sources = sources || other.sources;
-    result.dependencies = dependencies || other.dependencies;
-    result.plugins = plugins || other.plugins;
-    result.properties = properties || other.properties;
-    return result;
-  }
-
-  public boolean hasChanges() {
-    return packaging || output || sources || dependencies || plugins || properties;
   }
 }

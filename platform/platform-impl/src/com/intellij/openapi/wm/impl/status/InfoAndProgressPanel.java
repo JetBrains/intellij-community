@@ -59,6 +59,17 @@ import java.util.List;
 import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
+
+  @ApiStatus.Internal
+  public enum AutoscrollLimit {
+    NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
+  }
+
+  @ApiStatus.Internal
+  public interface ScrollableToSelected {
+    void updateAutoscrollLimit(AutoscrollLimit limit);
+  }
+
   public static final Object FAKE_BALLOON = new Object();
 
   private final ProcessPopup myPopup;
@@ -253,10 +264,20 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
+  private void updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit autoscrollLimit) {
+    if (myCentralComponent instanceof ScrollableToSelected) {
+      ((ScrollableToSelected)myCentralComponent).updateAutoscrollLimit(autoscrollLimit);
+    }
+  }
+
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
 
     synchronized (myOriginals) {
+      if (myOriginals.isEmpty()) {
+        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE);
+      }
+
       myOriginals.add(original);
       myInfos.add(info);
 
@@ -315,6 +336,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
 
       if (last) {
+        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED);
         myInlinePanel.updateState(null);
         if (myShouldClosePopupAndOnProcessFinish) {
           hideProcessPopup();

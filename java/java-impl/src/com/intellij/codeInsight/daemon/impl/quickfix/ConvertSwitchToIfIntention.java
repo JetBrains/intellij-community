@@ -310,7 +310,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       if (caseElement instanceof PsiExpression) {
         PsiExpression caseExpression = PsiUtil.skipParenthesizedExprDown((PsiExpression)caseElement);
         String caseValue = getCaseValueText(caseExpression, commentTracker);
-        if (useEquals && !ExpressionUtils.isNullLiteral(caseExpression)) {
+        if (useEquals && caseExpression != null && !(caseExpression.getType() instanceof PsiPrimitiveType)) {
           if (PsiPrecedenceUtil.getPrecedence(caseExpression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) {
             caseValue = "(" + caseValue + ")";
           }

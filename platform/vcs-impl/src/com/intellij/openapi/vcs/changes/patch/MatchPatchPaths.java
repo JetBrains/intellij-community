@@ -45,9 +45,7 @@ public final class MatchPatchPaths {
    * Find the best matched bases for file patches; e.g. Unshelve has to use project dir as best base by default,
    * while Apply patch should process through context, because it may have been created outside IDE for a certain vcs root
    *
-   * @param list
    * @param useProjectRootAsPredefinedBase if true then we use project dir as default base despite context matching
-   * @return
    */
   public List<AbstractFilePatchInProgress<?>> execute(@NotNull List<? extends FilePatch> list, boolean useProjectRootAsPredefinedBase) {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);

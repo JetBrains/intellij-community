@@ -1302,9 +1302,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
             LOG.debug(line);
           }
         }
-        else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
-          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
-                                                       JpsBuildBundle.message("build.message.insufficient.memory")));
+        else if (line.contains("java.lang.OutOfMemoryError")) {
+          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.insufficient.memory")));
           myErrorCount.incrementAndGet();
         }
         else {

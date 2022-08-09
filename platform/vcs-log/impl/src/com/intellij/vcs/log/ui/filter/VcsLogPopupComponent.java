@@ -14,10 +14,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.Nls;
@@ -32,7 +29,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
@@ -43,8 +42,10 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull private final Supplier<@NlsContexts.Label String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
+  @NotNull private InlineIconButton myFilterActionButton;
 
   protected VcsLogPopupComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
+    super(null);
     myDisplayName = displayName;
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
   }
@@ -57,25 +58,52 @@ public abstract class VcsLogPopupComponent extends JPanel {
     setBorder(wrapBorder(createUnfocusedBorder()));
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
+    myFilterActionButton = new InlineIconButton(AllIcons.Actions.Close);
+
     if (myNameLabel != null) add(myNameLabel);
     add(myValueLabel);
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
-    add(new JLabel(AllIcons.General.ArrowDown));
+    add(myFilterActionButton);
+
+    Runnable resetAction = createResetAction();
+
+    myFilterActionButton.setActionListener(e -> {
+      if (isValueSelected()) {
+        resetAction.run();
+      }
+      else {
+        showPopupMenu();
+      }
+    });
+
+    updateFilterButton();
 
     installChangeListener(() -> {
       setDefaultForeground();
+      updateFilterButton();
+
       myValueLabel.revalidate();
       myValueLabel.repaint();
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
     if (shouldIndicateHovering()) {
-      indicateHovering();
+      Stream.of(this, myFilterActionButton, myNameLabel, myValueLabel)
+        .filter(Objects::nonNull)
+        .forEach(this::indicateHovering);
     }
     indicateFocusing();
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return this;
   }
 
+  private void updateFilterButton() {
+    boolean selected = isValueSelected();
+    myFilterActionButton.setIcon(selected ? AllIcons.Actions.Close : AllIcons.General.ArrowDown);
+    myFilterActionButton.setHoveredIcon(selected ? AllIcons.Actions.CloseHovered : AllIcons.General.ArrowDown);
+    myFilterActionButton.setFocusable(selected);
+  }
 
   public abstract String getCurrentText();
 
@@ -103,6 +131,11 @@ public abstract class VcsLogPopupComponent extends JPanel {
    */
   protected abstract ActionGroup createActionGroup();
 
+  /**
+   * @return an action that resets filter to its default state
+   */
+  protected abstract Runnable createResetAction();
+
   private void indicateFocusing() {
     addFocusListener(new FocusAdapter() {
       @Override
@@ -129,17 +162,20 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private void showPopupMenuOnClick() {
-    new ClickListener() {
+    ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showPopupMenu();
         return true;
       }
-    }.installOn(this);
+    };
+    clickListener.installOn(this);
+    clickListener.installOn(myValueLabel);
+    if (myNameLabel != null) clickListener.installOn(myNameLabel);
   }
 
-  private void indicateHovering() {
-    addMouseListener(new MouseAdapter() {
+  private void indicateHovering(@NotNull JComponent component) {
+    component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(@NotNull MouseEvent e) {
         setOnHoverForeground();
@@ -154,7 +190,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   private void setDefaultForeground() {
     if (myNameLabel != null) {
-      myNameLabel.setForeground(isValueSelected() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground());
+      myNameLabel.setForeground(UIUtil.getLabelInfoForeground());
     }
     myValueLabel.setForeground(UIUtil.getLabelForeground());
   }

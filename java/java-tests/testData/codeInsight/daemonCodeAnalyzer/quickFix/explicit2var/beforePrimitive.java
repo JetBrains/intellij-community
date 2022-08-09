@@ -1,4 +1,4 @@
-// "Replace explicit type with 'var'" "true"
+// "Replace explicit type with 'var'" "true-preview"
 class Main {
   {
     @I <caret>int i = 0;

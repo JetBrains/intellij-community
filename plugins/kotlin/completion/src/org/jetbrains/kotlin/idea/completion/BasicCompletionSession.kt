@@ -19,6 +19,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -516,9 +516,9 @@ class BasicCompletionSession(
                                     }
                                 }
 
-                                override fun renderElement(presentation: LookupElementPresentation?) {
+                                override fun renderElement(presentation: LookupElementPresentation) {
                                     super.renderElement(presentation)
-                                    presentation?.appendTailText(
+                                    presentation.appendTailText(
                                         KotlinIdeaCompletionBundle.message(
                                             "presentation.tail.for.0.in.1",
                                             name,
@@ -741,7 +741,6 @@ class BasicCompletionSession(
             else -> false
         }
 
-        //workaround to avoid false-positive: KTIJ-19892
         override fun addWeighers(sorter: CompletionSorter): CompletionSorter = if (shouldCompleteParameterNameAndType())
             sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
         else

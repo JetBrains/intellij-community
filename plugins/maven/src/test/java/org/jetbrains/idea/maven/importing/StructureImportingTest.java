@@ -1184,7 +1184,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReleaseCompilerPropertyInPerSourceTypeModules() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled());
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

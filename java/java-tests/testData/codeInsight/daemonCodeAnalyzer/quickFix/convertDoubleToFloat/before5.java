@@ -1,4 +1,4 @@
-// "Cast argument to 'float'" "true"
+// "Cast argument to 'float'" "true-preview"
 class Test {
   void bar() {
     foo(3<caret>.14);

@@ -26,3 +26,5 @@ class MyClass {
 fun test() {}
 
 // SMART_STEP_INTO_BY_INDEX: 4
+
+// IGNORE_K2

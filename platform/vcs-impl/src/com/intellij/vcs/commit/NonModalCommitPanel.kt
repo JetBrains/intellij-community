@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativePoint.getNorthEastOf
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -32,14 +31,12 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.LayoutManager
 import java.awt.Point
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
-
-private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
 abstract class NonModalCommitPanel(
   val project: Project,
@@ -57,7 +54,6 @@ abstract class NonModalCommitPanel(
   private var needUpdateCommitOptionsUi = false
 
   protected val centerPanel = simplePanel()
-  protected var bottomPanel: JBPanel<*>.() -> Unit = { }
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
@@ -96,7 +92,7 @@ abstract class NonModalCommitPanel(
     commitActionsPanel.border = getButtonPanelBorder()
   }
 
-  protected fun buildLayout() {
+  protected fun buildLayout(bottomPanelBuilder: JPanel.() -> Unit) {
     commitActionsPanel.apply {
       border = getButtonPanelBorder()
       background = getButtonPanelBackground()
@@ -105,9 +101,9 @@ abstract class NonModalCommitPanel(
     }
     centerPanel
       .addToCenter(commitMessage)
-      .addToBottom(panel(VerticalLayout(0)).apply {
+      .addToBottom(JPanel(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
-        bottomPanel()
+        bottomPanelBuilder()
       })
 
     addToCenter(centerPanel)

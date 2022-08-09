@@ -1163,6 +1163,8 @@ public final class JBUI {
     }
 
     public static final class Tooltip {
+      public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("ToolTip.borderCornerRadius", 4);
+
       public static @NotNull Color shortcutForeground () {
         return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
       }

@@ -15,14 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CreateParameterFix extends AddParamBase {
     private final XPathVariableReference myReference;
@@ -38,7 +41,7 @@ public class CreateParameterFix extends AddParamBase {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.create.parameter");
     }
 
@@ -55,5 +58,10 @@ public class CreateParameterFix extends AddParamBase {
     @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myReference.isValid() && XsltCodeInsightUtil.getTemplateTag(myReference, true) != null;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new CreateParameterFix(PsiTreeUtil.findSameElementInCopy(myReference, target));
     }
 }

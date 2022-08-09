@@ -21,6 +21,28 @@ import java.util.function.Function;
  * that some {@linkplain Application#runWriteAction write action} might be run in between these short read actions,
  * which could potentially change the model of the element (reference model, PSI model, framework model or whatever model).
  * </p>
+ * <pre>
+ * val pointer = readAction {
+ *   val instance = obtainSomeInstanceWhichIsValidWithinAReadAction()
+ *   return@readAction instance.createPointer()
+ * }
+ * // the pointer might be safely stored in the UI or another model for later usage
+ * readAction { // another read action
+ *   val restoredInstance = pointer.dereference()
+ *   if (restoredInstance == null) {
+ *     // instance was invalidated, act accordingly
+ *     return
+ *   }
+ *   // at this point the instance is valid because it should've not exist if it's not
+ *   doSomething(restoredInstance)
+ * }
+ *
+ * readAction {
+ *   // same pointer may be used in several subsequent read actions
+ *   val restoredInstance = pointer.dereference()
+ *   ...
+ * }
+ * </pre>
  *
  * <h3>Example 2</h3>
  * <p>

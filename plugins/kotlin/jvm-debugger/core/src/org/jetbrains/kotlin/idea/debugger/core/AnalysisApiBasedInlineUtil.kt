@@ -60,7 +60,7 @@ object AnalysisApiBasedInlineUtil {
         this is KtNonErrorClassType && this.classId == classId
 
     // Copied from org.jetbrains.kotlin.resolve.calls.util.callUtil.kt
-    private fun KtCallExpression.getValueArgumentForExpression(expression: KtExpression): ValueArgument? {
+    fun KtCallExpression.getValueArgumentForExpression(expression: KtExpression): ValueArgument? {
         fun KtElement.deparenthesizeStructurally(): KtElement? {
             val deparenthesized = if (this is KtExpression) KtPsiUtil.deparenthesizeOnce(this) else this
             return when {

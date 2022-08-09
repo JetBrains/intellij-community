@@ -112,7 +112,7 @@ To start the evaluation in the headless mode you should describe where the proje
   "actions": { // part of config about actions generation step
     "evaluationRoots": [ ], // list of string with paths to files/directories for evaluation
     "strategy": { // describes evaluation rules
-      "codeGolf": false, // turn on "Code Golf" mode
+      "completionGolf": false, // turn on "Code Golf" mode
       "context": "ALL", // ALL, PREVIOUS
       "prefix": { // policy how to complete particular token
         "name": "SimplePrefix", // SimplePrefix (type 1 or more letters), CapitalizePrefix or NoPrefix
@@ -129,7 +129,7 @@ To start the evaluation in the headless mode you should describe where the proje
     }
   },
   "interpret": { // part of config about actions interpretation step
-    "codeGolfSettings": {
+    "completionGolfSettings": {
       "topN": 5, // Take only N top suggestions, applying after filtering by source. Pass -1 to disable
       "checkLine": true, // Check if expected line starts with suggestion from completion
       "checkToken": true, // In case first token in suggestion equals to first token in expected string, we can pick only first token from suggestion. Suitable for full line or multiple token completions

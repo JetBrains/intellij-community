@@ -12,6 +12,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -63,6 +64,7 @@ import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.ui.render.RendererPanelsUtilsKt;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -243,6 +245,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         }
       };
       myDialog.setUndecorated(true);
+      if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+        myDialog.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+      }
       ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
@@ -1958,6 +1963,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     private UsageTableCellRenderer() {
       if (ExperimentalUI.isNewUI()) {
         PopupUtil.configSelectablePanel(this);
+        setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+        RendererPanelsUtilsKt.resetHorizontalInsets(myUsageRenderer);
+        Insets ipad = myFileAndLineNumber.getIpad();
+        //noinspection UseDPIAwareInsets
+        myFileAndLineNumber.setIpad(new Insets(ipad.top, JBUI.scale(4), ipad.bottom, 0));
       } else {
         setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       }
@@ -1967,9 +1977,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       setLayout(new BorderLayout());
       add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
-      if (ExperimentalUI.isNewUI()) {
-        setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
-      }
     }
 
     @Override

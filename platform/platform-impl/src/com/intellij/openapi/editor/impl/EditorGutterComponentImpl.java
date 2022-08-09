@@ -90,6 +90,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -767,11 +768,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               if (breakpoint.isPresent()) {
                 iconOnTheLine = breakpoint.get().getIcon();
               }
-                if (myAlphaContext.isVisible() && Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
-                  Object activeIcon = getClientProperty("line.number.hover.icon");
-                  if (activeIcon instanceof Icon) {
-                    hoverIcon = (Icon)activeIcon;
-                  }
+              if ((myAlphaContext.isVisible() || isGutterContextMenuShown()) && Objects.equals(getClientProperty("active.line.number"), logicalLine)) {
+                Object activeIcon = getClientProperty("line.number.hover.icon");
+                if (activeIcon instanceof Icon) {
+                  hoverIcon = (Icon)activeIcon;
+                }
               }
             }
 
@@ -2437,12 +2438,29 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
         }
         if (group != null) {
-          e.consume();
-          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
-          popupMenu.getComponent().show(this, e.getX(), e.getY());
+          showGutterContextMenu(group, e);
         }
       }
     }
+  }
+
+  private static final String EDITOR_GUTTER_CONTEXT_MENU_KEY = "editor.gutter.context.menu";
+
+  private void showGutterContextMenu(@NotNull ActionGroup group, MouseEvent e) {
+    e.consume();
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
+    putClientProperty(EDITOR_GUTTER_CONTEXT_MENU_KEY, popupMenu);
+    popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        EditorGutterComponentImpl.this.putClientProperty(EDITOR_GUTTER_CONTEXT_MENU_KEY, null);
+      }
+    });
+    popupMenu.getComponent().show(this, e.getX(), e.getY());
+  }
+
+  private boolean isGutterContextMenuShown() {
+    return getClientProperty(EDITOR_GUTTER_CONTEXT_MENU_KEY) != null;
   }
 
   @Override

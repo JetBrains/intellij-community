@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -32,7 +32,7 @@ object ConfigLibraryUtil {
     private const val LIB_NAME_KOTLIN_STDLIB_JS = "KOTLIN_STDLIB_JS_LIB_NAME"
     private const val LIB_NAME_KOTLIN_STDLIB_COMMON = "KOTLIN_STDLIB_COMMON_LIB_NAME"
 
-    private val ATTACHABLE_LIBRARIES = mapOf(
+    val ATTACHABLE_LIBRARIES = mapOf(
         "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
         "JUnit3" to TestKotlinArtifacts.junit3,
         "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),

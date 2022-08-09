@@ -177,5 +177,11 @@ public abstract class JavaRefactoringActionHandlerFactory {
    */
   public abstract RefactoringActionHandler createInvertBooleanHandler();
 
-  public abstract RefactoringActionHandler createIntentionPreviewIntroduceVariableHandler();
+  /**
+   * Creates handler for Introduce Variable refactoring using for intention preview.<p>
+   *
+   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
+   * accepts 1 {@code PsiExpression}, that will be an initializer for introduced variable.
+   */
+  public abstract RefactoringActionHandler createIntroduceVariableOnPreviewHandler();
 }

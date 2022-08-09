@@ -84,8 +84,11 @@ internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
+
           val d = preferredSize
-          d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+          getProject()?.let {
+            d.width = RunWidgetWidthHelper.getInstance(it).arrow
+          }
 
           preferredSize = d
         })

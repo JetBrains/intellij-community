@@ -12,7 +12,7 @@ class BundledRuntimeTest {
   @Test
   fun download() {
     withCompilationContext { context ->
-      val bundledRuntime = BundledRuntimeImpl(context)
+      val bundledRuntime = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
       for (prefix in JetBrainsRuntimeDistribution.ALL) {
@@ -53,7 +53,8 @@ class BundledRuntimeTest {
   @Test
   fun currentArchDownload() {
     withCompilationContext { context ->
-      val currentJbrHome = BundledRuntimeImpl(context).getHomeForCurrentOsAndArch()
+      val currentJbrHome = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
+        .getHomeForCurrentOsAndArch()
       val javaExe = Jdk11Downloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
         .inheritIO()

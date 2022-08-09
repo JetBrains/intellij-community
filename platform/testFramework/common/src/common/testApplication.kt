@@ -10,7 +10,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
-import com.intellij.idea.getAppInitListeners
+import com.intellij.idea.getAppInitializedListeners
 import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -20,7 +20,6 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -41,6 +40,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
@@ -55,8 +56,6 @@ import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
-
 private var applicationInitializationResult: Result<Unit>? = null
 
 val isApplicationInitialized: Boolean
@@ -64,8 +63,8 @@ val isApplicationInitialized: Boolean
 
 @TestOnly
 @Internal
-fun initTestApplication() {
-  (applicationInitializationResult ?: doInitTestApplication()).getOrThrow()
+fun initTestApplication(): Result<Unit> {
+  return (applicationInitializationResult ?: doInitTestApplication())
 }
 
 @TestOnly
@@ -101,7 +100,6 @@ fun loadApp(setupEventQueue: Runnable) {
 }
 
 @TestOnly
-@OptIn(DelicateCoroutinesApi::class)
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
@@ -134,7 +132,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
         app.loadComponents()
       }
 
-      callAppInitialized(getAppInitListeners(app))
+      callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
     }
 
     StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
@@ -275,6 +273,9 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
 
   val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
   commitThread?.waitForAllCommits(timeout, timeUnit)
+
+  val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
+  stubIndex?.waitUntilStubIndexedInitialized()
 }
 
 @TestOnly

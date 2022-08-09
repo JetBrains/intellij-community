@@ -248,7 +248,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+  @Deprecated("Use overloaded collapsibleGroup(...) instead")
   override fun collapsibleGroup(title: String,
                                 indent: Boolean,
                                 topGroupGap: Boolean?,

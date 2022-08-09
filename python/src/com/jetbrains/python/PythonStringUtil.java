@@ -101,9 +101,6 @@ public final class PythonStringUtil {
    * Replaces word after last dot from string s to newElementName.
    * For example 'yy.xxx.foo' can be renamed to 'yy.xxx.bar'
    *
-   * @param s
-   * @param newElementName
-   * @return
    */
   public static String replaceLastSuffix(String s, String separator, String newElementName) {
 

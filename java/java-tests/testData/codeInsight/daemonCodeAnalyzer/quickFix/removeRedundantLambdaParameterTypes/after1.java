@@ -1,4 +1,4 @@
-// "Remove 'var'" "true"
+// "Remove 'var'" "true-preview"
 import java.util.function.Function;
 
 class Main {

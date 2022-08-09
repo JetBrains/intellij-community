@@ -61,5 +61,10 @@
       <option name="name" value="ea2d1ec7-ac51-47bd-8cff-265a321ccb16" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="kpm" />
+      <option name="name" value="kpm" />
+      <option name="url" value="https://packages.jetbrains.team/maven/p/kpm/public" />
+    </remote-repository>
   </component>
 </project>

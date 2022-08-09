@@ -35,7 +35,7 @@ import javax.swing.JPanel
 val LOG = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
- * Extension point to add actions in the inspections results export popup.
+ * Extension point to add actions in the inspection results export popup.
  */
 abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
                                                      description: Supplier<String?>,

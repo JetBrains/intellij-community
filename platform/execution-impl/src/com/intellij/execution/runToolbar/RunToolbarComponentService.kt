@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -17,7 +18,7 @@ class RunToolbarComponentService(val project: Project): Disposable {
   private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   init {
-    if (RunToolbarProcess.isAvailable) {
+    if (ToolbarSettings.getInstance().isAvailable) {
       project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           ApplicationManager.getApplication().invokeLater {

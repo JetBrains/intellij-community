@@ -42,6 +42,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
@@ -235,6 +236,7 @@ internal class FilteringBranchesTree(
   val component: BranchesTreeComponent,
   private val uiController: BranchesDashboardController,
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
+  place: @NonNls String,
   disposable: Disposable
 ) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
@@ -271,7 +273,7 @@ internal class FilteringBranchesTree(
 
   init {
     runInEdt {
-      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup")
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), place)
       setupTreeListeners()
     }
   }

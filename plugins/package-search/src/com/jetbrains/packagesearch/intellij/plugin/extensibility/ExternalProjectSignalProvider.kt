@@ -25,6 +25,10 @@ class ExternalProjectSignalProvider : FlowModuleChangesSignalProvider {
 
     override fun registerModuleChangesListener(project: Project): Flow<Unit> =
         project.messageBusFlow(ProjectDataImportListener.TOPIC) {
-            ProjectDataImportListener { trySend(Unit) }
+            object: ProjectDataImportListener {
+                override fun onImportFinished(projectPath: String?) {
+                    trySend(Unit)
+                }
+            }
         }
 }

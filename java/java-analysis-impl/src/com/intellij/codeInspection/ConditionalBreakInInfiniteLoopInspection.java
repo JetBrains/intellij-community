@@ -124,7 +124,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     @Nullable
     private static Context from(@NotNull PsiConditionalLoopStatement loopStatement,
                                 boolean noConversionToDoWhile,
-                                boolean dontConvertWhenIfIsSingleStmtInLoop) {
+                                boolean suggestConversionWhenIfIsASingleStmtInLoop) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
         if (loopStatement instanceof PsiForStatement) {
@@ -139,7 +139,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       if (body == null) return null;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
       if (statements.length < 1) return null;
-      if (statements.length == 1 && dontConvertWhenIfIsSingleStmtInLoop) return null;
+      if (statements.length == 1 && !suggestConversionWhenIfIsASingleStmtInLoop) return null;
       if (StreamEx.ofTree((PsiElement)body, el -> StreamEx.of(el.getChildren()))
             .select(PsiBreakStatement.class)
             .filter(stmt -> ControlFlowUtils.statementBreaksLoop(stmt, loopStatement))

@@ -2653,6 +2653,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="messages.InspectionGadgetsBundle" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OnlyOneElementUsed" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.only.one.element.used.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.OnlyOneElementUsedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceOnLiteralHasNoEffect" bundle="messages.InspectionGadgetsBundle" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.replace.on.literal.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.redundancy.ReplaceOnLiteralHasNoEffectInspection"/>
@@ -2687,6 +2690,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection" cleanupTool="true"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareToJavaTime"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" key="inspection.simplifiable.compare.java.time.display.name"
+                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.intellij.codeInspection.RedundantCompareToJavaTimeInspection"
+                     cleanupTool="true"/>
 
     <!--group.names.visibility.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AmbiguousMethodCall" bundle="messages.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"
@@ -2759,6 +2767,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.suspicious.date.format.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousDateFormatInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="IncorrectDateTimeFormat" enabledByDefault="true" level="WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.incorrect.date.format.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     implementationClass="com.siyeh.ig.bugs.IncorrectDateTimeFormatInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantExpression" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.constant.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"

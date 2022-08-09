@@ -2,6 +2,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -367,6 +369,11 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @NotNull
       public String getFamilyName() {
         return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myMethod ? 1 : 2);
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        return new IntentionPreviewInfo.Html(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix.preview"));
       }
 
       @NotNull

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -163,9 +162,6 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression);
-
-  @NotNull
-  public abstract IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression);
 
   @NotNull
   public abstract IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable);
@@ -530,7 +526,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 
-  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates);
+  public abstract @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className);
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 
@@ -594,9 +590,9 @@ public abstract class QuickFixFactory {
    * @param parameter receiver parameter to change name for
    * @param newName   new name of the receiver parameter
    *                  <p>
-   *                  In an instance method the name of the receiver parameter must be <code>this</code>.
+   *                  In an instance method the name of the receiver parameter must be {@code this}.
    *                  <p>
-   *                  In an inner class's constructor the name of the receiver parameter must be <i>Identifier</i> . <code>this</code>
+   *                  In an inner class's constructor the name of the receiver parameter must be <i>Identifier</i>.{@code this}
    *                  where <i>Identifier</i> is the simple name of the class or interface which is the immediately enclosing type
    *                  declaration of the inner class.
    * @return a new fix

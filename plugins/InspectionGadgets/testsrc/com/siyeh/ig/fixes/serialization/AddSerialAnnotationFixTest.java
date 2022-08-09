@@ -24,7 +24,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
            "class Test implements Serializable {\n" +
            "  private static final long /*'serialVersionUID' can be annotated with '@Serial' annotation*//*_*/serialVersionUID/**/ = 7874493593505141603L;\n" +
            "}");
-    checkQuickFix("Annotate field 'serialVersionUID' as @Serial", "import java.io.*;\n" +
+    checkQuickFix("Annotate field 'serialVersionUID' as '@Serial'", "import java.io.*;\n" +
                                     "class Test implements Serializable {\n" +
                                     "  @Serial\n" +
                                     "  private static final long serialVersionUID = 7874493593505141603L;\n" +
@@ -38,7 +38,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
            "    return 1;\n" +
            "  }\n" +
            "}");
-    checkQuickFix("Annotate method 'readResolve' as @Serial", "import java.io.*;\n" +
+    checkQuickFix("Annotate method 'readResolve' as '@Serial'", "import java.io.*;\n" +
                                             "class Test implements Serializable {\n" +
                                             "  @Serial\n" +
                                             "  protected Object readResolve() throws ObjectStreamException {\n" +

@@ -707,6 +707,13 @@ public class AnalysisScope {
     }
   }
 
+  /**
+   * @return true iff the scope covers the whole project so no external (non-scope) usages of project's code is possible
+   */
+  public boolean isTotalScope() {
+    return getScopeType() == PROJECT && isIncludeTestSource();
+  }
+  
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
   }

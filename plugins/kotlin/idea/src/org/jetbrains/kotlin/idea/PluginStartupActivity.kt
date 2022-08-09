@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
@@ -18,14 +16,10 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
-import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.util.concurrent.Callable
 
 internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
-        initializeDiagnostics()
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkCompatibility()
         setupReportingFromRelease()
@@ -51,23 +45,5 @@ internal class PluginStartupActivity : StartupActivity.Background {
                 daemonCodeAnalyzer.serializeCodeInsightPasses(true)
             }
             .submit(AppExecutorUtil.getAppExecutorService())
-    }
-
-    companion object {
-        /*
-        Concurrent access to Errors may lead to the class loading dead lock because of non-trivial initialization in Errors.
-        As a work-around, all Error classes are initialized beforehand.
-        It doesn't matter what exact diagnostic factories are used here.
-     */
-        private fun initializeDiagnostics() {
-            consumeFactory(Errors.DEPRECATION)
-            consumeFactory(ErrorsJvm.ACCIDENTAL_OVERRIDE)
-            consumeFactory(ErrorsJs.CALL_FROM_UMD_MUST_BE_JS_MODULE_AND_JS_NON_MODULE)
-            consumeFactory(ErrorsNative.INCOMPATIBLE_THROWS_INHERITED)
-        }
-
-        private inline fun consumeFactory(factory: DiagnosticFactory<*>) {
-            factory.javaClass
-        }
     }
 }

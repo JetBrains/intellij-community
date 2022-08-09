@@ -1062,7 +1062,6 @@ public final class ExpressionUtils {
    * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
    * reference which is initialized and not used anywhere else
    *
-   * @param expression
    * @return a resolved expression or expression itself
    */
   @Contract("null -> null")

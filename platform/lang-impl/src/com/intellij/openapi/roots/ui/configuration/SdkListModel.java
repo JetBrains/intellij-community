@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -19,7 +19,7 @@ import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
 public final class SdkListModel extends AbstractListModel<SdkListItem> implements ComboBoxPopupState<SdkListItem> {
   private final boolean myIsSearching;
-  private final ImmutableList<SdkListItem> myItems;
+  private final List<SdkListItem> myItems;
   private final Producer<? extends Sdk> myGetProjectSdk;
   private final ImmutableMap<SdkListItem, @NlsContexts.Separator String> mySeparators;
 
@@ -31,7 +31,7 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
                @NotNull List<? extends SdkListItem> items,
                @NotNull Producer<? extends Sdk> getProjectSdk) {
     myIsSearching = isSearching;
-    myItems = ImmutableList.copyOf(items);
+    myItems = List.copyOf(items);
     myGetProjectSdk = getProjectSdk;
 
     boolean myFirstSepSet = false;

@@ -225,7 +225,7 @@ public class PluginManagerTest {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     StringBuilder text = new StringBuilder();
-    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.getRawListOfEnabledModules()) {
+    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
       if (descriptor.moduleName != null) {
         text.append(" | ").append(descriptor.moduleName);

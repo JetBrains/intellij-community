@@ -493,6 +493,17 @@
       "stepOutCodeBlock.svg": "actions/stepOutCodeBlock.svg",
       "stepOver.svg": "actions/traceOver.svg",
       "stop.svg": "actions/suspend.svg",
+      "testCustom.svg": "runConfigurations/testCustom.svg",
+      "testError.svg": "runConfigurations/testError.svg",
+      "testFailed.svg": "runConfigurations/testFailed.svg",
+      "testIgnored.svg": "runConfigurations/testIgnored.svg",
+      "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
+      "testPassed.svg": "runConfigurations/testPassed.svg",
+      "testPassedIgnored.svg": "runConfigurations/testPassedIgnored.svg",
+      "testPaused.svg": "runConfigurations/testPaused.svg",
+      "testSkipped.svg": "runConfigurations/testSkipped.svg",
+      "testTerminated.svg": "runConfigurations/testTerminated.svg",
+      "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
     "runConfigurations":{

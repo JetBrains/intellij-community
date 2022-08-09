@@ -1110,7 +1110,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
-    <usageTargetProvider implementation="com.intellij.find.findUsages.ThrowsUsageTargetProvider"/>
+    <usageTargetProvider implementation="com.intellij.find.findUsages.JavaUsageTargetProvider"/>
     <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaBackspaceHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer" implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
@@ -2245,8 +2245,11 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA" order="first"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA" order="first"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA" order="first"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
@@ -2288,6 +2291,7 @@
                  defaultValue="false"
                  description="Format chained calls as in versions prior to 2021.2"/>
     <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java" key="ide.java.refactoring.suggested.call.site"/>
+    <registryKey defaultValue="true" description="Show no usages in Java reference code lenses" key="code.lens.java.show.0.usages"/>
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
   </extensions>

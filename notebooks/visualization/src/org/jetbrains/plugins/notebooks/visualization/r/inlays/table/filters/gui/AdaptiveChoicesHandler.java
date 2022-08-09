@@ -588,8 +588,6 @@ class AdaptiveChoicesHandler extends ChoicesHandler {
             /**
              * Handles a given row during the iteration.
              *
-             * @param   entry
-             *
              * @return  true if the handle requires no further iteration steps
              */
             public boolean handleRow(RowEntry entry) {

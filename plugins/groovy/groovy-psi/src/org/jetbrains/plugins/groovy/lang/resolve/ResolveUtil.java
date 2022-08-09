@@ -89,9 +89,7 @@ public final class ResolveUtil {
   /**
    *
    * @param place - place to start tree walk up
-   * @param processor
    * @param processNonCodeMembers - this parameter tells us if we need non code members
-   * @return
    */
   public static boolean treeWalkUp(@NotNull PsiElement place, @NotNull PsiScopeProcessor processor, boolean processNonCodeMembers) {
     return ResolveUtilKt.treeWalkUp(place, processor, initialState(processNonCodeMembers));

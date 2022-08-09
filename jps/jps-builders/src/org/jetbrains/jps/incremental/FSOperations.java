@@ -37,11 +37,7 @@ public final class FSOperations {
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 
   /**
-   * @param context
-   * @param round
-   * @param file
    * @return true if file is marked as "dirty" in the specified compilation round
-   * @throws IOException
    */
   public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
@@ -56,7 +52,6 @@ public final class FSOperations {
    * @deprecated use markDirty(CompileContext context, final CompilationRound round, final File file)
    *
    * Note: marked file will well be visible as "dirty" only on the <b>next</b> compilation round!
-   * @throws IOException
    *
    */
   @Deprecated
@@ -99,7 +94,6 @@ public final class FSOperations {
   }
 
   /**
-   * @param context
    * @param round desired compilation round at which these dirty marks should be visible
    * @return a builder object that marks dirty files and collects data about files marked
    */

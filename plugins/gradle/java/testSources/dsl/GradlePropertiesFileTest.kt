@@ -25,7 +25,7 @@ class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
     test(gradleVersion, PROPERTIES_FIXTURE) {
       runInEdtAndWait {
         val buildscript = findOrCreateFile("build.gradle", "foo")
-        val child = gradleFixture.fileFixture.root.findChild("gradle.properties")
+        val child = projectRoot.findChild("gradle.properties")
         assertNotNull(child, "Expected not-null child")
         val prop = (PsiUtilCore.getPsiFile(codeInsightFixture.project, child!!) as PropertiesFile).findPropertyByKey("foo")
         assertNotNull(prop, "Expected not-null prop")

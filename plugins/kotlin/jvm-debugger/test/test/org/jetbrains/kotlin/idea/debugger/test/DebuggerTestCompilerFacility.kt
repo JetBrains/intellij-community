@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -19,23 +19,26 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
+import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.GenerationUtils
-import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-class DebuggerTestCompilerFacility(
+open class DebuggerTestCompilerFacility(
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
     private val useIrBackend: Boolean
@@ -119,7 +122,7 @@ class DebuggerTestCompilerFacility(
     }
 
     // Returns the qualified name of the main test class.
-    fun compileTestSources(
+    open fun compileTestSources(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
@@ -156,7 +159,7 @@ class DebuggerTestCompilerFacility(
                 compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir)
                 mainClassName = analyzeAndFindMainClass(project, jvmKtFiles)
             } else {
-                mainClassName = compileKotlinFilesInIde(project, allKtFiles, classesDir)
+                mainClassName = compileKotlinFilesInIdeAndFindMainClass(project, allKtFiles, classesDir)
             }
         }
 
@@ -172,6 +175,26 @@ class DebuggerTestCompilerFacility(
         return mainClassName
     }
 
+    open fun compileTestSources(
+        project: Project,
+        srcDir: File,
+        classesDir: File,
+        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
+    ): CompilationResult = with(mainFiles) {
+        val testFiles = kotlinJvm + java
+        testFiles.copy(srcDir)
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(srcDir)
+
+        lateinit var ktFiles: List<KtFile>
+        doWriteAction {
+            ktFiles = createPsiFilesAndCollectKtFiles(testFiles, srcDir, project)
+        }
+
+        return runReadAction {
+            compileKotlinFilesInIde(project, ktFiles, classesDir, classBuilderFactory)
+        }
+    }
+
     private fun compileKotlinFilesWithCliCompiler(jvmSrcDir: File, commonSrcDir: File, classesDir: File) {
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
@@ -184,7 +207,7 @@ class DebuggerTestCompilerFacility(
         ).compile()
     }
 
-    private fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
+    protected open fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
 
         val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
@@ -194,28 +217,18 @@ class DebuggerTestCompilerFacility(
             ?: error("Cannot find main class name")
     }
 
-    private fun compileKotlinFilesInIde(project: Project, files: List<KtFile>, classesDir: File): String {
-        return analyzeAndCompileFiles(project, files) { analysisResult ->
-            val configuration = CompilerConfiguration()
-            configuration.put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
-            configuration.put(JVMConfigurationKeys.IR, useIrBackend)
-            configuration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
+    data class CompilationResult(
+        val analysisResult: AnalysisResult,
+        val generationState: GenerationState,
+        val resolutionFacade: ResolutionFacade
+    )
 
-            val state = GenerationUtils.generateFiles(project, files, configuration, ClassBuilderFactories.BINARIES, analysisResult) {
-                generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)
-            }
-
-            val extraDiagnostics = state.collectedExtraJvmDiagnostics
-            if (!extraDiagnostics.isEmpty()) {
-                val compoundMessage = extraDiagnostics.joinToString("\n") { DefaultErrorMessages.render(it) }
-                error("One or more errors occurred during code generation: \n$compoundMessage")
-            }
-
-            state.factory.writeAllTo(classesDir)
-        }
-    }
-
-    private fun analyzeAndCompileFiles(project: Project, files: List<KtFile>, compile: (AnalysisResult) -> Unit): String {
+    private fun compileKotlinFilesInIde(
+        project: Project,
+        files: List<KtFile>,
+        classesDir: File,
+        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
+    ): CompilationResult {
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
 
         val analysisResult = try {
@@ -226,8 +239,28 @@ class DebuggerTestCompilerFacility(
         }
         analysisResult.throwIfError()
 
-        compile(analysisResult)
+        val configuration = CompilerConfiguration()
+        configuration.put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
+        configuration.put(JVMConfigurationKeys.IR, useIrBackend)
+        configuration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
 
+        val state = GenerationUtils.generateFiles(project, files, configuration, classBuilderFactory, analysisResult) {
+            generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)
+        }
+
+        val extraDiagnostics = state.collectedExtraJvmDiagnostics
+        if (!extraDiagnostics.isEmpty()) {
+            val compoundMessage = extraDiagnostics.joinToString("\n") { DefaultErrorMessages.render(it) }
+            error("One or more errors occurred during code generation: \n$compoundMessage")
+        }
+
+        state.factory.writeAllTo(classesDir)
+
+        return CompilationResult(analysisResult, state, resolutionFacade)
+    }
+
+    protected open fun compileKotlinFilesInIdeAndFindMainClass(project: Project, files: List<KtFile>, classesDir: File): String {
+        val (analysisResult, _, resolutionFacade) = compileKotlinFilesInIde(project, files, classesDir)
         return findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, files)?.asString()
             ?: error("Cannot find main class name")
     }

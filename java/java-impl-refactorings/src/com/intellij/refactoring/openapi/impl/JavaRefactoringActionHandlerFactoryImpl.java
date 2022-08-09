@@ -15,8 +15,8 @@ import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.introduceVariable.IntentionPreviewIntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableOnPreviewHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
@@ -133,7 +133,7 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createIntentionPreviewIntroduceVariableHandler() {
-    return new IntentionPreviewIntroduceVariableHandler();
+  public RefactoringActionHandler createIntroduceVariableOnPreviewHandler() {
+    return new IntroduceVariableOnPreviewHandler();
   }
 }

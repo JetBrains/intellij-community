@@ -204,9 +204,16 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         copyClassType(originalClass, queryClass, replacementClass);
         copyExtendsListIfNotReplaced(originalClass, queryClass, replacementClass);
         copyImplementsListIfNotReplaced(originalClass, queryClass, replacementClass);
-        copyTypeParameterListIfNotReplaced(originalClass, queryClass, replacementClass);
 
         copyUnmatchedMembers(originalClass, originalNamedElements, replacementClass);
+      }
+
+      if (originalNamedElement instanceof PsiTypeParameterListOwner &&
+          patternNamedElement instanceof PsiTypeParameterListOwner &&
+          replacementNamedElement instanceof PsiTypeParameterListOwner) {
+        copyTypeParameterListIfNotReplaced((PsiTypeParameterListOwner)originalNamedElement,
+                                           (PsiTypeParameterListOwner)patternNamedElement,
+                                           (PsiTypeParameterListOwner)replacementNamedElement);
       }
     }
   }
@@ -656,7 +663,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
   }
 
-  private static void copyTypeParameterListIfNotReplaced(PsiClass original, PsiClass query, PsiClass replacement) {
+  private static void copyTypeParameterListIfNotReplaced(PsiTypeParameterListOwner original,
+                                                         PsiTypeParameterListOwner query,
+                                                         PsiTypeParameterListOwner replacement) {
     final PsiTypeParameterList originalTypeParameterList = original.getTypeParameterList();
     final PsiTypeParameterList queryTypeParameterList = query.getTypeParameterList();
     final PsiTypeParameterList replacementTypeParameterList = replacement.getTypeParameterList();
@@ -666,7 +675,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (originalTypeParameterList.getTypeParameters().length != 0 &&
         queryTypeParameterList.getTypeParameters().length == 0 &&
         replacementTypeParameterList.getTypeParameters().length == 0) {
-      replacementTypeParameterList.replace(originalTypeParameterList);
+      final PsiElement newElement = replacementTypeParameterList.replace(originalTypeParameterList);
+      final PsiElement prev = originalTypeParameterList.getPrevSibling();
+      if (prev instanceof PsiWhiteSpace) {
+        newElement.getParent().addBefore(prev, newElement);
+      }
     }
   }
 

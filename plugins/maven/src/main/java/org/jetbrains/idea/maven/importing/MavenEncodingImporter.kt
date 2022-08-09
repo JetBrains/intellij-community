@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.io.URLUtil.urlToPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -25,7 +26,8 @@ import java.nio.charset.UnsupportedCharsetException
 /**
  * @author Sergey Evdokimov
  */
-class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
+@ApiStatus.Internal
+class MavenEncodingImporter : MavenImporter("", ""), MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
   override fun isApplicable(mavenProject: MavenProject): Boolean {
@@ -36,13 +38,13 @@ class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
-    val allMavenProjects = context.mavenProjectsWithModules.asSequence().map { (mavenProject, _) -> mavenProject }
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    val allMavenProjects = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
     val mapper = mapEncodings(allMavenProjects, context.project)
     PREPARED_MAPPER.set(context, mapper)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     PREPARED_MAPPER.get(context)?.applyCollectedInfo()
   }
 

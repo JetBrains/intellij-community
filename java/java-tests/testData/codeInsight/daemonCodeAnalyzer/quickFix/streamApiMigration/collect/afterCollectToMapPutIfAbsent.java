@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with collect" "true-preview"
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;

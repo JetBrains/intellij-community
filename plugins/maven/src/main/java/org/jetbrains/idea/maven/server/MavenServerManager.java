@@ -8,16 +8,13 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,23 +30,24 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
+import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.function.Predicate;
 
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
@@ -230,16 +228,22 @@ public final class MavenServerManager implements Disposable {
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
     String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
+    Sdk jdk;
     try {
-      return MavenUtil.getJdk(project, jdkForImporterName);
+      jdk = MavenUtil.getJdk(project, jdkForImporterName);
     }
     catch (ExternalSystemJdkException e) {
-      Sdk jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
+      jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
       MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
                                                                             SyncBundle.message("importing.jdk.changed.description",
                                                                                                jdkForImporterName, jdk.getName())
       );
+    }
+    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
       return jdk;
+    } else {
+      MavenLog.LOG.info("Selected jdk [" + jdk.getName() + "] is not JDK1.8+ Will use internal jdk instead");
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
   }
 
@@ -271,7 +275,6 @@ public final class MavenServerManager implements Disposable {
   }
 
   /**
-   *
    * use MavenUtil.restartMavenConnectors
    */
   public void shutdown(boolean wait) {
@@ -351,105 +354,19 @@ public final class MavenServerManager implements Disposable {
     return null;
   }
 
-  /*
-  Made public for external systems integration
-   */
-  //TODO: WSL
-  public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
+  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     if (!distribution.isValid()) {
       MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
       throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
     }
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final String root = pluginFileOrDir.getParent();
 
-    final List<File> classpath = new ArrayList<>();
+    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
 
-    if (pluginFileOrDir.isDirectory()) {
-      MavenLog.LOG.debug("collecting classpath for local run");
-      prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, root);
+    if (extension == null) {
+      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
     }
-    else {
-      MavenLog.LOG.debug("collecting classpath for production");
-      prepareClassPathForProduction(distribution.getVersion(), classpath, root);
-    }
-
-    addMavenLibs(classpath, distribution.getMavenHome().toFile());
-    MavenLog.LOG.debug("Collected classpath = ", classpath);
-    return classpath;
-  }
-
-  private static void prepareClassPathForProduction(@NotNull String mavenVersion,
-                                                    List<File> classpath,
-                                                    String root) {
-    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
-    classpath.add(new File(root, "maven-server-api.jar"));
-
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-      classpath.add(new File(root, "maven2-server.jar"));
-      addDir(classpath, new File(root, "maven2-server-lib"), f -> true);
-    }
-    else {
-      classpath.add(new File(root, "maven3-server-common.jar"));
-      addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
-
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-        classpath.add(new File(root, "maven30-server.jar"));
-      }
-      else {
-        classpath.add(new File(root, "maven3-server.jar"));
-        if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-          classpath.add(new File(root, "maven36-server.jar"));
-        }
-      }
-    }
-  }
-
-  private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
-    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMavenCommonLibs(communityRoot);
-
-    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
-    classpath.add(new File(root, "intellij.maven.server"));
-    File parentFile = MavenUtil.getMavenPluginParentFile();
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-      classpath.add(new File(root, "intellij.maven.server.m2.impl"));
-      addDir(classpath, new File(parentFile, "maven2-server-impl/lib"), f -> true);
-    }
-    else {
-      classpath.add(new File(root, "intellij.maven.server.m3.common"));
-      addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
-
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-        classpath.add(new File(root, "intellij.maven.server.m30.impl"));
-      }
-      else {
-        classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-        if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-          classpath.add(new File(root, "intellij.maven.server.m36.impl"));
-        }
-      }
-    }
-  }
-
-  private static void addMavenLibs(List<File> classpath, File mavenHome) {
-    addDir(classpath, new File(mavenHome, "lib"), f -> !f.getName().contains("maven-slf4j-provider"));
-    File bootFolder = new File(mavenHome, "boot");
-    File[] classworldsJars = bootFolder.listFiles((dir, name) -> StringUtil.contains(name, "classworlds"));
-    if (classworldsJars != null) {
-      Collections.addAll(classpath, classworldsJars);
-    }
-  }
-
-  private static void addDir(List<File> classpath, File dir, Predicate<File> filter) {
-    File[] files = dir.listFiles();
-    if (files == null) return;
-
-    for (File jar : files) {
-      if (jar.isFile() && jar.getName().endsWith(".jar") && filter.test(jar)) {
-        classpath.add(jar);
-      }
-    }
+    MavenLog.LOG.warn("Using extension " + extension + " to start MavenServer");
+    return extension.collectClassPathAndLibsFolder(distribution);
   }
 
   @NotNull
@@ -590,14 +507,11 @@ public final class MavenServerManager implements Disposable {
    */
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
-    //will be removed after IDEA-205421
-    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
-      return resolveEmbeddedMaven2HomeForTests().getMavenHome().toFile();
+    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
+      File file = e.getMavenHomeFile(mavenHome);
+      if (file != null) return file;
     }
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
-    }
+
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
   }

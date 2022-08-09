@@ -6,7 +6,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -19,9 +18,9 @@ inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
 }
 
 inline fun <T> runActivity(@NonNls name: String, category: ActivityCategory = ActivityCategory.DEFAULT, task: () -> T): T {
-  val activity = StartUpMeasurer.startActivity(name, category)
+  val activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity(name, category) else null
   val result = task()
-  activity.end()
+  activity?.end()
   return result
 }
 
@@ -31,13 +30,9 @@ inline fun CoroutineScope.launchAndMeasure(
   context: CoroutineContext = EmptyCoroutineContext,
   crossinline block: suspend CoroutineScope.() -> Unit
 ): Job {
-  val start = AtomicLong()
-  val job = launch(context) {
-    start.set(System.nanoTime())
-    block()
+  return launch(context) {
+    runActivity(activityName) {
+      block()
+    }
   }
-  job.invokeOnCompletion {
-    StartUpMeasurer.addCompletedActivity(start.get(), System.nanoTime(), activityName, ActivityCategory.DEFAULT, null)
-  }
-  return job
 }

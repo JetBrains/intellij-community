@@ -10,9 +10,9 @@ import kotlinx.coroutines.withContext
 
 internal class VirtualFileUrlsLazyInitializer: ProjectPostStartupActivity {
   override suspend fun execute(project: Project) {
+    val urls = (VirtualFileUrlManager.getInstance(project) as? IdeVirtualFileUrlManagerImpl)?.getCachedVirtualFileUrls() ?: return
     withContext(Dispatchers.IO) {
-      (VirtualFileUrlManager.getInstance(project) as? IdeVirtualFileUrlManagerImpl)?.getCachedVirtualFileUrls()
-        ?.forEach { (it as? VirtualFileUrlBridge)?.isValid }
+      urls.forEach { (it as? VirtualFileUrlBridge)?.isValid }
     }
   }
 }

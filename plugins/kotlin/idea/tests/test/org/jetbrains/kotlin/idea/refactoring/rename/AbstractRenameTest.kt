@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -79,8 +79,13 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
         if (libraryInfos != null) {
-            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map {
-                File(PlatformTestUtil.getCommunityPath(), it.substringAfter("@"))
+            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
+                if ("@" in libraryInfo) {
+                    File(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
+                }
+                else {
+                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]
+                }
             }
             return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(TestKotlinArtifacts.kotlinStdlibSources))
         }

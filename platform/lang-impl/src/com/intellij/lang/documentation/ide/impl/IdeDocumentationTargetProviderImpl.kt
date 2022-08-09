@@ -5,6 +5,7 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.DocumentationTargetProvider
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
+import com.intellij.util.SmartList
 import com.intellij.util.castSafelyTo
 
 open class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
@@ -34,10 +36,17 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
-    val symbolTargets = symbolDocumentationTargets(file, offset)
-    if (symbolTargets.isNotEmpty()) {
-      return symbolTargets
+    val targets = SmartList<DocumentationTarget>()
+    for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {
+      targets.addAll(ext.documentationTargets(file, offset))
     }
+    if (!targets.isEmpty()) {
+      return targets
+    }
+    // fallback to PSI
+    // TODO this fallback should be implemented inside DefaultTargetSymbolDocumentationTargetProvider, but first:
+    //  - PsiSymbol has to hold information about origin element;
+    //  - documentation target by argument list should be also implemented separately.
     val documentationManager = DocumentationManager.getInstance(project)
     val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
                                          ?: return emptyList()

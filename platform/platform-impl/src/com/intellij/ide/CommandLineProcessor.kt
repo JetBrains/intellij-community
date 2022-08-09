@@ -13,13 +13,13 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.CommandLineArgs
+import com.intellij.idea.findStarter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
@@ -45,13 +45,12 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
   private const val OPTION_WAIT = "--wait"
   @JvmField
-  val OK_FUTURE: Future<CliResult> = CompletableFuture.completedFuture(CliResult.OK)
+  val OK_FUTURE: CompletableFuture<CliResult> = CompletableFuture.completedFuture(CliResult.OK)
 
   @ApiStatus.Internal
   const val SCHEME_INTERNAL = "!!!internal!!!"
@@ -238,12 +237,8 @@ object CommandLineProcessor {
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CommandLineProcessorResult? {
     val command = args.first()
 
-    val app = ApplicationManager.getApplication()
-    val extensionArea = app.extensionArea as ExtensionsAreaImpl
-    val adapter = extensionArea.getExtensionPoint<ApplicationStarter>(ApplicationStarter.EP_NAME.name).sortedAdapters.firstOrNull { it.orderId == command }
-                  ?: return null
-    val starter: ApplicationStarter = try {
-      adapter.createInstance(app) ?: return null
+    val starter = try {
+      findStarter(command) ?: return null
     }
     catch (e: CancellationException) {
       throw e
@@ -257,10 +252,12 @@ object CommandLineProcessor {
       return createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
                                            ApplicationNamesInfo.getInstance().productName))
     }
+
     LOG.info("Processing command with $starter")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
-      return CommandLineProcessorResult(project = null, future = starter.processExternalCommandLineAsync(args, currentDirectory))
+      val result = starter.processExternalCommandLine(args, currentDirectory)
+      return CommandLineProcessorResult(project = null, result = result)
     }
 
     val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) {
@@ -270,7 +267,8 @@ object CommandLineProcessor {
       ModalityState.defaultModalityState()
     }
     return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-      CommandLineProcessorResult(project = null, future = starter.processExternalCommandLineAsync(args, currentDirectory))
+      val result = starter.processExternalCommandLine(args, currentDirectory)
+      CommandLineProcessorResult(project = null, result = result)
     }
   }
 
@@ -321,8 +319,7 @@ object CommandLineProcessor {
       if (StringUtilRt.isQuotedString(arg)) {
         arg = StringUtilRt.unquoteString(arg)
       }
-      val file = parseFilePath(arg, currentDirectory)
-                 ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
+      val file = parseFilePath(arg, currentDirectory) ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
       projectAndCallback = openFileOrProject(file = file,
                                              line = line,
                                              column = column,
@@ -338,18 +335,17 @@ object CommandLineProcessor {
       i++
     }
 
-    if (projectAndCallback != null) {
-      return projectAndCallback
+    projectAndCallback?.let {
+      return it
     }
 
     if (shouldWait) {
       return CommandLineProcessorResult(
         project = null,
-        future = CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+        result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
       )
     }
-
-    if (lightEditMode) {
+    else if (lightEditMode) {
       LightEditService.getInstance().showEditorWindow()
       return CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
     }

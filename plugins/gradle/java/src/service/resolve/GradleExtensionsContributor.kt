@@ -13,6 +13,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.getStaticPluginModel
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
@@ -44,12 +45,27 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
 
     val resolvedProperties = processPropertiesFromFile(aClass, processor, place, state)
 
-    val properties = if (name == null) data.findAllProperties() else listOf(data.findProperty(name) ?: return)
+
+    val properties = if (name == null) data.findAllProperties() else listOfNotNull(data.findProperty(name))
+    val dynamicPropertiesNames = properties.map { it.name }
+
+    val staticProperties = getStaticPluginModel(place.containingFile).extensions.filter { if (name == null) it.name !in dynamicPropertiesNames else it.name == name }
+
+
     for (property in properties) {
       if (property.name in resolvedProperties) {
         continue
       }
-      if (!processor.execute(GradleGroovyProperty(property, file), state)) {
+      if (!processor.execute(GradleGroovyProperty(property.name, property.typeFqn, property.value, file), state)) {
+        return
+      }
+    }
+
+    for (property in staticProperties) {
+      if (property.name in resolvedProperties) {
+        continue
+      }
+      if (!processor.execute(GradleGroovyProperty(property.name, property.type, null, file), state)) {
         return
       }
     }
@@ -88,11 +104,8 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     return processedNames
   }
 
-
-
-
   companion object {
-    private fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
+    fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
       val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
       val userHomePropertiesFile = getGradleUserHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
       if (userHomePropertiesFile != null) {

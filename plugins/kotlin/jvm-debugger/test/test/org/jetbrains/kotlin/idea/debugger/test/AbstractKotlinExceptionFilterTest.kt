@@ -11,8 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.core.util.toVirtualFile
-import org.jetbrains.kotlin.idea.debugger.InlineFunctionHyperLinkInfo
-import org.jetbrains.kotlin.idea.debugger.KotlinExceptionFilterFactory
+import org.jetbrains.kotlin.idea.debugger.core.InlineFunctionHyperLinkInfo
+import org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory
 import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 import java.lang.reflect.InvocationTargetException
@@ -88,7 +88,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
         val info = result.firstHyperlinkInfo as FileHyperlinkInfo
 
         val descriptor = if (InTextDirectivesUtils.isDirectiveDefined(fileText, "NAVIGATE_TO_CALL_SITE")) {
-            (info as? InlineFunctionHyperLinkInfo)?.callSiteDescriptor
+          (info as? InlineFunctionHyperLinkInfo)?.callSiteDescriptor
         } else {
             info.descriptor
         }

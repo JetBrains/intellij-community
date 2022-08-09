@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.DataManagerImpl
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -44,7 +45,6 @@ import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
-import training.util.KeymapUtil
 import training.util.WeakReferenceDelegator
 import training.util.getActionById
 import training.util.invokeActionForFocusContext
@@ -225,7 +225,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       val position = sample.getPosition(1)
       val needAddToWatch = position.selection?.let { pair -> sample.text.substring(pair.first, pair.second) }
                            ?: error("Invalid sample data")
-      val hasShortcut = KeymapUtil.getShortcutByActionId(it) != null
+      val hasShortcut = ShortcutsRenderingUtil.getShortcutByActionId(it) != null
       val shortcut = if (hasShortcut) "" else " " + LessonsBundle.message("debug.workflow.consider.to.add.a.shortcut")
 
       text(LessonsBundle.message("debug.workflow.use.watches",

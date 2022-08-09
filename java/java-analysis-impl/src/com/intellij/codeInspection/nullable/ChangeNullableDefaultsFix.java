@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -72,5 +73,10 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
       }
       myManager.setDefaultNullable(myNullableName);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return new IntentionPreviewInfo.Html(JavaAnalysisBundle.message("make.0.default.annotation.preview"));
   }
 }

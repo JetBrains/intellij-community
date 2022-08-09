@@ -1,35 +1,51 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.isOverride
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.javaName
+import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.codegen.writer.isOverride
+import com.intellij.workspaceModel.codegen.writer.javaName
+import com.intellij.workspaceModel.codegen.writer.type
 
-val Field<*, *>.implWsDataFieldCode: String
+val ObjProperty<*, *>.implWsDataFieldCode: String
   get() = buildString {
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) append(implWsBlockingCodeOverride)
       else append(implWsDataBlockingCode)
     }
     else {
-      if (defaultValue!!.startsWith("=")) {
-        append("var $javaName: ${type.javaType} ${defaultValue}")
+      val expression = when (val kind = valueKind) {
+        is ObjProperty.ValueKind.Computable -> kind.expression
+        is ObjProperty.ValueKind.WithDefault -> kind.value
+        else -> error(kind)
+      }
+      if (expression.startsWith("=")) {
+        append("var $javaName: ${type.javaType} $expression")
       } else {
-        append("var $javaName: ${type.javaType} = ${defaultValue}")
+        append("var $javaName: ${type.javaType} = $expression")
       }
     }
   }
-private val Field<*, *>.implWsDataBlockingCode: String
+private val ObjProperty<*, *>.implWsDataBlockingCode: String
   get() = implWsDataBlockCode(type, name)
 
-private fun Field<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: String, isOptional: Boolean = false): String {
+private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: String, isOptional: Boolean = false): String {
   return when (fieldType) {
-    TInt -> "var $javaName: ${fieldType.javaType} = 0"
-    TBoolean -> "var $javaName: ${fieldType.javaType} = false"
-    TString -> "lateinit var $javaName: String"
-    is TRef -> error("Reference type at EntityData not supported")
-    is TCollection<*, *>, is TMap<*, *> -> {
+    ValueType.Int -> "var $javaName: ${fieldType.javaType} = 0"
+    ValueType.Boolean -> "var $javaName: ${fieldType.javaType} = false"
+    ValueType.String -> "lateinit var $javaName: String"
+    is ValueType.ObjRef<*> -> error("Reference type at EntityData not supported")
+    is ValueType.Collection<*, *> -> {
       if (fieldType.isRefType()) error("Reference type at EntityData not supported")
+      if (!isOptional) {
+        "lateinit var $javaName: ${fieldType.javaMutableType}"
+      }
+      else {
+        "var $javaName: ${fieldType.javaMutableType}? = null"
+      }
+    }
+    is ValueType.Map<*, *> -> {
       if (!isOptional) {
         "lateinit var $javaName: ${fieldType.javaType}"
       }
@@ -37,11 +53,11 @@ private fun Field<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: Strin
         "var $javaName: ${fieldType.javaType}? = null"
       }
     }
-    is TOptional<*> -> when (fieldType.type) {
-      TInt, TBoolean, TString -> "var $javaName: ${fieldType.javaType} = null"
+    is ValueType.Optional<*> -> when (fieldType.type) {
+      ValueType.Int, ValueType.Boolean, ValueType.String -> "var $javaName: ${fieldType.javaType} = null"
       else -> implWsDataBlockCode(fieldType.type, name, true)
     }
-    is TBlob<*> -> {
+    is ValueType.JvmClass -> {
       if (!isOptional) {
         "lateinit var $javaName: ${fieldType.javaType}"
       }
@@ -53,10 +69,10 @@ private fun Field<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: Strin
   }
 }
 
-val Field<*, *>.implWsDataFieldInitializedCode: String
+val ObjProperty<*, *>.implWsDataFieldInitializedCode: String
   get() = when (type) {
-    is TInt, is TBoolean -> ""
-    is TString, is TBlob<*>, is TCollection<*, *>, is TMap<*, *> -> {
+    is ValueType.Int, is ValueType.Boolean -> ""
+    is ValueType.String, is ValueType.JvmClass, is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       "fun is${capitalizedFieldName}Initialized(): Boolean = ::${javaName}.isInitialized"
     }

@@ -82,6 +82,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       if (terminalWidget == null) continue;
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
+      tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
       tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
         ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget)

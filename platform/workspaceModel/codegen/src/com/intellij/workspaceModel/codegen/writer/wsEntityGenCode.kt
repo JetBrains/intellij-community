@@ -3,8 +3,7 @@ package com.intellij.workspaceModel.codegen
 
 import com.intellij.workspaceModel.codegen.classes.implWsDataClassCode
 import com.intellij.workspaceModel.codegen.classes.implWsEntityCode
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.ObjType
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 
 /**
  * TODO:
@@ -30,10 +29,11 @@ import com.intellij.workspaceModel.codegen.deft.ObjType
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun DefType.implWsCode(simpleTypes: List<DefType>): String {
+fun ObjClass<*>.implWsCode(): String? {
+  if (!openness.instantiatable) return null
   return """
 ${implWsEntityCode()}
     
-${implWsDataClassCode(simpleTypes)}
+${implWsDataClassCode()}
     """.trimIndent()
 }

@@ -85,7 +85,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    TraceManager.getTracer("vcs").spanBuilder("loading details").setAttribute("root name", root.name).useWithScope {
+    TraceManager.getTracer("vcs").spanBuilder("loading details").setAttribute("rootName", root.name).useWithScope {
       val handlerListener = GitLogOutputSplitter(handler, parser, converter)
       Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
       handlerListener.reportErrors()

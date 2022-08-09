@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.base.analysis
 
@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.LibraryDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
@@ -87,7 +88,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
         for (module in modulesLibraryIsUsedIn) {
-            ProgressManager.checkCanceled()
+            checkCanceled()
             val (moduleLibraries, moduleSdks) = moduleDependenciesCache[module]
 
             libraries.addAll(moduleLibraries)
@@ -105,6 +106,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         val processedModules = HashSet<Module>()
         val condition = Condition<OrderEntry> { orderEntry ->
+            checkCanceled()
             orderEntry.safeAs<ModuleOrderEntry>()?.let {
                 it.module?.run { this !in processedModules } ?: false
             } ?: true
@@ -116,6 +118,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
+                checkCanceled()
                 libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
                     libraries += LibraryInfoCache.getInstance(project)[it].mapNotNull { libraryInfo ->
                         LibraryDependencyCandidate.fromLibraryOrNull(
@@ -127,6 +130,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
 
             override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
+                checkCanceled()
                 jdkOrderEntry.jdk?.let { jdk ->
                     sdks += SdkInfo(project, jdk)
                 }
@@ -202,9 +206,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+            val sdks = project.allSdks()
             invalidateEntries(
-                { _, value -> value.sdk.any { it.sdk !in jdks } },
+                { _, value -> value.sdk.any { it.sdk !in sdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
@@ -246,10 +250,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+            val sdks = project.allSdks()
 
             invalidateEntries(
-                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in jdks } },
+                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in sdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
@@ -335,6 +339,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val libraryWrapper = libraryInfo.library.wrap()
             val modulesLibraryIsUsedIn = get(libraryWrapper)
             for (module in modulesLibraryIsUsedIn) {
+                checkCanceled()
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)

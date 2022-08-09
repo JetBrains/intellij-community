@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -1117,8 +1118,8 @@ public final class EditorWindow {
   private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
     UISettings settings = UISettings.getInstance();
     boolean showAsterisk = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified();
-    boolean showFileIconInTabs = UISettings.getInstance().getShowFileIconInTabs();
-    if (!showAsterisk) {
+    boolean showFileIconInTabs = settings.getShowFileIconInTabs();
+    if (ExperimentalUI.isNewUI() || !showAsterisk) {
       return showFileIconInTabs ? baseIcon : null;
     }
 

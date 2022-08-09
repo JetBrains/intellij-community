@@ -104,7 +104,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val language = psiFile.language
     val project = editor.project ?: return null
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
-    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
+    val virtualFile = psiFile.virtualFile
+    if (virtualFile == null) return null
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile) ?: return null
     if ("Git" != vcs.name) {
       return null
     }

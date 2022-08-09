@@ -91,5 +91,9 @@ class Dominance {
         when l.size() == 2</error> -> System.out.println();
       default -> throw new IllegalStateException("Unexpected value: " + object);
     }
+    switch (integer) {
+      case Integer i -> {}
+      case null -> {}
+    }
   }
 }

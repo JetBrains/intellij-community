@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.test.utils
 
@@ -236,6 +236,7 @@ object IgnoreTests {
         const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"
 
         const val IGNORE_FIR = "// IGNORE_FIR"
+        const val IGNORE_K2 = "// IGNORE_K2"
         const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
 
         const val FIX_ME = "// FIX_ME: "

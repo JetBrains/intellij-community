@@ -11,6 +11,7 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +41,12 @@ public class ClusteringSearchSession {
   }
 
   @RequiresBackgroundThread
-  public synchronized Usage clusterUsage(@NotNull Bag usageFeatures, @NotNull Usage similarUsageAdapter) {
-    UsageCluster cluster = getTheMostSimilarCluster(usageFeatures);
+  public synchronized @NotNull SimilarUsage clusterUsage(@NotNull SimilarUsage similarUsageAdapter) {
+    UsageCluster cluster = getTheMostSimilarCluster(similarUsageAdapter.getFeatures());
     if (cluster == null) {
       cluster = createNewCluster();
     }
-    cluster.addUsage((SimilarUsage)similarUsageAdapter);
+    cluster.addUsage(similarUsageAdapter);
     return similarUsageAdapter;
   }
 
@@ -59,6 +60,14 @@ public class ClusteringSearchSession {
           return cluster;
         }
       }
+    }
+    return null;
+  }
+
+  public @Nullable UsageCluster findCluster(@NotNull List<? extends UsageInfo> infos) {
+    UsageInfo selectedInfo = ContainerUtil.getFirstItem(infos);
+    if (selectedInfo != null) {
+      return findCluster(selectedInfo);
     }
     return null;
   }

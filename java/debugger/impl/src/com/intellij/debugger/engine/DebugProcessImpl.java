@@ -417,10 +417,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   /**
    *
-   * @param suspendContext
-   * @param stepThread
    * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
-   * @param depth
    * @param hint may be null
    */
   protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,

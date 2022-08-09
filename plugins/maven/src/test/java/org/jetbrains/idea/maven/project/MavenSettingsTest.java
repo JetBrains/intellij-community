@@ -72,14 +72,17 @@ public class MavenSettingsTest extends MavenTestCase {
     });
 
     s.setCreateModulesForAggregators(true);
+    s.setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
 
+    s.clone().setCreateModulesForAggregators(true);
     s.clone().setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
   }
 
   public void testImportingSettings() {
-    assertTrue(new MavenImportingSettings().equals(new MavenImportingSettings()));
+    allowAccessToDirsIfExists(System.getenv("JAVA_HOME"));
+    assertEquals(new MavenImportingSettings(), new MavenImportingSettings());
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject);
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());

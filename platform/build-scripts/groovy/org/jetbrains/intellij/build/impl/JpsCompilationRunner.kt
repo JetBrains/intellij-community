@@ -59,6 +59,10 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
 
       // https://youtrack.jetbrains.com/issue/IDEA-269280
       System.setProperty("aether.connector.resumeDownloads", "false")
+
+      // Produces Kotlin compiler incremental cache which can be reused later.
+      // Unrelated to force rebuild controlled by JPS.
+      setSystemPropertyIfUndefined("kotlin.incremental.compilation", "true")
     }
   }
 

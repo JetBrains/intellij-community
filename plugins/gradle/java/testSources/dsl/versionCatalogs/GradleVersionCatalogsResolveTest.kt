@@ -64,6 +64,17 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNavigationToTomlEntry2(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs.groo<caret>vy.core") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "groovy-core")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testNavigationToTomlTable(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs.bun<caret>dles") {

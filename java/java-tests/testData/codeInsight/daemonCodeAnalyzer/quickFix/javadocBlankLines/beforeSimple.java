@@ -1,4 +1,4 @@
-// "Insert <p>" "true"
+// "Insert <p>" "true-preview"
 class Test {
   /**
    * Doesn't do anything.

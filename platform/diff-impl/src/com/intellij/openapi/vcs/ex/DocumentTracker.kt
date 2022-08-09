@@ -13,15 +13,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -174,11 +177,25 @@ class DocumentTracker(
         return
       }
 
-      tracker.refreshDirty(document1.immutableCharSequence,
-                           document2.immutableCharSequence,
-                           document1.lineOffsets,
-                           document2.lineOffsets,
-                           fastRefresh)
+      try {
+        tracker.refreshDirty(document1.immutableCharSequence,
+                             document2.immutableCharSequence,
+                             document1.lineOffsets,
+                             document2.lineOffsets,
+                             fastRefresh)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<DocumentTracker>().error(
+          "document1: $document1, document2: $document2, " +
+          "isFrozen1: ${freezeHelper.isFrozen(Side.LEFT)}, isFrozen2: ${freezeHelper.isFrozen(Side.RIGHT)}, " +
+          "isBulk1: ${document1.isInBulkUpdate}, isBulk2: ${document2.isInBulkUpdate}",
+          e)
+
+        tracker.resetTrackerState(DiffUtil.getLineCount(document1), DiffUtil.getLineCount(document2))
+      }
     }
   }
 
@@ -578,6 +595,21 @@ private class LineTracker(private val handlers: List<Handler>,
 
     blocks = result.newBlocks
     isDirty = false
+    forceMergeNearbyBlocks = false
+
+    afterBulkRangeChange(isDirty)
+  }
+
+  /**
+   * Reset to the simplest valid state. Hopefully, the next full refresh will be successful.
+   */
+  fun resetTrackerState(lineCount1: Int, lineCount2: Int) {
+    val fullRange = Range(0, lineCount1, 0, lineCount2)
+    val dirtyBlock = Block(fullRange, true, false)
+    onRangesChanged(emptyList(), dirtyBlock)
+
+    blocks = listOf(dirtyBlock)
+    isDirty = true
     forceMergeNearbyBlocks = false
 
     afterBulkRangeChange(isDirty)

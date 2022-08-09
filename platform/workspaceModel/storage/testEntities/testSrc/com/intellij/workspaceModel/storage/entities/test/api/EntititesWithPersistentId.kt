@@ -18,30 +18,29 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
       return FirstPId(data)
     }
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
-      override var data: String
-      override var entitySource: EntitySource
+  interface Builder : FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
+    override var data: String
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<FirstEntityWithPId, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FirstEntityWithPId {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<FirstEntityWithPId, Builder>() {
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FirstEntityWithPId {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(
+  FirstEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
 data class FirstPId(override val presentableName: String) : PersistentEntityId<FirstEntityWithPId>
@@ -51,30 +50,29 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
   override val persistentId: SecondPId
     get() = SecondPId(data)
 
-
   //region generated code
-  //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
-      override var data: String
-      override var entitySource: EntitySource
+  interface Builder : SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
+    override var data: String
+    override var entitySource: EntitySource
   }
-  
-  companion object: Type<SecondEntityWithPId, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondEntityWithPId {
-          val builder = builder()
-          builder.data = data
-          builder.entitySource = entitySource
-          init?.invoke(builder)
-          return builder
-      }
+
+  companion object : Type<SecondEntityWithPId, Builder>() {
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondEntityWithPId {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
   }
-  //@formatter:on
   //endregion
 
 }
+
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(
+  SecondEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
 data class SecondPId(override val presentableName: String) : PersistentEntityId<SecondEntityWithPId>

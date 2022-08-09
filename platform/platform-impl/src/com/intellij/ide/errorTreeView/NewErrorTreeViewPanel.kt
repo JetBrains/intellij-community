@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.createSupervisorCoroutineScope
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
@@ -32,6 +31,7 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.childScope
 import com.intellij.util.ui.ErrorTreeView
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MutableErrorTreeView
@@ -122,7 +122,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     val isProcessStopped: Boolean
   }
 
-  private val scope = createSupervisorCoroutineScope(myProject.coroutineScope)
+  private val scope = myProject.coroutineScope.childScope()
 
   init {
     layout = BorderLayout()
@@ -598,6 +598,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
       val presentation = event.presentation
       presentation.isEnabled = canControlProcess() && isProcessStopped
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
   }
 
   private inner class StopAction : DumbAwareAction(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend) {
@@ -612,6 +616,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
       val presentation = event.presentation
       presentation.isEnabled = canControlProcess() && !isProcessStopped
       presentation.isVisible = canControlProcess()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
   }
 
@@ -628,6 +636,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
         structureModel.invalidateAsync()
       }
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
   }
 
   private inner class ShowInfosAction : ToggleAction(IdeBundle.messagePointer("action.show.infos"),
@@ -640,6 +652,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
         configuration.isHideInfoMessages = hideInfos
         structureModel.invalidateAsync()
       }
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
   }
 

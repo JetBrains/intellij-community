@@ -5,20 +5,23 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.tail
+import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getRootGradleProjectPath
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeyValue
@@ -28,18 +31,22 @@ import org.toml.lang.psi.TomlTable
 class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandler {
 
   override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
+    if (!Registry.`is`(CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
+      return null
+    }
     if (sourceElement == null) {
       return null
     }
-    val resolved = sourceElement.parentOfType<GrReferenceExpression>()?.resolve()
+    val resolved = sourceElement.parentOfType<GrReferenceElement<*>>()?.resolve()
     if (resolved is GradleExtensionProperty && resolved.name == "libs") {
       val toml = findTomlFile(sourceElement, resolved.name)
       if (toml != null) {
         return arrayOf(toml)
       }
     }
-    if (resolved is PsiMethod) {
-      return resolved.resolveInToml(sourceElement)?.let { arrayOf(it) }
+    if (resolved is PsiMethod && resolved.containingFile?.name?.startsWith("LibrariesFor") == true) {
+      val actualMethod = findFinishingNode(sourceElement) ?: resolved
+      return actualMethod.resolveInToml(sourceElement)?.let { arrayOf(it) }
     }
     return null
   }
@@ -55,18 +62,32 @@ private fun findTomlFile(context: PsiElement, name: String): TomlFile? {
   return PsiManager.getInstance(context.project).findFile(toml)?.castSafelyTo<TomlFile>()
 }
 
-private fun PsiMethod.resolveInToml(sourceElement: PsiElement): PsiElement? {
+private fun PsiMethod.resolveInToml(context: PsiElement): PsiElement? {
   val containingClasses = mutableListOf(containingClass ?: return null)
   while (containingClasses.last().containingClass != null) {
     containingClasses.add(containingClasses.last().containingClass!!)
   }
   containingClasses.reverse()
   val name = containingClasses.first().name?.substringAfter(LIBRARIES_FOR_PREFIX) ?: return null
-  val toml = listOf(GroovyPropertyUtils.decapitalize(name), name).firstNotNullOfOrNull { findTomlFile(sourceElement, it) }
+  val toml = listOf(GroovyPropertyUtils.decapitalize(name), name).firstNotNullOfOrNull { findTomlFile(context, it) }
              ?: return null
   val tomlVisitor = TomlVersionCatalogVisitor(containingClasses.tail(), this)
   toml.accept(tomlVisitor)
   return tomlVisitor.resolveTarget
+}
+
+private fun findFinishingNode(element: PsiElement) : PsiMethod? {
+  var topElement : PsiMethod? = null
+  for (ancestor in element.parents(true)) {
+    if (ancestor !is GrReferenceElement<*>) {
+      continue
+    }
+    val resolved = ancestor.resolve()
+    if (resolved is PsiMethod && resolved.containingFile.name.startsWith("LibrariesFor")) {
+      topElement = resolved
+    }
+  }
+  return topElement
 }
 
 private class TomlVersionCatalogVisitor(containingClasses: List<PsiClass>, val targetMethod: PsiMethod) : TomlRecursiveVisitor() {

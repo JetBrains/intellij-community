@@ -51,7 +51,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     TreeUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
-      -Inspections Results
+      -Inspection Results
        -Java
         -Code maturity
          -Usage of API marked for removal
@@ -70,7 +70,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     TreeUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
-      -Inspections Results
+      -Inspection Results
        -Java
         -Code maturity
          -Usage of API marked for removal
@@ -95,7 +95,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     TreeUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
-      -Inspections Results
+      -Inspection Results
        -Groovy
         -Data flow
          -Unused assignment

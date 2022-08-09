@@ -45,13 +45,13 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(getter: () -> String, sette
   return bindText(MutableProperty(getter, setter))
 }
 
+fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
+}
+
 fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
   component.text = text
   return this
-}
-
-private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
-  return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =

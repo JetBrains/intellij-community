@@ -4,17 +4,16 @@ import com.intellij.ide.starter.bus.Signal
 import com.intellij.ide.starter.bus.StarterBus
 import com.intellij.ide.starter.bus.StarterListener
 import com.intellij.ide.starter.bus.subscribe
+import io.kotest.assertions.timing.eventually
 import io.kotest.assertions.withClue
-import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import org.junit.After
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.RepeatedTest
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class EventBusTest {
@@ -23,41 +22,36 @@ class EventBusTest {
   private fun checkIsEventFired(shouldEventBeFired: Boolean, isEventFiredGetter: () -> Boolean) {
     val shouldNotMessage = if (!shouldEventBeFired) "NOT" else ""
 
-    withClue("Event should $shouldNotMessage be fired") {
-      runBlocking {
-        try {
-          withTimeout(timeout = 10.seconds) {
-            while (shouldEventBeFired != isEventFiredGetter()) {
-              delay(Duration.milliseconds(500))
-            }
-          }
-        }
-        catch (_: Exception) {
+    runBlocking {
+      eventually(duration = 2.seconds, poll = 200.milliseconds) {
+        withClue("Event should $shouldNotMessage be fired in 2 sec") {
+          isEventFiredGetter() == shouldEventBeFired
         }
       }
-
-      isEventFiredGetter().shouldBe(shouldEventBeFired)
     }
   }
 
-  @Before
+  @BeforeEach
   fun beforeEach() {
     isEventHappened.set(false)
   }
 
-  @After
+  @AfterEach
   fun afterEach() {
     StarterListener.unsubscribe()
   }
 
-  @Ignore("Seems this event implementation will not produce stable results in producer/consumer terms. Need to find another lib/approach")
-  @Test
-  fun filteringEventsByTypeIsWorking() {
+  @Disabled("Is not stable")
+  @RepeatedTest(value = 50)
+  fun `filtering events by type is working`() {
     StarterListener.subscribe { event: Signal ->
       isEventHappened.set(true)
     }
 
     StarterBus.post(2)
+    // make sure there is no side effects
+    runBlocking { delay(1.seconds) }
+
     checkIsEventFired(false) { isEventHappened.get() }
 
     StarterBus.post(Signal())

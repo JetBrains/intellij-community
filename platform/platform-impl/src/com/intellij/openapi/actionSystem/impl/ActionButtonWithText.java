@@ -221,6 +221,7 @@ public class ActionButtonWithText extends ActionButton {
     super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
+      repaint();
     }
   }
 

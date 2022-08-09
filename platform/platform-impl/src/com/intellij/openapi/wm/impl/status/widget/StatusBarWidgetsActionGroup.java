@@ -83,6 +83,11 @@ public class StatusBarWidgetsActionGroup extends DefaultActionGroup {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
     }

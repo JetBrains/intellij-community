@@ -9,14 +9,16 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
+@ApiStatus.Internal
 class RemoteRepositoriesImporter : MavenImporter("", ""),
-                                   MavenConfigurator {
+                                   MavenWorkspaceConfigurator {
   private val COLLECTED_REPOSITORIES = Key.create<MutableSet<RemoteRepositoryDescription>>("COLLECTED_REPOSITORIES")
 
   override fun processChangedModulesOnly(): Boolean = false
@@ -29,13 +31,13 @@ class RemoteRepositoriesImporter : MavenImporter("", ""),
     return true
   }
 
-  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
-    val mavenProjects = context.mavenProjectsWithModules.asSequence().map { it.mavenProject }
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    val mavenProjects = context.mavenProjectsWithModules.map { it.mavenProject }
     val repositories = collectRepositoriesForMavenProjects(context.project, mavenProjects)
     COLLECTED_REPOSITORIES.set(context, repositories)
   }
 
-  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     COLLECTED_REPOSITORIES.get(context)?.let { applyRepositories(context.project, it) }
   }
 

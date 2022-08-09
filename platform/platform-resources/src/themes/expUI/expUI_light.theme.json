@@ -517,7 +517,7 @@
       "inactiveBackground": "Grey12",
       "Button": {
         "hoverBackground": "#00000000",
-        "preferredSize": "36,40"
+        "preferredSize": "44,40"
       }
     },
 

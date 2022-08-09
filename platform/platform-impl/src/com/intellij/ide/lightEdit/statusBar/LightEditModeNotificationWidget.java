@@ -178,6 +178,11 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate == null ? ActionUpdateThread.BGT : myDelegate.getActionUpdateThread();
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myDelegate != null) {
         myDelegate.actionPerformed(e);

@@ -25,11 +25,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import java.util.function.Supplier
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import java.util.function.Supplier
 
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
@@ -208,7 +206,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                     it.copy(library = LibraryId(newName, libraryTableId))
                   else -> it
                 }
-              }
+              } as MutableList<ModuleDependencyItem>
               builder.modifyEntity(module) {
                 dependencies = updated
               }
@@ -261,7 +259,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                 is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
                 else -> it
               }
-            }
+            } as MutableList<ModuleDependencyItem>
             builder.modifyEntity(module) {
               dependencies = updated
             }

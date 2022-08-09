@@ -1,16 +1,6 @@
+<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
-  <!--suppress PluginXmlDynamicPlugin -->
   <project-components>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
@@ -29,10 +19,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
-    </component>
   </project-components>
 
   <extensionPoints>
@@ -42,13 +28,17 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
       serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="await"/>
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
 
     <startupActivity
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
       order="first"/>
+
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressing$MyStartupActivity" />
 
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
                         serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
@@ -130,6 +120,10 @@
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     
     <postStartupActivity implementation="com.intellij.ide.RecentProjectsManagerBase$MyProjectPostStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
+                    serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -220,10 +214,6 @@
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyBeforeFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyFileEditorManagerListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    <listener class="com.intellij.internal.statistic.local.FileTypeSummaryListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    <listener class="com.intellij.internal.statistic.local.LanguageUsageUpdaterListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
     <!-- another one for project level -->

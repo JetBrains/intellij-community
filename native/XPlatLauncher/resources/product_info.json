@@ -1,0 +1,19 @@
+{
+  "buildNumber" : "222.658",
+  "bootClassPathJarNames" : [ "app.jar" ],
+  "customProperties" : [ ],
+  "dataDirectoryName" : "IntelliJIdea2022.2",
+  "launch" : [ {
+    "javaExecutablePath" : "../jbr/Contents/Home/bin/java",
+    "launcherPath" : "../MacOS/idea",
+    "os" : "macOS",
+    "vmOptionsFilePath" : "../bin/idea.vmoptions"
+  } ],
+  "name" : "IntelliJ IDEA",
+  "productCode" : "IU",
+  "productVendor" : "JetBrains",
+  "svgIconPath" : "../bin/idea.svg",
+  "version" : "2022.2",
+  "versionSuffix" : "EAP",
+  "vmOptionsBaseFileName" : "idea"
+}

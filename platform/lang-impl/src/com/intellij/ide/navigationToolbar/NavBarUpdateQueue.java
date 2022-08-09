@@ -209,7 +209,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     myPanel.revalidate();
     myPanel.repaint();
 
-    queueAfterAll(() -> myPanel.scrollSelectionToVisible(), ID.SCROLL_TO_VISIBLE);
+    queueAfterAll(() -> myPanel.scrollSelectionToVisible(false), ID.SCROLL_TO_VISIBLE);
   }
 
   private void queueRevalidate(@Nullable final Runnable after) {

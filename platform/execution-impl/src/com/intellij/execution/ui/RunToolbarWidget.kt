@@ -1,6 +1,4 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -22,6 +20,7 @@ import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -33,24 +32,21 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
 import com.intellij.ui.*
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -231,13 +227,16 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
-      actions.add(DefaultActionGroup(conf.shortenName(), true).apply {
+      val inlineActions = mutableListOf<AnAction>()
+      inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
+      inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+
+      actions.add(ActionGroupWithInlineActions(conf.shortenName(), true, inlineActions).apply {
         templatePresentation.icon = conf.configuration.icon
         if (conf.isRunning(project)) {
           templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
         }
-        add(RunToolbarWidgetRunAction(runExecutor) { conf })
-        add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+
         if (profilerExecutor != null) {
           add(profilerExecutor.createExecutorActionGroup { conf })
         }
@@ -268,7 +267,12 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true,
       ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    ).apply { setShowSubmenuOnHover(true) }
+    ).apply { disableExpandableItems(this) }
+  }
+
+  private fun disableExpandableItems(popup: ListPopup) {
+    val list = (popup as? ListPopupImpl)?.list
+    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
   }
 
   private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
@@ -286,6 +290,10 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       super.update(e)
       e.presentation.text = string.get()
     }
+  }
+
+  private class ActionGroupWithInlineActions(@NlsActions.ActionText name: String, popup: Boolean, private val actions: List<AnAction>) : DefaultActionGroup(name, popup), InlineActionsHolder {
+    override fun getInlineActions(): List<AnAction> = actions
   }
 
   companion object {
@@ -624,7 +632,19 @@ private class RunDropDownButtonUI : BasicButtonUI() {
         paintArrow(c, g2d, popupBounds)
       }
 
+      val fg = ColorUtil.toHtmlColor(JBColor.namedColor("RunWidget.iconColor", b.foreground))
+      val map: Map<String, String> = mapOf("#ffffff" to fg, "white" to fg)
+      val alpha = HashMap<String, Int>(map.size)
+      map.values.forEach { alpha[it] = 255 }
+      SVGLoader.setContextColorPatcher(object : SVGLoader.SvgElementColorPatcherProvider {
+        override fun forPath(path: String?): SVGLoader.SvgElementColorPatcher? {
+          return SVGLoader.newPatcher(digest = null, map, alpha)
+        }
+      })
+      SVGLoader.isColorRedefinitionContext = true
       paintIcon(g2d, c, iconRect)
+      SVGLoader.isColorRedefinitionContext = false
+      SVGLoader.setContextColorPatcher(null)
       paintText(g2d, c, textRect, text)
     }
     finally {

@@ -30,6 +30,7 @@ import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDu
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -120,7 +121,9 @@ open class TestProjectManager : ProjectManagerImpl() {
     val app = ApplicationManager.getApplication()
     try {
       runUnderModalProgressIfIsEdt {
-        runInitProjectActivities(project = project)
+        coroutineScope {
+          runInitProjectActivities(project = project)
+        }
         if (isRunStartUpActivitiesEnabled(project)) {
           (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
         }

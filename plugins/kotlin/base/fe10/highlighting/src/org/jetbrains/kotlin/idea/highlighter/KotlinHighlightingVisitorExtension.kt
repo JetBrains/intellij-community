@@ -19,3 +19,6 @@ abstract class KotlinHighlightingVisitorExtension {
         val EP_NAME = ExtensionPointName.create<KotlinHighlightingVisitorExtension>("org.jetbrains.kotlin.highlighterExtension")
     }
 }
+
+@Deprecated("Extend 'KotlinHighlightingVisitorExtension' instead", level = DeprecationLevel.ERROR)
+abstract class HighlighterExtension : KotlinHighlightingVisitorExtension()

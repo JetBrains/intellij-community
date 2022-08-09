@@ -104,7 +104,7 @@ abstract class FoldRegionsTree {
     updateCachedAndSortOffsets(cachedData.visibleRegions, false);
   }
 
-  private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions, boolean fromRebuild) {
+  private CachedData updateCachedAndSortOffsets(FoldRegion @Nullable [] visibleRegions, boolean fromRebuild) {
     if (!isFoldingEnabled()) {
       return null;
     }
@@ -201,8 +201,8 @@ abstract class FoldRegionsTree {
     if (!isFoldingEnabled()) return null;
     CachedData cachedData = ensureAvailableData();
 
-    final int[] starts = cachedData.topStartOffsets;
-    final int[] ends = cachedData.topEndOffsets;
+    int[] starts = cachedData.topStartOffsets;
+    int[] ends = cachedData.topEndOffsets;
     if (starts == null || ends == null) {
       return null;
     }
@@ -224,7 +224,7 @@ abstract class FoldRegionsTree {
     return cachedData.topLevelRegions;
   }
 
-  static boolean containsStrict(FoldRegion region, int offset) {
+  static boolean containsStrict(@NotNull FoldRegion region, int offset) {
     return region.getStartOffset() < offset && offset < region.getEndOffset();
   }
 
@@ -318,7 +318,7 @@ abstract class FoldRegionsTree {
     return getLastTopLevelIndexBefore(cachedData, offset);
   }
 
-  private static int getLastTopLevelIndexBefore(CachedData cachedData, int offset) {
+  private static int getLastTopLevelIndexBefore(@NotNull CachedData cachedData, int offset) {
     int[] endOffsets = cachedData.topEndOffsets;
 
     if (endOffsets == null) return -1;
@@ -391,7 +391,8 @@ abstract class FoldRegionsTree {
         topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
         int inlaysHeightSum = 0;
         for (int i = 0; i < count; i++) {
-          topFoldedInlaysHeight[i] = (inlaysHeightSum += getFoldedBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i] + 1));
+          inlaysHeightSum += getFoldedBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i] + 1);
+          topFoldedInlaysHeight[i] = inlaysHeightSum;
         }
       }
       else {

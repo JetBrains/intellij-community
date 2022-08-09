@@ -19,8 +19,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -100,6 +102,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
     boolean importSucceeded = false;
     int errorsCount = 0;
+
+    String projectPath = ObjectUtils.doIfNotNull(projectData, ProjectData::getLinkedExternalProjectPath);
+    var topic = project.getMessageBus()
+      .syncPublisher(ProjectDataImportListener.TOPIC);
+
+    topic.onImportStarted(projectPath);
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -135,46 +143,61 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         indicator.setIndeterminate(true);
       }
 
-      project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
-        .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      topic.onImportFinished(projectPath);
       importSucceeded = true;
     }
     catch (Throwable t) {
       errorsCount += 1;
-      project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
-        .onImportFailed(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      topic.onImportFailed(projectPath);
       ExternalSystemSyncActionsCollector.logError(null, activityId, t);
-      try {
-        runFinalTasks(project, synchronous, onFailureImportTasks);
-        dispose(modelsProvider, project, synchronous);
-      }
-      finally {
-        //noinspection ConstantConditions
-        ExceptionUtil.rethrowAllAsUnchecked(t);
-      }
+      //noinspection ConstantConditions
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
     finally {
+      if (importSucceeded) {
+        runFinalTasks(project, projectPath, synchronous, onSuccessImportTasks);
+      }
+      else {
+        runFinalTasks(project, projectPath, synchronous, onFailureImportTasks);
+      }
+      if (!importSucceeded) {
+        dispose(modelsProvider, project, synchronous);
+      }
+
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
-    }
-    runFinalTasks(project, synchronous, onSuccessImportTasks);
-    Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
-      StartUpPerformanceService.getInstance().reportStatistics(project);
+
+      Application app = ApplicationManager.getApplication();
+      if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+        StartUpPerformanceService.getInstance().reportStatistics(project);
+      }
     }
   }
 
-  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {
-    Runnable runnable = () -> {
+  private static void runFinalTasks(
+    @NotNull Project project,
+    @Nullable String projectPath,
+    boolean synchronous,
+    @NotNull List<Runnable> tasks
+  ) {
+    var topic = project.getMessageBus()
+      .syncPublisher(ProjectDataImportListener.TOPIC);
+
+    topic.onFinalTasksStarted(projectPath);
+    runOnEdt(synchronous, () -> {
       for (Runnable task : ContainerUtil.reverse(tasks)) {
         task.run();
       }
-    };
+      topic.onFinalTasksFinished(projectPath);
+    }, project.getDisposed());
+  }
+
+  private static void runOnEdt(boolean synchronous, @NotNull Runnable runnable, @NotNull Condition<?> expired) {
     if (synchronous) {
       try {
-        if (!project.isDisposed()) {
+        if (!expired.value(null)) {
           runnable.run();
         }
       }
@@ -183,7 +206,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+      ApplicationManager.getApplication().invokeLater(runnable, expired);
     }
   }
 

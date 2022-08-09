@@ -52,6 +52,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     try {
       result = checker()
     }
+    catch (e: ProcessCanceledException) {
+      result = CommitChecksResult.Cancelled
+    }
     finally {
       fireBeforeCommitChecksEnded(true, result)
     }

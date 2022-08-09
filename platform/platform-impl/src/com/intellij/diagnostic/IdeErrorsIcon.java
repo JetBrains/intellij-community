@@ -1,34 +1,36 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon.Blinking;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 final class IdeErrorsIcon extends JLabel {
-  private static final int ICON_BLINKING_TIMEOUT_MILLIS = 5_000;
+  private static final int TIMEOUT = (int)TimeUnit.SECONDS.toMillis(Registry.intValue("ea.indicator.blinking.timeout", -1));
+
   private final boolean myEnableBlink;
+  private final @Nullable MergingUpdateQueue myBlinkTimeoutQueue;
 
-  private final MergingUpdateQueue myIconBlinkingTimeoutQueue = new MergingUpdateQueue(
-    "ide-errors-icon-blinking-timeouts",
-    ICON_BLINKING_TIMEOUT_MILLIS,
-    true,
-    null);
-
-  IdeErrorsIcon(boolean enableBlink) {
-    myEnableBlink = enableBlink;
+  IdeErrorsIcon(boolean canBlink) {
+    myEnableBlink = canBlink && TIMEOUT != 0;
+    myBlinkTimeoutQueue =
+      myEnableBlink && TIMEOUT > 0 ? new MergingUpdateQueue("ide-error-icon-blink-timeout", TIMEOUT, true, null).setRestartTimerOnAdd(true) : null;
   }
 
-  void setState(MessagePool.State state) {
-    Icon myUnreadIcon = !myEnableBlink ? AllIcons.Ide.FatalError : new Blinking(AllIcons.Ide.FatalError);
-    if (state != null && state != MessagePool.State.NoErrors) {
+  void setState(@NotNull MessagePool.State state) {
+    Icon myUnreadIcon = myEnableBlink ? new Blinking(AllIcons.Ide.FatalError) : AllIcons.Ide.FatalError;
+    if (state != MessagePool.State.NoErrors) {
       setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalErrorRead : myUnreadIcon);
       setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
       getAccessibleContext().setAccessibleDescription(StringUtil.removeHtmlTags(DiagnosticBundle.message("error.notification.tooltip")));
@@ -44,28 +46,18 @@ final class IdeErrorsIcon extends JLabel {
       }
     }
 
-    setupBlinkingTimeout(state);
-  }
-
-  /**
-   This method disables blinking of Error icon after {@link IdeErrorsIcon#ICON_BLINKING_TIMEOUT_MILLIS} timeout.
-   Works only if {@link IdeMessagePanel#NO_DISTRACTION_MODE} is set to true.
-   @see <a href="https://youtrack.jetbrains.com/issue/RIDER-79376">RIDER-79376</a>
-   */
-  private void setupBlinkingTimeout(MessagePool.State state) {
-    if (!IdeMessagePanel.NO_DISTRACTION_MODE) {
-      return;
-    }
-    if (state == MessagePool.State.UnreadErrors) {
-      myIconBlinkingTimeoutQueue.queue(new Update(myIconBlinkingTimeoutQueue) {
-        @Override
-        public void run() {
-          setIcon(AllIcons.Ide.FatalError);
-        }
-      });
-    }
-    else {
-      myIconBlinkingTimeoutQueue.cancelAllUpdates();
+    if (myBlinkTimeoutQueue != null) {
+      if (state == MessagePool.State.UnreadErrors) {
+        myBlinkTimeoutQueue.queue(new Update(myBlinkTimeoutQueue) {
+          @Override
+          public void run() {
+            setIcon(AllIcons.Ide.FatalError);
+          }
+        });
+      }
+      else {
+        myBlinkTimeoutQueue.cancelAllUpdates();
+      }
     }
   }
 }

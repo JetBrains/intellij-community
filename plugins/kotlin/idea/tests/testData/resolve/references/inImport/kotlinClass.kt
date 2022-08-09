@@ -1,4 +1,4 @@
 import kotlin.collections.Mutab<caret>leList
 // MULTIRESOLVE
 // REF: (kotlin.collections).MutableList
-// REF: (kotlin.collections).MutableList(kotlin.Int, (kotlin.Int) -> T)
+// REF: (kotlin.collections).MutableList(Int, (index: Int) -> T)

@@ -46,7 +46,6 @@ abstract class ClientSessionImpl(
     registerComponents()
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
@@ -60,8 +59,8 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override fun preloadService(service: ServiceDescriptor) {
-    ClientId.withClientId(clientId) {
+  override suspend fun preloadService(service: ServiceDescriptor): Job? {
+    return ClientId.withClientId(clientId) {
       super.preloadService(service)
     }
   }
@@ -75,7 +74,7 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {

@@ -275,7 +275,6 @@ public abstract class AbstractFormattedWalker implements Walker {
      * Simple method that ensures the text is processed, regardless of
      * content, and is never escaped.
      *
-     * @param text
      */
     private void forceAppend(final String text) {
       mtgottext = true;
@@ -555,7 +554,6 @@ public abstract class AbstractFormattedWalker implements Walker {
    * This is important, because only pendingmt can be referenced when analyzing
    * the MultiText content.
    *
-   * @param first
    * @return The updated MultiText containing the correct sequence of Text-like content
    */
   private MultiText buildMultiText(final boolean first) {

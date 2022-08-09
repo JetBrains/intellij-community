@@ -7,13 +7,13 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
+import javax.swing.JRadioButton
 
 @ApiStatus.Internal
 internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
-  private val radioButtons = mutableMapOf<Cell<AbstractButton>, Any?>()
+  private val radioButtons = mutableMapOf<Cell<JRadioButton>, Any?>()
   private var groupBinding: GroupBinding<*>? = null
 
   override fun visible(isVisible: Boolean): ButtonsGroup {
@@ -44,7 +44,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
     return this
   }
 
-  fun <T : AbstractButton> add(cell: Cell<T>, value: Any? = null) {
+  fun add(cell: Cell<JRadioButton>, value: Any? = null) {
     radioButtons[cell] = value
   }
 

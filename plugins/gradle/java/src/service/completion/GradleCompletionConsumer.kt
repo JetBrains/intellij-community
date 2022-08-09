@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.completion
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.properties.IProperty
@@ -23,4 +24,8 @@ class GradleCompletionConsumer(val delegate: GroovyCompletionConsumer) : GroovyC
     }
   }
 
+  override fun fastElementsProcessed(parameters: CompletionParameters) {
+    GradleVersionCatalogCompletionContributor().fillCompletionVariants(parameters, delegate.completionResultSet)
+    super.fastElementsProcessed(parameters)
+  }
 }

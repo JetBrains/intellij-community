@@ -89,8 +89,16 @@ class GitPullDialog(private val project: Project,
     setOKButtonText(GitBundle.message("pull.button"))
     loadSettings()
     updateRemotesField()
+
+    // We call pack() manually.
+    isAutoAdjustable = false
+
     init()
+    window.minimumSize = JBDimension(200, 60)
+
     updateUi()
+    validate()
+    pack()
   }
 
   override fun createCenterPanel() = panel
@@ -214,6 +222,8 @@ class GitPullDialog(private val project: Project,
       selectedOptions -= option
     }
     updateUi()
+    validate()
+    pack()
   }
 
   private fun performFetch() {
@@ -274,14 +284,7 @@ class GitPullDialog(private val project: Project,
 
   private fun updateUi() {
     optionsPanel.rerender(selectedOptions)
-    rerender()
-  }
-
-  private fun rerender() {
-    window.pack()
-    window.revalidate()
-    pack()
-    repaint()
+    panel.invalidate()
   }
 
   private fun isOptionEnabled(option: GitPullOption) = selectedOptions.all { it.isOptionSuitable(option) }

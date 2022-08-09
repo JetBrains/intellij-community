@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -87,7 +88,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
         val provider = ScriptDefinitionContributor.find<ScriptTemplatesFromDependenciesProvider>(project)
             ?: error("Cannot find ScriptTemplatesFromDependenciesProvider")
 
-        val (templates, classpath) = provider.getTemplateClassPath(roots.toList())
+        val (templates, classpath) = provider.getTemplateClassPath(roots.toList(), EmptyProgressIndicator())
 
         checkTemplateNames(fileText, templates)
         checkTemplateClasspath(fileText, classpath)

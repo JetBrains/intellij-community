@@ -304,6 +304,7 @@ Includes the following features:</p>
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
     <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.BlockQuotePostFormatProcessor"/>
+    <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.TablePostFormatProcessor"/>
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
@@ -347,7 +348,7 @@ Includes the following features:</p>
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.14.0-5.js"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-9.1.3-6.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
@@ -407,7 +408,9 @@ Includes the following features:</p>
 
   <applicationListeners>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
-              class="org.intellij.plugins.markdown.settings.MarkdownLafListener"/>
+              class="org.intellij.plugins.markdown.settings.SettingsChangeLafListener"/>
+    <listener topic="com.intellij.ide.ui.LafManagerListener"
+              class="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter$InvalidateCacheLafListener"/>
   </applicationListeners>
 
   <projectListeners>

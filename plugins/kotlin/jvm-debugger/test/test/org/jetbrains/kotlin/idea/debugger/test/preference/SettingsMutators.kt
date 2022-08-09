@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesState
+import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys.DISABLE_KOTLIN_INTERNAL_CLASSES
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys.RENDER_DELEGATED_PROPERTIES

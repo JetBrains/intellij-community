@@ -44,6 +44,12 @@ public final class ActionGroupUtil {
       {
         setPopup(false);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return new AnAction[] { actionGroup };

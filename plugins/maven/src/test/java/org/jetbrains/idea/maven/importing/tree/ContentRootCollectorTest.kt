@@ -20,8 +20,6 @@ class ContentRootCollectorTest : MavenTestCase() {
     val target = "/home/a/b/c/maven/target"
     val generatedSourceFolder = "/home/a/b/c/maven/target/generated-sources/java"
     val generatedTestSourceFolder = "/home/a/b/c/maven/target/generated-sources-test/java"
-    val annotationProcessorDirectory = "/home/a/b/c/maven/target/annotation-processor/java"
-    val annotationProcessorTestDirectory = "/home/a/b/c/maven/target/annotation-processor-test/java"
 
     val contentRoots = collect(projectRoots = listOf(baseContentRoot),
                                mainSourceFolders = listOf(sourceMain),
@@ -29,8 +27,6 @@ class ContentRootCollectorTest : MavenTestCase() {
                                testSourceFolders = listOf(sourceTest),
                                mainGeneratedSourceFolders = listOf(generatedSourceFolder),
                                testGeneratedSourceFolders = listOf(generatedTestSourceFolder),
-                               mainAnnotationSourceFolders = listOf(annotationProcessorDirectory),
-                               testAnnotationSourceFolders = listOf(annotationProcessorTestDirectory),
                                excludeFolders = listOf(target))
 
     assertContentRoots(contentRoots,
@@ -39,10 +35,8 @@ class ContentRootCollectorTest : MavenTestCase() {
                          expectedMainSourceFolders = listOf(sourceMain),
                          expectedMainResourcesFolders = listOf(resourceMain),
                          expectedTestSourceFolders = listOf(sourceTest),
-                         expectedMainGeneratedFolders = listOf(generatedSourceFolder,
-                                                               annotationProcessorDirectory),
-                         expectedTestGeneratedFolders = listOf(generatedTestSourceFolder,
-                                                               annotationProcessorTestDirectory),
+                         expectedMainGeneratedFolders = listOf(generatedSourceFolder),
+                         expectedTestGeneratedFolders = listOf(generatedTestSourceFolder),
                          expectedExcludes = listOf(target)))
     )
   }
@@ -90,7 +84,6 @@ class ContentRootCollectorTest : MavenTestCase() {
     val sourceMain = "/home/main/source"
     val resourceMain = "/home/main/resource"
     val generatedSourceFolder = "/home/main/generated-sources"
-    val annotationProcessorDirectory = "/home/main/annotation-sources"
 
     val contentRoots = collect(projectRoots = listOf(root),
                                mainSourceFolders = listOf(sourceMain),
@@ -98,9 +91,7 @@ class ContentRootCollectorTest : MavenTestCase() {
                                testSourceFolders = listOf(sourceMain),
                                testResourceFolders = listOf(resourceMain),
                                mainGeneratedSourceFolders = listOf(generatedSourceFolder),
-                               testGeneratedSourceFolders = listOf(generatedSourceFolder),
-                               mainAnnotationSourceFolders = listOf(annotationProcessorDirectory),
-                               testAnnotationSourceFolders = listOf(annotationProcessorDirectory))
+                               testGeneratedSourceFolders = listOf(generatedSourceFolder))
 
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(
@@ -109,8 +100,7 @@ class ContentRootCollectorTest : MavenTestCase() {
                          expectedMainResourcesFolders = listOf(resourceMain),
                          expectedTestSourceFolders = listOf(),
                          expectedTestResourcesFolders = listOf(),
-                         expectedMainGeneratedFolders = listOf(generatedSourceFolder,
-                                                               annotationProcessorDirectory),
+                         expectedMainGeneratedFolders = listOf(generatedSourceFolder),
                          expectedTestGeneratedFolders = listOf()))
     )
   }
@@ -137,12 +127,10 @@ class ContentRootCollectorTest : MavenTestCase() {
 
     val source = "/project/source"
     val nestedGeneratedFolder = "/project/source/generated"
-    val nestedAnnotationProcessorFolder = "/project/source/annotation"
 
     val contentRoots = collect(projectRoots = listOf(root),
                                mainSourceFolders = listOf(source),
-                               mainGeneratedSourceFolders = listOf(nestedGeneratedFolder),
-                               mainAnnotationSourceFolders = listOf(nestedAnnotationProcessorFolder))
+                               mainGeneratedSourceFolders = listOf(nestedGeneratedFolder))
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(
                          expectedPath = root,
@@ -211,34 +199,6 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register annotation processor folder when there is parent generated or source folder`() {
-    val root = "/project/"
-
-    val source = "/project/source"
-    val generated = "/project/generated"
-    val annotation = "/project/annotation"
-
-    val annotationUnderSource = "/project/source/annotation"
-    val annotationUnderGenerated = "/project/generated/annotation"
-    val annotationUnderAnnotation = "/project/annotation/annotation"
-
-    val contentRoots = collect(listOf(root),
-                               listOf(source),
-                               mainGeneratedSourceFolders = listOf(generated),
-                               mainAnnotationSourceFolders = listOf(annotation,
-                                                                    annotationUnderSource,
-                                                                    annotationUnderGenerated,
-                                                                    annotationUnderAnnotation))
-
-    assertContentRoots(contentRoots,
-                       listOf(ContentRootTestData(
-                         expectedPath = root,
-                         expectedMainSourceFolders = listOf(source),
-                         expectedMainGeneratedFolders = listOf(generated, annotation)))
-    )
-  }
-
-  @Test
   fun `test folders outside of the content root`() {
     val baseContentRoot = "/home/content"
     val source = "/home/source"
@@ -263,8 +223,8 @@ class ContentRootCollectorTest : MavenTestCase() {
                                mainSourceFolders = listOf("/home/src",
                                                           "/home/exclude1/src",
                                                           "/home/exclude6"),
-                               mainGeneratedSourceFolders = listOf("/home/exclude2/annotations", "/home/exclude4/generated"),
-                               testGeneratedSourceFolders = listOf("/home/exclude3/annotations-test", "/home/exclude5/generated-test"),
+                               mainGeneratedSourceFolders = listOf("/home/exclude4/generated"),
+                               testGeneratedSourceFolders = listOf("/home/exclude5/generated-test"),
                                excludeFolders = listOf("/home/exclude1",
                                                        "/home/exclude2",
                                                        "/home/exclude3",
@@ -280,10 +240,8 @@ class ContentRootCollectorTest : MavenTestCase() {
                          expectedMainSourceFolders = listOf("/home/src",
                                                             "/home/exclude1/src",
                                                             "/home/exclude6"),
-                         expectedMainGeneratedFolders = listOf("/home/exclude2/annotations",
-                                                               "/home/exclude4/generated"),
-                         expectedTestGeneratedFolders = listOf("/home/exclude3/annotations-test",
-                                                               "/home/exclude5/generated-test"),
+                         expectedMainGeneratedFolders = listOf("/home/exclude4/generated"),
+                         expectedTestGeneratedFolders = listOf("/home/exclude5/generated-test"),
                          expectedExcludes = listOf("/home/exclude1",
                                                    "/home/exclude2",
                                                    "/home/exclude3",
@@ -369,22 +327,13 @@ class ContentRootCollectorTest : MavenTestCase() {
     val excludeWithTestGenerated = "/home/exclude-with-test-generated"
     val testGeneratedUnderExcluded = "/home/exclude-with-test-generated/test-generated"
 
-    val excludeWithAnnotation = "/home/exclude-with-annotation"
-    val annotationUnderExcluded = "/home/exclude-with-annotation/annotation"
-    val excludeWithTestAnnotation = "/home/exclude-with-test-annotation"
-    val testAnnotationUnderExcluded = "/home/exclude-with-test-annotation/test-annotation"
-
     val contentRoots = collect(projectRoots = listOf(root),
                                mainSourceFolders = listOf(sourcesUnderExcluded),
                                mainGeneratedSourceFolders = listOf(generatedUnderExcluded),
                                testGeneratedSourceFolders = listOf(testGeneratedUnderExcluded),
-                               mainAnnotationSourceFolders = listOf(annotationUnderExcluded),
-                               testAnnotationSourceFolders = listOf(testAnnotationUnderExcluded),
                                excludeAndPreventSubfoldersFolders = listOf(excludeWithSource,
                                                                            excludeWithGenerated,
-                                                                           excludeWithTestGenerated,
-                                                                           excludeWithAnnotation,
-                                                                           excludeWithTestAnnotation))
+                                                                           excludeWithTestGenerated))
 
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(
@@ -395,9 +344,7 @@ class ContentRootCollectorTest : MavenTestCase() {
                          expectedTestGeneratedFolders = listOf(),
                          expectedExcludes = listOf(excludeWithSource,
                                                    excludeWithGenerated,
-                                                   excludeWithAnnotation,
-                                                   excludeWithTestGenerated,
-                                                   excludeWithTestAnnotation)))
+                                                   excludeWithTestGenerated)))
     )
   }
 
@@ -410,15 +357,11 @@ class ContentRootCollectorTest : MavenTestCase() {
     val target = "/home/target"
     val generatedSourceFolder = "/home/target/generated-sources/java"
     val testGeneratedSourceFolder = "/home/target/test-generated-sources/java"
-    val annotationSourceFolder = "/home/target/annotation-sources/java"
-    val testAnnotationSourceFolder = "/home/target/test-annotation-sources/java"
 
     val contentRoots = collect(projectRoots = listOf(baseContentRoot),
                                mainSourceFolders = listOf(sourceMain, sourceMain2),
                                mainGeneratedSourceFolders = listOf(generatedSourceFolder),
                                testGeneratedSourceFolders = listOf(testGeneratedSourceFolder),
-                               mainAnnotationSourceFolders = listOf(annotationSourceFolder),
-                               testAnnotationSourceFolders = listOf(testAnnotationSourceFolder),
                                excludeFolders = listOf(target),
                                excludeAndPreventSubfoldersFolders = emptyList())
 
@@ -428,16 +371,12 @@ class ContentRootCollectorTest : MavenTestCase() {
         ContentRootTestData(expectedPath = baseContentRoot, expectedMainSourceFolders = listOf(sourceMain)),
         ContentRootTestData(expectedPath = sourceMain2, expectedMainSourceFolders = listOf(sourceMain2)),
         ContentRootTestData(expectedPath = generatedSourceFolder, expectedMainGeneratedFolders = listOf(generatedSourceFolder)),
-        ContentRootTestData(expectedPath = testGeneratedSourceFolder, expectedTestGeneratedFolders = listOf(testGeneratedSourceFolder)),
-        ContentRootTestData(expectedPath = annotationSourceFolder,
-                            expectedMainGeneratedFolders = listOf(annotationSourceFolder)),
-        ContentRootTestData(expectedPath = testAnnotationSourceFolder,
-                            expectedTestGeneratedFolders = listOf(testAnnotationSourceFolder)))
+        ContentRootTestData(expectedPath = testGeneratedSourceFolder, expectedTestGeneratedFolders = listOf(testGeneratedSourceFolder)))
     )
   }
 
   @Test
-  fun `test multiple source and resources content roots and annotation processor sources`() {
+  fun `test multiple source and resources content roots and generated sources`() {
     val baseContentRoot = "/home/a/b/c/maven/src/main"
     val sourceMain = "/home/a/b/c/maven/src/main/java"
     val sourceMain2 = "/home/a/b/c/maven/java2"
@@ -449,8 +388,8 @@ class ContentRootCollectorTest : MavenTestCase() {
     val resourceMain3 = "/home/a/b/c/maven/main/resource3"
     val resourceMain4 = "/home/a/b/c/other/resource4"
 
-    val annotationProcessorDirectory = "/home/a/b/c/maven/target/annotation-processor/java"
-    val annotationProcessorTestDirectory = "/home/a/b/c/maven/target/annotation-processor-test/java"
+    val generatedDirectory = "/home/a/b/c/maven/target/generated/java"
+    val generatedTestDirectory = "/home/a/b/c/maven/target/generated-test/java"
 
     val contentRoots = collect(projectRoots = listOf(baseContentRoot),
                                mainSourceFolders = listOf(
@@ -464,8 +403,8 @@ class ContentRootCollectorTest : MavenTestCase() {
                                  resourceMain2,
                                  resourceMain,
                                ),
-                               mainAnnotationSourceFolders = listOf(annotationProcessorDirectory),
-                               testAnnotationSourceFolders = listOf(annotationProcessorTestDirectory))
+                               mainGeneratedSourceFolders = listOf(generatedDirectory),
+                               testGeneratedSourceFolders = listOf(generatedTestDirectory))
 
     assertContentRoots(contentRoots, listOf(
       ContentRootTestData(expectedPath = baseContentRoot,
@@ -477,10 +416,8 @@ class ContentRootCollectorTest : MavenTestCase() {
       ContentRootTestData(expectedPath = resourceMain2, expectedMainResourcesFolders = listOf(resourceMain2)),
       ContentRootTestData(expectedPath = resourceMain3, expectedMainResourcesFolders = listOf(resourceMain3)),
       ContentRootTestData(expectedPath = resourceMain4, expectedMainResourcesFolders = listOf(resourceMain4)),
-      ContentRootTestData(expectedPath = annotationProcessorDirectory,
-                          expectedMainGeneratedFolders = listOf(annotationProcessorDirectory)),
-      ContentRootTestData(expectedPath = annotationProcessorTestDirectory,
-                          expectedTestGeneratedFolders = listOf(annotationProcessorTestDirectory)))
+      ContentRootTestData(expectedPath = generatedDirectory, expectedMainGeneratedFolders = listOf(generatedDirectory)),
+      ContentRootTestData(expectedPath = generatedTestDirectory, expectedTestGeneratedFolders = listOf(generatedTestDirectory)))
     )
   }
 
@@ -491,8 +428,6 @@ class ContentRootCollectorTest : MavenTestCase() {
                       testResourceFolders: List<String> = emptyList(),
                       mainGeneratedSourceFolders: List<String> = emptyList(),
                       testGeneratedSourceFolders: List<String> = emptyList(),
-                      mainAnnotationSourceFolders: List<String> = emptyList(),
-                      testAnnotationSourceFolders: List<String> = emptyList(),
                       excludeFolders: List<String> = emptyList(),
                       excludeAndPreventSubfoldersFolders: List<String> = emptyList()): Collection<ContentRootCollector.ContentRootResult> {
     val folders = mutableListOf<ContentRootCollector.ImportedFolder>()
@@ -504,17 +439,11 @@ class ContentRootCollectorTest : MavenTestCase() {
     mainGeneratedSourceFolders.forEach {
       folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.SOURCE))
     }
-    mainAnnotationSourceFolders.forEach {
-      folders.add(ContentRootCollector.AnnotationSourceFolder(it, JavaSourceRootType.SOURCE))
-    }
 
     testSourceFolders.forEach { folders.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
     testResourceFolders.forEach { folders.add(ContentRootCollector.SourceFolder(it, JavaResourceRootType.TEST_RESOURCE)) }
     testGeneratedSourceFolders.forEach {
       folders.add(ContentRootCollector.GeneratedSourceFolder(it, JavaSourceRootType.TEST_SOURCE))
-    }
-    testAnnotationSourceFolders.forEach {
-      folders.add(ContentRootCollector.AnnotationSourceFolder(it, JavaSourceRootType.TEST_SOURCE))
     }
 
     excludeFolders.forEach { folders.add(ContentRootCollector.ExcludedFolder(it)) }

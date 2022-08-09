@@ -1,3 +1,7 @@
+## 38
+
+* `classLoading` changed - added `preparedCount` and `loadedCount` metrics on Linux 
+
 ## 37
 
 * add `langLoading` extra data with `elementTypeCount` number

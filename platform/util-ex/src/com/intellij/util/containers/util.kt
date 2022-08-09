@@ -75,6 +75,10 @@ fun <T> List<T>?.nullize(): List<T>? {
   return if (this == null || this.isEmpty()) null else this
 }
 
+fun <T> Array<T>?.nullize(): Array<T>? {
+  return if (this == null || this.isEmpty()) null else this
+}
+
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
   return iterator().forEachGuaranteed(operation)
 }

@@ -1,4 +1,4 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   public void doSomething( String value) {
     switch<caret> ( value ) {

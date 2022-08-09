@@ -3,18 +3,23 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
 public class CommittedChangesBrowser extends SimpleChangesBrowser {
   private CommittedChangesBrowserUseCase myUseCase;
@@ -50,11 +55,28 @@ public class CommittedChangesBrowser extends SimpleChangesBrowser {
     if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
       return myUseCase;
     }
-    else if (VcsDataKeys.VCS.is(dataId)) {
-      Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
-      if (abstractVcs.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
-      return null;
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      //noinspection unchecked
+      Iterable<DataProvider> superProviders = (Iterable<DataProvider>)super.getData(dataId);
+
+      VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
+      return JBIterable.<DataProvider>of((slowDataId) -> getSlowData(slowDataId, selectedData))
+        .append(superProviders);
     }
     return super.getData(dataId);
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull VcsTreeModelData selectedData) {
+    if (VcsDataKeys.VCS.is(dataId)) {
+      AbstractVcs selectionVcs = selectedData.iterateUserObjects(Change.class)
+        .map(change -> ChangesUtil.getFilePath(change))
+        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
+        .filterNotNull()
+        .unique()
+        .single();
+      if (selectionVcs != null) return selectionVcs.getKeyInstanceMethod();
+      return null;
+    }
+    return null;
   }
 }

@@ -6,8 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
-
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
+import java.util.logging.Logger;
 
 /**
  * Provides a reasonable stable version of JDK 11 for current platform
@@ -16,11 +15,11 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
 public final class Jdk11Downloader {
+  private static final Logger LOG = Logger.getLogger(Jdk11Downloader.class.getName());
   private static final String CORRETTO_VERSION = "11.0.14.9.1";
 
   // Corretto 11 is not available on macOS aarch64
   private static final URI ZULU_MACOS_AARCH64_URL = URI.create("https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/zulu11.50.19-ca-jdk11.0.12-macosx_aarch64.tar.gz");
-
   public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
     OS os = OS.getCurrent();
     Arch arch = Arch.getCurrent();
@@ -39,7 +38,7 @@ public final class Jdk11Downloader {
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
     Path jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT);
-    info("jps-bootstrap JDK is at " + jdkExtracted);
+    LOG.info("jps-bootstrap JDK is at " + jdkExtracted);
 
     if (jdkUrl == ZULU_MACOS_AARCH64_URL) {
       jdkExtracted = jdkExtracted.resolve("zulu-11.jdk");
@@ -54,7 +53,7 @@ public final class Jdk11Downloader {
     }
 
     Path executable = getJavaExecutable(jdkHome);
-    info("JDK home is at " + jdkHome + ", executable at " + executable);
+    LOG.info("JDK home is at " + jdkHome + ", executable at " + executable);
 
     return jdkHome;
   }

@@ -775,7 +775,6 @@ public final class SvnVcs extends AbstractVcs {
    * For instance, when working copies of several formats are presented in project
    * (though it seems to be rather unlikely case).
    *
-   * @return
    */
   @NotNull
   public ClientFactory getFactory() {

@@ -1,4 +1,4 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class Test {
   void f(int n, int k) {
       if (n == 0) {

@@ -259,12 +259,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    return new WrapExpressionFix(type, expression);
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
     return new ReuseVariableDeclarationFix(variable);
   }
@@ -379,7 +373,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
+  public @NotNull IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
     return new UpgradeSdkFix(level);
   }
 
@@ -463,7 +457,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSuperMethodReturnFix(@NotNull PsiMethod superMethod, @NotNull PsiType superMethodType) {
-    return new SuperMethodReturnFix(superMethod, superMethodType);
+    return new MethodReturnTypeFix(superMethod, superMethodType, false, false, true);
   }
 
   @NotNull
@@ -922,7 +916,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new WrapWithAdapterMethodCallFix(type, expression);
+    return new WrapWithAdapterMethodCallFix(type, expression, null);
   }
 
   @NotNull
@@ -1044,8 +1038,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates) {
-    return new UnimplementInterfaceAction(className, isDuplicates);
+  public @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className) {
+    return new UnimplementInterfaceAction.RemoveDuplicateExtendFix(className);
   }
 
   @Override

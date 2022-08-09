@@ -57,8 +57,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
       if (InheritanceUtil.isInheritorOrSelf(psi, aClass, true)) {
         continue;
       }
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(aClass,
-                                                             psi,
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(psi,
                                                              superClass,
                                                              searchResult.number,
                                                              searchResult.psi.isInterface() && !aClass.isInterface());

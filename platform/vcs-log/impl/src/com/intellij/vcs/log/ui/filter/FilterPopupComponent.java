@@ -76,6 +76,11 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
     return new AllAction();
   }
 
+  @Override
+  protected Runnable createResetAction() {
+    return () -> myFilterModel.setFilter(null);
+  }
+
   private class AllAction extends DumbAwareAction {
 
     AllAction() {
