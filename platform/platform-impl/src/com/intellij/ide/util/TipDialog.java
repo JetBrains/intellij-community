@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -99,6 +100,7 @@ public final class TipDialog extends DialogWrapper {
       ourInstance.dispose();
     }
     ourInstance = new TipDialog(w, project);
+    Disposer.register(ourInstance.getDisposable(), () -> ourInstance = null);
     ourInstance.show();
   }
 
