@@ -2239,6 +2239,7 @@
     </inspection_tool>
     <inspection_tool class="NestedSwitchStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NestedSwitchStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NegativeIntConstantInLongContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="NestedSynchronizedStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NestedTryStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NestingDepth" enabled="false" level="WARNING" enabled_by_default="false">
@@ -2384,6 +2385,7 @@
     <inspection_tool class="OptionalToIf" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="OptionalUsedAsFieldOrParameterType" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OraDeprecateTypeInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OnlyOneElementUsed" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="OverflowingLoopIndex" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="OverloadedMethodsWithSameNumberOfParameters" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreInconvertibleTypes" value="true" />
@@ -3828,7 +3830,7 @@
     <inspection_tool class="TryFinallyCanBeTryWithResources" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TryStatementWithMultipleResources" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="TryWithIdenticalCatches" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="migrated from java 1.6 to 1.7" level="Strong Warning" enabled="false" />
+      <scope name="migrated from java 1.6 to 1.7" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="TsLint" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="TypeCustomizer" enabled="false" level="WARNING" enabled_by_default="false" />
