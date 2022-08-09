@@ -1203,7 +1203,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * Defines contract for associating operation type and particular wrap instance. I.e. given wrap object <b>may</b> be returned
    * from subsequent {@link #getReservedWrap(IElementType)} call if given operation type is used as an argument there.
    * <p/>
-   * Default implementation ({@link AbstractJavaBlock#setReservedWrap(Wrap, IElementType)}) does nothing.
+   * @implNote default implementation does nothing.
    * <p/>
    * <b>Note:</b> this method is considered to be a legacy heritage and is assumed to be removed as soon as formatting processing
    * is refactored

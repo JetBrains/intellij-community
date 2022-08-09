@@ -20,7 +20,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   @NotNull
   Set<RefClass> getBaseClasses();
 
-  /** @eturn the direct subclasses of this class. */
+  /** @return the direct subclasses of this class. */
   @NotNull
   Set<RefClass> getSubClasses();
 

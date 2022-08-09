@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class TextMateLexer {
   /**
    * Count of {@link #lastSuccessState} that can be occurred again without offset changing.
-   * If {@link #lastSuccessStateOccursCount} reaches {@link #MAX_LOOPS_COUNT}
+   * If {@link #lastSuccessStateOccursCount} reaches {@code MAX_LOOPS_COUNT}
    * then lexing of current line stops and lexer moved to the EOL.
    */
   private static final int MAX_LOOPS_COUNT = 10;

@@ -203,8 +203,8 @@ public class AlignmentInColumnsHelper {
   }
 
   /**
-   * Shorthand for calling {@link #findPreviousNode(AlignmentInColumnsConfig, ASTNode, NodeProcessor)} with the type of
-   * the given node as a target type.
+   * Shorthand for calling {@link #findPreviousNode(AlignmentInColumnsConfig, ASTNode, IElementType, boolean, boolean, NodeProcessor)}
+   * with the type of the given node as a target type.
    *
    * @param config    configuration to use
    * @param from      start node to use

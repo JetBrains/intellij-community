@@ -168,7 +168,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   /**
-   * @See {@link javax.swing.plaf.basic.BasicRadioButtonUI#getPreferredSize}
+   * @see javax.swing.plaf.basic.BasicRadioButtonUI#getPreferredSize
    * The difference is that we do not include `DarculaCheckBoxBorder` insets to the icon size.
    */
   @Nullable

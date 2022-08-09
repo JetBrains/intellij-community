@@ -12,9 +12,6 @@ import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @ignatov
- */
 @SuppressWarnings("UnusedDeclaration")
 public class KotlinPasteFromJavaDialog extends DialogWrapper {
     private JPanel panel;
@@ -47,7 +44,7 @@ public class KotlinPasteFromJavaDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
         setOKButtonText(CommonBundle.getYesButtonText());
         setCancelButtonText(CommonBundle.getNoButtonText());
         return new Action[] {getOKAction(), getCancelAction()};

@@ -281,8 +281,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Add or not SortValuesAction (alphabetically sort)
-   * @todo this action should be moved to "Variables" as gear action
+   * Add or not SortValuesAction (alphabetically sort).
+   * <p>
+   * TODO this action should be moved to "Variables" as gear action
    */
   public boolean isValuesCustomSorted() {
     return false;
