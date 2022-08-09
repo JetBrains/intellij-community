@@ -1241,7 +1241,7 @@ public class JBTabsImpl extends JComponent
         LOG.debug("preferred focusable component: " + toFocus);
       }
 
-      if (toFocus == null) {
+      if (toFocus == null || !toFocus.isShowing()) {
         return null;
       }
       final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
