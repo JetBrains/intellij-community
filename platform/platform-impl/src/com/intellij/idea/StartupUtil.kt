@@ -317,12 +317,16 @@ fun start(isHeadless: Boolean,
     }
 
     if (!isHeadless && configImportNeeded) {
-      importConfig(args = argsAsList,
-                   log = log,
-                   appStarter = appStarter,
-                   agreementShown = showEuaIfNeededJob,
-                   baseLaf = baseLaf,
-                   mainScope = mainScope)
+      val imported = importConfig(
+        args = argsAsList,
+        log = log,
+        appStarter = appStarter,
+        agreementShown = showEuaIfNeededJob,
+        baseLaf = baseLaf,
+      )
+      if (imported) {
+        PluginManagerCore.scheduleDescriptorLoading(mainScope)
+      }
     }
 
     appStarter.start(argsAsList, setBaseLafJob, telemetryInitJob)
@@ -470,8 +474,7 @@ private suspend fun importConfig(args: List<String>,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  agreementShown: Deferred<Boolean>,
-                                 baseLaf: Any,
-                                 mainScope: CoroutineScope) {
+                                 baseLaf: Any): Boolean {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -490,9 +493,7 @@ private suspend fun importConfig(args: List<String>,
   }
   appStarter.importFinished(newConfigDir)
   activity.end()
-  if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
-    PluginManagerCore.scheduleDescriptorLoading(mainScope)
-  }
+  return !PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()
 }
 
 private fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
