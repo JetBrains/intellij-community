@@ -4008,6 +4008,22 @@ public class PyTypeTest extends PyTestCase {
                    "expr = MyEnum(1).value")
     );
   }
+  
+  // PY-54503
+  public void testTypeHintedEnumItemValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "def f(p: MyEnum):\n" +
+                   "    expr = p.value")
+    );
+  }
 
   // PY-54503
   public void testImportedEnumGetItemResultValueAttribute() {

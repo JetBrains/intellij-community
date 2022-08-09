@@ -123,8 +123,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             }
           }
         }
-        // An enum value is retrieved programmatically, e.g. MyEnum[name].value
-        else if (qualifier != null) {
+        // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted
+        if (qualifier != null) {
           PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
           if (enumType != null) {
             PyClass enumClass = enumType.getPyClass();
