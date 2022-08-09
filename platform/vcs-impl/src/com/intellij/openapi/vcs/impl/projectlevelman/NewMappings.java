@@ -194,7 +194,13 @@ public final class NewMappings implements Disposable {
 
     updateActiveVcses(false);
 
-    updateMappedRoots(false);
+    if (ApplicationManager.getApplication().isDispatchThread() &&
+        ContainerUtil.exists(newMappings, it -> it.isDefaultMapping())) {
+      scheduleMappedRootsUpdate();
+    }
+    else {
+      updateMappedRoots(false);
+    }
 
     notifyMappingsChanged();
   }
