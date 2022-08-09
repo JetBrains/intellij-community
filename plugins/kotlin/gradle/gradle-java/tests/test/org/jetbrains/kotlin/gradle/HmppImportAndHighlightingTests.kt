@@ -484,6 +484,14 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.0-dev-0+")
+    fun testKtij22345SyntheticJavaProperties() {
+        configureByFiles()
+        importProject()
+        createHighlightingCheck(testLineMarkers = false).invokeOnAllModules()
+    }
+
+    @Test
     @PluginTargetVersions(pluginVersion = "1.4.30+")
     fun testHmppLibAndConsumer() {
         assumeTrue(
