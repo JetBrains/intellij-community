@@ -109,7 +109,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   @Override
   protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
-    validate(s);
   }
 
   @Nls
