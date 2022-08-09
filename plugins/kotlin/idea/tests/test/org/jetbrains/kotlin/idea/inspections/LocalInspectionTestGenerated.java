@@ -13309,6 +13309,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceUntilWithRangeUntil")
+    public static class ReplaceUntilWithRangeUntil extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noOptIn.kt")
+        public void testNoOptIn() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/noOptIn.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");
+        }
+
+        @TestMetadata("tooOldLanguageVersion.kt")
+        public void testTooOldLanguageVersion() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldLanguageVersion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithEnumMap")
     public static class ReplaceWithEnumMap extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
