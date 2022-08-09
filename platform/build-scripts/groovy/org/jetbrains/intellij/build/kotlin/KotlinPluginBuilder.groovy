@@ -172,6 +172,8 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.override-implement-k1",
     "kotlin.code-insight.override-implement-k2",
     "kotlin.code-insight.live-templates-shared",
+    "kotlin.code-insight.live-templates-k1",
+    "kotlin.code-insight.live-templates-k2",
     "kotlin.fir",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",

@@ -9,70 +9,39 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.IterableTypesDetection
-import org.jetbrains.kotlin.idea.resolve.ideService
-import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.psi.*
 
-class SuggestVariableNameMacro : KotlinMacro() {
+abstract class AbstractSuggestVariableNameMacro : KotlinMacro() {
     override fun getName() = "kotlinSuggestVariableName"
     override fun getPresentableName() = "kotlinSuggestVariableName()"
 
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext): Result? {
-        return suggestNames(context).firstOrNull()?.let(::TextResult)
+        return findAppropriateNames(context).firstOrNull()?.let(::TextResult)
     }
 
     override fun calculateLookupItems(params: Array<out Expression>, context: ExpressionContext): Array<out LookupElement>? {
-        val suggestions = suggestNames(context)
-        if (suggestions.size < 2) return null
-        return suggestions.map { LookupElementBuilder.create(it) }.toTypedArray()
+        return findAppropriateNames(context)
+            .takeIf { it.size >= 2 }
+            ?.map { LookupElementBuilder.create(it) }
+            ?.toTypedArray()
     }
 
-    private fun suggestNames(context: ExpressionContext): Collection<String> {
+    private fun findAppropriateNames(context: ExpressionContext): Collection<String> {
         val project = context.project
-        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+        val documentManager = PsiDocumentManager.getInstance(project)
+        val document = context.editor?.document ?: return emptyList()
+        documentManager.commitDocument(document)
 
-        val document = context.editor!!.document
-        psiDocumentManager.commitDocument(document)
-        val psiFile = psiDocumentManager.getPsiFile(document) as? KtFile ?: return emptyList()
-        val token = psiFile.findElementAt(context.startOffset) ?: return emptyList()
-        val declaration = token.parent as? KtCallableDeclaration ?: return emptyList()
-        if (token != declaration.nameIdentifier) return emptyList()
+        val psiFile = documentManager.getPsiFile(document) as? KtFile ?: return emptyList()
+        val targetElement = psiFile.findElementAt(context.startOffset) ?: return emptyList()
+        val targetDeclaration = targetElement.parent as? KtCallableDeclaration ?: return emptyList()
 
-        val nameValidator: (String) -> Boolean = { true }
-
-        val initializer = (declaration as? KtDeclarationWithInitializer)?.initializer
-        if (initializer != null) {
-            val bindingContext = initializer.analyze(BodyResolveMode.PARTIAL)
-            return Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, nameValidator, null)
+        if (targetElement != targetDeclaration.nameIdentifier) {
+            return emptyList()
         }
 
-        val parent = declaration.parent
-        if (parent is KtForExpression && declaration == parent.loopParameter) {
-            suggestIterationVariableName(parent, nameValidator)?.let { return it }
-        }
-
-        val descriptor = declaration.resolveToDescriptorIfAny() as? VariableDescriptor ?: return emptyList()
-        return Fe10KotlinNameSuggester.suggestNamesByType(descriptor.type, nameValidator, null)
+        return suggestNames(targetDeclaration)
     }
 
-    private fun suggestIterationVariableName(forExpression: KtForExpression, nameValidator: (String) -> Boolean): Collection<String>? {
-        val loopRange = forExpression.loopRange ?: return null
-        val resolutionFacade = forExpression.getResolutionFacade()
-        val bindingContext = resolutionFacade.analyze(loopRange, BodyResolveMode.PARTIAL)
-        val type = bindingContext.getType(loopRange) ?: return null
-        val scope = loopRange.getResolutionScope(bindingContext, resolutionFacade)
-        val detector = resolutionFacade.ideService<IterableTypesDetection>().createDetector(scope)
-        val elementType = detector.elementType(type)?.type ?: return null
-        return Fe10KotlinNameSuggester.suggestIterationVariableNames(loopRange, elementType, bindingContext, nameValidator, null)
-    }
+    protected abstract fun suggestNames(declaration: KtCallableDeclaration): Collection<String>
 }

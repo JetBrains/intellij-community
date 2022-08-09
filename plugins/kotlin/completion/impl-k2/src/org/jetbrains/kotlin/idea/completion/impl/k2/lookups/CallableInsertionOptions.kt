@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 
-internal data class CallableInsertionOptions(
+@ApiStatus.Internal
+data class CallableInsertionOptions(
     val importingStrategy: ImportStrategy,
     val insertionStrategy: CallableInsertionStrategy,
 ) {

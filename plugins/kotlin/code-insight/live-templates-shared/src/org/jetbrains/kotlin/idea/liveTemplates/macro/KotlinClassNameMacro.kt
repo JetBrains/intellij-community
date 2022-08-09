@@ -15,9 +15,15 @@ class KotlinClassNameMacro : KotlinMacro() {
     override fun getPresentableName() = "kotlinClassName()"
 
     override fun calculateResult(params: Array<Expression>, context: ExpressionContext): Result? {
-        val element = context.psiElementAtStartOffset?.parentsWithSelf?.firstOrNull {
-            it is KtClassOrObject && it.name != null && !it.hasModifier(KtTokens.COMPANION_KEYWORD)
-        } ?: return null
-        return TextResult((element as KtClassOrObject).name!!)
+        val targetElement = context.psiElementAtStartOffset ?: return null
+
+        val name = targetElement
+            .parentsWithSelf
+            .filterIsInstance<KtClassOrObject>()
+            .filter { !it.hasModifier(KtTokens.COMPANION_KEYWORD) }
+            .firstNotNullOfOrNull { it.name }
+            ?: return null
+
+        return TextResult(name)
     }
 }

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.IterableTypesDetection
-import org.jetbrains.kotlin.idea.liveTemplates.macro.SuggestVariableNameMacro
+import org.jetbrains.kotlin.idea.liveTemplates.k1.macro.Fe10SuggestVariableNameMacro
 import org.jetbrains.kotlin.idea.resolve.ideService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
@@ -60,7 +60,7 @@ internal class KtForEachPostfixTemplate(
     provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
-        val name = MacroCallNode(SuggestVariableNameMacro())
+        val name = MacroCallNode(Fe10SuggestVariableNameMacro())
         template.addVariable("name", name, ConstantNode("item"), true)
     }
 }

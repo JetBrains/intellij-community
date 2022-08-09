@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.template.impl.TemplateContext
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import com.intellij.psi.util.PsiUtilBase
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinShortenFQNamesProcessor : TemplateOptionalProcessor {
@@ -22,19 +22,16 @@ class KotlinShortenFQNamesProcessor : TemplateOptionalProcessor {
         PsiDocumentManager.getInstance(project).commitDocument(document)
 
         val file = PsiUtilBase.getPsiFileInEditor(editor, project) as? KtFile ?: return
-        ShortenReferences.DEFAULT.process(file, templateRange.startOffset, templateRange.endOffset)
+        ShortenReferencesFacility.getInstance().shorten(file, templateRange.textRange)
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
     }
 
     override fun getOptionName(): String {
-        return CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names")!!
+        return CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names")
     }
 
-    override fun isEnabled(template: Template) = template.isToShortenLongNames
-
-    override fun setEnabled(template: Template, value: Boolean) {
-    }
-
+    override fun isEnabled(template: Template): Boolean = template.isToShortenLongNames
+    override fun setEnabled(template: Template, value: Boolean) {}
     override fun isVisible(template: Template, context: TemplateContext) = false
 }

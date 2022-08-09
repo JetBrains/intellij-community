@@ -36,7 +36,10 @@ class KotlinExpressionNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase(
 
         executeOnPooledThreadInReadAction {
             analyze(targetExpression) {
-                val actualNames = KotlinNameSuggester(Case.CAMEL).suggestExpressionNames(targetExpression).toList().sorted()
+                val actualNames = with(KotlinNameSuggester(Case.CAMEL)) {
+                    suggestExpressionNames(targetExpression).toList().sorted()
+                }
+
                 TestCase.assertEquals(names.sorted(), actualNames)
             }
         }

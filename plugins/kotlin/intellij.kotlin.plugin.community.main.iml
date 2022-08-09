@@ -109,6 +109,8 @@
     <orderEntry type="module" module-name="kotlin.injection" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.native" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />

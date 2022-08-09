@@ -2,22 +2,21 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
-internal sealed class ImportStrategy {
+@ApiStatus.Internal
+sealed class ImportStrategy {
     object DoNothing : ImportStrategy()
     data class AddImport(val nameToImport: FqName) : ImportStrategy()
     data class InsertFqNameAndShorten(val fqName: FqName) : ImportStrategy()
 }
-
-
 
 internal fun addCallableImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
     if (!alreadyHasImport(targetFile, nameToImport)) {

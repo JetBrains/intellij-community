@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.liveTemplates.macro
+package org.jetbrains.kotlin.idea.liveTemplates.k1.macro
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.Expression
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.completion.BasicLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.InsertHandlerProvider
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.isVisible
+import org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinMacro
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.psi.KtElement
@@ -28,15 +29,18 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
-abstract class BaseKotlinVariableMacro<TState> : KotlinMacro() {
+abstract class Fe10AbstractKotlinVariableMacro<State> : KotlinMacro() {
     private fun getVariables(params: Array<Expression>, context: ExpressionContext): Collection<VariableDescriptor> {
-        if (params.size != 0) return emptyList()
+        if (params.isNotEmpty()) {
+            return emptyList()
+        }
 
         val project = context.project
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()
 
-        val psiFile = psiDocumentManager.getPsiFile(context.editor!!.document) as? KtFile ?: return emptyList()
+        val document = context.editor?.document ?: return emptyList()
+        val psiFile = psiDocumentManager.getPsiFile(document) as? KtFile ?: return emptyList()
 
         val contextElement = psiFile.findElementAt(context.startOffset)?.getNonStrictParentOfType<KtElement>() ?: return emptyList()
 
@@ -62,18 +66,19 @@ abstract class BaseKotlinVariableMacro<TState> : KotlinMacro() {
             ::isVisible,
             NotPropertiesService.getNotProperties(contextElement)
         )
+
         return helper
             .getReferenceVariants(contextElement, CallTypeAndReceiver.DEFAULT, DescriptorKindFilter.VARIABLES, { true })
             .map { it as VariableDescriptor }
             .filter { isSuitable(it, project, state) }
     }
 
-    protected abstract fun initState(contextElement: KtElement, bindingContext: BindingContext): TState
+    protected abstract fun initState(contextElement: KtElement, bindingContext: BindingContext): State
 
     protected abstract fun isSuitable(
         variableDescriptor: VariableDescriptor,
         project: Project,
-        state: TState
+        state: State
     ): Boolean
 
     override fun calculateResult(params: Array<Expression>, context: ExpressionContext): Result? {

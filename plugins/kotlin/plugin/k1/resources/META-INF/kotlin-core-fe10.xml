@@ -8,6 +8,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
             serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFE10Impl"/>

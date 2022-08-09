@@ -27,9 +27,10 @@ class KotlinTypeAliasNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase()
 
         executeOnPooledThreadInReadAction {
             analyze(targetDeclaration) {
-                val nameSuggester = KotlinNameSuggester(KotlinNameSuggester.Case.PASCAL)
-                val actualName = nameSuggester.suggestTypeAliasName(targetTypeElement)
-                assertEquals(expectedName, actualName)
+                with(KotlinNameSuggester(KotlinNameSuggester.Case.PASCAL)) {
+                    val actualName = suggestTypeAliasName(targetTypeElement)
+                    assertEquals(expectedName, actualName)
+                }
             }
         }
     }

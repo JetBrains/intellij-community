@@ -15,7 +15,11 @@ class KotlinMainArgumentsMacro : KotlinMacro() {
 
     override fun calculateResult(params: Array<Expression>, context: ExpressionContext): Result? {
         val languageVersionSettings = context.psiElementAtStartOffset?.languageVersionSettings ?: return null
-        if (languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)) return TextResult("")
-        return TextResult("args: Array<String>")
+
+        return if (languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)) {
+            TextResult("")
+        } else {
+            TextResult("args: Array<String>")
+        }
     }
 }

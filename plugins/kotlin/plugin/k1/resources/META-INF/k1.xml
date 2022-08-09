@@ -86,5 +86,6 @@
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.live-templates-shared"/>
+    <module name="kotlin.code-insight.live-templates-k1"/>
   </content>
 </idea-plugin>

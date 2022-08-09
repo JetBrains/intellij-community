@@ -2,11 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
 
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.AnyVariableMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SuitableVariableMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.FunctionParametersMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.AnonymousSuperMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SuggestVariableNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinClassNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinFunctionNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinPackageNameMacro"/>

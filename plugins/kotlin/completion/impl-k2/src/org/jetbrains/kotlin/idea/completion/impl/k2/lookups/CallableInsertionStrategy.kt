@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
-internal sealed class CallableInsertionStrategy {
+@ApiStatus.Internal
+sealed class CallableInsertionStrategy {
     object AsCall : CallableInsertionStrategy()
     object AsIdentifier : CallableInsertionStrategy()
     class AsIdentifierCustom(val insertionHandlerAction: InsertionContext.() -> Unit) : CallableInsertionStrategy()
