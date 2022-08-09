@@ -43,7 +43,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final int DEFAULT_HEIGHT = 200;
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
-  private @Nullable final Project myProject;
+  private @NotNull final Project myProject;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
@@ -53,7 +53,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
 
-  public TipPanel(@Nullable final Project project, @NotNull Disposable parentDisposable) {
+  public TipPanel(@NotNull final Project project, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
@@ -132,7 +132,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setPromotionForCurrentTip() {
-    if (myProject == null || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     if (myCurrentPromotion != null) {
       remove(myCurrentPromotion);
       myCurrentPromotion = null;

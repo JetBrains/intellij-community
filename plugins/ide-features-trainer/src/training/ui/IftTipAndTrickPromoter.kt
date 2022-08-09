@@ -2,8 +2,8 @@
 package training.ui
 
 import com.intellij.ide.util.TipAndTrickBean
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.ide.util.TipAndTrickPromotionFactory
-import com.intellij.ide.util.TipDialog
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
@@ -55,7 +55,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     container.add(Box.createHorizontalGlue())
 
     val openLessonLink = ActionLink(LearnBundle.message("tip.and.trick.promotion.open.lesson")) {
-      TipDialog.hideForProject(project)
+      TipAndTrickManager.getInstance().closeTipDialog()
       if (!project.isDisposed) {
         CourseManager.instance.openLesson(project, lesson, LessonStartingWay.TIP_AND_TRICK_PROMOTER, forceStartLesson = true)
         StatisticBase.logLessonLinkClickedFromTip(lesson.id, tip.fileName)
