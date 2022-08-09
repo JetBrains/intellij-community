@@ -60,6 +60,10 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     return null;
   }
 
+  @Override
+  public @NotNull List<String> supportedBundles() {
+    return Collections.singletonList(BUNDLED_MAVEN_3);
+  }
 
   @Override
   public @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
