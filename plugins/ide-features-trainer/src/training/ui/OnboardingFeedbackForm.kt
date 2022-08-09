@@ -38,6 +38,7 @@ import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
+import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.statistic.FeedbackEntryPlace
 import training.statistic.FeedbackLikenessAnswer
@@ -59,6 +60,14 @@ private const val SUB_OFFSET = 20
 
 /** Increase the additional number when onboarding feedback format is changed */
 private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
+
+// Key for PropertiesComponent to check whether to show onboarding feedback notification or not
+fun getFeedbackProposedPropertyName(langSupport: LangSupport): String {
+  val ideName = langSupport.defaultProductName?.let {
+    if (it == "GoLand") "go" else it.lowercase()
+  } ?: error("Lang support should implement 'defaultProductName': $langSupport")
+  return "ift.$ideName.onboarding.feedback.proposed"
+}
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
   onboardingFeedbackData.feedbackHasBeenProposed()

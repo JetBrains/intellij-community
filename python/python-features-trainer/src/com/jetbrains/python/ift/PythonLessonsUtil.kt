@@ -2,7 +2,6 @@ package com.jetbrains.python.ift
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
@@ -47,14 +46,9 @@ object PythonLessonsUtil {
                                              configPropertyName: String,
                                              reportTitle: String,
                                              feedbackReportId: String,
-                                             primaryLanguage: LangSupport?,
+                                             primaryLanguage: LangSupport,
                                              lessonEndInfo: LessonEndInfo,
                                              usedInterpreterAtStart: String) {
-    if (primaryLanguage == null) {
-      thisLogger().error("Onboarding lesson has no language support for some magical reason")
-      return
-    }
-
     if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
       return
     }
