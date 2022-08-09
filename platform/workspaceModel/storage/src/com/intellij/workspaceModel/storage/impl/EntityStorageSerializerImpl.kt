@@ -77,7 +77,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v38"
+    const val SERIALIZER_VERSION = "v39"
   }
 
   internal val KRYO_BUFFER_SIZE = 64 * 1024
@@ -332,11 +332,11 @@ class EntityStorageSerializerImpl(
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
       // Serialize and register persistent ids
-      val persistentIds = storage.indexes.persistentIdIndex.entries().toSet()
-      output.writeVarInt(persistentIds.size, true)
-      persistentIds.forEach {
-        val typeInfo = it::class.java.typeInfo
-        kryo.register(it::class.java)
+      val persistentIdClasses = storage.indexes.persistentIdIndex.entries().mapTo(HashSet()) { it::class.java }
+      output.writeVarInt(persistentIdClasses.size, true)
+      persistentIdClasses.forEach {
+        val typeInfo = it.typeInfo
+        kryo.register(it)
         kryo.writeClassAndObject(output, typeInfo)
       }
 
