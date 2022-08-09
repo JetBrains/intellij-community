@@ -579,17 +579,22 @@ private fun blockATKWrapper() {
   activity.end()
 }
 
-private fun loadSystemFontsAndDnDCursors() {
+private suspend fun loadSystemFontsAndDnDCursors() {
   var activity = StartUpMeasurer.startActivity("system fonts loading")
   // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
   Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
   // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 
-  // preload cursors used by drag-n-drop AWT subsystem
-  activity = activity.endAndStart("DnD setup")
-  DragSource.getDefaultDragSource()
-  activity.end()
+  activity.end();
+
+  // run on SwingDispatcher to avoid a possible deadlock see RIDER-80810
+  withContext(SwingDispatcher) {
+    // preload cursors used by drag-n-drop AWT subsystem
+    activity = StartUpMeasurer.startActivity("DnD setup")
+    DragSource.getDefaultDragSource()
+    activity.end()
+  }
 }
 
 // executed not in EDT
