@@ -82,11 +82,10 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   /**
-   * @remove at 2021
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
 
   /**
