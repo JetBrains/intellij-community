@@ -28,13 +28,13 @@ UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpr
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: setFoo
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> SymbolLightAccessorMethod:setFoo: setFoo
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = runRunnable) -> Kotlin_Light_Method: runRunnable
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod:runRunnable) -> USimpleNameReferenceExpression (identifier = runRunnable) -> SymbolLightSimpleMethod:runRunnable: runRunnable
 UField (name = baz) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
@@ -49,9 +49,9 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Method: Thread
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> Kotlin_Light_Method: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> SymbolLightSimpleMethod:ambiguousSamAcceptor: ambiguousSamAcceptor
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Supplier) -> Decompiled_Class: Supplier
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> Kotlin_Light_Method: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> SymbolLightSimpleMethod:ambiguousSamAcceptor: ambiguousSamAcceptor
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Callable) -> Decompiled_Class: Callable
 UTypeReferenceExpression (name = java.util.function.Supplier<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Supplier) -> Decompiled_Class: Supplier
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

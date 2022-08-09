@@ -13,6 +13,6 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = funPlainCall) -> Kotlin_Light_Method: funPlainCall
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = funNamedArgumentsCall) -> Kotlin_Light_Method: funNamedArgumentsCall
-    null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod:funPlainCall) -> USimpleNameReferenceExpression (identifier = funPlainCall) -> SymbolLightSimpleMethod:funPlainCall: funPlainCall
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod:funNamedArgumentsCall) -> USimpleNameReferenceExpression (identifier = funNamedArgumentsCall) -> SymbolLightSimpleMethod:funNamedArgumentsCall: funNamedArgumentsCall
+    null -> USimpleNameReferenceExpression (identifier = a) -> SymbolLightParameter:a: a
