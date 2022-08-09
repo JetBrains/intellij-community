@@ -86,7 +86,6 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   /**
    * @return a list of waiting ThreadReferenceProxies
-   * @throws IncompatibleThreadStateException
    */
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
     return StreamEx.of(getObjectReference().waitingThreads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();

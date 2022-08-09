@@ -1446,7 +1446,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   /**
-   * @param listener
    * @deprecated use addManagerListener(Listener, Disposable) instead
    */
   @Deprecated

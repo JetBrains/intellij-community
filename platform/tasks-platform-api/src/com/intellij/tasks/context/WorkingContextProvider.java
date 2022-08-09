@@ -34,8 +34,6 @@ public abstract class WorkingContextProvider {
    * Saves a component's state.
    * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(Element)}
    *
-   * @param project
-   * @param toElement
    */
   public abstract void saveContext(@NotNull Project project, @NotNull Element toElement);
 

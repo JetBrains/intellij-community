@@ -518,7 +518,6 @@ public final class CommentTracker {
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
-   * @param anchor
    */
   public void insertCommentsBefore(@NotNull PsiElement anchor) {
     checkState();

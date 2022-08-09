@@ -1020,7 +1020,6 @@ public class SwitchBlockHighlightingModel {
     }
 
     /**
-     * @param switchBlock
      * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete

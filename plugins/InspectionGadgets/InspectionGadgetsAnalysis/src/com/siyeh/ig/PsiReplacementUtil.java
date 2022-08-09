@@ -196,7 +196,6 @@ public final class PsiReplacementUtil {
    * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@oce !(...)}.
    * @param expression  a boolean PsiExpression
    * @param newExpression  text for the new expression, which will be negated/inverted.
-   * @param tracker
    */
   public static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression expression,
                                                             @NotNull String newExpression,

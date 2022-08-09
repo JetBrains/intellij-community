@@ -29,7 +29,6 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
    * Reads either basic profile info (name) or all the settings depending on whether <code>settings</code> parameter is null.
    * 
    * @param input The input stream to read from.
-   * @throws SchemeImportException
    */
   protected void readSettings(InputStream input) throws SchemeImportException {
     SAXParserFactory spf = SAXParserFactory.newDefaultInstance();

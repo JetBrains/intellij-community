@@ -105,8 +105,6 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    * Returns a name for "unfinished" SDK that is related to dynamically
    * interpreted language.
    *
-   * @param sdkName
-   * @return
    * @see {@link #getDefaultUnfinishedName()}
    */
   @NotNull

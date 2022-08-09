@@ -21,7 +21,6 @@ public interface EditorTextFieldProvider {
    *
    * @param language   target language used by document that will be displayed by returned editor
    * @param project    target project
-   * @param features
    * @return {@link EditorTextField} with specified customizations applied to its editor.
    */
   @NotNull

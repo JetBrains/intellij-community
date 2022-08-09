@@ -38,7 +38,6 @@ class MethodCallChainPredicate implements PsiElementPredicate {
   /**
    * Find root of the call chain
    *
-   * @param element
    * @return root of call chain or null if it's not a call chain
    */
   static PsiExpression getCallChainRoot(PsiElement element) {

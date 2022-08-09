@@ -275,8 +275,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
    * Waits until all passed strings appear in output.
    * If they don't appear in time limit, then exception is raised.
    *
-   * @param string
-   * @throws InterruptedException
    */
   public void waitForOutput(String... string) throws InterruptedException {
     int count = 0;

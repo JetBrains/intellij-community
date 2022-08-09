@@ -10,8 +10,6 @@ public class PyCodeCompletionImages {
 
     /**
      * Returns an image for the given type
-     * @param type
-     * @return
      */
     @Nullable
     public static Icon getImageForType(int type){

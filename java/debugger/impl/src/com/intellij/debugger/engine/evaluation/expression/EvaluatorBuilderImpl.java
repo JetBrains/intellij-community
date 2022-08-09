@@ -702,7 +702,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     /**
-     * @param type
      * @return promotion type to cast to or null if no casting needed
      */
     @Nullable
@@ -1283,7 +1282,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
      * - array dimension expressions
      * - array index expression
      * - unary +, -, and ~ operations
-     * @param operandExpressionType
      * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with necessary unboxing and type-casting evaluators to make returning value
      * suitable for mentioned contexts
      */

@@ -91,8 +91,6 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
    *
    * @param original is original element
    * @param result   is initial completion result
-   * @param offset
-   * @return
    */
   private static CompletionResultSet createResult(@NotNull final PsiElement original,
                                                   @NotNull final CompletionResultSet result,

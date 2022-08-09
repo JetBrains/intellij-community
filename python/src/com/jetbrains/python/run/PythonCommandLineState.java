@@ -276,10 +276,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * <p>
    * Patches the command line parameters applying patchers from first to last, and then runs it.
    *
-   * @param processStarter
    * @param patchers       any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
-   * @throws ExecutionException
    */
   @NotNull
   protected ProcessHandler startProcess(PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
@@ -557,7 +555,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * GROUP_EXE_OPTIONS, GROUP_DEBUGGER, GROUP_SCRIPT.
    * These are necessary for command line patchers to work properly.
    *
-   * @param commandLine
    */
   public static void createStandardGroups(GeneralCommandLine commandLine) {
     ParametersList params = commandLine.getParametersList();

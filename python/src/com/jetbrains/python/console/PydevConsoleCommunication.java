@@ -275,7 +275,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   /**
    * Executes the needed command
    *
-   * @param command
    * @return a Pair with (null, more) or (error, false)
    */
   protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
@@ -762,7 +761,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    *
    * @param localPort port for pydevd to connect to.
    * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
-   * @param extraEnvs
    * @throws Exception if connection fails
    */
   public void connectToDebugger(int localPort,

@@ -187,9 +187,6 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      *
      * {@link ProgressIndicatorUtils#runWithWriteActionPriority(Runnable, ProgressIndicator)}
      *
-     * @param indicator
-     * @param parentDisposable
-     * @param action
      */
     public static void runWithWriteActionPriority(
             @NotNull final ProgressIndicator indicator,

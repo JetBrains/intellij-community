@@ -97,8 +97,6 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
   public static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
     /**
-     * @param first
-     * @param second
      * @see #create(Object, Object)
      */
     PsiItemWithPresentation(PsiElement first, TargetPresentation second) {

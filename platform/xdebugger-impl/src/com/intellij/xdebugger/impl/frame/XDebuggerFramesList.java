@@ -461,7 +461,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
      * For a mouse click event it tries to find {@link XDebuggerFrameListRenderer}
      * and call {@link XDebuggerFrameListRenderer#onMouseEvent(MouseEvent, int)}.
      *
-     * @param list
      */
     private void installListeners(@NotNull XDebuggerFramesList list) {
       addTo(list);

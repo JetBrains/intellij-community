@@ -68,7 +68,6 @@ public class PyRemoteProcessStarter {
    * @param pathMapper  the mapping between paths on the host machine and the one
    *                    the process will be executed on
    * @return process handler for created process
-   * @throws ExecutionException
    * @throws UnsupportedPythonSdkTypeException if support cannot be found for
    *                                           the type of the provided sdk
    */

@@ -31,9 +31,6 @@ public interface ModelBuilderContext extends MessageReporter {
     /**
      * Create data value to be shared.
      * Returned value should be thread-safe.
-     * @param gradle
-     * @param messageReporter
-     * @return
      */
     @NotNull
     T create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter);
