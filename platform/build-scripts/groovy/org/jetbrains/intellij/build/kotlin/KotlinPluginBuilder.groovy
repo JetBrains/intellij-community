@@ -270,7 +270,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection

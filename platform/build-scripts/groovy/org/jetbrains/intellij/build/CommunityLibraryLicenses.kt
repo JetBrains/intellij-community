@@ -905,7 +905,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
-    jetbrainsLibrary("kotlinc.kotlin-reflect"),
     jetbrainsLibrary("kotlinc.kotlin-script-runtime"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
