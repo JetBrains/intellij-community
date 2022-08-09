@@ -6,14 +6,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
+abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue, Q: ReviewListQuickFilter<S>>(
   private val scope: CoroutineScope,
   private val historyModel: ReviewListSearchHistoryModel<S>,
   final override val emptySearch: S,
-  final override val defaultSearch: S
-) : ReviewListSearchPanelViewModel<S> {
+  final override val defaultQuickFilter: Q
+) : ReviewListSearchPanelViewModel<S, Q> {
 
-  final override val searchState = MutableStateFlow(historyModel.getHistory().lastOrNull() ?: defaultSearch)
+  final override val searchState = MutableStateFlow(historyModel.getHistory().lastOrNull() ?: defaultQuickFilter.filter)
 
   final override val queryState = searchState.partialState(ReviewListSearchValue::searchQuery) {
     withQuery(it)
@@ -33,7 +33,7 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
           return@collectLatestWithPrevious
         }
 
-        if (new.filterCount == 0 || new == defaultSearch) {
+        if (new.filterCount == 0 || new == defaultQuickFilter.filter) {
           return@collectLatestWithPrevious
         }
 

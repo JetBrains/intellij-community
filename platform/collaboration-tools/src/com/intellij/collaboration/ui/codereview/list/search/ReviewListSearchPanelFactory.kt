@@ -31,11 +31,11 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : ReviewListSearchPanelViewModel<S>>(
+abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : ReviewListQuickFilter<S>, VM : ReviewListSearchPanelViewModel<S, Q>>(
   protected val vm: VM
 ) {
 
-  fun create(viewScope: CoroutineScope, quickFilters: List<Pair<@Nls String, S>>): JComponent {
+  fun create(viewScope: CoroutineScope): JComponent {
     val searchField = ReviewListSearchTextFieldFactory(vm.queryState).create(viewScope, chooseFromHistory = { point ->
       val value = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(vm.getSearchHistory().reversed())
@@ -66,7 +66,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
       }
     }
 
-    val quickFilterButton = QuickFilterButtonFactory().create(viewScope, quickFilters)
+    val quickFilterButton = QuickFilterButtonFactory().create(viewScope, vm.quickFilters)
 
     val filterPanel = JPanel(BorderLayout()).apply {
       border = JBUI.Borders.emptyTop(10)
@@ -88,9 +88,11 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
 
   protected abstract fun createFilters(viewScope: CoroutineScope): List<JComponent>
 
+  protected abstract fun Q.getQuickFilterTitle(): @Nls String
+
   private inner class QuickFilterButtonFactory {
 
-    fun create(viewScope: CoroutineScope, quickFilters: List<Pair<String, S>>): JComponent {
+    fun create(viewScope: CoroutineScope, quickFilters: List<Q>): JComponent {
       val button = InlineIconButton(AllIcons.General.Filter).apply {
         border = JBUI.Borders.empty(3)
       }.also {
@@ -108,9 +110,9 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
       return button
     }
 
-    private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Pair<@Nls String, S>>) {
+    private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Q>) {
       val quickFiltersActions =
-        quickFilters.map { (name, search) -> QuickFilterAction(name, search) } +
+        quickFilters.map { QuickFilterAction(it.getQuickFilterTitle(), it.filter) } +
         Separator() +
         ClearFiltersAction()
 
