@@ -4,7 +4,7 @@
   "customProperties" : [ ],
   "dataDirectoryName" : "IntelliJIdea2022.2",
   "launch" : [ {
-    "javaExecutablePath" : "../jbr//Contents/Home/bin/java",
+    "javaExecutablePath" : "../jbr/Contents/Home/bin/java",
     "launcherPath" : "../MacOS/idea",
     "os" : "macOS",
     "vmOptionsFilePath" : "../bin/idea.vmoptions"
