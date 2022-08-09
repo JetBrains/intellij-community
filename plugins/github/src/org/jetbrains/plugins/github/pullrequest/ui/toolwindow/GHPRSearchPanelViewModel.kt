@@ -9,13 +9,11 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRListQuickFilter.*
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 internal class GHPRSearchPanelViewModel(
   scope: CoroutineScope,
   private val repositoryDataService: GHPRRepositoryDataService,
   historyViewModel: GHPRSearchHistoryModel,
-  val avatarIconsProvider: GHAvatarIconsProvider,
   currentUser: GHUser
 ) :
   ReviewListSearchPanelViewModelBase<GHPRListSearchValue, GHPRListQuickFilter>(

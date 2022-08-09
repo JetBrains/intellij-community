@@ -60,7 +60,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     val actionManager = ActionManager.getInstance()
 
     val historyModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
-    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, avatarIconsProvider, securityService.currentUser)
+    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, securityService.currentUser)
     scope.launch {
       searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
@@ -69,7 +69,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, disposable)
 
-    val searchPanel = GHPRSearchPanelFactory(searchVm).create(scope)
+    val searchPanel = GHPRSearchPanelFactory(searchVm, avatarIconsProvider).create(scope)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()

@@ -9,9 +9,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
-internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
+internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val avatarIconsProvider: GHAvatarIconsProvider) :
   ReviewListSearchPanelFactory<GHPRListSearchValue, GHPRListQuickFilter, GHPRSearchPanelViewModel>(vm) {
 
   override fun getShortText(searchValue: GHPRListSearchValue): @Nls String = with(searchValue) {
@@ -34,7 +35,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
         showAsyncChooserPopup(point, { vm.getAuthors() }) {
-          PopupItemPresentation.Simple(it.shortName, vm.avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
@@ -46,7 +47,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
     DropDownComponentFactory(vm.assigneeFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
         showAsyncChooserPopup(point, { vm.getAssignees() }) {
-          PopupItemPresentation.Simple(it.shortName, vm.avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)
