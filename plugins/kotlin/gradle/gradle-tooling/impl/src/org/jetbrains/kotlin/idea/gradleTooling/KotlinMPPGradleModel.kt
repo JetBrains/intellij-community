@@ -9,25 +9,6 @@ import java.io.Serializable
 
 typealias KotlinDependency = ExternalDependency
 
-class KotlinDependencyMapper {
-    private var currentIndex: KotlinDependencyId = 0
-    private val idToDependency = HashMap<KotlinDependencyId, KotlinDependency>()
-    private val dependencyToId = HashMap<KotlinDependency, KotlinDependencyId>()
-
-    fun getDependency(id: KotlinDependencyId) = idToDependency[id]
-
-    fun getId(dependency: KotlinDependency): KotlinDependencyId {
-        return dependencyToId[dependency] ?: let {
-            currentIndex++
-            dependencyToId[dependency] = currentIndex
-            idToDependency[currentIndex] = dependency
-            return currentIndex
-        }
-    }
-
-    fun toDependencyMap(): Map<KotlinDependencyId, KotlinDependency> = idToDependency
-}
-
 fun KotlinDependency.deepCopy(cache: MutableMap<Any, Any>): KotlinDependency {
     val cachedValue = cache[this] as? KotlinDependency
     return if (cachedValue != null) {
