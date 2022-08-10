@@ -57,7 +57,7 @@ sealed class EnableUnsupportedFeatureFix(
             }
 
             val fileIndex = ModuleRootManager.getInstance(module).fileIndex
-            val forTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
+            val forTests = file.originalFile.virtualFile?.let { fileIndex.getKotlinSourceRootType(it) } == TestSourceKotlinRootType
 
             findApplicableConfigurator(module).updateLanguageVersion(
                 module,
