@@ -68,8 +68,8 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
   override val outputUrl: VirtualFileUrl?
     get() = _outputUrl
 
-  override val rootElement: CompositePackagingElementEntity
-    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)!!
+  override val rootElement: CompositePackagingElementEntity?
+    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
 
   override val customProperties: List<ArtifactPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList()
@@ -116,16 +116,6 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
       }
       if (!getEntityData().isArtifactTypeInitialized()) {
         error("Field ArtifactEntity#artifactType should be initialized")
-      }
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(ROOTELEMENT_CONNECTION_ID, this) == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -200,15 +190,15 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: CompositePackagingElementEntity
+    override var rootElement: CompositePackagingElementEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                             ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+                                                                                                             ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
-          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
       }
       set(value) {

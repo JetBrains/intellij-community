@@ -36,7 +36,7 @@ class ParentAndChildTest {
     }
 
     assertNotNull(entity.child)
-    assertEquals("ChildData", entity.child.childData)
+    assertEquals("ChildData", entity!!.child!!.childData)
   }
 
   @Test
@@ -48,7 +48,7 @@ class ParentAndChildTest {
     builder.addEntity(entity)
 
     val single = builder.entities(ParentEntity::class.java).single()
-    assertEquals("ChildData", single.child.childData)
+    assertEquals("ChildData", single.child!!.childData)
   }
 
   @Test
@@ -65,7 +65,7 @@ class ParentAndChildTest {
 
     val builder1 = snapshot.toBuilder()
     builder1.removeEntity(parentSnapshot)
-    builder1.removeEntity(parentSnapshot.child)
+    builder1.removeEntity(parentSnapshot!!.child!!)
 
     val newSnapshot = builder1.toSnapshot()
     (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
@@ -102,7 +102,7 @@ class ParentAndChildTest {
     builder.addEntity(entity)
 
     val single = builder.entities(ChildEntity::class.java).single()
-    assertEquals("ChildData", single.parentEntity.child.childData)
+    assertEquals("ChildData", single.parentEntity.child!!.childData)
   }
 
   @Test
@@ -114,6 +114,6 @@ class ParentAndChildTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertEquals("ChildData", entity.child.childData)
+    assertEquals("ChildData", entity.child!!.childData)
   }
 }

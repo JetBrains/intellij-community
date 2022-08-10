@@ -1,8 +1,7 @@
 package com.intellij.workspaceModel.codegen.deft.model
 
-import com.intellij.workspaceModel.codegen.deft.TBlob
-import com.intellij.workspaceModel.codegen.deft.TRef
 import com.intellij.workspaceModel.codegen.deft.*
+import org.jetbrains.deft.annotations.Child
 
 class DefField(
   val nameRange: SrcRange,
@@ -48,6 +47,16 @@ class DefField(
     if (receiver != null) {
       todoMemberExtField(diagnostics)
       return
+    }
+
+    if (!type.optional && type.classifier !in setOf("String", "Int", "List", "Boolean", "Set", "Map", "VirtualFileUrl", "EntitySource",
+                                                    "PersistentEntityId")) {
+      val childAnnotation = type.annotations.byName[Child::class.java.simpleName]
+                            ?: annotations.byName[Child::class.java.simpleName]
+      if (childAnnotation != null) {
+        diagnostics.add(type.classifierRange, "Child reference should always be nullable.")
+        return
+      }
     }
 
     val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields) ?: return
