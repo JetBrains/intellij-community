@@ -12,18 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
-import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 public class RemoveFromIgnoreListAction extends BasicAction {
   private @ActionText String myActionName;
   private final boolean myUseCommonExtension;
-  @NotNull private final IgnoreInfoGetter myInfoGetter;
 
-  public RemoveFromIgnoreListAction(boolean useCommonExtension, @NotNull IgnoreInfoGetter getter) {
+  public RemoveFromIgnoreListAction(boolean useCommonExtension) {
     myUseCommonExtension = useCommonExtension;
-    myInfoGetter = getter;
   }
 
   public void setActionText(@ActionText @NotNull String name) {
@@ -69,7 +67,11 @@ public class RemoveFromIgnoreListAction extends BasicAction {
 
   @Override
   protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
-    SvnPropertyService.doRemoveFromIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
+    FileGroupInfo groupInfo = new FileGroupInfo();
+    for (VirtualFile file : files) {
+      groupInfo.onFileEnabled(file);
+    }
+    SvnPropertyService.doRemoveFromIgnoreProperty(vcs, myUseCommonExtension, files, groupInfo);
   }
 
   @Override

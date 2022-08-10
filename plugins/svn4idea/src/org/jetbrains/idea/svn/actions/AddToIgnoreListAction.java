@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
-import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -20,10 +20,8 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class AddToIgnoreListAction extends BasicAction {
   private @ActionText String myActionName;
   private final boolean myUseCommonExtension;
-  @NotNull private final IgnoreInfoGetter myInfoGetter;
 
-  public AddToIgnoreListAction(@NotNull IgnoreInfoGetter infoGetter, boolean useCommonExtension) {
-    myInfoGetter = infoGetter;
+  public AddToIgnoreListAction(boolean useCommonExtension) {
     myUseCommonExtension = useCommonExtension;
   }
 
@@ -72,7 +70,11 @@ public class AddToIgnoreListAction extends BasicAction {
 
   @Override
   protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
-    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
+    FileGroupInfo groupInfo = new FileGroupInfo();
+    for (VirtualFile file : files) {
+      groupInfo.onFileEnabled(file);
+    }
+    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, files, groupInfo);
   }
 
   @Override
