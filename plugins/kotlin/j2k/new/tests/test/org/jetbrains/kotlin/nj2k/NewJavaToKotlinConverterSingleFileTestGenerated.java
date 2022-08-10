@@ -229,6 +229,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/anonymousBlock/oneStaticAnonBlock.java");
         }
 
+        @TestMetadata("staticBlockWithVariable.java")
+        public void testStaticBlockWithVariable() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/staticBlockWithVariable.java");
+        }
+
         @TestMetadata("staticFieldUsageInInitBlockBeforeDeclaration.java")
         public void testStaticFieldUsageInInitBlockBeforeDeclaration() throws Exception {
             runTest("testData/newJ2k/anonymousBlock/staticFieldUsageInInitBlockBeforeDeclaration.java");
