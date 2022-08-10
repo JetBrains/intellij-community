@@ -109,4 +109,13 @@ public class ThrottledLogger {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return "ThrottledLogger[" +
+           "ignoreRepeatedMessagesInMs: " + ignoreRepeatedMessagesInMs +
+           ", lastLoggedAtMs:" + lastLoggedAtMsHolder.get() +
+           ", wrapped logger:" + logger +
+           '}';
+  }
 }
