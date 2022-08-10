@@ -44,10 +44,10 @@ public class ThrottledLogger {
                     final @Nullable Throwable t) {
     final long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
-    if (lastLoggedAt + ignoreRepeatedMessagesInMs > nowMs) {
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.debug(message, t);
 
-      forwardLastLoggedAt(nowMs, lastLoggedAt);
+      forwardLastLogged(nowMs, lastLoggedAt);
     }
   }
 
@@ -60,10 +60,10 @@ public class ThrottledLogger {
                    final @Nullable Throwable t) {
     final long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
-    if (lastLoggedAt + ignoreRepeatedMessagesInMs > nowMs) {
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.info(message, t);
 
-      forwardLastLoggedAt(nowMs, lastLoggedAt);
+      forwardLastLogged(nowMs, lastLoggedAt);
     }
   }
 
@@ -75,10 +75,10 @@ public class ThrottledLogger {
                    final @Nullable Throwable t) {
     final long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
-    if (lastLoggedAt + ignoreRepeatedMessagesInMs > nowMs) {
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.warn(message, t);
 
-      forwardLastLoggedAt(nowMs, lastLoggedAt);
+      forwardLastLogged(nowMs, lastLoggedAt);
     }
   }
 
@@ -90,18 +90,18 @@ public class ThrottledLogger {
                     final @Nullable Throwable t) {
     final long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
-    if (lastLoggedAt + ignoreRepeatedMessagesInMs > nowMs) {
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.error(message, t);
 
-      forwardLastLoggedAt(nowMs, lastLoggedAt);
+      forwardLastLogged(nowMs, lastLoggedAt);
     }
   }
 
   /**
    * Forward lastLogged timestamp to at least nowMs value, or do nothing if lastLogged is already >=nowMs
    */
-  private void forwardLastLoggedAt(final long nowMs,
-                                   long lastLoggedAt) {
+  private void forwardLastLogged(final long nowMs,
+                                 long lastLoggedAt) {
     while (!lastLoggedAtMsHolder.compareAndSet(lastLoggedAt, nowMs)) {
       lastLoggedAt = lastLoggedAtMsHolder.get();
       if (lastLoggedAt >= nowMs) {
