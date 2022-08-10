@@ -270,8 +270,6 @@ public final class NewMappings implements Disposable {
   }
 
   private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
-    VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
@@ -286,46 +284,20 @@ public final class NewMappings implements Disposable {
           continue;
         }
 
-        AbstractVcs vcs = getMappingsVcs(mapping);
-        String rootPath = mapping.getDirectory();
-
-        ReadAction.run(() -> {
-          VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
-
-          if (vcsRoot != null && vcsRoot.isDirectory()) {
-            if (checkMappedRoot(vcs, vcsRoot)) {
-              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-            }
-            else {
-              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
-            }
-          }
-
-          pointerManager.create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
-        });
+        MappedRoot mappedRoot = findDirectMappingFor(mapping, pointerDisposable);
+        if (mappedRoot != null) mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
       }
 
       for (VcsDirectoryMapping mapping : mappings) {
         if (!mapping.isDefaultMapping()) {
           continue;
         }
-        AbstractVcs vcs = getMappingsVcs(mapping);
-        if (vcs == null) {
-          continue;
+
+        Set<VirtualFile> directMappingDirs = ContainerUtil.map2Set(mappedRoots.values(), it -> it.root);
+        List<MappedRoot> defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
+        for (MappedRoot mappedRoot : defaultMappings) {
+          mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
         }
-
-        Collection<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs,
-                                                                     DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
-                                                                     ContainerUtil.map2Set(mappedRoots.values(), it -> it.root));
-
-        ReadAction.run(() -> {
-          for (VirtualFile vcsRoot : defaultRoots) {
-            if (vcsRoot != null && vcsRoot.isDirectory()) {
-              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-              pointerManager.create(vcsRoot, pointerDisposable, myFilePointerListener);
-            }
-          }
-        });
       }
 
       List<MappedRoot> result = Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR));
@@ -343,6 +315,54 @@ public final class NewMappings implements Disposable {
       ExceptionUtil.rethrow(e);
       return null;
     }
+  }
+
+  @Nullable
+  private MappedRoot findDirectMappingFor(@NotNull VcsDirectoryMapping mapping,
+                                          @NotNull Disposable pointerDisposable) {
+    AbstractVcs vcs = getMappingsVcs(mapping);
+    String rootPath = mapping.getDirectory();
+
+    return ReadAction.compute(() -> {
+      VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
+
+      VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
+      if (vcsRoot == null || !vcsRoot.isDirectory()) {
+        return null;
+      }
+
+      if (checkMappedRoot(vcs, vcsRoot)) {
+        return new MappedRoot(vcs, mapping, vcsRoot);
+      }
+      else {
+        return new MappedRoot(null, mapping, vcsRoot);
+      }
+    });
+  }
+
+  @NotNull
+  private List<MappedRoot> findDefaultMappingsFor(@NotNull VcsDirectoryMapping mapping,
+                                                  @NotNull Set<VirtualFile> directMappingDirs,
+                                                  @NotNull Disposable pointerDisposable) {
+    AbstractVcs vcs = getMappingsVcs(mapping);
+    if (vcs == null) {
+      return Collections.emptyList();
+    }
+
+    Collection<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs,
+                                                                 DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
+                                                                 directMappingDirs);
+
+    List<MappedRoot> result = new ArrayList<>();
+    ReadAction.run(() -> {
+      for (VirtualFile vcsRoot : defaultRoots) {
+        if (vcsRoot != null && vcsRoot.isDirectory()) {
+          VirtualFilePointerManager.getInstance().create(vcsRoot, pointerDisposable, myFilePointerListener);
+          result.add(new MappedRoot(vcs, mapping, vcsRoot));
+        }
+      }
+    });
+    return result;
   }
 
   private @Nullable AbstractVcs getMappingsVcs(@NotNull VcsDirectoryMapping mapping) {
