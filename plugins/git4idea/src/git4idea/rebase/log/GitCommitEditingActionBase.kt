@@ -2,6 +2,7 @@
 package git4idea.rebase.log
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -122,6 +123,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     selection: VcsLogCommitSelection,
     logData: VcsLogData
   ): CommitEditingDataCreationResult<T>
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
   }
