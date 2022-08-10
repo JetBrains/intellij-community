@@ -158,7 +158,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   /**
    * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
-   * This normalizations moves moment of suspension start from declared to after all other events between it and suspension end:
+   * These normalizations move moment of suspension start from declared to after all other events between it and suspension end:
    * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
    *
    * Suspended and unsuspended events appear only on pairs with none in between.
@@ -171,8 +171,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
         when (event) {
           is Event.SuspensionEvent -> {
             if (event.started) {
-              log.assertTrue(suspensionStartTime == null, "Two suspension starts, no stops. Events $events")
-              suspensionStartTime = event.instant
+              if (suspensionStartTime == null) {
+                suspensionStartTime = event.instant
+              }
             }
             else {
               //speculate suspension start as time of last meaningful event, if it ever happened
