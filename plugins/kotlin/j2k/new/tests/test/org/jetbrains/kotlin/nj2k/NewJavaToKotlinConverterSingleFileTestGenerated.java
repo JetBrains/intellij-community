@@ -1484,6 +1484,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/Comments.java");
         }
 
+        @TestMetadata("CommentsInsideAccessors.java")
+        public void testCommentsInsideAccessors() throws Exception {
+            runTest("testData/newJ2k/detectProperties/CommentsInsideAccessors.java");
+        }
+
         @TestMetadata("CyclicInheritance.java")
         public void testCyclicInheritance() throws Exception {
             runTest("testData/newJ2k/detectProperties/CyclicInheritance.java");

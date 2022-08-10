@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -23,8 +24,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -191,6 +191,9 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
 
         val ktGetter = factory.createGetter(body, getter.modifiersText)
         ktGetter.filterModifiers()
+        if (getter is RealGetter) {
+            savePossibleLeadingAndTrailingComments(getter, ktGetter, factory)
+        }
         property.add(factory.createNewLine(1))
         return property.add(ktGetter).cast<KtPropertyAccessor>().also {
             if (getter is RealGetter) {
@@ -252,6 +255,8 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         ktSetter.filterModifiers()
         val propertyName = property.name
         if (setter is RealSetter) {
+            savePossibleLeadingAndTrailingComments(setter, ktSetter, factory)
+
             setter.function.forAllUsages { usage ->
                 val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
                 val qualifier = callExpression.getQualifiedExpressionForSelector()
@@ -266,6 +271,21 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             }
         }
         return ktSetter
+    }
+
+    private fun savePossibleLeadingAndTrailingComments(
+        accessor: RealAccessor,
+        ktAccessor: KtPropertyAccessor,
+        factory: KtPsiFactory
+    ) {
+        if (accessor.function.firstChild is PsiComment) {
+            ktAccessor.addBefore(factory.createWhiteSpace(), ktAccessor.firstChild)
+            ktAccessor.addBefore(accessor.function.firstChild, ktAccessor.firstChild)
+        }
+        if (accessor.function.lastChild is PsiComment) {
+            ktAccessor.add(factory.createWhiteSpace())
+            ktAccessor.add(accessor.function.lastChild)
+        }
     }
 
     private fun KtPropertyAccessor.filterModifiers() {
@@ -655,14 +675,18 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 if (getter.function.isAbstract()) {
                     ktProperty.addModifier(KtTokens.ABSTRACT_KEYWORD)
                 }
-                val commentSaver = CommentSaver(getter.function)
+                if (ktGetter.isRedundantGetter()) {
+                    val commentSaver = CommentSaver(getter.function)
+                    commentSaver.restore(ktProperty)
+                }
                 getter.function.delete()
-                commentSaver.restore(ktProperty)
             }
             if (setter is RealSetter) {
-                val commentSaver = CommentSaver(setter.function)
+                if (ktSetter?.isRedundantSetter() == true) {
+                    val commentSaver = CommentSaver(setter.function)
+                    commentSaver.restore(ktProperty)
+                }
                 setter.function.delete()
-                commentSaver.restore(ktProperty)
             }
 
             // If getter & setter do not have backing fields we should remove initializer
