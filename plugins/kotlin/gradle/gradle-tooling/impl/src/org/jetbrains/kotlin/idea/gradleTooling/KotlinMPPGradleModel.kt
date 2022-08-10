@@ -7,19 +7,6 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.ModelFactory
 import java.io.Serializable
 
-typealias KotlinDependency = ExternalDependency
-
-fun KotlinDependency.deepCopy(cache: MutableMap<Any, Any>): KotlinDependency {
-    val cachedValue = cache[this] as? KotlinDependency
-    return if (cachedValue != null) {
-        cachedValue
-    } else {
-        val result = ModelFactory.createCopy(this)
-        cache[this] = result
-        result
-    }
-}
-
 interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val dependencyMap: Map<KotlinDependencyId, KotlinDependency>
     val targets: Collection<KotlinTarget>
