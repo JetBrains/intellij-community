@@ -53,6 +53,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -344,6 +345,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         wrapperPanel.repaint();
       }
     }
+  }
+
+  public void rebuildAndSelectLastDirectoryOrTail(boolean showPopup) {
+    rebuildAndSelectItem((list) -> {
+      if (UISettings.getInstance().getShowMembersInNavigationBar()) {
+        int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));
+        if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
+      }
+      return list.size() - 1;
+    }, showPopup);
   }
 
   public void rebuildAndSelectItem(final Function<? super List<NavBarItem>, Integer> indexToSelectCallback, boolean showPopup) {
@@ -993,7 +1004,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         });
       }
 
-      rebuildAndSelectTail(true);
+      rebuildAndSelectLastDirectoryOrTail(true);
     });
   }
 
