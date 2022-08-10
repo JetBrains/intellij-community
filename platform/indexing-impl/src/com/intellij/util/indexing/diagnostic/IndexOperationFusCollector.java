@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.IndexDebugProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.Locale;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Collects and reports performance data (timings mostly) about index usage (lookup). Right now there 'all keys'
@@ -43,6 +44,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class IndexOperationFusCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(IndexOperationFusCollector.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
 
   /**
    * If true -> throw exception if tracing methods are called in incorrect order (e.g. .finish() before start()).
@@ -248,7 +250,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
           throw new AssertionError(errorMessage);
         }
         else {
-          LOG.warn(errorMessage);
+          THROTTLED_LOG.warn(errorMessage);
         }
       }
     }
@@ -260,7 +262,7 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
           throw new AssertionError(errorMessage);
         }
         else {
-          LOG.warn(errorMessage);
+          THROTTLED_LOG.warn(errorMessage);
         }
       }
 
