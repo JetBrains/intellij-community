@@ -84,5 +84,15 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ml.intellij.completion.engine" type="repository">
+        <properties include-transitive-deps="false" maven-id="ml.intellij:completion-engine:0.0.17" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ml/intellij/completion-engine/0.0.17/completion-engine-0.0.17.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
