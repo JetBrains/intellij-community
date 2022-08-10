@@ -23,7 +23,7 @@ interface UastLanguagePlugin {
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensionPointName.extensionList.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = UastFacade.findPlugin(language)
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
