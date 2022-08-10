@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
@@ -156,7 +157,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
     // editing merge commit or root commit is not allowed
     commitList.forEach { commit ->
-      if (commit.isRootOrMerge()) {
+      if (commit !is LoadingDetails && commit.isRootOrMerge()) {
         e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
         return
       }
