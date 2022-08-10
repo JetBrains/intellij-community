@@ -214,6 +214,12 @@ public final class NewMappings implements Disposable {
     List<VcsDirectoryMapping> mappings = myMappings;
     Mappings newMappedRoots = collectMappedRoots(mappings);
 
+    setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
+  }
+
+  private void setNewMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
+                                 @NotNull Mappings newMappedRoots,
+                                 boolean fireMappingsChangedEvent) {
     boolean mappedRootsChanged;
     synchronized (myUpdateLock) {
       if (myMappings != mappings) {
