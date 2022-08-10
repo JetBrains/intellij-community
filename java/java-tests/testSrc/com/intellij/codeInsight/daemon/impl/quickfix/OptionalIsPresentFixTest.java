@@ -8,12 +8,11 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-
-public class OptionalIsPresentInspectionTest extends LightQuickFixParameterizedTestCase {
+public class OptionalIsPresentFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
   }
 
   @Override
