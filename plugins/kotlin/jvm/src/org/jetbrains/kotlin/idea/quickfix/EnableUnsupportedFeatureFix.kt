@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.projectConfiguration.checkUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 
 sealed class EnableUnsupportedFeatureFix(
@@ -59,13 +60,15 @@ sealed class EnableUnsupportedFeatureFix(
             val fileIndex = ModuleRootManager.getInstance(module).fileIndex
             val forTests = file.originalFile.virtualFile?.let { fileIndex.getKotlinSourceRootType(it) } == TestSourceKotlinRootType
 
-            findApplicableConfigurator(module).updateLanguageVersion(
-                module,
-                if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
-                targetApiLevel,
-                feature.sinceApiVersion,
-                forTests
-            )
+            runWriteAction {
+                findApplicableConfigurator(module).updateLanguageVersion(
+                    module,
+                    if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
+                    targetApiLevel,
+                    feature.sinceApiVersion,
+                    forTests
+                )
+            }
         }
     }
 
