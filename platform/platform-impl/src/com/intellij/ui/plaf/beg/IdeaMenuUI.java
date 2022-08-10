@@ -301,13 +301,13 @@ public class IdeaMenuUI extends BasicMenuUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
+    acceleratorRect.x = viewRect.x + viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
 
     if (useCheckAndArrow()){
-      arrowIconRect.x += viewRect.width - arrowIconRect.width;
+      arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
       arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
         checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;

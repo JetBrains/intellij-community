@@ -973,6 +973,11 @@
       "description": "Insets around separator label (experimental UI only)"
     },
     {
+      "key": "PopupMenu.Selection.innerInsets",
+      "description": "Inner insets in selection line",
+      "since": "2022.3"
+    },
+    {
       "key": "ProgressBar.failedColor",
       "description": "Use the \"Test Progress Indicators\" action in internal mode to preview progress bars"
     },

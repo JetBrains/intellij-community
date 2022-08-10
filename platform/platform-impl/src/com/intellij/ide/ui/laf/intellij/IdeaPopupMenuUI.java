@@ -42,7 +42,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundSelectionEnabled(Component c) {
-    return isPartOfPopupMenu(c) && ((Registry.is("popup.menu.roundSelection.enabled", true) && ExperimentalUI.isNewUI()) || isRoundBorder());
+    return isPartOfPopupMenu(c) && (ExperimentalUI.isNewUI() || isRoundBorder());
   }
 
   public static boolean isPartOfPopupMenu(Component c) {

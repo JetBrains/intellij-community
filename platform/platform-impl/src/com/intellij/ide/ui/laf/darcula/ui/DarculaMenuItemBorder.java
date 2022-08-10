@@ -17,8 +17,8 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
@@ -28,17 +28,18 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaMenuItemBorder implements Border, UIResource {
-  private static final JBValue LEFT_BORDER = new JBValue.UIInteger("PopupMenu.leftBorderWith", 2);
-  private static final JBValue RIGHT_BORDER = new JBValue.UIInteger("PopupMenu.rightBorderWith", 2);
+
+  private static JBInsets popupMenuInnerInsets() {
+    return JBUI.insets("PopupMenu.Selection.innerInsets", ExperimentalUI.isNewUI() ? JBUI.insets(4, 10) :
+                                                          JBUI.insets(2, 10));
+  }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) { }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    int top = ExperimentalUI.isNewUI() ? 4 : 2;
-    return (IdeaPopupMenuUI.isPartOfPopupMenu(c)
-            ? JBUI.insets(top, LEFT_BORDER.get(), top, RIGHT_BORDER.get()) : JBUI.insets(2)).asUIResource();
+    return (IdeaPopupMenuUI.isPartOfPopupMenu(c) ? popupMenuInnerInsets() : JBUI.insets(2)).asUIResource();
   }
 
   @Override

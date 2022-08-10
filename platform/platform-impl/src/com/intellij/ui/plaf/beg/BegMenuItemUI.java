@@ -16,10 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,10 +48,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
   private int myMaxGutterIconWidth2;
-  private int a;
   private static Rectangle i = new Rectangle();
   private int k;
-  private int e;
   private static final Rectangle c = new Rectangle();
   private static final Rectangle h = new Rectangle();
   private static final Rectangle l = new Rectangle();
@@ -122,10 +117,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     Insets insets = comp.getInsets();
     initBounds();
     f.setBounds(0, 0, j1, k1);
-    f.x += insets.left;
-    f.y += insets.top;
-    f.width -= insets.right + f.x;
-    f.height -= insets.bottom + f.y;
+    JBInsets.removeFrom(f, insets);
     Font font = g.getFont();
     Font font1 = comp.getFont();
     g.setFont(font1);
@@ -378,19 +370,17 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
+    acceleratorRect.x = viewRect.x + viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
 
     if (useCheckAndArrow()){
-      arrowIconRect.x += viewRect.width - arrowIconRect.width;
+      arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
       arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
         checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
-        a = viewRect.x;
-        e = (viewRect.y + labelRect.height / 2) - myMaxGutterIconWidth / 2;
         k = viewRect.x + myMaxGutterIconWidth + 2;
       }
       else{
@@ -493,7 +483,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   /** Copied from BasicMenuItemUI */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean isInternalFrameSystemMenu(){
     String actionCommand=menuItem.getActionCommand();
     if(
