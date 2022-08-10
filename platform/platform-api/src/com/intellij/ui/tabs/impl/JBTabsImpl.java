@@ -1452,9 +1452,6 @@ public class JBTabsImpl extends JComponent
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     TabInfo newInfo = getSelectedInfo();
-    if (myRequestFocusOnLastFocusedComponent && newInfo != null) {
-      newInfo.setLastFocusOwner(null);
-    }
 
     TabLabel label = myInfo2Label.get(info);
     if (label != null) {
@@ -1507,7 +1504,11 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   protected JComponent getFocusOwnerToStore() {
-    return getFocusOwner();
+    JComponent owner = getFocusOwner();
+    if (owner == null) return null;
+    JBTabsImpl tabs = ComponentUtil.getParentOfType(JBTabsImpl.class, owner.getParent());
+    if (tabs != this) return null;
+    return owner;
   }
 
   private void fireBeforeSelectionChanged(@Nullable TabInfo oldInfo, TabInfo newInfo) {
