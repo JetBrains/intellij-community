@@ -80,7 +80,9 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
 
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     for (RootsChangeRescanningInfo change : changes) {
-      if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED) continue;
+      if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
+        continue;
+      }
       if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
         builders.addAll(getBuildersOnWorkspaceChange(project,
                                                      ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
@@ -100,13 +102,13 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
 
       if (!mergedIterators.isEmpty()) {
-        List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
+        List<String> debugNames = ContainerUtil.map(mergedIterators, IndexableFilesIterator::getDebugName);
         LOG.debug("Accumulated iterators: " + debugNames);
         int maxNamesToLog = 10;
         String reasonMessage = "changes in: " + debugNames
           .stream()
           .limit(maxNamesToLog)
-          .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
+          .map(StringUtil::wrapWithDoubleQuote).collect(Collectors.joining(", "));
         if (debugNames.size() > maxNamesToLog) {
           reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
         }
