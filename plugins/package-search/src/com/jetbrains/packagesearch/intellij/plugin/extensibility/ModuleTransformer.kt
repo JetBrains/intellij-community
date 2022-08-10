@@ -37,7 +37,7 @@ interface ModuleTransformer {
 
     companion object {
 
-        private val extensionPointName: ExtensionPointName<AsyncModuleTransformer> =
+        private val extensionPointName: ExtensionPointName<ModuleTransformer> =
             ExtensionPointName.create("com.intellij.packagesearch.moduleTransformer")
 
         internal fun extensions(areaInstance: AreaInstance) =
