@@ -155,13 +155,6 @@ object CommandLineProcessor {
     val scheme = uri.substring(0, separatorStart)
     val query = uri.substring(separatorStart + URLUtil.SCHEME_SEPARATOR.length)
 
-    if (internal) {
-      processInternalProtocol(query)
-    }
-    else {
-      processProtocol(scheme, query)
-    }
-
     val cliResult = try {
       if (internal) processInternalProtocol(query) else processProtocol(scheme, query)
     }
