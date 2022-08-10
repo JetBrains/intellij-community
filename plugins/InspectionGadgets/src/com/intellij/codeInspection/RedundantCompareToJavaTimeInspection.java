@@ -97,29 +97,12 @@ public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalI
 
     @NotNull
     private String getMethodName() {
-      String method;
-      switch (myRelationType) {
-        case EQ:
-        case NE:
-          if (myArgumentType.equals(JAVA_TIME_LOCAL_TIME)) {
-            method = "equals";
-          }
-          else {
-            method = "isEqual";
-          }
-          break;
-        case GT:
-        case LE:
-          method = "isAfter";
-          break;
-        case LT:
-        case GE:
-          method = "isBefore";
-          break;
-        default:
-          throw new UnsupportedOperationException(myRelationType.toString());
-      }
-      return method;
+      return switch (myRelationType) {
+        case EQ, NE -> myArgumentType.equals(JAVA_TIME_LOCAL_TIME) ? "equals" : "isEqual";
+        case GT, LE -> "isAfter";
+        case LT, GE -> "isBefore";
+        default -> throw new UnsupportedOperationException(myRelationType.toString());
+      };
     }
 
     @Override
@@ -132,9 +115,7 @@ public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalI
       }
       PsiExpression second = call.getArgumentList().getExpressions()[0];
       CommentTracker ct = new CommentTracker();
-      String text = ct.text(first) +
-                    "." + getMethodName() + "(" +
-                    ct.text(second) + ")";
+      String text = ct.text(first) + "." + getMethodName() + "(" + ct.text(second) + ")";
 
       if (myRelationType == RelationType.NE || myRelationType == RelationType.LE || myRelationType == RelationType.GE) {
         text = "!" + text;

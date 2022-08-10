@@ -1,18 +1,4 @@
-/*
- * Copyright 2009-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -37,22 +23,14 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    switch ((WarningType)infos[0]) {
-      case MODULE:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.module.invalid.problem.descriptor");
-      case CLASS:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.class.invalid.problem.descriptor");
-      case FIELD:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.field.invalid.problem.descriptor");
-      case CONSTRUCTOR:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.constructor.invalid.problem.descriptor");
-      case NO_SUPER:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.constructor.no.super.problem.descriptor");
-      case EMPTY:
-        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.problem.descriptor");
-      default:
-        throw new AssertionError();
-    }
+    return switch ((WarningType)infos[0]) {
+      case MODULE -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.module.invalid.problem.descriptor");
+      case CLASS -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.class.invalid.problem.descriptor");
+      case FIELD -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.field.invalid.problem.descriptor");
+      case CONSTRUCTOR -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.constructor.invalid.problem.descriptor");
+      case NO_SUPER -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.constructor.no.super.problem.descriptor");
+      case EMPTY -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.problem.descriptor");
+    };
   }
 
   enum WarningType {
@@ -81,8 +59,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
       }
       final PsiDocTag docTag = (PsiDocTag)element;
       final PsiElement parent = docTag.getParent();
-      if (parent instanceof PsiDocComment) {
-        final PsiDocComment docComment = (PsiDocComment)parent;
+      if (parent instanceof PsiDocComment docComment) {
         final PsiDocTag[] docTags = docComment.getTags();
         if (docTags.length > 0) {
           element.delete();
@@ -133,8 +110,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
         registerError(tag, WarningType.CLASS);
         return;
       }
-      else if (owner instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)owner;
+      else if (owner instanceof PsiMethod method) {
         if (method.isConstructor()) {
           registerError(tag, WarningType.CONSTRUCTOR);
           return;
@@ -148,8 +124,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
         return;
       }
       final PsiElement parent = tag.getParent();
-      if (parent instanceof PsiDocTag) {
-        final PsiDocTag docTag = (PsiDocTag)parent;
+      if (parent instanceof PsiDocTag docTag) {
         @NonNls final String docTagName = docTag.getName();
         if ((docTagName.equals("throws") || docTagName.equals("exception")) &&
             !isCheckExceptionAndPresentInThrowsList((PsiMethod)owner, docTag)) {
