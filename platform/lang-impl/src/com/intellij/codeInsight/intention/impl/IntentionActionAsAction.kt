@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -34,6 +35,8 @@ class IntentionActionAsAction(intention: IntentionAction)
 
     e.presentation.isEnabled = findIntention()?.isAvailable(project, editor, file) == true
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private fun findIntention(): IntentionAction? = IntentionShortcutManager.getInstance().findIntention(actionId)
 }

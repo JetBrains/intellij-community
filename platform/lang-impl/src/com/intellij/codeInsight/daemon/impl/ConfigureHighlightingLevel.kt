@@ -62,6 +62,8 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
     return level == configuredLevel
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     if (!state) return
     val file = provider.getPsi(language) ?: return

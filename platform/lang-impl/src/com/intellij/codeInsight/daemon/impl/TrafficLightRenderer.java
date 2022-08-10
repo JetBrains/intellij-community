@@ -15,10 +15,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -531,6 +528,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         PsiFile psiFile = getPsiFile();
         return psiFile != null && myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {

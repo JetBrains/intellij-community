@@ -594,6 +594,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
         public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       }).addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -604,6 +609,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
         @Override
         public boolean isEnabled() {
           return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       });
     return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
@@ -653,6 +662,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         renameGroup();
       }
@@ -694,6 +708,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
           });
         }
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
 
     final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.change.context")) {
@@ -703,6 +721,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
         boolean enabled = !getSelectedTemplates().isEmpty();
         e.getPresentation().setEnabled(enabled);
         super.update(e);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -741,6 +764,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
         e.getPresentation().setEnabledAndVisible(enabled);
         super.update(e);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
