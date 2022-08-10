@@ -20,7 +20,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
-internal fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
+@ApiStatus.Internal // for Fleet
+fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
   val targets = SmartList<DocumentationTarget>()
   for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {
     targets.addAll(ext.documentationTargets(file, offset))
@@ -87,6 +88,18 @@ internal sealed class InternalResolveLinkResult<out X> {
   object InvalidTarget : InternalResolveLinkResult<Nothing>()
   object CannotResolve : InternalResolveLinkResult<Nothing>()
   class Value<X>(val value: X) : InternalResolveLinkResult<X>()
+}
+
+/**
+ * @return `null` if [contextTarget] was invalidated, or [url] cannot be resolved
+ */
+@ApiStatus.Internal // for Fleet
+suspend fun resolveLinkToTarget(contextTarget: Pointer<out DocumentationTarget>, url: String): Pointer<out DocumentationTarget>? {
+  return when (val resolveLinkResult = resolveLink(contextTarget::dereference, url, DocumentationTarget::createPointer)) {
+    InternalResolveLinkResult.CannotResolve -> null
+    InternalResolveLinkResult.InvalidTarget -> null
+    is InternalResolveLinkResult.Value -> resolveLinkResult.value
+  }
 }
 
 internal suspend fun resolveLink(
