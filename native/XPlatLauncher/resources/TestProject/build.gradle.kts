@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("me.filippov.gradle.jvm.wrapper") version "0.11.0"
+    id("me.filippov.gradle.jvm.wrapper")
 }
 
 group = "com.intellij.idea"
@@ -17,13 +17,15 @@ tasks.withType<Jar> {
     archiveFileName.set("app.jar")
 }
 
-// TODO: gradle.properties
+val jbrsdkVersion: String by project
+val jbrsdkBuildNumber: String by project
+
 jvmWrapper {
     winJvmInstallDir = "gradle-jvm"
     unixJvmInstallDir = "gradle-jvm"
-    linuxAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-linux-aarch64-b469.37.tar.gz"
-    linuxX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-linux-x64-b469.37.tar.gz"
-    macAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-aarch64-b469.37.tar.gz"
-    macX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-osx-x64-b469.37.tar.gz"
-    windowsX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-windows-x64-b469.37.tar.gz"
+    linuxAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-linux-aarch64-b$jbrsdkBuildNumber.tar.gz"
+    linuxX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-linux-x64-b$jbrsdkBuildNumber.tar.gz"
+    macAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-osx-aarch64-b$jbrsdkBuildNumber.tar.gz"
+    macX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-osx-x64-b$jbrsdkBuildNumber.tar.gz"
+    windowsX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-windows-x64-b$jbrsdkBuildNumber.tar.gz"
 }
