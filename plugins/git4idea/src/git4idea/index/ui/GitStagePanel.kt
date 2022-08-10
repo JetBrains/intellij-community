@@ -246,7 +246,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     installSelectionHandler(tree, false)
     installNextDiffActionOn(this@GitStagePanel)
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+    tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun dispose() {
