@@ -4,7 +4,8 @@ package org.jetbrains.plugins.github.util
 import com.intellij.collaboration.async.CancellingScopedDisposable
 import com.intellij.collaboration.async.ScopedDisposable
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.collaboration.hosting.GitHostingUrlUtil
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
@@ -23,7 +24,6 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 
 @Service
@@ -38,7 +38,9 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
     get() = knownRepositoriesState.value
 
   init {
-    val accountsServersFlow = createAccountsServersFlow().also {
+    val accountsServersFlow = accountManager.createAccountsFlow(this).mapState(scope) { accounts ->
+      accounts.map { it.server }.toSet()
+    }.also {
       checkServerVersions(it)
     }
 
@@ -58,17 +60,6 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
     val knownServersFlow = combineState(scope, accountsServersFlow, discoveredServersState, ::collectServers)
 
     knownRepositoriesState = combineState(scope, knownServersFlow, remotesFlow, ::collectMappings)
-  }
-
-  private fun createAccountsServersFlow(): StateFlow<Set<GithubServerPath>> {
-    val flow = MutableStateFlow<Set<GithubServerPath>>(emptySet())
-    accountManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        flow.value = new.map { it.server }.toSet()
-      }
-    })
-    flow.value = accountManager.accounts.map { it.server }.toSet()
-    return flow
   }
 
   private fun createRemotesFlow(): StateFlow<Set<GitRemoteUrlCoordinates>> {

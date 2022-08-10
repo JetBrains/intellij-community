@@ -72,20 +72,17 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
   init {
-    val accountsFlow = MutableSharedFlow<Set<GithubAccount>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val accountsState = authManager.createAccountsFlow(tabDisposable)
+    val credChangeFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     authManager.addListener(tabDisposable, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        accountsFlow.tryEmit(new.toSet())
-      }
-
       override fun onAccountCredentialsChanged(account: GithubAccount) {
-        accountsFlow.tryEmit(authManager.getAccounts())
+        credChangeFlow.tryEmit(Unit)
       }
     })
-    accountsFlow.tryEmit(authManager.getAccounts())
+    credChangeFlow.tryEmit(Unit)
 
     scope.launch {
-      combine(repositoryManager.knownRepositoriesState, accountsFlow, resetRequestFlow) { repos, accounts, _ ->
+      combine(repositoryManager.knownRepositoriesState, accountsState, credChangeFlow,  resetRequestFlow) { repos, accounts, _, _ ->
         Updater(repos, accounts)
       }.collectLatest {
         it.update()
