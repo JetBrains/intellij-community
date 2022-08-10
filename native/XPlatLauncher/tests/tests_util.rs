@@ -70,7 +70,7 @@ pub fn layout_into_test_dir(
     // │   └── idea64.vmoptions
     // ├── lib/
     // │   └── app.jar
-    // ├── jbr/  TODO: <-- can be symlinked to java we've already downloaded for now
+    // ├── jbr/
     // └── product-info.json
     create_dir("lib").expect("Failed to create lib dir");
     create_dir("bin").expect("Failed to create bin dir");
@@ -85,9 +85,8 @@ pub fn layout_into_test_dir(
     assert!(launcher.exists());
 
     fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
-
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    copy_dir::copy_dir(jbr_absolute_path, "jbr/").expect("Failed to copy jbr");
+    std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
     File::create("bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
 }
 
@@ -108,7 +107,7 @@ pub fn layout_into_test_dir(
     //     │   └── product-info.json
     //     ├── lib/
     //     │   └── app.jar
-    //     └── jbr/  <-- can be symlinked to java we've already downloaded for now
+    //     └── jbr/
     create_dir("Contents").expect("Failed to create contents dir");
     create_dir("Contents/Resources").expect("Failed to create resources dir");
     create_dir("Contents/lib").expect("Failed to create lib dir");
@@ -128,7 +127,7 @@ pub fn layout_into_test_dir(
 
     fs::copy(launcher, "Contents/bin/xplat_launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
-    copy_dir::copy_dir(jbr_absolute_path, "Contents/jbr/").expect("Failed to copy jbr");
+    std::os::unix::fs::symlink(jbr_absolute_path, "Contents/jbr").expect("Failed to create symlink for jbr");
     File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
 }
 
@@ -146,7 +145,7 @@ pub fn layout_into_test_dir(
     // │   └── idea64.exe.vmoptions
     // ├── lib/
     // │   └── app.jar
-    // ├── jbr/  TODO: <-- can be symlinked to java we've already downloaded for now
+    // ├── jbr/
     // └── product-info.json
 
     create_dir("lib").expect("Failed to create lib dir");
@@ -163,6 +162,6 @@ pub fn layout_into_test_dir(
 
     fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    copy_dir::copy_dir(jbr_absolute_path, "jbr/").expect("Failed to copy jbr");
+    std::os::windows::fs::symlink_dir(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
     File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
 }
