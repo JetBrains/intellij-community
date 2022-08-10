@@ -32,6 +32,6 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
-    return com.intellij.lang.documentation.impl.documentationTargets(editor, file, offset)
+    return com.intellij.lang.documentation.impl.documentationTargets(file, offset)
   }
 }
