@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -241,7 +242,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             // force calculations
             updatedModules.forEach(::get)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
     }
 
@@ -275,7 +276,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             // force calculations
             project.ideaModules().forEach(::calculateLibrariesForModule)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         private fun calculateLibrariesForModule(module: Module) {
@@ -307,13 +308,13 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         override fun jdkAdded(jdk: Sdk) {
             get(jdk)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun jdkRemoved(jdk: Sdk) {
             invalidateKeys(listOf(jdk))
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun jdkNameChanged(jdk: Sdk, previousName: String) {
@@ -321,7 +322,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             // force calculation
             get(jdk)
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
@@ -332,7 +333,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             // force calculation
             sdks.forEach(::get)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -356,8 +357,13 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             updatedModuleSdks.forEach(::get)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
+    }
+
+    private fun incModificationCount() {
+        modificationTracker.incModificationCount()
+        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
     }
 
     override fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo> =
