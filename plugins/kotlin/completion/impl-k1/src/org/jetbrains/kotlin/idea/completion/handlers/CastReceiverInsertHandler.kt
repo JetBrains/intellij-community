@@ -8,7 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 
@@ -20,7 +20,7 @@ object CastReceiverInsertHandler {
         if (qualifiedExpression != null) {
             val receiver = qualifiedExpression.receiverExpression
 
-            val descriptor = (item.`object` as? DeclarationLookupObject)?.descriptor as CallableDescriptor
+            val descriptor = (item.`object` as? DescriptorBasedDeclarationLookupObject)?.descriptor as CallableDescriptor
             val project = context.project
 
             val thisObj =

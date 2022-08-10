@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.isArtificialImportAliasedDescriptor
 import org.jetbrains.kotlin.idea.completion.shortenReferences
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -28,7 +28,7 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
 
             val file = context.file
             val o = item.`object`
-            if (file is KtFile && o is DeclarationLookupObject) {
+            if (file is KtFile && o is DescriptorBasedDeclarationLookupObject) {
                 val descriptor = o.descriptor as? CallableDescriptor ?: return
                 if (descriptor.extensionReceiverParameter != null || callType == CallType.CALLABLE_REFERENCE) {
                     if (DescriptorUtils.isTopLevelDeclaration(descriptor) && !descriptor.isArtificialImportAliasedDescriptor) {

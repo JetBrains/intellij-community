@@ -7,7 +7,6 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources-en" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources-completion" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src-completion" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

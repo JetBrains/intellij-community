@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.completion.PsiClassLookupObject
 import org.jetbrains.kotlin.idea.completion.isAfterDot
 import org.jetbrains.kotlin.idea.completion.isArtificialImportAliasedDescriptor
 import org.jetbrains.kotlin.idea.completion.shortenReferences
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
@@ -49,7 +49,7 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
                 val startOffset = context.startOffset
                 val document = context.document
 
-                val lookupObject = item.`object` as DeclarationLookupObject
+                val lookupObject = item.`object` as DescriptorBasedDeclarationLookupObject
                 // never need to insert import or use qualified name for import-aliased class
                 val descriptor = lookupObject.descriptor
                 if (descriptor?.isArtificialImportAliasedDescriptor == true) return
@@ -116,7 +116,7 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
         }
     }
 
-    private fun qualifiedName(lookupObject: DeclarationLookupObject): String {
+    private fun qualifiedName(lookupObject: DescriptorBasedDeclarationLookupObject): String {
         return if (lookupObject.descriptor != null) {
             IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(lookupObject.descriptor as ClassifierDescriptor)
         } else {

@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -484,7 +484,7 @@ class BasicCompletionSession(
                         receiverTypes = receiverTypes,
                         standardLookupElementsPostProcessor = { lookupElement ->
                             val lookupDescriptor = lookupElement.`object`
-                                .safeAs<DeclarationLookupObject>()
+                                .safeAs<DescriptorBasedDeclarationLookupObject>()
                                 ?.descriptor as? MemberDescriptor
                                 ?: return@copy lookupElement
 

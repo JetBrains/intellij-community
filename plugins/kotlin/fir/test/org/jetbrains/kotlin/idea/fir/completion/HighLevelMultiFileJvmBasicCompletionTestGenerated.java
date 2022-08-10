@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData-completion/basic/multifile")
+@TestMetadata("../completion/testData/basic/multifile")
 public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractHighLevelMultiFileJvmBasicCompletionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,386 +25,386 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
 
     @TestMetadata("CallableReferenceNotImported")
     public void testCallableReferenceNotImported() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CallableReferenceNotImported/");
+        runTest("../completion/testData/basic/multifile/CallableReferenceNotImported/");
     }
 
     @TestMetadata("CallableReferenceNotImportedExtension")
     public void testCallableReferenceNotImportedExtension() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CallableReferenceNotImportedExtension/");
+        runTest("../completion/testData/basic/multifile/CallableReferenceNotImportedExtension/");
     }
 
     @TestMetadata("CallableReferenceNotImportedExtension2")
     public void testCallableReferenceNotImportedExtension2() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CallableReferenceNotImportedExtension2/");
+        runTest("../completion/testData/basic/multifile/CallableReferenceNotImportedExtension2/");
     }
 
     @TestMetadata("CallablesInExcludedPackage")
     public void testCallablesInExcludedPackage() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CallablesInExcludedPackage/");
+        runTest("../completion/testData/basic/multifile/CallablesInExcludedPackage/");
     }
 
     @TestMetadata("ClassInExcludedPackage")
     public void testClassInExcludedPackage() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ClassInExcludedPackage/");
+        runTest("../completion/testData/basic/multifile/ClassInExcludedPackage/");
     }
 
     @TestMetadata("CompleteFunctionWithNoSpecifiedType")
     public void testCompleteFunctionWithNoSpecifiedType() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CompleteFunctionWithNoSpecifiedType/");
+        runTest("../completion/testData/basic/multifile/CompleteFunctionWithNoSpecifiedType/");
     }
 
     @TestMetadata("CompleteImportedFunction")
     public void testCompleteImportedFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CompleteImportedFunction/");
+        runTest("../completion/testData/basic/multifile/CompleteImportedFunction/");
     }
 
     @TestMetadata("CompletionOnImportedFunction")
     public void testCompletionOnImportedFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/CompletionOnImportedFunction/");
+        runTest("../completion/testData/basic/multifile/CompletionOnImportedFunction/");
     }
 
     @TestMetadata("DoNotCompleteWithConstraints")
     public void testDoNotCompleteWithConstraints() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/DoNotCompleteWithConstraints/");
+        runTest("../completion/testData/basic/multifile/DoNotCompleteWithConstraints/");
     }
 
     @TestMetadata("EnhancementFlexibleTypes")
     public void testEnhancementFlexibleTypes() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/EnhancementFlexibleTypes/");
+        runTest("../completion/testData/basic/multifile/EnhancementFlexibleTypes/");
     }
 
     @TestMetadata("EntriesOfNotImportedEnumFromKotlin")
     public void testEntriesOfNotImportedEnumFromKotlin() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/EntriesOfNotImportedEnumFromKotlin/");
+        runTest("../completion/testData/basic/multifile/EntriesOfNotImportedEnumFromKotlin/");
     }
 
     @TestMetadata("EnumEntry")
     public void testEnumEntry() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/EnumEntry/");
+        runTest("../completion/testData/basic/multifile/EnumEntry/");
     }
 
     @TestMetadata("ExactMatchPreferImported")
     public void testExactMatchPreferImported() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExactMatchPreferImported/");
+        runTest("../completion/testData/basic/multifile/ExactMatchPreferImported/");
     }
 
     @TestMetadata("ExcludedClass")
     public void testExcludedClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExcludedClass/");
+        runTest("../completion/testData/basic/multifile/ExcludedClass/");
     }
 
     @TestMetadata("ExcludedJavaClass")
     public void testExcludedJavaClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExcludedJavaClass/");
+        runTest("../completion/testData/basic/multifile/ExcludedJavaClass/");
     }
 
     @TestMetadata("ExtensionFunction")
     public void testExtensionFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExtensionFunction/");
+        runTest("../completion/testData/basic/multifile/ExtensionFunction/");
     }
 
     @TestMetadata("ExtensionFunctionOnImportedFunction")
     public void testExtensionFunctionOnImportedFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExtensionFunctionOnImportedFunction/");
+        runTest("../completion/testData/basic/multifile/ExtensionFunctionOnImportedFunction/");
     }
 
     @TestMetadata("ExtensionOnNullable")
     public void testExtensionOnNullable() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExtensionOnNullable/");
+        runTest("../completion/testData/basic/multifile/ExtensionOnNullable/");
     }
 
     @TestMetadata("ExtensionsAndGetPrefix")
     public void testExtensionsAndGetPrefix() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExtensionsAndGetPrefix/");
+        runTest("../completion/testData/basic/multifile/ExtensionsAndGetPrefix/");
     }
 
     @TestMetadata("ExtensionsForSmartCast")
     public void testExtensionsForSmartCast() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ExtensionsForSmartCast/");
+        runTest("../completion/testData/basic/multifile/ExtensionsForSmartCast/");
     }
 
     @TestMetadata("FileRefInStringLiteral")
     public void testFileRefInStringLiteral() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/FileRefInStringLiteral/");
+        runTest("../completion/testData/basic/multifile/FileRefInStringLiteral/");
     }
 
     @TestMetadata("FileRefInStringLiteralNoPrefix")
     public void testFileRefInStringLiteralNoPrefix() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/FileRefInStringLiteralNoPrefix/");
+        runTest("../completion/testData/basic/multifile/FileRefInStringLiteralNoPrefix/");
     }
 
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
     public void testGroovyClassNameCompletionFromDefaultPackage() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");
+        runTest("../completion/testData/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");
     }
 
     @TestMetadata("GroovyClassNameCompletionFromNonDefaultPackage")
     public void testGroovyClassNameCompletionFromNonDefaultPackage() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/GroovyClassNameCompletionFromNonDefaultPackage/");
+        runTest("../completion/testData/basic/multifile/GroovyClassNameCompletionFromNonDefaultPackage/");
     }
 
     @TestMetadata("HiddenDeclarations")
     public void testHiddenDeclarations() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/HiddenDeclarations/");
+        runTest("../completion/testData/basic/multifile/HiddenDeclarations/");
     }
 
     @TestMetadata("InImport")
     public void testInImport() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/InImport/");
+        runTest("../completion/testData/basic/multifile/InImport/");
     }
 
     @TestMetadata("InImportedFunctionLiteralParameter")
     public void testInImportedFunctionLiteralParameter() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/InImportedFunctionLiteralParameter/");
+        runTest("../completion/testData/basic/multifile/InImportedFunctionLiteralParameter/");
     }
 
     @TestMetadata("IncorrectGetters")
     public void testIncorrectGetters() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/IncorrectGetters/");
+        runTest("../completion/testData/basic/multifile/IncorrectGetters/");
     }
 
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/JavaCallableReference/");
+        runTest("../completion/testData/basic/multifile/JavaCallableReference/");
     }
 
     @TestMetadata("JavaInnerClasses")
     public void testJavaInnerClasses() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/JavaInnerClasses/");
+        runTest("../completion/testData/basic/multifile/JavaInnerClasses/");
     }
 
     @TestMetadata("KT12124")
     public void testKT12124() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/KT12124/");
+        runTest("../completion/testData/basic/multifile/KT12124/");
     }
 
     @TestMetadata("KT9835")
     public void testKT9835() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/KT9835/");
+        runTest("../completion/testData/basic/multifile/KT9835/");
     }
 
     @TestMetadata("MoreSpecificExtensionGeneric")
     public void testMoreSpecificExtensionGeneric() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/MoreSpecificExtensionGeneric/");
+        runTest("../completion/testData/basic/multifile/MoreSpecificExtensionGeneric/");
     }
 
     @TestMetadata("MoreSpecificExtensionInDifferentPackage")
     public void testMoreSpecificExtensionInDifferentPackage() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/MoreSpecificExtensionInDifferentPackage/");
+        runTest("../completion/testData/basic/multifile/MoreSpecificExtensionInDifferentPackage/");
     }
 
     @TestMetadata("MoreSpecificExtensionIsPrivate")
     public void testMoreSpecificExtensionIsPrivate() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/MoreSpecificExtensionIsPrivate/");
+        runTest("../completion/testData/basic/multifile/MoreSpecificExtensionIsPrivate/");
     }
 
     @TestMetadata("NoAutoInsertionOfNotImported")
     public void testNoAutoInsertionOfNotImported() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NoAutoInsertionOfNotImported/");
+        runTest("../completion/testData/basic/multifile/NoAutoInsertionOfNotImported/");
     }
 
     @TestMetadata("NoExtForOuterFromNested")
     public void testNoExtForOuterFromNested() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NoExtForOuterFromNested/");
+        runTest("../completion/testData/basic/multifile/NoExtForOuterFromNested/");
     }
 
     @TestMetadata("NoExtensionMethodDuplication")
     public void testNoExtensionMethodDuplication() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NoExtensionMethodDuplication/");
+        runTest("../completion/testData/basic/multifile/NoExtensionMethodDuplication/");
     }
 
     @TestMetadata("NoGenericFunDuplication")
     public void testNoGenericFunDuplication() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NoGenericFunDuplication/");
+        runTest("../completion/testData/basic/multifile/NoGenericFunDuplication/");
     }
 
     @TestMetadata("NotImportedClass")
     public void testNotImportedClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedClass/");
+        runTest("../completion/testData/basic/multifile/NotImportedClass/");
     }
 
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
     public void testNotImportedExtensionForImplicitReceiver() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionForImplicitReceiver/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionForImplicitReceiver/");
     }
 
     @TestMetadata("NotImportedExtensionFunction")
     public void testNotImportedExtensionFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionFunction/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionFunction/");
     }
 
     @TestMetadata("NotImportedExtensionFunction2")
     public void testNotImportedExtensionFunction2() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionFunction2/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionFunction2/");
     }
 
     @TestMetadata("NotImportedExtensionFunction3")
     public void testNotImportedExtensionFunction3() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionFunction3/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionFunction3/");
     }
 
     @TestMetadata("NotImportedExtensionFunctionAndAlias")
     public void testNotImportedExtensionFunctionAndAlias() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionFunctionAndAlias/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionFunctionAndAlias/");
     }
 
     @TestMetadata("NotImportedExtensionProperty")
     public void testNotImportedExtensionProperty() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedExtensionProperty/");
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionProperty/");
     }
 
     @TestMetadata("NotImportedFunction")
     public void testNotImportedFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedFunction/");
+        runTest("../completion/testData/basic/multifile/NotImportedFunction/");
     }
 
     @TestMetadata("NotImportedInfixExtension")
     public void testNotImportedInfixExtension() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedInfixExtension/");
+        runTest("../completion/testData/basic/multifile/NotImportedInfixExtension/");
     }
 
     @TestMetadata("NotImportedJavaClass")
     public void testNotImportedJavaClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedJavaClass/");
+        runTest("../completion/testData/basic/multifile/NotImportedJavaClass/");
     }
 
     @TestMetadata("NotImportedNestedClassFromPrivateClass")
     public void testNotImportedNestedClassFromPrivateClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedNestedClassFromPrivateClass/");
+        runTest("../completion/testData/basic/multifile/NotImportedNestedClassFromPrivateClass/");
     }
 
     @TestMetadata("NotImportedObject")
     public void testNotImportedObject() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedObject/");
+        runTest("../completion/testData/basic/multifile/NotImportedObject/");
     }
 
     @TestMetadata("NotImportedProperty")
     public void testNotImportedProperty() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/NotImportedProperty/");
+        runTest("../completion/testData/basic/multifile/NotImportedProperty/");
     }
 
     @TestMetadata("ObjectInTypePosition")
     public void testObjectInTypePosition() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ObjectInTypePosition/");
+        runTest("../completion/testData/basic/multifile/ObjectInTypePosition/");
     }
 
     @TestMetadata("ObjectMembers")
     public void testObjectMembers() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ObjectMembers/");
+        runTest("../completion/testData/basic/multifile/ObjectMembers/");
     }
 
     @TestMetadata("ParameterNameAndTypeForNotImportedAlias")
     public void testParameterNameAndTypeForNotImportedAlias() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ParameterNameAndTypeForNotImportedAlias/");
+        runTest("../completion/testData/basic/multifile/ParameterNameAndTypeForNotImportedAlias/");
     }
 
     @TestMetadata("ParameterNameAndTypeNestedClasses")
     public void testParameterNameAndTypeNestedClasses() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/ParameterNameAndTypeNestedClasses/");
+        runTest("../completion/testData/basic/multifile/ParameterNameAndTypeNestedClasses/");
     }
 
     @TestMetadata("PreferMemberToExtension")
     public void testPreferMemberToExtension() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PreferMemberToExtension/");
+        runTest("../completion/testData/basic/multifile/PreferMemberToExtension/");
     }
 
     @TestMetadata("PreferMemberToGlobal")
     public void testPreferMemberToGlobal() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PreferMemberToGlobal/");
+        runTest("../completion/testData/basic/multifile/PreferMemberToGlobal/");
     }
 
     @TestMetadata("PreferMoreSpecificExtension1")
     public void testPreferMoreSpecificExtension1() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PreferMoreSpecificExtension1/");
+        runTest("../completion/testData/basic/multifile/PreferMoreSpecificExtension1/");
     }
 
     @TestMetadata("PreferMoreSpecificExtension2")
     public void testPreferMoreSpecificExtension2() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PreferMoreSpecificExtension2/");
+        runTest("../completion/testData/basic/multifile/PreferMoreSpecificExtension2/");
     }
 
     @TestMetadata("PreferMoreSpecificExtension3")
     public void testPreferMoreSpecificExtension3() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PreferMoreSpecificExtension3/");
+        runTest("../completion/testData/basic/multifile/PreferMoreSpecificExtension3/");
     }
 
     @TestMetadata("PropertyKeysEmptyString")
     public void testPropertyKeysEmptyString() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PropertyKeysEmptyString/");
+        runTest("../completion/testData/basic/multifile/PropertyKeysEmptyString/");
     }
 
     @TestMetadata("PropertyKeysNoPrefix")
     public void testPropertyKeysNoPrefix() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PropertyKeysNoPrefix/");
+        runTest("../completion/testData/basic/multifile/PropertyKeysNoPrefix/");
     }
 
     @TestMetadata("PropertyKeysWithPrefix")
     public void testPropertyKeysWithPrefix() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/PropertyKeysWithPrefix/");
+        runTest("../completion/testData/basic/multifile/PropertyKeysWithPrefix/");
     }
 
     @TestMetadata("StaticMembersOfImportedClassFromJava")
     public void testStaticMembersOfImportedClassFromJava() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfImportedClassFromJava/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfImportedClassFromJava/");
     }
 
     @TestMetadata("StaticMembersOfImportedInterfaceFromJava")
     public void testStaticMembersOfImportedInterfaceFromJava() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfImportedInterfaceFromJava/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfImportedInterfaceFromJava/");
     }
 
     @TestMetadata("StaticMembersOfNotImportedClassFromJava")
     public void testStaticMembersOfNotImportedClassFromJava() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfNotImportedClassFromJava/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfNotImportedClassFromJava/");
     }
 
     @TestMetadata("StaticMembersOfNotImportedClassFromKotlin")
     public void testStaticMembersOfNotImportedClassFromKotlin() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfNotImportedClassFromKotlin/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfNotImportedClassFromKotlin/");
     }
 
     @TestMetadata("StaticMembersOfNotImportedClassFromKotlinObject")
     public void testStaticMembersOfNotImportedClassFromKotlinObject() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfNotImportedClassFromKotlinObject/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfNotImportedClassFromKotlinObject/");
     }
 
     @TestMetadata("StaticMembersOfNotImportedClassNameConflict")
     public void testStaticMembersOfNotImportedClassNameConflict() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/StaticMembersOfNotImportedClassNameConflict/");
+        runTest("../completion/testData/basic/multifile/StaticMembersOfNotImportedClassNameConflict/");
     }
 
     @TestMetadata("SuspensionPointInMonitor")
     public void testSuspensionPointInMonitor() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/SuspensionPointInMonitor/");
+        runTest("../completion/testData/basic/multifile/SuspensionPointInMonitor/");
     }
 
     @TestMetadata("SyntheticExtensionDeprecated")
     public void testSyntheticExtensionDeprecated() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/SyntheticExtensionDeprecated/");
+        runTest("../completion/testData/basic/multifile/SyntheticExtensionDeprecated/");
     }
 
     @TestMetadata("SyntheticExtensionForGenericClass")
     public void testSyntheticExtensionForGenericClass() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/SyntheticExtensionForGenericClass/");
+        runTest("../completion/testData/basic/multifile/SyntheticExtensionForGenericClass/");
     }
 
     @TestMetadata("SyntheticExtensionNonVoidSetter")
     public void testSyntheticExtensionNonVoidSetter() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/SyntheticExtensionNonVoidSetter/");
+        runTest("../completion/testData/basic/multifile/SyntheticExtensionNonVoidSetter/");
     }
 
     @TestMetadata("SyntheticPrimitiveJavaProperty")
     public void testSyntheticPrimitiveJavaProperty() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/SyntheticPrimitiveJavaProperty/");
+        runTest("../completion/testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
     }
 
     @TestMetadata("TopLevelFunction")
     public void testTopLevelFunction() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/TopLevelFunction/");
+        runTest("../completion/testData/basic/multifile/TopLevelFunction/");
     }
 
     @TestMetadata("TypeAliases")
     public void testTypeAliases() throws Exception {
-        runTest("../idea/tests/testData-completion/basic/multifile/TypeAliases/");
+        runTest("../completion/testData/basic/multifile/TypeAliases/");
     }
 }

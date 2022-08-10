@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
 class KotlinCompletionStatistician : CompletionStatistician() {
     override fun serialize(element: LookupElement, location: CompletionLocation): StatisticsInfo? {
-        val o = (element.`object` as? DeclarationLookupObject) ?: return null
+        val o = (element.`object` as? DescriptorBasedDeclarationLookupObject) ?: return null
 
         val context = element.getUserDataDeep(STATISTICS_INFO_CONTEXT_KEY) ?: ""
 

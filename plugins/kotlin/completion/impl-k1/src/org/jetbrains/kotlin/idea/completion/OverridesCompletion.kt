@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -49,7 +49,7 @@ class OverridesCompletion(
             val baseClass = descriptor.containingDeclaration as ClassDescriptor
             val baseClassName = baseClass.name.asString()
 
-            val baseIcon = (lookupElement.`object` as DeclarationLookupObject).getIcon(0)
+            val baseIcon = (lookupElement.`object` as DescriptorBasedDeclarationLookupObject).getIcon(0)
             val isImplement = descriptor.modality == Modality.ABSTRACT
             val additionalIcon = if (isImplement)
                 AllIcons.Gutter.ImplementingMethod

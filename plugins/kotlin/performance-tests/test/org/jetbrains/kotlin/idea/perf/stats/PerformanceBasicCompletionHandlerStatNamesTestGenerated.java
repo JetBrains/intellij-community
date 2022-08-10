@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("performance-tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData-completion/handlers/basic")
+@TestMetadata("../completion/testData/handlers/basic")
 public class PerformanceBasicCompletionHandlerStatNamesTestGenerated extends AbstractPerformanceBasicCompletionHandlerStatNamesTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
@@ -25,6 +25,6 @@ public class PerformanceBasicCompletionHandlerStatNamesTestGenerated extends Abs
 
     @TestMetadata("GetOperator.kt")
     public void testGetOperator() throws Exception {
-        runTest("../idea/tests/testData-completion/handlers/basic/GetOperator.kt");
+        runTest("../completion/testData/handlers/basic/GetOperator.kt");
     }
 }

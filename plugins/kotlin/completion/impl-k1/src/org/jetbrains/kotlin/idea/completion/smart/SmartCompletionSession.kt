@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.ExpectedInfos
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptorKindExclude
@@ -216,7 +216,7 @@ class SmartCompletionSession(
         )
 
     private fun wrapStandardLookupElement(lookupElement: LookupElement): LookupElement {
-        val descriptor = (lookupElement.`object` as DeclarationLookupObject).descriptor
+        val descriptor = (lookupElement.`object` as DescriptorBasedDeclarationLookupObject).descriptor
         var element = lookupElement
 
         if (descriptor is FunctionDescriptor && descriptor.valueParameters.isNotEmpty()) {

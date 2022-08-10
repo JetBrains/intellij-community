@@ -7,6 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiElement
 import com.intellij.openapi.util.Key
+import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,6 +21,9 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
+
+@ApiStatus.Internal
+val KOTLIN_CAST_REQUIRED_COLOR = JBColor(0x4E4040, 0x969696)
 
 val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null

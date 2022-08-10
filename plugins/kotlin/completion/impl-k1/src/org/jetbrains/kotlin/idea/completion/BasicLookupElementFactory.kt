@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.BaseDeclarationInsertHandle
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinClassifierInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
@@ -42,7 +42,7 @@ class BasicLookupElementFactory(
             parameterNamesInFunctionalTypes = false
         }
 
-        private fun getIcon(lookupObject: DeclarationLookupObject, descriptor: DeclarationDescriptor, flags: Int): Icon? {
+        private fun getIcon(lookupObject: DescriptorBasedDeclarationLookupObject, descriptor: DeclarationDescriptor, flags: Int): Icon? {
             // KotlinDescriptorIconProvider does not use declaration if it is KtElement,
             // so, do not try to look up psiElement for known Kotlin descriptors as it could be a heavy deserialization (e.g. from kotlin libs)
             val declaration = when (descriptor) {
@@ -143,7 +143,7 @@ class BasicLookupElementFactory(
             return createLookupElementForPackage(descriptor.fqName)
         }
 
-        val lookupObject: DeclarationLookupObject
+        val lookupObject: DescriptorBasedDeclarationLookupObject
         val name: String = when (descriptor) {
             is ConstructorDescriptor -> {
                 // for constructor use name and icon of containing class

@@ -8,11 +8,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 
 class KotlinExcludeFromCompletionLookupActionProvider : LookupActionProvider {
     override fun fillActions(element: LookupElement, lookup: Lookup, consumer: Consumer<LookupElementAction>) {
-        val lookupObject = element.`object` as? DeclarationLookupObject ?: return
+        val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return
 
         val project = lookup.psiFile?.project ?: return
 

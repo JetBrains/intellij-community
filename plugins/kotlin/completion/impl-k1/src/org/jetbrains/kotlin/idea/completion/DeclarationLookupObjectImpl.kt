@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
  */
 abstract class DeclarationLookupObjectImpl(
     final override val descriptor: DeclarationDescriptor?
-) : DeclarationLookupObject {
+) : DescriptorBasedDeclarationLookupObject {
     override val name: Name?
         get() = descriptor?.name ?: (psiElement as? PsiNamedElement)?.name?.let { Name.identifier(it) }
 

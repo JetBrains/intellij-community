@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.idea.completion.handlers.WithExpressionPrefixInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -96,7 +96,7 @@ class LookupElementsCollector(
             return
         }
         if (!allowExpectDeclarations) {
-            val descriptor = (element.`object` as? DeclarationLookupObject)?.descriptor
+            val descriptor = (element.`object` as? DescriptorBasedDeclarationLookupObject)?.descriptor
             if ((descriptor as? MemberDescriptor)?.isExpect == true) return
         }
 
@@ -117,7 +117,7 @@ class LookupElementsCollector(
             result = postProcessor(result)
         }
 
-        val declarationLookupObject = result.`object` as? DeclarationLookupObject
+        val declarationLookupObject = result.`object` as? DescriptorBasedDeclarationLookupObject
         if (declarationLookupObject != null) {
             result = DeclarationLookupObjectLookupElementDecorator(result, declarationLookupObject)
         }
@@ -178,7 +178,7 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
 
 private class DeclarationLookupObjectLookupElementDecorator(
     element: LookupElement,
-    private val declarationLookupObject: DeclarationLookupObject
+    private val declarationLookupObject: DescriptorBasedDeclarationLookupObject
 ) : LookupElementDecorator<LookupElement>(element) {
     override fun getPsiElement() = declarationLookupObject.psiElement
 }
