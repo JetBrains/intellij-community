@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.
 import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -480,8 +479,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
-        // Expect to be resolved to source KtParameter
-        val resolved = (uCallExpression.receiver?.tryResolve() as? KtParameter)
+        val resolved = (uCallExpression.receiver?.tryResolve() as? PsiParameter)
             .orFail("cant resolve explicit lambda parameter")
         TestCase.assertEquals("it", resolved.name)
     }
