@@ -23,14 +23,19 @@ internal class GradleDependencyCollector : DependencyCollector {
       .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
       .asSequence()
       .mapNotNull { it.externalProjectStructure }
-      .flatMap { ExternalSystemApiUtil.findAll(it, ProjectKeys.LIBRARY) }
-      .map { it.data }
+      .flatMap { projectStructure ->
+        projectStructure.getChildrenSequence(ProjectKeys.MODULE)
+          .flatMap { it.getChildrenSequence(GradleSourceSetData.KEY) }
+          .flatMap { it.getChildrenSequence(ProjectKeys.LIBRARY_DEPENDENCY) }
+      }.map { it.data.target }
       .mapNotNull { libraryData ->
         val groupId = libraryData.groupId
         val artifactId = libraryData.artifactId
         if (groupId != null && artifactId != null) "$groupId:$artifactId" else null
       }.toSet()
   }
+
+  private fun <T> DataNode<*>.getChildrenSequence(key: Key<T>) = ExternalSystemApiUtil.getChildren(this, key).asSequence()
 }
 
 internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() {
