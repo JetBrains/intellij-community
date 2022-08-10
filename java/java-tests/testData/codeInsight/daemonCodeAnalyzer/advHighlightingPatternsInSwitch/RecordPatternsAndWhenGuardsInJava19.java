@@ -4,7 +4,7 @@ class RecordPatternsAndWhenGuardsInJava18 {
       case MyRecord(int x) r -> {
 
       }
-      case String s when <error descr="Cannot resolve symbol 's'">s</error>.length() > 10 -> {
+      case String s when s.length() > 10 -> {
 
       }
       default -> {
