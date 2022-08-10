@@ -61,13 +61,17 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="ml.intellij.completion.engine" type="repository">
-        <properties include-transitive-deps="false" maven-id="ml.intellij:completion-engine:0.0.17-SNAPSHOT" />
+      <library name="rauschig.jarchivelib" type="repository">
+        <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ml/intellij/completion-engine/0.0.17-SNAPSHOT/completion-engine-0.0.17-SNAPSHOT.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
+        <excluded>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
+        </excluded>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
