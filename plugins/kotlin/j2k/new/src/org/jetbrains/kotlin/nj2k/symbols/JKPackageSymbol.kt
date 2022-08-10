@@ -24,4 +24,7 @@ class JKUniversePackageSymbol(
 
     override val declaredIn: JKSymbol?
         get() = null
+
+    override val fqName: String
+        get() = name
 }
