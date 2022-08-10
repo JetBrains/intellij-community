@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.layout.*
+import org.jetbrains.completion.full.line.language.KeepKind
 import org.jetbrains.completion.full.line.language.ModelState
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
@@ -19,10 +20,6 @@ import org.jetbrains.completion.full.line.settings.ui.panels.LanguageCloudModelP
 import org.jetbrains.completion.full.line.settings.ui.panels.LanguageLocalModelPanel
 import java.awt.event.ItemEvent
 import javax.swing.DefaultComboBoxModel
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.javaField
 
 class MLServerCompletionConfigurable : BoundConfigurable(message("fl.server.completion.display")), SearchableConfigurable {
     init {
@@ -198,23 +195,21 @@ class MLServerCompletionConfigurable : BoundConfigurable(message("fl.server.comp
         return helpTopic
     }
 
-    @Suppress("UNCHECKED_CAST")
+    //TODO: move to ModelState
     private fun ModelState.fillFrom(inst: ModelState) {
-        val propertiesByName = ModelState::class.memberProperties.filterIsInstance<KMutableProperty<*>>()//.associateBy { it.name }
-
-        propertiesByName.forEach {
-            val value = it.getter.call(inst)!!
-            val type = it.javaField!!.type
-            when {
-                type.isPrimitive                                    -> it.setter.call(this, value)
-                value::class.isSubclassOf(MutableCollection::class) -> {
-                    val current = it.getter.call(this) as MutableCollection<Any>
-                    current.clear()
-                    current.addAll(value as MutableCollection<Any>)
-                }
-                else                                                -> throw IllegalArgumentException("Unsupported type")
-            }
-        }
+      numIterations = inst.numIterations
+      beamSize = inst.beamSize
+      diversityGroups = inst.diversityGroups
+      diversityStrength = inst.diversityStrength
+      lenPow = inst.lenPow
+      lenBase = inst.lenBase
+      useGroupTopN = inst.useGroupTopN
+      groupTopN = inst.groupTopN
+      useCustomContextLength = inst.useCustomContextLength
+      customContextLength = inst.customContextLength
+      minimumPrefixDist = inst.minimumPrefixDist
+      minimumEditDist = inst.minimumEditDist
+      keepKinds = mutableSetOf<KeepKind>().apply { addAll(inst.keepKinds) }
+      psiBased = inst.psiBased
     }
-
 }

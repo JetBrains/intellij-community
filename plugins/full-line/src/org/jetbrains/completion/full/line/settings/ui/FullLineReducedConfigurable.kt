@@ -2,6 +2,7 @@ package org.jetbrains.completion.full.line.settings.ui
 
 import com.intellij.lang.Language
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.ComboBox
@@ -21,11 +22,9 @@ import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSetti
 import org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState
 import org.jetbrains.completion.full.line.settings.ui.components.*
 import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
-import org.jetbrains.completion.full.line.thisLogger
 import javax.swing.JTextField
 import javax.swing.ListCellRenderer
 import kotlin.reflect.KMutableProperty1
-import org.jetbrains.completion.full.line.visibleIf
 
 @Suppress("DuplicatedCode")
 class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.completion.display")), SearchableConfigurable {

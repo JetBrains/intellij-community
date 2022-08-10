@@ -120,7 +120,7 @@ class CloudFullLineCompletionProvider : FullLineCompletionProvider {
         val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ML Server Completion", 2)
 
         /**
-         * return Response status for connection with server or throws an error if can't connect to server
+         * return Response status for connection with server or throws an error if it can't connect to server
          * for specific authentication token
          *  - 200 - Success
          *  - 403 - Forbidden

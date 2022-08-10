@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.jetbrains.rd.util.CopyOnWriteArrayList
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.platform.FullLineCompletionQuery
 import org.jetbrains.completion.full.line.RawFullLineProposal
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
+import java.util.concurrent.CopyOnWriteArrayList
 
 interface FullLineCompletionProvider {
     @Suppress("RemoveExplicitTypeArguments")

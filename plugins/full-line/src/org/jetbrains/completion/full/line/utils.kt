@@ -1,6 +1,5 @@
 package org.jetbrains.completion.full.line
 
-import com.google.common.base.Throwables
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -60,7 +59,7 @@ fun Throwable.decoratedMessage(): String {
                 is CloudExceptionWithCustomRegistry -> with(cause as CloudExceptionWithCustomRegistry) {
                     (cause?.decoratedMessage() ?: "") + "\n With custom registry `${registry.key}` value `${registry.asString()}`"
                 }
-                else                                -> with(Throwables.getRootCause(this)) {
+                else                                -> with(ExceptionUtil.getRootCause(this)) {
                     if (this is ExecutionException) "Execution exception" else decoratedMessage()
                 }
             }

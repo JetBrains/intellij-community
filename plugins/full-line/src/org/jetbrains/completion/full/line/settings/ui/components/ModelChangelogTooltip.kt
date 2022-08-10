@@ -1,8 +1,8 @@
 package org.jetbrains.completion.full.line.settings.ui.components
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.ui.components.labels.LinkLabel
-import org.apache.commons.io.FileUtils
 
 
 class ModelChangelogTooltip(action: () -> Unit) : LinkLabel<Any>("", null) {
@@ -29,7 +29,7 @@ class ModelChangelogTooltip(action: () -> Unit) : LinkLabel<Any>("", null) {
         tooltip.setDescription(changelog)
             .setTitle("Changelog for $version")
             .installOn(this)
-        text = "New version available (${FileUtils.byteCountToDisplaySize(size)})"
+        text = "New version available (${StringUtilRt.formatFileSize(size)})"
         isVisible = true
     }
 }
