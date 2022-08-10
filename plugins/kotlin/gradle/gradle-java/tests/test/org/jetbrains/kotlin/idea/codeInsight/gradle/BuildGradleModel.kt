@@ -42,8 +42,14 @@ class BuiltGradleModel<T : Any>(val modules: Map<IdeaModule, T?>) {
     }
 }
 
+data class BuildGradleModelDebuggerOptions(
+    val suspend: Boolean = true,
+    val port: Int = 5005
+)
+
 fun <T : Any> buildGradleModel(
-    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>
+    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>,
+    debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
     connector.useDistribution(AbstractModelBuilderTest.DistributionLocator().getDistributionFor(gradleVersion))
@@ -89,9 +95,10 @@ fun <T : Any> buildGradleModel(
         buildActionExecutor.withArguments(executionSettings.arguments)
 
         buildActionExecutor.setJavaHome(File(javaHomePath))
-        buildActionExecutor.setJvmArguments("-Xmx512m")
         buildActionExecutor.setStandardOutput(System.out)
         buildActionExecutor.setStandardError(System.err)
+        buildActionExecutor.setJvmArguments(listOfNotNull("-Xmx512m", debuggerOptions?.toJvmArgumentString()))
+
 
         val allModels = runBlocking {
             suspendCoroutine<ProjectImportAction.AllModels> { continuation ->
@@ -112,4 +119,8 @@ fun <T : Any> buildGradleModel(
         val ideaProject = allModels.getModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
         return BuiltGradleModel(ideaProject.modules.associateWith { module -> allModels.getModel(module, clazz.java) })
     }
+}
+
+private fun BuildGradleModelDebuggerOptions.toJvmArgumentString() : String {
+    return "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if(suspend) "y" else "n"},address=${port}"
 }

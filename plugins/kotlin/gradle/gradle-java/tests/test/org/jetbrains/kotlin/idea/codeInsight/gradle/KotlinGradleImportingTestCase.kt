@@ -172,13 +172,18 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return files
     }
 
-    protected inline fun <reified T : Any> buildGradleModel(): BuiltGradleModel<T> =
-        buildGradleModel(T::class)
+    protected inline fun <reified T : Any> buildGradleModel(debuggerOptions: BuildGradleModelDebuggerOptions? = null): BuiltGradleModel<T> =
+        buildGradleModel(T::class, debuggerOptions)
 
-    protected fun <T : Any> buildGradleModel(clazz: KClass<T>): BuiltGradleModel<T> =
-        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz)
+    protected fun <T : Any> buildGradleModel(
+        clazz: KClass<T>,
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<T> =
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz, debuggerOptions)
 
-    protected fun buildKotlinMPPGradleModel(): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel()
+    protected fun buildKotlinMPPGradleModel(
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(debuggerOptions)
 
     protected fun getSourceRootInfos(moduleName: String): List<Pair<String, JpsModuleSourceRootType<*>>> {
         return ModuleRootManager.getInstance(getModule(moduleName)).contentEntries.flatMap { contentEntry ->
