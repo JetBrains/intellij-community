@@ -1558,7 +1558,7 @@ public class JBTabsImpl extends JComponent
         else {
           myFocusManager.requestFocusInProject(toFocus, myProject);
         }
-      }, ModalityState.NON_MODAL);
+      });
       return ActionCallback.DONE;
     }
     return ActionCallback.REJECTED;
