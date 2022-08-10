@@ -84,13 +84,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
-  private val treeMessageSplitter: Splitter
-  private val commitPanel: GitStageCommitPanel
-  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
-  private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
+  private val commitPanel: GitStageCommitPanel
   private val changesStatusPanel: Wrapper
+
+  private val treeMessageSplitter: Splitter
+  private val commitDiffSplitter: OnePixelSplitter
+
+  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
