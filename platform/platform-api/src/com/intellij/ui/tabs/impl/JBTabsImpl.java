@@ -1551,15 +1551,17 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
+      ActionCallback res = new ActionCallback();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (inWindow) {
           toFocus.requestFocusInWindow();
+          res.setDone();
         }
         else {
-          myFocusManager.requestFocusInProject(toFocus, myProject);
+          myFocusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res);
         }
       });
-      return ActionCallback.DONE;
+      return res;
     }
     return ActionCallback.REJECTED;
   }
