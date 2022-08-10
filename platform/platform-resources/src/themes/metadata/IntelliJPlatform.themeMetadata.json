@@ -46,40 +46,42 @@
       "deprecated": true
     },
     {
-      "key": "BookmarkMnemonicAvailable.buttonForeground",
-      "description": "The button text color for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.foreground",
+      "description": "The button text color for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAvailable.buttonBackground",
-      "description": "The button background for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.background",
+      "description": "The button background for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAvailable.borderColor",
-      "description": "The button border color for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.borderColor",
+      "description": "The button border color for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAssigned.buttonForeground",
-      "description": "The button text color for the already assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAssigned.foreground",
+      "description": "The button text color for already assigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAssigned.buttonBackground",
-      "description": "The button background for the already assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAssigned.background",
+      "description": "The button background for already assigned bookmark mnemonics."
     },
     {
       "key": "BookmarkMnemonicAssigned.borderColor",
-      "description": "The button border color for the already assigned bookmark mnemonic."
+      "description": "The button border color for already assigned bookmark mnemonics.",
+      "deprecated": true
     },
     {
-      "key": "BookmarkMnemonicCurrent.buttonForeground",
+      "key": "Bookmark.MnemonicCurrent.foreground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicCurrent.buttonBackground",
+      "key": "Bookmark.MnemonicCurrent.background",
       "description": "The button background for the currently selected bookmark mnemonic."
     },
     {
       "key": "BookmarkMnemonicCurrent.borderColor",
-      "description": "The button border color for the currently selected bookmark mnemonic."
+      "description": "The button border color for the currently selected bookmark mnemonic.",
+      "deprecated": true
     },
     {
       "key": "Breakpoint.iconHoverAlpha",

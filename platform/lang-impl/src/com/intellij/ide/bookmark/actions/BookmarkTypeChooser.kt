@@ -23,13 +23,11 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.buttonForeground", 0x000000, 0xBBBBBB)
-private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.buttonBackground", 0xF7C777, 0x665632)
-private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
+private val ASSIGNED_FOREGROUND = namedColor("Bookmark.MnemonicAssigned.foreground", 0x000000, 0xBBBBBB)
+private val ASSIGNED_BACKGROUND = namedColor("Bookmark.MnemonicAssigned.background", 0xF7C777, 0x665632)
 
-private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.buttonForeground", 0xFFFFFF, 0xFEFEFE)
-private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.buttonBackground", 0x389FD6, 0x345F85)
-private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
+private val CURRENT_FOREGROUND = namedColor("Bookmark.MnemonicCurrent.foreground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("Bookmark.MnemonicCurrent.background", 0x389FD6, 0x345F85)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
@@ -189,17 +187,17 @@ private class BookmarkLayoutGrid(
         type == current -> {
           it.putClientProperty("JButton.textColor", CURRENT_FOREGROUND)
           it.putClientProperty("JButton.backgroundColor", CURRENT_BACKGROUND)
-          it.putClientProperty("JButton.borderColor", CURRENT_BORDER)
+          it.putClientProperty("JButton.borderColor", CURRENT_BACKGROUND)
         }
         assigned.contains(type) -> {
           it.putClientProperty("JButton.textColor", ASSIGNED_FOREGROUND)
           it.putClientProperty("JButton.backgroundColor", ASSIGNED_BACKGROUND)
-          it.putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
+          it.putClientProperty("JButton.borderColor", ASSIGNED_BACKGROUND)
         }
         else -> {
-          it.putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
+          it.putClientProperty("JButton.textColor", UIManager.getColor("Bookmark.MnemonicAvailable.foreground"))
           it.putClientProperty("JButton.backgroundColor", UIManager.getColor("Popup.background"))
-          it.putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
+          it.putClientProperty("JButton.borderColor", UIManager.getColor("Bookmark.MnemonicAvailable.borderColor"))
         }
       }
     }

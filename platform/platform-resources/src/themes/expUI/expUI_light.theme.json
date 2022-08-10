@@ -133,7 +133,11 @@
     },
 
     "Bookmark": {
-      "Mnemonic.iconForeground": "Grey1"
+      "Mnemonic.iconForeground": "Grey1",
+      "MnemonicAvailable.borderColor": "Grey9",
+      "MnemonicAssigned.background": "Orange7",
+      "MnemonicCurrent.background": "Blue7",
+      "MnemonicCurrent.foreground": "Grey11"
     },
 
     "Borders.color": "Grey11",
