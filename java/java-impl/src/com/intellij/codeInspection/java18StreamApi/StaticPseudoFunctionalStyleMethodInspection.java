@@ -26,7 +26,6 @@ import java.util.Collection;
  * @author Dmitry Batkovich
  */
 public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(StaticPseudoFunctionalStyleMethodInspection.class);
   private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override
@@ -103,6 +102,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
   }
 
   public static final class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
+    @SafeFieldForPreview
     private final StaticPseudoFunctionalStyleMethodOptions.PipelineElement myHandler;
 
     private ReplacePseudoLambdaWithLambda(StaticPseudoFunctionalStyleMethodOptions.PipelineElement handler) {
