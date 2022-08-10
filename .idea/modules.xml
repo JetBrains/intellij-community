@@ -571,6 +571,12 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.tests.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/intellij.fullLine.iml" filepath="$PROJECT_DIR$/plugins/full-line/intellij.fullLine.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/languages/intellij.fullLine.languages.iml" filepath="$PROJECT_DIR$/plugins/full-line/languages/intellij.fullLine.languages.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/languages/java/intellij.fullLine.languages.java.iml" filepath="$PROJECT_DIR$/plugins/full-line/languages/java/intellij.fullLine.languages.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/languages/js/intellij.fullLine.languages.js.iml" filepath="$PROJECT_DIR$/plugins/full-line/languages/js/intellij.fullLine.languages.js.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/languages/kotlin/intellij.fullLine.languages.kotlin.iml" filepath="$PROJECT_DIR$/plugins/full-line/languages/kotlin/intellij.fullLine.languages.kotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/languages/python/intellij.fullLine.languages.python.iml" filepath="$PROJECT_DIR$/plugins/full-line/languages/python/intellij.fullLine.languages.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" />
