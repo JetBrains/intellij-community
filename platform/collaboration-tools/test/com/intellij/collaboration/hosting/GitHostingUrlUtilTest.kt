@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.hosting
 
-import com.intellij.collaboration.hosting.GitHostingUrlUtil
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 import java.net.URI

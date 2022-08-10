@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.collaboration.api.ServerPath;
-import com.intellij.collaboration.hosting.GitHostingUrlUtil;
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;

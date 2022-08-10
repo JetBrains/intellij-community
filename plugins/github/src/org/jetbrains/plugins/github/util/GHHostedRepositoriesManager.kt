@@ -6,7 +6,7 @@ import com.intellij.collaboration.async.ScopedDisposable
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.createAccountsFlow
-import com.intellij.collaboration.hosting.GitHostingUrlUtil
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.application.ApplicationManager
