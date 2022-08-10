@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.*;
 import java.util.*;
@@ -497,6 +498,19 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals(ContainerUtil.newHashSet("key", "key2"), allKeys);
     assertEquals(ContainerUtil.newHashSet("key"), existingKeys);
+  }
+
+  public void testSmallPersistentMapPhysicalSize() throws IOException {
+    File file = FileUtil.createTempFile("persistent", "map");
+    try (PersistentHashMap<String, String> smallMap = new PersistentHashMap<>(file,
+                                                                              EnumeratorStringDescriptor.INSTANCE,
+                                                                              EnumeratorStringDescriptor.INSTANCE)) {
+      smallMap.put("single key", "single value");
+    }
+    File[] mapFiles = file.getParentFile().listFiles((dir, name) -> name.startsWith(file.getName()));
+    int size = Arrays.stream(mapFiles).mapToInt(f -> Math.toIntExact(f.length())).sum();
+    Assert.assertTrue(size < 42 * 1024);
+    Assert.assertTrue(size > 40 * 1024);
   }
 
   private void runIteration(PersistentMapPerformanceTest.MapConstructor<String, String> brokenMapDescritor) throws IOException {
