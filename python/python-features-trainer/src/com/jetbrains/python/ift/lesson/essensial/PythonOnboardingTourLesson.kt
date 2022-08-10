@@ -2,7 +2,6 @@
 package com.jetbrains.python.ift.lesson.essensial
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
@@ -12,15 +11,15 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
-import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -36,6 +35,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -230,7 +230,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonById("Debug")
+    highlightButtonById("Debug", highlightInside = false, usePulsation = false)
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
@@ -241,22 +241,23 @@ class PythonOnboardingTourLesson :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar()
+    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
 
     task {
       rehighlightPreviousUi = true
-      text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
-                                       strong(UIBundle.message("tool.window.name.debug")),
-                                       if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
-                                       strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      proceedLink()
+      gotItStep(Balloon.Position.above, 400,
+                PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
+                                            strong(UIBundle.message("tool.window.name.debug")),
+                                            if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
+                                            strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }
 
-    highlightButtonById("Stop")
+    highlightButtonById("Stop", highlightInside = false, usePulsation = false)
     task {
-      showBalloonOnHighlightingComponent(
-        PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
+      showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging"),
+                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
                                        icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
@@ -290,47 +291,39 @@ class PythonOnboardingTourLesson :
   }
 
   private fun LessonContext.runTasks() {
-    task {
-      triggerAndBorderHighlight().component { ui: EditorComponentImpl ->
-        ui.text.contains("find_average")
-      }
-    }
-
-    val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName'"
+    highlightRunToolbar(highlightInside = false, usePulsation = false)
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.context.menu"))
-      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionMenuItem ->
-        ui.text.isToStringContains(runItem)
-      }
-      restoreIfModified(sample)
+      triggerUI {
+        clearPreviousHighlights = false
+      }.component { ui: ActionButton -> ActionManager.getInstance().getId(ui.action) == "Run" }
     }
+
     task {
-      text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
+      val runOptionsText = if (PlatformUtils.isPyCharmCommunity()) {
+        PythonLessonsBundle.message("python.onboarding.run.options.community",
+                                    icon(AllIcons.Actions.Execute),
+                                    icon(AllIcons.Actions.StartDebugger))
+      }
+      else {
+        PythonLessonsBundle.message("python.onboarding.run.options.professional",
+                                    icon(AllIcons.Actions.Execute),
+                                    icon(AllIcons.Actions.StartDebugger),
+                                    icon(AllIcons.Actions.Profile),
+                                    icon(AllIcons.General.RunWithCoverage))
+      }
+      text(PythonLessonsBundle.message("python.onboarding.temporary.configuration.description") + " $runOptionsText")
+      text(PythonLessonsBundle.message("python.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
+      text(PythonLessonsBundle.message("python.onboarding.run.sample.balloon", icon(AllIcons.Actions.Execute), action("Run")),
+           LearningBalloonConfig(Balloon.Position.below, 0))
       checkToolWindowState("Run", true)
-      timerCheck {
-        configurations().isNotEmpty()
-      }
-      restoreIfModified(sample)
-      rehighlightPreviousUi = true
-    }
-
-    highlightRunToolbar()
-
-    task {
-      text(PythonLessonsBundle.message("python.onboarding.temporary.configuration.description",
-                                       icon(AllIcons.Actions.Execute),
-                                       icon(AllIcons.Actions.StartDebugger),
-                                       icon(AllIcons.Actions.Profile),
-                                       icon(AllIcons.General.RunWithCoverage)))
-      proceedLink()
       restoreIfModified(sample)
     }
   }
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Learn"
       }
     }
@@ -382,7 +375,7 @@ class PythonOnboardingTourLesson :
       LessonUtil.hideStandardToolwindows(project)
     }
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Project"
       }
     }
@@ -599,14 +592,12 @@ class PythonOnboardingTourLesson :
         useDelay = false
       }
       text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
-      text(PythonLessonsBundle.message("python.onboarding.interpreter.tip"),
-           LearningBalloonConfig(Balloon.Position.above, width = 0))
+      gotItStep(Balloon.Position.above, 0, PythonLessonsBundle.message("python.onboarding.interpreter.tip"), duplicateMessage = false)
 
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
       }
       restoreIfModified(sample)
-      proceedLink()
     }
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
