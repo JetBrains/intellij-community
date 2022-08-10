@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,9 +15,9 @@ import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class AddToIgnoreListAction extends BasicAction {
-  private @ActionText String myActionName;
   private final boolean myUseCommonExtension;
 
   public AddToIgnoreListAction(boolean useCommonExtension) {
@@ -30,10 +29,6 @@ public class AddToIgnoreListAction extends BasicAction {
     return IgnoreGroupHelperAction.getSelectedFiles(e);
   }
 
-  public void setActionText(@ActionText @NotNull String name) {
-    myActionName = name;
-  }
-
   @NotNull
   @Override
   protected String getActionName() {
@@ -43,12 +38,28 @@ public class AddToIgnoreListAction extends BasicAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    IgnoreGroupHelperAction helper = IgnoreGroupHelperAction.createFor(e);
+    if (helper == null || !helper.allCanBeIgnored()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-    presentation.setEnabledAndVisible(true);
-    presentation.setText(myActionName, false);
-    presentation.setDescription(myUseCommonExtension
-                                ? message("action.Subversion.Ignore.MatchExtension.description", myActionName)
-                                : message("action.Subversion.Ignore.ExactMatch.description"));
+    FileGroupInfo fileGroupInfo = helper.getFileGroupInfo();
+    if (myUseCommonExtension) {
+      String actionName = fileGroupInfo.getExtensionMask();
+      presentation.setEnabledAndVisible(fileGroupInfo.sameExtension());
+      presentation.setText(actionName, false);
+      presentation.setDescription(messagePointer("action.Subversion.Ignore.MatchExtension.description", actionName));
+    }
+    else {
+      if (fileGroupInfo.oneFileSelected()) {
+        presentation.setText(fileGroupInfo.getFileName(), false);
+      }
+      else {
+        presentation.setText(messagePointer("action.Subversion.Ignore.ExactMatch.text"));
+      }
+      presentation.setDescription(messagePointer("action.Subversion.Ignore.ExactMatch.description"));
+    }
   }
 
   @Override

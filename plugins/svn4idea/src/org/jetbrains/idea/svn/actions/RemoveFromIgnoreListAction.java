@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,16 +15,13 @@ import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
+
 public class RemoveFromIgnoreListAction extends BasicAction {
-  private @ActionText String myActionName;
   private final boolean myUseCommonExtension;
 
   public RemoveFromIgnoreListAction(boolean useCommonExtension) {
     myUseCommonExtension = useCommonExtension;
-  }
-
-  public void setActionText(@ActionText @NotNull String name) {
-    myActionName = name;
   }
 
   @NotNull
@@ -37,10 +33,28 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    IgnoreGroupHelperAction helper = IgnoreGroupHelperAction.createFor(e);
+    if (helper == null || !helper.allAreIgnored()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-    presentation.setEnabledAndVisible(true);
-    presentation.setText(myActionName);
-    presentation.setDescription(SvnBundle.messagePointer("action.Subversion.UndoIgnore.description"));
+    FileGroupInfo fileGroupInfo = helper.getFileGroupInfo();
+    if (myUseCommonExtension) {
+      presentation.setEnabledAndVisible(helper.areIgnoreExtensionOk());
+      presentation.setText(fileGroupInfo.getExtensionMask(), false);
+      presentation.setDescription(messagePointer("action.Subversion.UndoIgnore.description"));
+    }
+    else {
+      presentation.setEnabledAndVisible(helper.areIgnoreFilesOk());
+      if (fileGroupInfo.oneFileSelected()) {
+        presentation.setText(fileGroupInfo.getFileName(), false);
+      }
+      else {
+        presentation.setText(messagePointer("action.Subversion.UndoIgnore.text"));
+      }
+      presentation.setDescription(messagePointer("action.Subversion.UndoIgnore.description"));
+    }
   }
 
   @Override
