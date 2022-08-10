@@ -6,7 +6,10 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.RepetitionInfo
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -1435,6 +1438,52 @@ class ReplaceBySourceAsTreeTest {
       .toSet()
       .single()
     assertEquals("x", sources)
+  }
+
+  @RepeatedTest(10)
+  fun `persistent id in the middle`() {
+    builder add ModuleTestEntity("data", AnotherSource) {
+      facets = listOf(
+        FacetTestEntity("facet", "MyData", MySource)
+      )
+    }
+    replacement add ModuleTestEntity("data", AnotherSource) {
+      facets = listOf(
+        FacetTestEntity("facet", "Very other data", MySource)
+      )
+    }
+
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    assertEquals("Very other data", builder.entities(ModuleTestEntity::class.java).single().facets.single().moreData)
+  }
+
+  @RepeatedTest(10)
+  fun `persistent id in the middle 2`() {
+    builder add ModuleTestEntity("data", AnotherSource) {
+      facets = listOf(
+        FacetTestEntity("facet", "MyData", AnotherSource)
+      )
+    }
+    replacement add ModuleTestEntity("data", MySource) {
+      facets = listOf(
+        FacetTestEntity("facet", "Very other data", MySource)
+      )
+    }
+
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    val module = builder.entities(ModuleTestEntity::class.java).single()
+    assertEquals(MySource, module.entitySource)
+    val facet = module.facets.single()
+    assertEquals(MySource, facet.entitySource)
+    assertEquals("Very other data", facet.moreData)
   }
 
   private inner class ThisStateChecker {
