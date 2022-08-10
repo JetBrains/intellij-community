@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -164,12 +165,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     }
   }
 
-  override fun validateAll(): List<ValidationInfo> =
-    when (newEnvironmentModeSelected()) {
-      true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField, pathInfoProvider),
-                            validateSdkComboBox(baseInterpreterCombobox, this))
-      false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+  override fun validateAll(): List<ValidationInfo> {
+    if (newEnvironmentModeSelected()) {
+      val provider = pathInfoProvider ?: if (targetEnvironmentConfiguration.isLocal()) PathInfo.localPathInfoProvider else null
+      return listOfNotNull(validateEnvironmentDirectoryLocation(locationField, provider),
+                           validateSdkComboBox(baseInterpreterCombobox, this))
     }
+    else {
+      return listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+    }
+  }
 
   override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 
