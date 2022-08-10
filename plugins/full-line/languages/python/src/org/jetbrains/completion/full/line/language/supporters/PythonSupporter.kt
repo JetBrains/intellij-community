@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
@@ -21,7 +22,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
-import org.apache.commons.io.FilenameUtils
 import org.jetbrains.completion.full.line.language.*
 import org.jetbrains.completion.full.line.language.formatters.DummyPsiCodeFormatter
 import org.jetbrains.completion.full.line.language.formatters.PythonCodeFormatter
@@ -130,7 +130,7 @@ class PythonSupporter : FullLineLanguageSupporterBase(listOf(PythonLocationMatch
 
     override fun createCodeFragment(file: PsiFile, text: String, isPhysical: Boolean): PsiFile {
         // Creating with .ipynb extension calls `unexpected file type`
-        return PyExpressionCodeFragmentImpl(file.project, FilenameUtils.removeExtension(file.name) + ".py", text, isPhysical)
+        return PyExpressionCodeFragmentImpl(file.project, FileUtil.getNameWithoutExtension(file.name) + ".py", text, isPhysical)
     }
 
     override fun isStringElement(element: PsiElement): Boolean {
