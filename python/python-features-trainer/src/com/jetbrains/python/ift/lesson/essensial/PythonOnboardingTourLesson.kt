@@ -3,6 +3,8 @@ package com.jetbrains.python.ift.lesson.essensial
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.RunManager
+import com.intellij.execution.console.DuplexConsoleListener
+import com.intellij.execution.console.DuplexConsoleView
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -28,7 +30,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.toolWindow.StripeButton
 import com.intellij.ui.UIBundle
@@ -268,6 +269,17 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
                                        icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
+      addFutureStep {
+        val process = XDebuggerManager.getInstance(project).currentSession?.debugProcess
+        val console = process?.createConsole() as? DuplexConsoleView<*, *>
+        if (console != null) {
+          // When debug process terminates the console tab become activated and brings focus.
+          // So, we need to finish this task only after tab is activated.
+          // And then focus will be returned to editor in the start of completion tasks.
+          console.addSwitchListener(DuplexConsoleListener { completeStep() }, taskDisposable)
+        }
+        else completeStep()
+      }
       stateCheck {
         XDebuggerManager.getInstance(project).currentSession == null
       }
@@ -440,7 +452,6 @@ class PythonOnboardingTourLesson :
   private fun LessonContext.completionSteps() {
     prepareRuntimeTask {
       setSample(sample.insertAtPosition(2, " / len(<caret>)"))
-      FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
     }
 
     task {
