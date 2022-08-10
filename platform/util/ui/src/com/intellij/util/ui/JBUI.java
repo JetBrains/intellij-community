@@ -1349,6 +1349,18 @@ public final class JBUI {
         return getInt("List.Button.leftRightInset", 8);
       }
 
+      static Color buttonHoverBackground() {
+        return JBColor.namedColor("List.Button.hoverBackground");
+      }
+
+      static Color buttonSeparatorColor() {
+        return JBColor.namedColor("List.Button.separatorColor", Popup.BACKGROUND);
+      }
+
+      static Color lineHoverBackground(boolean focused) {
+        return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
+      }
+
       final class Selection {
         private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
         private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));

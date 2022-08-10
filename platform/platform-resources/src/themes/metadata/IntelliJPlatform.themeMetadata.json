@@ -1130,6 +1130,21 @@
       "description": "An insets for popup inline actions buttons"
     },
     {
+      "key": "List.Button.separatorColor",
+      "since": "2022.3",
+      "description": "A color for inline buttons separator"
+    },
+    {
+      "key": "List.Button.hoverBackground",
+      "since": "2022.3",
+      "description": "Hover background for inline buttons in list popups"
+    },
+    {
+      "key": "List.Line.hoverBackground",
+      "since": "2022.3",
+      "description": "Hover background for list item in list popups (when inline buttons are shown)"
+    },
+    {
       "key": "TabbedPane.tabSelectionArc",
       "since": "2022.2",
       "description": "Selection border corners radius of TabbedPane underline"
