@@ -151,6 +151,16 @@ public final class NewMappings implements Disposable {
     myRootUpdateQueue.flush();
   }
 
+  @TestOnly
+  public void freezeMappedRootsUpdate(@NotNull Disposable disposable) {
+    myRootUpdateQueue.setPassThrough(false);
+    myRootUpdateQueue.suspend();
+    Disposer.register(disposable, () -> {
+      myRootUpdateQueue.setPassThrough(false);
+      myRootUpdateQueue.resume();
+    });
+  }
+
   public void updateMappedVcsesImmediately() {
     LOG.debug("updateMappingsImmediately");
 
@@ -196,6 +206,7 @@ public final class NewMappings implements Disposable {
 
     if (ApplicationManager.getApplication().isDispatchThread() &&
         ContainerUtil.exists(newMappings, it -> it.isDefaultMapping())) {
+      updateMappedRootsFast();
       scheduleMappedRootsUpdate();
     }
     else {
@@ -212,9 +223,24 @@ public final class NewMappings implements Disposable {
     LOG.debug("updateMappedRoots");
 
     List<VcsDirectoryMapping> mappings = myMappings;
-    Mappings newMappedRoots = collectMappedRoots(mappings);
+    Mappings newMappedRoots = collectMappedRoots(mappings, null);
 
     setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
+  }
+
+  private void updateMappedRootsFast() {
+    if (!myActivated) return;
+    LOG.debug("updateMappedRootsFast");
+
+    List<VcsDirectoryMapping> mappings;
+    List<MappedRoot> mappedRoots;
+    synchronized (myUpdateLock) {
+      mappings = myMappings;
+      mappedRoots = myMappedRoots;
+    }
+    Mappings newMappedRoots = collectMappedRoots(mappings, mappedRoots);
+
+    setNewMappedRoots(mappings, newMappedRoots, false);
   }
 
   private void setNewMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
@@ -269,7 +295,8 @@ public final class NewMappings implements Disposable {
     return newMapping;
   }
 
-  private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
+  private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
+                                               @Nullable List<MappedRoot> reuseMappedRoots) {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
@@ -293,8 +320,14 @@ public final class NewMappings implements Disposable {
           continue;
         }
 
-        Set<VirtualFile> directMappingDirs = ContainerUtil.map2Set(mappedRoots.values(), it -> it.root);
-        List<MappedRoot> defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
+        List<MappedRoot> defaultMappings;
+        if (reuseMappedRoots != null) {
+          defaultMappings = reuseDefaultMappingsFrom(mapping, reuseMappedRoots, pointerDisposable);
+        }
+        else {
+          Set<VirtualFile> directMappingDirs = ContainerUtil.map2Set(mappedRoots.values(), it -> it.root);
+          defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
+        }
         for (MappedRoot mappedRoot : defaultMappings) {
           mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
         }
@@ -359,6 +392,22 @@ public final class NewMappings implements Disposable {
         if (vcsRoot != null && vcsRoot.isDirectory()) {
           VirtualFilePointerManager.getInstance().create(vcsRoot, pointerDisposable, myFilePointerListener);
           result.add(new MappedRoot(vcs, mapping, vcsRoot));
+        }
+      }
+    });
+    return result;
+  }
+
+  @NotNull
+  private List<MappedRoot> reuseDefaultMappingsFrom(@NotNull VcsDirectoryMapping mapping,
+                                                    @NotNull List<MappedRoot> oldMappedRoots,
+                                                    @NotNull Disposable pointerDisposable) {
+    List<MappedRoot> result = new ArrayList<>();
+    ReadAction.run(() -> {
+      for (MappedRoot root : oldMappedRoots) {
+        if (root.mapping.isDefaultMapping() && root.mapping.equals(mapping)) {
+          VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);
+          result.add(root);
         }
       }
     });
