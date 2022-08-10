@@ -23,15 +23,13 @@ import com.intellij.ui.TableUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.table.JBTable
-import com.intellij.util.containers.ContainerUtil
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.bottom
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.left
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.ListCellRenderer
 import javax.swing.event.TableModelEvent
 
@@ -51,11 +49,9 @@ internal class ComboBoxTableCellEditorComponent<T : Any>(
     private var row = 0
     private var column = 0
 
-    private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionListener>()
-
     init {
         isOpaque = true
-        background = table.colors.selectionBackground
+        background = PackageSearchUI.Colors.PackagesTable.background(isSelected = false, isHover = false)
     }
 
     fun setCell(row: Int? = null, column: Int? = null) {
@@ -77,10 +73,6 @@ internal class ComboBoxTableCellEditorComponent<T : Any>(
             .setRenderer(cellRenderer)
             .setItemChosenCallback { selectedItem ->
                 value = selectedItem
-                val event = ActionEvent(this, ActionEvent.ACTION_PERFORMED, "elementChosen")
-                for (listener in listeners) {
-                    listener.actionPerformed(event)
-                }
                 TableUtil.stopEditing(table)
                 table.setValueAt(value, row, column) // on Mac getCellEditorValue() is called before myValue is set.
                 table.tableChanged(TableModelEvent(table.model, row)) // force repaint
@@ -103,9 +95,5 @@ internal class ComboBoxTableCellEditorComponent<T : Any>(
 
         val popupLocation = Point(cellRect.left, if (isShowBelowCell) cellRect.bottom else cellRect.top)
         popup.show(RelativePoint(table, popupLocation))
-    }
-
-    fun addActionListener(listener: ActionListener) {
-        listeners.add(listener)
     }
 }

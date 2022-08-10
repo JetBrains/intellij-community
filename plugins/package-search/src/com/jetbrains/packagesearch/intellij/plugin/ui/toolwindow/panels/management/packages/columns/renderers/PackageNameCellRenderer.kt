@@ -84,9 +84,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
-                val colors = CellColors(
-                    background = PackageSearchUI.Colors.PackagesTable.background(isSelected, isHover),
-                    foreground = PackageSearchUI.Colors.PackagesTable.foreground(isSelected, isHover),
+                val colors = computeColors(isSelected, isHover, isSearchResult = false)
+                val additionalColors = AdditionalCellColors(
                     secondaryForeground = PackageSearchUI.getTextColorSecondary(isSelected),
                     tagBackground = PackageSearchUI.Colors.PackagesTable.Tag.background(isSelected, isHover),
                     tagForeground = PackageSearchUI.Colors.PackagesTable.Tag.foreground(isSelected, isHover),
@@ -97,7 +96,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                     name = name,
                     identifier = rawIdentifier,
                     isKotlinMultiplatform = packageModel.isKotlinMultiplatform,
-                    colors = colors
+                    colors = colors,
+                    additionalColors = additionalColors
                 )
             }
             is PackagesTableItem.InstallablePackage -> {
@@ -106,9 +106,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
-                val colors = CellColors(
-                    background = PackageSearchUI.Colors.PackagesTable.SearchResult.background(isSelected, isHover),
-                    foreground = PackageSearchUI.Colors.PackagesTable.SearchResult.foreground(isSelected, isHover),
+                val colors = computeColors(isSelected, isHover, isSearchResult = false)
+                val additionalColors = AdditionalCellColors(
                     secondaryForeground = PackageSearchUI.getTextColorSecondary(isSelected),
                     tagBackground = PackageSearchUI.Colors.PackagesTable.SearchResult.Tag.background(isSelected, isHover),
                     tagForeground = PackageSearchUI.Colors.PackagesTable.SearchResult.Tag.foreground(isSelected, isHover),
@@ -119,7 +118,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                     name = name,
                     identifier = rawIdentifier,
                     isKotlinMultiplatform = packageModel.isKotlinMultiplatform,
-                    colors = colors
+                    colors = colors,
+                    additionalColors = additionalColors
                 )
             }
         }
@@ -130,28 +130,31 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         @NlsSafe name: String?,
         @NlsSafe identifier: String,
         isKotlinMultiplatform: Boolean,
-        colors: CellColors
+        colors: CellColors,
+        additionalColors: AdditionalCellColors
     ) = TagPaintingJPanel(columnWidth).apply {
-        background = colors.background
-        foreground = colors.foreground
+        colors.applyTo(this)
 
         if (!name.isNullOrBlank() && name != identifier) {
             add(
                 JLabel(name).apply {
-                    foreground = colors.foreground
+                    colors.applyTo(this)
+                    isOpaque = false
                 },
                 componentConstraint(gapAfter = componentGapX)
             )
             add(
                 JLabel(identifier).apply {
-                    foreground = colors.secondaryForeground
+                    colors.applyTo(this)
+                    isOpaque = false
                 },
                 componentConstraint().gapAfter("0:push")
             )
         } else {
             add(
                 JLabel(identifier).apply {
-                    foreground = colors.foreground
+                    colors.applyTo(this)
+                    isOpaque = false
                 },
                 componentConstraint()
             )
@@ -163,8 +166,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
 
             add(tagComponent, componentConstraint(1, 0))
 
-            tagComponent.background = colors.tagBackground
-            tagComponent.foreground = colors.tagForeground
+            tagComponent.background = additionalColors.tagBackground
+            tagComponent.foreground = additionalColors.tagForeground
         }
     }
 
@@ -202,9 +205,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         }
     }
 
-    private data class CellColors(
-        val background: Color,
-        val foreground: Color,
+    private data class AdditionalCellColors(
         val secondaryForeground: Color,
         val tagBackground: Color,
         val tagForeground: Color,

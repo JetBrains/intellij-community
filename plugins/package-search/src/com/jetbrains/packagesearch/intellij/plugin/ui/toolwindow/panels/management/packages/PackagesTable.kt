@@ -81,9 +81,6 @@ internal class PackagesTable(
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
 
-    val hoverBackground: Color
-        get() = PackageSearchUI.Colors.hoverBackground
-
     private var lastSelectedDependency: UnifiedDependency? = null
 
     private val operationFactory = PackageSearchOperationFactory()
@@ -239,7 +236,6 @@ internal class PackagesTable(
 
         val hoverListener = object : TableHoverListener() {
             override fun onHover(table: JTable, row: Int, column: Int) {
-                invalidate()
                 val currentCursor = cursor
                 if (tableModel.items.isEmpty() || row < 0) {
                     if (currentCursor != Cursor.getDefaultCursor()) cursor = Cursor.getDefaultCursor()

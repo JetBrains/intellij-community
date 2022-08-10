@@ -54,26 +54,20 @@ import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
 object PackageSearchUI {
-    object Colors {
+
+    internal object Colors {
 
         private val mainBackgroundColor: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
-        internal val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
+        val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
-        internal val headerBackgroundColor = mainBackgroundColor
-        internal val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
+        val headerBackgroundColor = mainBackgroundColor
+        val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
 
-        internal val panelBackgroundColor
+        val panelBackgroundColor
             get() = if (isNewUI) JBColor.namedColor("Panel.background") else mainBackgroundColor
 
-        internal val hoverBackground: Color
-            get() = color(
-                propertyName = "Table.hoverBackground",
-                newUILight = 0xE7EFFD, newUIDark = 0x393B40,
-                oldUILight = 0xEDF5FC, oldUIDark = 0x464A4D
-            )
-
-        internal interface StatefulColor {
+        interface StatefulColor {
 
             fun background(isSelected: Boolean, isHover: Boolean): Color
             fun foreground(isSelected: Boolean, isHover: Boolean): Color
@@ -81,62 +75,60 @@ object PackageSearchUI {
 
         object PackagesTable : StatefulColor {
 
-            private val foreground = JBColor.namedColor("Table.foreground")
-            private val background = JBColor.namedColor("Table.background") // TODO newUI vs oldUI?
+            override fun background(isSelected: Boolean, isHover: Boolean) =
+                when {
+                    isSelected -> tableSelectedBackground
+                    isHover -> tableHoverBackground
+                    else -> tableBackground
+                }
 
-            private val selectedBackground = JBColor.namedColor("Table.selectionBackground")
+            override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                when {
+                    isSelected -> tableSelectedForeground
+                    else -> tableForeground
+                }
 
-            private val selectedForeground = JBColor.namedColor("Table.selectionForeground")
+            private val tableBackground = JBColor.namedColor("Table.background") // TODO newUI vs oldUI?
+            private val tableForeground = JBColor.namedColor("Table.foreground")
 
-            private val hoverBackground
+            private val tableHoverBackground
                 get() = color(
                     propertyName = "PackageSearch.SearchResult.hoverBackground",
                     newUILight = 0x2C3341, newUIDark = 0xDBE1EC,
                     oldUILight = 0xF2F5F9, oldUIDark = 0x4C5052
                 )
 
-            override fun background(isSelected: Boolean, isHover: Boolean) =
-                when {
-                    isSelected -> selectedBackground
-                    isHover -> hoverBackground
-                    else -> background
-                }
-
-            override fun foreground(isSelected: Boolean, isHover: Boolean) =
-                when {
-                    isSelected -> selectedForeground
-                    else -> foreground
-                }
+            private val tableSelectedBackground = JBColor.namedColor("Table.selectionBackground")
+            private val tableSelectedForeground = JBColor.namedColor("Table.selectionForeground")
 
             object SearchResult : StatefulColor {
 
-                override fun foreground(isSelected: Boolean, isHover: Boolean) =
-                    when {
-                        isSelected -> selectedForeground
-                        else -> foreground
-                    }
-
                 override fun background(isSelected: Boolean, isHover: Boolean) =
                     when {
-                        isSelected -> selectedBackground
-                        isHover -> hoverBackground
-                        else -> background
+                        isSelected -> searchResultSelectedBackground
+                        isHover -> searchResultHoverBackground
+                        else -> searchResultBackground
                     }
 
-                private val foreground = JBColor.namedColor("Table.foreground")
+                override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> searchResultSelectedForeground
+                        else -> searchResultForeground
+                    }
 
-                private val background
+                private val searchResultBackground
                     get() = color(
                         propertyName = "PackageSearch.SearchResult.background",
                         newUILight = 0xE8EEFA, newUIDark = 0x1C2433,
-                        oldUILight = 0xF2F5F9, oldUIDark = 0x4C5052
+                        oldUILight = 0xE4FAFF, oldUIDark = 0x3F4749
                     )
 
-                private val selectedBackground = JBColor.namedColor("Table.selectionBackground")
+                private val searchResultForeground = tableForeground
 
-                private val selectedForeground = JBColor.namedColor("Table.selectionForeground")
+                private val searchResultSelectedBackground = tableSelectedBackground
+                private val searchResultSelectedForeground = tableSelectedForeground
 
-                private val hoverBackground
+                private val searchResultHoverBackground
                     get() = color(
                         propertyName = "PackageSearch.SearchResult.hoverBackground",
                         newUILight = 0xDBE1EC, newUIDark = 0x2C3341,
@@ -147,91 +139,122 @@ object PackageSearchUI {
 
                     override fun background(isSelected: Boolean, isHover: Boolean) =
                         when {
-                            isSelected -> PackagesTable.selectedBackground
-                            isHover -> hoverBackground
-                            else -> background
+                            isSelected -> searchResultTagSelectedBackground
+                            isHover -> searchResultTagHoverBackground
+                            else -> searchResultTagBackground
                         }
 
                     override fun foreground(isSelected: Boolean, isHover: Boolean) =
                         when {
-                            isSelected -> PackagesTable.selectedForeground
-                            else -> foreground
+                            isSelected -> searchResultTagSelectedForeground
+                            else -> searchResultTagForeground
                         }
 
-                    private val foreground
-                        get() = color(
-                            propertyName = "PackageSearch.SearchResult.PackageTag.foreground",
-                            newUILight = 0xE3E4E6, newUIDark = 0xDFE1E5,
-                            oldUILight = 0x000000, oldUIDark = 0x8E8F8F
-                        )
-
-                    private val background
+                    private val searchResultTagBackground
                         get() = color(
                             propertyName = "PackageSearch.SearchResult.PackageTag.background",
                             newUILight = 0xD5DBE6, newUIDark = 0x2E3643,
                             oldUILight = 0xD2E6EB, oldUIDark = 0x4E5658
                         )
 
-                    private val hoverBackground
+                    private val searchResultTagForeground
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.foreground",
+                            newUILight = 0xE3E4E6, newUIDark = 0xDFE1E5,
+                            oldUILight = 0x000000, oldUIDark = 0x8E8F8F
+                        )
+
+                    private val searchResultTagHoverBackground
                         get() = color(
                             propertyName = "PackageSearch.SearchResult.PackageTag.hoverBackground",
                             newUILight = 0xC9CFD9, newUIDark = 0x3D4350,
                             oldUILight = 0xBFD0DB, oldUIDark = 0x55585B
+                        )
+
+                    private val searchResultTagSelectedBackground
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.selectedBackground",
+                            newUILight = 0xA0BDF8, newUIDark = 0x375FAD,
+                            oldUILight = 0x4395E2, oldUIDark = 0x2F65CA
+                        )
+
+                    private val searchResultTagSelectedForeground
+                        get() = color(
+                            propertyName = "PackageSearch.SearchResult.PackageTag.selectedForeground",
+                            newUILight = 0x000000, newUIDark = 0x1E1F22,
+                            oldUILight = 0xFFFFFF, oldUIDark = 0xBBBBBB
                         )
                 }
             }
 
             object Tag : StatefulColor {
 
-                internal val foreground
-                    get() = color(
-                        propertyName = "PackageSearch.PackageTag.foreground",
-                        newUILight = 0x5A5D6B, newUIDark = 0x9DA0A8,
-                        oldUILight = 0x000000, oldUIDark = 0x9C9C9C
-                    )
+                override fun background(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> tagSelectedBackground
+                        isHover -> tagHoverBackground
+                        else -> tagBackground
+                    }
 
-                internal val background
+                override fun foreground(isSelected: Boolean, isHover: Boolean) =
+                    when {
+                        isSelected -> tagSelectedForeground
+                        else -> tagForeground
+                    }
+
+                private val tagBackground
                     get() = color(
                         propertyName = "PackageSearch.PackageTag.background",
                         newUILight = 0xDFE1E5, newUIDark = 0x43454A,
                         oldUILight = 0xEBEBEB, oldUIDark = 0x4C4E50
                     )
 
-                internal val hoverBackground
+                private val tagForeground
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.foreground",
+                        newUILight = 0x5A5D6B, newUIDark = 0x9DA0A8,
+                        oldUILight = 0x000000, oldUIDark = 0x9C9C9C
+                    )
+
+                private val tagHoverBackground
                     get() = color(
                         propertyName = "PackageSearch.PackageTag.hoverBackground",
                         newUILight = 0xF7F8FA, newUIDark = 0x4A4C4E,
                         oldUILight = 0xC9D2DB, oldUIDark = 0x55585B
                     )
 
-                override fun background(isSelected: Boolean, isHover: Boolean) =
-                    when {
-                        isSelected -> selectedBackground
-                        isHover -> hoverBackground
-                        else -> background
-                    }
+                private val tagSelectedBackground
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.selectedBackground",
+                        newUILight = 0x88ADF7, newUIDark = 0x43454A,
+                        oldUILight = 0x4395E2, oldUIDark = 0x2F65CA
+                    )
 
-                override fun foreground(isSelected: Boolean, isHover: Boolean) =
-                    when {
-                        isSelected -> selectedForeground
-                        else -> foreground
-                    }
+                private val tagSelectedForeground
+                    get() = color(
+                        propertyName = "PackageSearch.PackageTag.selectedForeground",
+                        newUILight = 0x000000, newUIDark = 0x9DA0A8,
+                        oldUILight = 0xFFFFFF, oldUIDark = 0xBBBBBB
+                    )
             }
         }
 
-        internal val infoBannerBackground
-            get() = color(
-                propertyName = "PackageSearch.PackageDetails.infoBanner.background",
-                newUILight = 0xCFDEFC, newUIDark = 0x35538F,
-                oldUILight = 0xE6EEF7, oldUIDark = 0x1C3956
-            )
+        object InfoBanner {
 
-        internal val infoBannerBorder
-            get() = color(
-                propertyName = "PackageSearch.PackageDetails.infoBanner.border",
-                newUILight = 0xCFDEFC, newUIDark = 0x35538F,
-                oldUILight = 0xD1D1D1, oldUIDark = 0x323232
-            )
+            val background
+                get() = color(
+                    propertyName = "PackageSearch.PackageDetails.infoBanner.background",
+                    newUILight = 0xCFDEFC, newUIDark = 0x35538F,
+                    oldUILight = 0xE6EEF7, oldUIDark = 0x1C3956
+                )
+
+            val border
+                get() = color(
+                    propertyName = "PackageSearch.PackageDetails.infoBanner.border",
+                    newUILight = 0xCFDEFC, newUIDark = 0x35538F,
+                    oldUILight = 0xD1D1D1, oldUIDark = 0x323232
+                )
+        }
 
         private fun color(
             propertyName: String? = null,

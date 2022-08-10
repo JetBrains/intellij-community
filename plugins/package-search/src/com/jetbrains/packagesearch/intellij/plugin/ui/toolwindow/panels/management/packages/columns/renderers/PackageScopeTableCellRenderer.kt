@@ -39,13 +39,10 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         val isSearchResult = value is PackagesTableItem.InstallablePackage
 
         val colors = computeColors(isSelected, isHover, isSearchResult)
-
-        background = colors.background
-        foreground = colors.foreground
+        colors.applyTo(this)
 
         val jbComboBoxLabel = JBComboBoxLabel().apply {
-            background = colors.background
-            foreground = colors.foreground
+            colors.applyTo(this)
             icon = AllIcons.General.LinkDropTriangle
 
             text = when (value) {

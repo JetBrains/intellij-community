@@ -2,8 +2,15 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import java.awt.Color
+import javax.swing.JComponent
 
-internal data class CellColors(val background: Color, val foreground: Color)
+internal data class CellColors(val background: Color, val foreground: Color) {
+
+    fun applyTo(component: JComponent) {
+        component.background = background
+        component.foreground = foreground
+    }
+}
 
 internal fun computeColors(isSelected: Boolean, isHover: Boolean, isSearchResult: Boolean): CellColors {
     val background = if (isSearchResult) {
