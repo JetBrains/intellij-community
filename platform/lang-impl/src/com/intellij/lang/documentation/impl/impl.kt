@@ -17,10 +17,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.TestOnly
 
-@ApiStatus.Internal // for Fleet
+@Internal // for Fleet
 fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
   val targets = SmartList<DocumentationTarget>()
   for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {
@@ -45,7 +45,7 @@ internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   return DocumentationRequest(createPointer(), presentation)
 }
 
-@ApiStatus.Internal
+@Internal
 fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationResultData?> {
   return async(Dispatchers.Default) {
     computeDocumentation(targetPointer)
@@ -67,7 +67,7 @@ internal suspend fun computeDocumentation(targetPointer: Pointer<out Documentati
   }
 }
 
-@ApiStatus.Internal
+@Internal
 suspend fun handleLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     tryResolveLink(targetPointer, url)
@@ -93,7 +93,7 @@ internal sealed class InternalResolveLinkResult<out X> {
 /**
  * @return `null` if [contextTarget] was invalidated, or [url] cannot be resolved
  */
-@ApiStatus.Internal // for Fleet
+@Internal // for Fleet
 suspend fun resolveLinkToTarget(contextTarget: Pointer<out DocumentationTarget>, url: String): Pointer<out DocumentationTarget>? {
   return when (val resolveLinkResult = resolveLink(contextTarget::dereference, url, DocumentationTarget::createPointer)) {
     InternalResolveLinkResult.CannotResolve -> null
