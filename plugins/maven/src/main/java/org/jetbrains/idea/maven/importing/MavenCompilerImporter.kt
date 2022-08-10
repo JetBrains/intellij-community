@@ -28,7 +28,8 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
+class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+                              MavenWorkspaceConfigurator {
   private val LOG = Logger.getInstance(MavenCompilerImporter::class.java)
 
 
@@ -49,12 +50,44 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     if (!super.isApplicable(mavenProject)) return
     if (!Registry.`is`("maven.import.compiler.arguments", true)) return
 
-    val compilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
+    val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
       it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
     }
     if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
-      project.putUserData(DEFAULT_COMPILER_EXTENSION, compilerExtension)
+      project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
     }
+  }
+
+  override fun isMigratedToConfigurator(): Boolean {
+    return true
+  }
+
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    var defaultCompilerExtension = context.project.getUserData(DEFAULT_COMPILER_EXTENSION)
+    context.putUserData(DEFAULT_COMPILER_EXTENSION, null)
+
+    if (defaultCompilerExtension == null) {
+      val allCompilers = context.mavenProjectsWithModules.mapNotNullTo(mutableSetOf()) {
+        getCompilerConfigurationWhenApplicable(it.mavenProject)?.let { config -> getCompilerId(config) }
+      }
+      defaultCompilerExtension = selectDefaultCompilerExtension(allCompilers)
+    }
+
+    context.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
+  }
+
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
+    val defaultCompilerExtension = context.getUserData(DEFAULT_COMPILER_EXTENSION)
+
+    val ideCompilerConfiguration = CompilerConfiguration.getInstance(context.project) as CompilerConfigurationImpl
+    setDefaultProjectCompiler(context.project, ideCompilerConfiguration, defaultCompilerExtension)
+
+    val data = context.mavenProjectsWithModules.map {
+      MavenProjectWithModulesData(it.mavenProject, it.modules.map { it.module })
+    }
+    configureModules(context.project, data, ideCompilerConfiguration, defaultCompilerExtension)
+
+    MavenProjectImporterBase.removeOutdatedCompilerConfigSettings(context.project)
   }
 
   override fun preProcess(module: Module,
@@ -113,9 +146,10 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     }
 
     // configure module settings
-    applyCompilerExtensionConfiguration(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
-    configureTargetLevel(mavenProject, module, CompilerConfiguration.getInstance(project), defaultCompilerExtension)
-    excludeArchetypeResources(mavenProject, module, ideCompilerConfiguration)
+    configureModules(module.project,
+                     sequenceOf(MavenProjectWithModulesData(mavenProject, listOf(module))),
+                     ideCompilerConfiguration,
+                     defaultCompilerExtension)
   }
 
   private fun selectDefaultCompilerExtension(allCompilers: Set<String>): MavenCompilerExtension? {
@@ -140,6 +174,20 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       else {
         LOG.error("$backendCompiler is not registered.")
       }
+    }
+  }
+
+  private fun configureModules(project: Project,
+                               mavenProjectWithModule: Sequence<MavenProjectWithModulesData>,
+                               ideCompilerConfiguration: CompilerConfigurationImpl,
+                               defaultCompilerExtension: MavenCompilerExtension?) {
+    mavenProjectWithModule.forEach { (mavenProject, modules) ->
+      modules.forEach { module ->
+        applyCompilerExtensionConfiguration(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
+        configureTargetLevel(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
+      }
+
+      excludeArchetypeResources(project, mavenProject, ideCompilerConfiguration)
     }
   }
 
@@ -194,16 +242,19 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     ideCompilerConfiguration.setBytecodeTargetLevel(module, targetLevel)
   }
 
-  private fun excludeArchetypeResources(mavenProject: MavenProject,
-                                        module: Module,
+  private fun excludeArchetypeResources(project: Project,
+                                        mavenProject: MavenProject,
                                         ideCompilerConfiguration: CompilerConfiguration) {
     // Exclude src/main/archetype-resources
     val dir = VfsUtil.findRelativeFile(mavenProject.directoryFile, "src", "main", "resources", "archetype-resources")
     if (dir != null && !ideCompilerConfiguration.isExcludedFromCompilation(dir)) {
       val cfg = ideCompilerConfiguration.excludedEntriesConfiguration
-      cfg.addExcludeEntryDescription(ExcludeEntryDescription(dir, true, false, MavenDisposable.getInstance(module.project)))
+      cfg.addExcludeEntryDescription(ExcludeEntryDescription(dir, true, false, MavenDisposable.getInstance(project)))
     }
   }
+
+  private data class MavenProjectWithModulesData(val mavenProject: MavenProject,
+                                                 val modules: List<Module>)
 
   companion object {
     private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
