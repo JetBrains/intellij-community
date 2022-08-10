@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.analysis.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native.tests" scope="RUNTIME" />

@@ -19,11 +19,14 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -213,34 +216,49 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         override fun changed(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
+
             val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val sourceRootEntityChanges = event.getChanges(SourceRootEntity::class.java)
+            val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
 
-            if (moduleChanges.isEmpty() && sourceRootEntityChanges.isEmpty()) return
-
-            val outdatedContentRootInModules =
-                sourceRootEntityChanges.mapNotNull { it.oldEntity?.contentRoot?.module }
-                    .mapNotNull { storageBefore.findModuleByEntity(it) }
-            val updatedContentRootInModules =
-                sourceRootEntityChanges.mapNotNull { it.newEntity?.contentRoot?.module }
-                    .mapNotNull { storageAfter.findModuleByEntity(it) }
-
-            val outdatedModules =
-                moduleChanges.asSequence().mapNotNull { it.oldEntity }
-                    .mapNotNull { storageBefore.findModuleByEntity(it) }
-                    .toList() + outdatedContentRootInModules + updatedContentRootInModules
-
-            val updatedModules: Set<Module> =
-                moduleChanges.asSequence().mapNotNull { it.newEntity }
-                    .mapNotNull { storageAfter.findModuleByEntity(it) }
-                    .toSet() + updatedContentRootInModules
-
-            if (outdatedModules.isNotEmpty()) {
-                invalidateKeys(outdatedModules)
+            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty()) {
+                return
             }
 
-            // force calculations
-            updatedModules.forEach(::get)
+            val modulesToRegister = mutableListOf<Module>()
+            val modulesToRemove = mutableListOf<Module>()
+
+            fun Module.scheduleRegister() = modulesToRegister.add(this)
+            fun Module.scheduleRemove() = modulesToRemove.add(this)
+
+            for (moduleChange in moduleChanges) {
+                when (moduleChange) {
+                    is EntityChange.Added -> storageAfter.findModuleByEntity(moduleChange.entity)?.scheduleRegister()
+                    is EntityChange.Removed -> storageBefore.findModuleByEntity(moduleChange.entity)?.scheduleRemove()
+                    is EntityChange.Replaced -> {
+                        storageBefore.findModuleByEntity(moduleChange.oldEntity)?.scheduleRemove()
+                        storageAfter.findModuleByEntity(moduleChange.newEntity)?.scheduleRegister()
+                    }
+                }
+            }
+
+            for (sourceRootChange in sourceRootChanges) {
+                val modules: List<Module> = when (sourceRootChange) {
+                    is EntityChange.Added -> listOfNotNull(storageAfter.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
+                    is EntityChange.Removed -> listOfNotNull(storageBefore.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
+                    is EntityChange.Replaced -> listOfNotNull(
+                        storageBefore.findModuleByEntity(sourceRootChange.oldEntity.contentRoot.module),
+                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                    )
+                }
+
+                for (module in modules) {
+                    module.scheduleRemove()
+                    module.scheduleRegister()
+                }
+            }
+
+            invalidateKeys(modulesToRemove.distinct())
+            modulesToRegister.distinct().forEach { get(it) }
 
             incModificationCount()
         }
