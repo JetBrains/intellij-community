@@ -39,7 +39,7 @@ interface DependencyCollector {
    * The specific format of returned strings depends on the dependency kind. For Java, the format is Maven group ID and artifact ID
    * separated by a colon.
    */
-  fun collectDependencies(project: Project): List<String>
+  fun collectDependencies(project: Project): Collection<String>
 }
 
 /**

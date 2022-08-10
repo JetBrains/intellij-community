@@ -5,16 +5,16 @@ import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.openapi.project.Project
 
 internal class MavenPackagingDependencyCollector : DependencyCollector {
-  override fun collectDependencies(project: Project): List<String> {
-    val result = mutableSetOf<String>()
-    for (mavenProject in MavenProjectsManager.getInstance(project).projects) {
-      val packaging = mavenProject.packaging
-      if (packaging.isNotBlank()
-          && packaging != "jar"
-          && packaging != "pom") {
-        result.add(packaging)
-      }
-    }
-    return result.toList()
+
+  override fun collectDependencies(project: Project): Set<String> {
+    return MavenProjectsManager.getInstance(project)
+      .projects
+      .asSequence()
+      .map { it.packaging }
+      .filter { packaging ->
+        packaging.isNotBlank()
+        && packaging != "jar"
+        && packaging != "pom"
+      }.toSet()
   }
 }

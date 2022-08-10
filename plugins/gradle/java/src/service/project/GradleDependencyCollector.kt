@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -11,33 +13,34 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleDependencyCollector : DependencyCollector {
-  override fun collectDependencies(project: Project): List<String> {
-    val projectInfoList = ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
-    val result = mutableListOf<String>()
-    for (externalProjectInfo in projectInfoList) {
-      val projectStructure = externalProjectInfo.externalProjectStructure ?: continue
-      val libraries = ExternalSystemApiUtil.findAll(projectStructure, ProjectKeys.LIBRARY)
-      for (libraryNode in libraries) {
-        val groupId = libraryNode.data.groupId
-        val artifactId = libraryNode.data.artifactId
-        if (groupId != null && artifactId != null) {
-          result.add("$groupId:$artifactId")
-        }
-      }
-    }
-    return result
+internal class GradleDependencyCollector : DependencyCollector {
+
+  override fun collectDependencies(project: Project): Set<String> {
+    return ProjectDataManager.getInstance()
+      .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
+      .asSequence()
+      .mapNotNull { it.externalProjectStructure }
+      .flatMap { ExternalSystemApiUtil.findAll(it, ProjectKeys.LIBRARY) }
+      .map { it.data }
+      .mapNotNull { libraryData ->
+        val groupId = libraryData.groupId
+        val artifactId = libraryData.artifactId
+        if (groupId != null && artifactId != null) "$groupId:$artifactId" else null
+      }.toSet()
   }
 }
 
-class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() {
+internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() {
+
   override fun onEnd(id: ExternalSystemTaskId) {
-    if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-      id.findProject()?.let {
-        it.coroutineScope.launch {
-          PluginAdvertiserService.getInstance().rescanDependencies(it)
+    if (id.projectSystemId == GradleConstants.SYSTEM_ID
+        && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
+      id.findProject()?.let { project ->
+        project.coroutineScope.launch {
+          PluginAdvertiserService.getInstance().rescanDependencies(project)
         }
       }
     }
