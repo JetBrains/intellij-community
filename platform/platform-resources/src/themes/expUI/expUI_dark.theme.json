@@ -252,6 +252,7 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
+        "separatorColor": "Grey2",
         "hoverBackground": "Blue3",
         "leftRightInset": 8
       }
