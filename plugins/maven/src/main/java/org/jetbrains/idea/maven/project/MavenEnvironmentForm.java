@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
+import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
 import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
@@ -219,15 +221,39 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
     String versionText = null;
     if (version != null) {
-      versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
+      if (StringUtil.compareVersionNumbers(version, "3") < 0) {
+        versionText = getMaven2Message(version);
+      }
+      else {
+        versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
+      }
     }
     else if (StringUtil.equals(MavenProjectBundle.message("maven.wrapper.version.title"), mavenHomeField.getText())) {
       versionText = MavenProjectBundle.message("maven.wrapper.version.label", version);
     }
     else if (localTarget) {
-      versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
+      if (MavenServerManager.BUNDLED_MAVEN_2.equals(mavenHomeField.getText().trim())) {
+        versionText = getMaven2Message(null);
+      }
+      else {
+        versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
+      }
     }
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
+  }
+
+  @NlsContexts.Label
+  private static String getMaven2Message(String version) {
+    if (!MavenVersionSupportUtil.isMaven2PluginInstalled()) {
+      return MavenProjectBundle.message("label.invalid.install.maven2plugin");
+    }
+
+    if (MavenVersionSupportUtil.isMaven2PluginDisabled()) {
+      return MavenProjectBundle.message("label.invalid.enable.maven2plugin");
+    }
+
+    if (version == null) return MavenProjectBundle.message("label.invalid.maven.home.directory");
+    return MavenProjectBundle.message("label.invalid.maven.home.version", version);
   }
 
   @Nullable

@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,6 +36,7 @@ import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InstallMaven2BuildIssue;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
@@ -241,7 +243,8 @@ public final class MavenServerManager implements Disposable {
     }
     if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
       return jdk;
-    } else {
+    }
+    else {
       MavenLog.LOG.info("Selected jdk [" + jdk.getName() + "] is not JDK1.8+ Will use internal jdk instead");
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
@@ -362,7 +365,11 @@ public final class MavenServerManager implements Disposable {
 
     MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
 
+
     if (extension == null) {
+      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
+        throw new BuildIssueException(new InstallMaven2BuildIssue());
+      }
       throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
     }
     MavenLog.LOG.warn("Using extension " + extension + " to start MavenServer");
