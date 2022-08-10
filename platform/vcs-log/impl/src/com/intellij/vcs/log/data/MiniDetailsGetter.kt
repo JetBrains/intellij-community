@@ -47,13 +47,13 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
-    if (!EventQueue.isDispatchThread()) {
-      thisLogger().assertTrue(commitsToLoad.none(), "Requesting loading commits in background thread is not supported.")
-      return cache.getIfPresent(commit)
-             ?: return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
-    }
     val details = getCommitDataIfAvailable(commit)
     if (details != null) return details
+
+    if (!EventQueue.isDispatchThread()) {
+      thisLogger().assertTrue(commitsToLoad.none(), "Requesting loading commits in background thread is not supported.")
+      return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
 
     val toLoad = IntOpenHashSet(commitsToLoad.iterator())
     val taskNumber = currentTaskIndex++
