@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.ScopedDisposable
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.createAccountsFlow
+import com.intellij.collaboration.git.GitRemoteUrlCoordinates
 import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
