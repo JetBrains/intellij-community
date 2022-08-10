@@ -18,7 +18,10 @@ package org.jetbrains.idea.svn.ignore;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.UpdateSession;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -30,21 +33,42 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import java.util.Optional;
+
 import static com.intellij.util.ArrayUtil.isEmpty;
 
 public class IgnoreGroupHelperAction {
+  private static final Key<Optional<IgnoreGroupHelperAction>> KEY = Key.create("IgnoreGroupHelperAction");
+
   private final FileGroupInfo myFileGroupInfo = new FileGroupInfo();
+
   private boolean myAllCanBeIgnored = true;
   private boolean myAllAreIgnored = true;
 
-  public void update(@NotNull AnActionEvent e) {
+  private IgnoreGroupHelperAction() {
+  }
+
+  @Nullable
+  public static IgnoreGroupHelperAction createFor(@NotNull AnActionEvent e) {
+    UpdateSession session = e.getUpdateSession();
+    Optional<IgnoreGroupHelperAction> helper = session != null
+                                               ? session.sharedData(KEY, () -> tryCreateFor(e))
+                                               : tryCreateFor(e);
+    return helper.orElse(null);
+  }
+
+  @NotNull
+  private static Optional<IgnoreGroupHelperAction> tryCreateFor(@NotNull AnActionEvent e) {
     // TODO: This logic was taken from BasicAction.update(). Probably it'll be more convenient to share these conditions for correctness.
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
     VirtualFile[] files = getSelectedFiles(e);
-    boolean enabledAndVisible = project != null && vcs != null && !isEmpty(files) && isEnabled(vcs, files);
+    if (project == null || vcs == null || isEmpty(files)) return Optional.empty();
 
-    e.getPresentation().setEnabledAndVisible(enabledAndVisible);
+    IgnoreGroupHelperAction helper = new IgnoreGroupHelperAction();
+    if (!helper.checkEnabled(vcs, files)) return Optional.empty();
+
+    return Optional.of(helper);
   }
 
   public static VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
@@ -57,7 +81,7 @@ public class IgnoreGroupHelperAction {
     return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
   }
 
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
+  private boolean checkEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
            ContainerUtil.and(files, file -> isEnabled(vcs, file));
   }
@@ -79,7 +103,7 @@ public class IgnoreGroupHelperAction {
     return false;
   }
 
-  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+  private boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     boolean result = isEnabledImpl(vcs, file);
     if (result) {
       myFileGroupInfo.onFileEnabled(file);

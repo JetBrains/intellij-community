@@ -32,47 +32,48 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    IgnoreGroupHelperAction helper = new IgnoreGroupHelperAction();
-    helper.update(e);
+    IgnoreGroupHelperAction helper = IgnoreGroupHelperAction.createFor(e);
+    if (helper == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
 
     FileGroupInfo fileGroupInfo = helper.getFileGroupInfo();
 
-    if ((e.getPresentation().isEnabled())) {
-      removeAll();
-      if (helper.allAreIgnored()) {
-        final DataContext dataContext = e.getDataContext();
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        SvnVcs vcs = SvnVcs.getInstance(project);
+    removeAll();
+    if (helper.allAreIgnored()) {
+      final DataContext dataContext = e.getDataContext();
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      SvnVcs vcs = SvnVcs.getInstance(project);
 
-        final Ref<Boolean> filesOk = new Ref<>(Boolean.FALSE);
-        final Ref<Boolean> extensionOk = new Ref<>(Boolean.FALSE);
+      final Ref<Boolean> filesOk = new Ref<>(Boolean.FALSE);
+      final Ref<Boolean> extensionOk = new Ref<>(Boolean.FALSE);
 
-        // virtual files parameter is not used -> can pass null
-        SvnPropertyService.doCheckIgnoreProperty(vcs, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);
+      // virtual files parameter is not used -> can pass null
+      SvnPropertyService.doCheckIgnoreProperty(vcs, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);
 
-        if (Boolean.TRUE.equals(filesOk.get())) {
-          myRemoveExactAction
-            .setActionText(fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.UndoIgnore.text"));
-          add(myRemoveExactAction);
-        }
-
-        if (Boolean.TRUE.equals(extensionOk.get())) {
-          myRemoveExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
-          add(myRemoveExtensionAction);
-        }
-
-        e.getPresentation().setText(messagePointer("group.RevertIgnoreChoicesGroup.text"));
+      if (Boolean.TRUE.equals(filesOk.get())) {
+        myRemoveExactAction
+          .setActionText(fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.UndoIgnore.text"));
+        add(myRemoveExactAction);
       }
-      else if (helper.allCanBeIgnored()) {
-        myAddExactAction.setActionText(
-          fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.Ignore.ExactMatch.text"));
-        add(myAddExactAction);
-        if (fileGroupInfo.sameExtension()) {
-          myAddExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
-          add(myAddExtensionAction);
-        }
-        e.getPresentation().setText(messagePointer("group.IgnoreChoicesGroup.text"));
+
+      if (Boolean.TRUE.equals(extensionOk.get())) {
+        myRemoveExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
+        add(myRemoveExtensionAction);
       }
+
+      e.getPresentation().setText(messagePointer("group.RevertIgnoreChoicesGroup.text"));
+    }
+    else if (helper.allCanBeIgnored()) {
+      myAddExactAction.setActionText(
+        fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.Ignore.ExactMatch.text"));
+      add(myAddExactAction);
+      if (fileGroupInfo.sameExtension()) {
+        myAddExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
+        add(myAddExtensionAction);
+      }
+      e.getPresentation().setText(messagePointer("group.IgnoreChoicesGroup.text"));
     }
   }
 }
