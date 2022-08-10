@@ -9,7 +9,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,6 +28,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
 /**
  * @author vlan
@@ -188,7 +189,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       getPythonProcessResult(Objects.requireNonNull(getHelperPath(VIRTUALENV_ZIPAPP_NAME)), args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
-      throw new ExecutionException(PySdkBundle.message("python.creating.venv.failed.sentence"), e);
+      showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
