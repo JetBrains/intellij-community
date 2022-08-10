@@ -238,17 +238,18 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     private fun processEntity(replaceWithTrack: TrackToParents): ParentsRef? {
 
-      val replaceWithEntityState = replaceWithState[replaceWithTrack.entity]
+      val replaceWithEntityId = replaceWithTrack.entity
+      val replaceWithEntityState = replaceWithState[replaceWithEntityId]
       when (replaceWithEntityState) {
-        ReplaceWithState.ElementMoved -> return ParentsRef.AddedElement(replaceWithTrack.entity)
+        ReplaceWithState.ElementMoved -> return ParentsRef.AddedElement(replaceWithEntityId)
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithEntityState.targetEntityId)
         ReplaceWithState.NoChangeTraceLost -> return null
         is ReplaceWithState.Relabel -> return ParentsRef.TargetRef(replaceWithEntityState.targetEntityId)
         null -> Unit
       }
 
-      val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithTrack.entity)
-      val replaceWithEntity = replaceWithEntityData.createEntity(replaceWithStorage)
+      val replaceWithEntityData = replaceWithStorage.entityDataByIdOrDie(replaceWithEntityId)
+      val replaceWithEntity = replaceWithEntityData.createEntity(replaceWithStorage) as WorkspaceEntityBase
       if (replaceWithTrack.parents.isEmpty()) {
         return findAndReplaceRootEntity(replaceWithEntity as WorkspaceEntityBase)
       }
@@ -256,90 +257,80 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         val parentsAssociation = replaceWithTrack.parents.mapNotNullTo(HashSet()) { processEntity(it) }
         if (parentsAssociation.isNotEmpty()) {
           val targetEntityData = parentsAssociation.filterIsInstance<ParentsRef.TargetRef>().firstNotNullOfOrNull { parent ->
-            findEntityInTargetStore(replaceWithEntityData, parent.targetEntityId, replaceWithTrack.entity.clazz)
+            findEntityInTargetStore(replaceWithEntityData, parent.targetEntityId, replaceWithEntityId.clazz)
           }
-          if (targetEntityData == null) {
-            if (entityFilter(replaceWithEntity.entitySource)) {
-              addSubtree(parentsAssociation, replaceWithTrack.entity)
-              return ParentsRef.AddedElement(replaceWithTrack.entity)
-            }
-            else {
-              replaceWithTrack.entity.addState(ReplaceWithState.NoChangeTraceLost)
-              return null
-            }
-          }
-          else {
-            when {
-              entityFilter(targetEntityData.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-                error("Should be already processed")
-              }
-              entityFilter(targetEntityData.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
-                error("Should be already processed")
-              }
-              !entityFilter(targetEntityData.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-                addSubtree(parentsAssociation, replaceWithTrack.entity)
-                return ParentsRef.AddedElement(replaceWithTrack.entity)
-              }
-              !entityFilter(targetEntityData.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
-                doNothingOn(targetEntityData.createEntityId(), replaceWithTrack.entity)
-                return ParentsRef.TargetRef(targetEntityData.createEntityId())
-              }
-              else -> error("Unexpected branch")
-            }
-          }
+          val targetEntity = targetEntityData?.createEntity(targetStorage) as? WorkspaceEntityBase
+
+          return processExactEntity(targetEntity, replaceWithEntity, parentsAssociation)
         }
         else {
-          replaceWithTrack.entity.addState(ReplaceWithState.NoChangeTraceLost)
+          replaceWithEntityId.addState(ReplaceWithState.NoChangeTraceLost)
           return null
         }
       }
     }
 
-    @Suppress("MoveVariableDeclarationIntoWhen")
-    private fun findAndReplaceRootEntity(replaceWithRootEntity: WorkspaceEntityBase): ParentsRef? {
-      val currentState = replaceWithState[replaceWithRootEntity.id]
+    private fun findAndReplaceRootEntity(replaceWithEntity: WorkspaceEntityBase): ParentsRef? {
+      val replaceWithEntityId = replaceWithEntity.id
+      val currentState = replaceWithState[replaceWithEntityId]
       // This was just checked before this call
       assert(currentState == null)
 
-      val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage)
+      val targetEntity = findEntityInStorage(replaceWithEntity, targetStorage, replaceWithStorage)
+      val parents = null
+
+      return processExactEntity(targetEntity, replaceWithEntity, parents)
+    }
+
+    private fun processExactEntity(targetEntity: WorkspaceEntity?,
+                                   replaceWithEntity: WorkspaceEntityBase,
+                                   parents: Set<ParentsRef>?): ParentsRef? {
+      val replaceWithEntityId = replaceWithEntity.id
       if (targetEntity == null) {
-        if (entityFilter(replaceWithRootEntity.entitySource)) {
-          addSubtree(null, replaceWithRootEntity.id)
-          return ParentsRef.AddedElement(replaceWithRootEntity.id)
+        if (entityFilter(replaceWithEntity.entitySource)) {
+          addSubtree(parents, replaceWithEntityId)
+          return ParentsRef.AddedElement(replaceWithEntityId)
         }
         else {
-          replaceWithRootEntity.id.addState(ReplaceWithState.NoChangeTraceLost)
+          replaceWithEntityId.addState(ReplaceWithState.NoChangeTraceLost)
           return null
         }
       }
+      else {
 
-      val targetEntityId = (targetEntity as WorkspaceEntityBase).id
-      val targetCurrentState = targetState[targetEntityId]
-      when (targetCurrentState) {
-        is ReplaceState.NoChange -> return ParentsRef.TargetRef(targetEntityId)
-        is ReplaceState.Relabel -> return ParentsRef.TargetRef(targetEntityId)
-        ReplaceState.Remove -> return null
-        null -> Unit
+        val targetEntityId = (targetEntity as WorkspaceEntityBase).id
+        val targetCurrentState = targetState[targetEntityId]
+        when (targetCurrentState) {
+          is ReplaceState.NoChange -> return ParentsRef.TargetRef(targetEntityId)
+          is ReplaceState.Relabel -> return ParentsRef.TargetRef(targetEntityId)
+          ReplaceState.Remove -> return null
+          null -> Unit
+        }
+
+        when {
+          entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
+            error("This branch should be already processed because we process 'target' entities first")
+          }
+          entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
+            error("This branch should be already processed because we process 'target' entities first")
+          }
+          !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
+            if (targetEntity is WorkspaceEntityWithPersistentId) {
+              replaceWorkspaceData(targetEntityId, replaceWithEntityId, parents)
+              return ParentsRef.TargetRef(targetEntityId)
+            }
+            else {
+              addSubtree(parents, replaceWithEntityId)
+              return ParentsRef.AddedElement(replaceWithEntityId)
+            }
+          }
+          !entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
+            doNothingOn(targetEntity.id, replaceWithEntityId)
+            return ParentsRef.TargetRef(targetEntityId)
+          }
+          else -> error("Unexpected branch")
+        }
       }
-
-      when {
-        entityFilter(replaceWithRootEntity.entitySource) && entityFilter(targetEntity.entitySource) -> {
-          error("This branch should be already processed because we process 'target' entities first")
-        }
-        entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          replaceWorkspaceData(targetEntity.id, replaceWithRootEntity.id, null)
-          return ParentsRef.TargetRef(targetEntityId)
-        }
-        !entityFilter(replaceWithRootEntity.entitySource) && entityFilter(targetEntity.entitySource) -> {
-          error("This branch should be already processed because we process 'target' entities first")
-        }
-        !entityFilter(replaceWithRootEntity.entitySource) && !entityFilter(targetEntity.entitySource) -> {
-          doNothingOn(targetEntity.id, replaceWithRootEntity.id)
-          return ParentsRef.TargetRef(targetEntityId)
-        }
-      }
-
-      error("Unexpected branch")
     }
   }
 
