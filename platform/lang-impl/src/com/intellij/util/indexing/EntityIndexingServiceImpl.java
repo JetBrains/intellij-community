@@ -99,18 +99,20 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       List<IndexableFilesIterator> mergedIterators =
         IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
 
-      List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
-      LOG.debug("Accumulated iterators: " + debugNames);
-      int maxNamesToLog = 10;
-      String reasonMessage = "changes in: " + debugNames
-        .stream()
-        .limit(maxNamesToLog)
-        .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
-      if (debugNames.size() > maxNamesToLog) {
-        reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
+      if (!mergedIterators.isEmpty()) {
+        List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
+        LOG.debug("Accumulated iterators: " + debugNames);
+        int maxNamesToLog = 10;
+        String reasonMessage = "changes in: " + debugNames
+          .stream()
+          .limit(maxNamesToLog)
+          .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
+        if (debugNames.size() > maxNamesToLog) {
+          reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
+        }
+        logRootChanges(project, false);
+        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
       }
-      logRootChanges(project, false);
-      new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
     }
   }
 
