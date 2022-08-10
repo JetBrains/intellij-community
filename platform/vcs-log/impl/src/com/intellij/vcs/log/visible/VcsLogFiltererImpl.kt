@@ -29,7 +29,6 @@ import com.intellij.vcs.log.util.VcsLogUtil.SHORT_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
-import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer

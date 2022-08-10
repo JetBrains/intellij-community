@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
