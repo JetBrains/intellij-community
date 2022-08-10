@@ -34,9 +34,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjec
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -262,7 +260,7 @@ internal class BackgroundLoadingBarController(private val syncMutex: Mutex) {
 
 suspend fun <R> writeAction(action: () -> R): R = withContext(Dispatchers.EDT) { action() }
 
-internal fun ModuleTransformer.asCoroutine() = object : CoroutineModuleTransformer {
+internal fun AsyncModuleTransformer.asCoroutine() = object : CoroutineModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         this@asCoroutine.transformModules(project, nativeModules)
 }
@@ -279,7 +277,7 @@ internal fun ModuleChangesSignalProvider.asCoroutine() = object : FlowModuleChan
     }
 }
 
-internal fun ProjectModuleOperationProvider.asCoroutine() = object : CoroutineProjectModuleOperationProvider {
+internal fun ProjectAsyncModuleOperationProvider.asCoroutine() = object : CoroutineProjectModuleOperationProvider {
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = this@asCoroutine.hasSupportFor(project, psiFile)
 

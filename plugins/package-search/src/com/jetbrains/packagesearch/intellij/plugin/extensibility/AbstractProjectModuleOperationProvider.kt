@@ -34,7 +34,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
     DeprecationLevel.ERROR
 )
 @ScheduledForRemoval
-abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
+abstract class AbstractProjectModuleOperationProvider : ProjectAsyncModuleOperationProvider {
 
     override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,

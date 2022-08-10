@@ -44,7 +44,7 @@ interface ProjectModuleOperationProvider {
     companion object {
 
         private val extensionPointName
-            get() = ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
+            get() = ExtensionPointName.create<ProjectAsyncModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
 
         internal val extensions
             get() = extensionPointName.extensions.map { it.asCoroutine() }
