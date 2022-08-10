@@ -23,7 +23,6 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
-  private final IgnoreGroupHelperAction myHelperAction;
   private final IgnoreInfoGetterStub myGetterStub;
 
   private final RemoveFromIgnoreListAction myRemoveExactAction;
@@ -32,7 +31,6 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
   private final AddToIgnoreListAction myAddExtensionAction;
 
   public IgnoreActionGroup() {
-    myHelperAction = new IgnoreGroupHelperAction();
     myGetterStub = new IgnoreInfoGetterStub();
 
     myAddExactAction = new AddToIgnoreListAction(myGetterStub, false);
@@ -56,16 +54,15 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    final FileGroupInfo fileGroupInfo = new FileGroupInfo();
+    IgnoreGroupHelperAction helper = new IgnoreGroupHelperAction();
+    helper.update(e);
 
-    myHelperAction.setFileIterationListener(fileGroupInfo);
-    myHelperAction.update(e);
-
+    FileGroupInfo fileGroupInfo = helper.getFileGroupInfo();
     myGetterStub.setDelegate(fileGroupInfo);
 
     if ((e.getPresentation().isEnabled())) {
       removeAll();
-      if (myHelperAction.allAreIgnored()) {
+      if (helper.allAreIgnored()) {
         final DataContext dataContext = e.getDataContext();
         final Project project = CommonDataKeys.PROJECT.getData(dataContext);
         SvnVcs vcs = SvnVcs.getInstance(project);
@@ -88,7 +85,8 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
         }
 
         e.getPresentation().setText(messagePointer("group.RevertIgnoreChoicesGroup.text"));
-      } else if (myHelperAction.allCanBeIgnored()) {
+      }
+      else if (helper.allCanBeIgnored()) {
         myAddExactAction.setActionText(
           fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.Ignore.ExactMatch.text"));
         add(myAddExactAction);

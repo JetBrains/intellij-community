@@ -33,14 +33,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import static com.intellij.util.ArrayUtil.isEmpty;
 
 public class IgnoreGroupHelperAction {
-  private boolean myAllCanBeIgnored;
-  private boolean myAllAreIgnored;
-  private FileIterationListener myListener;
+  private final FileGroupInfo myFileGroupInfo = new FileGroupInfo();
+  private boolean myAllCanBeIgnored = true;
+  private boolean myAllAreIgnored = true;
 
   public void update(@NotNull AnActionEvent e) {
-    myAllAreIgnored = true;
-    myAllCanBeIgnored = true;
-
     // TODO: This logic was taken from BasicAction.update(). Probably it'll be more convenient to share these conditions for correctness.
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
@@ -50,7 +47,7 @@ public class IgnoreGroupHelperAction {
     e.getPresentation().setEnabledAndVisible(enabledAndVisible);
   }
 
-  private VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+  private static VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       Iterable<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
       if (exactlySelectedFiles != null) {
@@ -63,10 +60,6 @@ public class IgnoreGroupHelperAction {
   protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
            ContainerUtil.and(files, file -> isEnabled(vcs, file));
-  }
-
-  public void setFileIterationListener(FileIterationListener listener) {
-    myListener = listener;
   }
 
   private boolean isEnabledImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
@@ -89,7 +82,7 @@ public class IgnoreGroupHelperAction {
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     boolean result = isEnabledImpl(vcs, file);
     if (result) {
-      myListener.onFileEnabled(file);
+      myFileGroupInfo.onFileEnabled(file);
     }
     return result;
   }
@@ -100,5 +93,10 @@ public class IgnoreGroupHelperAction {
 
   public boolean allAreIgnored() {
     return myAllAreIgnored;
+  }
+
+  @NotNull
+  public FileGroupInfo getFileGroupInfo() {
+    return myFileGroupInfo;
   }
 }
