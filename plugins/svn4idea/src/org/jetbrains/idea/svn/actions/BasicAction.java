@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = getSelectedFiles(e);
     if (isEmpty(files)) return;
 
     SvnVcs vcs = SvnVcs.getInstance(project);
@@ -70,6 +71,10 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     }
   }
 
+  protected VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+    return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -79,7 +84,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = getSelectedFiles(e);
     boolean visible = project != null;
 
     e.getPresentation().setEnabled(visible && vcs != null && !isEmpty(files) && isEnabled(vcs, files));
@@ -129,7 +134,8 @@ public abstract class BasicAction extends AnAction implements DumbAware {
 
   protected abstract void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException;
 
-  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException;
+  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context)
+    throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

@@ -47,7 +47,7 @@ public class IgnoreGroupHelperAction {
     e.getPresentation().setEnabledAndVisible(enabledAndVisible);
   }
 
-  private static VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+  public static VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       Iterable<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
       if (exactlySelectedFiles != null) {
@@ -63,11 +63,11 @@ public class IgnoreGroupHelperAction {
   }
 
   private boolean isEnabledImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    if (SvnStatusUtil.isIgnoredInAnySense(vcs.getProject(), file)) {
+    if (isIgnored(vcs, file)) {
       myAllCanBeIgnored = false;
       return myAllAreIgnored;
     }
-    else if (ChangeListManager.getInstance(vcs.getProject()).isUnversioned(file)) {
+    else if (isUnversioned(vcs, file)) {
       VirtualFile parent = file.getParent();
       if (parent != null && SvnStatusUtil.isUnderControl(vcs, parent)) {
         myAllAreIgnored = false;
@@ -98,5 +98,19 @@ public class IgnoreGroupHelperAction {
   @NotNull
   public FileGroupInfo getFileGroupInfo() {
     return myFileGroupInfo;
+  }
+
+  public static boolean isIgnored(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    return SvnStatusUtil.isIgnoredInAnySense(vcs.getProject(), file);
+  }
+
+  public static boolean isUnversioned(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    if (ChangeListManager.getInstance(vcs.getProject()).isUnversioned(file)) {
+      VirtualFile parent = file.getParent();
+      if (parent != null && SvnStatusUtil.isUnderControl(vcs, parent)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

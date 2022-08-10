@@ -9,8 +9,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
 import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
@@ -44,8 +46,13 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   }
 
   @Override
+  protected VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+    return IgnoreGroupHelperAction.getSelectedFiles(e);
+  }
+
+  @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return true;
+    return IgnoreGroupHelperAction.isIgnored(vcs, file);
   }
 
   @Override

@@ -9,7 +9,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
 import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
@@ -23,6 +25,11 @@ public class AddToIgnoreListAction extends BasicAction {
   public AddToIgnoreListAction(@NotNull IgnoreInfoGetter infoGetter, boolean useCommonExtension) {
     myInfoGetter = infoGetter;
     myUseCommonExtension = useCommonExtension;
+  }
+
+  @Override
+  protected VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+    return IgnoreGroupHelperAction.getSelectedFiles(e);
   }
 
   public void setActionText(@ActionText @NotNull String name) {
@@ -56,7 +63,7 @@ public class AddToIgnoreListAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return true;
+    return IgnoreGroupHelperAction.isUnversioned(vcs, file);
   }
 
   @Override
