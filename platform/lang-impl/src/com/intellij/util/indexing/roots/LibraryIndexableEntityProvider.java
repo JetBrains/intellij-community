@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
@@ -25,6 +25,9 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull LibraryEntity entity,
                                                                                                 @NotNull Project project) {
+    //  sure we are interested only in libraries used in project, but in case registered library is downloaded
+    // no change in dependencies happen, only Added event on LibraryEntity.
+    // For debug see com.intellij.roots.libraries.LibraryTest
     return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getPersistentId(), false);
   }
 
