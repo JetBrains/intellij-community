@@ -1446,7 +1446,7 @@ public class JBTabsImpl extends JComponent
     }
 
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow()) {
-      mySelectedInfo.setLastFocusOwner(getFocusOwner());
+      mySelectedInfo.setLastFocusOwner(getFocusOwnerToStore());
     }
 
     TabInfo oldInfo = mySelectedInfo;
@@ -1503,6 +1503,11 @@ public class JBTabsImpl extends JComponent
       }, ModalityState.NON_MODAL);
       return removeDeferred();
     }
+  }
+
+  @Nullable
+  protected JComponent getFocusOwnerToStore() {
+    return getFocusOwner();
   }
 
   private void fireBeforeSelectionChanged(@Nullable TabInfo oldInfo, TabInfo newInfo) {
