@@ -155,7 +155,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           targetFile = macZipWithoutRuntime,
           zipRoot = zipRoot,
           productJson = generateMacProductJson(builtinModule = context.builtinModule, context = context, javaExecutablePath = null),
-          directories = directories - runtimeDist,
+          directories = directories.filterNot { it == runtimeDist },
           extraFiles = extraFiles,
           executableFilePatterns = generateExecutableFilesPatterns(false),
           compressionLevel = compressionLevel
