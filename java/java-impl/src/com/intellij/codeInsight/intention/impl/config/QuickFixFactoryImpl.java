@@ -737,7 +737,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+      JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
 
   @NotNull

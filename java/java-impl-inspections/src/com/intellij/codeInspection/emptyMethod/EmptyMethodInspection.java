@@ -4,7 +4,6 @@ package com.intellij.codeInspection.emptyMethod;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.*;
@@ -125,7 +124,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
             fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
               QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
               QuickFixBundle.message("fix.add.special.annotation.family"),
-              EXCLUDE_ANNOS, qualifiedName, psi));
+              JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
+            ));
             return true;
           });
         }

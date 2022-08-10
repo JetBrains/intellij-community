@@ -97,7 +97,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
           final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
             QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, field);
+            JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
+          );
           fixes.add(quickFix);
           return true;
         });
