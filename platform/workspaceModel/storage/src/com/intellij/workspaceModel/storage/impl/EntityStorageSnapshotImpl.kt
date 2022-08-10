@@ -285,7 +285,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  internal var useNewRbs = false
+  internal var useNewRbs = true
 
   @TestOnly
   internal var keepLastRbsEngine = false

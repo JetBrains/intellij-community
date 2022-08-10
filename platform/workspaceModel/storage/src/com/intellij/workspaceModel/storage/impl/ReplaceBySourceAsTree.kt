@@ -57,6 +57,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
 
+    // This method can be used for debugging
+    // OperationsApplier().dumpOperations()
+
     OperationsApplier().apply()
   }
 
@@ -110,6 +113,82 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                                                              replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = entityData.id
     }
+
+    /**
+     * First print the operations, then print the information about entities
+     */
+    fun dumpOperations(): String {
+      val targetEntities: MutableSet<EntityId> = mutableSetOf()
+      val replaceWithEntities: MutableSet<EntityId> = mutableSetOf()
+      return buildString {
+        appendLine("---- New entities -------")
+        for (addOperation in addOperations) {
+          appendLine(infoOf(addOperation.replaceWithSource, replaceWithStorage, true))
+          replaceWithEntities += addOperation.replaceWithSource
+          if (addOperation.parents == null) {
+            appendLine("No parent entities")
+          } else {
+            appendLine("Parents:")
+            addOperation.parents.forEach { parent ->
+              when (parent) {
+                is ParentsRef.AddedElement -> {
+                  appendLine("   - ${infoOf(parent.replaceWithEntityId, replaceWithStorage, true)} <--- New Added Entity")
+                  replaceWithEntities += parent.replaceWithEntityId
+                }
+                is ParentsRef.TargetRef -> {
+                  appendLine("   - ${infoOf(parent.targetEntityId, targetStorage, true)} <--- Existing Entity")
+                  targetEntities += parent.targetEntityId
+                }
+              }
+            }
+          }
+          appendLine()
+        }
+
+        appendLine("---- No More New Entities -------")
+        appendLine("---- Removes -------")
+
+        operations.filterValues { it is Operation.Remove }.forEach { entityId, _ ->
+          appendLine(infoOf(entityId, targetStorage, true))
+          targetEntities += entityId
+        }
+
+        appendLine("---- No More Removes -------")
+        appendLine()
+        appendLine("---- Replaces -------")
+
+        operations.filterValues { it is Operation.Relabel }.forEach { entityId, operation ->
+          operation as Operation.Relabel
+          appendLine(infoOf(entityId, targetStorage, true) + " -> " + infoOf(operation.replaceWithEntityId, replaceWithStorage,
+                                                                             true) + " | " + "Count of parents: ${operation.parents?.size}")
+          targetEntities += entityId
+          replaceWithEntities += operation.replaceWithEntityId
+        }
+
+        appendLine("---- No More Replaces -------")
+        appendLine()
+        appendLine("---- Entities -------")
+        appendLine()
+        appendLine("---- Target Storage -------")
+        targetEntities.forEach {
+          appendLine(infoOf(it, targetStorage, false))
+          appendLine()
+        }
+
+        appendLine()
+        appendLine("---- Replace With Storage -------")
+        replaceWithEntities.forEach {
+          appendLine(infoOf(it, replaceWithStorage, false))
+          appendLine()
+        }
+      }
+    }
+
+    private fun infoOf(entity: EntityId, store: AbstractEntityStorage, short: Boolean): String {
+      val entityData = store.entityDataByIdOrDie(entity)
+      val entity = entityData.createEntity(store)
+      return if (entity is WorkspaceEntityWithPersistentId) entity.persistentId.toString() else if (short) "$entity" else "$entity | $entityData"
+    }
   }
 
   // This class is just a wrapper to combine functions logically
@@ -130,9 +209,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val replaceWithEntityState = replaceWithState[replaceWithTrack.entity]
       when (replaceWithEntityState) {
         ReplaceWithState.ElementMoved -> return ParentsRef.AddedElement(replaceWithTrack.entity)
-        is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithTrack.entity)
+        is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithEntityState.targetEntityId)
         ReplaceWithState.NoChangeTraceLost -> return null
-        is ReplaceWithState.Relabel -> return ParentsRef.TargetRef(replaceWithTrack.entity)
+        is ReplaceWithState.Relabel -> return ParentsRef.TargetRef(replaceWithEntityState.targetEntityId)
         null -> Unit
       }
 
