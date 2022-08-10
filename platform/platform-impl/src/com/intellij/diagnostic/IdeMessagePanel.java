@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 public final class IdeMessagePanel extends NonOpaquePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
+  private static final boolean NOTIFICATIONS_ENABLED = Registry.intValue("ea.indicator.blinking.timeout", -1) < 0;
   private static final String GROUP_ID = "IDE-errors";
 
   private final IdeErrorsIcon myIcon;
@@ -173,7 +175,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
         Disposer.dispose(myBalloon);
       }
     }
-    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame)) {
+    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame) && NOTIFICATIONS_ENABLED) {
       Project project = myFrame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
