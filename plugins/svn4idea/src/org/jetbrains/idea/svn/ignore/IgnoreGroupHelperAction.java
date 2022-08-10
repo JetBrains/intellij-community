@@ -45,6 +45,9 @@ public class IgnoreGroupHelperAction {
   private boolean myAllCanBeIgnored = true;
   private boolean myAllAreIgnored = true;
 
+  private final Ref<Boolean> myIgnoreFilesOk = new Ref<>(Boolean.FALSE);
+  private final Ref<Boolean> myIgnoreExtensionOk = new Ref<>(Boolean.FALSE);
+
   private IgnoreGroupHelperAction() {
   }
 
@@ -68,6 +71,7 @@ public class IgnoreGroupHelperAction {
     IgnoreGroupHelperAction helper = new IgnoreGroupHelperAction();
     if (!helper.checkEnabled(vcs, files)) return Optional.empty();
 
+    helper.checkIgnoreProperty(vcs);
     return Optional.of(helper);
   }
 
@@ -84,6 +88,14 @@ public class IgnoreGroupHelperAction {
   private boolean checkEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
            ContainerUtil.and(files, file -> isEnabled(vcs, file));
+  }
+
+  private void checkIgnoreProperty(@NotNull SvnVcs vcs) {
+    if (myAllAreIgnored) {
+      // virtual files parameter is not used -> can pass null
+      SvnPropertyService.doCheckIgnoreProperty(vcs, null, myFileGroupInfo, myFileGroupInfo.getExtensionMask(),
+                                               myIgnoreFilesOk, myIgnoreExtensionOk);
+    }
   }
 
   private boolean isEnabledImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
@@ -122,6 +134,14 @@ public class IgnoreGroupHelperAction {
   @NotNull
   public FileGroupInfo getFileGroupInfo() {
     return myFileGroupInfo;
+  }
+
+  public boolean areIgnoreFilesOk() {
+    return myAllAreIgnored && Boolean.TRUE.equals(myIgnoreFilesOk.get());
+  }
+
+  public boolean areIgnoreExtensionOk() {
+    return myAllAreIgnored && Boolean.TRUE.equals(myIgnoreExtensionOk.get());
   }
 
   public static boolean isIgnored(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
