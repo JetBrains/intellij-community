@@ -106,7 +106,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
-                val colors = computeColors(isSelected, isHover, isSearchResult = false)
+                val colors = computeColors(isSelected, isHover, isSearchResult = true)
                 val additionalColors = AdditionalCellColors(
                     secondaryForeground = PackageSearchUI.getTextColorSecondary(isSelected),
                     tagBackground = PackageSearchUI.Colors.PackagesTable.SearchResult.Tag.background(isSelected, isHover),
@@ -139,14 +139,12 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             add(
                 JLabel(name).apply {
                     colors.applyTo(this)
-                    isOpaque = false
                 },
                 componentConstraint(gapAfter = componentGapX)
             )
             add(
                 JLabel(identifier).apply {
                     colors.applyTo(this)
-                    isOpaque = false
                 },
                 componentConstraint().gapAfter("0:push")
             )
@@ -154,7 +152,6 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             add(
                 JLabel(identifier).apply {
                     colors.applyTo(this)
-                    isOpaque = false
                 },
                 componentConstraint()
             )

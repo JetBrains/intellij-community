@@ -18,11 +18,13 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.AbstractTableCellEditor
+import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.ComboBoxTableCellEditorComponent
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PopupMenuListItemCellRenderer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.computeColors
+import java.awt.Color
 import java.awt.Component
 import javax.swing.JTable
 
@@ -48,7 +50,7 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
 
         val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion.originalVersion)
             .apply {
-                val colors = computeColors(isSelected, isHover = false, isSearchResult = viewModel is UiPackageModel.SearchResult)
+                val colors = computeColors(isSelected = true, isHover = false, isSearchResult = viewModel is UiPackageModel.SearchResult)
                 colors.applyTo(this)
                 setCell(row, column)
             }
