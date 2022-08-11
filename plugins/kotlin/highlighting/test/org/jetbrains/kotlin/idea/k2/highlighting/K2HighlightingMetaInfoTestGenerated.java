@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.highlighter;
+package org.jetbrains.kotlin.idea.k2.highlighting;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,14 +14,14 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir")
+@TestRoot("highlighting")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../idea/tests/testData/highlighterMetaInfo")
-public abstract class FirHighlightingMetaInfoTestGenerated extends AbstractFirHighlightingMetaInfoTest {
+public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2HighlightingMetaInfoTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/highlighterMetaInfo/smartCasts")
-    public static class SmartCasts extends AbstractFirHighlightingMetaInfoTest {
+    public static class SmartCasts extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -69,7 +69,7 @@ public abstract class FirHighlightingMetaInfoTestGenerated extends AbstractFirHi
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/highlighterMetaInfo")
-    public static class Uncategorized extends AbstractFirHighlightingMetaInfoTest {
+    public static class Uncategorized extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

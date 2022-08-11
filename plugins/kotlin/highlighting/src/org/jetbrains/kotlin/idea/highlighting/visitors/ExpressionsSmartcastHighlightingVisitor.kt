@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.fir.highlighter.visitors
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.highlighting.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
@@ -33,7 +32,7 @@ internal class ExpressionsSmartcastHighlightingVisitor(
         }
         expression.getSmartCastInfo()?.let { info ->
             createInfoAnnotation(
-                getSmartCastTarget(expression),
+              getSmartCastTarget(expression),
                 KotlinBaseHighlightingBundle.message(
                     "smart.cast.to.0",
                     info.smartCastType.asStringForDebugging()
@@ -45,7 +44,6 @@ internal class ExpressionsSmartcastHighlightingVisitor(
         super.visitExpression(expression)
     }
 }
-
 
 private fun getSmartCastTarget(expression: KtExpression): PsiElement {
     var target: PsiElement = expression

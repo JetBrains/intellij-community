@@ -46,8 +46,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" exported="" />
@@ -143,6 +141,9 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />

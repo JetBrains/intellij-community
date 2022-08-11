@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.idea.fir.highlighter
+package org.jetbrains.kotlin.idea.highlighting
 
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.AbstractKotlinMainRunLineMarkerContributor
 import org.jetbrains.kotlin.psi.KtNamedFunction

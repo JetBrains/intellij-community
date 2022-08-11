@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.fir.highlighter
+package org.jetbrains.kotlin.idea.k2.highlighting
 
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
@@ -8,7 +7,7 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-abstract class AbstractFirHighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
+abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
     private val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
 
     override fun isFirPlugin(): Boolean = true

@@ -176,6 +176,7 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.live-templates-k1",
     "kotlin.code-insight.live-templates-k2",
     "kotlin.fir",
+    "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",

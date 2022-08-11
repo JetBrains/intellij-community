@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.fir.highlighter.visitors
+package org.jetbrains.kotlin.idea.highlighting.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForPropertyDeclaration
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
@@ -31,9 +31,9 @@ internal class VariableReferenceHighlightingVisitor(
 
         if (expression.isAutoCreatedItParameter()) {
             createInfoAnnotation(
-                expression,
-                KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
-                Colors.FUNCTION_LITERAL_DEFAULT_PARAMETER
+              expression,
+              KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
+              KotlinHighlightingColors.FUNCTION_LITERAL_DEFAULT_PARAMETER
             )
             return
         }
@@ -71,6 +71,7 @@ internal class VariableReferenceHighlightingVisitor(
         return getReferencedName() == "it" // todo
     }
 }
+
 
 @Suppress("UnusedReceiverParameter")
 private fun KtAnalysisSession.isMutableVariable(symbol: KtSymbol?): Boolean = when (symbol) {

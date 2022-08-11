@@ -1,9 +1,6 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve
+package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.util.PsiUtilCore
@@ -13,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterD
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.*
+import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHiglightingVisitory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors

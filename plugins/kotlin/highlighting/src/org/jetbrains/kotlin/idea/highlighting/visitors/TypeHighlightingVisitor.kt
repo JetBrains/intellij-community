@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.fir.highlighter.visitors
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.highlighting.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiClass
@@ -9,10 +8,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForTypeDeclaration
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class TypeHighlightingVisitor(
     analysisSession: KtAnalysisSession,
@@ -33,7 +32,7 @@ internal class TypeHighlightingVisitor(
             return
         }
         textAttributesKeyForTypeDeclaration(target)?.let { key ->
-            if (expression.isConstructorCallReference() && key != Colors.ANNOTATION) {
+            if (expression.isConstructorCallReference() && key != KotlinHighlightingColors.ANNOTATION) {
                 // Do not highlight constructor call as class reference
                 return@let
             }
@@ -57,7 +56,7 @@ internal class TypeHighlightingVisitor(
         }
 
         val annotationEntry = PsiTreeUtil.getParentOfType(
-            expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
+          expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
         )
        return annotationEntry?.atSymbol != null
     }
