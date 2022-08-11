@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.Gradl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
+import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.templates.ReactJsClientTemplate
@@ -209,7 +210,15 @@ fun GradleIRListBuilder.applicationSupport() {
 
 fun GradleIRListBuilder.commonCssSupport() {
     "commonWebpackConfig" {
-        +"cssSupport.enabled = true"
+        "cssSupport" {
+            addRaw {
+                val receiver = when (dsl) {
+                    GradlePrinter.GradleDsl.KOTLIN -> ""
+                    GradlePrinter.GradleDsl.GROOVY -> "it."
+                }
+                +"${receiver}enabled.set(true)"
+            }
+        }
     }
 }
 
