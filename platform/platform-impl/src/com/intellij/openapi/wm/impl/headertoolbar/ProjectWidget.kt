@@ -165,7 +165,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value))
+      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value), index == 0)
     }
 
     private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
@@ -175,7 +175,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       return ListSeparator(model.getCaptionAboveOf(value))
     }
 
-    private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {
+    private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
       val action = value.action as ReopenProjectAction
       val projectPath = action.projectPath
       lateinit var nameLbl: JLabel
@@ -226,14 +226,15 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
       val res = NonOpaquePanel(BorderLayout())
       res.border = JBUI.Borders.empty()
-      res.add(createSeparator(separator), BorderLayout.NORTH)
+      res.add(createSeparator(separator, hideLine), BorderLayout.NORTH)
       res.add(result, BorderLayout.CENTER)
       return res
     }
 
-    private fun createSeparator(separator: ListSeparator): JComponent {
+    private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JComponent {
       val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
       res.caption = separator.text
+      res.setHideLine(hideLine)
 
       val panel = JPanel(BorderLayout())
       panel.border = JBUI.Borders.empty()
