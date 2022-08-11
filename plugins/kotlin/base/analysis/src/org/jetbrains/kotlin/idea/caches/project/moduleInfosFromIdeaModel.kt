@@ -224,8 +224,8 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 return
             }
 
-            val modulesToRegister = mutableListOf<Module>()
-            val modulesToRemove = mutableListOf<Module>()
+            val modulesToRegister = LinkedHashSet<Module>()
+            val modulesToRemove = LinkedHashSet<Module>()
 
             fun Module.scheduleRegister() = modulesToRegister.add(this)
             fun Module.scheduleRemove() = modulesToRemove.add(this)
@@ -241,6 +241,8 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 }
             }
 
+            val modulesToUpdate = mutableListOf<Module>()
+
             for (sourceRootChange in sourceRootChanges) {
                 val modules: List<Module> = when (sourceRootChange) {
                     is EntityChange.Added -> listOfNotNull(storageAfter.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
@@ -252,13 +254,23 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 }
 
                 for (module in modules) {
-                    module.scheduleRemove()
-                    module.scheduleRegister()
+                    if (module in modulesToRemove && module !in modulesToRegister) {
+                        // The module itself is gone. No need in updating it because of source root modification.
+                        // Note that on module deletion, both module and source root deletion events arrive.
+                        continue
+                    }
+
+                    modulesToUpdate.add(module)
                 }
             }
 
-            invalidateKeys(modulesToRemove.distinct())
-            modulesToRegister.distinct().forEach { get(it) }
+            for (module in modulesToUpdate) {
+                module.scheduleRemove()
+                module.scheduleRegister()
+            }
+
+            invalidateKeys(modulesToRemove)
+            modulesToRegister.forEach { get(it) }
 
             incModificationCount()
         }

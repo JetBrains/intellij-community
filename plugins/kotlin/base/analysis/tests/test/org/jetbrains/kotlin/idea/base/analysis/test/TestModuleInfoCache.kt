@@ -66,6 +66,10 @@ class TestModuleInfoCache : JavaModuleTestCase() {
         renameModule(barModule, "baq")
 
         assertHasModules("SDK", "foo:test", "baq:test", "boo:src", "boo:test")
+
+        removeModule(barModule)
+
+        assertHasModules("SDK", "foo:test", "boo:src", "boo:test")
     }
 
     private fun assertHasModules(vararg names: String) {
@@ -106,6 +110,15 @@ class TestModuleInfoCache : JavaModuleTestCase() {
         runWriteActionAndWait {
             ModuleManager.getInstance(project).getModifiableModel().apply {
                 renameModule(module, newName)
+                commit()
+            }
+        }
+    }
+
+    private fun removeModule(module: Module) {
+        runWriteActionAndWait {
+            ModuleManager.getInstance(project).getModifiableModel().apply {
+                disposeModule(module)
                 commit()
             }
         }
