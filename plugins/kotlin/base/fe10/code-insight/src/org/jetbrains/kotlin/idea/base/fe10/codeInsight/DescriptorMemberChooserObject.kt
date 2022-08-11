@@ -60,6 +60,7 @@ open class DescriptorMemberChooserObject(
             modifiers = emptySet()
             startFromName = true
             classifierNamePolicy = ClassifierNamePolicy.SHORT
+            presentableUnresolvedTypes = true
         }
 
         @NlsSafe

@@ -56,12 +56,12 @@ class ConvertClassToKClassFix(element: KtDotQualifiedExpression, type: KotlinTyp
 
     companion object Factory : KotlinIntentionActionsFactory() {
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-            val casted = Errors.TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.cast(diagnostic)
+            val casted = Errors.TYPE_MISMATCH.cast(diagnostic)
 
             val expectedClassDescriptor = casted.a.constructor.declarationDescriptor as? ClassDescriptor ?: return emptyList()
             if (!KotlinBuiltIns.isKClass(expectedClassDescriptor)) return emptyList()
 
-            val element = casted.psiElement.parent as? KtDotQualifiedExpression ?: return emptyList()
+            val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
             return listOf(ConvertClassToKClassFix(element, casted.a))
         }
     }

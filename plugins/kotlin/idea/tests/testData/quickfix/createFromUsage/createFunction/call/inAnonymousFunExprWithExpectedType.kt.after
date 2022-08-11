@@ -1,5 +1,5 @@
 // "Create function 'bar'" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+// DISABLE-ERRORS
 
 class A<T>(val t: T)
 
@@ -9,6 +9,6 @@ fun foo(l: A<String>): A<Int> {
     return l.convert(fun(it: String) = bar(it))
 }
 
-fun bar(it: String): Int {
+fun bar(it: String) {
     TODO("Not yet implemented")
 }

@@ -42,5 +42,3 @@ fun foo10(a: () -> Unit = { println() }) { /// *, L, M, λ
 // If a default parameter value is not just a lambda, but a function call with a lambda argument,
 // there should be a line breakpoint as well
 fun foo11(a: String = run { "foo" }) = a /// *, L, M, λ
-
-// IGNORE_K2

@@ -51,4 +51,3 @@ private inline fun inlineOnlyBlock(block: () -> Unit) {
 private inline fun inlineOnlyBlock2(noinline block: () -> Unit) {
     block()
 }
-// IGNORE_K2

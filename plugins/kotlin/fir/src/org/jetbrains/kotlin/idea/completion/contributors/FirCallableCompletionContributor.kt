@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAnd
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -48,13 +48,13 @@ internal open class FirCallableCompletionContributor(
     }
 
     protected fun KtAnalysisSession.getOptions(symbol: KtCallableSymbol): CallableInsertionOptions =
-        CallableInsertionOptions(detectImportStrategy(symbol), getInsertionStrategy(symbol))
+        CallableInsertionOptions(importStrategyDetector.detectImportStrategy(symbol), getInsertionStrategy(symbol))
 
     private fun KtAnalysisSession.getExtensionOptions(
         symbol: KtCallableSymbol,
         applicability: KtExtensionApplicabilityResult
     ): CallableInsertionOptions? =
-        getInsertionStrategyForExtensionFunction(symbol, applicability)?.let { CallableInsertionOptions(detectImportStrategy(symbol), it) }
+        getInsertionStrategyForExtensionFunction(symbol, applicability)?.let { CallableInsertionOptions(importStrategyDetector.detectImportStrategy(symbol), it) }
 
     protected open fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean = true
 
@@ -266,10 +266,10 @@ internal open class FirCallableCompletionContributor(
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
         // equal to the same symbols from top level without substitution.
-        val extensionMembers = mutableSetOf<KtCallableSymbol>()
+        val extensionMembers = mutableSetOf<CallableId>()
         extensionNonMembers.forEach { (symbol, applicabilityResult) ->
             getExtensionOptions(symbol, applicabilityResult)?.let {
-                extensionMembers += symbol
+                symbol.callableIdIfNonLocal?.let(extensionMembers::add)
                 addCallableSymbolToCompletion(
                     context,
                     symbol,
@@ -281,7 +281,7 @@ internal open class FirCallableCompletionContributor(
         }
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
-            .filter { it !in extensionMembers && filter(it) }
+            .filter { it.callableIdIfNonLocal !in extensionMembers && filter(it) }
             .forEach { addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint) }
     }
 

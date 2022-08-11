@@ -146,6 +146,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
             LambdaToAnonymousFunctionIntention.convertLambdaToFunction(
                 lambda,
                 functionDescriptor,
+                IdeDescriptorRenderers.SOURCE_CODE_TYPES_FOR_SAM_CONVERSION,
                 functionName,
                 functionParameterName,
                 typeParameters

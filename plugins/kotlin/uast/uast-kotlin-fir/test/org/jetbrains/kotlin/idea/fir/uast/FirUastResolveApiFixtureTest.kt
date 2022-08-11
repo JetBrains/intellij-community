@@ -26,8 +26,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "MultiResolveJava",
         // TODO: multiResolve, getArgumentForParameter, return type for ambiguous call
         "MultiResolveJavaAmbiguous",
-        // TODO: resolve to setter, not getter
-        "ResolveFromBaseJava",
         // TODO: multiResolve
         "MultiResolveInClass",
         // TODO: multiResolve, return type for ambiguous call
@@ -198,4 +196,13 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testOperatorOverloads() {
         doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
+
+    fun testResolveSyntheticJavaPropertyAccessor() {
+        doCheck("ResolveSyntheticJavaPropertyAccessor", ::checkResolveSyntheticJavaPropertyAccessor)
+    }
+
+    fun testResolveKotlinPropertyAccessor() {
+        doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
 }
