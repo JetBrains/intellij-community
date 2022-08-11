@@ -81,6 +81,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/annotationsOnEnumEntry.java");
         }
 
+        @TestMetadata("documented.java")
+        public void testDocumented() throws Exception {
+            runTest("testData/newJ2k/annotations/documented.java");
+        }
+
         @TestMetadata("forLoopParameter.java")
         public void testForLoopParameter() throws Exception {
             runTest("testData/newJ2k/annotations/forLoopParameter.java");
