@@ -111,12 +111,12 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
       return null
     }
 
-    fun getRelativePath(parent: FilePath?, child: FilePath): String {
-      val isLocal = !child.isNonLocal
+    fun getRelativePath(parentPath: FilePath?, path: FilePath): String {
+      val isLocal = !path.isNonLocal
       val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      var result = if (parent != null) FileUtil.getRelativePath(parent.path, child.path, '/', caseSensitive) else null
-      result = result ?: child.path
-      return if (isLocal) FileUtil.toSystemDependentName(result) else result
+      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
     }
   }
 }
