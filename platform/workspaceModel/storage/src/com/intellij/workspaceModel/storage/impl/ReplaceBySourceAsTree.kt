@@ -318,7 +318,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
         when {
           entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-            replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, parents)
+            if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
+              replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, parents)
+            } else {
+              doNothingOn(targetEntityId, replaceWithEntityId)
+            }
             return ParentsRef.TargetRef(replaceWithEntity.id)
           }
           entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -327,7 +331,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
           !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
             if (targetEntity is WorkspaceEntityWithPersistentId) {
-              replaceWorkspaceData(targetEntityId, replaceWithEntityId, parents)
+              if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
+                replaceWorkspaceData(targetEntityId, replaceWithEntityId, parents)
+              } else {
+                doNothingOn(targetEntityId, replaceWithEntityId)
+              }
               return ParentsRef.TargetRef(targetEntityId)
             }
             else {
@@ -524,7 +532,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       else {
         when {
           entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-            replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
+            if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
+              replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
+            } else {
+              doNothingOn(targetEntity.id, replaceWithEntity.id)
+            }
             return replaceWithEntity.id
           }
           entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
@@ -532,7 +544,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             return null
           }
           !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-            replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
+            if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
+              replaceWorkspaceData(targetEntity.id, replaceWithEntity.id, targetParents)
+            } else {
+              doNothingOn(targetEntity.id, replaceWithEntity.id)
+            }
             return replaceWithEntity.id
           }
           !entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
