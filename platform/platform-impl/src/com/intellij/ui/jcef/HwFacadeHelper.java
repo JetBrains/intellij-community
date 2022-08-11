@@ -71,7 +71,7 @@ public class HwFacadeHelper {
       Set<CefClient> clients = clientsField.get(ourCefApp);
       if (clients == null) return list;
       for (CefClient client : clients) {
-        HashMap<?, CefBrowser> browsers = browsersField.get(client);
+        Map<?, CefBrowser> browsers = browsersField.get(client);
         if (browsers == null) return list;
         for (CefBrowser browser : browsers.values()) {
           JBCefBrowserBase jbCefBrowser = JBCefBrowserBase.getJBCefBrowser(browser);
