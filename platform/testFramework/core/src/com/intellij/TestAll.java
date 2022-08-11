@@ -501,4 +501,12 @@ public class TestAll implements Test {
       fail("Bomb created by " + myBombed.user() + description + " now explodes!");
     }
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+           "myRunTests=" + myRunTests +
+           ", myIgnoredTests=" + myIgnoredTests +
+           '}';
+  }
 }
