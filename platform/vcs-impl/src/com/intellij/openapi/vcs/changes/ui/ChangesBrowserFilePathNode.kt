@@ -114,8 +114,8 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     @JvmStatic
     fun safeCastToFilePath(node: ChangesBrowserNode<*>?): FilePath? {
       if (node == null) return null
-      if (node is ChangesBrowserModuleNode) {
-        return node.moduleRoot
+      if (node is NodeWithFilePath) {
+        return node.nodeFilePath
       }
       val o = node.userObject
       if (o is FilePath) return o
