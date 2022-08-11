@@ -122,9 +122,16 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     if (targetPlatform.platform == Platform.current()) this
     else replace(targetPlatform.platform.lineSeparator, Platform.current().lineSeparator)
 
-  private fun String.useLocalFileSeparators(targetPlatform: TargetPlatform) =
-    if (targetPlatform.platform == Platform.current()) this
-    else replace(targetPlatform.platform.fileSeparator, Platform.current().fileSeparator)
+  private fun String.useLocalFileSeparators(platform: Platform, uriMode: Boolean): String {
+    val separator = if (uriMode)
+        '/'
+      else
+        Platform.current().fileSeparator
+
+    return if (platform.fileSeparator == separator) this
+    else replace(platform.fileSeparator, separator)
+  }
+
   @NlsSafe
   private fun resolveFistPath(@NlsSafe text: String,
                               targetProjectBasePath: String,
@@ -144,11 +151,13 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     if (pathIndexEnd == -1) pathIndexEnd = text.length
-    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform)
+
+    val isUri = text.substring(maxOf(0, pathIndexStart - 7), maxOf(0,pathIndexStart - 1)).endsWith("file:/")
+    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform.platform, isUri)
 
     val buf = StringBuilder()
     buf.append(text.subSequence(0, pathIndexStart))
-    buf.append(localProjectBasePath)
+    buf.append(localProjectBasePath.useLocalFileSeparators(Platform.current(), isUri))
     buf.append(path)
     buf.append(text.substring(pathIndexEnd))
     return buf.toString()
