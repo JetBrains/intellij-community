@@ -5,17 +5,15 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.util.isInDumbMode
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileClassProvider
 import org.jetbrains.kotlin.psi.analysisContext
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
 
 class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
@@ -40,16 +38,13 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         val result = arrayListOf<PsiClass>()
         file.declarations.filterIsInstance<KtClassOrObject>().mapNotNullTo(result) { it.toLightClass() }
 
-        val jvmClassInfo = JvmFileClassUtil.getFileClassInfoNoResolve(file)
-        if (!jvmClassInfo.withJvmMultifileClass && !file.hasTopLevelCallables()) return result.toTypedArray()
+        if (!file.isJvmMultifileClassFile && !file.hasTopLevelCallables()) return result.toTypedArray()
 
         val kotlinAsJavaSupport = KotlinAsJavaSupport.getInstance(project)
         if (file.analysisContext == null) {
-            kotlinAsJavaSupport
-                .getFacadeClasses(file.javaFileFacadeFqName, moduleInfo.contentScope())
-                .filterTo(result) { it is KtLightClassForFacade && file in it.files }
+            kotlinAsJavaSupport.getLightFacade(file)?.let(result::add)
         } else {
-            result.add(kotlinAsJavaSupport.createFacadeForSyntheticFile(file.javaFileFacadeFqName, file))
+            result.add(kotlinAsJavaSupport.createFacadeForSyntheticFile(file))
         }
 
         return result.toTypedArray()
