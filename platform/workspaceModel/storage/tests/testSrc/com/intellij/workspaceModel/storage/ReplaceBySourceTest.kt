@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
 import kotlin.test.assertEquals
@@ -438,7 +437,6 @@ class ReplaceBySourceTest {
   }
 
   @RepeatedTest(10)
-  @Disabled
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
     builder.addWithSoftLinkEntity(named.persistentId)
@@ -479,7 +477,6 @@ class ReplaceBySourceTest {
   }
 
   @RepeatedTest(10)
-  @Disabled
   fun `replace by source with composite id`() {
     replacement = createEmptyBuilder()
     val namedEntity = replacement.addNamedEntity("MyName")
@@ -495,32 +492,6 @@ class ReplaceBySourceTest {
     assertOneElement(builder.entities(ComposedLinkEntity::class.java).toList())
   }
 
-  /*
-    Not sure if this should work this way. We can track persistentId changes in builder, but what if we perform replaceBySource with storage?
-    @RepeatedTest(10)
-    fun `entity with soft reference - linked has wrong source`() {
-      val builder = PEntityStorageBuilder.create()
-      val named = builder.addNamedEntity("MyName")
-      val linked = builder.addWithSoftLinkEntity(named.persistentId, AnotherSource)
-      resetChanges()
-      builder.assertConsistency()
-
-      replacement = PEntityStorageBuilder.from(builder)
-      replacement.modifyEntity(ModifiableNamedEntity::class.java, named) {
-        this.name = "NewName"
-      }
-
-      replacement.assertConsistency()
-
-      builder.replaceBySource({ it is MySource }, replacement)
-      assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
-      assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
-
-      builder.assertConsistency()
-    }
-  */
-
-  @Disabled
   @RepeatedTest(10)
   fun `trying to create two similar persistent ids`() {
     val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
@@ -531,7 +502,9 @@ class ReplaceBySourceTest {
 
     replacement.addNamedEntity("MyName", source = MySource)
 
-    builder.replaceBySource({ it is MySource }, replacement)
+    rbsMySources()
+
+    assertEquals(MySource, builder.entities(NamedEntity::class.java).single().entitySource)
   }
 
   @RepeatedTest(10)
@@ -652,7 +625,6 @@ class ReplaceBySourceTest {
   }
 
   @RepeatedTest(10)
-  @Disabled
   fun `replace oneToOne connection with partial move`() {
     val parentEntity = builder.addOoParentEntity()
     builder.addOoChildEntity(parentEntity)

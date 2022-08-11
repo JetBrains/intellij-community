@@ -323,7 +323,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             } else {
               doNothingOn(targetEntityId, replaceWithEntityId)
             }
-            return ParentsRef.TargetRef(replaceWithEntity.id)
+            return ParentsRef.TargetRef(targetEntityId)
           }
           entityFilter(targetEntity.entitySource) && !entityFilter(replaceWithEntity.entitySource) -> {
             removeWorkspaceData(targetEntity.id, replaceWithEntity.id)
