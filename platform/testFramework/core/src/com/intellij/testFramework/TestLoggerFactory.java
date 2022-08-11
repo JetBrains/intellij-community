@@ -79,7 +79,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
     if (julLogger.isLoggable(Level.FINE) &&
         ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
-      julLogger.addHandler(new LogToStdoutJulHandler());
+      julLogger.addHandler(LogToStdoutJulHandler.create());
     }
   }
 
@@ -493,6 +493,22 @@ public final class TestLoggerFactory implements Logger.Factory {
       setFormatter(new WithTimeSinceTestStartedJulFormatter());
       setOutputStream(System.out);
       setLevel(Level.ALL);
+    }
+
+    /*
+     * The constructor of ConsoleHandler takes and stores System.err,
+     * and when setOutputStream is called later, the original stream is closed.
+     * Prevent System.err from being closed.
+     */
+    private static LogToStdoutJulHandler create() {
+      PrintStream stderr = System.err;
+      try {
+        System.setErr(new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8));
+        return new LogToStdoutJulHandler();
+      }
+      finally {
+        System.setErr(stderr);
+      }
     }
   }
 
