@@ -79,7 +79,13 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   protected open fun getRelativePath(path: FilePath): @NlsSafe String {
-    return getRelativePath(safeCastToFilePath(getParent()), path)
+    val parent = getParent()
+    val isLocal = !path.isNonLocal
+    val parentPath = safeCastToFilePath(parent)
+    val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+    val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
+    val prettyPath = relativePath ?: path.path
+    return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
   }
 
   override fun getTextPresentation(): String {
@@ -109,14 +115,6 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
       if (o is FilePath) return o
       if (o is Change) return ChangesUtil.getAfterPath(o)
       return null
-    }
-
-    fun getRelativePath(parentPath: FilePath?, path: FilePath): String {
-      val isLocal = !path.isNonLocal
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
     }
   }
 }
