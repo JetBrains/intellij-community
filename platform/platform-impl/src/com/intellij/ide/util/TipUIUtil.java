@@ -208,12 +208,23 @@ public final class TipUIUtil {
 
       Image image = null;
       if (loader == null) {
+        // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
         try {
           URL imageUrl = new File(tipsPath, path).toURI().toURL();
           image = loadFromUrl(imageUrl);
         }
         catch (MalformedURLException e) {
           handleError(e, isStrict);
+        }
+        // This case is required only for Startdust Tips of the Day preview
+        if (image == null) {
+          try {
+            URL imageUrl = new URL(null, path);
+            image = loadFromUrl(imageUrl);
+          }
+          catch (MalformedURLException e) {
+            handleError(e, isStrict);
+          }
         }
       }
       else {
