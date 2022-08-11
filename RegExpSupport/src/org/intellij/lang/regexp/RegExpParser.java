@@ -511,11 +511,11 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
   }
 
-  private void parsePcreConditionalGroup(PsiBuilder builder) {
+  private static void parsePcreConditionalGroup(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     builder.advanceLexer();
-    parseGroupEnd(builder);
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
     marker.done(RegExpElementTypes.GROUP);
   }
 
