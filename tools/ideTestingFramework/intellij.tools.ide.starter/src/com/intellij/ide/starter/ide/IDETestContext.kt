@@ -5,7 +5,10 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.ide.command.MarshallableCommand
-import com.intellij.ide.starter.models.*
+import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.models.VMOptions
+import com.intellij.ide.starter.models.andThen
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.profiler.ProfilerType

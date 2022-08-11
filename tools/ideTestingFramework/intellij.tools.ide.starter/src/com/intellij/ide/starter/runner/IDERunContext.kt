@@ -28,7 +28,10 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -91,7 +94,7 @@ data class IDERunContext(
     }
   }
 
-  // TODO: refactor this
+  // TODO: refactor this https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext
   private fun prepareToRunIDE(): IDEStartResult {
     StarterBus.post(IdeLaunchEvent(EventState.BEFORE, this))
 
