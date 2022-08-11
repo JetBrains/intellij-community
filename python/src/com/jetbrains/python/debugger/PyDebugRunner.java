@@ -188,7 +188,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
-  private static int findAvailableSocketPort() {
+  public static int findAvailableSocketPort() {
     try {
       return NetUtils.findAvailableSocketPort();
     }
