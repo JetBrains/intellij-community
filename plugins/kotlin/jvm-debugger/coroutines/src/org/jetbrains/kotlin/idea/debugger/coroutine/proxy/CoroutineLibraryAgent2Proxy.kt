@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineLibraryAgent2Proxy(
     private val executionContext: DefaultExecutionContext,

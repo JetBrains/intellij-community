@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.toJavaValue
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isCreationSeparatorFrame
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineStackTraceProvider(private val executionContext: DefaultExecutionContext) {
     companion object {
