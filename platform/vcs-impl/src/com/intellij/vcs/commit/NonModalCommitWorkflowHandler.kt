@@ -200,6 +200,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun resetCommitChecksResult() {
     isCommitChecksResultUpToDate = false
+    hideCommitChecksFailureNotification()
   }
 
   override fun beforeCommitChecksStarted() {
