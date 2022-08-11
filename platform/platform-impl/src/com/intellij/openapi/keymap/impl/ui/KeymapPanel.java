@@ -346,6 +346,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myShowOnlyConflicts = state;
         myActionsTree.setBaseFilter(myShowOnlyConflicts ? SystemShortcuts.getInstance().createKeymapConflictsActionFilter() : null);

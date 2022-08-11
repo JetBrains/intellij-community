@@ -211,6 +211,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           mySecondaryGroupUpdater.update(e);
         }
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);

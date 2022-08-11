@@ -155,6 +155,10 @@ public class RecentProjectPanel extends JPanel {
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(true);
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
 
