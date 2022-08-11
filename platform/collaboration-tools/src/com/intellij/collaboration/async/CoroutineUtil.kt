@@ -26,9 +26,9 @@ interface ScopedDisposable : Disposable {
 }
 
 @ApiStatus.Experimental
-class CancellingScopedDisposable(context: CoroutineContext = SupervisorJob()) : ScopedDisposable {
+open class CancellingScopedDisposable(context: CoroutineContext = SupervisorJob()) : ScopedDisposable {
 
-  override val scope: CoroutineScope = CoroutineScope(context)
+  final override val scope: CoroutineScope = CoroutineScope(context)
 
   override fun dispose() {
     scope.cancel()

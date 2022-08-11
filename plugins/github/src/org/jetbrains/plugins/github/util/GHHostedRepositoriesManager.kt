@@ -20,12 +20,14 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 
 @Service
 class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposable by CancellingScopedDisposable() {
@@ -41,17 +43,10 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
   init {
     val accountsServersFlow = accountManager.createAccountsFlow(this).mapState(scope) { accounts ->
       accounts.map { it.server }.toSet()
-    }.also {
-      checkServerVersions(it)
-    }
-
-    val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    if (unitTestMode) {
-      checkServerVersions(accountsServersFlow)
     }
 
     val remotesFlow = createRemotesFlow()
-    val discoveredServersState = if (unitTestMode) {
+    val discoveredServersState = if (ApplicationManager.getApplication().isUnitTestMode) {
       MutableStateFlow(emptySet())
     }
     else {
@@ -163,25 +158,6 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
       }
     }
     return null
-  }
-
-  private fun checkServerVersions(serversFlow: Flow<Set<GithubServerPath>>) {
-    scope.launch {
-      serversFlow.collectLatest { servers ->
-        for (server in servers) {
-          if (server.isGithubDotCom) {
-            continue
-          }
-
-          try {
-            val metadata = metadataLoader.loadMetadata(server).await()
-            GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)
-          }
-          catch (ignore: Exception) {
-          }
-        }
-      }
-    }
   }
 
   companion object {

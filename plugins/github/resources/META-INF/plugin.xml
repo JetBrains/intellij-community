@@ -50,6 +50,7 @@
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.plugins.github.pullrequest.GHServerVersionsCollector$Initializer"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffExtension"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
