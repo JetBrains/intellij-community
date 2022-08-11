@@ -24,6 +24,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -290,7 +291,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      byte @NotNull [] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
-      return createBinaryImpl(project, content, highlightFile.getFileType(), DiffVcsFacade.getInstance().getFilePath(highlightFile), highlightFile);
+      FilePath filePath = DiffVcsFacade.getInstance().getFilePath(highlightFile);
+      return createBinaryImpl(project, content, highlightFile.getFileType(), filePath, highlightFile);
     }
 
     return createDocumentFromBytes(project, content, highlightFile);
@@ -444,13 +446,20 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   private static boolean isBinaryContent(byte @NotNull [] content, @NotNull FileType fileType) {
-    if (UnknownFileType.INSTANCE.equals(fileType)) {
+    if (fileType instanceof UIBasedFileType) {
+      return true; // text file, that should be shown as binary (SVG, UI Forms).
+    }
+
+    if (!fileType.isBinary()) {
+      return false;
+    }
+
+    if (UnknownFileType.INSTANCE.equals(fileType) ||
+        fileType instanceof INativeFileType ||
+        Registry.is("diff.use.aggressive.text.file.detection")) {
       return guessCharsetFromContent(content) == null;
     }
-    if (fileType instanceof UIBasedFileType) {
-      return true;
-    }
-    return fileType.isBinary();
+    return true;
   }
 
 
