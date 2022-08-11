@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.platforms.library
 
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -38,8 +39,9 @@ fun VirtualFile.getLibraryKindForJar(): KnownLibraryKindForIndex {
 private fun detectLibraryKindFromJarContentsForIndex(jarRoot: VirtualFile): KnownLibraryKindForIndex {
     var result: KnownLibraryKindForIndex? = null
     VfsUtil.visitChildrenRecursively(jarRoot, object : VirtualFileVisitor<Unit>() {
-        override fun visitFile(file: VirtualFile): Boolean =
-            when (file.extension) {
+        override fun visitFile(file: VirtualFile): Boolean {
+            ProgressManager.checkCanceled()
+            return when (file.extension) {
                 "class" -> false
 
                 "kjsm" -> {
@@ -54,6 +56,8 @@ private fun detectLibraryKindFromJarContentsForIndex(jarRoot: VirtualFile): Know
 
                 else -> true
             }
+        }
     })
+
     return result ?: KnownLibraryKindForIndex.UNKNOWN
 }
