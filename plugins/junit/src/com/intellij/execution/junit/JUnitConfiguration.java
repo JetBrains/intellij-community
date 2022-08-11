@@ -50,6 +50,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
@@ -298,7 +300,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH)
                                         : null;
   }
 
@@ -781,7 +783,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
-    
+
     public void setTestMethodName(String methodName) {
       METHOD_NAME = methodName;
     }
@@ -856,7 +858,21 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
-        return className + '.' + getMethodName();
+        Integer index = null;
+        if (PARAMETERS != null) {
+          Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
+          Matcher matcher = pattern.matcher(PARAMETERS);
+          if (matcher.find()) {
+            String group = matcher.group(1);
+            try {
+              index = Integer.parseInt(group);
+            }
+            catch (NumberFormatException ignored) {
+            }
+          }
+        }
+        String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+        return className + '.' + getMethodName() + indexStr;
       }
 
       return className;

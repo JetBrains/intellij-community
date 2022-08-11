@@ -19,6 +19,8 @@ import org.jetbrains.uast.UastContextKt;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -50,7 +52,20 @@ public class TestMethod extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()";
+    Integer index = null;
+    String parameters = getConfiguration().getPersistentData().getProgramParameters();
+    Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
+    Matcher matcher = pattern.matcher(parameters);
+    if (matcher.find()) {
+      String group = matcher.group(1);
+      try {
+        index = Integer.parseInt(group);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()" + indexStr;
   }
 
   @Override
@@ -128,7 +143,7 @@ public class TestMethod extends TestObject {
       }
       return false;
     };
-    
+
     if (!hasMethod.test(methodName) && !hasMethod.test(methodNameWithSignature)) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
