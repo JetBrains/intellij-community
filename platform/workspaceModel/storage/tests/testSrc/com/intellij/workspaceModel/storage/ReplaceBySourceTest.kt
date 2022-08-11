@@ -14,34 +14,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-/**
- * Replace by source test plan
- *
- * Plus sign means implemented
- *
- *   + Same entity modification
- *   + Add entity in remote builder
- *   + Remove entity in remote builder
- *   + Parent + child - modify parent
- *   + Parent + child - modify child
- *   + Parent + child - remove child
- *   + Parent + child - remove parent
- * - Parent + child - wrong source for parent nullable
- * - Parent + child - wrong source for parent not null
- * - Parent + child - wrong source for child nullable
- * - Parent + child - wrong source for child not null
- *   + Parent + child - wrong source for parent in remote builder
- *   + Parent + child - wrong source for child in remote builder
- *
- * Soft links
- *   + Change property of persistent id
- * - Change property of persistent id. Entity with link should be in wrong source
- * - Change property of persistent id. Entity with persistent id should be in wrong source (what should happen?)
- *
- *
- * different connection types
- * persistent id
- */
 class ReplaceBySourceTest {
 
   private lateinit var builder: MutableEntityStorageImpl
@@ -1447,6 +1419,24 @@ class ReplaceBySourceTest {
     val facet = module.facets.single()
     assertEquals(MySource, facet.entitySource)
     assertEquals("Very other data", facet.moreData)
+  }
+
+  @RepeatedTest(10)
+  fun `replace root entities without persistent id`() {
+    builder add LeftEntity(AnotherSource)
+    builder add LeftEntity(AnotherSource)
+
+    replacement add LeftEntity(MySource)
+    replacement add LeftEntity(MySource)
+
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    val leftEntities = builder.entities(LeftEntity::class.java).toList()
+    assertEquals(2, leftEntities.size)
+    assertTrue(leftEntities.all { it.entitySource == MySource })
   }
 
   private inner class ThisStateChecker {

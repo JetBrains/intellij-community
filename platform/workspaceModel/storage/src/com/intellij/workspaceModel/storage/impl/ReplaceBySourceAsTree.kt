@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsTree.OperationsApplier
 import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
@@ -285,7 +286,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // This was just checked before this call
       assert(currentState == null)
 
-      val targetEntity = findEntityInStorage(replaceWithEntity, targetStorage, replaceWithStorage)
+      val targetEntity = findEntityInStorage(replaceWithEntity, targetStorage, replaceWithStorage, targetState)
       val parents = null
 
       return processExactEntity(targetEntity, replaceWithEntity, parents)
@@ -363,7 +364,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         null -> Unit
       }
 
-      val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage)
+      val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage, targetState)
 
       return processExactEntity(targetEntity, replaceWithRootEntity, null)
     }
@@ -643,7 +644,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       assert(currentTargetState == null) { "This state was already checked before this function" }
 
       val replaceWithEntity = findEntityInStorage(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase, replaceWithStorage,
-                                                  targetStorage) as? WorkspaceEntityBase
+                                                  targetStorage, replaceWithState) as? WorkspaceEntityBase
 
       return processExactEntity(null, targetEntityData, replaceWithEntity)
     }
@@ -789,15 +790,19 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
      */
     private fun findEntityInStorage(rootEntity: WorkspaceEntityBase,
                                     goalStorage: AbstractEntityStorage,
-                                    oppositeStorage: AbstractEntityStorage): WorkspaceEntity? {
+                                    oppositeStorage: AbstractEntityStorage,
+                                    goalState: Long2ObjectMap<out Any>): WorkspaceEntity? {
       return if (rootEntity is WorkspaceEntityWithPersistentId) {
         val persistentId = rootEntity.persistentId
         goalStorage.resolve(persistentId)
       }
       else {
+        val oppositeEntityData = oppositeStorage.entityDataByIdOrDie(rootEntity.id)
         goalStorage.entities(rootEntity.id.clazz.findWorkspaceEntity())
           .filter {
-            goalStorage.entityDataByIdOrDie((it as WorkspaceEntityBase).id) == oppositeStorage.entityDataByIdOrDie(rootEntity.id)
+            val itId = (it as WorkspaceEntityBase).id
+            if (goalState[itId] != null) return@filter false
+            goalStorage.entityDataByIdOrDie(itId).equalsIgnoringEntitySource(oppositeEntityData)
           }
           .firstOrNull()
       }
