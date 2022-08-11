@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.visualLayer
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR_EVEN_IF_INACTIVE
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -13,6 +14,8 @@ class ToggleVisualLayerAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean =
     getEditor(e)?.let { service.enabledForEditor(it) } ?: false
+
+  override  fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val editor = getEditor(e) ?: return

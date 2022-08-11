@@ -757,6 +757,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         if (e.getDataContext() != DataContext.EMPTY_CONTEXT) { // Avoid fake events
           properties.setValue(PREVIEW_PROPERTY_KEY, state);

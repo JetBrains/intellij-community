@@ -1785,6 +1785,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       e.getPresentation().setEnabled(myEnableStateProvider.produce());
       Toggleable.setSelected(e.getPresentation(), myState.get());
     }
+    
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean selected) {
@@ -1806,6 +1811,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return Objects.equals(mySelectedContextName, getTemplatePresentation().getText());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1836,6 +1846,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return mySelectedScope == myScope;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -2051,6 +2066,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myIsPinned.set(state);
       UISettings.getInstance().setPinFindInPath(state);
@@ -2072,6 +2092,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), header.fileMaskField));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), header.fileMaskField) &&

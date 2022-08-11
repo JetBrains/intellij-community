@@ -42,6 +42,11 @@ public class InvokeQuickFixAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ActionGroup fixes = (ActionGroup)ActionManager.getInstance().getAction("QuickFixes");
     if (fixes.getChildren(e).length == 0) {

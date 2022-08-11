@@ -269,6 +269,11 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myContent != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   protected void configureTree(@NotNull Tree tree) {

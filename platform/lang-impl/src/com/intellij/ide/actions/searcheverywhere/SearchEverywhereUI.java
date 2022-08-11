@@ -1147,6 +1147,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, SHOW_IN_FIND_TOOL_WINDOW_ICON));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class CompleteCommandAction extends DumbAwareAction {
@@ -1160,6 +1165,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getCompleteCommand() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     private boolean completeCommand() {
