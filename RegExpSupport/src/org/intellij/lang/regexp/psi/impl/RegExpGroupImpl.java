@@ -99,7 +99,7 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   }
 
   public static boolean isPcreConditionalGroup(ASTNode node) {
-    return node != null && node.findChildByType(RegExpTT.PCRE_CONDITION) != null;
+    return node != null && node.findChildByType(RegExpTT.PCRE_CONDITIONS) != null;
   }
 
   public static boolean isPcreDefine(ASTNode node) {

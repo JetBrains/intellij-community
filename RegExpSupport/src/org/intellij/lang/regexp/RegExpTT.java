@@ -170,8 +170,17 @@ public interface RegExpTT {
     /** \g'name' */
     IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
-    /** DEFINE|VERSION[>]=n.m */
-    IElementType PCRE_CONDITION = new RegExpElementType("PCRE_CONDITION");
+    /** DEFINE
+     * <a href="https://www.pcre.org/current/doc/html/pcre2pattern.html#subdefine">
+     * */
+    IElementType PCRE_DEFINE = new RegExpElementType("PCRE_DEFINE");
+
+    /** VERSION[>]=n.m
+     * <a href="https://www.pcre.org/current/doc/html/pcre2pattern.html#subdefine">
+     * */
+    IElementType PCRE_VERSION = new RegExpElementType("PCRE_VERSION");
+
+    TokenSet PCRE_CONDITIONS = TokenSet.create(PCRE_DEFINE, PCRE_VERSION);
 
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
                                           ESC_CTRL_CHARACTER,

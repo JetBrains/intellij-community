@@ -459,7 +459,8 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.GROUP_BEGIN == type) {
-        if (builder.lookAhead(1) == RegExpTT.PCRE_CONDITION) {
+        IElementType lookAhead = builder.lookAhead(1);
+        if (RegExpTT.PCRE_CONDITIONS.contains(lookAhead)) {
           parsePcreConditionalGroup(builder);
         }
         else {

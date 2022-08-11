@@ -161,7 +161,8 @@ TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
 
-PCRE_CONDITION=DEFINE|VERSION>?=\d*[.]?\d{0,2}
+PCRE_DEFINE=DEFINE
+PCRE_VERSION=VERSION>?=\d*[.]?\d{0,2}
 
 /* 999 back references should be enough for everybody */
 BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
@@ -504,7 +505,8 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 }
 
 <CONDITIONAL2> {
-  {PCRE_CONDITION}  { return allowPcreConditions ? RegExpTT.PCRE_CONDITION : RegExpTT.NAME; }
+  {PCRE_DEFINE}     { return allowPcreConditions ? RegExpTT.PCRE_DEFINE : RegExpTT.NAME; }
+  {PCRE_VERSION}    { return allowPcreConditions ? RegExpTT.PCRE_VERSION : RegExpTT.NAME; }
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
   "')"              { yybegin(YYINITIAL); return RegExpTT.QUOTED_CONDITION_END; }
