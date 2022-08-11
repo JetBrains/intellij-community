@@ -4,10 +4,15 @@ package com.intellij.dvcs.commit
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowHandlerState
 
 @NlsActions.ActionText
 fun CommitWorkflowHandler.getCommitAndPushActionName(): String {
-  val state = getState()
+  return getCommitAndPushActionName(getState())
+}
+
+@NlsActions.ActionText
+fun getCommitAndPushActionName(state: CommitWorkflowHandlerState): String {
   val isAmend = state.isAmend
   val isSkipCommitChecks = state.isSkipCommitChecks
 
