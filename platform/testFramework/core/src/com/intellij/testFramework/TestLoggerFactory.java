@@ -300,7 +300,12 @@ public final class TestLoggerFactory implements Logger.Factory {
         try {
           Files.createDirectories(logDir);
           Files.writeString(logFile, buffer);
-          buffer = "Log saved to: " + logFile.getFileName() + " (" + logFile + ')';
+          String headerFooter = StringUtil.repeat("=", 80);
+          buffer = "\n" + headerFooter +
+                   "\nLog saved to: " + logFile.getFileName() +
+                   "\n    (" + logFile + ")" +
+                   "\n" + headerFooter +
+                   "\n";
         }
         catch (IOException e) {
           buffer += "\nError writing split log, disabling splitting: " + logFile + '\n' + e;
