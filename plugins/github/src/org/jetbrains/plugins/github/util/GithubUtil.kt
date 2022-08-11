@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.diagnostic.Logger
@@ -140,7 +141,7 @@ object GithubUtil {
     var githubRemote: Pair<GitRemote, String>? = null
     for (gitRemote in repository.remotes) {
       for (remoteUrl in gitRemote.urls) {
-        if (server.matches(remoteUrl)) {
+        if (match(server.toURI(), remoteUrl)) {
           val remoteName = gitRemote.name
           if ("github" == remoteName || "origin" == remoteName) {
             return Pair.create(gitRemote, remoteUrl)

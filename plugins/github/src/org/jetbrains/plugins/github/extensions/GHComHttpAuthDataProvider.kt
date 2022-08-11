@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -14,20 +15,20 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
 
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
     return getAuthDataOrCancel(project, url, login)
   }
 
   override fun getAuthData(project: Project, url: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
     return getAuthDataOrCancel(project, url, null)
   }
 }
 
 private fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
-  val accounts = GithubAuthenticationManager.getInstance().getAccounts().filter { it.server.matches(url) }
+  val accounts = GithubAuthenticationManager.getInstance().getAccounts().filter { match(it.server.toURI(), url) }
   val provider = when (accounts.size) {
     0 -> GHCreateAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
     1 -> GHUpdateTokenHttpAuthDataProvider(project, accounts.first())

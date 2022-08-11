@@ -8,6 +8,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.collaboration.git.GitRemoteUrlCoordinates
 import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.application.ApplicationManager
@@ -93,7 +94,7 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
 
     scope.launch {
       combine(accountsServersFlow, remotesFlow) { servers, remotes ->
-        remotes.filter { remote -> servers.none { it.matches(remote.url) } }
+        remotes.filter { remote -> servers.none { match(it.toURI(), remote.url) } }
       }.collect { remotes ->
         remotes.chunked(URLS_CHECK_PARALLELISM).forEach { remotesChunk ->
           remotesChunk.map { remote ->
@@ -118,7 +119,7 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
   private fun collectMappings(servers: Set<GithubServerPath>, remotes: Collection<GitRemoteUrlCoordinates>): Set<GHGitRepositoryMapping> {
     val mappings = HashSet<GHGitRepositoryMapping>()
     for (remote in remotes) {
-      val repository = servers.find { it.matches(remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
+      val repository = servers.find { match(it.toURI(), remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
       if (repository != null) {
         mappings.add(repository)
       }

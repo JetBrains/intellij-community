@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github;
 
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -284,7 +284,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     private GitRemote findRemote(@NotNull GHRepositoryPath repoPath) {
       return ContainerUtil.find(myRepository.getRemotes(), remote -> {
         String url = remote.getFirstUrl();
-        if (url == null || !myServer.matches(url)) return false;
+        if (url == null || !GitHostingUrlUtil.match(myServer.toURI(), url)) return false;
 
         GHRepositoryPath remotePath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
         return repoPath.equals(remotePath);

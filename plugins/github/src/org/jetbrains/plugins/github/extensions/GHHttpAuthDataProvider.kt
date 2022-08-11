@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -48,7 +49,7 @@ internal class GHHttpAuthDataProvider : GitHttpAuthDataProvider {
       val authenticationFailureManager = project.service<GHGitAuthenticationFailureManager>()
       val authenticationManager = GithubAuthenticationManager.getInstance()
       val potentialAccounts = authenticationManager.getAccounts()
-        .filter { it.server.matches(url) }
+        .filter { match(it.server.toURI(), url) }
         .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
         .filter { login == null || login == getAccountDetails(it)?.login }
 

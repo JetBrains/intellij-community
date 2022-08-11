@@ -2,6 +2,7 @@
 package com.intellij.collaboration.git.hosting
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
 import java.net.URI
@@ -39,5 +40,18 @@ object GitHostingUrlUtil {
     catch (e: URISyntaxException) {
       null
     }
+  }
+
+  @JvmStatic
+  fun match(serverUri: URI, gitRemoteUrl: String): Boolean {
+    val remoteUri = getUriFromRemoteUrl(gitRemoteUrl) ?: return false
+
+    if(!serverUri.host.equals(remoteUri.host, true)) return false
+
+    if (serverUri.path != null) {
+      val remoteUriPath = remoteUri.path ?: return false
+      if(!remoteUriPath.startsWith(serverUri.path, true)) return false
+    }
+    return true
   }
 }
