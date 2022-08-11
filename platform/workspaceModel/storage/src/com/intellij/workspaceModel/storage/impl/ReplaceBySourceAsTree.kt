@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsTree.OperationsApplier
 import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -51,10 +52,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private lateinit var replaceWithStorage: AbstractEntityStorage
   private lateinit var entityFilter: (EntitySource) -> Boolean
 
-  internal val operations = HashMap<EntityId, Operation>()
+  internal val operations = Long2ObjectOpenHashMap<Operation>()
   internal val addOperations = ArrayList<AddElement>()
-  internal val targetState = HashMap<EntityId, ReplaceState>()
-  internal val replaceWithState = HashMap<EntityId, ReplaceWithState>()
+  internal val targetState = Long2ObjectOpenHashMap<ReplaceState>()
+  internal val replaceWithState = Long2ObjectOpenHashMap<ReplaceWithState>()
 
   @set:TestOnly
   internal var shuffleEntities: Long = -1L
