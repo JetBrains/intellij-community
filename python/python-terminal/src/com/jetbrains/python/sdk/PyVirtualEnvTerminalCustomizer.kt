@@ -67,7 +67,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
                                               workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    val sdk: Sdk? = PySdkUtil.findSdkForDirectory(project, workingDirectory)
+    val sdk: Sdk? = PySdkUtil.findSdkForDirectory(project, workingDirectory, false)
 
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&

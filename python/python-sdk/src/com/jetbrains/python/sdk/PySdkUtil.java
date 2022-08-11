@@ -243,10 +243,10 @@ public final class PySdkUtil {
   /**
    * Finds sdk for provided directory. Takes into account both project and module SDK
    */
-  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory) {
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory, boolean allowRemote) {
     VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByPath(workingDirectory);
     if (workingDirectoryVirtualFile != null) {
-      Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile);
+      Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile, allowRemote);
       if (sdk != null) {
         return sdk;
       }
@@ -254,7 +254,7 @@ public final class PySdkUtil {
 
     for (Module m : ModuleManager.getInstance(project).getModules()) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(m);
-      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+      if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
           return sdk;
       }
     }
@@ -263,11 +263,11 @@ public final class PySdkUtil {
   }
 
   @Nullable
-  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile) {
+  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile, boolean allowRemote) {
     Module module = ModuleUtilCore.findModuleForFile(workingDirectoryVirtualFile, project);
     if (module != null) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+      if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
         return sdk;
       }
     }
