@@ -25,11 +25,6 @@ public class TestProductivityFeatureProvider extends ProductivityFeaturesProvide
   }
 
   @Override
-  public ApplicabilityFilter[] getApplicabilityFilters() {
-    return new ApplicabilityFilter[0];
-  }
-
-  @Override
   public String toString() {
     return super.toString() + "; was asked: "+asked;
   }
