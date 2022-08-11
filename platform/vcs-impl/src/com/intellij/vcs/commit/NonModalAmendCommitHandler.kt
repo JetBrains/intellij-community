@@ -52,6 +52,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
 
     fireAmendCommitModeToggled()
     workflowHandler.updateDefaultCommitActionName()
+    workflowHandler.hideCommitChecksFailureNotification()
     updateAmendCommitState()
     if (isAmendCommitMode) loadAmendDetails(amendAware, root) else restoreAmendDetails()
   }

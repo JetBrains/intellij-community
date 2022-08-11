@@ -311,7 +311,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     super.dispose()
   }
 
-  private fun hideCommitChecksFailureNotification() {
+  fun hideCommitChecksFailureNotification() {
     checkinErrorNotifications.clear()
   }
 
