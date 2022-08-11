@@ -157,6 +157,7 @@ public final class GithubServerPath implements ServerPath {
     return builder.toString();
   }
 
+  @Override
   public @NotNull URI toURI() {
     int port = getPort() == null ? -1 : getPort();
     try {

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.collaboration.git.hosting.GitHostingUrlUtil;
+import com.intellij.collaboration.git.hosting.HostedGitRepositoriesManagerKt;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -97,7 +99,8 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GHGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(ghRepositoriesManager);
+    GHGitRepositoryMapping originMapping = ContainerUtil.find(repositories, mapping ->
       mapping.getRemote().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
     if (originMapping == null) {
       GithubNotifications.showError(project,
@@ -162,7 +165,8 @@ public class GithubSyncForkAction extends DumbAwareAction {
     GHHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
-    return !repositoriesManager.getKnownRepositories().isEmpty();
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(repositoriesManager);
+    return !repositories.isEmpty();
   }
 
   private static class SyncForkTask extends Task.Backgroundable {

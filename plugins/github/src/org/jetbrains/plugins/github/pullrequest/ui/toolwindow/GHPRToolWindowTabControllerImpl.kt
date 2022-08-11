@@ -3,12 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.git.hosting.knownRepositories
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
-import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
