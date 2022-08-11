@@ -244,7 +244,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
+  protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
 
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
     if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
@@ -345,6 +345,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   protected fun disposeCommitOptions() {
     workflow.disposeCommitOptions()
     areCommitOptionsCreated = false
+  }
+
+  override fun getState(): CommitWorkflowHandlerState {
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val isSkipCommitChecks = isSkipCommitChecks()
+    return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
   protected open inner class CommitStateCleaner : CommitResultHandler {
