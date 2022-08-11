@@ -70,6 +70,5 @@ class ReportingTest {
     val file2 = File((folder / "test2.txt").toString())
     file2.writeText("DE", Charset.defaultCharset())
     folder.getFileOrDirectoryPresentableSize().shouldBe("5 B")
-
   }
 }
