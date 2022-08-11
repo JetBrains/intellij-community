@@ -86,7 +86,7 @@ internal class MutableEntityStorageImpl(
   private var threadName: String? = null
 
   // --------------- Replace By Source stuff -----------
-  internal var useNewRbs = Registry.`is`("ide.workspace.model.rbs.as.tree", false)
+  internal var useNewRbs = Registry.`is`("ide.workspace.model.rbs.as.tree", true)
 
   @TestOnly
   internal var keepLastRbsEngine = false
