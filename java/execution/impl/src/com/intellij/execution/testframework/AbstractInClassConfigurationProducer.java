@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -260,4 +261,3 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     return null;
   }
 }
-
