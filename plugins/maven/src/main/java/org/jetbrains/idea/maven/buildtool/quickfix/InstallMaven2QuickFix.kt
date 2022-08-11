@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
+package org.jetbrains.idea.maven.buildtool.quickfix
 
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -40,13 +39,15 @@ class InstallMaven2BuildIssue : BuildIssue {
 }
 
 
+private const val MAVEN2_SEARCH_STRING = "Maven2 Support"
+
 class InstallMaven2QuickFix : BuildIssueQuickFix {
   override val id = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     ApplicationManager.getApplication().invokeLater {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.openMarketplaceTab("maven2-support")
+        it.openMarketplaceTab(MAVEN2_SEARCH_STRING)
       }
     }
     return CompletableFuture.completedFuture(null)
@@ -63,7 +64,7 @@ class EnableMaven2QuickFix : BuildIssueQuickFix {
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     ApplicationManager.getApplication().invokeLater {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.openInstalledTab("maven2-support")
+        it.openInstalledTab(MAVEN2_SEARCH_STRING)
       }
     }
     return CompletableFuture.completedFuture(null)
