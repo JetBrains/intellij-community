@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -38,9 +41,10 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
 
     override fun isDefaultButton(): Boolean = isCommitButtonDefault()
   }
+
   private val primaryCommitActionsToolbar =
     ActionManager.getInstance().createActionToolbar(
-      "ChangesView.CommitButtonsToolbar",
+      COMMIT_BUTTONS_TOOLBAR,
       ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions") as ActionGroup,
       true
     ).apply {
@@ -54,6 +58,19 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   init {
     addToLeft(commitButton)
     addToCenter(primaryCommitActionsToolbar.component)
+
+    addToRight(createShowOptionButton())
+  }
+
+  private fun createShowOptionButton(): ActionButton {
+    val presentation = Presentation().apply {
+      icon = AllIcons.General.GearPlain
+    }
+    val action = ActionManager.getInstance().getAction("ChangesView.ShowCommitOptions")
+    val actionButton = ActionButton(action, presentation, COMMIT_BUTTONS_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+      border = JBUI.Borders.empty(1, 2)
+    }
+    return actionButton
   }
 
   var isActive: Boolean = true
@@ -116,6 +133,9 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   companion object {
     private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, CTRL_DOWN_MASK), null)
     private val META_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, META_DOWN_MASK), null)
+
+    const val COMMIT_BUTTONS_TOOLBAR = "ChangesView.CommitButtonsToolbar"
+
     val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
       if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
   }

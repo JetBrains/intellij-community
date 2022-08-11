@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.awt.RelativePoint.getNorthEastOf
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Point
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -57,12 +58,32 @@ abstract class NonModalCommitPanel(
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
-    setTargetComponent(this@NonModalCommitPanel)
+    targetComponent = this@NonModalCommitPanel
     component.isOpaque = false
   }
 
+
+
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
-    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
+    editorField.addSettingsProvider {
+      it.setBorder(emptyLeft(6))
+
+      val jbScrollPane = it.scrollPane as? JBScrollPane
+      jbScrollPane?.statusComponent = createToolbarWithHistoryAction(editorField).component
+    }
+  }
+
+  private fun createToolbarWithHistoryAction(target: JComponent): ActionToolbar {
+    val actions = ActionManager.getInstance().getAction("Vcs.MessageActionGroup") as ActionGroup
+
+    val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
+      targetComponent = this@NonModalCommitPanel
+      setReservePlaceAutoPopupIcon(false)
+      component.border = BorderFactory.createEmptyBorder()
+      component.isOpaque = false
+      targetComponent = target
+    }
+    return editorToolbar
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -151,11 +172,14 @@ abstract class NonModalCommitPanel(
   }
 
   protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
-    if (isFromToolbar) popup.show(getNorthEastOf(toolbar.getShowCommitOptionsButton() ?: toolbar.component))
+    if (isFromToolbar) {
+      popup.showAbove(commitActionsPanel.getShowCommitOptionsButton() ?: commitActionsPanel)
+    }
     else popup.showInBestPositionFor(dataContext)
 
   companion object {
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
+    internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
 
     fun JBPopup.showAbove(component: JComponent) {
       val northWest = RelativePoint(component, Point())
@@ -173,7 +197,7 @@ abstract class NonModalCommitPanel(
   }
 }
 
-private fun ActionToolbar.getShowCommitOptionsButton(): JComponent? =
-  uiTraverser(component)
+private fun CommitActionsPanel.getShowCommitOptionsButton(): JComponent? =
+  uiTraverser(this)
     .filter(ActionButton::class.java)
     .find { it.action is ShowCommitOptionsAction }
