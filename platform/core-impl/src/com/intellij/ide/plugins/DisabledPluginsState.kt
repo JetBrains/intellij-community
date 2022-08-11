@@ -126,14 +126,19 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
     }
 
-    internal fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
+    @JvmName("setEnabledState")
+    internal fun setEnabledState(descriptors: Collection<IdeaPluginDescriptor>, enabled: Boolean): Boolean {
+      val pluginIds = descriptors.toPluginIdSet()
+
       val disabled = getDisabledIds().toMutableSet()
       val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
       if (changed) {
         disabledPlugins = Collections.unmodifiableSet(disabled)
       }
       logger.info(pluginIds.joinedPluginIds(if (enabled) "enable" else "disable"))
-      return changed && saveDisabledPluginsAndInvalidate(disabled)
+
+      return (changed && saveDisabledPluginsAndInvalidate(disabled))
+        .or(EnabledOnDemandPluginsState.setEnabledState(descriptors, enabled))
     }
 
     @JvmStatic
@@ -193,11 +198,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
   override fun isDisabled(pluginId: PluginId) = getDisabledIds().contains(pluginId)
 
-  override fun enable(descriptors: Collection<IdeaPluginDescriptor>) = enableById(descriptors.toPluginIdSet())
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = setEnabledState(descriptors, enabled = true)
 
-  override fun disable(descriptors: Collection<IdeaPluginDescriptor>) = disableById(descriptors.toPluginIdSet())
-
-  override fun enableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = true)
-
-  override fun disableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = false)
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = setEnabledState(descriptors, enabled = false)
 }

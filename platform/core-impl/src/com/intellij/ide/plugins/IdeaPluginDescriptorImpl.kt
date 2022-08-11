@@ -32,7 +32,7 @@ fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
 
 internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
   return joinToString(
-    prefix = "Plugins to $operation:[",
+    prefix = "Plugins to $operation: [",
     postfix = "]",
   ) { it.idString }
 }

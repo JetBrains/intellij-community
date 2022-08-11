@@ -511,13 +511,18 @@ public final class PluginManagerCore {
 
     boolean applied = pluginIds != null;
     if (applied) {
-      for (IdeaPluginDescriptorImpl module : getPluginSet().allPlugins) {
-        if (pluginIds.contains(module.getPluginId())) {
-          module.setEnabled(enabled);
+      List<IdeaPluginDescriptorImpl> descriptors = new ArrayList<>();
+      for (IdeaPluginDescriptorImpl descriptor : getPluginSet().allPlugins) {
+        if (pluginIds.contains(descriptor.getPluginId())) {
+          descriptor.setEnabled(enabled);
+
+          if (descriptor.moduleName == null) {
+            descriptors.add(descriptor);
+          }
         }
       }
 
-      DisabledPluginsState.Companion.setEnabledState$intellij_platform_core_impl(pluginIds, enabled);
+      DisabledPluginsState.Companion.setEnabledState(descriptors, enabled);
     }
     return applied;
   }
@@ -781,14 +786,18 @@ public final class PluginManagerCore {
                                                                                                      disabledRequired,
                                                                                                      context.disabledPlugins,
                                                                                                      pluginErrorsById);
+      PluginId pluginId = descriptor.getPluginId();
       boolean isLoadable = loadingError == null;
       if (!isLoadable) {
-        pluginErrorsById.put(descriptor.getPluginId(), loadingError);
+        pluginErrorsById.put(pluginId, loadingError);
         disabledAfterInit.add(descriptor);
       }
 
-      descriptor.setEnabled(descriptor.isEnabled() && isLoadable
-                            && !descriptor.onDemand); // todo explicitly enabled on demand plugins
+      boolean shouldLoad = !descriptor.isOnDemand() ||
+                           EnabledOnDemandPluginsState.isEnabled(pluginId);
+
+      descriptor.setEnabled(descriptor.isEnabled()
+                            && isLoadable && shouldLoad);
       return !descriptor.isEnabled();
     });
 

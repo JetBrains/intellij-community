@@ -84,8 +84,8 @@ open class PluginAdvertiserService {
     val pluginManagerFilter = PluginManagerFilters.getInstance()
     val disabledDescriptors = plugins.asSequence()
       .map { it.pluginId }
-      .filter { PluginManagerCore.isDisabled(it) }
       .mapNotNull { descriptorsById[it] }
+      .filterNot { it.isEnabled }
       .filter { pluginManagerFilter.allowInstallingPlugin(it) }
       .toList()
 
