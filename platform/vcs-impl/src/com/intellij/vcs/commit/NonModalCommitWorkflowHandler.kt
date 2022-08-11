@@ -217,7 +217,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
         it.addAction(
           NotificationAction.createExpiring(message("commit.checks.failed.notification.commit.anyway.action", commitText)) { _, _ ->
-            ui.runDefaultCommitAction()
+            if (!workflow.isExecuting) {
+              executorCalled(executor)
+            }
           })
         it.addAction(
           NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->

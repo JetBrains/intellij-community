@@ -25,8 +25,6 @@ interface CommitActionsUi {
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
   fun setCustomCommitActions(actions: List<AnAction>)
-
-  fun runDefaultCommitAction()
 }
 
 @ApiStatus.Experimental
