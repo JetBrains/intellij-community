@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.codegen.model
 
 import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.ExtField
 import com.intellij.workspaceModel.codegen.deft.meta.*
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.deft.meta.impl.*
@@ -63,7 +62,7 @@ private class ObjModuleStub(val module: CompiledObjModuleImpl, val types: List<P
     var extPropertyId = 0
     for ((defType, objType) in types) {
       for ((fieldId, field) in defType.structure.declaredFields.withIndex()) {
-        objType.addField(convertOwnField<Any>(field, objType, typeRegistry, fieldId))
+        objType.addField(convertOwnField<Any>(field, objType, typeRegistry, fieldId, field.isKey))
       }                         
       val addedSupers = HashSet<String>()
       
@@ -101,8 +100,9 @@ private fun createObjModuleStub(packageName: String, defTypes: List<DefType>): O
 private fun <V> convertOwnField(field: Field<org.jetbrains.deft.Obj, Any?>,
                                 receiver: ObjClassImpl<Obj>,
                                 typeRegistry: DefTypeRegistry,
-                                fieldId: Int): OwnProperty<Obj, V> {
-  return OwnPropertyImpl(receiver, field.name, convertType(field.type, typeRegistry) as ValueType<V>, computeKind(field), field.open, field.content, field.constructorField, fieldId)
+                                fieldId: Int,
+                                isKey: Boolean): OwnProperty<Obj, V> {
+  return OwnPropertyImpl(receiver, field.name, convertType(field.type, typeRegistry) as ValueType<V>, computeKind(field), field.open, field.content, field.constructorField, fieldId, isKey)
 }
 
 private fun computeKind(field: MemberOrExtField<*, *>): ObjProperty.ValueKind = when {

@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.storage.EqualsBy
 import org.jetbrains.deft.Obj
 
 abstract class KtInterfaceKind {
@@ -30,6 +31,7 @@ open class WsEntityInterface : KtInterfaceKind() {
           else Field.Default.plain
       }
       entitySource.content = field.content
+      entitySource.isKey = field.annotations.contains(EqualsBy::class)
     }
   }
 

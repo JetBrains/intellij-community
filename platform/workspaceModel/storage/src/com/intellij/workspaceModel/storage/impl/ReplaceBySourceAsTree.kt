@@ -655,11 +655,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       if (a == null || b == null) {
         return false
       }
-      return a.equalsIgnoringEntitySource(b)
+      return a.equalsByKey(b)
     }
 
     override fun hashCode(o: WorkspaceEntityData<out WorkspaceEntity>?): Int {
-      return o?.hashCodeIgnoringEntitySource() ?: 0
+      return o?.hashCodeByKey() ?: 0
     }
   }
 
@@ -802,7 +802,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .filter {
             val itId = (it as WorkspaceEntityBase).id
             if (goalState[itId] != null) return@filter false
-            goalStorage.entityDataByIdOrDie(itId).equalsIgnoringEntitySource(oppositeEntityData)
+            goalStorage.entityDataByIdOrDie(itId).equalsByKey(oppositeEntityData)
           }
           .firstOrNull()
       }

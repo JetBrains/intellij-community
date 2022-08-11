@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.storage.EqualsBy
 import org.jetbrains.deft.annotations.Child
 
 class DefField(
@@ -62,6 +63,7 @@ class DefField(
     val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields) ?: return
     val field = Field(owner, name, valueType)
     configure(field)
+    field.isKey = annotations.contains(EqualsBy::class)
   }
 
   fun todoMemberExtField(diagnostics: Diagnostics) {
