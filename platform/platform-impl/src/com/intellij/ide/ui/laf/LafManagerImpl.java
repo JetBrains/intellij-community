@@ -1061,7 +1061,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
       StartupUiUtil.initFontDefaults(uiDefaults, getDefaultInterFont());
-      JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
+      if (!uiSettings.getPresentationMode()) {
+        JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
+      }
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
