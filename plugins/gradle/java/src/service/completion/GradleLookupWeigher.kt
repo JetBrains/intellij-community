@@ -6,10 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
 import com.intellij.util.castSafelyTo
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 
@@ -22,7 +22,7 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
       ?: completionElement.castSafelyTo<GroovyResolveResult>()?.element
       ?: return 0
 
-    val comparable: Int = holder.getUserData(COMPLETION_PRIORITY) ?: getFallbackCompletionPriority(holder)
+    val comparable: Int = element.getUserData(COMPLETION_PRIORITY) ?: holder.getUserData(COMPLETION_PRIORITY) ?: getFallbackCompletionPriority(holder)
     val deprecationMultiplier = if (element.psiElement?.getUserData(DECLARATION_ALTERNATIVES) != null) 0.9 else 1.0
     return (comparable.toDouble() * deprecationMultiplier).toInt()
   }
@@ -33,17 +33,22 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
     }
     val containingFile = holder.containingFile ?: holder.castSafelyTo<PsiMember>()?.containingClass?.containingFile
     if (containingFile is PsiJavaFile && containingFile.packageName.startsWith("org.gradle")) {
-      return 1
+      return DEFAULT_COMPLETION_PRIORITY
     }
     return 0
   }
 
   companion object {
     @JvmStatic
-    fun setGradleCompletionPriority(element: PsiElement, priority: Int) {
+    fun setGradleCompletionPriority(element: UserDataHolder, priority: Int) {
       element.putUserData(COMPLETION_PRIORITY, priority)
     }
 
+    const val DEFAULT_COMPLETION_PRIORITY : Int = 100
+
     private val COMPLETION_PRIORITY: Key<Int> = Key.create("grouping priority for gradle completion results")
+
+    @TestOnly
+    fun getGradleCompletionPriority(element: UserDataHolder) : Int? = element.getUserData(COMPLETION_PRIORITY)
   }
 }
