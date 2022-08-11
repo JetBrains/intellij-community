@@ -103,18 +103,14 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
       if (groupDescriptors != null) {
         for (GroupDescriptor groupDescriptor : groupDescriptors) {
-          myGroups.put(groupDescriptor.getId(), groupDescriptor);
+          // do not allow to override groups
+          myGroups.putIfAbsent(groupDescriptor.getId(), groupDescriptor);
         }
       }
       final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
       if (featureDescriptors != null) {
         for (FeatureDescriptor featureDescriptor : featureDescriptors) {
-          final FeatureDescriptor featureLoadedStatistics = myFeatures.get(featureDescriptor.getId());
-          if (featureLoadedStatistics != null) {
-            featureDescriptor.copyStatistics(featureLoadedStatistics);
-          }
-          myFeatures.put(featureDescriptor.getId(), featureDescriptor);
-          addUsageEvents(featureDescriptor);
+          addFeature(featureDescriptor);
         }
       }
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
@@ -154,7 +150,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     GroupDescriptor groupDescriptor = new GroupDescriptor();
     groupDescriptor.readExternal(groupElement);
     String groupId = groupDescriptor.getId();
-    myGroups.put(groupId, groupDescriptor);
+    myGroups.putIfAbsent(groupId, groupDescriptor);  // do not allow to override groups
     readFeatures(groupElement, groupDescriptor);
   }
 
@@ -162,10 +158,20 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, featureElement);
       if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
-        myFeatures.put(featureDescriptor.getId(), featureDescriptor);
+        addFeature(featureDescriptor);
       }
-      addUsageEvents(featureDescriptor);
     }
+  }
+
+  private void addFeature(@NotNull FeatureDescriptor descriptor) {
+    // Allow to override features for now, but maybe it should be restricted
+    final FeatureDescriptor existingDescriptor = myFeatures.get(descriptor.getId());
+    if (existingDescriptor != null) {
+      LOG.warn("Feature with id '" + descriptor.getId() + "' is overridden by: " + descriptor);
+      descriptor.copyStatistics(existingDescriptor);
+    }
+    myFeatures.put(descriptor.getId(), descriptor);
+    addUsageEvents(descriptor);
   }
 
   private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<? extends T> events, Function<? super T, Boolean> eventChecker) {
