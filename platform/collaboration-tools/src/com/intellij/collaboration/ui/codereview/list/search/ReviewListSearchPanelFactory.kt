@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.util.ui.InlineIconButton
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -17,16 +16,15 @@ import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Adjustable
+import java.awt.BorderLayout
 import java.awt.event.ActionListener
-import java.awt.geom.Ellipse2D
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -93,7 +91,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
   private inner class QuickFilterButtonFactory {
 
     fun create(viewScope: CoroutineScope, quickFilters: List<Q>): JComponent {
-      val button = InlineIconButton(AllIcons.General.Filter).apply {
+      val button = InlineIconButton(Companion.FILTER_ICON.originalIcon).apply {
         border = JBUI.Borders.empty(3)
       }.also {
         it.actionListener = ActionListener { _ ->
@@ -103,7 +101,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
       viewScope.launch {
         vm.searchState.collect {
-          button.icon = if (it.filterCount == 0) AllIcons.General.Filter else IconWithNotifyDot(AllIcons.General.Filter)
+          button.icon = if (it.filterCount == 0) Companion.FILTER_ICON.originalIcon else Companion.FILTER_ICON.getLiveIndicatorIcon(true)
         }
       }
 
@@ -139,17 +137,9 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
       override fun actionPerformed(e: AnActionEvent) = vm.searchState.update { vm.emptySearch }
     }
+  }
 
-    //TODO: request a ready-made icon from UI and also a proper icon for old UI
-    private inner class IconWithNotifyDot(private val originalIcon: Icon) : Icon by originalIcon {
-      override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-        originalIcon.paintIcon(c, g, x, y)
-        g as Graphics2D
-        val dotSize = JBUIScale.scale(6)
-        val notifyDotShape = Ellipse2D.Float((iconWidth - dotSize).toFloat(), 0f, dotSize.toFloat(), dotSize.toFloat())
-        g.color = ColorUtil.fromHex("#3574F0")
-        g.fill(notifyDotShape)
-      }
-    }
+  companion object {
+    private val FILTER_ICON: BadgeIconSupplier = BadgeIconSupplier(AllIcons.General.Filter)
   }
 }
