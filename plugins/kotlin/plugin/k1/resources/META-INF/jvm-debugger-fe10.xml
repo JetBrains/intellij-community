@@ -14,18 +14,6 @@
     <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.core.DiagnosticSuppressorForDebugger"/>
   </extensions>
 
-  <!-- Coroutines -->
-
-  <extensions defaultExtensionNs="com.intellij">
-    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
-            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
-
-    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
-  </extensions>
-
   <!-- Evaluation -->
 
   <extensions defaultExtensionNs="com.intellij">
