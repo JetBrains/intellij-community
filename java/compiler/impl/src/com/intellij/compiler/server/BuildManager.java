@@ -1110,7 +1110,7 @@ public final class BuildManager implements Disposable {
   }
 
   public static @NotNull Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, 8);
+    return getRuntimeSdk(project, 11);
   }
 
   public static @NotNull Pair<Sdk, JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
