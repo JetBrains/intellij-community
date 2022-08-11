@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 
-public class SaveClusteringResultActionLink extends ActionLink {
-  public SaveClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
+public class ExportClusteringResultActionLink extends ActionLink {
+  public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
           (event) -> {
             List<UsageCluster> clusters = new ArrayList<>(session.getClusters());
@@ -72,7 +72,8 @@ public class SaveClusteringResultActionLink extends ActionLink {
       document.insertString(document.getTextLength(), fileContent);
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }
-    CodeStyleManager.getInstance(project).reformatText(psiFile, psiFile.getTextRange().getStartOffset(), psiFile.getTextRange().getEndOffset());
+    CodeStyleManager.getInstance(project)
+      .reformatText(psiFile, psiFile.getTextRange().getStartOffset(), psiFile.getTextRange().getEndOffset());
   }
 
   private static void buildSessionDataFile(@NotNull Project project,
@@ -94,34 +95,10 @@ public class SaveClusteringResultActionLink extends ActionLink {
             sb.append(",\n");
           }
           indicator.checkCanceled();
-          Ref<PsiElement> elementRef = new Ref<>();
-          Ref<String> fileNameRef = new Ref<>();
-          Ref<String> usageLineSnippet = new Ref<>("");
-          ApplicationManager.getApplication().runReadAction(() -> {
-            elementRef.set(((UsageInfo2UsageAdapter)usage).getElement());
-            VirtualFile containingVirtualFile = elementRef.get().getContainingFile().getVirtualFile();
-            assert containingVirtualFile != null;
-            VirtualFile rootForFile = ProjectFileIndex.getInstance(project).getSourceRootForFile(containingVirtualFile);
-            if (rootForFile != null) {
-              fileNameRef.set(VfsUtilCore.getRelativePath(containingVirtualFile, rootForFile));
-              PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-              Document doc = docManager.getDocument(elementRef.get().getContainingFile());
-              if (doc == null) {
-                return;
-              }
-              int usageStartLineNumber = doc.getLineNumber(elementRef.get().getTextRange().getStartOffset());
-              int usageEndLineNumber = doc.getLineNumber(elementRef.get().getTextRange().getEndOffset());
-              usageLineSnippet.set(doc.getText(new TextRange(doc.getLineStartOffset(usageStartLineNumber),
-                                                             doc.getLineEndOffset(Math.min(usageEndLineNumber, doc.getLineCount() - 1)))));
-            }
-          });
-          PsiElement element = elementRef.get();
-          String sourceFileName = fileNameRef.get();
-          String fileNameBase = sourceFileName +
-                                ":" +
-                                element.getTextRange().getStartOffset();
-          sb.append("{\"filename\":").append("\"").append(fileNameBase).append("\",\n");
-          sb.append("\"snippet\":").append("\"").append(StringUtil.escapeChars(usageLineSnippet.get(), '\\', '"').trim()).append("\",\n");
+          PsiElement element = getElement((UsageInfo2UsageAdapter)usage);
+          sb.append("{\"filename\":").append("\"").append(getUsageId(element)).append("\",\n");
+          sb.append("\"snippet\":").append("\"").append(getUsageLineSnippet(project, element))
+            .append("\",\n");
           sb.append("\"cluster_number\": ").append(counter).append(",\n");
           sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("}");
         }
@@ -138,17 +115,53 @@ public class SaveClusteringResultActionLink extends ActionLink {
     }
   }
 
+  private static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {
+    Ref<PsiElement> elementRef = new Ref<>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      elementRef.set(usage.getElement());
+    });
+    return elementRef.get();
+  }
+
+  private static @NotNull String getUsageId(@NotNull PsiElement element) {
+    Ref<String> fileNameRef = new Ref<>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      VirtualFile containingVirtualFile = element.getContainingFile().getVirtualFile();
+      assert containingVirtualFile != null;
+      VirtualFile rootForFile = ProjectFileIndex.getInstance(element.getProject()).getSourceRootForFile(containingVirtualFile);
+      if (rootForFile != null) {
+        fileNameRef.set(VfsUtilCore.getRelativePath(containingVirtualFile, rootForFile));
+      }
+    });
+    return fileNameRef.get() + ":" + element.getTextRange().getStartOffset();
+  }
+
+  private static @NotNull String getUsageLineSnippet(@NotNull Project project, @NotNull PsiElement element) {
+    Ref<String> usageLineSnippet = new Ref<>("");
+    ApplicationManager.getApplication().runReadAction(() -> {
+      PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+      Document doc = docManager.getDocument(element.getContainingFile());
+      if (doc != null) {
+        int usageStartLineNumber = doc.getLineNumber(element.getTextRange().getStartOffset());
+        int usageEndLineNumber = doc.getLineNumber(element.getTextRange().getEndOffset());
+        usageLineSnippet.set(doc.getText(new TextRange(doc.getLineStartOffset(usageStartLineNumber),
+                                                       doc.getLineEndOffset(Math.min(usageEndLineNumber, doc.getLineCount() - 1)))));
+      }
+    });
+    return StringUtil.escapeChars(usageLineSnippet.get(), '\\', '"', '\n').trim();
+  }
+
   private static @NotNull String createJsonForFeatures(@NotNull Bag bag) {
     return bag.getBag().object2IntEntrySet().stream().map(entry -> "\"" + entry.getKey() + "\":" + entry.getIntValue())
       .collect(Collectors.joining(",\n", "{", "}"));
   }
 
-  static @Nullable SaveClusteringResultActionLink getInternalSaveClusteringResultsLink(@NotNull Project project,
-                                                                                       @NotNull ClusteringSearchSession session,
-                                                                                       @Nullable String fileName) {
+  static @Nullable ExportClusteringResultActionLink getInternalSaveClusteringResultsLink(@NotNull Project project,
+                                                                                         @NotNull ClusteringSearchSession session,
+                                                                                         @Nullable String fileName) {
     return Registry.is("similarity.import.clustering.results.action.enabled")
-           ? new SaveClusteringResultActionLink(project, session,
-                                                StringUtilRt.notNullize(fileName, "features"))
+           ? new ExportClusteringResultActionLink(project, session,
+                                                  StringUtilRt.notNullize(fileName, "features"))
            : null;
   }
 }
