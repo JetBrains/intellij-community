@@ -69,7 +69,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         if (condition == null) return;
         PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
-        boolean invert = isPresentCheck(condition);
+        boolean invert = isEmptyCheck(condition);
         PsiExpression thenExpression = invert ? expression.getElseExpression() : expression.getThenExpression();
         PsiExpression elseExpression = invert ? expression.getThenExpression() : expression.getElseExpression();
         check(condition, optionalRef, thenExpression, elseExpression);
@@ -82,7 +82,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         if (condition == null) return;
         PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
-        boolean invert = isPresentCheck(condition);
+        boolean invert = isEmptyCheck(condition);
         PsiStatement thenStatement = extractThenStatement(statement, invert);
         PsiStatement elseStatement = extractElseStatement(statement, invert);
         check(condition, optionalRef, thenStatement, elseStatement);
@@ -141,9 +141,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
 
   /**
    * @param condition condition which is known to represent either isPresent() or isEmpty() check
-   * @return true if condition represents isPresent() check; false if it's isEmpty() check
+   * @return true if condition represents isEmpty() check; false if it's isPresent() check
    */
-  private static boolean isPresentCheck(PsiExpression condition) {
+  private static boolean isEmptyCheck(PsiExpression condition) {
     boolean invert = false;
     while (condition != null && BoolUtils.isNegation(condition)) {
       condition = BoolUtils.getNegated(condition);
@@ -277,7 +277,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
       PsiElement thenElement;
       PsiElement elseElement;
-      boolean invert = isPresentCheck(condition);
+      boolean invert = isEmptyCheck(condition);
       if (cond instanceof PsiIfStatement) {
         thenElement = extractThenStatement((PsiIfStatement)cond, invert);
         elseElement = extractElseStatement((PsiIfStatement)cond, invert);
