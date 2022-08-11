@@ -13,9 +13,11 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.io.File
+import java.net.URI
 import java.util.function.Consumer
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.io.path.toPath
 
 
 /**
@@ -27,20 +29,43 @@ class KotlincOutputParser : BuildOutputParser {
     private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
       @BuildEventsNls.Title
       get() = LangBundle.message("build.event.title.kotlin.compiler")
+
+    private val WINDOWS_PATH = "^\\s*.:(/|\\\\)".toRegex()
+    private val WINDOWS_URI = "^\\s*file:/+.:(/|\\\\)".toRegex()
+    private val UNIX_URI = "^\\s*file:/".toRegex()
+
+    fun extractPath(line: String): String? {
+      if (!line.contains(":")) return null
+      val systemPrefixLen = listOf(WINDOWS_PATH, WINDOWS_URI, UNIX_URI).firstNotNullOfOrNull {
+        it.find(line)?.groups?.last()?.range?.endInclusive
+      } ?: 0
+
+      val colonIndex = line.indexOf(':', systemPrefixLen)
+      if (colonIndex < 0) return null
+
+      return line.substring(0, colonIndex)
+    }
   }
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
+    override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
     val colonIndex1 = line.colon()
 
     val severity = if (colonIndex1 >= 0) line.substringBeforeAndTrim(colonIndex1) else return false
     if (!severity.startsWithSeverityPrefix()) return false
 
     val lineWoSeverity = line.substringAfterAndTrim(colonIndex1)
-    val colonIndex2 = lineWoSeverity.colon().skipDriveOnWin(lineWoSeverity)
-    if (colonIndex2 < 0) return false
+    var path = extractPath(lineWoSeverity) ?: return false
 
-    val path = lineWoSeverity.substringBeforeAndTrim(colonIndex2)
-    val file = File(path)
+
+    val file = if (path.startsWith("file:")) {
+      try {
+        URI(path).toPath().toFile()
+      } catch (_: Exception){
+        File(path)
+      }
+    } else {
+      File(path)
+    }
 
     val fileExtension = file.extension.toLowerCase()
     if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
@@ -49,7 +74,7 @@ class KotlincOutputParser : BuildOutputParser {
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
 
-    val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
+    val lineWoPath = lineWoSeverity.substringAfterAndTrim(path.length)
     var lineWoPositionIndex = -1
     var matcher: Matcher? = null
     if (lineWoPath.startsWith('(')) {
@@ -61,8 +86,13 @@ class KotlincOutputParser : BuildOutputParser {
         val position = lineWoPath.substringBeforeAndTrim(lineWoPositionIndex)
         matcher = KOTLIN_POSITION_PATTERN.matcher(position).takeIf { it.matches() } ?: JAVAC_POSITION_PATTERN.matcher(position)
       }
-    }
-    else {
+    } else if (URI_POSITION_PATTERN.toRegex().find(lineWoPath) != null) {
+      val parts = URI_POSITION_PATTERN.toRegex().find(lineWoPath)!!
+      println(parts)
+      val position = parts.groupValues.first()
+      lineWoPositionIndex = position.length
+      matcher = URI_POSITION_PATTERN.matcher(position)
+    } else {
       val colonIndex4 = lineWoPath.colon(1)
       if (colonIndex4 >= 0) {
         lineWoPositionIndex = colonIndex4
@@ -87,7 +117,7 @@ class KotlincOutputParser : BuildOutputParser {
         if (lineNumber != null) {
           val symbolNumberText = symbolNumber.toInt()
           return addMessage(createMessageWithLocation(
-            reader.parentEventId, getMessageKind(severity), message, path, lineNumber.toInt(), symbolNumberText, details), consumer)
+            reader.parentEventId, getMessageKind(severity), message, file, lineNumber.toInt(), symbolNumberText, details), consumer)
         }
       }
 
@@ -102,6 +132,7 @@ class KotlincOutputParser : BuildOutputParser {
 
   private val COLON = ":"
   private val KOTLIN_POSITION_PATTERN = Pattern.compile("\\(([0-9]*), ([0-9]*)\\)")
+  private val URI_POSITION_PATTERN = Pattern.compile("^([0-9]*):([0-9]*)")
   private val JAVAC_POSITION_PATTERN = Pattern.compile("([0-9]+)")
   private val LINE_COLON_COLUMN_POSITION_PATTERN = Pattern.compile("([0-9]*):([0-9]*)")
 
@@ -157,10 +188,6 @@ class KotlincOutputParser : BuildOutputParser {
     return index
   }
 
-  private fun Int.skipDriveOnWin(line: String): Int {
-    return if (this == 1) line.indexOf(COLON, this + 1) else this
-  }
-
   private val KAPT_ERROR_WHILE_ANNOTATION_PROCESSING_MARKER_TEXT
     get() =
       // KaptError::class.java.canonicalName + ": " + KaptError.Kind.ERROR_RAISED.message
@@ -192,13 +219,13 @@ class KotlincOutputParser : BuildOutputParser {
     parentId: Any,
     messageKind: MessageEvent.Kind,
     text: @BuildEventsNls.Message String,
-    file: String,
+    file: File,
     lineNumber: Int,
     columnIndex: Int,
     detail: @BuildEventsNls.Description String
   ): FileMessageEventImpl {
     return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail, //NON-NLS
-                                FilePosition(File(file), lineNumber - 1, columnIndex - 1))
+                                FilePosition(file, lineNumber - 1, columnIndex - 1))
   }
 
 }
