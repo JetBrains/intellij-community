@@ -651,6 +651,8 @@
     <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
                         serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
 
+    <navbar.item.provider implementation="com.intellij.ide.navbar.impl.DefaultNavBarItemProvider" order="last"/>
+
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
