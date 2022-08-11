@@ -11,6 +11,7 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -84,6 +85,9 @@ fun <T : Any> buildGradleModel(
                         /* Representative of the `kotlin.project-module` module */
                         KotlinCompilation::class.java,
 
+                        /* Representative of the `kotlin-tooling-core` library */
+                        KotlinToolingVersion::class.java,
+
                         /* Representative of the kotlin stdlib */
                         Unit::class.java
                     )
@@ -121,6 +125,6 @@ fun <T : Any> buildGradleModel(
     }
 }
 
-private fun BuildGradleModelDebuggerOptions.toJvmArgumentString() : String {
-    return "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if(suspend) "y" else "n"},address=${port}"
+private fun BuildGradleModelDebuggerOptions.toJvmArgumentString(): String {
+    return "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspend) "y" else "n"},address=${port}"
 }

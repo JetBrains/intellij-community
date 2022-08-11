@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.idea.projectModel.*
-import org.jetbrains.plugins.gradle.model.ExternalDependency
-import org.jetbrains.plugins.gradle.model.ModelFactory
 import java.io.Serializable
 
 interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
@@ -16,7 +14,6 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
 
     @Deprecated(level = DeprecationLevel.WARNING, message = "Use KotlinMPPGradleModel#cacheAware instead")
     val partialCacheAware: CompilerArgumentsCacheAware
-    val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
 
     @Deprecated("Use 'sourceSetsByName' instead", ReplaceWith("sourceSetsByName"), DeprecationLevel.ERROR)
     val sourceSets: Map<String, KotlinSourceSet>
@@ -24,7 +21,11 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
 
     override val sourceSetsByName: Map<String, KotlinSourceSet>
 
+    val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
+    val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
+
     companion object {
         const val NO_KOTLIN_NATIVE_HOME = ""
     }
 }
+

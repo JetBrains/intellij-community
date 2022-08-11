@@ -298,7 +298,8 @@ data class KotlinMPPGradleModelImpl(
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val cacheAware: CompilerArgumentsCacheAware,
-    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf()
+    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -317,7 +318,8 @@ data class KotlinMPPGradleModelImpl(
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
-        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) }
+        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
+        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
     )
 
     @Deprecated(

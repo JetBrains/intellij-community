@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
@@ -39,7 +40,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinMPPGradleModel? {
         try {
-            val projectTargets = project.getTargets() ?: return null
+            val kotlinExtension = project.extensions.findByName("kotlin") ?: return null
+            val kotlinExtensionReflection = KotlinExtensionReflection(project, kotlinExtension)
+
             val modelBuilderContext = builderContext ?: return null
             val argsMapper = CompilerArgumentsCacheMapperImpl()
 
@@ -48,7 +51,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val sourceSets = buildSourceSets(importingContext) ?: return null
             importingContext.initializeSourceSets(sourceSets)
 
-            val targets = buildTargets(importingContext, projectTargets)
+            val targets = buildTargets(importingContext, kotlinExtensionReflection.targets)
             importingContext.initializeTargets(targets)
             importingContext.initializeCompilations(targets.flatMap { it.compilations })
 
@@ -65,7 +68,13 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
-                cacheAware = argsMapper
+                cacheAware = argsMapper,
+                kotlinGradlePluginVersion = kotlinExtensionReflection.kotlinGradlePluginVersion?.let { version ->
+                    KotlinGradlePluginVersion.parse(version) ?: run {
+                        MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: $version")
+                        null
+                    }
+                }
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
             }
@@ -143,10 +152,10 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun buildTargets(
         importingContext: MultiplatformModelImportingContext,
-        projectTargets: Collection<Named>
+        projectTargets: List<KotlinTargetReflection>
     ): Collection<KotlinTarget> {
-        return projectTargets.mapNotNull {
-            KotlinTargetBuilder.buildComponent(KotlinTargetReflection(it), importingContext)
+        return projectTargets.mapNotNull { kotlinTargetReflection ->
+            KotlinTargetBuilder.buildComponent(kotlinTargetReflection, importingContext)
         }
     }
 

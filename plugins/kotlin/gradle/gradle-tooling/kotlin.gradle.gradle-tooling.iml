@@ -8,5 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
   </component>
 </module>

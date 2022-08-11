@@ -24,3 +24,4 @@ fun KotlinMPPGradleModel.findCompilation(coordinates: KotlinCompilationCoordinat
     return targets.find { target -> target.name == coordinates.targetName }
         ?.compilations?.find { compilation -> compilation.name == coordinates.compilationName }
 }
+
