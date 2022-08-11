@@ -781,14 +781,15 @@ public final class PluginManagerCore {
                                                                                                      disabledRequired,
                                                                                                      context.disabledPlugins,
                                                                                                      pluginErrorsById);
-      boolean result = loadingError != null;
-      if (result) {
+      boolean isLoadable = loadingError == null;
+      if (!isLoadable) {
         pluginErrorsById.put(descriptor.getPluginId(), loadingError);
-        descriptor.setEnabled(false);
         disabledAfterInit.add(descriptor);
       }
 
-      return result;
+      descriptor.setEnabled(descriptor.isEnabled() && isLoadable
+                            && !descriptor.onDemand); // todo explicitly enabled on demand plugins
+      return !descriptor.isEnabled();
     });
 
     List<Supplier<HtmlChunk>> actions = prepareActions(disabledAfterInit, disabledRequired);
