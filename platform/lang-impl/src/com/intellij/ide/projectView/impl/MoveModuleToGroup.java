@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +50,10 @@ public class MoveModuleToGroup extends ActionGroup {
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
     result.add(Separator.getInstance());
     ModuleGrouper grouper = ModuleGrouper.instanceFor(project, modifiableModuleModel);
-    result.addAll(myModuleGroup.childGroups(grouper).stream().sorted((moduleGroup1, moduleGroup2) -> {
-          assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
-          return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
-    }).map(MoveModuleToGroup::new).collect(Collectors.toList()));
+    StreamEx.of(myModuleGroup.childGroups(grouper)).sorted((moduleGroup1, moduleGroup2) -> {
+      assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
+      return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
+    }).map(MoveModuleToGroup::new).into(result);
 
     return result.toArray(AnAction.EMPTY_ARRAY);
   }

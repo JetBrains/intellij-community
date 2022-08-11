@@ -299,10 +299,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
     }
 
-    List<String> advertisements = contributors.stream()
-      .map(c -> c.getAdvertisement())
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    List<String> advertisements = ContainerUtil.mapNotNull(contributors, c -> c.getAdvertisement());
 
     return advertisements.isEmpty() ? null : advertisements.get(new Random().nextInt(advertisements.size()));
   }
@@ -749,10 +746,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     };
 
     ShortcutSet selectShortcuts = ActionManager.getInstance().getAction(SearchEverywhereActions.SELECT_ITEM).getShortcutSet();
-    Collection<KeyboardShortcut> keyboardShortcuts = Arrays.stream(selectShortcuts.getShortcuts())
-      .filter(shortcut -> shortcut instanceof KeyboardShortcut)
-      .map(shortcut -> (KeyboardShortcut)shortcut)
-      .collect(Collectors.toList());
+    Collection<KeyboardShortcut> keyboardShortcuts = ContainerUtil.filterIsInstance(selectShortcuts.getShortcuts(), KeyboardShortcut.class);
 
     for (int modifiers : allowedModifiers) {
       Collection<Shortcut> newShortcuts = new ArrayList<>();

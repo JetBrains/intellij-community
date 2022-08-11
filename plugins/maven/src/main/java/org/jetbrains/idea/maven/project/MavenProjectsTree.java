@@ -22,6 +22,8 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -1064,11 +1066,10 @@ public final class MavenProjectsTree {
   public MavenProject findSingleProjectInReactor(MavenId id) {
     readLock();
     try {
-      List<MavenProject> list = myMavenIdToProjectMapping.values().stream().filter(
-        it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
-              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())
-      ).collect(Collectors.toList());
-      return list.size() == 1 ? list.get(0) : null;
+      return StreamEx.ofValues(myMavenIdToProjectMapping)
+        .collect(MoreCollectors.onlyOne(it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
+                                              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())))
+        .orElse(null);
     }
     finally {
       readUnlock();

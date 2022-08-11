@@ -341,11 +341,9 @@ final public class BuildDependenciesDownloader {
               new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
 
             Map<String, List<String>> headers = response.headers().map();
-            for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
-              for (String value : headers.get(headerName)) {
-                builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
-              }
-            }
+            headers.keySet().stream().sorted()
+              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
+              .forEach(builder::append);
 
             builder.append("\n");
             if (Files.exists(tempFile)) {

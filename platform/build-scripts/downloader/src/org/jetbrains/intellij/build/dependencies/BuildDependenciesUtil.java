@@ -426,7 +426,7 @@ public final class BuildDependenciesUtil {
         "Normalized entry name should not contain '" + doubleForwardSlashString + "': " + normalizedEntryName);
     }
     if (normalizedEntryName.contains("..") &&
-        Arrays.stream(normalizedEntryName.split(forwardSlashString)).collect(Collectors.toList()).contains("..")) {
+        Arrays.asList(normalizedEntryName.split(forwardSlashString)).contains("..")) {
       throw new IllegalStateException("Invalid entry name: " + normalizedEntryName);
     }
   }

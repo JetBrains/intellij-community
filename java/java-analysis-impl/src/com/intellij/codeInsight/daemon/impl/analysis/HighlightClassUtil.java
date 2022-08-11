@@ -611,7 +611,7 @@ public final class HighlightClassUtil {
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
                resolveHelper.isAccessible(constructor, aClass, null);
       })
-      .limit(2).collect(Collectors.toList());
+      .limit(2).toList();
 
     if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
       String m1 = PsiFormatUtil.formatMethod(constructorCandidates.get(0), PsiSubstitutor.EMPTY,

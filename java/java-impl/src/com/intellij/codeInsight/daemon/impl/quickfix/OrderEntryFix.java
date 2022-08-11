@@ -243,8 +243,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     ProjectFileIndex index = ProjectRootManager.getInstance(currentModule.getProject()).getFileIndex();
     List<PsiElement> targets = Stream.of(reference.multiResolve(true))
       .map(ResolveResult::getElement)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .filter(Objects::nonNull).toList();
 
     PsiElement statement = reference.getElement().getParent();
     boolean exported = statement instanceof PsiRequiresStatement &&

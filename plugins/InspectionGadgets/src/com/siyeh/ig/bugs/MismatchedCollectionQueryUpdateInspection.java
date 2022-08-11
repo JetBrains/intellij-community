@@ -501,7 +501,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       if (written) {
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null) {
-          List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(initializer).collect(Collectors.toList());
+          List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(initializer).toList();
           if (!ContainerUtil.and(expressions, MismatchedCollectionQueryUpdateInspection::isCollectionInitializer)) {
             expressions.stream().filter(MismatchedCollectionQueryUpdateInspection::isCollectionInitializer)
               .forEach(emptyCollection -> registerError(emptyCollection, Boolean.TRUE));

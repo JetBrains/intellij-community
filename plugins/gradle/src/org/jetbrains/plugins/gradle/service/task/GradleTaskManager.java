@@ -225,7 +225,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                               @NotNull GradleExecutionSettings effectiveSettings,
                                               @Nullable String gradleVersion) {
     final List<String> initScripts = new ArrayList<>();
-    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
+    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
     for (GradleProjectResolverExtension resolverExtension : extensions) {
       final String resolverClassName = resolverExtension.getClass().getName();
       Consumer<String> initScriptConsumer = script -> {

@@ -791,7 +791,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return VirtualFileManager.getInstance().findFileByUrl(pomFileUrl);
     }
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
+      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).toList();
       if (pomFiles.isEmpty()) {
         continue;
       }

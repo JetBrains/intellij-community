@@ -253,8 +253,7 @@ public final class TextMateLexer {
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
       //noinspection SSBasedInspection
-      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty())
-        .collect(Collectors.toList());
+      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty()).toList();
       LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
       Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);
 

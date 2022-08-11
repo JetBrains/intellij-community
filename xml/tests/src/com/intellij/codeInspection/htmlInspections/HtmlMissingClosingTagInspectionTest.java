@@ -82,7 +82,7 @@ public class HtmlMissingClosingTagInspectionTest extends BasePlatformTestCase {
   protected IntentionAction findIntention(@NotNull final String hint) {
     final List<IntentionAction> allIntentions = myFixture.getAvailableIntentions();
     final List<IntentionAction> intentions =
-      allIntentions.stream().filter(action -> action.getText().startsWith(hint)).limit(2).collect(Collectors.toList());
+      allIntentions.stream().filter(action -> action.getText().startsWith(hint)).limit(2).toList();
     Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());
     Assert.assertFalse("Too many quickfixes found for \"" + hint + "\": " + intentions + "]", intentions.size() > 1);
     return intentions.get(0);

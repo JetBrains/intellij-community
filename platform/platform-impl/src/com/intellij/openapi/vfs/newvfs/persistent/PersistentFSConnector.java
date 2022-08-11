@@ -98,7 +98,7 @@ final class PersistentFSConnector {
       if (traceNumeratorOps) {
         try (Stream<Path> files = Files.list(basePath)) {
           List<Path> nameEnumeratorFiles =
-            files.filter(p -> p.getFileName().toString().startsWith(namesFile.getFileName().toString())).collect(Collectors.toList());
+            files.filter(p -> p.getFileName().toString().startsWith(namesFile.getFileName().toString())).toList();
           LOG.info("Existing name enumerator files: " + nameEnumeratorFiles);
         }
       }

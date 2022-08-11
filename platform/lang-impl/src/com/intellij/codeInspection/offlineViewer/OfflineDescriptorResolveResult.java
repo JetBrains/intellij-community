@@ -286,8 +286,7 @@ public final class OfflineDescriptorResolveResult {
     };
     List<String> hints = offlineDescriptor.getHints();
     if (hints != null && entity instanceof RefModule) {
-      List<QuickFix> fixes =
-        hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).collect(Collectors.toList());
+      List<QuickFix> fixes = hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).toList();
       return new ModuleProblemDescriptorImpl(ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix), offlineDescriptor.getDescription(), ((RefModule)entity).getModule());
     }
     return new CommonProblemDescriptorImpl(new QuickFix[]{rerunFix}, offlineDescriptor.getDescription());

@@ -64,7 +64,7 @@ final class DumpFormattingModelAction extends AnAction implements DumbAware {
       .map(documentWindow -> PsiDocumentManager.getInstance(project).getPsiFile(documentWindow))
       .filter(psi -> psi != null)
       .sorted(Comparator.comparingInt(psi -> injectedLanguageManager.injectedToHost(psi, psi.getTextRange()).getStartOffset()))
-      .collect(Collectors.toList());
+      .toList();
 
     for (PsiFile injectedFile : injectedFiles) {
       dumpModelForFile(injectedFile, output, injectedLanguageManager.injectedToHost(injectedFile, injectedFile.getTextRange()));
