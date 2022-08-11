@@ -131,7 +131,7 @@ fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatche
 
     tempList.sort()
     for (file in tempList) {
-      if (Files.isDirectory(file, LinkOption.NOFOLLOW_LINKS)) {
+      if (Files.isDirectory(file)) {
         dirCandidates.add(file)
       }
       else {
