@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
@@ -75,14 +76,15 @@ fun installAndEnable(
 }
 
 
-internal fun getBundledPluginToInstall(plugins: Collection<PluginData>): List<String> {
+internal fun getBundledPluginToInstall(
+  plugins: Collection<PluginData>,
+  descriptorsById: Map<PluginId, IdeaPluginDescriptor> = PluginManagerCore.buildPluginIdMap(),
+): List<String> {
   return if (isIdeaUltimate()) {
     emptyList()
   }
   else {
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    plugins
-      .filter { it.isBundled }
+    plugins.filter { it.isBundled }
       .filterNot { descriptorsById.containsKey(it.pluginId) }
       .map { it.pluginName }
   }
