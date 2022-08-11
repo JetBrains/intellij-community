@@ -322,7 +322,8 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerLambdaReturnTypeFixes(HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
+  static void registerLambdaReturnTypeFixes(@Nullable HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
+    if (info == null) return;
     PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     if (type != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(info, expression, type);
