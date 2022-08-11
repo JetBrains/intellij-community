@@ -41,7 +41,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   @NotNull
   @Override
   protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
-    GotoSymbolModel2 model = new GotoSymbolModel2(project);
+    GotoSymbolModel2 model = new GotoSymbolModel2(project, this);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
     }
