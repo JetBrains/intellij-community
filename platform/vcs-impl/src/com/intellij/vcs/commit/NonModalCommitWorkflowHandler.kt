@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -209,7 +210,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
     if (result is CommitChecksResult.Failed ||
         result is CommitChecksResult.ExecutionError) {
-      val commitText = getCommitActionName()
+      val commitText = removeEllipsisSuffix(executor?.actionText ?: getCommitActionName())
       val messageText = ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
 
       checkinErrorNotifications.notify(message("commit.checks.failed.notification.title", commitText), messageText, project) {
