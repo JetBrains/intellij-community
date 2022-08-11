@@ -15,14 +15,6 @@ buildscript {
   }
 }
 
-sourceSets {
-  test.kotlin.srcDirs += 'testSrc'
-  test.resources {
-    srcDirs "testResources"
-    includes = ["**/*.*"]
-  }
-}
-
 repositories {
   maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
   maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
@@ -30,8 +22,6 @@ repositories {
   maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
   maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
   maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
-
-  maven { url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" }
 }
 
 dependencies {
@@ -43,22 +33,13 @@ dependencies {
   implementation "org.kodein.di:kodein-di-jvm:7.13.0"
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+  implementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
 
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit4:LATEST-TRUNK-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-TRUNK-SNAPSHOT'
-
-  testImplementation 'junit:junit:4.13.2'
-
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
-  testImplementation 'org.junit.vintage:junit-vintage-engine:5.8.1'
-  testImplementation 'org.junit.platform:junit-platform-launcher:1.8.2'
-
-  testImplementation 'io.kotest:kotest-assertions-core-jvm:5.3.2'
-  testImplementation 'org.mockito:mockito-core:3.12.4'
-  testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
+  implementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+  implementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+  implementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
+  implementation 'org.junit.vintage:junit-vintage-engine:5.8.1'
+  implementation 'org.junit.platform:junit-platform-launcher:1.8.2'
 }
 
 configurations {
@@ -97,30 +78,6 @@ compileTestKotlin {
 
 
 test {
-  useJUnitPlatform()
-
-  testLogging {
-    events "passed", "skipped", "failed", "standardOut", "standardError"
-  }
-}
-
-task runOnlyExamplesTests(type: Test) {
-  filter {
-    includeTestsMatching "com.intellij.ide.starter.tests.examples.*"
-  }
-
-  useJUnitPlatform()
-
-  testLogging {
-    events "passed", "skipped", "failed", "standardOut", "standardError"
-  }
-}
-
-task runOnlyUnitTests(type: Test) {
-  filter {
-    includeTestsMatching "com.intellij.ide.starter.tests.unit.*"
-  }
-
   useJUnitPlatform()
 
   testLogging {

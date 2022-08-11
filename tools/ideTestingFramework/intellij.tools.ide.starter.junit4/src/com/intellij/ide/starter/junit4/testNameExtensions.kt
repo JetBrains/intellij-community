@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.tests.examples.junit4
+package com.intellij.ide.starter.junit4
 
 import com.intellij.ide.starter.utils.hyphenateTestName
 import org.junit.rules.TestName
