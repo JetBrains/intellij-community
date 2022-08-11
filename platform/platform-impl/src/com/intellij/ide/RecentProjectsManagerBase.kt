@@ -332,11 +332,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     Toolkit.getDefaultToolkit().addAWTEventListener(
       { e ->
         if (e.id == WindowEvent.WINDOW_ACTIVATED) {
-          var window = (e as WindowEvent).window ?: return@addAWTEventListener
-          while (window.owner != null) {
-            window = window.owner
-          }
-          (window as? IdeFrame)?.notifyProjectActivation()
+          ProjectUtil.getRootFrameForWindow((e as WindowEvent).window)?.notifyProjectActivation()
         }
       }, AWTEvent.WINDOW_EVENT_MASK)
   }

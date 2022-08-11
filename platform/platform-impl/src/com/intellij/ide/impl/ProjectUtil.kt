@@ -614,12 +614,17 @@ object ProjectUtil {
     })
   }
 
-  fun getProjectForWindow(window: Window?): Project? {
+  @JvmStatic
+  fun getRootFrameForWindow(window: Window?): IdeFrame? {
     var w = window ?: return null
     while (w.owner != null) {
       w = w.owner
     }
-    return if (w is IdeFrame) (w as IdeFrame).project else null
+    return w as? IdeFrame
+  }
+
+  fun getProjectForWindow(window: Window?): Project? {
+    return getRootFrameForWindow(window)?.project
   }
 
   @JvmStatic
