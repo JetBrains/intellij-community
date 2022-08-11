@@ -38,9 +38,6 @@ import java.util.Optional;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
 
-import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
-import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
-
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
@@ -262,5 +259,3 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     return null;
   }
 }
-
-
