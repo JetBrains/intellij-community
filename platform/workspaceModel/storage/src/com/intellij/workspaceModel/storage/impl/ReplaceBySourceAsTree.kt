@@ -609,7 +609,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         }
 
         // Here we know our "associated" entity, so we just check what parents remain with it.
-        entriesList.drop(index).forEach { tailItem ->
+        entriesList.drop(index + 1).forEach { tailItem ->
           val replaceWithEntityIds = childrenInStorage(tailItem.value, targetEntityTrack.entity.clazz, replaceWithStorage)
           val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
           var replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
