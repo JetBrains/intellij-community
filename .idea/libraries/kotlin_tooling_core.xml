@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-tooling-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.7.20-dev-547" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.7.20-Beta" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.7.20-dev-547/kotlin-tooling-core-1.7.20-dev-547.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.7.20-Beta/kotlin-tooling-core-1.7.20-Beta.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.7.20-dev-547/kotlin-tooling-core-1.7.20-dev-547-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.7.20-Beta/kotlin-tooling-core-1.7.20-Beta-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
