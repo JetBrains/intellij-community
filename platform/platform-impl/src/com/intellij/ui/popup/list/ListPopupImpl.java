@@ -439,8 +439,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
-      myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e);
-      disposePopup(e);
+      if (myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e)) {
+        disposePopup(e);
+      }
       return true;
     }
 
