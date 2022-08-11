@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.exec
+package com.intellij.ide.starter.process.exec
 
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput

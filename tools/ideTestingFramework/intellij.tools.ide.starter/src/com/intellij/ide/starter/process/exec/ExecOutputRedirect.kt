@@ -1,6 +1,6 @@
-package com.intellij.ide.starter.exec
+package com.intellij.ide.starter.process.exec
 
-import com.intellij.ide.starter.exec.ExecOutputRedirect.*
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect.*
 import com.intellij.ide.starter.utils.logOutput
 import java.io.File
 import java.io.PrintWriter

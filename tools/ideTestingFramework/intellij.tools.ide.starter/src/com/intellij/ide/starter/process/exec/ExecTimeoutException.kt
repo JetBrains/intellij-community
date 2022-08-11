@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.exec
+package com.intellij.ide.starter.process.exec
 
 import kotlin.time.Duration
 
