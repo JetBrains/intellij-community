@@ -12,7 +12,6 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -444,20 +443,12 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (!groupByCodeBlocks(ReferencesSearch.search(variable,  new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
-        if (IntentionPreviewUtils.isPreviewElement(variable)) {
-          declaration = copyVariableToMethodBody(variable, psiReferences);
-        } else {
-          declaration = WriteAction.compute(() -> copyVariableToMethodBody(variable, psiReferences));
-        }
+        declaration = IntentionPreviewUtils.writeAndCompute(() -> copyVariableToMethodBody(variable, psiReferences));
         if (declaration != null) newDeclarations.add(declaration);
       }
       if (!newDeclarations.isEmpty()) {
         final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-        if (IntentionPreviewUtils.isPreviewElement(variable)) {
-          deleteField(variable, lastDeclaration);
-        } else {
-          WriteAction.run(() -> deleteField(variable, lastDeclaration));
-        }
+        IntentionPreviewUtils.write(() -> deleteField(variable, lastDeclaration));
       }
       return newDeclarations;
     }
