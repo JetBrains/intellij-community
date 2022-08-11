@@ -4,7 +4,10 @@ package com.intellij.configurationStore
 import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.*
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.SaveAndSyncHandlerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -27,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.application
@@ -140,8 +144,8 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     }
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
-    busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
-      override fun onFrameDeactivated() {
+    busConnection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+      override fun applicationDeactivated(ideFrame: IdeFrame) {
         externalChangesModificationTracker.incModificationCount()
         if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
           return
@@ -155,7 +159,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
         }
       }
 
-      override fun onFrameActivated() {
+      override fun applicationActivated(ideFrame: IdeFrame) {
         if (!ApplicationManager.getApplication().isDisposed && settings.isSyncOnFrameActivation) {
           scheduleRefresh()
         }

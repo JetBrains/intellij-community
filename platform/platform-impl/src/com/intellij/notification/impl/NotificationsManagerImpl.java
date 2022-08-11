@@ -4,7 +4,6 @@ package com.intellij.notification.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
@@ -13,6 +12,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -362,9 +362,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       Disposable listenerDisposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, listenerDisposable);
       ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
-        .subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+        .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
           @Override
-          public void onFrameActivated() {
+          public void applicationActivated(@NotNull IdeFrame ideFrame) {
             Disposer.dispose(listenerDisposable);
             callback.run();
           }

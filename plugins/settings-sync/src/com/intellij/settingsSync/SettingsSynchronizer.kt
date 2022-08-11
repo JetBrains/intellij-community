@@ -1,11 +1,12 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.FrameStateListener
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -13,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, FrameStateListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -47,7 +48,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, FrameState
     }
   }
 
-  override fun onFrameActivated() {
+  override fun applicationActivated(ideFrame: IdeFrame) {
     if (!isSettingsSyncEnabledByKey() || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
@@ -61,7 +62,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, FrameState
     }
   }
 
-  override fun onFrameDeactivated() {
+  override fun applicationDeactivated(ideFrame: IdeFrame) {
     stopSyncingByTimer()
   }
 
