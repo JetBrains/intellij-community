@@ -45,7 +45,7 @@ class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
         private val sourceModules = moduleInfo.projectSourceModules()
 
         override fun packageExists(fqName: FqName): Boolean {
-            return sourceModules?.any { cacheService.packageExists(fqName, it) } ?: false
+            return sourceModules.any { cacheService.packageExists(fqName, it) }
         }
     }
 
