@@ -59,10 +59,10 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
 
         val repositoryMapping =
           project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
-            .find { it.gitRemoteUrlCoordinates.remote == remote }
+            .find { it.remote.remote == remote }
           ?: continue
 
-        val serverPath = repositoryMapping.ghRepositoryCoordinates.serverPath
+        val serverPath = repositoryMapping.repository.serverPath
         val defaultAccount = authenticationManager.getDefaultAccount(repository.project)
 
         val account =
@@ -77,7 +77,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
           } ?: continue
 
         val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
-        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.ghRepositoryCoordinates) })
+        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
           .loadAll(SensitiveProgressWrapper((indicator)))
           .forEach { rule -> branchProtectionPatterns.add(PatternUtil.convertToRegex(rule.pattern)) }
       }

@@ -61,7 +61,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   }
 
   override fun createPullRequest(requestFocus: Boolean) {
-    val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::ghRepositoryCoordinates)
+    val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
     onTitleChange(GithubBundle.message("tab.title.pull.requests.new",
                                        GHUIUtil.getRepositoryDisplayName(allRepos,
                                                                          dataContext.repositoryDataService.repositoryCoordinates)))
@@ -78,7 +78,7 @@ internal class GHPRToolWindowTabComponentControllerImpl(
   }
 
   override fun viewList(requestFocus: Boolean) {
-    val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::ghRepositoryCoordinates)
+    val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
     onTitleChange(GithubBundle.message("tab.title.pull.requests.at",
                                        GHUIUtil.getRepositoryDisplayName(allRepos,
                                                                          dataContext.repositoryDataService.repositoryCoordinates)))

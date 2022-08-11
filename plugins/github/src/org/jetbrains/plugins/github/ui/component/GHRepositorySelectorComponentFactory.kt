@@ -22,7 +22,7 @@ class GHRepositorySelectorComponentFactory {
           if (value is ComboBoxWithActionsModel.Item.Wrapper) {
             val mapping = value.wrappee.castSafelyTo<GHGitRepositoryMapping>() ?: return
             val repositoryName = repositoryName(model, mapping)
-            val remoteName = mapping.gitRemoteUrlCoordinates.remote.name
+            val remoteName = mapping.remote.remote.name
             append(repositoryName).append(" ").append(remoteName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
           if (value is ComboBoxWithActionsModel.Item.Action) {
@@ -40,8 +40,8 @@ class GHRepositorySelectorComponentFactory {
   }
 
   private fun repositoryName(model: ComboBoxWithActionsModel<GHGitRepositoryMapping>, mapping: GHGitRepositoryMapping): @NlsSafe String {
-    val allRepositories = model.items.map(GHGitRepositoryMapping::ghRepositoryCoordinates)
-    return GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.ghRepositoryCoordinates,true)
+    val allRepositories = model.items.map(GHGitRepositoryMapping::repository)
+    return GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true)
   }
 
   private fun installSpeedSearch(model: ComboBoxWithActionsModel<GHGitRepositoryMapping>,

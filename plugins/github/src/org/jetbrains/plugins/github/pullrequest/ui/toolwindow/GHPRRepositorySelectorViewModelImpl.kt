@@ -33,7 +33,7 @@ class GHPRRepositorySelectorViewModelImpl(private val project: Project,
       emptyList()
     }
     else {
-      val server = repo.ghRepositoryCoordinates.serverPath
+      val server = repo.repository.serverPath
       accounts.filter { it.server.equals(server, true) }
     }
   }
@@ -68,7 +68,7 @@ class GHPRRepositorySelectorViewModelImpl(private val project: Project,
   }
 
   override fun loginToGhe(): GithubAccount? {
-    val server = repoSelectionState.value?.ghRepositoryCoordinates?.serverPath ?: return null
+    val server = repoSelectionState.value?.repository?.serverPath ?: return null
     return authManager.requestNewAccountForServer(server, project)
   }
 

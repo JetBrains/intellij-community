@@ -127,7 +127,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
       val repo = currentRepository
       if (repo != null && currentAccount == null) {
-        val matchingAccounts = accounts.filter { it.server.equals(repo.ghRepositoryCoordinates.serverPath, true) }
+        val matchingAccounts = accounts.filter { it.server.equals(repo.repository.serverPath, true) }
         if (matchingAccounts.size == 1) {
           currentAccount = matchingAccounts.single()
         }
@@ -194,8 +194,8 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     if (showingSelectors == false && !force) return
     tab.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
 
-    val repository = repositoryMapping.ghRepositoryCoordinates
-    val remote = repositoryMapping.gitRemoteUrlCoordinates
+    val repository = repositoryMapping.repository
+    val remote = repositoryMapping.remote
 
     val disposable = Disposer.newDisposable()
     contentDisposable = Disposable {
@@ -239,7 +239,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     val singleRepo = repositoryManager.knownRepositories.singleOrNull()
     if (singleRepo == null) return true
 
-    val matchingAccounts = authManager.getAccounts().filter { it.server.equals(singleRepo.ghRepositoryCoordinates.serverPath, true) }
+    val matchingAccounts = authManager.getAccounts().filter { it.server.equals(singleRepo.repository.serverPath, true) }
     return matchingAccounts.size != 1
   }
 

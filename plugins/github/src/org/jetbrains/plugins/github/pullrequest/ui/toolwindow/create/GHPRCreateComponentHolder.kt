@@ -123,7 +123,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       return
     }
 
-    val repository = headRepo.gitRemoteUrlCoordinates.repository
+    val repository = headRepo.remote.repository
     changesLoadingModel.load(EmptyProgressIndicator()) {
       GitChangeUtils.getThreeDotDiff(repository, baseBranch.name, headBranch.name)
     }
@@ -148,7 +148,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun checkUpdateHead() {
     val headRepo = directionModel.headRepo
     if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo,
-                                                                                  headRepo.gitRemoteUrlCoordinates.repository.currentBranch)
+                                                                                  headRepo.remote.repository.currentBranch)
   }
 
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
@@ -294,7 +294,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private fun GHPRMergeDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
-    val currentRemote = repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates
+    val currentRemote = repositoryDataService.repositoryMapping.remote
     val currentRepo = currentRemote.repository
 
     val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
@@ -314,13 +314,13 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork
     val recentHead = settings.recentNewPullRequestHead
-    val headRepo = repos.find { it.ghRepositoryCoordinates == recentHead } ?: when {
+    val headRepo = repos.find { it.repository == recentHead } ?: when {
       repos.size == 1 -> repos.single()
       baseIsFork -> baseRepo
-      else -> repos.find { it.gitRemoteUrlCoordinates.remote.name == "origin" }
+      else -> repos.find { it.remote.remote.name == "origin" }
     }
 
-    val headBranch = headRepo?.gitRemoteUrlCoordinates?.repository?.currentBranch
+    val headBranch = headRepo?.remote?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
   }

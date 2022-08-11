@@ -72,7 +72,7 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
 
     scope.launch {
       combine(vm.accountsState, vm.repoSelectionState) { accounts, repo ->
-        accounts.isNotEmpty() to (repo?.ghRepositoryCoordinates?.serverPath?.isGithubDotCom ?: false)
+        accounts.isNotEmpty() to (repo?.repository?.serverPath?.isGithubDotCom ?: false)
       }.collect { (hasAccounts, isDotCom) ->
         applyAction.visible = hasAccounts
         githubLoginAction.visible = !hasAccounts && isDotCom
@@ -137,7 +137,7 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
   }
 
   private fun createPopupLoginActions(repo: GHGitRepositoryMapping?): List<AbstractAction> {
-    val isDotComServer = repo?.ghRepositoryCoordinates?.serverPath?.isGithubDotCom ?: false
+    val isDotComServer = repo?.repository?.serverPath?.isGithubDotCom ?: false
     return if (isDotComServer)
       listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
         override fun actionPerformed(e: ActionEvent?) {

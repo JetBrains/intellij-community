@@ -62,7 +62,7 @@ abstract class GithubGitRepoTest : GithubTest() {
     assertNotNull(repository)
     val mappings = project.service<GHHostedRepositoriesManager>().knownRepositories
     assertTrue("GitHub remote is not configured, current mappings: $mappings", mappings.any {
-      it.gitRemoteUrlCoordinates.repository == repository
+      it.remote.repository == repository
     })
   }
 

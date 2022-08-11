@@ -129,7 +129,7 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
 
   fun findKnownRepositories(repository: GitRepository): List<GHGitRepositoryMapping> {
     return knownRepositoriesState.value.filter {
-      it.gitRemoteUrlCoordinates.repository == repository
+      it.remote.repository == repository
     }
   }
 

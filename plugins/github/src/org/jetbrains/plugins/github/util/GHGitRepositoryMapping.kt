@@ -2,35 +2,42 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.git.GitRemoteUrlCoordinates
+import com.intellij.collaboration.git.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
 
-class GHGitRepositoryMapping(val ghRepositoryCoordinates: GHRepositoryCoordinates, val gitRemoteUrlCoordinates: GitRemoteUrlCoordinates) : GitRepositoryMappingData {
+class GHGitRepositoryMapping(override val repository: GHRepositoryCoordinates,
+                             override val remote: GitRemoteUrlCoordinates)
+  : GitRepositoryMappingData, HostedGitRepositoryMapping {
+
   override val gitRemote: GitRemote
-    get() = gitRemoteUrlCoordinates.remote
+    get() = remote.remote
   override val gitRepository: GitRepository
-    get() = gitRemoteUrlCoordinates.repository
+    get() = remote.repository
   override val repositoryPath: String
-    get() = ghRepositoryCoordinates.repositoryPath.repository
+    get() = repository.repositoryPath.repository
+
+  @Deprecated("use repository property", ReplaceWith("repository"))
+  val ghRepositoryCoordinates: GHRepositoryCoordinates = repository
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHGitRepositoryMapping) return false
 
-    if (ghRepositoryCoordinates != other.ghRepositoryCoordinates) return false
+    if (repository != other.repository) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return ghRepositoryCoordinates.hashCode()
+    return repository.hashCode()
   }
 
   override fun toString(): String {
-    return "(repository=$ghRepositoryCoordinates, remote=$gitRemoteUrlCoordinates)"
+    return "(repository=$repository, remote=$repository)"
   }
 
   companion object {
