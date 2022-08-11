@@ -19,6 +19,8 @@ object SystemInfo {
   val isUnix = !isWindows
   val isXWindow = isUnix && !isMac
 
+  val isAarch64: Boolean = OS_ARCH == "aarch64"
+
   private fun getRtVersion(fallback: String): String? {
     val rtVersion = System.getProperty("java.runtime.version")
     return if (Character.isDigit(rtVersion[0])) rtVersion else fallback

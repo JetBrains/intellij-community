@@ -2,7 +2,7 @@ package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.exec
+import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
@@ -41,13 +41,14 @@ object IdeArchiveExtractor {
 
     val mountDir = File(dmgFile.path + "-mount${System.currentTimeMillis()}")
     try {
-      exec(presentablePurpose = "hdiutil",
-           workDir = target,
-           timeout = 10.minutes,
-           stderrRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
-           stdoutRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
-           args = listOf("hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse", "-mountpoint", "$mountDir",
-                         "$dmgFile"))
+      ProcessExecutor(presentableName = "hdiutil",
+                      workDir = target,
+                      timeout = 10.minutes,
+                      stderrRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
+                      stdoutRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
+                      args = listOf("hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse", "-mountpoint", "$mountDir",
+                                    "$dmgFile")
+      ).start()
     }
     catch (t: Throwable) {
       dmgFile.delete()
@@ -59,24 +60,26 @@ object IdeArchiveExtractor {
                    ?: error("Failed to find the only one .app folder in $dmgFile")
 
       val targetAppDir = target / appDir.name
-      exec(
-        presentablePurpose = "copy-dmg",
+      ProcessExecutor(
+        presentableName = "copy-dmg",
         workDir = target,
         timeout = 10.minutes,
         stderrRedirect = ExecOutputRedirect.ToStdOut("cp"),
-        args = listOf("cp", "-R", "$appDir", "$targetAppDir"))
+        args = listOf("cp", "-R", "$appDir", "$targetAppDir")
+      ).start()
 
       return targetAppDir
     }
     finally {
       catchAll {
-        exec(
-          presentablePurpose = "hdiutil",
+        ProcessExecutor(
+          presentableName = "hdiutil",
           workDir = target,
           timeout = 10.minutes,
           stdoutRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
           stderrRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
-          args = listOf("hdiutil", "detach", "-force", "$mountDir"))
+          args = listOf("hdiutil", "detach", "-force", "$mountDir")
+        ).start()
       }
     }
   }
@@ -97,11 +100,11 @@ object IdeArchiveExtractor {
     val severZipToolExe = sevenZipTool.resolve("7z.exe")
 
     targetDir.mkdirs()
-    exec(
-      presentablePurpose = "unpack-zip",
+    ProcessExecutor(
+      presentableName = "unpack-zip",
       workDir = targetDir.toPath(),
       timeout = 10.minutes,
       args = listOf(severZipToolExe.toAbsolutePath().toString(), "x", "-y", "-o$targetDir", exeFile.path)
-    )
+    ).start()
   }
 }

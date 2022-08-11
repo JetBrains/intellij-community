@@ -60,7 +60,8 @@ open class PluginConfigurator(val testContext: IDETestContext) {
         logError("Plugin $pluginId downloading failed, skipping")
         return@apply
       }
-    } else {
+    }
+    else {
       FileSystem.unpack(downloadedPlugin, testContext.paths.pluginsDir)
     }
     logOutput("Plugin $pluginId setup finished")

@@ -9,7 +9,7 @@ import com.intellij.ide.starter.report.sarif.TestContextToQodanaSarifMapper
 object QodanaTestResultPublisher : ReportPublisher {
 
   override fun publish(ideStartResult: IDEStartResult) {
-      QodanaClient.report(TestContextToQodanaSarifMapper.map(ideStartResult))
+    QodanaClient.report(TestContextToQodanaSarifMapper.map(ideStartResult))
   }
 
 }
