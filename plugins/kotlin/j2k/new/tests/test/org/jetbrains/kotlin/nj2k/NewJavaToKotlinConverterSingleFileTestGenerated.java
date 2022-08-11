@@ -3775,6 +3775,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/methodCallExpression/annotationReceiver3.java");
         }
 
+        @TestMetadata("builtInTopLevelFunctionsThatMayBeShadowed.java")
+        public void testBuiltInTopLevelFunctionsThatMayBeShadowed() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/builtInTopLevelFunctionsThatMayBeShadowed.java");
+        }
+
         @TestMetadata("callWithKeywords.java")
         public void testCallWithKeywords() throws Exception {
             runTest("testData/newJ2k/methodCallExpression/callWithKeywords.java");
