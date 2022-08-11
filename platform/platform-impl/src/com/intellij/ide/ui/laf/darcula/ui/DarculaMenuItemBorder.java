@@ -29,17 +29,28 @@ import java.awt.*;
  */
 public class DarculaMenuItemBorder implements Border, UIResource {
 
-  private static JBInsets popupMenuInnerInsets() {
-    return JBUI.insets("PopupMenu.Selection.innerInsets", ExperimentalUI.isNewUI() ? JBUI.insets(4, 10) :
-                                                          JBUI.insets(2, 10));
-  }
-
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) { }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return (IdeaPopupMenuUI.isPartOfPopupMenu(c) ? popupMenuInnerInsets() : JBUI.insets(2)).asUIResource();
+    JBInsets result;
+
+    if (IdeaPopupMenuUI.isPartOfPopupMenu(c)) {
+      result = JBUI.CurrentTheme.PopupMenu.Selection.innerInsets();
+      if (ExperimentalUI.isNewUI()) {
+        result.top = 0;
+        result.bottom = 0;
+
+        // For backward compatibility outerInsets is NOT part of border in old UI
+        result = JBInsets.addInsets(result, JBUI.CurrentTheme.PopupMenu.Selection.outerInsets());
+      }
+    }
+    else {
+      result = JBUI.insets(2);
+    }
+
+    return result.asUIResource();
   }
 
   @Override

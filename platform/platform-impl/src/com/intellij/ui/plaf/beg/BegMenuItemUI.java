@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.*;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.event.MenuDragMouseListener;
 import javax.swing.event.MouseInputListener;
@@ -58,8 +58,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
-  private Border myAquaSelectedBackgroundPainter;
-
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
     return new BegMenuItemUI();
@@ -67,10 +65,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   public BegMenuItemUI() {
     myMaxGutterIconWidth2 = myMaxGutterIconWidth = 18;
-
-    if (UIUtil.isUnderAquaBasedLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
-      myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-    }
   }
 
   @Override
@@ -126,7 +120,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     String keyStrokeText = getKeyStrokeText(jmenuitem);
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+    if (comp.isOpaque() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
@@ -136,8 +130,10 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         }
         else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
           GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
-          g.fillRoundRect(4, 1, j1 - 8, k1 - 2, radius, radius);
+          int radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
+          JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
+          g.fillRoundRect(outerInsets.left, outerInsets.top, j1 - outerInsets.width(),
+                          k1 - outerInsets.height(), radius, radius);
           config.restore();
         }
         else {
@@ -377,9 +373,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     if (useCheckAndArrow()){
       arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
-      arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
+      arrowIconRect.y = (labelRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
-        checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;
+        checkIconRect.y = (labelRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
         k = viewRect.x + myMaxGutterIconWidth + 2;
       }
@@ -436,6 +432,12 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (i.height % 2 == 0){
       i.height++;
     }
+
+    if (ExperimentalUI.isNewUI() && IdeaPopupMenuUI.isPartOfPopupMenu(comp)) {
+      JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
+      return new Dimension(i.width, JBUI.CurrentTheme.List.rowHeight() + outerInsets.height());
+    }
+
     return i.getSize();
   }
 
@@ -454,7 +456,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 */
   }
 
-  private void initBounds() {
+  private static void initBounds() {
     l.setBounds(b);
     j.setBounds(b);
     c.setBounds(b);

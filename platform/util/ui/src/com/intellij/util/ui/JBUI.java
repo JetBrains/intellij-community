@@ -488,7 +488,7 @@ public final class JBUI {
       }
 
       public static int menuPopupMinWidth() {
-        return JBUI.scale(180);
+        return scale(180);
       }
     }
 
@@ -975,6 +975,21 @@ public final class JBUI {
           result.bottom = 0;
           return result;
         }
+      }
+    }
+
+    public static final class PopupMenu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("PopupMenu.Selection.innerInsets", insets(2, 10));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("PopupMenu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
       }
     }
 

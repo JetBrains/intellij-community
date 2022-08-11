@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
@@ -210,8 +211,10 @@ public class IdeaMenuUI extends BasicMenuUI {
     }
     else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
-      g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, radius, radius);
+      int radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
+      JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
+      g.fillRoundRect(outerInsets.left, outerInsets.top, jMenu.getWidth() -  outerInsets.width(),
+                      jMenu.getHeight() - outerInsets.height(), radius, radius);
       config.restore();
     }
     else {
@@ -308,9 +311,9 @@ public class IdeaMenuUI extends BasicMenuUI {
 
     if (useCheckAndArrow()){
       arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
-      arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
+      arrowIconRect.y = (labelRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
-        checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;
+        checkIconRect.y = (labelRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
         a = viewRect.x;
         e = (viewRect.y + labelRect.height / 2) - myMaxGutterIconWidth / 2;
@@ -385,6 +388,12 @@ public class IdeaMenuUI extends BasicMenuUI {
     if (ourPreferredSizeRect.height % 2 == 0){
       ourPreferredSizeRect.height++;
     }
+
+    if (ExperimentalUI.isNewUI() && IdeaPopupMenuUI.isPartOfPopupMenu(comp)) {
+      JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
+      return new Dimension(ourPreferredSizeRect.width, JBUI.CurrentTheme.List.rowHeight() + outerInsets.height());
+    }
+
     return ourPreferredSizeRect.getSize();
   }
 

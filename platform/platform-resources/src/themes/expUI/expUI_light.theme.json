@@ -269,7 +269,12 @@
       }
     },
 
-    "PopupMenu.background": "Grey13",
+    "PopupMenu": {
+      "background": "Grey13",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
+      }
+    },
 
     "MenuItem.background": "Grey13",
 

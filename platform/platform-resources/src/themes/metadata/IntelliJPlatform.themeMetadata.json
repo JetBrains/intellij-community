@@ -974,7 +974,7 @@
     },
     {
       "key": "PopupMenu.Selection.innerInsets",
-      "description": "Inner insets in selection line",
+      "description": "Inner insets in selection line. In experimental UI top and bottom values are ignored, row height is used",
       "since": "2022.3"
     },
     {

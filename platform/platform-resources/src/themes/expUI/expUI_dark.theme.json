@@ -325,6 +325,12 @@
       }
     },
 
+    "PopupMenu": {
+      "Selection": {
+        "innerInsets": "0,6,0,6"
+      }
+    },
+
     "ComplexPopup.Header.background": "Grey3",
 
     "CompletionPopup": {
