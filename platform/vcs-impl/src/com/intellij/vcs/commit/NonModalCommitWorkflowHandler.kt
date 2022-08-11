@@ -202,8 +202,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isCommitChecksResultUpToDate = false
   }
 
+  override fun beforeCommitChecksStarted() {
+    super.beforeCommitChecksStarted()
+    hideCommitChecksFailureNotification()
+  }
+
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) {
-    checkinErrorNotifications.clear()
+    hideCommitChecksFailureNotification()
     super.beforeCommitChecksEnded(isDefaultCommit, executor, result)
     if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
@@ -301,9 +306,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
-    checkinErrorNotifications.clear()
+    hideCommitChecksFailureNotification()
     coroutineScope.cancel()
     super.dispose()
+  }
+
+  private fun hideCommitChecksFailureNotification() {
+    checkinErrorNotifications.clear()
   }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
