@@ -695,7 +695,7 @@ public final class IncProjectBuilder {
   private static Set<BuildTarget<?>> getTargetsWithClearedOutput(CompileContext context) {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-      return data != null? Collections.unmodifiableSet(new HashSet<>(data)) : Collections.emptySet();
+      return data != null ? Set.copyOf(data) : Collections.emptySet();
     }
   }
 
