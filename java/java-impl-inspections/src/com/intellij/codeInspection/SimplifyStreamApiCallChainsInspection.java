@@ -590,8 +590,15 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
         String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
-        addBoxingIfNecessary(factory, collectCall.replace(replacement));
+        PsiMethodCallExpression mock = (PsiMethodCallExpression)factory.createExpressionFromText(result, collectCall);
+        if (mock.getMethodExpression().getQualifierExpression() == null) {
+          ExpressionUtils.bindCallTo(collectCall, Objects.requireNonNull(mock.getMethodExpression().getReferenceName()));
+          collectCall.getArgumentList().replace(mock.getArgumentList());
+        } else {
+          PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+          collectCall = (PsiMethodCallExpression)collectCall.replace(replacement);
+        }
+        addBoxingIfNecessary(factory, collectCall);
       }
     }
 
