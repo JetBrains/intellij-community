@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.util.ui.JButtonAction
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import javax.swing.JButton
@@ -23,6 +24,14 @@ abstract class CommitExecutorAction : JButtonAction(null) {
   override fun update(e: AnActionEvent) {
     val workflowHandler = e.getContextCommitWorkflowHandler()
     val executor = if (workflowHandler != null) getCommitExecutor(workflowHandler) else null
+
+    if (workflowHandler != null && executor is CommitExecutorWithRichDescription) {
+      val state = workflowHandler.getState()
+      val actionText = executor.getText(state)
+      if (actionText != null) {
+        e.presentation.text = actionText
+      }
+    }
 
     e.presentation.isVisible = workflowHandler != null && executor != null
     e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
