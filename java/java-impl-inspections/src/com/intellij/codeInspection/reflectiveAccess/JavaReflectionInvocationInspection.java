@@ -93,6 +93,8 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
               PsiType actualType = argument.getType();
               if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
                   PsiPolyExpressionUtil.isPolyExpression(argument)) {
+                // We make a copy here to avoid surrounding call affecting the inferred type,
+                // as sometimes in complex expressions it causes the final type to be inferred to Object
                 actualType = ((PsiExpression)argument.copy()).getType();
               }
               if (actualType != null && !requiredType.isAssignableFrom(actualType)) {
