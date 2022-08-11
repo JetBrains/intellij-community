@@ -149,6 +149,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.ide.RecentProjectsManagerBase$MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectManagerListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.ide.lightEdit.LightEditServiceListener"

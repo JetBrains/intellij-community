@@ -328,13 +328,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   fun getLastOpenedProject() = state.lastOpenedProject
 
-  init {
-    Toolkit.getDefaultToolkit().addAWTEventListener(
-      { e ->
-        if (e.id == WindowEvent.WINDOW_ACTIVATED) {
-          ProjectUtil.getRootFrameForWindow((e as WindowEvent).window)?.notifyProjectActivation()
-        }
-      }, AWTEvent.WINDOW_EVENT_MASK)
+  @Internal
+  class MyFrameStateListener : FrameStateListener {
+    override fun onFrameActivated(frame: IdeFrame) = frame.notifyProjectActivation()
   }
 
   @VisibleForTesting
