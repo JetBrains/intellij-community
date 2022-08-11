@@ -23,21 +23,21 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   private String[] mySeparators;
   private final boolean myAllContributors;
 
-  public GotoSymbolModel2(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
+  public GotoSymbolModel2(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors, @NotNull Disposable parentDisposable) {
     super(project, contributors);
     myAllContributors = false;
-    addEpListener(project);
+    addEpListener(parentDisposable);
   }
 
-  public GotoSymbolModel2(@NotNull Project project) {
+  public GotoSymbolModel2(@NotNull Project project, @NotNull Disposable parentDisposable) {
     super(project, new ChooseByNameContributor[0]);
     myAllContributors = true;
-    addEpListener(project);
+    addEpListener(parentDisposable);
   }
 
-  private void addEpListener(@NotNull Project project) {
+  private void addEpListener(@NotNull Disposable parentDisposable) {
     ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(
-      () -> mySeparators = null, project);
+      () -> mySeparators = null, parentDisposable);
   }
 
   @Override
