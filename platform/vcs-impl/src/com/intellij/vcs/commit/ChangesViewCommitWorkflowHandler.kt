@@ -229,8 +229,8 @@ internal class ChangesViewCommitWorkflowHandler(
     super.inclusionChanged()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
-    super.beforeCommitChecksEnded(isDefaultCommit, result)
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) {
+    super.beforeCommitChecksEnded(isDefaultCommit, executor, result)
     if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
