@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -47,7 +49,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
   private final @NotNull JScrollPane myMostCommonUsageScrollPane;
-  private final @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
+  private @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
   private final @NotNull ClusteringSearchSession mySession;
@@ -73,11 +75,11 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           myMainPanel.revalidate();
           mySelectedUsages = myUsageView.getSelectedUsages();
           setToolbar(null);
-          setToolbar(new MostCommonUsagesToolbar(myMostCommonUsageScrollPane,
-                                                 UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()),
-                                                 myRefreshAction,
-                                                 SaveClusteringResultActionLink.getInternalSaveClusteringResultsLink(myProject, mySession,
-                                                                                                                     usageView.getTargets()[0].getName())));
+          myMostCommonUsagesToolbar = new MostCommonUsagesToolbar(myMostCommonUsageScrollPane,
+                                      UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()),
+                                      myRefreshAction);
+          setToolbar(myMostCommonUsagesToolbar);
+          addInternalClusteringSessionActions(usageView);
           addMostCommonUsagesForSelectedGroups();
           setContent(myMostCommonUsageScrollPane);
         }
@@ -88,12 +90,21 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         }
       };
     myMostCommonUsagesToolbar =
-      new MostCommonUsagesToolbar(this, UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()), myRefreshAction,
-                                  SaveClusteringResultActionLink.getInternalSaveClusteringResultsLink(myProject, mySession, usageView.getTargets()[0].getName()));
+      new MostCommonUsagesToolbar(this, UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()), myRefreshAction);
+    addInternalClusteringSessionActions(usageView);
     setToolbar(myMostCommonUsagesToolbar);
     addMostCommonUsagesForSelectedGroups();
     revalidate();
     setContent(myMostCommonUsageScrollPane);
+  }
+
+  private void addInternalClusteringSessionActions(@NotNull UsageViewImpl usageView) {
+    if (Registry.is("similarity.import.clustering.results.action.enabled")) {
+      myMostCommonUsagesToolbar.add(new ExportClusteringResultActionLink(myProject, mySession,
+                                                                         StringUtilRt.notNullize(usageView.getTargets()[0].getName(),
+                                                                                                 "features")));
+      myMostCommonUsagesToolbar.add(new ImportClusteringResultActionLink(myProject, mySession));
+    }
   }
 
 

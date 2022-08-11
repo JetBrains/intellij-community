@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -74,7 +71,8 @@ public class ClusteringSearchSession {
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, @NotNull Set<Usage> selectedUsages) {
+  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator,
+                                                                  @NotNull Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
     return new ArrayList<>(getClusters()).stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
@@ -82,6 +80,13 @@ public class ClusteringSearchSession {
         indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
       }).collect(Collectors.toList());
+  }
+
+  public void updateClusters(@NotNull List<UsageCluster> clusters) {
+    synchronized (myClusters) {
+      myClusters.clear();
+      myClusters.addAll(clusters);
+    }
   }
 
   private @NotNull UsageCluster createNewCluster() {

@@ -13,9 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,7 +29,6 @@ import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +40,9 @@ import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 
 
 public class ExportClusteringResultActionLink extends ActionLink {
+  public static final String FILENAME = "filename";
+  public static final String CLUSTER_NUMBER = "\"cluster_number\": ";
+
   public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
           (event) -> {
@@ -96,10 +96,10 @@ public class ExportClusteringResultActionLink extends ActionLink {
           }
           indicator.checkCanceled();
           PsiElement element = getElement((UsageInfo2UsageAdapter)usage);
-          sb.append("{\"filename\":").append("\"").append(getUsageId(element)).append("\",\n");
+          sb.append("{\"" + FILENAME + "\":").append("\"").append(getUsageId(element)).append("\",\n");
           sb.append("\"snippet\":").append("\"").append(getUsageLineSnippet(project, element))
             .append("\",\n");
-          sb.append("\"cluster_number\": ").append(counter).append(",\n");
+          sb.append(CLUSTER_NUMBER).append(counter).append(",\n");
           sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("}");
         }
       }
@@ -115,7 +115,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
     }
   }
 
-  private static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {
+  public static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {
     Ref<PsiElement> elementRef = new Ref<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       elementRef.set(usage.getElement());
@@ -123,7 +123,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
     return elementRef.get();
   }
 
-  private static @NotNull String getUsageId(@NotNull PsiElement element) {
+  public static @NotNull String getUsageId(@NotNull PsiElement element) {
     Ref<String> fileNameRef = new Ref<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       VirtualFile containingVirtualFile = element.getContainingFile().getVirtualFile();
@@ -154,14 +154,5 @@ public class ExportClusteringResultActionLink extends ActionLink {
   private static @NotNull String createJsonForFeatures(@NotNull Bag bag) {
     return bag.getBag().object2IntEntrySet().stream().map(entry -> "\"" + entry.getKey() + "\":" + entry.getIntValue())
       .collect(Collectors.joining(",\n", "{", "}"));
-  }
-
-  static @Nullable ExportClusteringResultActionLink getInternalSaveClusteringResultsLink(@NotNull Project project,
-                                                                                         @NotNull ClusteringSearchSession session,
-                                                                                         @Nullable String fileName) {
-    return Registry.is("similarity.import.clustering.results.action.enabled")
-           ? new ExportClusteringResultActionLink(project, session,
-                                                  StringUtilRt.notNullize(fileName, "features"))
-           : null;
   }
 }
