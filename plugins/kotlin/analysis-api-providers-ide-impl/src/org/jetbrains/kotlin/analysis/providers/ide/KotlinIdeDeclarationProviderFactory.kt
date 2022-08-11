@@ -82,9 +82,8 @@ private class KotlinIdeDeclarationProvider(
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
     }
 
-    override fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex
-            .get(packageFqName.asString(), project, searchScope)
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
+        return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, searchScope)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {

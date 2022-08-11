@@ -52,22 +52,36 @@ class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAliasesOnly() {
         val file = myFixture.configureByFile("aliasesOnly.kt") as KtFile
         val aClass = file.classes.single()
-        assertEquals(0, aClass.getMethods().size)
+        assertEquals(0, aClass.methods.size)
     }
 
     fun testNoFacadeForScript() {
         val file = myFixture.configureByText("foo.kts", "package foo") as KtFile
         assertEquals(0, file.classes.size)
-        val facadeFiles =
-            KotlinAsJavaSupport.getInstance(project).findFilesForFacade(FqName("foo.FooKt"), GlobalSearchScope.allScope(project))
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        assertNull(javaSupport.getLightFacade(file))
+
+        val fqName = FqName("foo.FooKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val facadeClasses = javaSupport.getFacadeClasses(fqName, scope)
+        assertEquals(0, facadeClasses.size)
+
+        val facadeFiles = javaSupport.findFilesForFacade(fqName, scope)
         assertEquals(0, facadeFiles.size)
     }
 
     fun testNoFacadeForHeaderClass() {
         val file = myFixture.configureByText("foo.kt", "header fun foo(): Int") as KtFile
         assertEquals(0, file.classes.size)
-        val facadeFiles =
-            KotlinAsJavaSupport.getInstance(project).findFilesForFacade(FqName("foo.FooKt"), GlobalSearchScope.allScope(project))
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        assertNull(javaSupport.getLightFacade(file))
+
+        val fqName = FqName("foo.FooKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val facadeClasses = javaSupport.getFacadeClasses(fqName, scope)
+        assertEquals(0, facadeClasses.size)
+
+        val facadeFiles = javaSupport.getFacadeClasses(fqName, scope)
         assertEquals(0, facadeFiles.size)
     }
 
