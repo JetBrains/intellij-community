@@ -1348,6 +1348,7 @@
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
+    <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
                     serviceImplementation="com.intellij.presentation.impl.FilePresentationServiceImpl"/>
 
