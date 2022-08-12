@@ -41,20 +41,20 @@ public final class ChangesViewWorkflowManager implements Disposable {
     myProject = project;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
-    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
-    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), ModalityState.NON_MODAL, myProject.getDisposed());
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflowHandler());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     if (ApplicationManager.getApplication().isDispatchThread() && !myInitialized) {
-      updateCommitWorkflow();
+      updateCommitWorkflowHandler();
     }
     return myCommitWorkflowHandler;
   }
 
   @RequiresEdt
-  private void updateCommitWorkflow() {
+  private void updateCommitWorkflowHandler() {
     myInitialized = true;
 
     boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
