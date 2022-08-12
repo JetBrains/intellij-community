@@ -375,6 +375,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, SearchEverywhereFoundElementInfo info) {
     //noinspection unchecked
     SearchEverywhereContributor<Object> contributor = (SearchEverywhereContributor<Object>)info.getContributor();
+    if (contributor == null) return null;
+
     return contributor.getDataForItem(info.getElement(), dataId);
   }
 
