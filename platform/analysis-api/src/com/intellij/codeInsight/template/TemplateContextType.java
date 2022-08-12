@@ -3,14 +3,15 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.template.LiveTemplateContextBean.EVERYWHERE_CONTEXT_ID;
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
@@ -18,22 +19,33 @@ import static com.intellij.openapi.util.NlsContexts.Label;
  * Contexts are available for the user in the Live Template management UI.
  */
 public abstract class TemplateContextType {
-  public static final ExtensionPointName<TemplateContextType> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
+  String myContextId;
+  DeferredTemplateContextType myBaseContextType;
 
-  private final @NotNull String myContextId;
   private final @NotNull @Label String myPresentableName;
-  private final TemplateContextTypeCache myBaseContextType;
 
+  protected TemplateContextType(@Label @NotNull String presentableName) {
+    myPresentableName = presentableName;
+  }
+
+  /**
+   * @deprecated Set contextId in plugin.xml instead
+   */
+  @Deprecated
   protected TemplateContextType(@NotNull String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
+  /**
+   * @deprecated Set contextId and baseContextId in plugin.xml instead
+   */
+  @Deprecated
   protected TemplateContextType(@NotNull String id,
                                 @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
-    myBaseContextType = new TemplateContextTypeCache(baseContextType);
+    myBaseContextType = new ClassTemplateContextTypeCache(baseContextType);
   }
 
   /**
@@ -48,7 +60,10 @@ public abstract class TemplateContextType {
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
   @NotNull
-  public String getContextId() {
+  public final String getContextId() {
+    if (myContextId == null) {
+      throw new AssertionError("contextId must be set for liveTemplateContext " + this);
+    }
     return myContextId;
   }
 
@@ -95,12 +110,14 @@ public abstract class TemplateContextType {
    */
   @Nullable
   public TemplateContextType getBaseContextType() {
-    return myBaseContextType.getValue();
+    return myBaseContextType != null ? myBaseContextType.getValue() : null;
   }
 
   @ApiStatus.Internal
   public void clearCachedBaseContextType() {
-    myBaseContextType.drop();
+    if (myBaseContextType != null) {
+      myBaseContextType.drop();
+    }
   }
 
   /**
@@ -111,24 +128,69 @@ public abstract class TemplateContextType {
     return EditorFactory.getInstance().createDocument(text);
   }
 
-  private static class TemplateContextTypeCache {
-    private final @Nullable Class<? extends TemplateContextType> myBaseContextType;
+  interface DeferredTemplateContextType {
+    TemplateContextType getValue();
+    void drop();
+  }
+
+  static final class TemplateContextTypeCache implements DeferredTemplateContextType {
+
+    public static final TemplateContextTypeCache EVERYWHERE_CONTEXT = new TemplateContextTypeCache(EVERYWHERE_CONTEXT_ID);
+
+    private final @Nullable String myBaseContextTypeId;
     private boolean myComputed;
     private @Nullable TemplateContextType myValue;
 
-    private TemplateContextTypeCache(@Nullable Class<? extends TemplateContextType> baseContextType) {
-      myBaseContextType = baseContextType;
+    TemplateContextTypeCache(@Nullable String baseContextTypeId) {
+      myBaseContextTypeId = baseContextTypeId;
     }
 
-    private synchronized @Nullable TemplateContextType getValue() {
+    @Override
+    public synchronized @Nullable TemplateContextType getValue() {
       if (!myComputed) {
-        myValue = myBaseContextType == null ? null : EP_NAME.findExtension(myBaseContextType);
+        myValue = myBaseContextTypeId == null ? null : LiveTemplateContextBean.EP_NAME.getExtensionList().stream()
+          .filter(t -> t.getContextId().equals(myBaseContextTypeId))
+          .map(BaseKeyedLazyInstance::getInstance)
+          .findFirst()
+          .orElseThrow();
+
         myComputed = true;
       }
       return myValue;
     }
 
-    private synchronized void drop() {
+    @Override
+    public synchronized void drop() {
+      myComputed = false;
+      myValue = null;
+    }
+  }
+
+  private static class ClassTemplateContextTypeCache implements DeferredTemplateContextType {
+    private final @Nullable Class<? extends TemplateContextType> myBaseContextType;
+    private boolean myComputed;
+    private @Nullable TemplateContextType myValue;
+
+    private ClassTemplateContextTypeCache(@Nullable Class<? extends TemplateContextType> baseContextType) {
+      myBaseContextType = baseContextType;
+    }
+
+    @Override
+    public synchronized @Nullable TemplateContextType getValue() {
+      if (!myComputed) {
+        myValue = myBaseContextType == null ? null : LiveTemplateContextBean.EP_NAME.getExtensionList().stream()
+          .filter(t -> myBaseContextType.getName().equals(t.implementationClass))
+          .map(BaseKeyedLazyInstance::getInstance)
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("Unable to find base context type with implementation class " + myBaseContextType));
+
+        myComputed = true;
+      }
+      return myValue;
+    }
+
+    @Override
+    public synchronized void drop() {
       myComputed = false;
       myValue = null;
     }

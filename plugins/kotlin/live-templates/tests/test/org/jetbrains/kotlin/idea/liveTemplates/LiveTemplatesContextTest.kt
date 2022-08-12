@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.liveTemplates
 
-import com.intellij.codeInsight.template.TemplateContextType
+import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.test.TestMetadata
+import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @TestRoot("live-templates/tests")
@@ -81,7 +81,7 @@ class LiveTemplatesContextTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun assertInContexts(vararg expectedContexts: java.lang.Class<out KotlinTemplateContextType>) {
         myFixture.configureByFile(getTestName(false) + ".kt")
-        val allContexts = TemplateContextType.EP_NAME.extensions.filterIsInstance<KotlinTemplateContextType>()
+        val allContexts = TemplateContextTypes.getAllContextTypes().filterIsInstance<KotlinTemplateContextType>()
         val enabledContexts = allContexts.filter { it.isInContext(myFixture.file, myFixture.caretOffset) }.map { it::class.java }
         UsefulTestCase.assertSameElements(enabledContexts, *expectedContexts)
     }

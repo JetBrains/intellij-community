@@ -7,13 +7,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ListTemplateActionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -33,7 +33,7 @@ public class ListTemplateActionTest extends LightJavaCodeInsightFixtureTestCase 
     TemplateManager manager = TemplateManager.getInstance(getProject());
     TemplateImpl template = (TemplateImpl)manager.createTemplate(key, group, text);
     template.setDescription(description);
-    TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
+    TemplateContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Generic.class);
     template.getTemplateContext().setEnabled(contextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
   }
