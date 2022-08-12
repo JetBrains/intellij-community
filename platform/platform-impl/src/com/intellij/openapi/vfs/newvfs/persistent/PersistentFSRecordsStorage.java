@@ -9,6 +9,7 @@ import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,7 +34,8 @@ abstract class PersistentFSRecordsStorage {
            : new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
   }
 
-  private static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
+  @VisibleForTesting
+  static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
     int pageSize = PagedFileStorage.BUFFER_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
@@ -51,13 +53,14 @@ abstract class PersistentFSRecordsStorage {
 
   abstract int allocateRecord();
 
+  //TODO RC: offset constant named ATTR_REF, but accessor is attributeRecord -- which one is correct?
   abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
   abstract int getAttributeRecordId(int fileId) throws IOException;
 
   abstract int getParent(int fileId) throws IOException;
 
-  abstract void setParent(int fileIf, int parentId) throws IOException;
+  abstract void setParent(int fileId, int parentId) throws IOException;
 
   abstract int getNameId(int fileId) throws IOException;
 
@@ -67,10 +70,12 @@ abstract class PersistentFSRecordsStorage {
 
   abstract long getLength(int fileId) throws IOException;
 
+  //RC: why 'put' not 'set'?
   abstract void putLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
 
+  //RC: why 'put' not 'set'?
   abstract void putTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;
@@ -83,6 +88,8 @@ abstract class PersistentFSRecordsStorage {
 
   abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
+  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
+  //         it makes it harder to implement a storage in a lock-free way
   abstract void setAttributesAndIncModCount(int fileId,
                                             long timestamp,
                                             long length,
@@ -107,6 +114,7 @@ abstract class PersistentFSRecordsStorage {
 
   abstract int incGlobalModCount();
 
+  /**@return length of underlying file storage */
   abstract long length();
 
   abstract void cleanRecord(int fileId) throws IOException;

@@ -1,0 +1,372 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.WRITE;
+
+/**
+ * This implementation keeps all FSRecords always in RAM, but it still loads them from file,
+ * and persist changes into the file on {@linkplain #close()}
+ */
+public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStorage {
+
+  /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
+
+  private static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
+  //RC: fields offsets are in int(4 bytes) because of historical reasons. Probably, switch to size in bytes later on, as
+  //    code stabilizes
+  private static final int PARENT_REF_OFFSET = 0;
+  private static final int PARENT_REF_SIZE = 1;
+  private static final int NAME_REF_OFFSET = PARENT_REF_OFFSET + PARENT_REF_SIZE;
+  private static final int NAME_REF_SIZE = 1;
+  private static final int FLAGS_OFFSET = NAME_REF_OFFSET + NAME_REF_SIZE;
+  private static final int FLAGS_SIZE = 1;
+  private static final int ATTR_REF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
+  private static final int ATTR_REF_SIZE = 1;
+  private static final int CONTENT_REF_OFFSET = ATTR_REF_OFFSET + ATTR_REF_SIZE;
+  private static final int CONTENT_REF_SIZE = 1;
+  private static final int MOD_COUNT_OFFSET = CONTENT_REF_OFFSET + CONTENT_REF_SIZE;
+  private static final int MOD_COUNT_SIZE = 1;
+  //RC: moved timestamp 1 field down so both LONG fields are 8-byte aligned (for atomic accesses alignment is important)
+  private static final int TIMESTAMP_OFFSET = MOD_COUNT_OFFSET + MOD_COUNT_SIZE;
+  private static final int TIMESTAMP_SIZE = 2;
+  private static final int LENGTH_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
+  private static final int LENGTH_SIZE = 2;
+
+  private static final int RECORD_SIZE_IN_INTS = LENGTH_OFFSET + LENGTH_SIZE;
+  private static final int RECORD_SIZE_IN_BYTES = RECORD_SIZE_IN_INTS * Integer.BYTES;
+
+  /* ================ RECORD FIELDS LAYOUT end             ======================================== */
+
+  private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
+  private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.nativeOrder());
+
+
+  private final int maxRecords;
+
+  private final ByteBuffer records;
+  private final AtomicInteger allocatedRecordsCount = new AtomicInteger(0);
+  private final AtomicInteger globalModCount = new AtomicInteger(0);
+  private final AtomicBoolean dirty = new AtomicBoolean(false);
+
+
+  private final Path storagePath;
+
+
+  public PersistentInMemoryFSRecordsStorage(final Path file,
+                                            final int maxRecords) {
+    storagePath = Objects.requireNonNull(file, "file");
+    if (maxRecords <= 0) {
+      throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");
+    }
+    this.maxRecords = maxRecords;
+    //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
+    this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
+  }
+
+  @Override
+  public int allocateRecord() {
+    final int recordId = allocatedRecordsCount.getAndIncrement();
+    if (recordId > maxRecords) {
+      throw new IndexOutOfBoundsException("maxRecords(=" + maxRecords + ") limit exceeded");
+    }
+    markDirty();
+    return recordId;
+  }
+
+  @Override
+  public void setAttributeRecordId(final int recordId,
+                                   final int recordRef) throws IOException {
+    setIntField(recordId, ATTR_REF_OFFSET, recordRef);
+  }
+
+  @Override
+  public int getAttributeRecordId(final int recordId) throws IOException {
+    return getIntField(recordId, ATTR_REF_OFFSET);
+  }
+
+  @Override
+  public int getParent(final int recordId) throws IOException {
+    return getIntField(recordId, PARENT_REF_OFFSET);
+  }
+
+  @Override
+  public void setParent(final int recordId,
+                        final int parentId) throws IOException {
+    setIntField(recordId, PARENT_REF_OFFSET, parentId);
+  }
+
+  @Override
+  public int getNameId(final int recordId) throws IOException {
+    return getIntField(recordId, NAME_REF_OFFSET);
+  }
+
+  @Override
+  public void setNameId(final int recordId,
+                        final int nameId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(nameId);
+    setIntField(recordId, NAME_REF_OFFSET, nameId);
+  }
+
+  @Override
+  public void setFlags(final int recordId,
+                       @PersistentFS.Attributes final int flags) throws IOException {
+    setIntField(recordId, FLAGS_OFFSET, flags);
+  }
+
+  @Override
+  @PersistentFS.Attributes
+  public int getFlags(final int recordId) throws IOException {
+    return getIntField(recordId, FLAGS_OFFSET);
+  }
+
+  @Override
+  public long getLength(final int recordId) throws IOException {
+    return getLongField(recordId, LENGTH_OFFSET);
+  }
+
+  @Override
+  public void putLength(final int recordId,
+                        final long length) throws IOException {
+    setLongField(recordId, LENGTH_OFFSET, length);
+  }
+
+  @Override
+  public long getTimestamp(final int recordId) throws IOException {
+    return getLongField(recordId, TIMESTAMP_OFFSET);
+  }
+
+  @Override
+  public void putTimestamp(final int recordId, long timestamp) throws IOException {
+    setLongField(recordId, TIMESTAMP_OFFSET, timestamp);
+  }
+
+  @Override
+  public int getModCount(final int recordId) throws IOException {
+    return getIntField(recordId, MOD_COUNT_OFFSET);
+  }
+
+  @Override
+  public void setModCount(final int recordId, int counter) throws IOException {
+    setIntField(recordId, MOD_COUNT_OFFSET, counter);
+  }
+
+  @Override
+  public int getContentRecordId(final int recordId) throws IOException {
+    return getIntField(recordId, CONTENT_REF_OFFSET);
+  }
+
+  @Override
+  public void setContentRecordId(final int recordId,
+                                 final int contentRef) throws IOException {
+    setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
+  }
+
+  @Override
+  public void setAttributesAndIncModCount(final int recordId,
+                                          final long timestamp,
+                                          final long length,
+                                          final int flags,
+                                          final int nameId,
+                                          final int parentId,
+                                          final boolean overwriteMissed) throws IOException {
+    setParent(recordId, parentId);
+    setNameId(recordId, nameId);
+    setFlags(recordId, flags);
+    if (overwriteMissed) {
+      setAttributeRecordId(recordId, 0);
+    }
+    putTimestamp(recordId, timestamp);
+    putLength(recordId, length);
+  }
+
+  @Override
+  public void cleanRecord(final int recordId) throws IOException {
+    //FIXME: implement
+    throw new UnsupportedOperationException("Method not implemented yet");
+  }
+
+  /* ============== global storage properties accessors ================ */
+
+  @Override
+  public boolean isDirty() {
+    return dirty.get();
+  }
+
+  @Override
+  public long getTimestamp() throws IOException {
+    return getLongHeaderField(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
+  }
+
+  @Override
+  public void setConnectionStatus(final int connectionStatus) throws IOException {
+    setIntHeaderField(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
+  }
+
+  @Override
+  public int getConnectionStatus() throws IOException {
+    return getIntHeaderField(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
+  }
+
+  @Override
+  public void setVersion(final int version) throws IOException {
+    setIntHeaderField(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
+    setLongHeaderField(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+  }
+
+  @Override
+  public int getVersion() throws IOException {
+    return getIntHeaderField(PersistentFSHeaders.HEADER_VERSION_OFFSET);
+  }
+
+  @Override
+  public int getGlobalModCount() {
+    return globalModCount.get();
+  }
+
+  @Override
+  public int incGlobalModCount() {
+    return globalModCount.incrementAndGet();
+  }
+
+  @Override
+  public long length() {
+    final int recordsCount = allocatedRecordsCount.get();
+    return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
+  }
+
+
+  @Override
+  public boolean processAllRecords(final @NotNull FsRecordProcessor processor) throws IOException {
+    final int recordsCount = allocatedRecordsCount.get();
+    for (int recordId = 0; recordId < recordsCount; recordId++) {
+      processor.process(
+        recordId,
+        getNameId(recordId),
+        getFlags(recordId),
+        getParent(recordId),
+        /* corrupted = */ false
+      );
+    }
+    return true;
+  }
+
+  @Override
+  public void force() throws IOException {
+    if (dirty.get()) {
+      setIntField(0, PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
+
+      try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
+        channel.write(records);
+      }
+      markNotDirty();
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    force();
+  }
+
+  /* =============== implementation =============================================================== */
+
+  //TODO RC: current implementation uses VarHandle as 'official' way. Unsafe could be (?) better way to do it, if performance proves itself
+  //         to be less than expected
+
+  private void setLongField(final int recordId,
+                            final int fieldRelativeOffset,
+                            final long fieldValue) {
+    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    LONG_HANDLE.setVolatile(records, offset, fieldValue);
+    markDirty();
+  }
+
+  private long getLongField(final int recordId,
+                            final int fieldRelativeOffset) {
+    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    return (Long)LONG_HANDLE.getVolatile(records, offset);
+  }
+
+  private void setIntField(final int recordId,
+                           final int fieldRelativeOffset,
+                           final int fieldValue) {
+    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    INT_HANDLE.setVolatile(records, offset, fieldValue);
+    markDirty();
+  }
+
+  private int getIntField(final int recordId,
+                          final int fieldRelativeOffset) {
+    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    return (Integer)INT_HANDLE.getVolatile(records, offset);
+  }
+
+  private int offsetOfInBytes(final int recordId,
+                              final int fieldRelativeOffset) throws IndexOutOfBoundsException {
+    checkFileId(recordId);
+    return (RECORD_SIZE_IN_INTS * recordId + fieldRelativeOffset) * Integer.BYTES + HEADER_SIZE;
+  }
+
+  private void checkFileId(final int recordId) throws IndexOutOfBoundsException {
+    if (!(0 <= recordId && recordId < allocatedRecordsCount.get())) {
+      throw new IndexOutOfBoundsException(
+        "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");
+    }
+  }
+
+  private void setLongHeaderField(final int fieldRelativeOffsetBytes,
+                                  final long fieldValue) {
+    checkHeaderOffset(fieldRelativeOffsetBytes);
+    LONG_HANDLE.setVolatile(records, fieldRelativeOffsetBytes, fieldValue);
+    markDirty();
+  }
+
+  private long getLongHeaderField(final int fieldRelativeOffsetBytes) {
+    checkHeaderOffset(fieldRelativeOffsetBytes);
+    return (Long)LONG_HANDLE.getVolatile(records, fieldRelativeOffsetBytes);
+  }
+
+  private void setIntHeaderField(final int fieldRelativeOffsetBytes,
+                                 final int fieldValue) {
+    checkHeaderOffset(fieldRelativeOffsetBytes);
+    INT_HANDLE.setVolatile(records, fieldRelativeOffsetBytes, fieldValue);
+    markDirty();
+  }
+
+  private int getIntHeaderField(final int fieldRelativeOffsetBytes) {
+    checkHeaderOffset(fieldRelativeOffsetBytes);
+    return (Integer)INT_HANDLE.getVolatile(records, fieldRelativeOffsetBytes);
+  }
+
+  private static void checkHeaderOffset(final int fieldRelativeOffset) {
+    if (!(0 <= fieldRelativeOffset && fieldRelativeOffset < HEADER_SIZE)) {
+      throw new IndexOutOfBoundsException(
+        "headerFieldOffset(=" + fieldRelativeOffset + ") is outside of header [0, " + HEADER_SIZE + ") ");
+    }
+  }
+
+  private void markDirty() {
+    dirty.compareAndSet(false, true);
+  }
+
+  private void markNotDirty() {
+    dirty.compareAndSet(true, false);
+  }
+}
