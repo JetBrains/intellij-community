@@ -261,3 +261,4 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     return null;
   }
 }
+
