@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.PlatformUtils
 
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
@@ -114,8 +113,6 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
                     }
                   }
                 }
-                .horizontalAlign(HorizontalAlign.FILL)
-                .resizableColumn()
             }
           }.enabledIf(visualFormattingLayer.selected).visible(vFmtEnabledByRegistry)
         }
