@@ -82,7 +82,7 @@ import java.util.Set;
 public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, String, JavaMethodDescriptor, ParameterTableModelItemBase<ParameterInfoImpl>, JavaParameterTableModel> {
   private @Nullable ExceptionsTableModel myExceptionsModel;
   protected Set<PsiMethod> myMethodsToPropagateExceptions;
-  private AnActionButton myPropExceptionsButton;
+  private @Nullable AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
   public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
@@ -161,7 +161,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected void updatePropagateButtons() {
     super.updatePropagateButtons();
-    myPropExceptionsButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+    if (myPropExceptionsButton != null) {
+      myPropExceptionsButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+    }
   }
 
   protected boolean mayPropagateExceptions() {
