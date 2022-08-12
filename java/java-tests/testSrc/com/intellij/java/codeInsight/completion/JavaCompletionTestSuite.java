@@ -36,6 +36,8 @@ public class JavaCompletionTestSuite extends TestSuite {
       if (!aClass.getSimpleName().contains("Completion")) continue;
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
+      // Exclude feature suggester tests
+      if (aClass.getPackageName().equals("com.intellij.java.ifs")) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
         Class<? extends TestIndexingModeSupporter> testCaseClass = aClass.asSubclass(TestIndexingModeSupporter.class);
         TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.FullIndexSuite(), suite);
