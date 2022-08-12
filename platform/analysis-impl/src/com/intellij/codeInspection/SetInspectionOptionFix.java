@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
@@ -66,7 +66,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return QuickFixBundle.message("set.inspection.option.fix");
+    return AnalysisBundle.message("set.inspection.option.fix");
   }
 
   @Override
@@ -114,8 +114,8 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
         HtmlChunk.tag("td").child(label)
       ));
     return new IntentionPreviewInfo.Html(
-      new HtmlBuilder().append(myValue ? QuickFixBundle.message("set.inspection.option.description.check")
-                                       : QuickFixBundle.message("set.inspection.option.description.uncheck"))
+      new HtmlBuilder().append(myValue ? AnalysisBundle.message("set.inspection.option.description.check")
+                                       : AnalysisBundle.message("set.inspection.option.description.uncheck"))
         .br().br().append(info).toFragment());
   }
 
