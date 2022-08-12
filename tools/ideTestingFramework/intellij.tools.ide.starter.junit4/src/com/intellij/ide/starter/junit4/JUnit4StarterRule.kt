@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.junit4
 
+import com.intellij.ide.starter.bus.StarterListener
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
@@ -17,7 +18,7 @@ import org.kodein.di.instance
 
 fun initStarterRule(): JUnit4StarterRule = JUnit4StarterRule(useLatestDownloadedIdeBuild = false)
 
-class JUnit4StarterRule(
+open class JUnit4StarterRule(
   override var useLatestDownloadedIdeBuild: Boolean,
   override val setupHooks: MutableList<IDETestContext.() -> IDETestContext> = mutableListOf(),
   override val ciServer: CIServer = di.direct.instance()
@@ -25,7 +26,7 @@ class JUnit4StarterRule(
 
   override lateinit var testContext: IDETestContext
 
-  private lateinit var testDescription: Description
+  protected lateinit var testDescription: Description
 
   override fun apply(base: Statement, description: Description): Statement {
     testDescription = description
@@ -41,6 +42,8 @@ class JUnit4StarterRule(
     }
 
     killOutdatedProcessesOnUnix()
+
+    super.before()
   }
 
   override fun close() {
@@ -48,6 +51,8 @@ class JUnit4StarterRule(
   }
 
   override fun after() {
+    StarterListener.unsubscribe()
+
     super.after()
     close()
   }
