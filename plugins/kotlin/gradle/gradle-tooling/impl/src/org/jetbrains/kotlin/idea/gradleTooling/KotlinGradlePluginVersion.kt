@@ -6,8 +6,6 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersionOrNull
 import java.io.Serializable
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 
 sealed interface KotlinGradlePluginVersion : Serializable {
     val versionString: String
