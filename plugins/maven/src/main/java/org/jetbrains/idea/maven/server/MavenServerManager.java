@@ -47,7 +47,6 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -521,22 +520,5 @@ public final class MavenServerManager implements Disposable {
 
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
-  }
-
-
-  @NotNull
-  private static LocalMavenDistribution resolveEmbeddedMaven2HomeForTests() {
-    if (!MavenUtil.isMavenUnitTestModeEnabled()) {
-      throw new IllegalStateException("Maven2 is for test purpose only");
-    }
-
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    if (pluginFileOrDir.isDirectory()) {
-      Path parentPath = MavenUtil.getMavenPluginParentFile().toPath();
-      return new LocalMavenDistribution(parentPath.resolve("maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
-    }
-    else {
-      throw new IllegalStateException("Maven2 is not bundled anymore, please do not try to use it in tests");
-    }
   }
 }
