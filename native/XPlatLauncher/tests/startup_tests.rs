@@ -62,10 +62,13 @@ mod tests {
     use std::{thread, time};
 
     #[test]
-    #[cfg(target_os = "macos")]
     fn test_test() {
         initialize();
-        let test_dir = current_dir().unwrap().join("Contents").join("bin");
+        let test_dir = if cfg!(target_os = "macos") {
+            current_dir().unwrap().join("Contents").join("bin")
+        } else {
+            current_dir().unwrap().join("bin")
+        };
 
         let mut launcher_process = Command::new(test_dir.join("xplat_launcher"))
             .current_dir(test_dir)

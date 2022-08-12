@@ -48,6 +48,11 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf> {
         self.default.prepare_for_launch()
     }
+
+    #[cfg(target_os = "linux")]
+    fn prepare_for_launch(&self) -> Result<PathBuf> {
+        todo!()
+    }
 }
 
 impl DefaultLaunchConfiguration {

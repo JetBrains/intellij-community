@@ -2,14 +2,19 @@ use std::{mem, panic, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
-use core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef};
-use core_foundation::date::{CFAbsoluteTime, CFTimeInterval};
-use core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished};
+use std::thread::sleep;
+use std::time::Duration;
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info, Log};
 use crate::{err_from_string, errors};
 use crate::errors::{LauncherError, Result};
+
+#[cfg(target_os = "macos")] use {
+    core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef},
+    core_foundation::date::{CFAbsoluteTime, CFTimeInterval},
+    core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished},
+};
 
 #[cfg(target_os = "windows")] use {
     crate::utils::canonical_non_unc,

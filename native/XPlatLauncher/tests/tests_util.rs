@@ -87,7 +87,7 @@ pub fn layout_into_test_dir(
     fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
-    File::create("bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("bin/idea64.vmoptions").expect("Failed to create idea.vmoptions");
 }
 
 #[cfg(target_os = "macos")]
