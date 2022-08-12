@@ -177,7 +177,6 @@ class CompilerArgumentsCachingTest {
         noInline = Random.nextBoolean()
         skipMetadataVersionCheck = Random.nextBoolean()
         skipPrereleaseCheck = Random.nextBoolean()
-        newInference = Random.nextBoolean()
         allowKotlinPackage = Random.nextBoolean()
         reportOutputFiles = Random.nextBoolean()
         multiPlatform = Random.nextBoolean()
@@ -446,7 +445,6 @@ class CompilerArgumentsCachingTest {
             "noInline",
             "skipMetadataVersionCheck",
             "skipPrereleaseCheck",
-            "newInference",
             "allowKotlinPackage",
             "reportOutputFiles",
             "multiPlatform",

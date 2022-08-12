@@ -1,5 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
-// PROBLEM: none
+// PROBLEM: Redundant lambda arrow
 // WITH_STDLIB
 
 fun main() {

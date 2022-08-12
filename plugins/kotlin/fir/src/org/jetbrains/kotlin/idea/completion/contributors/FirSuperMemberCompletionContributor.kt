@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferenc
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.Name
@@ -119,7 +118,7 @@ internal class FirSuperMemberCompletionContributor(
                         context,
                         callableSymbol,
                         CallableInsertionOptions(
-                            detectImportStrategy(callableSymbol),
+                            importStrategyDetector.detectImportStrategy(callableSymbol),
                             wrapWithDisambiguationIfNeeded(
                                 getInsertionStrategy(callableSymbol),
                                 superType,
@@ -191,7 +190,7 @@ internal class FirSuperMemberCompletionContributor(
                 context,
                 callableSymbol,
                 CallableInsertionOptions(
-                    detectImportStrategy(callableSymbol),
+                    importStrategyDetector.detectImportStrategy(callableSymbol),
                     wrapWithDisambiguationIfNeeded(
                         CallableInsertionStrategy.WithCallArgs(args),
                         superType,

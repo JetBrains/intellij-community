@@ -42,9 +42,9 @@ UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = Date) -> Decompiled_Method: Date
-    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> Decompiled_Method: setTime
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = date) -> Kotlin_Light_Variable: date
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = time) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = time) -> Decompiled_Method: setTime
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf

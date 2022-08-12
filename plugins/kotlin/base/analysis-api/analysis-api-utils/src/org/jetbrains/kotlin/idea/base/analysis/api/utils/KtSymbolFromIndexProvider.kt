@@ -50,15 +50,15 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         nameFilter: (Name) -> Boolean,
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KtNamedClassOrObjectSymbol> {
+        val scope = analysisScope
         val names = buildSet<Name> {
             forEachNonKotlinCache { cache ->
-                cache.allClassNames.forEach { nameString ->
-                    if (Name.isValidIdentifier(nameString)) return@forEach
+                cache.processAllClassNames({ nameString ->
+                    if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true
                     val name = Name.identifier(nameString)
-                    if (nameFilter(name)) {
-                        add(name)
-                    }
-                }
+                    if (nameFilter(name)) { add(name) }
+                    true
+                }, scope, null)
             }
         }
 

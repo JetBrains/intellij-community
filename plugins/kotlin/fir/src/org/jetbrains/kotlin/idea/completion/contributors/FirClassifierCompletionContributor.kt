@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.psi.KtExpression
@@ -25,7 +24,7 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
 
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
-        detectImportStrategy(classifierSymbol)
+        importStrategyDetector.detectImportStrategy(classifierSymbol)
 
     override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)

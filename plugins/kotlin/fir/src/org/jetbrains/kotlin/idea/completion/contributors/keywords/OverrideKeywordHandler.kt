@@ -88,7 +88,7 @@ internal class OverrideKeywordHandler(
 
         val memberPointer = memberSymbol.createPointer()
 
-        val baseLookupElement = with(basicContext.lookupElementFactory) { createLookupElement(memberSymbol) }
+        val baseLookupElement = with(basicContext.lookupElementFactory) { createLookupElement(memberSymbol, basicContext.importStrategyDetector) }
             ?: error("Lookup element should be available for override completion")
         return OverridesCompletionLookupElementDecorator(
             baseLookupElement,

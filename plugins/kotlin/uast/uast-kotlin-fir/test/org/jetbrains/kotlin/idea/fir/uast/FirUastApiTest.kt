@@ -28,8 +28,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
         "uast-kotlin/tests/testData/Resolve.kt",
         // TODO: return type of inline functions
         "uast-kotlin/tests/testData/ReifiedReturnType.kt",
-        // TODO: PsiMethod -> getFunctionalInterfaceMethod
-        "uast-kotlin/tests/testData/LambdaParameters.kt",
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {

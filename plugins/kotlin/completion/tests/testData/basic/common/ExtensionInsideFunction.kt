@@ -1,3 +1,6 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+
 class StrSome {
   class StrOther
 

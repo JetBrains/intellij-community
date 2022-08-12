@@ -6030,11 +6030,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList2.kt");
             }
 
-            @TestMetadata("typeMismatchMutableList2_ni.kt")
-            public void testTypeMismatchMutableList2_ni() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList2_ni.kt");
-            }
-
             @TestMetadata("usedAsExpression.kt")
             public void testUsedAsExpression() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/usedAsExpression.kt");
@@ -8806,16 +8801,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg2.kt");
         }
 
-        @TestMetadata("notApplicableVararg2_ni.kt")
-        public void testNotApplicableVararg2_ni() throws Exception {
-            runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg2_ni.kt");
-        }
-
-        @TestMetadata("notApplicableVararg_ni.kt")
-        public void testNotApplicableVararg_ni() throws Exception {
-            runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg_ni.kt");
-        }
-
         @TestMetadata("nullableReceiver.kt")
         public void testNullableReceiver() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/nullableReceiver.kt");
@@ -8841,19 +8826,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantLambdaArrow/typeParameter2.kt");
         }
 
-        @TestMetadata("typeParameter2_ni.kt")
-        public void testTypeParameter2_ni() throws Exception {
-            runTest("testData/inspectionsLocal/redundantLambdaArrow/typeParameter2_ni.kt");
-        }
-
         @TestMetadata("typeParameter3.kt")
         public void testTypeParameter3() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/typeParameter3.kt");
-        }
-
-        @TestMetadata("typeParameter3_ni.kt")
-        public void testTypeParameter3_ni() throws Exception {
-            runTest("testData/inspectionsLocal/redundantLambdaArrow/typeParameter3_ni.kt");
         }
 
         @TestMetadata("typeParameter4.kt")
@@ -11310,11 +11285,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
             }
 
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/arrayVersion13.kt");
-            }
-
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
@@ -11388,11 +11358,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/array.kt");
             }
 
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/arrayVersion13.kt");
-            }
-
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/basic.kt");
@@ -11416,19 +11381,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("basic5.kt")
             public void testBasic5() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/basic5.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/replaceAssociateFunction")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("version1_2.kt")
-            public void testVersion1_2() throws Exception {
-                runTest("testData/inspectionsLocal/replaceAssociateFunction/version1_2.kt");
             }
         }
     }

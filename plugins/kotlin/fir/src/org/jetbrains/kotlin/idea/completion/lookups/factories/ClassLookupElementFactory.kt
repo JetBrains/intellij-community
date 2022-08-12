@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.renderer.render
 internal class ClassLookupElementFactory {
     fun KtAnalysisSession.createLookup(
         symbol: KtClassLikeSymbol,
-        importingStrategy: ImportStrategy = detectImportStrategy(symbol)
+        importingStrategy: ImportStrategy,
     ): LookupElementBuilder {
         val name = symbol.nameOrAnonymous
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
