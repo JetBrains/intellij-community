@@ -669,6 +669,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       boolean actionState = TreeModelWrapper.shouldRevert(myAction) != state;
       myTreeActionsOwner.setActionIncluded(myAction, actionState);
@@ -1074,6 +1079,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isShouldNarrowDown();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

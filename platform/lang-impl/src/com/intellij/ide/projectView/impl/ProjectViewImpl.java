@@ -657,6 +657,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       changeView(myId, mySubId);
     }

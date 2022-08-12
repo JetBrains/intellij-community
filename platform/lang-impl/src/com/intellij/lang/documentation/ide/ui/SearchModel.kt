@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -21,7 +22,6 @@ import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.awt.Point
 import java.awt.event.KeyAdapter
@@ -97,6 +97,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
         e.presentation.isEnabled = hasPrev
       }
 
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
       override fun actionPerformed(e: AnActionEvent) = prev()
     },
     object : DumbAwareAction() {
@@ -109,6 +111,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = hasNext
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     },
   )
 

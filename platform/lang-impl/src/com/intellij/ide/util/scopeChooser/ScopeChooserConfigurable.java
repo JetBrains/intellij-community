@@ -437,6 +437,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         }
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class MyCopyAction extends DumbAwareAction {
@@ -460,6 +465,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
+    }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -492,6 +501,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

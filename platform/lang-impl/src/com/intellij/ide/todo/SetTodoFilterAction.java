@@ -93,6 +93,11 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       String arg1 = myFilter != null ? myFilter.getName() : null;
       return Objects.equals(arg1, mySettings.todoFilterName);
