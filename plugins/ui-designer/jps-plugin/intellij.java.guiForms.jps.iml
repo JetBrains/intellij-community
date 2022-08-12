@@ -36,5 +36,6 @@
     <orderEntry type="library" scope="TEST" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
   </component>
 </module>

@@ -185,7 +185,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.java.plugin",
     )
     additionalModulesToCompile = java.util.List.of("intellij.tools.jps.build.standalone")
-    modulesToCompileTests = java.util.List.of("intellij.platform.jps.build")
+    modulesToCompileTests = java.util.List.of("intellij.platform.jps.build.tests")
 
     isAntRequired = true
   }
