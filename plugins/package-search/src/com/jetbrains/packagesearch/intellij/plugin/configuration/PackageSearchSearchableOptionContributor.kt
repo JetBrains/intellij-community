@@ -18,7 +18,6 @@ package com.jetbrains.packagesearch.intellij.plugin.configuration
 
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
-import com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable
 
 class PackageSearchSearchableOptionContributor : SearchableOptionContributor() {
 
@@ -34,6 +33,6 @@ class PackageSearchSearchableOptionContributor : SearchableOptionContributor() {
 
 fun addSearchConfigurationMap(processor: SearchableOptionProcessor, vararg entries: String) {
     for (entry in entries) {
-        processor.addOptions(entry, null, entry, PackageSearchGeneralConfigurable.ID, null, false)
+        processor.addOptions(entry, null, entry, "preferences.packagesearch.PackageSearchGeneralConfigurable", null, false)
     }
 }

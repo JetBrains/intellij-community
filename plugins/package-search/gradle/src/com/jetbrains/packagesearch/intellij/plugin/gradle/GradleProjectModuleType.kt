@@ -36,8 +36,8 @@ internal object GradleProjectModuleType : ProjectModuleType {
         PackageSearchBundle.message("packagesearch.terminology.dependency.configuration")
 
     override fun defaultScope(project: Project): String =
-        PackageSearchGradleConfiguration.getInstance(project).determineDefaultGradleScope()
+        PackageSearchGradleConfiguration.getInstance(project).defaultGradleScope
 
     override fun userDefinedScopes(project: Project): List<String> =
-        PackageSearchGradleConfiguration.getInstance(project).getGradleScopes()
+        PackageSearchGradleConfiguration.getInstance(project).gradleScopes.toList().sorted()
 }

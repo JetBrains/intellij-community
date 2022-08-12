@@ -28,6 +28,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import java.awt.datatransfer.StringSelection
 
 internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyProvider {
@@ -110,7 +111,9 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
     ) : PackagesTableItem<PackageModel.Installed>() {
 
         init {
-            require(allScopes.isNotEmpty()) { "An installed package must have at least one installed scope" }
+            if (allScopes.isEmpty()) {
+                logWarn { "An installed package must have at least one installed scope. Entry:\n$uiPackageModel" }
+            }
         }
 
         override fun additionalCopyText() = buildString {

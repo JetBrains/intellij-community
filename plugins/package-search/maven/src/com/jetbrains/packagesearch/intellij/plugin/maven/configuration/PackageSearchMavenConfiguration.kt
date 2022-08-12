@@ -22,6 +22,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 
@@ -29,7 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
     name = "PackageSearchMavenConfiguration",
     storages = [(Storage(PackageSearchGeneralConfiguration.StorageFileName))],
 )
-internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateComponent<PackageSearchMavenConfiguration> {
+internal class PackageSearchMavenConfiguration : PersistentStateComponent<PackageSearchMavenConfiguration.State> {
 
     companion object {
 
@@ -39,16 +40,21 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
         fun getInstance(project: Project) = project.service<PackageSearchMavenConfiguration>()
     }
 
-    override fun getState(): PackageSearchMavenConfiguration = this
+    var defaultMavenScope: String = DEFAULT_MAVEN_SCOPE
 
-    override fun loadState(state: PackageSearchMavenConfiguration) {
-        this.copyFrom(state)
+    override fun getState(): State = State().also {
+        it.defaultMavenScope = defaultMavenScope
     }
 
-    @get:OptionTag("MAVEN_SCOPES_DEFAULT")
-    var defaultMavenScope by string(DEFAULT_MAVEN_SCOPE)
+    override fun loadState(state: State) {
+        defaultMavenScope = state.defaultMavenScope.nullize(true) ?: DEFAULT_MAVEN_SCOPE
+    }
 
-    fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else DEFAULT_MAVEN_SCOPE
+    fun getMavenScopes() = listOf(defaultMavenScope, "provided", "runtime", "test", "system", "import")
 
-    fun getMavenScopes() = listOf(DEFAULT_MAVEN_SCOPE, "provided", "runtime", "test", "system", "import")
+    class State : BaseState() {
+
+        @get:OptionTag("MAVEN_SCOPES_DEFAULT")
+        var defaultMavenScope by string(DEFAULT_MAVEN_SCOPE)
+    }
 }
