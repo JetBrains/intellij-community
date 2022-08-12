@@ -28,6 +28,11 @@ public class OpenAlienProjectAction extends AnAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()));
+  }
+
+  @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
