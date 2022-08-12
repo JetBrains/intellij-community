@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -78,10 +77,6 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
       TogglePresentationModeAction.restoreToolWindows(project, false);
-    }
-    JFrame projectJFrame = WindowManager.getInstance().getFrame(project);
-    if (projectJFrame != null) {
-      projectJFrame.transferFocus();
     }
   }
 
