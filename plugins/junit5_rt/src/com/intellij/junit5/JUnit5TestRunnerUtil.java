@@ -105,7 +105,10 @@ public class JUnit5TestRunnerUtil {
         selector = classSelector;
       }
       if (selector instanceof MethodSelector && param != null) {
-        return  builder.selectors(createMethodSelectIteration(selector, param)).build();
+        DiscoverySelector methodSelectIteration = createMethodSelectIteration(selector, param);
+        if (methodSelectIteration != null) {
+          return builder.selectors(methodSelectIteration).build();
+        }
       }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
@@ -223,13 +226,15 @@ public class JUnit5TestRunnerUtil {
   private static DiscoverySelector createMethodSelectIteration(DiscoverySelector methodSelector, String param) {
     Integer index = null;
     Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
-    Matcher matcher = pattern.matcher(param);
-    if (matcher.find()) {
-      String group = matcher.group(1);
-      try {
-        index = Integer.parseInt(group);
-      }
-      catch (NumberFormatException ignored) {
+    if (param != null) {
+      Matcher matcher = pattern.matcher(param);
+      if (matcher.find()) {
+        String group = matcher.group(1);
+        try {
+          index = Integer.parseInt(group);
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
     if (index != null) return DiscoverySelectors.selectIteration(methodSelector, index);

@@ -165,8 +165,9 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       else if (element instanceof PsiJavaToken) {
         PsiJavaToken token = (PsiJavaToken)element;
         JvmAnnotationAttribute annotationArrayValue = getAnnotationValue(token);
-        if (annotationArrayValue == null) break;
-        sourceValueIndex = getSourceValueIndex(token, annotationArrayValue);
+        if (annotationArrayValue != null) {
+          sourceValueIndex = getSourceValueIndex(token, annotationArrayValue);
+        }
       }
       element = element.getParent();
     }
@@ -257,3 +258,4 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     return null;
   }
 }
+
