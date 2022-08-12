@@ -100,7 +100,7 @@ fun <T : Any> buildGradleModel(
 
         buildActionExecutor.setJavaHome(File(javaHomePath))
         buildActionExecutor.setStandardOutput(System.out)
-        buildActionExecutor.setStandardError(System.err)
+        buildActionExecutor.setStandardError(System.out)
         buildActionExecutor.setJvmArguments(listOfNotNull("-Xmx512m", debuggerOptions?.toJvmArgumentString()))
 
 
