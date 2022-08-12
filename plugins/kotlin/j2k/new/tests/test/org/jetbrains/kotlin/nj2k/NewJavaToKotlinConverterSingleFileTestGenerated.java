@@ -786,6 +786,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/boxedType/object.java");
         }
 
+        @TestMetadata("redundantConversion.java")
+        public void testRedundantConversion() throws Exception {
+            runTest("testData/newJ2k/boxedType/redundantConversion.java");
+        }
+
         @TestMetadata("short.java")
         public void testShort() throws Exception {
             runTest("testData/newJ2k/boxedType/short.java");
