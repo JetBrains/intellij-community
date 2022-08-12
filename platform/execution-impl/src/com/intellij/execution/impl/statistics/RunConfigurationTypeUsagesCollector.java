@@ -35,7 +35,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 13);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 14);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
@@ -61,6 +61,11 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
                               ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
+
+  private static final IntEventField TOTAL_COUNT_FIELD = EventFields.Int("total_count");
+  private static final IntEventField TEMP_COUNT_FIELD = EventFields.Int("temp_count");
+
+  private static final EventId2<Integer, Integer> TOTAL_COUNT = GROUP.registerEvent("total.configurations.registered", TOTAL_COUNT_FIELD, TEMP_COUNT_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
@@ -105,6 +110,12 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
       metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
     }
+
+
+    final int limitingBoundary = 500; // avoid reporting extreme values
+    metrics.add(TOTAL_COUNT.metric(Math.min(runManager.getAllSettings().size(), limitingBoundary),
+                                   runManager.getTempConfigurationsList().size()));
+
     return metrics;
   }
 
