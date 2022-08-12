@@ -31,7 +31,6 @@
     <orderEntry type="module" module-name="kotlin.base.klib" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
-    <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector
@@ -15,5 +16,9 @@ class MavenDetector : BuildSystemTypeDetector {
         } else {
             null
         }
+    }
+
+    override fun isMavenizedProject(project: Project): Boolean {
+        return !project.isDisposed && MavenProjectsManager.getInstance(project).isMavenizedProject
     }
 }
