@@ -1,6 +1,6 @@
 {
   "buildNumber" : "222.658",
-  "bootClassPathJarNames" : [ "app.jar" ],
+  "bootClassPathJarNames" : [ "test.jar", "app.jar" ],
   "customProperties" : [ ],
   "dataDirectoryName" : "IntelliJIdea2022.2",
   "launch" : [ {

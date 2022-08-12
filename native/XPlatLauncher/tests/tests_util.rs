@@ -1,4 +1,5 @@
 use std::{fs, io};
+use std::env::current_dir;
 use std::fs::{create_dir, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -88,6 +89,7 @@ pub fn layout_into_test_dir(
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
     File::create("bin/idea64.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }
 
 #[cfg(target_os = "macos")]
@@ -129,6 +131,7 @@ pub fn layout_into_test_dir(
     fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "Contents/jbr").expect("Failed to create symlink for jbr");
     File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("Contents/lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }
 
 #[cfg(target_os = "windows")]
@@ -164,4 +167,13 @@ pub fn layout_into_test_dir(
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     std::os::windows::fs::symlink_dir(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
     File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
+}
+
+pub fn resolve_test_dir() -> PathBuf {
+    if cfg!(target_os = "macos") {
+        current_dir().unwrap().join("Contents").join("bin")
+    } else {
+        current_dir().unwrap().join("bin")
+    }
 }
