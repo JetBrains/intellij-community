@@ -983,7 +983,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
