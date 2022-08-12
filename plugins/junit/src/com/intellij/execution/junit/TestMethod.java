@@ -55,13 +55,15 @@ public class TestMethod extends TestObject {
     Integer index = null;
     String parameters = getConfiguration().getPersistentData().getProgramParameters();
     Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
-    Matcher matcher = pattern.matcher(parameters);
-    if (matcher.find()) {
-      String group = matcher.group(1);
-      try {
-        index = Integer.parseInt(group);
-      }
-      catch (NumberFormatException ignored) {
+    if (parameters != null) {
+      Matcher matcher = pattern.matcher(parameters);
+      if (matcher.find()) {
+        String group = matcher.group(1);
+        try {
+          index = Integer.parseInt(group);
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
     String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
