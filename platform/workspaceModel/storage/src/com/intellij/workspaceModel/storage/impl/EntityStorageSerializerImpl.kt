@@ -38,6 +38,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.system.measureNanoTime
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
@@ -399,35 +400,50 @@ class EntityStorageSerializerImpl(
   }
 
   override fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?> {
+    LOG.debug("Start deserializing workspace model cache")
     val deserializedCache = Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val (kryo, classesCache) = createKryo()
 
       try { // Read version
-        val cacheVersion = input.readString()
-        if (cacheVersion != serializerDataFormatVersion) {
-          LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-          return Result.success(null)
-        }
+        measureNanoTime {
+          val cacheVersion = input.readString()
+          if (cacheVersion != serializerDataFormatVersion) {
+            LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+            return Result.success(null)
+          }
 
-        if (!checkContributedVersion(kryo, input)) return Result.success(null)
+          if (!checkContributedVersion(kryo, input)) return Result.success(null)
+        }.also { LOG.debug("Load version and contributed versions: $it ns") }
 
-        readAndRegisterClasses(input, kryo, classesCache)
+        measureNanoTime {
+          readAndRegisterClasses(input, kryo, classesCache)
+        }.also { LOG.debug("Read and register classes: $it ns") }
 
         // Read and register persistent ids
-        val persistentIdCount = input.readVarInt(true)
-        repeat(persistentIdCount) {
-          val objectClass = kryo.readClassAndObject(input) as TypeInfo
-          val resolvedClass = typesResolver.resolveClass(objectClass.name, objectClass.pluginId)
-          kryo.register(resolvedClass)
-          classesCache.putIfAbsent(objectClass, resolvedClass.toClassId())
-        }
+        measureNanoTime {
+          val persistentIdCount = input.readVarInt(true)
+          repeat(persistentIdCount) {
+            val objectClass = kryo.readClassAndObject(input) as TypeInfo
+            val resolvedClass = typesResolver.resolveClass(objectClass.name, objectClass.pluginId)
+            kryo.register(resolvedClass)
+            classesCache.putIfAbsent(objectClass, resolvedClass.toClassId())
+          }
+        }.also { LOG.debug("Read and register persistent ids: $it ns") }
+
+        var time = System.nanoTime()
 
         // Read entity data and references
         val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
         val refsTable = kryo.readObject(input, RefsTable::class.java)
 
+        LOG.debug("Read data and references: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         // Read indexes
         val softLinks = kryo.readObject(input, MultimapStorageIndex::class.java)
+
+        LOG.debug("Read soft links: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
 
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, Long2ObjectOpenHashMap::class.java) as Long2ObjectOpenHashMap<Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
@@ -436,8 +452,18 @@ class EntityStorageSerializerImpl(
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
+        LOG.debug("Read virtual file index: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         val entitySourceIndex = kryo.readObject(input, EntityStorageInternalIndex::class.java) as EntityStorageInternalIndex<EntitySource>
+
+        LOG.debug("Read virtual file index: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         val persistentIdIndex = kryo.readObject(input, PersistentIdInternalIndex::class.java)
+
+        LOG.debug("Persistent id index: " + (System.nanoTime() - time) + " ns")
+
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = EntityStorageSnapshotImpl(entitiesBarrel, refsTable, storageIndexes)
