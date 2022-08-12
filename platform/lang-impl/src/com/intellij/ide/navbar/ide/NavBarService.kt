@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.navbar.ide.NavBarEvent.ModelChangeEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -26,8 +27,9 @@ class NavBarService(val myProject: Project) : Disposable {
   private val navigationBar = NavigationBar(myProject, cs, myEventFlow.asSharedFlow())
 
   init {
-    val listener = NavBarListener(myProject, myEventFlow)
-    Disposer.register(this, listener)
+    IdeEventQueue.getInstance().addActivityListener(Runnable {
+      myEventFlow.tryEmit(ModelChangeEvent)
+    }, this)
   }
 
   override fun dispose() {
