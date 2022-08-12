@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -44,6 +46,11 @@ sealed class EnableUnsupportedFeatureFix(
         if (apiVersionOnly) feature.sinceApiVersion.versionString else feature.sinceVersion?.versionString.toString()
     )
 
+    /**
+     * Tests:
+     * [org.jetbrains.kotlin.idea.maven.MavenUpdateConfigurationQuickFixTest12]
+     * [org.jetbrains.kotlin.idea.codeInsight.gradle.GradleUpdateConfigurationQuickFixTest]
+     */
     class InModule(element: PsiElement, feature: LanguageFeature, apiVersionOnly: Boolean) :
         EnableUnsupportedFeatureFix(element, feature, apiVersionOnly, isModule = true) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
@@ -60,13 +67,20 @@ sealed class EnableUnsupportedFeatureFix(
             val fileIndex = ModuleRootManager.getInstance(module).fileIndex
             val forTests = file.originalFile.virtualFile?.let { fileIndex.getKotlinSourceRootType(it) } == TestSourceKotlinRootType
 
-            runWriteAction {
-                findApplicableConfigurator(module).updateLanguageVersion(
-                    module,
-                    if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
-                    targetApiLevel,
-                    feature.sinceApiVersion,
-                    forTests
+            ApplicationManager.getApplication().invokeLater {
+                WriteCommandAction.runWriteCommandAction(
+                    project,
+                    KotlinJvmBundle.message("command.name.update.kotlin.language.version"),
+                    null,
+                    Runnable {
+                        findApplicableConfigurator(module).updateLanguageVersion(
+                            module,
+                            if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
+                            targetApiLevel,
+                            feature.sinceApiVersion,
+                            forTests
+                        )
+                    }
                 )
             }
         }
