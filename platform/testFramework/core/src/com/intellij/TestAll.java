@@ -504,9 +504,6 @@ public class TestAll implements Test {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" +
-           "myRunTests=" + myRunTests +
-           ", myIgnoredTests=" + myIgnoredTests +
-           '}';
+    return getClass().getSimpleName();
   }
 }
