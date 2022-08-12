@@ -37,13 +37,13 @@ public class JavaCompletionTestSuite extends TestSuite {
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
-        //noinspection unchecked
-        Class<? extends TestIndexingModeSupporter> testCaseClass = (Class<? extends TestIndexingModeSupporter>)aClass;
+        Class<? extends TestIndexingModeSupporter> testCaseClass = aClass.asSubclass(TestIndexingModeSupporter.class);
         TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.FullIndexSuite(), suite);
         TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.RuntimeOnlyIndexSuite(), suite);
         TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.EmptyIndexSuite(), suite);
       } else if (!JavaCompletionTestSuite.class.equals(aClass)) {
-        suite.addTest(warning("Unexpected " + aClass + " in " + suite.getClass()));
+        suite.addTest(warning("Unexpected " + aClass + " in the " + suite.getClass().getName() + " suite: " +
+                              "its name contains 'Completion' substring but it doesn't implement TestIndexingModeSupporter"));
       }
     }
     return suite;
