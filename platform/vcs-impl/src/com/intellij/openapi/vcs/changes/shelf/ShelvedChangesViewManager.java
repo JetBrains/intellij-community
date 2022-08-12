@@ -979,8 +979,7 @@ public class ShelvedChangesViewManager implements Disposable {
       new IconSizeWrapper(Patch_applied, Patch_applied.getIconWidth(), Patch_applied.getIconHeight()) {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          GraphicsUtil.paintWithAlpha(g, 0.6f);
-          super.paintIcon(c, g, x, y);
+          GraphicsUtil.paintWithAlpha(g, 0.6f, () -> super.paintIcon(c, g, x, y));
         }
       };
     private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
