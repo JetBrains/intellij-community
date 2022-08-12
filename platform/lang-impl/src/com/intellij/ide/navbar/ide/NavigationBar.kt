@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDirectory
@@ -45,6 +46,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 
+
+const val REGISTRY_KEY = "ide.navBar.v2"
+val navbarV2Enabled = Registry.`is`(REGISTRY_KEY, false)
 
 internal class UiNavBarItem(
   val pointer: Pointer<out NavBarItem>,
