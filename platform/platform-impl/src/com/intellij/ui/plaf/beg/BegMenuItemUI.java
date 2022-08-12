@@ -10,14 +10,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
   private int myMaxGutterIconWidth2;
-  private static Rectangle i = new Rectangle();
   private int k;
   private static final Rectangle c = new Rectangle();
   private static final Rectangle h = new Rectangle();
@@ -128,13 +128,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           g.fillRect(k, 0, j1 - k, k1);
         }
-        else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
-          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          int radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
-          JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
-          g.fillRoundRect(outerInsets.left, outerInsets.top, j1 - outerInsets.width(),
-                          k1 - outerInsets.height(), radius, radius);
-          config.restore();
+        else if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
+          IdeaMenuUI.paintRoundSelection(g, comp, j1, k1);
         }
         else {
           g.fillRect(0, 0, j1, k1);
@@ -408,8 +403,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     FontMetrics fontmetrics1 = comp.getFontMetrics(acceleratorFont);
     initBounds();
     layoutMenuItem(fontmetrics, text, fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, text != null ? defaultTextIconGap : 0, defaultTextIconGap);
+    Rectangle i = new Rectangle();
     i.setBounds(j);
-    i = SwingUtilities.computeUnion(l.x, l.y, l.width, l.height, i);
+    SwingUtilities.computeUnion(l.x, l.y, l.width, l.height, i);
     if (!(keyStrokeText == null || keyStrokeText.isEmpty())){
       i.width += c.width;
       i.width += 7 * defaultTextIconGap;
@@ -433,12 +429,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       i.height++;
     }
 
-    if (ExperimentalUI.isNewUI() && IdeaPopupMenuUI.isPartOfPopupMenu(comp)) {
-      JBInsets outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
-      return new Dimension(i.width, JBUI.CurrentTheme.List.rowHeight() + outerInsets.height());
-    }
-
-    return i.getSize();
+    return IdeaMenuUI.patchPreferredSize(comp, i.getSize());
   }
 
   private void drawIconBorder(Graphics g) {
@@ -463,7 +454,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     h.setBounds(b);
     d.setBounds(b);
     f.setBounds(0, 0, 32767, 32767);
-    i.setBounds(b);
   }
 
   private Icon getAllowedIcon() {

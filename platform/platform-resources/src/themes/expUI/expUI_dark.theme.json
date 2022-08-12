@@ -265,7 +265,11 @@
 
     "Menu": {
       "separatorColor": "Grey4",
-      "borderColor": "Grey4"
+      "borderColor": "Grey4",
+      "borderInsets": "6,1,6,1",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
+      }
     },
 
     "Notification": {

@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
@@ -28,6 +29,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaMenuItemBorder implements Border, UIResource {
+
+  public static @NotNull JBInsets menuBarItemInnerInsets() {
+    return JBUI.insets(2);
+  }
+
+  public static @NotNull JBInsets menuBarItemOuterInsets() {
+    return JBUI.insets(0);
+  }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) { }
@@ -46,8 +55,16 @@ public class DarculaMenuItemBorder implements Border, UIResource {
         result = JBInsets.addInsets(result, JBUI.CurrentTheme.PopupMenu.Selection.outerInsets());
       }
     }
+    else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
+      result = menuBarItemInnerInsets();
+    }
     else {
-      result = JBUI.insets(2);
+      result = JBUI.CurrentTheme.Menu.Selection.innerInsets();
+      if (ExperimentalUI.isNewUI()) {
+        result.top = 0;
+        result.bottom = 0;
+        result = JBInsets.addInsets(result, JBUI.CurrentTheme.Menu.Selection.outerInsets());
+      }
     }
 
     return result.asUIResource();

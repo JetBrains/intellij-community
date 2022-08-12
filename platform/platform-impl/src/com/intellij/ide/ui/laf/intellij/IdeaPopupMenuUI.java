@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBValue;
@@ -40,10 +39,6 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
     return false;
   }
 
-  public static boolean isRoundSelectionEnabled(Component c) {
-    return isPartOfPopupMenu(c) && (ExperimentalUI.isNewUI() || isRoundBorder());
-  }
-
   public static boolean isPartOfPopupMenu(Component c) {
     if (c == null) {
       return false;
@@ -52,6 +47,10 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
       return isUnderPopup(c);
     }
     return isPartOfPopupMenu(c.getParent());
+  }
+
+  public static boolean isMenuBarItem(Component c) {
+    return c.getParent() instanceof JMenuBar;
   }
 
   @Override

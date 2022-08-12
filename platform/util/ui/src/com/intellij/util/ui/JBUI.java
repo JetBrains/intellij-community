@@ -978,6 +978,21 @@ public final class JBUI {
       }
     }
 
+    public static final class Menu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("Menu.Selection.innerInsets", insets(2, 2));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("Menu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("Menu.Selection.arc", 8);
+      }
+    }
+
     public static final class PopupMenu {
 
       public static final class Selection {

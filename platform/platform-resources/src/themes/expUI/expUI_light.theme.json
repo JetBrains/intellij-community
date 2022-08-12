@@ -270,6 +270,10 @@
       "borderColor": {
         "os.default": "Grey11",
         "os.windows": "windowsPopupBorder"
+      },
+      "borderInsets": "6,1,6,1",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
       }
     },
 

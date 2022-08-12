@@ -625,6 +625,26 @@
       "since": "2019.2"
     },
     {
+      "key": "Menu.borderInsets",
+      "description": "Border insets of main menu borders",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.innerInsets",
+      "description": "Inner insets in selection line. In experimental UI top and bottom values are ignored, row height is used",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.outerInsets",
+      "description": "Outer insets for menu item",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.arc",
+      "description": "Selection border corners radius in selection",
+      "since": "2022.3"
+    },
+    {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
     },
@@ -976,6 +996,15 @@
       "key": "PopupMenu.Selection.innerInsets",
       "description": "Inner insets in selection line. In experimental UI top and bottom values are ignored, row height is used",
       "since": "2022.3"
+    },
+    {
+      "key": "PopupMenu.Selection.outerInsets",
+      "description": "Outer insets for menu item",
+      "since": "2022.3"
+    },
+    {
+      "key": "PopupMenu.Selection.arc",
+      "description": "Selection border corners radius in selection"
     },
     {
       "key": "ProgressBar.failedColor",
