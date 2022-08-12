@@ -263,7 +263,9 @@ class CompilationContextImpl private constructor(model: JpsModel,
       if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
-      printEnvironmentDebugInfo()
+      messages.block("Environment info") {
+        printEnvironmentDebugInfo()
+      }
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries)
@@ -276,7 +278,9 @@ class CompilationContextImpl private constructor(model: JpsModel,
                                            buildOutputRootEvaluator = buildOutputRootEvaluator,
                                            options = options)
       defineJavaSdk(context)
-      context.prepareForBuild()
+      messages.block("Preparing for build") {
+        context.prepareForBuild()
+      }
 
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)

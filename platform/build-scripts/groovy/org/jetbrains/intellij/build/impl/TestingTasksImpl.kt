@@ -35,7 +35,6 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.regex.Pattern
 import java.util.stream.Stream
-import kotlin.streams.toList
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
@@ -326,18 +325,20 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     if (numberOfBuckets > 1) {
       messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
     }
-    val runtime = runtimeExecutablePath().toString()
-    messages.info("Runtime: ${runtime}")
-    runProcess(listOf(runtime, "-version"), null, messages)
-    messages.info("Runtime options: ${allJvmArgs}")
-    messages.info("System properties: ${allSystemProperties}")
-    messages.info("Bootstrap classpath: ${bootstrapClasspath}")
-    messages.info("Tests classpath: ${testClasspath}")
-    modulePath?.let { mp ->
-      messages.info("Tests modulepath: $mp")
-    }
-    if (!envVariables.isEmpty()) {
-      messages.info("Environment variables: ${envVariables}")
+    messages.block("Test classpath and runtime info") {
+      val runtime = runtimeExecutablePath().toString()
+      messages.info("Runtime: ${runtime}")
+      runProcess(listOf(runtime, "-version"), null, messages)
+      messages.info("Runtime options: ${allJvmArgs}")
+      messages.info("System properties: ${allSystemProperties}")
+      messages.info("Bootstrap classpath: ${bootstrapClasspath}")
+      messages.info("Tests classpath: ${testClasspath}")
+      modulePath?.let { mp ->
+        messages.info("Tests modulepath: $mp")
+      }
+      if (!envVariables.isEmpty()) {
+        messages.info("Environment variables: ${envVariables}")
+      }
     }
     runJUnit5Engine(mainModule = mainModule,
                     systemProperties = allSystemProperties,
