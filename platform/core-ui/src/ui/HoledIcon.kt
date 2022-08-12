@@ -10,14 +10,12 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-abstract class HoledIcon(private val icon: Icon) : RetrievableIcon, ScalableIcon {
+abstract class HoledIcon(private val icon: Icon) : ScalableIcon {
 
   protected abstract fun copyWith(icon: Icon):Icon
 
   protected abstract fun createHole(width: Int, height: Int): Shape?
   protected abstract fun paintHole(g: Graphics2D, width: Int, height: Int)
-
-  override fun retrieveIcon() = icon
 
   override fun getScale() = (icon as? ScalableIcon)?.scale ?: 1f
   override fun scale(factor: Float) = copyWith(IconUtil.scaleOrLoadCustomVersion(icon, factor))
