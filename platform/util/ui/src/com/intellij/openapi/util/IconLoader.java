@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
@@ -649,11 +650,9 @@ public final class IconLoader {
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D)g;
-        Composite saveComposite = g2.getComposite();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha));
-        icon.paintIcon(c, g2, x, y);
-        g2.setComposite(saveComposite);
+        GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
+        icon.paintIcon(c, g, x, y);
+        config.restore();
       }
     };
   }
