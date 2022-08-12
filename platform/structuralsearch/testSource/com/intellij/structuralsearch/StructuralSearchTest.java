@@ -1916,6 +1916,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find all equivalent annotations", 4, findMatchesCount(source7, "@Annotation(\"Hello\")"));
     assertEquals("Find all annotations with a specific value", 5, findMatchesCount(source7, "@Annotation({\"Hello\", '_O*})"));
     assertEquals("Find all annotations", 6, findMatchesCount(source7, "@Annotation('_V)"));
+
+    String source8 = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) " +
+                     "@interface NotNull {}" +
+                     "class X {" +
+                     "  boolean a(@NotNull String s, @NotNull String t, String u) {" +
+                     "    java.util.Objects.equals(s, t);" +
+                     "    return java.util.Objects.equals(t, u);" +
+                     "  }" +
+                     "}";
+    assertEquals("Call with @NotNull annotated argument", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype( ~@NotNull.* )], '_b:[exprtype( ~@NotNull.* )])"));
+    assertEquals("Call with arguments with @NotNull String type", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype(  @NotNull String  )], '_b:[exprtype(  @NotNull String  )])"));
   }
 
   public void testBoxingAndUnboxing() {
