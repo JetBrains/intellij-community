@@ -62,7 +62,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
         AttributeKey.stringArrayKey("stepsToSkip"), options.buildStepsToSkip.toImmutableList()
       ))
     }
-    configureProjectorPlugin(productProperties)
   }
 
   companion object {
@@ -312,19 +311,6 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
-}
-
-private const val projectorPlugin = "intellij.cwm.plugin.projector"
-private const val projectorJar = "plugins/cwm-plugin-projector/lib/projector/projector.jar"
-
-private fun configureProjectorPlugin(properties: ProductProperties) {
-  // configure only if versionCheckerConfig is not empty -
-  // otherwise will be an error because versionCheckerConfig expected to contain a default version (e.g. "" to "11")
-  if (properties.versionCheckerConfig.isNotEmpty() &&
-      properties.productLayout.bundledPluginModules.contains(projectorPlugin) &&
-      !properties.versionCheckerConfig.containsKey(projectorJar)) {
-    properties.versionCheckerConfig = properties.versionCheckerConfig.put(projectorJar, "17")
-  }
 }
 
 private fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
