@@ -17,8 +17,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -27,8 +26,7 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="intellij.performanceTesting.commands" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
   </component>
 </module>
