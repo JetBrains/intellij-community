@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -243,8 +244,8 @@ public final class PySdkUtil {
   /**
    * Finds sdk for provided directory. Takes into account both project and module SDK
    */
-  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory, boolean allowRemote) {
-    VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
+    VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(workingDirectory);
     if (workingDirectoryVirtualFile != null) {
       Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile, allowRemote);
       if (sdk != null) {
