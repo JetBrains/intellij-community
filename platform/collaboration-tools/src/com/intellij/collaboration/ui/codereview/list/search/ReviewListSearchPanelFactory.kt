@@ -5,10 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
@@ -125,12 +122,16 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
     private inner class QuickFilterAction(name: @Nls String, private val search: S)
       : DumbAwareAction(name), Toggleable {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) = Toggleable.setSelected(e.presentation, vm.searchState.value == search)
       override fun actionPerformed(e: AnActionEvent) = vm.searchState.update { search }
     }
 
     private inner class ClearFiltersAction
       : DumbAwareAction(CollaborationToolsBundle.message("review.list.filter.quick.clear", vm.searchState.value.filterCount)) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = vm.searchState.value.filterCount > 0
       }
