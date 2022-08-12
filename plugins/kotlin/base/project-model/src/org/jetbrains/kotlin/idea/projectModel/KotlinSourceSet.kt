@@ -66,7 +66,7 @@ interface KotlinSourceSet : KotlinComponent {
     val platform: KotlinPlatform
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
-
+    @KotlinGradlePluginVersionDependentApi("This field is only available for Kotlin Gradle Plugin 1.8 or higher")
     val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
 
     companion object {
