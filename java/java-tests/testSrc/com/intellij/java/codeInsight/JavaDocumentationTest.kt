@@ -76,6 +76,31 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(expected, doc)
   }
 
+  fun testPatternDoc() {
+    configure("""
+      /**
+       *  @param i my parameter
+       */ 
+      record Rec(int i, String s) {
+        void foo(Object o) {
+          switch (o) {
+            case Rec(int patternName1, String patternName2) -> {
+              <caret>patternName1            
+            }      
+          }
+        }
+      }""".trimIndent())
+
+    val ref = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset),
+                                               PsiReferenceExpression::class.java)!!
+    val doc = JavaDocumentationProvider().generateDoc(ref.resolve(), null)
+
+    val expected =
+      "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">patternName1</span></pre></div><div class='content'>my parameter</div>"
+
+    assertEquals(expected, doc)
+  }
+
   fun testGenericMethod() {
     doTestCtrlHoverDoc(
       """\

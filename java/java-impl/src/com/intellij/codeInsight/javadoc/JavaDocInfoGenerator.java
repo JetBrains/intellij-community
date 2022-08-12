@@ -516,6 +516,9 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiMethod) {
       generateMethodJavaDoc(buffer, (PsiMethod)myElement, generatePrologue);
     }
+    else if (myElement instanceof PsiPatternVariable) {
+      generatePatternVariableJavaDoc(buffer, generatePrologue, (PsiPatternVariable)myElement);
+    }
     else if (myElement instanceof PsiParameter) {
       generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement, generatePrologue);
     }
@@ -541,6 +544,46 @@ public class JavaDocInfoGenerator {
     }
 
     return true;
+  }
+
+  private void generatePatternVariableJavaDoc(StringBuilder buffer, boolean generatePrologue, @NotNull PsiPatternVariable variable) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateVariableDefinition(buffer, variable, true);
+
+    String docForPattern = getDocForPattern(variable);
+    if (docForPattern != null) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      buffer.append(docForPattern);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
+  }
+
+  @Nullable
+  private String getDocForPattern(@NotNull PsiPatternVariable variable) {
+    PsiPattern pattern = variable.getPattern();
+    PsiElement parent = pattern.getParent();
+    if (!(parent instanceof PsiDeconstructionList)) return null;
+    PsiPattern[] components = ((PsiDeconstructionList)parent).getDeconstructionComponents();
+    int index = ArrayUtil.indexOf(components, pattern);
+    PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)parent.getParent();
+    PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
+    PsiType deconstructionType = typeElement.getType();
+    PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionType);
+    if (recordClass == null) return null;
+    PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+    if (recordComponents.length <= index) return null;
+    PsiRecordComponent recordComponent = recordComponents[index];
+    PsiDocComment classComment = recordClass.getDocComment();
+    String recordComponentName = recordComponent.getName();
+    if (classComment == null || recordComponentName == null) return null;
+    PsiDocTag tag = getParamTagByName(classComment, recordComponentName);
+    if (tag == null) return null;
+    PsiElement[] elements = tag.getDataElements();
+    if (elements.length == 0) return null;
+    String text = elements[0].getText();
+    StringBuilder buffer = new StringBuilder();
+    generateValue(buffer, new ParamInfo(recordComponentName, recordComponentName, tag, ourEmptyProvider), elements, text);
+    return buffer.toString();
   }
 
   public @NlsSafe String generateSignature(PsiElement element) {
