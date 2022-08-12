@@ -1,6 +1,6 @@
 <html>
 <body>                                            
-<p>Detects usage of configuration methods that were deprecated.<br>
+<p>Detects usage of configuration methods that were deprecated.</p>
 
   Configuration methods may be deprecated because of two possible reasons:
   <ul>
@@ -8,5 +8,16 @@
   <li>Some plugin provides a better version of the deprecated configuration method.</li>
   </ul>
   Most likely there will be an alternative for the deprecated method.
+<p><b>Example:</b></p>
+<pre><code>
+plugins {
+  id 'java'
+}
+
+dependencies {
+  archive 'org.gradle.api:gradle:1.0' // reports 'archive'
+}
+</code></pre>
+
 </body>
 </html>
