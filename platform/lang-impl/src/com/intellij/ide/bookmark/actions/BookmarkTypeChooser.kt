@@ -41,10 +41,10 @@ private val SHARED_LAYOUT by lazy {
 
 internal class BookmarkTypeChooser(
   private var current: BookmarkType?,
-  private val assigned: Set<BookmarkType>,
+  assigned: Set<BookmarkType>,
   private var description: String?,
   private val onChosen: (BookmarkType, String) -> Unit
-): JPanel() {
+): JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)) {
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
     assigned,
@@ -95,8 +95,8 @@ internal class BookmarkTypeChooser(
       }
     }.apply {
       border = when {
-        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 8, 2, 8)
-        else -> JBUI.Borders.empty(2, 6)
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 8, 20)
+        else -> JBUI.Borders.empty(7, 11)
       }
       isOpaque = false
       isFocusCycleRoot = true
@@ -107,6 +107,7 @@ internal class BookmarkTypeChooser(
       }
     })
 
+    border = JBUI.Borders.empty()
     background = namedColor("Popup.background")
   }
 
