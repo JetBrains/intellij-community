@@ -25,7 +25,17 @@ private val LOG: Logger
 
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull(PluginManagerCore::findPlugin)
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+  val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+  return mapNotNull { pluginIdMap[it] }
+}
+
+internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
+  return joinToString(
+    prefix = "Plugins to $operation:[",
+    postfix = "]",
+  ) { it.idString }
+}
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,

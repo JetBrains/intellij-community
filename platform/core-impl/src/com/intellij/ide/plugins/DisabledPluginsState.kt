@@ -15,11 +15,13 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.stream.Collectors
+import kotlin.streams.asSequence
 
 @ApiStatus.Internal
 class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
+
   companion object {
+
     const val DISABLED_PLUGINS_FILENAME: @NonNls String = "disabled_plugins.txt"
     private val IGNORE_DISABLED_PLUGINS = java.lang.Boolean.getBoolean("idea.ignore.disabled.plugins")
 
@@ -29,6 +31,15 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
     @Volatile
     private var isDisabledStateIgnored = IGNORE_DISABLED_PLUGINS
+
+    private val defaultFilePath: Path
+      get() = PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
+
+    // do not use class reference here
+    @Suppress("SSBasedInspection")
+    private val logger: Logger
+      // do not use class reference here
+      get() = Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState")
 
     @JvmStatic
     fun addDisablePluginListener(listener: Runnable) {
@@ -43,15 +54,11 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     internal fun readPluginIdsFromFile(path: Path): Set<PluginId> {
       try {
         Files.lines(path).use { lines ->
-          return lines
-            .map(String::trim)
-            .filter { !it.isEmpty() }
-            .map(PluginId::getId)
-            .collect(Collectors.toSet())
+          return lines.asSequence().toPluginSet()
         }
       }
       catch (ignored: NoSuchFileException) {
-        return Collections.emptySet()
+        return emptySet()
       }
     }
 
@@ -66,7 +73,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
         val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
 
         if (pluginIdsFromFile.isEmpty() && suppressedPluginIds.isEmpty()) {
-          return Collections.emptySet()
+          return emptySet()
         }
 
         // ApplicationInfoImpl maybe loaded in another thread - get it after readPluginIdsFromFile
@@ -88,7 +95,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
       catch (e: IOException) {
         logger.info("Unable to load disabled plugins list from $path", e)
-        return Collections.emptySet()
+        return emptySet()
       }
       finally {
         if (updateFile) {
@@ -119,13 +126,13 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
     }
 
-    internal fun setEnabledState(plugins: Set<PluginId>, enabled: Boolean): Boolean {
+    internal fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
       val disabled = getDisabledIds().toMutableSet()
-      val changed = if (enabled) disabled.removeAll(plugins) else disabled.addAll(plugins)
+      val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
       if (changed) {
         disabledPlugins = Collections.unmodifiableSet(disabled)
       }
-      logger.info(joinedPluginIds(plugins, enabled))
+      logger.info(pluginIds.joinedPluginIds(if (enabled) "enable" else "disable"))
       return changed && saveDisabledPluginsAndInvalidate(disabled)
     }
 
@@ -158,44 +165,23 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       invalidate()
     }
 
-    private val defaultFilePath: Path
-      get() = PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
-
-    // do not use class reference here
-    @Suppress("SSBasedInspection")
-    private val logger: Logger
-      // do not use class reference here
-      get() = Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState")
-
     fun invalidate() {
       disabledPlugins = null
     }
 
     private fun splitByComma(key: String): Set<PluginId> {
       val property = System.getProperty(key, "")
-      if (property.isEmpty()) {
-        return emptySet()
-      }
-
-      val result = HashSet<PluginId>()
-      for (s in property.split(',')) {
-        result.add(PluginId.getId(s.trim().takeIf(String::isNotEmpty) ?: continue))
-      }
-      return result
+      return if (property.isEmpty())
+        emptySet()
+      else
+        property.split(',').asSequence().toPluginSet()
     }
 
-    private fun joinedPluginIds(pluginIds: Collection<PluginId>, enabled: Boolean): String {
-      val buffer = StringBuilder("Plugins to ")
-        .append(if (enabled) "enable" else "disable")
-        .append(": [")
-      val iterator = pluginIds.iterator()
-      while (iterator.hasNext()) {
-        buffer.append(iterator.next().idString)
-        if (iterator.hasNext()) {
-          buffer.append(", ")
-        }
-      }
-      return buffer.append(']').toString()
+    private fun Sequence<String>.toPluginSet(): Set<PluginId> {
+      return map { it.trim() }
+        .filterNot { it.isBlank() }
+        .map { PluginId.getId(it) }
+        .toSet()
     }
   }
 
@@ -211,7 +197,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>) = disableById(descriptors.toPluginIdSet())
 
-  override fun enableById(pluginIds: Set<PluginId>) = setEnabledState(plugins = pluginIds, enabled = true)
+  override fun enableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = true)
 
-  override fun disableById(pluginIds: Set<PluginId>) = setEnabledState(plugins = pluginIds, enabled = false)
+  override fun disableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = false)
 }
