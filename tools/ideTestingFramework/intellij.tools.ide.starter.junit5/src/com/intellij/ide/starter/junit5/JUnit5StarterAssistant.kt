@@ -1,9 +1,12 @@
 package com.intellij.ide.starter.junit5
 
+import com.intellij.ide.starter.bus.StarterListener
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.killOutdatedProcessesOnUnix
+import com.intellij.ide.starter.runner.CurrentTestMethod
+import com.intellij.ide.starter.runner.TestContainer
 import com.intellij.ide.starter.runner.TestContainerImpl
 import com.intellij.ide.starter.utils.logError
 import com.intellij.ide.starter.utils.logOutput
@@ -21,13 +24,16 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
-class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
+open class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
 
-  private fun getProperty(testInstance: Any, propertyType: KClass<*>): KProperty1<out Any, *>? {
+  protected fun getProperty(testInstance: Any, propertyType: KClass<*>): KProperty1<out Any, *>? {
     val properties = testInstance::class.memberProperties
 
     try {
-      val contextField = properties.single { it.javaField!!.type.isAssignableFrom(propertyType.javaObjectType) }
+      val contextField = properties.single { property ->
+        if (property.javaField == null) false
+        else property.javaField!!.type.equals(propertyType.javaObjectType)
+      }
       return contextField
     }
     catch (t: Throwable) {
@@ -37,7 +43,7 @@ class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
     return null
   }
 
-  private fun injectTestContainerProperty(testInstance: Any) {
+  open fun injectTestContainerProperty(testInstance: Any) {
     val containerProp = getProperty(testInstance, TestContainerImpl::class)
     if (containerProp != null) {
       val jbContainerInstance = TestContainerImpl()
@@ -51,7 +57,7 @@ class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  private fun injectTestInfoProperty(context: ExtensionContext) {
+  protected fun injectTestInfoProperty(context: ExtensionContext) {
     val testInstance = context.testInstance.get()
 
     val testInfoProperty = getProperty(testInstance, TestInfo::class)
@@ -72,34 +78,47 @@ class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  override fun beforeEach(context: ExtensionContext?) {
+  override fun beforeEach(context: ExtensionContext) {
+    if (context.testMethod.isPresent) {
+      di.direct.instance<CurrentTestMethod>().set(context.testMethod.get())
+    }
+    else {
+      logError("Couldn't acquire test method")
+    }
 
     if (di.direct.instance<CIServer>().isBuildRunningOnCI) {
       logOutput(buildString {
-        appendLine("Disk usage diagnostics before test ${context?.displayName}")
+        appendLine("Disk usage diagnostics before test ${context.displayName}")
         appendLine(di.direct.instance<GlobalPaths>().getDiskUsageDiagnostics().withIndent("  "))
       })
     }
 
     killOutdatedProcessesOnUnix()
 
-    val testInstance = context!!.testInstance.get()
+    val testInstance = context.testInstance.get()
 
     injectTestContainerProperty(testInstance)
     injectTestInfoProperty(context)
   }
 
-  override fun afterEach(context: ExtensionContext?) {
-    val testInstance = context!!.testInstance.get()
-    val containerProp = getProperty(testInstance, TestContainerImpl::class)
+  protected inline fun <reified T : TestContainer<T>> closeResourcesOfTestContainer(context: ExtensionContext) {
+    val testInstance = context.testInstance.get()
+    val containerProp = getProperty(testInstance, T::class)
+
     if (containerProp != null) {
       try {
-        (containerProp.javaField!!.apply { trySetAccessible() }.get(testInstance) as TestContainerImpl).close()
+        (containerProp.javaField!!.apply { trySetAccessible() }.get(testInstance) as T).close()
       }
       catch (e: Throwable) {
         logError("Unable automatically to close resources of ${containerProp.name}")
       }
     }
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    StarterListener.unsubscribe()
+
+    closeResourcesOfTestContainer<TestContainerImpl>(context)
   }
 }
 
