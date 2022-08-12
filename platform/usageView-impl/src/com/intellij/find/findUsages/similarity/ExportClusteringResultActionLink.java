@@ -20,7 +20,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -72,8 +71,6 @@ public class ExportClusteringResultActionLink extends ActionLink {
       document.insertString(document.getTextLength(), fileContent);
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }
-    CodeStyleManager.getInstance(project)
-      .reformatText(psiFile, psiFile.getTextRange().getStartOffset(), psiFile.getTextRange().getEndOffset());
   }
 
   private static void buildSessionDataFile(@NotNull Project project,
@@ -148,7 +145,11 @@ public class ExportClusteringResultActionLink extends ActionLink {
                                                        doc.getLineEndOffset(Math.min(usageEndLineNumber, doc.getLineCount() - 1)))));
       }
     });
-    return StringUtil.escapeChars(usageLineSnippet.get(), '\\', '"', '\n').trim();
+    return StringUtil.escapeChars(removeNewLines(usageLineSnippet.get()), '\\', '"').trim();
+  }
+
+  private static @NotNull String removeNewLines(@NotNull String snippet) {
+    return snippet.replace("\n", " ").replace("\t", " ").replace("\r", " ");
   }
 
   private static @NotNull String createJsonForFeatures(@NotNull Bag bag) {

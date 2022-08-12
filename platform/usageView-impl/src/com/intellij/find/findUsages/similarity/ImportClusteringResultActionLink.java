@@ -15,23 +15,28 @@ import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.*;
 
 
 public class ImportClusteringResultActionLink extends ActionLink {
-  public ImportClusteringResultActionLink(Project project, ClusteringSearchSession session) {
+  private static final Logger LOG = Logger.getLogger(ImportClusteringResultActionLink.class.getName());
+
+  public ImportClusteringResultActionLink(@NotNull Project project, ClusteringSearchSession session) {
     super(UsageViewBundle.message("similar.usages.internal.import.clustering.data"),
           (event) -> {
             final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
             fileChooserDescriptor.setTitle(UsageViewBundle.message("similar.usages.internal.import.clustering.data.title"));
             final VirtualFile file = FileChooser.chooseFile(fileChooserDescriptor, project, null);
+            if (file == null) return;
             try {
               Map<String, SimilarUsage> usageIndex = buildIndex(session);
               List<UsageCluster> parsedClusters = new ArrayList<>(parseFile(file, usageIndex));
@@ -43,13 +48,19 @@ public class ImportClusteringResultActionLink extends ActionLink {
           });
   }
 
-  private static Map<String, SimilarUsage> buildIndex(ClusteringSearchSession session) {
-    List<SimilarUsage> usages = session.getClusters().stream().flatMap(e -> e.getUsages().stream()).collect(Collectors.toList());
+  private static Map<String, SimilarUsage> buildIndex(@NotNull ClusteringSearchSession session) {
+    List<SimilarUsage> usages = session.getClusters().stream().flatMap(e -> e.getUsages().stream()).toList();
     return usages.stream()
-      .collect(Collectors.toMap(e -> getUsageId(Objects.requireNonNull(((UsageInfo2UsageAdapter)e).getElement())), value -> value));
+      .collect(Collectors.toMap(e -> getUsageId(Objects.requireNonNull(((UsageInfo2UsageAdapter)e).getElement())), value -> value,
+                                (usageId1, usageId2) ->
+                                {
+                                  LOG.warning("Duplicate found:" + usageId1);
+                                  return usageId1;
+                                }));
   }
 
-  private static Collection<UsageCluster> parseFile(VirtualFile file, Map<String, SimilarUsage> usageIndex) throws IOException {
+  private static @NotNull Collection<UsageCluster> parseFile(@NotNull VirtualFile file, @NotNull Map<String, SimilarUsage> usageIndex)
+    throws IOException {
     JsonReaderEx json = new JsonReaderEx(VfsUtilCore.loadText(file));
     List<Map<String, Object>> list = JsonUtil.nextList(json);
     Int2ObjectMap<UsageCluster> clusters = new Int2ObjectOpenHashMap<>();
@@ -62,7 +73,13 @@ public class ImportClusteringResultActionLink extends ActionLink {
       }
       Object filename = e.get("filename");
       if (filename != null) {
-        cluster.addUsage(usageIndex.get(filename));
+        SimilarUsage usage = usageIndex.get(filename);
+        if (usage == null) {
+          LOG.warning("No usage found for " + filename);
+        }
+        else {
+          cluster.addUsage(usage);
+        }
       }
     });
     return clusters.values();
