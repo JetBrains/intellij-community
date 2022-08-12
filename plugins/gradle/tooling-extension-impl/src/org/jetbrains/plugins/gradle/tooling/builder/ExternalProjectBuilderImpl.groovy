@@ -115,8 +115,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     catch (Throwable ignored) {
       skipTasks = false
     }
-    List<Task> tasks = skipTasks ? project.tasks.withType(AbstractTestTask.class).toList() as List<Task> : tasksFactory.getTasks(project).toList();
-    defaultExternalProject.tasks = getTasks(project, tasks)
+    defaultExternalProject.tasks = skipTasks ? getTestTasks(project) : getTasks(project, tasksFactory)
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
     defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
 
@@ -176,10 +175,25 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }
 
-  static Map<String, DefaultExternalTask> getTasks(Project project, List<Task> tasks) {  // Android Studio: b/235320590
+  private static Map<String, DefaultExternalTask> getTestTasks(Project project) {  // Android Studio: b/235320590
+    def result = [:] as Map<String, DefaultExternalTask>
+    project.tasks.withType(AbstractTestTask.class).getNames().forEach { name ->
+      DefaultExternalTask externalTask = new DefaultExternalTask()
+      externalTask.name = name
+      externalTask.test = true
+
+      def projectTaskPath = (project.path == ':' ? ':' : project.path + ':') + name
+      externalTask.QName = projectTaskPath
+
+      result.put(externalTask.name, externalTask)
+    }
+    return result
+  }
+
+  static Map<String, DefaultExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
     def result = [:] as Map<String, DefaultExternalTask>
 
-    for (Task task in tasks) {  // Android Studio: b/235320590
+    for (Task task in tasksFactory.getTasks(project)) {
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
         externalTask = new DefaultExternalTask()
