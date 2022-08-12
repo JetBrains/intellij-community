@@ -110,7 +110,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
     }
     String actionId = addActionClass(data, action, info);
     eventId.log(project, data);
-    FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(actionId);
+    if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(actionId);
+    }
   }
 
   public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
