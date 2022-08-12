@@ -165,7 +165,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      final ToolsImpl tools = profile.getToolsOrNull(configuration.getShortName(), project);
+      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid(), project);
       if (tools != null && tools.isEnabled()) {
         configurations.add(configuration);
         register(configuration);
@@ -185,7 +185,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     // modify from single (AWT) thread, to prevent race conditions.
     ApplicationManager.getApplication().invokeLater(() -> {
-      final String shortName = configuration.getShortName();
+      final String shortName = configuration.getUuid();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key != null) {
         if (!isMetaDataChanged(configuration, key)) return;
@@ -228,7 +228,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     if (configuration.getOrder() == 0) {
       return configuration;
     }
-    final UUID uuid = configuration.getUuid();
+    final String uuid = configuration.getUuid();
     return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
   }
 
@@ -238,7 +238,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @NotNull
-  public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
+  public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
     final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
     configurations.sort(Comparator.comparingInt(Configuration::getOrder));
     return configurations;
@@ -267,7 +267,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  public boolean removeConfigurationsWithUuid(@NotNull UUID uuid) {
+  public boolean removeConfigurationsWithUuid(@NotNull String uuid) {
     final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
     if (removed) myWriteSorted = true;
     return removed;
@@ -348,7 +348,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final InspectionManager manager = holder.getManager();
       final ProblemDescriptor descriptor =
         manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
-      final String toolName = configuration.getShortName();
+      final String toolName = configuration.getUuid();
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
     }
 
@@ -450,7 +450,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
-      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getShortName()), element)) {
+      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid()), element)) {
         return;
       }
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);

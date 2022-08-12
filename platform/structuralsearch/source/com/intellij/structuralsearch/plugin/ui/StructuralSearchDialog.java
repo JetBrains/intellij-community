@@ -993,7 +993,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   public void showFilterPanel(String variableName) {
     myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
     setFilterPanelVisible(true);
-    myConfiguration.setCurrentVariableName(variableName);
   }
 
   private void setFilterPanelVisible(boolean visible) {
@@ -1008,7 +1007,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     else {
       if (isFilterPanelVisible()) {
         mySearchEditorPanel.setSecondComponent(null);
-        myConfiguration.setCurrentVariableName(null);
       }
     }
   }
@@ -1343,9 +1341,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-        }
-        if (isFilterPanelVisible()) {
-          myConfiguration.setCurrentVariableName(variableName);
         }
       }, myDisposable, myReplace);
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
