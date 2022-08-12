@@ -25,47 +25,16 @@ public final class TypeConstraints {
   /**
    * Top constraint (no restriction; any non-primitive value satisfies this)
    */
-  public static final TypeConstraint TOP = new TypeConstraint() {
-    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
-    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
-    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
-    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
-    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
-    @Override public TypeConstraint tryNegate() { return BOTTOM; }
-    @Override public String toString() { return ""; }
-    @Override public DfType getUnboxedType() { return DfType.TOP; }
-    @Override public @NotNull TypeConstraint arrayOf() { return new ExactArray(EXACTLY_OBJECT).instanceOf(); }
-  };
+  public static final TypeConstraint TOP = new TopConstraint();
   /**
    * Bottom constraint (no actual type satisfies this)
    */
-  public static final TypeConstraint BOTTOM = new TypeConstraint() {
-    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
-    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
-    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
-    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
-    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
-    @Override public TypeConstraint tryNegate() { return TOP; }
-    @Override public String toString() { return "<impossible type>"; }
-  };
+  public static final TypeConstraint BOTTOM = new BottomConstraint();
 
   /**
    * Exactly java.lang.Object class
    */
-  public static final TypeConstraint.Exact EXACTLY_OBJECT = new TypeConstraint.Exact() {
-    @Override public StreamEx<Exact> superTypes() { return StreamEx.empty();}
-    @Override public boolean isFinal() { return false;}
-    @Override public boolean isAssignableFrom(@NotNull Exact other) { return true;}
-    @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
-    @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
-    @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
-    @Override public String toString() { return JAVA_LANG_OBJECT;}
-
-    @Override
-    public PsiType getPsiType(Project project) {
-      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(JAVA_LANG_OBJECT);
-    }
-  };
+  public static final TypeConstraint.Exact EXACTLY_OBJECT = new ExactObject();
 
   @Nullable
   private static TypeConstraint.Exact createExact(@NotNull PsiType type) {
@@ -262,7 +231,7 @@ public final class TypeConstraints {
     return new Unresolved(fqn);
   }
 
-  private enum PrimitiveArray implements TypeConstraint.Exact {
+  enum PrimitiveArray implements TypeConstraint.Exact {
     BOOLEAN(PsiType.BOOLEAN), INT(PsiType.INT),
     BYTE(PsiType.BYTE), SHORT(PsiType.SHORT), LONG(PsiType.LONG),
     CHAR(PsiType.CHAR), FLOAT(PsiType.FLOAT), DOUBLE(PsiType.DOUBLE);
@@ -319,7 +288,7 @@ public final class TypeConstraints {
     }
   }
 
-  private enum ArraySuperInterface implements TypeConstraint.Exact {
+  enum ArraySuperInterface implements TypeConstraint.Exact {
     CLONEABLE(JAVA_LANG_CLONEABLE),
     SERIALIZABLE(JAVA_IO_SERIALIZABLE);
     private final @NotNull String myReference;
@@ -376,7 +345,7 @@ public final class TypeConstraints {
     }
   }
 
-  private static final class ExactClass implements TypeConstraint.Exact {
+  static final class ExactClass implements TypeConstraint.Exact {
     private final @NotNull ClassDef myClass;
     private final boolean mySingleton;
 
@@ -527,7 +496,7 @@ public final class TypeConstraints {
   /**
    * Some unknown subclass that has given list of supertypes
    */
-  private static final class ExactSubclass implements TypeConstraint.Exact {
+  static final class ExactSubclass implements TypeConstraint.Exact {
     private final @NotNull Exact @NotNull[] mySupers;
     private final @NotNull Object myId;
 
@@ -667,7 +636,7 @@ public final class TypeConstraints {
     }
   }
 
-  private static final class Unresolved implements TypeConstraint.Exact {
+  static final class Unresolved implements TypeConstraint.Exact {
     private final @NotNull String myReference;
 
     private Unresolved(@NotNull String reference) {
@@ -759,5 +728,64 @@ public final class TypeConstraints {
   @FunctionalInterface
   public interface TypeConstraintFactory {
     TypeConstraint.@NotNull Exact create(@NotNull String fqn);
+  }
+
+  static final class TopConstraint implements TypeConstraint {
+    @NotNull
+    @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
+
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
+
+    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
+
+    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
+
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
+
+    @Override public TypeConstraint tryNegate() { return BOTTOM; }
+
+    @Override public String toString() { return ""; }
+
+    @Override public DfType getUnboxedType() { return DfType.TOP; }
+
+    @Override public @NotNull TypeConstraint arrayOf() { return new ExactArray(EXACTLY_OBJECT).instanceOf(); }
+  }
+
+  static final class BottomConstraint implements TypeConstraint {
+    @NotNull
+    @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
+
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
+
+    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
+
+    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
+
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
+
+    @Override public TypeConstraint tryNegate() { return TOP; }
+
+    @Override public String toString() { return "<impossible type>"; }
+  }
+
+  static final class ExactObject implements TypeConstraint.Exact {
+    @Override public StreamEx<Exact> superTypes() { return StreamEx.empty();}
+
+    @Override public boolean isFinal() { return false;}
+
+    @Override public boolean isAssignableFrom(@NotNull Exact other) { return true;}
+
+    @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
+
+    @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
+
+    @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
+
+    @Override public String toString() { return JAVA_LANG_OBJECT;}
+
+    @Override
+    public PsiType getPsiType(Project project) {
+      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(JAVA_LANG_OBJECT);
+    }
   }
 }
