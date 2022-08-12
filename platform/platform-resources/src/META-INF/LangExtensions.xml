@@ -925,7 +925,7 @@
 
     <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 
-    <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType" order="last"/>
+    <liveTemplateContext id="OTHER" contextId="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType" order="last"/>
 
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 

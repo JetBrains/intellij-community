@@ -60,7 +60,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
 
-    TemplateContextType.EP_NAME.addChangeListener(
+    LiveTemplateContextBean.EP_NAME.addChangeListener(
       () -> {
         for (TemplateContextType type : getAllContextTypes()) {
           type.clearCachedBaseContextType();

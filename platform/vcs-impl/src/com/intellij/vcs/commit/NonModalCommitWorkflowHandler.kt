@@ -25,10 +25,12 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -44,6 +46,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import java.lang.Runnable
 import kotlin.properties.Delegates.observable
 
@@ -130,6 +133,18 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
+  private fun getCommitActionTextForNotification(executor: CommitExecutor?, isSkipCommitChecks: Boolean): @Nls String {
+    if (executor is CommitExecutorWithRichDescription) {
+      val isAmend = amendCommitHandler.isAmendCommitMode
+      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
+      val actionText = executor.getText(state)
+      if (actionText != null) return capitalize(toLowerCase(removeEllipsisSuffix(actionText)))
+    }
+
+    val actionText = removeEllipsisSuffix(executor?.actionText ?: getCommitActionName())
+    return capitalize(toLowerCase(message("commit.checks.failed.notification.commit.anyway.action", actionText)))
+  }
+
   fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isReady()
   }
@@ -199,24 +214,33 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun resetCommitChecksResult() {
     isCommitChecksResultUpToDate = false
+    hideCommitChecksFailureNotification()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
-    checkinErrorNotifications.clear()
-    super.beforeCommitChecksEnded(isDefaultCommit, result)
+  override fun beforeCommitChecksStarted() {
+    super.beforeCommitChecksStarted()
+    hideCommitChecksFailureNotification()
+  }
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) {
+    hideCommitChecksFailureNotification()
+    super.beforeCommitChecksEnded(isDefaultCommit, executor, result)
     if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
     }
     if (result is CommitChecksResult.Failed ||
         result is CommitChecksResult.ExecutionError) {
-      val commitText = getCommitActionName()
+      val commitActionText = getCommitActionTextForNotification(executor, false)
+      val commitAnywayActionText = getCommitActionTextForNotification(executor, true)
       val messageText = ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
 
-      checkinErrorNotifications.notify(message("commit.checks.failed.notification.title", commitText), messageText, project) {
+      checkinErrorNotifications.notify(message("commit.checks.failed.notification.title", commitActionText), messageText, project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
         it.addAction(
-          NotificationAction.createExpiring(message("commit.checks.failed.notification.commit.anyway.action", commitText)) { _, _ ->
-            ui.runDefaultCommitAction()
+          NotificationAction.createExpiring(commitAnywayActionText) { _, _ ->
+            if (!workflow.isExecuting) {
+              executorCalled(executor)
+            }
           })
         it.addAction(
           NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
@@ -235,13 +259,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
+  protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
 
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
     if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
 
     coroutineScope.launch {
-      workflow.executeDefault {
+      workflow.executeDefault(executor) {
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
@@ -298,9 +322,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
-    checkinErrorNotifications.clear()
+    hideCommitChecksFailureNotification()
     coroutineScope.cancel()
     super.dispose()
+  }
+
+  fun hideCommitChecksFailureNotification() {
+    checkinErrorNotifications.clear()
   }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
@@ -332,6 +360,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   protected fun disposeCommitOptions() {
     workflow.disposeCommitOptions()
     areCommitOptionsCreated = false
+  }
+
+  override fun getState(): CommitWorkflowHandlerState {
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val isSkipCommitChecks = isSkipCommitChecks()
+    return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
   protected open inner class CommitStateCleaner : CommitResultHandler {

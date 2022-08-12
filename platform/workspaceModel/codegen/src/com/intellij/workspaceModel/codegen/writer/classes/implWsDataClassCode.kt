@@ -174,6 +174,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- equals
+      val keyFields = allFields.filter { it.isKey }
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
         line("if (this::class != other::class) return false")
@@ -217,6 +218,30 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           "result = 31 * result + $name.hashCode()"
         }
         line("return result")
+      }
+
+      if (keyFields.isNotEmpty()) {
+        line()
+        section("override fun equalsByKey(other: Any?): Boolean") {
+          line("if (other == null) return false")
+          line("if (this::class != other::class) return false")
+
+          lineWrapped("other as $javaDataName")
+
+          list(keyFields) {
+            "if (this.$name != other.$name) return false"
+          }
+
+          line("return true")
+        }
+        line()
+        section("override fun hashCodeByKey(): Int") {
+          line("var result = javaClass.hashCode()")
+          list(keyFields) {
+            "result = 31 * result + $name.hashCode()"
+          }
+          line("return result")
+        }
       }
     }
   }

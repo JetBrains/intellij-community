@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -38,8 +39,8 @@ open class ParentEntityImpl : ParentEntity, WorkspaceEntityBase() {
   override val parentData: String
     get() = _parentData!!
 
-  override val child: ChildEntity
-    get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)!!
+  override val child: ChildEntity?
+    get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -77,16 +78,6 @@ open class ParentEntityImpl : ParentEntity, WorkspaceEntityBase() {
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field ParentEntity#entitySource should be initialized")
       }
-      if (_diff != null) {
-        if (_diff.extractOneToOneChild<WorkspaceEntityBase>(CHILD_CONNECTION_ID, this) == null) {
-          error("Field ParentEntity#child should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
-          error("Field ParentEntity#child should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -120,14 +111,14 @@ open class ParentEntityImpl : ParentEntity, WorkspaceEntityBase() {
 
       }
 
-    override var child: ChildEntity
+    override var child: ChildEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildEntity
+          _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildEntity
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildEntity
         }
       }
       set(value) {

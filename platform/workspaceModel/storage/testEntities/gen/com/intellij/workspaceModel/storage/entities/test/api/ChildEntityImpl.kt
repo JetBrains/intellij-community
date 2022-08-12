@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage

@@ -85,12 +85,6 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
-  override fun runDefaultCommitAction() {
-    if (isDefaultExecutorEnabled()) {
-      fireDefaultExecutorCalled()
-    }
-  }
-
   private fun isDefaultExecutorEnabled() = isActive && defaultCommitAction.isEnabled
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)

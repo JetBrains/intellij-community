@@ -1,22 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.LiveTemplateContextBean;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @ApiStatus.Internal
-final class TemplateContextTypes {
+public final class TemplateContextTypes {
+  public static @NotNull List<TemplateContextType> getAllContextTypes() {
+    return ContainerUtil.map(LiveTemplateContextBean.EP_NAME.getExtensionList(), LiveTemplateContextBean::getInstance);
+  }
 
-  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP =
-    NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint());
+  public static <T extends TemplateContextType> @NotNull T getByClass(@NotNull Class<T> clazz) {
+    T templateContextType = getByClassOrNull(clazz);
+    if (templateContextType == null) {
+      throw new IllegalStateException("Template context type with class " + clazz + " is not registered");
+    }
 
-  @NotNull
-  public static List<TemplateContextType> getAllContextTypes() {
-    return TEMPLATE_CONTEXT_EP.getValue().getExtensionList();
+    return templateContextType;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T extends TemplateContextType> @Nullable T getByClassOrNull(@NotNull Class<T> clazz) {
+    for (LiveTemplateContextBean templateContextEP : LiveTemplateContextBean.EP_NAME.getExtensionList()) {
+      TemplateContextType instance = templateContextEP.getInstance();
+      if (clazz.isInstance(instance)) {
+        return (T)instance;
+      }
+    }
+    return null;
   }
 }

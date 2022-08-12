@@ -70,6 +70,13 @@ class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above *
         EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
       e.consume();
     }
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner == null || focusOwner instanceof Window) {
+      // Swing doesn't process key bindings when there's no focus component,
+      // or when focus component is a window (as window classes don't inherit from JComponent),
+      // but WHEN_IN_FOCUSED_WINDOW bindings make sense even in this case.
+      SwingUtilities.processKeyBindings(e);
+    }
     return super.postProcessKeyEvent(e);
   }
 

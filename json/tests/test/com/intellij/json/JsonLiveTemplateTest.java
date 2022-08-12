@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
@@ -29,7 +30,6 @@ import com.intellij.json.liveTemplates.JsonInLiteralsContextType;
 import com.intellij.json.liveTemplates.JsonInPropertyKeysContextType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,11 +49,11 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     final TemplateManager templateManager = TemplateManager.getInstance(getProject());
     final Template template = templateManager.createTemplate(name, group, text);
 
-    TemplateContextType context = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JsonContextType.class);
+    TemplateContextType context = TemplateContextTypes.getByClass(JsonContextType.class);
     assertNotNull(context);
     ((TemplateImpl)template).getTemplateContext().setEnabled(context, true);
     for (Class<? extends TemplateContextType> ctx: contextsToDisable) {
-      context = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), ctx);
+      context = TemplateContextTypes.getByClass(ctx);
       assertNotNull(context);
       ((TemplateImpl)template).getTemplateContext().setEnabled(context, false);
     }

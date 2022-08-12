@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -83,6 +84,18 @@ internal class MutableEntityStorageImpl(
 
   @Volatile
   private var threadName: String? = null
+
+  // --------------- Replace By Source stuff -----------
+  internal var useNewRbs = Registry.`is`("ide.workspace.model.rbs.as.tree", true)
+
+  @TestOnly
+  internal var keepLastRbsEngine = false
+  internal var engine: ReplaceBySourceOperation? = null
+
+  @set:TestOnly
+  internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
+
+  // --------------- Replace By Source stuff -----------
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")
@@ -285,14 +298,6 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  internal var useNewRbs = false
-
-  @TestOnly
-  internal var keepLastRbsEngine = false
-  internal var engine: ReplaceBySourceOperation? = null
-
-  @set:TestOnly
-  internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
   private fun getRbsEngine(): ReplaceBySourceOperation {
     if (useNewRbs) {
       return ReplaceBySourceAsTree()

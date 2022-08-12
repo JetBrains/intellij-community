@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.LiveTemplateContextBean;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -35,7 +36,7 @@ public final class TemplateContext {
     @Override
     protected Map<String, String> compute() {
       if (isListenerAdded.compareAndSet(false, true)) {
-        TemplateContextTypes.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<>() {
+        LiveTemplateContextBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointAdapter<>() {
           @Override
           public void areaReplaced(@NotNull ExtensionsArea oldArea) {
             drop();
@@ -48,8 +49,8 @@ public final class TemplateContext {
         }, false, null);
       }
 
-      return TemplateContextTypes.getAllContextTypes().stream()
-        .map(TemplateContextType::getContextId)
+      return LiveTemplateContextBean.EP_NAME.getExtensionList().stream()
+        .map(LiveTemplateContextBean::getContextId)
         .distinct()
         .collect(Collectors.toMap(Function.identity(), Function.identity()));
     }
@@ -61,14 +62,22 @@ public final class TemplateContext {
     return cloneResult;
   }
 
-  @Nullable
-  TemplateContextType getDifference(@NotNull TemplateContext defaultContext) {
-    return ContainerUtil.find(TemplateContextTypes.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
+  @Nullable LiveTemplateContextBean getDifference(@NotNull TemplateContext defaultContext) {
+    return ContainerUtil.find(LiveTemplateContextBean.EP_NAME.getExtensionList(),
+                              type -> isEnabled(type) != defaultContext.isEnabled(type));
+  }
+
+  @Nullable TemplateContextType getDifferenceType(@NotNull TemplateContext defaultContext) {
+    LiveTemplateContextBean differenceExtension = getDifference(defaultContext);
+    if (differenceExtension != null) {
+      return differenceExtension.getInstance();
+    }
+    return null;
   }
 
   public boolean isEnabled(@NotNull TemplateContextType contextType) {
     synchronized (myContextStates) {
-      Boolean storedValue = getOwnValue(contextType);
+      Boolean storedValue = getOwnValue(contextType.getContextId());
       if (storedValue == null) {
         TemplateContextType baseContextType = contextType.getBaseContextType();
         return baseContextType != null && isEnabled(baseContextType);
@@ -77,10 +86,24 @@ public final class TemplateContext {
     }
   }
 
-  @Nullable
-  public Boolean getOwnValue(TemplateContextType contextType) {
+  private boolean isEnabled(@NotNull LiveTemplateContextBean contextType) {
     synchronized (myContextStates) {
-      return myContextStates.get(contextType.getContextId());
+      Boolean storedValue = getOwnValue(contextType.getContextId());
+      if (storedValue == null) {
+        LiveTemplateContextBean baseContextType = contextType.getBaseContextType();
+        return baseContextType != null && isEnabled(baseContextType);
+      }
+      return storedValue.booleanValue();
+    }
+  }
+
+  public @Nullable Boolean getOwnValue(@NotNull TemplateContextType contextType) {
+    return getOwnValue(contextType.getContextId());
+  }
+
+  private @Nullable Boolean getOwnValue(String contextTypeId) {
+    synchronized (myContextStates) {
+      return myContextStates.get(contextTypeId);
     }
   }
 
@@ -121,7 +144,7 @@ public final class TemplateContext {
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
     Map<String, Boolean> explicitStates = new HashMap<>();
-    for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
+    for (LiveTemplateContextBean type : LiveTemplateContextBean.EP_NAME.getExtensionList()) {
       if (isDisabledByInheritance(type)) {
         explicitStates.put(type.getContextId(), false);
       }
@@ -129,14 +152,14 @@ public final class TemplateContext {
     return explicitStates;
   }
 
-  private boolean isDisabledByInheritance(TemplateContextType type) {
+  private boolean isDisabledByInheritance(LiveTemplateContextBean type) {
     return !hasOwnValue(type) &&
            !isEnabled(type) &&
-           JBIterable.generate(type, TemplateContextType::getBaseContextType).filter(this::hasOwnValue).first() != null;
+           JBIterable.generate(type, LiveTemplateContextBean::getBaseContextType).filter(this::hasOwnValue).first() != null;
   }
 
-  private boolean hasOwnValue(TemplateContextType t) {
-    return getOwnValue(t) != null;
+  private boolean hasOwnValue(LiveTemplateContextBean t) {
+    return getOwnValue(t.getContextId()) != null;
   }
 
   @TestOnly
@@ -178,8 +201,8 @@ public final class TemplateContext {
       @Override
       public Map<String, TemplateContextType> invoke() {
         Map<String, TemplateContextType> idToType = new HashMap<>();
-        for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
-          idToType.put(type.getContextId(), type);
+        for (LiveTemplateContextBean type : LiveTemplateContextBean.EP_NAME.getExtensionList()) {
+          idToType.put(type.getContextId(), type.getInstance());
         }
         return idToType;
       }
@@ -196,7 +219,7 @@ public final class TemplateContext {
    * See TemplateSchemeTest.
    */
   private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
-    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type.getContextId());
     if (defaultValue == null) {
       TemplateContextType base = type.getBaseContextType();
       boolean baseEnabled = base != null && isEnabled(base);

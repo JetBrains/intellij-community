@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.model
 
-import org.jetbrains.deft.Obj
 import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.storage.EqualsBy
+import org.jetbrains.deft.Obj
 
 abstract class KtInterfaceKind {
   abstract fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics, keepUnknownFields: Boolean)
@@ -31,6 +31,7 @@ open class WsEntityInterface : KtInterfaceKind() {
           else Field.Default.plain
       }
       entitySource.content = field.content
+      entitySource.isKey = field.annotations.contains(EqualsBy::class)
     }
   }
 

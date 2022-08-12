@@ -41,8 +41,8 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
   override val data: String
     get() = _data!!
 
-  override val child: CompositeBaseEntity
-    get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)!!
+  override val child: CompositeBaseEntity?
+    get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -80,16 +80,6 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field HeadAbstractionEntity#entitySource should be initialized")
       }
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(CHILD_CONNECTION_ID, this) == null) {
-          error("Field HeadAbstractionEntity#child should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
-          error("Field HeadAbstractionEntity#child should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -123,15 +113,15 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
 
       }
 
-    override var child: CompositeBaseEntity
+    override var child: CompositeBaseEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                       CHILD_CONNECTION_ID)]!! as CompositeBaseEntity
+                                                                                                       CHILD_CONNECTION_ID)] as? CompositeBaseEntity
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as CompositeBaseEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity
         }
       }
       set(value) {

@@ -30,9 +30,12 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java,
                                                                                 ContentRootTestEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
+      FACETS_CONNECTION_ID,
     )
 
   }
@@ -44,6 +47,9 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
 
   override val contentRoots: List<ContentRootTestEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootTestEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
+
+  override val facets: List<FacetTestEntity>
+    get() = snapshot.extractOneToManyChildren<FacetTestEntity>(FACETS_CONNECTION_ID, this)!!.toList()
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -90,6 +96,17 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
       else {
         if (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] == null) {
           error("Field ModuleTestEntity#contentRoots should be initialized")
+        }
+      }
+      // Check initialization for list with ref type
+      if (_diff != null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(FACETS_CONNECTION_ID, this) == null) {
+          error("Field ModuleTestEntity#facets should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] == null) {
+          error("Field ModuleTestEntity#facets should be initialized")
         }
       }
     }
@@ -162,6 +179,46 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoots")
+      }
+
+    // List of non-abstract referenced types
+    var _facets: List<FacetTestEntity>? = emptyList()
+    override var facets: List<FacetTestEntity>
+      get() {
+        // Getter of the list of non-abstract referenced types
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToManyChildren<FacetTestEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                                FACETS_CONNECTION_ID)] as? List<FacetTestEntity>
+                                                                                                    ?: emptyList())
+        }
+        else {
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetTestEntity> ?: emptyList()
+        }
+      }
+      set(value) {
+        // Setter of the list of non-abstract referenced types
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null) {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              _diff.addEntity(item_value)
+            }
+          }
+          _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
+        }
+        else {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
+            }
+            // else you're attaching a new entity to an existing entity that is not modifiable
+          }
+
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] = value
+        }
+        changedProperty.add("facets")
       }
 
     override fun getEntityData(): ModuleTestEntityData = result ?: super.getEntityData() as ModuleTestEntityData

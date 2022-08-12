@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -34,8 +35,8 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
 
   }
 
-  override val root: CompositeAbstractEntity
-    get() = snapshot.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this)!!
+  override val root: CompositeAbstractEntity?
+    get() = snapshot.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -67,16 +68,6 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(ROOT_CONNECTION_ID, this) == null) {
-          error("Field ParentChainEntity#root should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] == null) {
-          error("Field ParentChainEntity#root should be initialized")
-        }
-      }
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field ParentChainEntity#entitySource should be initialized")
       }
@@ -95,15 +86,15 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
     }
 
 
-    override var root: CompositeAbstractEntity
+    override var root: CompositeAbstractEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                      ROOT_CONNECTION_ID)]!! as CompositeAbstractEntity
+                                                                                                      ROOT_CONNECTION_ID)] as? CompositeAbstractEntity
         }
         else {
-          this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)]!! as CompositeAbstractEntity
+          this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] as? CompositeAbstractEntity
         }
       }
       set(value) {

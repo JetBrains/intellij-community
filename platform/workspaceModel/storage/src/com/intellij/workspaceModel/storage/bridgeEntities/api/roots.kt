@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import org.jetbrains.deft.annotations.Child
 
 
 
@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 interface ContentRootEntity : WorkspaceEntity {
     val module: ModuleEntity
 
+    @EqualsBy
     val url: VirtualFileUrl
     val excludedUrls: List<VirtualFileUrl>
     val excludedPatterns: List<String>
