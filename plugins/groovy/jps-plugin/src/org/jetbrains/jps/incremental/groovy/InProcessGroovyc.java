@@ -25,6 +25,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -356,7 +357,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       boolean hasLineSeparator = false;
 
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
         if (overridden != null && Thread.currentThread() != thread) {
           overridden.write(b);
           return;
@@ -376,19 +377,19 @@ final class InProcessGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void flush() throws IOException {
+      public void flush() {
         if (overridden != null && Thread.currentThread() != thread) {
           overridden.flush();
           return;
         }
 
         if (line.size() > 0) {
-          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString("UTF-8")), type);
+          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString(StandardCharsets.UTF_8)), type);
           line = new ByteArrayOutputStream();
           hasLineSeparator = false;
         }
       }
     };
-    return new PrintStream(out, false, "UTF-8");
+    return new PrintStream(out, false, StandardCharsets.UTF_8);
   }
 }
