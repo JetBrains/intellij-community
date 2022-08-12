@@ -67,6 +67,8 @@ interface KotlinSourceSet : KotlinComponent {
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
 
+    val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
+
     companion object {
         const val COMMON_MAIN_SOURCE_SET_NAME = "commonMain"
         const val COMMON_TEST_SOURCE_SET_NAME = "commonTest"

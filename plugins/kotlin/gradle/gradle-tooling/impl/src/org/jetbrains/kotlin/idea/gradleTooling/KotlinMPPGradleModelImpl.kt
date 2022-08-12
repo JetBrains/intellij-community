@@ -16,7 +16,8 @@ class KotlinSourceSetProto(
     private val regularDependencies: () -> Array<KotlinDependencyId>,
     private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
     val dependsOnSourceSets: Set<String>,
-    val additionalVisibleSourceSets: Set<String>
+    val additionalVisibleSourceSets: Set<String>,
+    val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
 ) {
     fun buildKotlinSourceSetImpl(
         doBuildDependencies: Boolean,
@@ -30,7 +31,8 @@ class KotlinSourceSetProto(
         intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
         declaredDependsOnSourceSets = dependsOnSourceSets,
         allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames),
-        additionalVisibleSourceSets = additionalVisibleSourceSets
+        additionalVisibleSourceSets = additionalVisibleSourceSets,
+        androidSourceSetInfo = androidSourceSetInfo
     )
 }
 
@@ -41,6 +43,18 @@ fun KotlinSourceSetProto.allDependsOnSourceSets(sourceSetsByName: Map<String, Ko
             addAll(dependsOnSourceSet.allDependsOnSourceSets(sourceSetsByName))
         }
     }
+}
+
+class KotlinAndroidSourceSetInfoImpl(
+    override val kotlinSourceSetName: String,
+    override val androidSourceSetName: String,
+    override val androidVariantNames: Set<String>
+): KotlinAndroidSourceSetInfo {
+    constructor(info: KotlinAndroidSourceSetInfo) : this(
+        kotlinSourceSetName = info.kotlinSourceSetName,
+        androidSourceSetName = info.androidSourceSetName,
+        androidVariantNames = info.androidVariantNames.toSet()
+    )
 }
 
 class KotlinSourceSetImpl(
@@ -54,8 +68,9 @@ class KotlinSourceSetImpl(
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
+    override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
     actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestComponent: Boolean = false
+    isTestComponent: Boolean = false,
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -71,6 +86,7 @@ class KotlinSourceSetImpl(
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
+        androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
         this.isTestComponent = kotlinSourceSet.isTestComponent
