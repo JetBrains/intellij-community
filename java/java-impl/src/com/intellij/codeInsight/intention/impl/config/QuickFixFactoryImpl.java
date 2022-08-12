@@ -1154,6 +1154,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
   }
 
+  @Override
+  public @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass) {
+    return new MoveAnonymousToInnerFix(anonymousClass);
+  }
+
   private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {
     private final @IntentionName String myMessage;
 

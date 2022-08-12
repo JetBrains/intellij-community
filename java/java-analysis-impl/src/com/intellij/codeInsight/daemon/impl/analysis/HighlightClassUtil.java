@@ -1126,9 +1126,11 @@ public final class HighlightClassUtil {
     if (aClass != null) {
       PsiClass superClass = aClass.getBaseClassType().resolve();
       if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(aClass.getBaseClassReference())
           .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.not.extend.sealed.classes")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertAnonymousToInnerAction(aClass));
+        return info;
       }
     }
     return null;

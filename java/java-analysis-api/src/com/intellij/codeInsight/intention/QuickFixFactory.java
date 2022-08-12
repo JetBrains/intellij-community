@@ -32,7 +32,7 @@ public abstract class QuickFixFactory {
    * {@link QuickFixFactory#createModifierListFix(PsiModifierListOwner, String, boolean, boolean)} for java only fix or
    * {@link JvmElementActionsFactory#createChangeModifierActions(com.intellij.lang.jvm.JvmModifiersOwner, com.intellij.lang.jvm.actions.ChangeModifierRequest)}
    * for jvm languages transparent fix
-   *
+   * <p>
    * Usage of this method might be unsafe in case of fixing java multi variable declaration modifier list
    */
   @NotNull
@@ -609,4 +609,10 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                         @IntentionName String message);
+
+  /**
+   * @param anonymousClass class to convert
+   * @return a fix that converts an anonymous class to an inner class
+   */
+  public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
 }
