@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
@@ -742,9 +741,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         @Override
         public void paint(Graphics g) {
           if (ExperimentalUI.isNewUI() && getSelectedInfo() != info && !isHoveredTab(this)) {
-            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
-            super.paint(g);
-            config.restore();
+            float alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f);
+            GraphicsUtil.paintWithAlpha(g, alpha, () -> super.paint(g));
           } else {
             super.paint(g);
           }
