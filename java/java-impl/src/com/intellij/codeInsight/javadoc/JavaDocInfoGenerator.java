@@ -525,6 +525,9 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement, generatePrologue);
     }
+    else if (myElement instanceof PsiRecordComponent) {
+      generateRecordComponentJavaDoc(buffer, generatePrologue, (PsiRecordComponent)myElement);
+    }
     else if (myElement instanceof PsiVariable) {
       generateVariableJavaDoc(buffer, (PsiVariable)myElement, generatePrologue);
     }
@@ -546,6 +549,24 @@ public class JavaDocInfoGenerator {
     return true;
   }
 
+  private void generateRecordComponentJavaDoc(StringBuilder buffer, boolean generatePrologue, @NotNull PsiRecordComponent recordComponent) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateVariableDefinition(buffer, recordComponent, true);
+
+    PsiRecordHeader recordHeader = ObjectUtils.tryCast(recordComponent.getParent(), PsiRecordHeader.class);
+    if (recordHeader == null) return;
+    PsiRecordComponent[] components = recordHeader.getRecordComponents();
+    int recordIndex = ArrayUtil.indexOf(components, recordComponent);
+    PsiClass recordClass = recordComponent.getContainingClass();
+    if (recordClass == null) return;
+    String recordComponentJavadoc = getRecordComponentJavadocFromParameterTag(recordIndex, recordClass);
+    if (recordComponentJavadoc != null) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      buffer.append(recordComponentJavadoc);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
+  }
+
   private void generatePatternVariableJavaDoc(StringBuilder buffer, boolean generatePrologue, @NotNull PsiPatternVariable variable) {
     if (generatePrologue) generatePrologue(buffer);
     generateVariableDefinition(buffer, variable, true);
@@ -557,6 +578,7 @@ public class JavaDocInfoGenerator {
       buffer.append(DocumentationMarkup.CONTENT_END);
     }
   }
+
 
   @Nullable
   private String getDocForPattern(@NotNull PsiPatternVariable variable) {
@@ -570,9 +592,14 @@ public class JavaDocInfoGenerator {
     PsiType deconstructionType = typeElement.getType();
     PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionType);
     if (recordClass == null) return null;
+    return getRecordComponentJavadocFromParameterTag(index, recordClass);
+  }
+
+  @Nullable
+  private String getRecordComponentJavadocFromParameterTag(int recordComponentIndex, @NotNull PsiClass recordClass) {
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-    if (recordComponents.length <= index) return null;
-    PsiRecordComponent recordComponent = recordComponents[index];
+    if (recordComponents.length <= recordComponentIndex) return null;
+    PsiRecordComponent recordComponent = recordComponents[recordComponentIndex];
     PsiDocComment classComment = recordClass.getDocComment();
     String recordComponentName = recordComponent.getName();
     if (classComment == null || recordComponentName == null) return null;

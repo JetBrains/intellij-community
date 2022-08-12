@@ -101,6 +101,26 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(expected, doc)
   }
 
+  fun testRecordComponent() {
+    configure("""
+      /**
+       * @param foo doc for foo
+       * @param bar doc for bar
+       */
+      public record Rec(int <caret> foo, int bar) {
+      }
+      """.trimIndent())
+
+    val recordComponent = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset),
+                                               PsiRecordComponent::class.java)!!
+    val doc = JavaDocumentationProvider().generateDoc(recordComponent, null)
+
+    val expected =
+      "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Rec\"><code><span style=\"color:#000000;\">Rec</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">foo</span></pre></div><div class='content'>doc for foo  </div>"
+
+    assertEquals(expected, doc)
+  }
+
   fun testGenericMethod() {
     doTestCtrlHoverDoc(
       """\
