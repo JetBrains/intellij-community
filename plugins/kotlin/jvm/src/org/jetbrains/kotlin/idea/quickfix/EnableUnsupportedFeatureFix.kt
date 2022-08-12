@@ -80,6 +80,7 @@ sealed class EnableUnsupportedFeatureFix(
                             feature.sinceApiVersion,
                             forTests
                         )
+                        project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
                     }
                 )
             }
