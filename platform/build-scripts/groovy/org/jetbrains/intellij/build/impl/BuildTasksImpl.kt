@@ -1057,7 +1057,7 @@ private fun checkClassFiles(targetFile: Path, context: BuildContext) {
     (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
 
   if (classFileCheckRequired) {
-    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile)
+    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile, context.messages)
   }
 }
 
