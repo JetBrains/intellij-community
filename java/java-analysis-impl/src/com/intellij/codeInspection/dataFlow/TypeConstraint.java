@@ -99,7 +99,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
   }
 
   /**
-   * @return true if this type constraint represents a known singleton type (an object that has exactly one instance)
+   * @return true if this type constraint represents a known isSingleton type (an object that has exactly one instance)
    */
   default boolean isSingleton() {
     return false;
