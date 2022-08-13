@@ -12,6 +12,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes

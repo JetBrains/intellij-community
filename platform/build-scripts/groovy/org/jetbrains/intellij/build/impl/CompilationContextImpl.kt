@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
@@ -306,7 +307,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
-    dependenciesProperties = DependenciesProperties(paths)
+    dependenciesProperties = DependenciesProperties(paths.communityHomeDir, paths.projectHome.resolve("build/dependencies.properties"))
     bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
     stableJdkHome = JdkDownloader.getJdkHome(paths.communityHomeDir)
     stableJavaExecutable = JdkDownloader.getJavaExecutable(stableJdkHome)
