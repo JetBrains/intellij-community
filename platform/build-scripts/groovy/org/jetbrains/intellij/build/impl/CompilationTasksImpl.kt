@@ -21,6 +21,12 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
   private val jpsCache by lazy { PortableCompilationCache(context) }
 
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    context.messages.block("Compiling modules") {
+      doCompileModules(moduleNames, includingTestsInModules)
+    }
+  }
+
+  private fun doCompileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     reuseCompiledClassesIfProvided()
     val options = context.options
     val messages = context.messages
