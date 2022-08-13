@@ -1257,6 +1257,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testSuspend() throws Exception {
             runTest("testData/quickfix/addNoinline/suspend.kt");
         }
+
+        @TestMetadata("withCrossinline.kt")
+        public void testWithCrossinline() throws Exception {
+            runTest("testData/quickfix/addNoinline/withCrossinline.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -43,6 +43,10 @@ open class AddModifierFix(
                 }
             }
         }
+
+        if (modifier == KtTokens.NOINLINE_KEYWORD) {
+            element?.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+        }
     }
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
