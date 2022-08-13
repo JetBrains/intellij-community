@@ -264,6 +264,9 @@ class CompilationContextImpl private constructor(model: JpsModel,
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       messages.block("Environment info") {
+        // printEnvironmentDebugInfo doesn't use a logger, and prints directly to stdout instead.
+        // Here we log at least something before the main output, so that the block doesn't get omitted as empty.
+        messages.info("Project home: $projectHome")
         printEnvironmentDebugInfo()
       }
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
