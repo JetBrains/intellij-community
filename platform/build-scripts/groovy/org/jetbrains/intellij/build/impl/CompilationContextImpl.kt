@@ -237,18 +237,17 @@ class CompilationContextImpl private constructor(model: JpsModel,
   override val stableJdkHome: Path
 
   companion object {
-    @JvmStatic
-    fun printEnvironmentDebugInfo() {
+    private fun printEnvironmentDebugInfo(messages: BuildMessages) {
       // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
       // don't write it to debug log file!
       val env = System.getenv()
       for (key in env.keys.sorted()) {
-        println("ENV $key = ${env[key]}")
+        messages.info("ENV $key = ${env[key]}")
       }
 
       val properties = System.getProperties()
       for (propertyName in properties.keys.sortedBy { it as String }) {
-        println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
+        messages.info("PROPERTY $propertyName = ${properties[propertyName].toString()}")
       }
     }
 
@@ -264,10 +263,9 @@ class CompilationContextImpl private constructor(model: JpsModel,
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       messages.block("Environment info") {
-        // printEnvironmentDebugInfo doesn't use a logger, and prints directly to stdout instead.
-        // Here we log at least something before the main output, so that the block doesn't get omitted as empty.
+        messages.info("Community home: ${communityHome.communityRoot}")
         messages.info("Project home: $projectHome")
-        printEnvironmentDebugInfo()
+        printEnvironmentDebugInfo(messages)
       }
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
