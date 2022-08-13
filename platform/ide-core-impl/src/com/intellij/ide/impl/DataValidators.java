@@ -69,7 +69,7 @@ public abstract class DataValidators {
         EDT.isCurrentThreadEdt() &&
         SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
       LOG.error(data.getClass().getName() + " is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
-                "Please move that to a BGT data provider using PlatformCoreDataKeys.SLOW_DATA_PROVIDERS");
+                "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER");
     }
     try {
       for (Validator<Object> validator : validators) {

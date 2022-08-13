@@ -47,10 +47,15 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
 
   /**
    * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
-   * and the slow part to be queried on a background thread or under a progress.
+   * and the slow part to be queried on a background thread or under progress.
    * That slow part shall be returned when this data key is requested.
    */
+  public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
+
+  /** @deprecated Use {@link #BGT_DATA_PROVIDER} and {@link CompositeDataProvider} */
+  @Deprecated
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+
   /**
    * Returns single selection item.
    *

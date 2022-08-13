@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,5 +45,10 @@ public final class CompositeDataProvider implements DataProvider {
       }
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Iterable<? extends DataProvider> getDataProviders() {
+    return myProviders;
   }
 }
