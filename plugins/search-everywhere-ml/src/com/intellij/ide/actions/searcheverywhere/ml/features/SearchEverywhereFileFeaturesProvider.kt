@@ -62,7 +62,7 @@ class SearchEverywhereFileFeaturesProvider
     val data = arrayListOf<EventPair<*>>(
       IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
       IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
-      IS_EXACT_MATCH_DATA_KEY.with(elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority))
     )
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
@@ -90,6 +90,14 @@ class SearchEverywhereFileFeaturesProvider
   private fun isBookmark(item: PsiFileSystemItem): Boolean {
     val bookmarkManager = BookmarkManager.getInstance(item.project)
     return ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { bookmarkManager.findFileBookmark(it) } != null }
+  }
+
+  private fun isExactMatch(item: PsiFileSystemItem, searchQuery: String, elementPriority: Int): Boolean {
+    if (elementPriority < GotoFileItemProvider.EXACT_MATCH_DEGREE) return false
+    if (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE) return true
+    if (searchQuery.indexOfLast {c -> c == '/' || c == '\\' } <= 0) return false
+
+    return item.virtualFile.path.endsWith(searchQuery)
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {
