@@ -68,7 +68,6 @@ import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
-import java.util.List;
 
 /**
  * Image editor UI
@@ -613,8 +612,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
       return editor != null ? editor : this;
     }
-    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return List.<DataProvider>of(slowId -> getSlowData(slowId));
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId);
     }
     return null;
   }

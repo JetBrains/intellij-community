@@ -384,7 +384,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     else if (TODO_PANEL_DATA_KEY.is(dataId)) {
       return this;
     }
-    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -393,7 +393,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      return List.of((DataProvider)realDataId -> getSlowData(realDataId, (NodeDescriptor)userObject));
+      return (DataProvider)slowId -> getSlowData(slowId, (NodeDescriptor)userObject);
     }
     return super.getData(dataId);
   }

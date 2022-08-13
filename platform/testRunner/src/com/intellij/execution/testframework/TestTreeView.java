@@ -31,7 +31,6 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
@@ -111,9 +110,9 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return testProxy;
     }
 
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       TestFrameworkRunningModel model = myModel;
-      return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, model));
+      return (DataProvider)slowId -> getSlowData(slowId, testProxy, model);
     }
     if (RunConfiguration.DATA_KEY.is(dataId)) {
       RunProfile configuration = myModel.getProperties().getConfiguration();

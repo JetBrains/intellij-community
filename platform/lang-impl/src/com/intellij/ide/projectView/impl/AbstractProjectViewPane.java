@@ -84,7 +84,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SLOW_DATA_PROVIDERS;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -400,7 +400,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     Object[] selectedUserObjects = getSelectedUserObjects();
 
-    if (SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (BGT_DATA_PROVIDER.is(dataId)) {
       return slowProviders(selectedUserObjects);
     }
 
@@ -473,23 +473,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  private @Nullable Iterable<DataProvider> slowProviders(@Nullable Object @NotNull [] selectedUserObjects) {
-    //noinspection unchecked
-    Iterable<DataProvider> structureProviders = (Iterable<DataProvider>)getFromTreeStructure(
-      selectedUserObjects, SLOW_DATA_PROVIDERS.getName());
+  private @Nullable DataProvider slowProviders(@Nullable Object @NotNull [] selectedUserObjects) {
+    DataProvider structureProvider = (DataProvider)getFromTreeStructure(selectedUserObjects, BGT_DATA_PROVIDER.getName());
     DataProvider selectionProvider = selectionProvider(selectedUserObjects);
-    if (structureProviders != null && selectionProvider != null) {
-      return ContainerUtil.nullize(ContainerUtil.flattenIterables(List.of(structureProviders, List.of(selectionProvider))));
-    }
-    else if (structureProviders != null) {
-      return structureProviders;
-    }
-    else if (selectionProvider != null) {
-      return List.of(selectionProvider);
-    }
-    else {
-      return null;
-    }
+    return structureProvider != null ? CompositeDataProvider.compose(structureProvider, selectionProvider) : selectionProvider;
   }
 
   @RequiresEdt

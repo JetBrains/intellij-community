@@ -62,11 +62,11 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<Object> selection = Arrays.stream(getSelectedRows())
         .mapToObj(o -> getValueAt(o, 0))
         .collect(Collectors.toList());
-      return List.<DataProvider>of(slowId -> getSlowData(slowId, selection));
+      return (DataProvider)slowId -> getSlowData(slowId, selection);
     }
     return null;
   }

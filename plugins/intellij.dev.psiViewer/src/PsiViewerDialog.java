@@ -679,8 +679,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(realDataId -> getSlowData(realDataId));
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId);
     }
     return null;
   }

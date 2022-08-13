@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
@@ -175,8 +174,8 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-        return List.of((DataProvider)this::getSlowData);
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)this::getSlowData;
       }
       return null;
     }

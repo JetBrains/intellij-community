@@ -820,9 +820,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       JBIterable<?> finalSelection = selection.get();
-      return Collections.<DataProvider>singletonList(o -> getSlowData(o, myProject, finalSelection));
+      return (DataProvider)slowId -> getSlowData(slowId, myProject, finalSelection);
     }
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;

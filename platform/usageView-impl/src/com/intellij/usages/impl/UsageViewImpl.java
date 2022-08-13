@@ -2023,12 +2023,10 @@ public class UsageViewImpl implements UsageViewEx {
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
-        if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
           List<TreeNode> selectedNodes = allSelectedNodes();
-          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
-          slowProviders = ObjectUtils.notNull(slowProviders, Collections.emptyList());
-          slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedNodes)), slowProviders);
-          return slowProviders;
+          DataProvider selectedBgtProvider = selectedProvider == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedProvider);
+          return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedNodes), selectedBgtProvider);
         }
         if (selectedProvider != null) {
           return selectedProvider.getData(dataId);
