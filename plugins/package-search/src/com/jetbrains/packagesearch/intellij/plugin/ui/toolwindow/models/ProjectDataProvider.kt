@@ -16,7 +16,6 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
-import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -26,12 +25,13 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal class ProjectDataProvider(
-    private val apiClient: PackageSearchApiClient,
+    private val apiClient: PackageSearchProvider,
     private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
 ) {
 
