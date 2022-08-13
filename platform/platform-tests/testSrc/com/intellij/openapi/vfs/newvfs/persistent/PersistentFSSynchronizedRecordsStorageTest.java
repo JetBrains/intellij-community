@@ -4,13 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.createFile;
 
 /**
- * FIXME type something meaningful here
  */
 public class PersistentFSSynchronizedRecordsStorageTest
   extends PersistentFSRecordsStorageTestBase<PersistentFSSynchronizedRecordsStorage> {
@@ -23,13 +22,19 @@ public class PersistentFSSynchronizedRecordsStorageTest
   }
 
   @Override
-  protected @NotNull PersistentFSSynchronizedRecordsStorage openStorage(final File storageFile,
-                                                                        final int maxRecordsToInsert) throws IOException {
+  protected @NotNull PersistentFSSynchronizedRecordsStorage openStorage(final Path storagePath) throws IOException {
     final ResizeableMappedFile resizeableMappedFile = createFile(
-      storageFile.toPath(),
+      storagePath,
       PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
     );
-    return new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
-    //FSRecords.connect();
+    final PersistentFSSynchronizedRecordsStorage storage = new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+    //FIXME legacy implementation doesn't allocate space for header explicitly -- instead header is just 0-th record, and some
+    //      code secretly calls .allocateRecord() on a fresh storage to reserve space for a header.
+    //      Here I emulate this behavior, until it will be fixed in a regular way (i.e. storage will reserve space for
+    //      header explicitly)
+    if(storage.length() < PersistentFSHeaders.HEADER_SIZE) {
+      storage.allocateRecord();
+    }
+    return storage;
   }
 }

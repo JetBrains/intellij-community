@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -9,12 +10,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -26,16 +30,17 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  protected File storageFile;
+  protected Path storagePath;
   protected T storage;
 
   protected PersistentFSRecordsStorageTestBase(final int maxRecordsToInsert) { this.maxRecordsToInsert = maxRecordsToInsert; }
 
   @Before
   public void setUp() throws Exception {
-    storageFile = temporaryFolder.newFile();
+    storagePath = temporaryFolder.newFile().toPath();
 
-    storage = openStorage(storageFile, maxRecordsToInsert);
+    storage = openStorage(storagePath);
+    //System.out.println("File: " + storagePath);
   }
 
   @NotNull
@@ -43,34 +48,48 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                                    final int maxRecordsToInsert) throws IOException;
 
   @Test
-  public void singleWrittenRecordFieldCouldBeReadBackUnchanged() throws Exception {
+  public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
     final int recordId = storage.allocateRecord();
-    final FSRecord recordOriginal = PersistentFSRecordsStorageTestBase.generateRecordFields(recordId);
+    final FSRecord recordOriginal = generateRecordFields(recordId);
 
     recordOriginal.updateInStorage(storage);
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
 
-    assertEquals("Fields inserted and fields read back by same ID should be equal",
+    assertEquals("Record updated and record read back by same ID should be equal",
                  recordOriginal,
-                 recordReadBack);
+                 recordReadBack
+    );
   }
 
   @Test
-  public void manyRecordsWrittenCouldBeReadBackUnchanged() throws Exception {
+  public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
     for (int i = 0; i < records.length; i++) {
       final int recordId = storage.allocateRecord();
-      records[i] = PersistentFSRecordsStorageTestBase.generateRecordFields(recordId);
+      records[i] = generateRecordFields(recordId);
       records[i].updateInStorage(storage);
     }
 
+    final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
     for (int i = 0; i < records.length; i++) {
       final FSRecord recordOriginal = records[i];
       final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
-      assertEquals("[" + i + "]: fields inserted and fields read back by same ID should be equal",
-                   recordOriginal,
-                   recordReadBack);
+      //assertEquals("[" + i + "]: fields inserted and fields read back by same ID should be equal",
+      //             recordOriginal,
+      //             recordReadBack);
+      if (!recordOriginal.equals(recordReadBack)) {
+        incorrectlyReadBackRecords.put(recordOriginal, recordReadBack);
+      }
+    }
+    if (!incorrectlyReadBackRecords.isEmpty()) {
+      fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
+           " different: \n" +
+           incorrectlyReadBackRecords.entrySet().stream()
+             .sorted(Comparator.comparing(e -> e.getKey().id))
+             .map(e -> e.getKey() + "\n" + e.getValue())
+             .collect(Collectors.joining("\n"))
+      );
     }
   }
 
@@ -80,7 +99,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     for (int i = 0; i < records.length; i++) {
       final int recordId = storage.allocateRecord();
-      records[i] = PersistentFSRecordsStorageTestBase.generateRecordFields(recordId);
+      records[i] = generateRecordFields(recordId);
     }
 
     final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
@@ -124,7 +143,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     for (int i = 0; i < records.length; i++) {
       final int recordId = storage.allocateRecord();
-      records[i] = PersistentFSRecordsStorageTestBase.generateRecordFields(recordId);
+      records[i] = generateRecordFields(recordId);
     }
 
     final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
@@ -162,29 +181,58 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     }
   }
 
+  /* =================== PERSISTENCE: values are kept through close-and-reopen =============================== */
+
   @Test
-  public void writtenRecordCouldBeReadBackUnchangedAfterStorageCloseAndReopen() throws Exception {
-    final Path file = storageFile.toPath();
-
-    final PersistentFSRecordsStorage storage = PersistentFSRecordsStorage.createStorage(file);
-    storage.allocateRecord();
-    final int recordId = storage.allocateRecord();
-    storage.setParent(recordId, 10);
-    storage.setNameId(recordId, 110);
+  public void emptyStorageRemainsEmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
+    final int version = 10;
+    final int connectionStatus = PersistentFSHeaders.CONNECTED_MAGIC;
     final int globalModCount = storage.incGlobalModCount();
-    storage.close();
 
-    final PersistentFSRecordsStorage storageReopened = PersistentFSRecordsStorage.createStorage(file);
-    assertEquals(globalModCount, storageReopened.getGlobalModCount());
-    assertEquals(110, storageReopened.getNameId(recordId));
-    assertEquals(10, storageReopened.getParent(recordId));
-    //assertEquals(1, storageReopened.length());
+    storage.setVersion(version);
+    storage.setConnectionStatus(connectionStatus);
+    assertTrue("Storage must be 'dirty' after few header fields were written",
+               storage.isDirty());
+
+    final long lengthBeforeClose = storage.length();
+    assertEquals("No records were allocated => (storage size == HEADER_SIZE)",
+                 PersistentFSHeaders.HEADER_SIZE,
+                 lengthBeforeClose
+    );
+
+    //close storage, and reopen from same file again:
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+
+    //now re-read values from re-opened storage:
+    assertFalse("Storage must be !dirty since no modifications since open", storageReopened.isDirty());
+    assertEquals("globalModCount", globalModCount, storageReopened.getGlobalModCount());
+    assertEquals("version", version, storageReopened.getVersion());
+    assertEquals("connectionStatus", connectionStatus, storageReopened.getConnectionStatus());
+    assertEquals("length", lengthBeforeClose, storageReopened.length());
+  }
+
+  @Test
+  public void singleWrittenRecord_CouldBeReadBackUnchanged_AfterStorageClosedAndReopened() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordWritten = generateRecordFields(recordId);
+    recordWritten.updateInStorage(storage);
+
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordId);
+    assertEquals("Record written should be read back as-is",
+                 recordWritten,
+                 recordReadBack
+    );
   }
 
   @After
   public void tearDown() throws Exception {
     storage.close();
-    //storageFile.delete();
   }
 
 
@@ -246,8 +294,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       storage.setAttributeRecordId(id, this.attributeRef);
       storage.setContentRecordId(id, this.contentRef);
       storage.putTimestamp(id, this.timestamp);
-      storage.setModCount(id, this.modCount);
       storage.putLength(id, this.length);
+      storage.setModCount(id, this.modCount);
     }
 
     public FSRecord insertInStorage(final PersistentFSRecordsStorage storage) throws IOException {
@@ -258,8 +306,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       storage.setAttributeRecordId(id, this.attributeRef);
       storage.setContentRecordId(id, this.contentRef);
       storage.putTimestamp(id, this.timestamp);
-      storage.setModCount(id, this.modCount);
       storage.putLength(id, this.length);
+      storage.setModCount(id, this.modCount);
       return assignId(id);
     }
 
@@ -319,16 +367,19 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @NotNull
   private static FSRecord generateRecordFields(final int recordId) {
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return new FSRecord(
       recordId,
-      ThreadLocalRandom.current().nextInt(),
-      ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE),//nameId should be >0
-      ThreadLocalRandom.current().nextInt(),
-      ThreadLocalRandom.current().nextInt(),
-      ThreadLocalRandom.current().nextInt(),
+      rnd.nextInt(),
+      rnd.nextInt(1, Integer.MAX_VALUE),//nameId should be >0
+      rnd.nextInt(),
+      rnd.nextInt(),
+      rnd.nextInt(),
+      //rnd.nextBoolean() ? System.currentTimeMillis() : Long.MAX_VALUE,
       System.currentTimeMillis(),
-      ThreadLocalRandom.current().nextInt(),
-      Long.MAX_VALUE //check extreme long values
+      rnd.nextInt(),
+      Long.MAX_VALUE
+      //rnd.nextBoolean() ? rnd.nextLong(0, Long.MAX_VALUE) : Long.MAX_VALUE //check extreme long values
     );
   }
 }

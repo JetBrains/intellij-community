@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
@@ -19,8 +21,8 @@ public class PersistentInMemoryFSRecordsStorageTest
   public PersistentInMemoryFSRecordsStorageTest() { super(MAX_RECORDS_TO_INSERT); }
 
   @NotNull
-  protected PersistentInMemoryFSRecordsStorage openStorage(final File storageFile,
-                                                           final int maxRecordsToInsert) {
-    return new PersistentInMemoryFSRecordsStorage(storageFile.toPath(), maxRecordsToInsert);
+  @Override
+  protected PersistentInMemoryFSRecordsStorage openStorage(final Path storagePath) throws IOException {
+    return new PersistentInMemoryFSRecordsStorage(storagePath, maxRecordsToInsert);
   }
 }
