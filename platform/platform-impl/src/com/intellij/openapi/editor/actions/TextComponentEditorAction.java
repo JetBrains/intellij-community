@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +48,9 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   private static @Nullable Editor getEditorFromContext(@NotNull DataContext dataContext, boolean allowSpeedSearch) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    // always get host editor for update in EDT
+    Editor editor = (EDT.isCurrentThreadEdt() && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
+                     CommonDataKeys.HOST_EDITOR : CommonDataKeys.EDITOR).getData(dataContext);
     if (editor != null) return editor;
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Object data = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
