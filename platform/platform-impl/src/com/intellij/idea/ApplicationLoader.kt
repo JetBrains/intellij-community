@@ -5,7 +5,6 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.*
@@ -68,7 +67,7 @@ fun initApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob:
 }
 
 suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job): Unit = coroutineScope {
-  val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
+  val initAppActivity = initAppActivity!!
   val app = initAppActivity.runChild("app instantiation") {
     val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
     ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())

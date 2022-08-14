@@ -90,7 +90,8 @@ private const val IDE_SHUTDOWN = "----------------------------------------------
 internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
 
 @JvmField
-internal var startupStart: Activity? = null
+internal var initAppActivity: Activity? = null
+
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 
 // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
@@ -109,7 +110,7 @@ fun start(isHeadless: Boolean,
           args: Array<String>,
           startupTimings: LinkedHashMap<String, Long>) {
   StartUpMeasurer.addTimings(startupTimings, "bootstrap")
-  startupStart = StartUpMeasurer.startActivity("app initialization preparation")
+  val startupStart = StartUpMeasurer.startActivity("app initialization preparation")
 
   // required if the unified class loader is not used
   if (setFlagsAgain) {
@@ -181,13 +182,13 @@ fun start(isHeadless: Boolean,
       initUi(busyThread = busyThread, isHeadless = isHeadless)
     }
     if (!isHeadless) {
-      launch {
-        initUiJob.await()
+      launch(Dispatchers.Default) {
+        initUiJob.join()
         launch(Dispatchers.Default) {
           updateFrameClassAndWindowIcon()
         }
         launch(Dispatchers.IO) {
-          loadSystemFontsAndDnDCursors()
+          loadSystemFonts()
         }
       }
     }
@@ -215,10 +216,18 @@ fun start(isHeadless: Boolean,
         initUiJob.join()
 
         // before showEuaIfNeededJob to prepare during showing EUA dialog
-        val runnable = prepareSplash(args) ?: return@launch
-        showEuaIfNeededJob.join()
-        withContext(SwingDispatcher) {
-          runnable.run()
+        val runnable = prepareSplash(args)
+        if (runnable != null) {
+          showEuaIfNeededJob.join()
+          withContext(SwingDispatcher) {
+            runnable.run()
+          }
+        }
+
+        // preload cursors used by drag-n-drop AWT subsystem
+        // run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+        launchAndMeasure("DnD setup", SwingDispatcher) {
+          DragSource.getDefaultDragSource()
         }
       }
     }
@@ -248,7 +257,7 @@ fun start(isHeadless: Boolean,
       setBaseLaF(showEuaIfNeededJob, initUiJob)
     }
     if (!isHeadless) {
-      launch {
+      launch(asyncDispatcher) {
         setBaseLafJob.join()
         patchHtmlStyle()
       }
@@ -332,6 +341,7 @@ fun start(isHeadless: Boolean,
       }
     }
 
+    initAppActivity = startupStart.endAndStart("app initialization")
     appStarter.start(argsAsList, setBaseLafJob, telemetryInitJob)
 
     awaitCancellation()
@@ -354,6 +364,10 @@ private fun CoroutineScope.patchHtmlStyle() {
     val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
     uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
     uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+
+    runActivity("global styleSheet updating") {
+      GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+    }
   }
   launch(SwingDispatcher) {
     WeakFocusStackManager.getInstance()
@@ -596,21 +610,12 @@ private fun blockATKWrapper() {
   activity.end()
 }
 
-private suspend fun loadSystemFontsAndDnDCursors() {
-  var activity = StartUpMeasurer.startActivity("system fonts loading")
-  // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
-  Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-  // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
-  GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
-
-  activity.end();
-
-  // run on SwingDispatcher to avoid a possible deadlock see RIDER-80810
-  withContext(SwingDispatcher) {
-    // preload cursors used by drag-n-drop AWT subsystem
-    activity = StartUpMeasurer.startActivity("DnD setup")
-    DragSource.getDefaultDragSource()
-    activity.end()
+private fun loadSystemFonts() {
+  runActivity("system fonts loading") {
+    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
   }
 }
 
