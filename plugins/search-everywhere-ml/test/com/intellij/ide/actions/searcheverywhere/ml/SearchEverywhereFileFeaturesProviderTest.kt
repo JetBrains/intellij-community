@@ -196,20 +196,20 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(true)
   }
 
-  fun `test exact match is true when query is absolute path`() {
+  fun `test exact match is false when only slash is first character of query`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
       .ofElement(testFile)
       .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
-      .withQuery(testFile.virtualFile.presentableUrl)
-      .isEqualTo(true)
+      .withQuery("/${testFile.virtualFile.name}")
+      .isEqualTo(false)
   }
 
-  fun `test exact match is false when last slash is first character of query`() {
+  fun `test exact match is true when query starts with slash`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
       .ofElement(testFile)
       .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
-      .withQuery("/testFile.txt")
-      .isEqualTo(false)
+      .withQuery("/${testFile.virtualFile.parent.name}/${testFile.virtualFile.name}")
+      .isEqualTo(true)
   }
 
   fun `test exact match is true when last slash is not first character of query`() {
@@ -217,6 +217,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .ofElement(testFile)
       .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("${testFile.virtualFile.parent.name.last()}/${testFile.virtualFile.name}")
+      .isEqualTo(true)
+  }
+
+  fun `test exact match is true when using backslash`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withQuery("${testFile.virtualFile.parent.name.last()}\\${testFile.virtualFile.name}")
       .isEqualTo(true)
   }
 

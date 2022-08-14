@@ -94,10 +94,19 @@ class SearchEverywhereFileFeaturesProvider
 
   private fun isExactMatch(item: PsiFileSystemItem, searchQuery: String, elementPriority: Int): Boolean {
     if (elementPriority < GotoFileItemProvider.EXACT_MATCH_DEGREE) return false
-    if (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE) return true
-    if (searchQuery.indexOfLast {c -> c == '/' || c == '\\' } <= 0) return false
+    if (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE) return true  // Absolute path
 
-    return item.virtualFile.path.endsWith(searchQuery)
+    val filePath = item.virtualFile.path
+    val fileName = item.virtualFile.name
+
+    return searchQuery.asSequence()
+      .map { if (it == '\\') '/' else it }
+      .filterIndexed { index, c ->
+        // check if query starts with slash and contains just the filename (i.e. "/file.ext")
+        if ((index == 0 && c == '/') && (searchQuery.length - 1) == fileName.length) return@filterIndexed true
+
+        filePath[filePath.length - searchQuery.length + index] != c
+      }.none()
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {
