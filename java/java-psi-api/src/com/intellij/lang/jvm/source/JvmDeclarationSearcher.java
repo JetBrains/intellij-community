@@ -19,7 +19,7 @@ public interface JvmDeclarationSearcher {
   @NotNull
   Collection<JvmElement> findDeclarations(@NotNull PsiElement declaringElement);
   
-  default @Nullable PsiElement adjustIdentifierElement(PsiElement identifierElement) {
+  default @Nullable PsiElement adjustIdentifierElement(@NotNull PsiElement identifierElement) {
     return null;
   }
 }
