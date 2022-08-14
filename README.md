@@ -47,8 +47,8 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
    to enable the "Compile independent modules in parallel" option. Also, increase build process heap size:
-   * if you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
-   * if you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
+   * If you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
+   * If you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
     
     These changes will greatly reduce compilation time.
 
