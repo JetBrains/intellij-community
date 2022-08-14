@@ -19,6 +19,7 @@ import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
+import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.SocketLock.ActivationStatus
@@ -30,6 +31,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
@@ -46,6 +48,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.Java11Shim
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -90,7 +93,7 @@ private const val IDE_SHUTDOWN = "----------------------------------------------
 internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
 
 @JvmField
-internal var initAppActivity: Activity? = null
+internal var appInitPreparationActivity: Activity? = null
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 
@@ -137,9 +140,9 @@ fun start(isHeadless: Boolean,
     var activity = StartUpMeasurer.startActivity("main class loading scheduling")
     // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
     val appStarterFuture = async(asyncDispatcher) {
-      val subActivity = StartUpMeasurer.startActivity("main class loading")
-      val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
-      subActivity.end()
+      val aClass = startupStart.runChild("main class loading") {
+        AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+      }
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
 
@@ -182,9 +185,9 @@ fun start(isHeadless: Boolean,
       initUi(busyThread = busyThread, isHeadless = isHeadless)
     }
     if (!isHeadless) {
-      launch(Dispatchers.Default) {
+      launch(asyncDispatcher) {
         initUiJob.join()
-        launch(Dispatchers.Default) {
+        launch(asyncDispatcher) {
           updateFrameClassAndWindowIcon()
         }
         launch(Dispatchers.IO) {
@@ -224,8 +227,7 @@ fun start(isHeadless: Boolean,
           }
         }
 
-        // preload cursors used by drag-n-drop AWT subsystem
-        // run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+        // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
         launchAndMeasure("DnD setup", SwingDispatcher) {
           DragSource.getDefaultDragSource()
         }
@@ -233,7 +235,8 @@ fun start(isHeadless: Boolean,
     }
 
     activity = activity.endAndStart("system dirs checking")
-    if (!checkSystemDirs(configPath, systemPath)) { // this must happen after locking system dirs
+    if (!checkSystemDirs(configPath, systemPath)) {
+      // must happen after locking system dirs
       exitProcess(Main.DIR_CHECK_FAILED)
     }
 
@@ -254,12 +257,21 @@ fun start(isHeadless: Boolean,
     }
 
     val setBaseLafJob = launch(asyncDispatcher) {
-      setBaseLaF(showEuaIfNeededJob, initUiJob)
+      showEuaIfNeededJob.join()
+      val baseLaF = initUiJob.await() as LookAndFeel
+      runActivity("base laf passing") {
+        DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+      }
     }
     if (!isHeadless) {
       launch(asyncDispatcher) {
         setBaseLafJob.join()
-        patchHtmlStyle()
+        launchAndMeasure("html style patching", SwingDispatcher) {
+          patchHtmlStyle()
+        }
+        launch(SwingDispatcher) {
+          WeakFocusStackManager.getInstance()
+        }
       }
     }
 
@@ -317,22 +329,19 @@ fun start(isHeadless: Boolean,
       runPreAppClass(log, args)
     }
 
-    val mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting")
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     val argsAsList = java.util.List.of(*args)
-    val appStarter = appStarterFuture.await()
-    mainClassLoadingWaitingActivity.end()
 
     // we must wait for UI before creating application - EDT thread is required
-    val baseLaf = runActivity("prepare ui waiting") {
-      initUiJob.await() as LookAndFeel
+    val baseLaf = startupStart.runChild("prepare ui waiting") {
+      initUiJob.await()
     }
 
     if (!isHeadless && configImportNeeded) {
       val imported = importConfig(
         args = argsAsList,
         log = log,
-        appStarter = appStarter,
+        appStarter = appStarterFuture.await(),
         agreementShown = showEuaIfNeededJob,
         baseLaf = baseLaf,
       )
@@ -341,36 +350,39 @@ fun start(isHeadless: Boolean,
       }
     }
 
-    initAppActivity = startupStart.endAndStart("app initialization")
-    appStarter.start(argsAsList, setBaseLafJob, telemetryInitJob)
+    val appDeferred = async(asyncDispatcher) {
+      val app = startupStart.runChild("app instantiation") {
+        val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+        ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+      }
+
+      startupStart.runChild("telemetry waiting") {
+        telemetryInitJob.join()
+      }
+
+      app to setBaseLafJob
+    }
+
+    appInitPreparationActivity = startupStart
+
+    startupStart.runChild("main class loading waiting") {
+      appStarterFuture.await()
+    }.start(argsAsList, appDeferred)
 
     awaitCancellation()
   }
 }
 
-private suspend fun setBaseLaF(showEuaIfNeededJob: Deferred<Boolean>, initUiJob: Deferred<Any>) {
-  showEuaIfNeededJob.join()
-  val baseLaF = initUiJob.await() as LookAndFeel
-  runActivity("base laf passing") {
-    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
-  }
-}
+private fun patchHtmlStyle() {
+  // patch html styles
+  val uiDefaults = UIManager.getDefaults()
+  // create a separate copy for each case
+  val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+  uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+  uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
-private fun CoroutineScope.patchHtmlStyle() {
-  launchAndMeasure("html style patching", SwingDispatcher) {
-    // patch html styles
-    val uiDefaults = UIManager.getDefaults()
-    // create a separate copy for each case
-    val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-    uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-    uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
-
-    runActivity("global styleSheet updating") {
-      GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
-    }
-  }
-  launch(SwingDispatcher) {
-    WeakFocusStackManager.getInstance()
+  runActivity("global styleSheet updating") {
+    GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
   }
 }
 
@@ -525,28 +537,41 @@ private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
   // only non-logging tasks can be executed before `setupLogger`
   val activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)")
 
-  checkHiDPISettings()
-  blockATKWrapper()
+  coroutineScope {
+    launch {
+      checkHiDPISettings()
+      blockATKWrapper()
 
-  @Suppress("SpellCheckingInspection")
-  System.setProperty("sun.awt.noerasebackground", "true")
-  activityQueue.startChild("awt toolkit creating").let { activity ->
-    Toolkit.getDefaultToolkit()
-    activity.end()
+      @Suppress("SpellCheckingInspection")
+      System.setProperty("sun.awt.noerasebackground", "true")
+
+      activityQueue.startChild("awt toolkit creating").let { activity ->
+        Toolkit.getDefaultToolkit()
+        activity.end()
+      }
+    }
+
+    // IdeaLaF uses AllIcons - icon manager must be activated
+    launchAndMeasure("icon manager activation") {
+      if (!isHeadless) {
+        IconManager.activate(CoreIconManager())
+      }
+    }
+
+    launchAndMeasure("LaF class preloading") {
+      // preload class not in EDT
+      val classLoader = AppStarter::class.java.classLoader
+      Class.forName(DarculaLaf::class.java.name, true, classLoader)
+      Class.forName(IdeaLaf::class.java.name, true, classLoader)
+      Class.forName(JBUIScale::class.java.name, true, classLoader)
+    }
   }
-  activityQueue.updateThreadName()
 
   // SwingDispatcher must be used after Toolkit init
   val baseLaF = withContext(SwingDispatcher) {
     activityQueue.end()
-    var activity: Activity? = null
     // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-    if (!isHeadless) {
-      // IdeaLaF uses AllIcons - icon manager must be activated
-      activity = StartUpMeasurer.startActivity("icon manager activation")
-      IconManager.activate(CoreIconManager())
-    }
-    activity = activity?.endAndStart("base LaF creation") ?: StartUpMeasurer.startActivity("base LaF creation")
+    var activity = StartUpMeasurer.startActivity("base LaF creation")
     val baseLaF = DarculaLaf.createBaseLaF()
     activity = activity.endAndStart("base LaF initialization")
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
@@ -997,7 +1022,7 @@ fun canonicalPath(path: String): Path {
 
 interface AppStarter {
   /* called from IDE init thread */
-  suspend fun start(args: List<String>, setBaseLafJob: Job, telemetryInitJob: Job)
+  suspend fun start(args: List<String>, appDeferred: Deferred<Any>)
 
   /* called from IDE init thread */
   fun beforeImportConfigs() {}

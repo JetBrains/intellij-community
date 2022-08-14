@@ -2,8 +2,8 @@
 package com.intellij.idea
 
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 
 internal class MainImpl : AppStarter {
@@ -11,9 +11,9 @@ internal class MainImpl : AppStarter {
     PlatformUtils.setDefaultPrefixForCE()
   }
 
-  override suspend fun start(args: List<String>, setBaseLafJob: Job, telemetryInitJob: Job) {
+  override suspend fun start(args: List<String>, appDeferred: Deferred<Any>) {
     withContext(Dispatchers.Default) {
-      doInitApplication(args, setBaseLafJob, telemetryInitJob)
+      doInitApplication(args, appDeferred)
     }
   }
 }

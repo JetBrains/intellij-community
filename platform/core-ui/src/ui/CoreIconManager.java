@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 public final class CoreIconManager implements IconManager, CoreAwareIconManager {
   private static final List<IconLayer> iconLayers = new CopyOnWriteArrayList<>();
   private static final int FLAGS_LOCKED = 0x800;
-  private static final Logger LOG = Logger.getInstance(CoreIconManager.class);
 
   @Override
   public @NotNull Icon getStubIcon() {
@@ -242,7 +241,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       }
     });
     if (result.get() == null && Registry.is("ide.icon.tooltips.trace.missing", false)) {
-      LOG.info("Icon tooltip requested but not found for " + path);
+      Logger.getInstance(CoreIconManager.class).info("Icon tooltip requested but not found for " + path);
     }
     return result.get();
   }

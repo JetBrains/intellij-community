@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceRes
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -35,7 +34,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
@@ -55,9 +53,9 @@ import kotlin.system.exitProcess
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job) {
+fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   val job = Main.mainScope.launch(Dispatchers.Default) {
-    doInitApplication(rawArgs, setBaseLafJob, telemetryInitJob)
+    doInitApplication(rawArgs, appDeferred)
   }
 
   // block the thread
@@ -66,18 +64,15 @@ fun initApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob:
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job): Unit = coroutineScope {
-  val initAppActivity = initAppActivity!!
-  val app = initAppActivity.runChild("app instantiation") {
-    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-  }
+suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>): Unit = coroutineScope {
+  val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  initAppActivity.runChild("telemetry waiting") {
-    telemetryInitJob.join()
+  val (app, setBaseLaFJob) = initAppActivity.runChild("app waiting") {
+    @Suppress("UNCHECKED_CAST")
+    appDeferred.await() as Pair<ApplicationImpl, Job>
   }
 
   initAppActivity.runChild("app component registration") {
@@ -96,18 +91,10 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemet
     createAppStarterAsync(args)
   }
 
-  launch {
-    // ensure that base laf is set before initialization of LafManagerImpl
-    runActivity("base laf waiting") {
-      setBaseLafJob.join()
-    }
-
-    withContext(SwingDispatcher) {
-      runActivity("laf initialization") {
-        // don't wait for result - we just need to trigger initialization if not yet created
-        app.getServiceAsync(LafManager::class.java)
-      }
-    }
+  launchAndMeasure("laf initialization", SwingDispatcher) {
+    setBaseLaFJob.join()
+    // don't wait for result - we just need to trigger initialization if not yet created
+    app.getServiceAsync(LafManager::class.java)
   }
 
   val appInitializedListeners = coroutineScope {
@@ -146,28 +133,28 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemet
   }
 
   val starter = deferredStarter.await()
-  if (starter.requiredModality != ApplicationStarter.NOT_IN_EDT) {
-    ApplicationManager.getApplication().invokeLater {
+  if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
+    asyncScope.launch {
+      if (starter is ModernApplicationStarter) {
+        starter.start(args)
+      }
+      else {
+        // todo https://youtrack.jetbrains.com/issue/IDEA-298594
+        CompletableFuture.runAsync {
+          starter.main(args)
+        }
+      }
+      // no need to use pool once started
+      ZipFilePool.POOL = null
+    }
+  }
+  else {
+    asyncScope.launch(Dispatchers.EDT) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
         starter.main(args)
       }
+      ZipFilePool.POOL = null
     }
-    ZipFilePool.POOL = null
-    return@coroutineScope
-  }
-
-  asyncScope.launch {
-    if (starter is ModernApplicationStarter) {
-      starter.start(args)
-    }
-    else {
-      // todo https://youtrack.jetbrains.com/issue/IDEA-298594
-      CompletableFuture.runAsync {
-        starter.main(args)
-      }
-    }
-    // no need to use pool once started
-    ZipFilePool.POOL = null
   }
 }
 
