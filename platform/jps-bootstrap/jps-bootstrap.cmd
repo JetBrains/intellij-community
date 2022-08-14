@@ -55,7 +55,7 @@ cd /d "%JVM_TARGET_DIR%"
 if errorlevel 1 goto fail
 
 echo Extracting %TARGET_DIR%%JVM_TEMP_FILE% to %JVM_TARGET_DIR%
-tar -x -f "..\%JVM_TEMP_FILE%" -C .
+"%POWERSHELL%" -nologo -noprofile -command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; (Get-Location) -split '\\' | ForEach { $dir='' } { $dir=Get-Item \"$dir$_\\\" -Force -ErrorAction SilentlyContinue; if ($dir.Attributes -band [System.IO.FileAttributes]::ReparsePoint) { $dir=\"$($dir.Target)\\\" } } { Set-Location $dir }; & tar -x -f \"..\%JVM_TEMP_FILE%\" -C .; if ($LastExitCode -ne 0) { throw \"Exec: tar exited with code $LastExitCode\" }"
 if errorlevel 1 goto fail
 
 del /F "..\%JVM_TEMP_FILE%"
