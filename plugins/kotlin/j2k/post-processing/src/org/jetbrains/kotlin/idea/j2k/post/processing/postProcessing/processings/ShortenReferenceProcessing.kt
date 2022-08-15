@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.FileBasedPos
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
-class ShortenReferenceProcessing : FileBasedPostProcessing() {
+internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
     private val filter = filter@{ element: PsiElement ->
         when (element) {
             is KtQualifiedExpression -> when {

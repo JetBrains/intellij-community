@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
-val fixValToVarDiagnosticBasedProcessing =
+internal val fixValToVarDiagnosticBasedProcessing =
     diagnosticBasedProcessing(
         Errors.VAL_REASSIGNMENT, Errors.CAPTURED_VAL_INITIALIZATION, Errors.CAPTURED_MEMBER_VAL_INITIALIZATION
     ) { element: KtSimpleNameExpression, _ ->
@@ -32,7 +32,7 @@ val fixValToVarDiagnosticBasedProcessing =
         }
     }
 
-val fixTypeMismatchDiagnosticBasedProcessing =
+internal val fixTypeMismatchDiagnosticBasedProcessing =
     diagnosticBasedProcessing(Errors.TYPE_MISMATCH) { element: PsiElement, diagnostic ->
         @Suppress("UNCHECKED_CAST")
         val diagnosticWithParameters =
@@ -64,7 +64,7 @@ val fixTypeMismatchDiagnosticBasedProcessing =
         }
     }
 
-val removeUselessCastDiagnosticBasedProcessing =
+internal val removeUselessCastDiagnosticBasedProcessing =
     diagnosticBasedProcessing<KtBinaryExpressionWithTypeRHS>(Errors.USELESS_CAST) { element, _ ->
         if (element.left.isNullExpression()) return@diagnosticBasedProcessing
         val expression = RemoveUselessCastFix.invoke(element)
@@ -79,7 +79,7 @@ val removeUselessCastDiagnosticBasedProcessing =
         }
     }
 
-val removeUnnecessaryNotNullAssertionDiagnosticBasedProcessing =
+internal val removeUnnecessaryNotNullAssertionDiagnosticBasedProcessing =
     diagnosticBasedProcessing<KtSimpleNameExpression>(Errors.UNNECESSARY_NOT_NULL_ASSERTION) { element, _ ->
         val exclExclExpr = element.parent as KtUnaryExpression
         val baseExpression = exclExclExpr.baseExpression ?: return@diagnosticBasedProcessing

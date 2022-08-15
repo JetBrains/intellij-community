@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 
-fun KtExpression.unpackedReferenceToProperty(): KtProperty? =
+internal fun KtExpression.unpackedReferenceToProperty(): KtProperty? =
     when (this) {
         is KtDotQualifiedExpression -> selectorExpression as? KtNameReferenceExpression
         is KtNameReferenceExpression -> this
@@ -28,13 +28,13 @@ fun KtExpression.unpackedReferenceToProperty(): KtProperty? =
         ?.resolve() as? KtProperty
 
 
-fun KtDeclaration.type() =
+internal fun KtDeclaration.type() =
     (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
 
-fun KtReferenceExpression.resolve() =
+internal fun KtReferenceExpression.resolve() =
     mainReference.resolve()
 
-fun KtPsiFactory.createGetter(body: KtExpression?, modifiers: String?): KtPropertyAccessor {
+internal fun KtPsiFactory.createGetter(body: KtExpression?, modifiers: String?): KtPropertyAccessor {
     val property =
         createProperty(
             "val x\n ${modifiers.orEmpty()} get" +
@@ -52,7 +52,7 @@ fun KtPsiFactory.createGetter(body: KtExpression?, modifiers: String?): KtProper
     return getter
 }
 
-fun KtPsiFactory.createSetter(body: KtExpression?, fieldName: String?, modifiers: String?): KtPropertyAccessor {
+internal fun KtPsiFactory.createSetter(body: KtExpression?, fieldName: String?, modifiers: String?): KtPropertyAccessor {
     val modifiersText = modifiers.orEmpty()
     val property = when (body) {
         null -> createProperty("var x = 1\n  get() = 1\n $modifiersText set")
@@ -67,18 +67,18 @@ fun KtPsiFactory.createSetter(body: KtExpression?, fieldName: String?, modifiers
 }
 
 
-fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
+internal fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
     ReferencesSearch.search(this, LocalSearchScope(inElement)).any { reference ->
         outsideElements.none { it.isAncestor(reference.element) }
     }
 
-inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
+internal inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
     flatMap { it.collectDescendantsOfType() }
 
-fun PsiElement.isInRange(outerRange: TextRange) =
+internal fun PsiElement.isInRange(outerRange: TextRange) =
     outerRange.contains(textRange)
 
-fun runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> Unit) {
+internal fun runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> Unit) {
     ApplicationManager.getApplication().invokeAndWait {
         CommandProcessor.getInstance().runUndoTransparentAction {
             if (inWriteAction) {

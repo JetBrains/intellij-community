@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.JKInMemoryFilesSearcher
 
-class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
+internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
     override val options: PostProcessingOptions =
         PostProcessingOptions(
             disablePostprocessingFormatting = false // without it comment saver will make the file invalid :(

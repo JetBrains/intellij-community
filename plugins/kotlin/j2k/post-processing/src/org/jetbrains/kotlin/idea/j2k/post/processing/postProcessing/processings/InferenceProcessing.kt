@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.psi.KtElement
 
-abstract class InferenceProcessing : ElementsBasedPostProcessing() {
+internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         val kotlinElements = elements.filterIsInstance<KtElement>()
         if (kotlinElements.isEmpty()) return
@@ -35,7 +35,7 @@ abstract class InferenceProcessing : ElementsBasedPostProcessing() {
     ): InferenceFacade
 }
 
-class NullabilityInferenceProcessing : InferenceProcessing() {
+internal class NullabilityInferenceProcessing : InferenceProcessing() {
     override fun createInferenceFacade(
         resolutionFacade: ResolutionFacade,
         converterContext: NewJ2kConverterContext
@@ -57,7 +57,7 @@ class NullabilityInferenceProcessing : InferenceProcessing() {
     )
 }
 
-class MutabilityInferenceProcessing : InferenceProcessing() {
+internal class MutabilityInferenceProcessing : InferenceProcessing() {
     override fun createInferenceFacade(
         resolutionFacade: ResolutionFacade,
         converterContext: NewJ2kConverterContext

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.utils.mapToIndex
 import java.util.*
 
 
-class InspectionLikeProcessingGroup(
+internal class InspectionLikeProcessingGroup(
     private val runSingleTime: Boolean = false,
     private val acceptNonKtElements: Boolean = false,
     private val processings: List<InspectionLikeProcessing>
@@ -108,7 +108,7 @@ class InspectionLikeProcessingGroup(
     }
 }
 
-abstract class InspectionLikeProcessing {
+internal abstract class InspectionLikeProcessing {
     abstract fun isApplicableToElement(element: PsiElement, settings: ConverterSettings?): Boolean
     abstract fun applyToElement(element: PsiElement)
 
@@ -120,7 +120,7 @@ abstract class InspectionLikeProcessing {
     val processingOptions: PostProcessingOptions = PostProcessingOptions.DEFAULT
 }
 
-abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val classTag: Class<E>) : InspectionLikeProcessing() {
+internal abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val classTag: Class<E>) : InspectionLikeProcessing() {
     protected abstract fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean
     protected abstract fun apply(element: E)
 
@@ -140,7 +140,7 @@ abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val cl
 }
 
 
-inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>> intentionBasedProcessing(
+internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>> intentionBasedProcessing(
     intention: I,
     writeActionNeeded: Boolean = true,
     noinline additionalChecker: (E) -> Boolean = { true }
@@ -157,7 +157,7 @@ inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>> intentio
 }
 
 
-inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
+internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
     inspection: I,
     writeActionNeeded: Boolean = true
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {

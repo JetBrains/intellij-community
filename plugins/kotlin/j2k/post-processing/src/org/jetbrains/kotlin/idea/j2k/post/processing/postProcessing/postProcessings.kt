@@ -12,14 +12,14 @@ import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 
 
-interface GeneralPostProcessing {
+internal interface GeneralPostProcessing {
     val options: PostProcessingOptions
         get() = PostProcessingOptions.DEFAULT
 
     fun runProcessing(target: JKPostProcessingTarget, converterContext: NewJ2kConverterContext)
 }
 
-data class PostProcessingOptions(
+internal data class PostProcessingOptions(
     val disablePostprocessingFormatting: Boolean = true
 ) {
     companion object {
@@ -28,7 +28,7 @@ data class PostProcessingOptions(
 }
 
 
-abstract class FileBasedPostProcessing : GeneralPostProcessing {
+internal abstract class FileBasedPostProcessing : GeneralPostProcessing {
     final override fun runProcessing(target: JKPostProcessingTarget, converterContext: NewJ2kConverterContext) = when (target) {
         is JKPieceOfCodePostProcessingTarget ->
             runProcessing(target.file, listOf(target.file), target.rangeMarker, converterContext)
@@ -41,7 +41,7 @@ abstract class FileBasedPostProcessing : GeneralPostProcessing {
     abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext)
 }
 
-abstract class ElementsBasedPostProcessing : GeneralPostProcessing {
+internal abstract class ElementsBasedPostProcessing : GeneralPostProcessing {
     final override fun runProcessing(target: JKPostProcessingTarget, converterContext: NewJ2kConverterContext) {
         runProcessing(target.elements(), converterContext)
     }
@@ -49,7 +49,7 @@ abstract class ElementsBasedPostProcessing : GeneralPostProcessing {
     abstract fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext)
 }
 
-data class NamedPostProcessingGroup(
+internal data class NamedPostProcessingGroup(
     val description: String,
     val processings: List<GeneralPostProcessing>
 )

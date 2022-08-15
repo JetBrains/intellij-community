@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 
 
-class FormatCodeProcessing : FileBasedPostProcessing() {
+internal class FormatCodeProcessing : FileBasedPostProcessing() {
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         val codeStyleManager = CodeStyleManager.getInstance(file.project)
         runUndoTransparentActionInEdt(inWriteAction = true) {
@@ -37,7 +37,7 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
 }
 
 
-class ClearUnknownLabelsProcessing : GeneralPostProcessing {
+internal class ClearUnknownLabelsProcessing : GeneralPostProcessing {
     override fun runProcessing(target: JKPostProcessingTarget, converterContext: NewJ2kConverterContext) {
         val comments = mutableListOf<PsiComment>()
         runUndoTransparentActionInEdt(inWriteAction = true) {
@@ -60,7 +60,7 @@ class ClearUnknownLabelsProcessing : GeneralPostProcessing {
 }
 
 
-class OptimizeImportsProcessing : FileBasedPostProcessing() {
+internal class OptimizeImportsProcessing : FileBasedPostProcessing() {
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         val elements = runReadAction {
             when {

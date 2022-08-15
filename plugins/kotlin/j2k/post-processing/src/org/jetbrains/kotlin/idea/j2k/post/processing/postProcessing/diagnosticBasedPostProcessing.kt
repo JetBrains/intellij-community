@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
-class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: List<DiagnosticBasedProcessing>) : FileBasedPostProcessing() {
+internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: List<DiagnosticBasedProcessing>) : FileBasedPostProcessing() {
     constructor(vararg diagnosticBasedProcessings: DiagnosticBasedProcessing) : this(diagnosticBasedProcessings.toList())
 
     private val diagnosticToFix =
@@ -61,12 +61,12 @@ class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: List<Diagno
     }
 }
 
-interface DiagnosticBasedProcessing {
+internal interface DiagnosticBasedProcessing {
     val diagnosticFactories: List<DiagnosticFactory<*>>
     fun fix(diagnostic: Diagnostic)
 }
 
-inline fun <reified T : PsiElement> diagnosticBasedProcessing(
+internal inline fun <reified T : PsiElement> diagnosticBasedProcessing(
     vararg diagnosticFactory: DiagnosticFactory<*>,
     crossinline fix: (T, Diagnostic) -> Unit
 ) =
@@ -80,7 +80,7 @@ inline fun <reified T : PsiElement> diagnosticBasedProcessing(
         }
     }
 
-fun diagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagnosticFactory: DiagnosticFactory<*>) =
+internal fun diagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagnosticFactory: DiagnosticFactory<*>) =
     object : DiagnosticBasedProcessing {
         override val diagnosticFactories = diagnosticFactory.toList()
         override fun fix(diagnostic: Diagnostic) {
