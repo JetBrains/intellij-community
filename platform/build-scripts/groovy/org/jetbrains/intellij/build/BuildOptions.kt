@@ -268,6 +268,12 @@ class BuildOptions {
   var skipDependencySetup = false
 
   /**
+   * If 'true' print system properties and environment variables to stdout.
+   * Mostly useful for build scripts debugging.
+   */
+  var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
+
+  /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
