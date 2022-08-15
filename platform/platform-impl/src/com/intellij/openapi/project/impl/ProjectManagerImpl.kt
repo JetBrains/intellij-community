@@ -117,7 +117,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       command += customProperties.values
-      command += System.getProperty("idea.main.class.name", com.intellij.idea.Main::class.java.canonicalName)
+      command += System.getProperty("idea.main.class.name", "com.intellij.idea.Main")
       command += projectStoreBaseDir.toString()
       return command
     }

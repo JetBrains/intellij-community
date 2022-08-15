@@ -5,7 +5,7 @@ package com.intellij.serviceContainer
 import com.intellij.diagnostic.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.idea.Main
+import com.intellij.idea.AppMode.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
@@ -59,6 +59,11 @@ abstract class ComponentManagerImpl(
   }
 
   companion object {
+    @JvmField
+    @Volatile
+    @ApiStatus.Internal
+    var mainScope: CoroutineScope? = null
+
     @ApiStatus.Internal
     @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
@@ -137,7 +142,7 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> Main.mainScope?.childScope(Dispatchers.Default) ?: CoroutineScope(SupervisorJob())
+    parent == null -> mainScope?.childScope(Dispatchers.Default) ?: CoroutineScope(SupervisorJob())
     parent.parent == null -> parent.coroutineScope!!.childScope()
     else -> null
   }
@@ -1091,7 +1096,7 @@ abstract class ComponentManagerImpl(
         val scope: CoroutineScope = when (service.preload) {
           PreloadMode.TRUE -> if (onlyIfAwait) null else asyncScope
           PreloadMode.NOT_HEADLESS -> if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) null else asyncScope
-          PreloadMode.NOT_LIGHT_EDIT -> if (onlyIfAwait || Main.isLightEdit()) null else asyncScope
+          PreloadMode.NOT_LIGHT_EDIT -> if (onlyIfAwait || isLightEdit()) null else asyncScope
           PreloadMode.AWAIT -> syncScope
           PreloadMode.FALSE -> null
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")

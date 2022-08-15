@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -94,9 +95,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     fun isFileSystemPath(path: String): Boolean {
       return path.indexOf('/') != -1 || path.indexOf('\\') != -1
     }
-
-    @JvmField
-    var dontReopenProjects = false
   }
 
   private val modCounter = AtomicLong()
@@ -422,7 +420,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject || dontReopenProjects) {
+    if (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects()) {
       return false
     }
 

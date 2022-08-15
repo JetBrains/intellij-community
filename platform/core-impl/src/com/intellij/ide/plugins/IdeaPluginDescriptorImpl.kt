@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -294,7 +295,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       isEnabled = false
     }
 
-    if (disableNonBundledPlugins) {
+    if (AppMode.isDisableNonBundledPlugins()) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },

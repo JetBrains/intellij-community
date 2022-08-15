@@ -55,7 +55,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
   }
 
   private val commandProcessorRef: AtomicReference<Function<List<String>, Future<CliResult>>> = AtomicReference(Function {
-    CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
+    CliResult.error(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
   })
 
   private val lockedFiles = ArrayList<AutoCloseable>(4)
@@ -343,11 +343,11 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
               while (tokenizer.hasMoreTokens()) {
                 list.add(tokenizer.nextToken())
               }
-              CliResult.unmap(commandProcessorRef.get().apply(list), Main.ACTIVATE_ERROR)
+              CliResult.unmap(commandProcessorRef.get().apply(list), AppExitCodes.ACTIVATE_ERROR)
             }
             else {
               log(UnsupportedOperationException("unauthorized request: $command"))
-              CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"))
+              CliResult(AppExitCodes.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"))
             }
 
             val exitCode = result.exitCode.toString()

@@ -8,7 +8,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.Main
+import com.intellij.idea.AppMode
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.getAppInitializedListeners
 import com.intellij.idea.initConfigurationStore
@@ -91,7 +91,7 @@ fun loadApp() {
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
-  Main.setHeadlessInTestMode(isHeadless)
+  AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
   PluginManagerCore.scheduleDescriptorLoading(GlobalScope)

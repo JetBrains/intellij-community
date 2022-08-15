@@ -16,6 +16,7 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.win32.IdeaWin32
 import com.intellij.openapi.wm.WeakFocusStackManager
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.CoreIconManager
 import com.intellij.ui.IconManager
@@ -90,7 +92,7 @@ internal const val IDE_STARTED = "----------------------------------------------
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
 
 @JvmField
-internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
+internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> AppExitCodes.ACTIVATE_NOT_INITIALIZED }
 
 @JvmField
 internal var appInitPreparationActivity: Activity? = null
@@ -107,19 +109,8 @@ private var socketLock: SocketLock? = null
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-/** Called via reflection from [Main.bootstrap].  */
-fun start(isHeadless: Boolean,
-          setFlagsAgain: Boolean,
-          args: Array<String>,
-          startupTimings: LinkedHashMap<String, Long>) {
-  StartUpMeasurer.addTimings(startupTimings, "bootstrap")
+fun start(args: Array<String>) {
   val startupStart = StartUpMeasurer.startActivity("app initialization preparation")
-
-  // required if the unified class loader is not used
-  if (setFlagsAgain) {
-    Main.setFlags(args)
-  }
-  CommandLineArgs.parse(args)
 
   LoadingState.setStrictMode()
   LoadingState.errorHandler = BiConsumer { message, throwable ->
@@ -129,6 +120,8 @@ fun start(isHeadless: Boolean,
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
   runBlocking {
+    val isHeadless = AppMode.isHeadless()
+
     val exceptionHandler = StartupAbortedExceptionHandler()
     val asyncDispatcher = Dispatchers.Default + exceptionHandler
     launch(asyncDispatcher) {
@@ -157,7 +150,7 @@ fun start(isHeadless: Boolean,
     val euaDocumentFuture = if (isHeadless) null else async(Dispatchers.IO) { loadEuaDocument(appInfoDeferred) }
 
     // This must happen before LaF loading
-    if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
+    if (args.isNotEmpty() && (AppMode.CWM_HOST_COMMAND == args[0] || AppMode.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
       activity = activity.endAndStart("cwm host init")
       val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
       MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
@@ -166,7 +159,7 @@ fun start(isHeadless: Boolean,
     activity = activity.endAndStart("graphics environment checking")
 
     if (!isHeadless && !checkGraphics()) {
-      exitProcess(Main.NO_GRAPHICS)
+      exitProcess(AppExitCodes.NO_GRAPHICS)
     }
 
     activity = activity.endAndStart("config path computing")
@@ -196,8 +189,6 @@ fun start(isHeadless: Boolean,
       }
     }
 
-    Main.mainScope = this@runBlocking
-
     activity = activity.endAndStart("console logger configuration")
     configureJavaUtilLogging()
 
@@ -211,7 +202,7 @@ fun start(isHeadless: Boolean,
       }
     }
 
-    if (!isHeadless && !Main.isLightEdit()) {
+    if (!isHeadless && !AppMode.isLightEdit()) {
       launch(asyncDispatcher) {
         // A splash instance must not be created before base LaF is created.
         // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
@@ -237,7 +228,7 @@ fun start(isHeadless: Boolean,
     activity = activity.endAndStart("system dirs checking")
     if (!checkSystemDirs(configPath, systemPath)) {
       // must happen after locking system dirs
-      exitProcess(Main.DIR_CHECK_FAILED)
+      exitProcess(AppExitCodes.DIR_CHECK_FAILED)
     }
 
     activity = activity.endAndStart("file logger configuration")
@@ -255,6 +246,8 @@ fun start(isHeadless: Boolean,
         result
       })
     }
+
+    ComponentManagerImpl.mainScope = this@runBlocking
 
     val setBaseLafJob = launch(asyncDispatcher) {
       showEuaIfNeededJob.join()
@@ -353,7 +346,7 @@ fun start(isHeadless: Boolean,
     val appDeferred = async(asyncDispatcher) {
       val app = startupStart.runChild("app instantiation") {
         val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-        ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+        ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), EDT.getEventDispatchThread())
       }
 
       startupStart.runChild("telemetry waiting") {
@@ -430,13 +423,13 @@ private fun prepareSplash(args: Array<String>): Runnable? {
 }
 
 private fun checkGraphics(): Boolean {
-  return if (GraphicsEnvironment.isHeadless()) {
-    Main.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                     BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-    false
+  if (GraphicsEnvironment.isHeadless()) {
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                                     BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+    return false
   }
   else {
-    true
+    return true
   }
 }
 
@@ -714,8 +707,8 @@ fun checkHiDPISettings() {
 private suspend fun checkSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
     withContext(SwingDispatcher) {
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
-                       BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
+                                       BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
                                                PathManager.PROPERTY_CONFIG_PATH,
                                                PathManager.PROPERTY_SYSTEM_PATH), true)
     }
@@ -817,7 +810,7 @@ private fun checkDirectory(directory: Path,
     val message = BootstrapBundle.message(
       "bootstrap.error.message.invalid.ide.directory.problem.0.possible.reason.1.advice.2.location.3.exception.class.4.exception.message.5",
       BootstrapBundle.message(problem), BootstrapBundle.message(reason), advice, directory, e.javaClass.name, e.message)
-    Main.showMessage(title, message, true)
+    StartupErrorReporter.showMessage(title, message, true)
     return false
   }
   finally {
@@ -859,8 +852,8 @@ private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean, configPath: Path
     ActivationStatus.CANNOT_ACTIVATE -> {
       val message = BootstrapBundle.message("bootstrap.error.message.only.one.instance.of.0.can.be.run.at.a.time",
                                             ApplicationNamesInfo.getInstance().productName)
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true)
-      exitProcess(Main.INSTANCE_CHECK_FAILED)
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true)
+      exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
     }
   }
   return importNeeded
@@ -982,11 +975,11 @@ fun runStartupWizard() {
     (ctor.newInstance(null) as CommonCustomizeIDEWizardDialog).showIfNeeded()
   }
   catch (e: Throwable) {
-    Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
     return
   }
   PluginManagerCore.invalidatePlugins()
-  PluginManagerCore.scheduleDescriptorLoading(Main.mainScope!!)
+  PluginManagerCore.scheduleDescriptorLoading(ComponentManagerImpl.mainScope!!)
 }
 
 // the method must be called on EDT

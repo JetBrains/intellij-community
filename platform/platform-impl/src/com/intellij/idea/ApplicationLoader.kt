@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -54,7 +55,7 @@ import kotlin.system.exitProcess
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  val job = Main.mainScope.launch(Dispatchers.Default) {
+  val job = ComponentManagerImpl.mainScope!!.launch(Dispatchers.Default) {
     doInitApplication(rawArgs, appDeferred)
   }
 
@@ -171,7 +172,7 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     createAppLocatorFile()
   }
 
-  if (!Main.isLightEdit()) {
+  if (!AppMode.isLightEdit()) {
     // this functionality should be used only by plugin functionality that is used after start-up
     launchAndMeasure("system properties setting") {
       SystemPropertyBean.initSystemProperties()
@@ -231,7 +232,7 @@ private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<A
   }
 
   val starter = findStarter(first) ?: createDefaultAppStarter()
-  if (Main.isHeadless() && !starter.isHeadless) {
+  if (AppMode.isHeadless() && !starter.isHeadless) {
     @Suppress("DEPRECATION") val commandName = starter.commandName
     val message = IdeBundle.message(
       "application.cannot.start.in.a.headless.mode",
@@ -245,8 +246,8 @@ private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<A
       if (args.isEmpty()) 0 else 1,
       args.joinToString(" ")
     )
-    Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
-    exitProcess(Main.NO_GRAPHICS)
+    StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+    exitProcess(AppExitCodes.NO_GRAPHICS)
   }
 
   // must be executed before container creation
@@ -285,13 +286,13 @@ private fun addActivateAndWindowsCliListeners() {
       return@BiFunction 0
     }
     val result = runBlocking { handleExternalCommand(args.asList(), currentDirectory) }
-    CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
+    CliResult.unmap(result.future, AppExitCodes.ACTIVATE_ERROR).exitCode
   }
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      EXTERNAL_LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+      addExternalInstanceListener { CliResult.error(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
 }

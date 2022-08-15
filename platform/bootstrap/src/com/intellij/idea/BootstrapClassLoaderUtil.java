@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.idea;
 
-import com.intellij.idea.Main;
+import com.intellij.ide.BootstrapBundle;
+import com.intellij.ide.BytecodeTransformer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.lang.PathClassLoader;
@@ -20,14 +21,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class BootstrapClassLoaderUtil {
-  private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
-  private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
-  private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
   private static final @NonNls String MARKETPLACE_PLUGIN_DIR = "marketplace";
   private static final String MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar";
 
@@ -45,14 +42,27 @@ public final class BootstrapClassLoaderUtil {
       return loadClassPathFromDevBuildServer(distDir);
     }
     else {
-      return computeClassPath(distDir.resolve("lib"));
+      Path libDir = distDir.resolve("lib");
+      Collection<Path> classpath = new LinkedHashSet<>();
+
+      parseClassPathString(System.getProperty("java.class.path"), classpath);
+
+      Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
+      String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+      assert selfRootPath != null;
+      Path selfRoot = Path.of(selfRootPath);
+      classpath.add(selfRoot);
+      addLibraries(classpath, libDir, selfRoot);
+      addLibraries(classpath, libDir.resolve("ant/lib"), null);
+      return classpath;
     }
   }
 
-  public static @NotNull PathClassLoader initClassLoader(boolean addCwmLibs) throws Throwable {
+  public static void initClassLoader(boolean addCwmLibs) throws Throwable {
     Path distDir = Path.of(PathManager.getHomePath());
+    ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
+
     if (isDevServer()) {
-      ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
       if (!(classLoader instanceof PathClassLoader)) {
         //noinspection UseOfSystemOutOrSystemErr
         System.err.println("Please run with VM option -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
@@ -62,7 +72,7 @@ public final class BootstrapClassLoaderUtil {
       List<Path> paths = loadClassPathFromDevBuildServer(distDir);
       PathClassLoader result = (PathClassLoader)classLoader;
       result.getClassPath().appendFiles(paths);
-      return result;
+      return;
     }
 
     // Non-unified classloader:
@@ -72,11 +82,8 @@ public final class BootstrapClassLoaderUtil {
     // - classpath is generated during build,
     // - classpath is used as is.
     // TODO remove non-unified classloader
-    boolean useUnifiedClassloader = Boolean.parseBoolean(System.getProperty("idea.use.unified.classloader", "true"));
-    boolean strict = useUnifiedClassloader && Boolean.getBoolean("idea.strict.classpath");
-    ClassLoader currentClassLoader = BootstrapClassLoaderUtil.class.getClassLoader();
 
-    Collection<Path> classpath = strict ? new LinkedHashSet<>() : computeClassPath(distDir.resolve("lib"));
+    Collection<Path> classpath = new LinkedHashSet<>();
 
     Path preinstalledPluginDir = distDir.resolve("plugins");
     Path pluginDir = preinstalledPluginDir;
@@ -125,53 +132,37 @@ public final class BootstrapClassLoaderUtil {
       updateSystemClassLoader = true;
     }
 
-    PathClassLoader newClassLoader;
-    if (useUnifiedClassloader && currentClassLoader instanceof PathClassLoader) {
-      newClassLoader = (PathClassLoader)currentClassLoader;
-      if (!classpath.isEmpty()) {
-        newClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
-      }
+    if (!(classLoader instanceof PathClassLoader)) {
+      throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
     }
-    else {
-      if (useUnifiedClassloader) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
-      }
-      newClassLoader = new PathClassLoader(createNonUnifiedClassloaderBuilder(classpath));
+
+    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
+    if (!classpath.isEmpty()) {
+      pathClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
     }
 
     if (installMarketplace) {
       try {
         PathClassLoader spiLoader = new PathClassLoader(UrlClassLoader.build()
                                                           .files(Collections.singletonList(mpBoot))
-                                                          .parent(currentClassLoader));
+                                                          .parent(classLoader));
         Iterator<BytecodeTransformer> transformers = ServiceLoader.load(BytecodeTransformer.class, spiLoader).iterator();
         if (transformers.hasNext()) {
-          newClassLoader.setTransformer(new BytecodeTransformerAdapter(transformers.next()));
+          pathClassLoader.setTransformer(new BytecodeTransformerAdapter(transformers.next()));
         }
       }
       catch (Throwable e) {
         // at this point logging is not initialized yet, so reporting the error directly
         String path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).toString();
         String message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at " + path;
-        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"), new Exception(message, e));
+        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"), new Exception(message, e));
       }
     }
 
     if (updateSystemClassLoader) {
       Class<ClassLoader> aClass = ClassLoader.class;
-      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
+      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(pathClassLoader);
     }
-    return newClassLoader;
-  }
-
-  private static @NotNull UrlClassLoader.Builder createNonUnifiedClassloaderBuilder(@NotNull Collection<Path> classpath) {
-    return UrlClassLoader.build()
-      .files(filterClassPath(classpath))
-      .usePersistentClasspathIndexForLocalClassDirectories()
-      .parent(ClassLoader.getPlatformClassLoader())
-      .useCache()
-      .allowBootstrapResources(Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true")));
   }
 
   private static @NotNull Path findMarketplaceBootDir(Path pluginDir) {
@@ -247,23 +238,6 @@ public final class BootstrapClassLoaderUtil {
     return true;
   }
 
-  private static @NotNull Collection<Path> computeClassPath(@NotNull Path libDir) throws IOException {
-    Collection<Path> classpath = new LinkedHashSet<>();
-
-    parseClassPathString(System.getProperty("java.class.path"), classpath);
-
-    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
-    String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-    assert selfRootPath != null;
-    Path selfRoot = Path.of(selfRootPath);
-    classpath.add(selfRoot);
-    addLibraries(classpath, libDir, selfRoot);
-    addLibraries(classpath, libDir.resolve("ant/lib"), null);
-
-    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
-    return classpath;
-  }
-
   private static void addLibraries(Collection<Path> classPath, Path fromDir, @Nullable Path selfRoot) throws IOException {
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(fromDir)) {
       for (Path file : dirStream) {
@@ -291,21 +265,6 @@ public final class BootstrapClassLoaderUtil {
     while (tokenizer.hasMoreTokens()) {
       classpath.add(Path.of(tokenizer.nextToken()));
     }
-  }
-
-  private static @NotNull List<Path> filterClassPath(@NotNull Collection<Path> classpath) {
-    String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
-    if (ignoreProperty != null) {
-      Pattern pattern = Pattern.compile(ignoreProperty);
-      for (Iterator<Path> i = classpath.iterator(); i.hasNext(); ) {
-        String url = i.next().toString();
-        if (pattern.matcher(url).matches()) {
-          i.remove();
-        }
-      }
-    }
-    // must be mutable (see UrlClassLoader.addFiles)
-    return new ArrayList<>(classpath);
   }
 
   private static final class SimpleVersion implements Comparable<SimpleVersion>{

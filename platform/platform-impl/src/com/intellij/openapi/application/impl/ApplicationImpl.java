@@ -11,10 +11,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.ApplicationLoader;
-import com.intellij.idea.IdeaLogger;
-import com.intellij.idea.Main;
-import com.intellij.idea.StartupUtil;
+import com.intellij.idea.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -258,7 +255,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final boolean isLightEditMode() {
-    return Main.isLightEdit();
+    return AppMode.isLightEdit();
   }
 
   @Override
@@ -675,8 +672,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
-          Main.showMessage(BootstrapBundle.message("restart.failed.title"), t);
-          exitCode = Main.RESTART_FAILED;
+          StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
+          exitCode = AppExitCodes.RESTART_FAILED;
         }
       }
       System.exit(exitCode);
