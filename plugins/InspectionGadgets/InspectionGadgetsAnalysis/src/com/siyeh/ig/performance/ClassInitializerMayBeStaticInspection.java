@@ -51,7 +51,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
       }
       final PsiClass containingClass =
         ClassUtils.getContainingClass(initializer);
-      if (containingClass == null) {
+      if (containingClass == null || containingClass instanceof PsiAnonymousClass) {
         return;
       }
       for (Condition<PsiElement> addin : InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensionList()) {

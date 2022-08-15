@@ -11,6 +11,10 @@ public class ClassInitializerMayBeStaticInspectionTest extends LightJavaInspecti
     doTest();
   }
 
+  public void testAnonymousClass() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
