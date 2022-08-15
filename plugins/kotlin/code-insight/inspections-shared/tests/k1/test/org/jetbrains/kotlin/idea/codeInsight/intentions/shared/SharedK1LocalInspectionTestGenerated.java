@@ -205,4 +205,52 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/removeRedundantBackticks/yield.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/sortModifiers")
+    public static class SortModifiers extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotatedBefore.kt")
+        public void testAnnotatedBefore() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore.kt");
+        }
+
+        @TestMetadata("annotatedBefore2.kt")
+        public void testAnnotatedBefore2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore2.kt");
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation.kt");
+        }
+
+        @TestMetadata("annotation2.kt")
+        public void testAnnotation2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation2.kt");
+        }
+
+        @TestMetadata("annotationGroup.kt")
+        public void testAnnotationGroup() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationGroup.kt");
+        }
+
+        @TestMetadata("annotationOverrideFinal.kt")
+        public void testAnnotationOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
+        }
+
+        @TestMetadata("overrideFinal.kt")
+        public void testOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/simple.kt");
+        }
+    }
 }
