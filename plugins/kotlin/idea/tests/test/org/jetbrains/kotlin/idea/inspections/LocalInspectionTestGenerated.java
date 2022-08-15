@@ -15414,6 +15414,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/noArguments.kt");
         }
 
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/recursive.kt");
+        }
+
         @TestMetadata("redundantClassTwoMarkers.kt")
         public void testRedundantClassTwoMarkers() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkers.kt");
