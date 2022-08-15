@@ -232,10 +232,17 @@ final class ActionUpdater {
       }
       if (myCurEDTPerformMillis > 200) {
         Throwable throwable = new Throwable(elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX);
-        for (Throwable trace : Objects.requireNonNullElse(edtTracesRef.get(), FList.<Throwable>emptyList())) {
-          throwable.addSuppressed(trace);
+        FList<Throwable> edtTraces = edtTracesRef.get();
+        // do not report pauses without EDT traces (e.g. due to debugging)
+        if (edtTraces != null && edtTraces.size() > 0) {
+          for (Throwable trace : edtTraces) {
+            throwable.addSuppressed(trace);
+          }
+          LOG.error(throwable);
         }
-        LOG.error(throwable);
+        else {
+          LOG.warn(throwable);
+        }
       }
       myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
     }
