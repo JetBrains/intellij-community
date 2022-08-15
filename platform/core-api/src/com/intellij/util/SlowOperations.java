@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
@@ -73,7 +74,12 @@ public final class SlowOperations {
       return;
     }
     if (isInsideActivity(FAST_TRACK)) {
-      throw new ProcessCanceledException();
+      if (Cancellation.isInNonCancelableSection()) {
+        LOG.error("Non-cancellable section in FAST_TRACK");
+      }
+      else {
+        throw new ProcessCanceledException();
+      }
     }
     boolean forceAssert = isInsideActivity(FORCE_ASSERT);
     if (!forceAssert && isAlwaysAllowed()) {
