@@ -61,7 +61,9 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   @Override
   public void paint(final Graphics g, final JComponent jcomponent) {
     if (!isUnderPopup(jcomponent) || isRoundBorder()) {
-      super.paint(g, jcomponent);
+      Rectangle bounds = popupMenu.getBounds();
+      g.setColor(popupMenu.getBackground());
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       return;
     }
 
