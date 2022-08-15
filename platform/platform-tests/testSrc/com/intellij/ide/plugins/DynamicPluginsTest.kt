@@ -145,16 +145,24 @@ class DynamicPluginsTest {
   fun testSaveSettingsOnPluginUnload() {
     val data = System.currentTimeMillis().toString()
 
-    val extensionTag = "<applicationService serviceImplementation=\"${MyPersistentComponent::class.java.name}\"/>"
-    val disposable = loadExtensionWithText(extensionTag)
-    val service = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
-    service.myState.stateData = data
-    Disposer.dispose(disposable)
+    val extensionTag = """<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
+      |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()
 
-    val disposable2 = loadExtensionWithText(extensionTag)
-    val service2 = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
-    assertThat(service2.myState.stateData).isEqualTo(data)
-    Disposer.dispose(disposable2)
+    loadExtensionWithText(extensionTag).use {
+      val service = ApplicationManager.getApplication()
+        .getService(MyPersistentComponent::class.java)
+      assertThat(service).isInstanceOf(MyPersistentComponentImpl::class.java)
+
+      (service as MyPersistentComponentImpl).state.stateData = data
+    }
+
+    loadExtensionWithText(extensionTag).use {
+      val service = ApplicationManager.getApplication()
+        .getService(MyPersistentComponent::class.java)
+      assertThat(service).isNotNull
+
+      assertThat(service.data).isEqualTo(data)
+    }
   }
 
   @Test
@@ -470,7 +478,8 @@ class DynamicPluginsTest {
       val pluginTwoId = "optionalDependencyDescriptor-two_${Ksuid.generate()}"
       loadPluginWithOptionalDependency(
         PluginBuilder().id(pluginTwoId),
-        PluginBuilder().extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>"""),
+        PluginBuilder().extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
+          |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()),
         pluginOneBuilder
       ).use {
         assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
@@ -658,7 +667,8 @@ class DynamicPluginsTest {
   fun disableWithoutRestart() {
     val pluginBuilder = PluginBuilder()
       .randomId("disableWithoutRestart")
-      .extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+      .extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}"
+        |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin())
     val disposable = loadPluginWithText(pluginBuilder)
     val app = ApplicationManager.getApplication()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
@@ -724,14 +734,31 @@ private class MyUISettingsListener2 : UISettingsListener {
 
 private data class MyPersistentState(@Attribute var stateData: String? = "")
 
-@State(name = "MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
-private class MyPersistentComponent : PersistentStateComponent<MyPersistentState> {
-  var myState = MyPersistentState("")
+private interface MyPersistentComponent {
 
-  override fun getState() = myState
+  var data: String?
+}
+
+@State(name = "MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
+private class MyPersistentComponentImpl : MyPersistentComponent,
+                                          PersistentStateComponent<MyPersistentState> {
+
+  private var _state = MyPersistentState("")
+
+  override var data: String?
+    get() = _state.stateData
+    set(value) {
+      _state.stateData = value
+    }
+
+  override fun getState() = _state
+
+  fun setState(state: MyPersistentState) {
+    _state = state
+  }
 
   override fun loadState(state: MyPersistentState) {
-    myState = state
+    this.state = state
   }
 }
 
