@@ -351,6 +351,9 @@ final class CommunityRepositoryModules {
       // android-extensions-ide.jar
       withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar") // <= ADDED
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
+      
+      // android-kotlin-extensions-tooling.jar
+      withModule("intellij.android.kotlin.extensions.tooling", "android-kotlin-extensions-tooling.jar")
 
       // android-kotlin.jar
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
