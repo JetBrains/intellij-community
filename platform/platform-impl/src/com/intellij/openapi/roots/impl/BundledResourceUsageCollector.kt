@@ -49,10 +49,13 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project, indicator: ProgressIndicator): CancellablePromise<Set<MetricEvent>> {
+  override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<Set<MetricEvent>> {
+    var action = ReadAction.nonBlocking<Set<VirtualFile>> { collectLibraryFiles(project) }
+    if (indicator != null) {
+      action = action.wrapProgress(indicator)
+    }
     @Suppress("UNCHECKED_CAST")
-    return ReadAction.nonBlocking<Set<VirtualFile>> { collectLibraryFiles(project) }
-        .wrapProgress(indicator)
+    return action
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance())
         .thenAsync { files ->
