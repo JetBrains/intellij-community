@@ -205,6 +205,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         if (myNewEditor instanceof TextEditor) {
           myEditor = ((TextEditor)myNewEditor).getEditor();
           addMatchHighlights();
+          addRestartHighlightingListenerToCurrentEditor();
         }
         else {
           myEditor = null;
