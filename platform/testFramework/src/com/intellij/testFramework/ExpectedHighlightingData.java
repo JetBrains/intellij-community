@@ -67,7 +67,7 @@ public class ExpectedHighlightingData {
   private static final String INJECTED_SYNTAX_MARKER = "injectedSyntax";
   private static final String SYMBOL_NAME_MARKER = "symbolName";
   private static final String LINE_MARKER = "lineMarker";
-  private static final String ANY_TEXT = "*";
+  protected static final String ANY_TEXT = "*";
 
   private static final HighlightInfoType WHATEVER =
     new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.TEXT);
@@ -90,9 +90,9 @@ public class ExpectedHighlightingData {
   }
 
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
-  private final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new HashMap<>();
-  private final Document myDocument;
-  private final String myText;
+  protected final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new HashMap<>();
+  protected final Document myDocument;
+  protected final String myText;
   private boolean myIgnoreExtraHighlighting;
   private final ResourceBundle[] myMessageBundles;
 
@@ -842,7 +842,7 @@ public class ExpectedHighlightingData {
     return matchDescriptions(false, t1, t2);
   }
 
-  private static String rangeString(String text, int startOffset, int endOffset) {
+  protected static String rangeString(String text, int startOffset, int endOffset) {
     LineColumn start = StringUtil.offsetToLineColumn(text, startOffset);
     assert start != null: "textLength = " + text.length() + ", startOffset = " + startOffset;
 

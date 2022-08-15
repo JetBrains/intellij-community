@@ -3,11 +3,16 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.openapi.editor.Document
-import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.Pair
+import com.intellij.psi.PsiFile
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExpectedHighlightingData
+import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.idea.codeInsight.InnerLineMarkerConfiguration.Companion.sanitizeLineMarker
+import java.util.*
+import java.util.function.ToIntFunction
 
 class KotlinExpectedHighlightingData(document: Document) :
     ExpectedHighlightingData(/* document = */ document,
@@ -16,29 +21,91 @@ class KotlinExpectedHighlightingData(document: Document) :
                              /* checkInfos = */ false
     ) {
 
-    override fun containsLineMarker(info: LineMarkerInfo<*>?, where: MutableCollection<out LineMarkerInfo<PsiElement>>?): Boolean {
+    override fun checkLineMarkers(psiFile: PsiFile?, markerInfos: MutableCollection<out LineMarkerInfo<*>>, text: String) {
+        val fileName = if (psiFile == null) "" else psiFile.name + ": "
+        val failMessage = StringBuilder()
+        for (info in markerInfos) {
+            if (!containsLineMarker(info, myLineMarkerInfos.values)) {
+                if (failMessage.isNotEmpty()) failMessage.append('\n')
+                failMessage.append(fileName).append("extra ")
+                    .append(rangeString(text, info.startOffset, info.endOffset))
+                    .append(": '").append(sanitizeLineMarker(info.lineMarkerTooltip)).append('\'')
+                val icon = info.icon
+                if (icon != null && icon.toString() != ANY_TEXT) {
+                    failMessage.append(" icon='").append(icon).append('\'')
+                }
+            }
+        }
+        for (expectedLineMarker in myLineMarkerInfos.values) {
+            if (markerInfos.isEmpty() || !containsLineMarker(expectedLineMarker, markerInfos)) {
+                if (failMessage.isNotEmpty()) failMessage.append('\n')
+                failMessage.append(fileName).append("missing ")
+                    .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
+                    .append(": '").append(sanitizeLineMarker(expectedLineMarker.lineMarkerTooltip)).append('\'')
+                val icon = expectedLineMarker.icon
+                if (icon != null && icon.toString() != ANY_TEXT) {
+                    failMessage.append(" icon='").append(icon).append('\'')
+                }
+            }
+        }
+        if (failMessage.isNotEmpty()) {
+            var filePath: String? = null
+            if (psiFile != null) {
+                val file = psiFile.virtualFile
+                if (file != null) {
+                    filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH)
+                }
+            }
+            throw FileComparisonFailure(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath)
+        }
+    }
+
+    override fun containsLineMarker(info: LineMarkerInfo<*>?, where: MutableCollection<out LineMarkerInfo<*>>?): Boolean {
         val originalTooltip = info!!.lineMarkerTooltip
         val infoTooltip = sanitizeLineMarker(originalTooltip)
         val icon = info.icon
-        try {
-            for (markerInfo in where!!) {
-                if (!(markerInfo.startOffset == info.startOffset && markerInfo.endOffset == info.endOffset)) continue
-                val lineMarkerTooltip = markerInfo.lineMarkerTooltip
-                val sanitizeLineMarker = sanitizeLineMarker(lineMarkerTooltip)
-                if ((matchDescriptions(false, originalTooltip, lineMarkerTooltip) ||
-                            matchDescriptions(false, infoTooltip, lineMarkerTooltip) ||
-                            matchDescriptions(false, originalTooltip, sanitizeLineMarker) ||
-                            matchDescriptions(false, infoTooltip, sanitizeLineMarker)) &&
-                    matchIcons(icon, markerInfo.icon)
-                ) {
-                    return true
-                }
+        for (markerInfo in where!!) {
+            if (!(markerInfo.startOffset == info.startOffset && markerInfo.endOffset == info.endOffset)) continue
+            val lineMarkerTooltip = markerInfo.lineMarkerTooltip
+            val sanitizeLineMarker = sanitizeLineMarker(lineMarkerTooltip)
+            if ((matchDescriptions(false, originalTooltip, lineMarkerTooltip) ||
+                        matchDescriptions(false, infoTooltip, lineMarkerTooltip) ||
+                        matchDescriptions(false, originalTooltip, sanitizeLineMarker) ||
+                        matchDescriptions(false, infoTooltip, sanitizeLineMarker)) &&
+                matchIcons(icon, markerInfo.icon)
+            ) {
+                return true
             }
-        } catch (e: Exception) {
-            throw Exception("infoTooltip\n$infoTooltip\n-> ${e.message}", e)
         }
 
         return false
+    }
+
+    private fun getActualLineMarkerFileText(markerInfos: Collection<LineMarkerInfo<*>>): String {
+        val result = java.lang.StringBuilder()
+        var index = 0
+        val lineMarkerInfos: MutableList<Pair<LineMarkerInfo<*>, Int>?> = ArrayList(markerInfos.size * 2)
+        for (info in markerInfos) lineMarkerInfos.add(Pair.create(info, info.startOffset))
+        for (info in markerInfos) lineMarkerInfos.add(Pair.create(info, info.endOffset))
+        lineMarkerInfos.subList(markerInfos.size, lineMarkerInfos.size).reverse()
+        lineMarkerInfos.sortWith(
+            Comparator.comparingInt<Pair<LineMarkerInfo<*>, Int>>(ToIntFunction { o: Pair<LineMarkerInfo<*>, Int> -> o.second!! }))
+        val documentText = myDocument.text
+        for (info in lineMarkerInfos) {
+            val expectedLineMarker = info!!.first
+            result.append(documentText, index, info.second)
+            if (info.second == expectedLineMarker.startOffset) {
+                result
+                    .append("<lineMarker descr=\"")
+                    .append(sanitizeLineMarker(expectedLineMarker.lineMarkerTooltip))
+                    .append("\">")
+            } else {
+                result.append("</lineMarker>")
+            }
+            index = info.second
+        }
+        result.append(documentText, index, myDocument.textLength)
+        return result.toString()
     }
 }
 
