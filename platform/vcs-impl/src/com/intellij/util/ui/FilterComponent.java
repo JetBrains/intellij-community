@@ -43,7 +43,13 @@ public abstract class FilterComponent extends JPanel {
   }
 
   public JComponent initUi() {
-    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + (isValueSelected() ? ": " : "")) : null;
+    DrawLabelMode drawLabelMode = shouldDrawLabel();
+    switch (drawLabelMode) {
+      case ALWAYS -> myNameLabel = new DynamicLabel(() -> myDisplayName.get() + (isValueSelected() ? ": " : ""));
+      case NEVER -> myNameLabel = null;
+      case WHEN_VALUE_NOT_SET -> myNameLabel = new DynamicLabel(() -> isValueSelected() ? "" : myDisplayName.get());
+      default -> throw new IllegalStateException("Unexpected value: " + drawLabelMode);
+    }
     myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
@@ -114,8 +120,9 @@ public abstract class FilterComponent extends JPanel {
     return true;
   }
 
-  protected boolean shouldDrawLabel() {
-    return true;
+  @NotNull
+  protected DrawLabelMode shouldDrawLabel() {
+    return DrawLabelMode.ALWAYS;
   }
 
   /**
@@ -192,7 +199,8 @@ public abstract class FilterComponent extends JPanel {
   private void showPopup() {
     if (myShowPopupAction == null) {
       return;
-    } else {
+    }
+    else {
       myShowPopupAction.run();
     }
   }
@@ -211,6 +219,12 @@ public abstract class FilterComponent extends JPanel {
 
   private static Border wrapBorder(Border outerBorder) {
     return BorderFactory.createCompoundBorder(outerBorder, JBUI.Borders.empty(2));
+  }
+
+  public enum DrawLabelMode {
+    ALWAYS,
+    NEVER,
+    WHEN_VALUE_NOT_SET
   }
 
   public static class FilledRoundedBorder implements Border {
