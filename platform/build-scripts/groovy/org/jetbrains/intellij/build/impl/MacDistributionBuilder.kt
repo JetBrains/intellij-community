@@ -437,6 +437,8 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?, cont
         javaExecutablePath = javaExecutablePath,
         vmOptionsFilePath = "../bin/${executable}.vmoptions",
         startupWmClass = null,
+        bootClassPathJarNames = context.bootClassPathJarNames,
+        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS)
       )
     ), context = context
   )

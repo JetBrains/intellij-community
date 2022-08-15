@@ -42,18 +42,6 @@
       "description": "Short company name as used in config paths, e.g. ~/.config/JetBrains/...",
       "type": "string"
     },
-    "vmOptionsBaseFileName": {
-      "description": "Base name for vm options file, usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)",
-      "type": "string"
-    },
-    "bootClassPathJarNames" : {
-      "description": "Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minItems": 1
-      }
-    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",
@@ -83,6 +71,22 @@
           "startupWmClass": {
             "description": "Value of 'WMClass' property used by some Linux desktop distributions to associate windows with the owning application, e.g. 'jetbrains-idea'. May be specified only if 'os' is 'Linux'.",
             "type": "string"
+          },
+          "bootClassPathJarNames" : {
+            "description": "Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
+          },
+          "additionalJvmArguments" : {
+            "description": "Additional arguments required for IDE to launch which are not supposed to be changed by a user, e.g. various --add-opens",
+            "type" : "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
           }
         }
       }
