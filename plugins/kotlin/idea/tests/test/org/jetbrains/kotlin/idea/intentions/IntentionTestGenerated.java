@@ -14485,6 +14485,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/operatorToFunction/binaryRangeTo.kt");
         }
 
+        @TestMetadata("binaryRangeUntil.kt")
+        public void testBinaryRangeUntil() throws Exception {
+            runTest("testData/intentions/operatorToFunction/binaryRangeUntil.kt");
+        }
+
         @TestMetadata("binaryTimesEquals.kt")
         public void testBinaryTimesEquals() throws Exception {
             runTest("testData/intentions/operatorToFunction/binaryTimesEquals.kt");
