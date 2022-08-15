@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.quickfix
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -21,9 +20,10 @@ class ChangeVariableMutabilityFix(
     private val deleteInitializer: Boolean = false
 ) : KotlinPsiOnlyQuickFixAction<KtValVarKeywordOwner>(element) {
 
-    override fun getText() = actionText
-        ?: (if (makeVar) KotlinBundle.message("change.to.var") else KotlinBundle.message("change.to.val")) +
-        if (deleteInitializer) KotlinBundle.message("and.delete.initializer") else ""
+    override fun getText() = actionText ?: buildString {
+        if (makeVar) append(KotlinBundle.message("change.to.var")) else append(KotlinBundle.message("change.to.val"))
+        if (deleteInitializer) append(KotlinBundle.message("and.delete.initializer"))
+    }
 
     override fun getFamilyName(): String = text
 
