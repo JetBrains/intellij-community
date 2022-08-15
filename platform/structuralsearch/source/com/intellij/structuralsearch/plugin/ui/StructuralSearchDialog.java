@@ -487,6 +487,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                                    SSRBundle.message("templates.button.description"),
                                                                    AllIcons.Actions.PreviewDetails) {
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+
+      @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return isExistingTemplatesPanelVisible();
       }
@@ -502,6 +508,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
                                                             filterModifiedIcon) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -529,6 +539,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     // Pin action
     final DumbAwareToggleAction pinAction =
       new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
