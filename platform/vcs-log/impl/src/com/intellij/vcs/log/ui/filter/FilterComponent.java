@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public abstract class VcsLogPopupComponent extends JPanel {
+public abstract class FilterComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
@@ -44,7 +44,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull private JLabel myValueLabel;
   @NotNull private InlineIconButton myFilterActionButton;
 
-  protected VcsLogPopupComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
+  protected FilterComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
     super(null);
     myDisplayName = displayName;
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);

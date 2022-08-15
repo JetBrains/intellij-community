@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
-abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> extends VcsLogPopupComponent {
+abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> extends FilterComponent {
 
   /**
    * Special value that indicates that no filtering is on.

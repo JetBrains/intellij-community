@@ -226,8 +226,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
         return ClientProperty.get(component, ACTION_KEY) == this;
       });
-      if (actionComponent instanceof VcsLogPopupComponent) {
-        ((VcsLogPopupComponent)actionComponent).showPopupMenu();
+      if (actionComponent instanceof FilterComponent) {
+        ((FilterComponent)actionComponent).showPopupMenu();
       }
     }
   }
