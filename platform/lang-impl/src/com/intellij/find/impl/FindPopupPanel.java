@@ -1655,8 +1655,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
         ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
           @Override
-          protected Insets getMargins() {
-            return new JBInsets(4, 2, 4, 2);
+          protected @NotNull Insets getMargins() {
+            return JBInsets.addInsets(super.getMargins(), new JBInsets(4, 2, 4, 2));
           }
         };
 
