@@ -40,11 +40,11 @@ abstract class AbstractClass
 // EXIST: { itemText: "globalVar", attributes: "" }
 // EXIST: { itemText: "memberFun", attributes: "grayed" }
 // EXIST: { itemText: "memberVal", attributes: "grayed" }
+// EXIST: { itemText: "companionObjectFun", attributes: "grayed" }
 // ABSENT: extensionFun
 // ABSENT: extensionVal
 // EXIST: { itemText: "localFun", attributes: "" }
 // ABSENT: local
-// ABSENT: companionObjectFun
 // EXIST: { itemText: "C", attributes: "" }
 // EXIST: { itemText: "NestedClass", attributes: "" }
 // ABSENT: InnerClass

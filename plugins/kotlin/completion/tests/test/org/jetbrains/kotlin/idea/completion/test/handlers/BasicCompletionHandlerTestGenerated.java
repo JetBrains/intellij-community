@@ -69,6 +69,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/callableReference/ClassThisProperty.kt");
         }
 
+        @TestMetadata("CompanionObjectClassFunction.kt")
+        public void testCompanionObjectClassFunction() throws Exception {
+            runTest("testData/handlers/basic/callableReference/CompanionObjectClassFunction.kt");
+        }
+
+        @TestMetadata("CompanionObjectFunction.kt")
+        public void testCompanionObjectFunction() throws Exception {
+            runTest("testData/handlers/basic/callableReference/CompanionObjectFunction.kt");
+        }
+
         @TestMetadata("EmptyQualifier.kt")
         public void testEmptyQualifier() throws Exception {
             runTest("testData/handlers/basic/callableReference/EmptyQualifier.kt");
