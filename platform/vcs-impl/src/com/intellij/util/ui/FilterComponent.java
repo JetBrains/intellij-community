@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.filter;
+package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -14,7 +14,6 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.Nls;
@@ -202,7 +201,7 @@ public abstract class FilterComponent extends JPanel {
     myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
-  void showPopupMenu() {
+  public void showPopupMenu() {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = createPopupMenu();
     myPopupState.prepareToShow(popup);

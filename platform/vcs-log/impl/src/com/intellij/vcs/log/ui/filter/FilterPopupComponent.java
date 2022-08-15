@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.ui.FilterComponent;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import org.jetbrains.annotations.Nls;
