@@ -31,7 +31,6 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
         if (this is JKQualifiedExpression && conversion.replaceType == ReplaceType.REPLACE_WITH_QUALIFIER) {
             newSelector.leadingComments += receiver.trailingComments
-            newSelector.leadingComments += receiver.trailingComments
             newSelector.leadingComments += receiver.leadingComments
             newSelector.leadingComments += selector.trailingComments
             newSelector.leadingComments += selector.leadingComments
