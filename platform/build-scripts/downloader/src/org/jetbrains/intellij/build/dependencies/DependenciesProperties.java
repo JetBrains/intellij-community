@@ -1,35 +1,68 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.dependencies;
 
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.util.*
-import kotlin.io.path.appendText
-import kotlin.io.path.inputStream
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-class DependenciesProperties(paths: BuildPaths) {
-  private val propertiesFile = paths.communityHomeDir.communityRoot.resolve("build/dependencies/dependencies.properties")
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-  private val props: Properties by lazy {
-    propertiesFile.inputStream().use {
-      val properties = Properties()
-      properties.load(it)
-      properties
+@ApiStatus.Internal
+public final class DependenciesProperties {
+  private final Map<String, String> dependencies = new TreeMap<>();
+
+  public DependenciesProperties(BuildDependenciesCommunityRoot communityRoot, Path... customPropertyFiles) throws IOException {
+    var communityPropertiesFile = communityRoot.getCommunityRoot()
+      .resolve("build")
+      .resolve("dependencies")
+      .resolve("dependencies.properties");
+    //noinspection SimplifyStreamApiCallChains
+    var propertyFiles = Stream.concat(
+      Stream.of(customPropertyFiles), Stream.of(communityPropertiesFile)
+    ).collect(Collectors.toList());
+    for (Path propertyFile : propertyFiles) {
+      if (Files.exists(propertyFile)) {
+        try (var file = Files.newInputStream(propertyFile)) {
+          var properties = new Properties();
+          properties.load(file);
+          properties.forEach((key, value) -> {
+            dependencies.putIfAbsent(key.toString(), value.toString());
+          });
+        }
+      }
+    }
+    if (dependencies.isEmpty()) {
+      throw new IllegalStateException("No dependencies are defined");
     }
   }
 
-  fun property(name: String): String =
-    props.getProperty(name) ?: error("`$name` is not defined in `$propertiesFile`")
+  @Override
+  public String toString() {
+    //noinspection SimplifyStreamApiCallChains,SSBasedInspection
+    return String.join("\n", dependencies.entrySet().stream()
+      .map(it -> it.getKey() + "=" + it.getValue())
+      .collect(Collectors.toList()));
+  }
 
-  fun copy(copy: Path) {
-    Files.copy(propertiesFile, copy, StandardCopyOption.REPLACE_EXISTING)
-    // legacy key is required for backward compatibility with gradle-intellij-plugin
-    val jdkBuild = "jdkBuild"
-    if (props.getProperty(jdkBuild) == null) {
-      copy.appendText("\n$jdkBuild=${property("runtimeBuild")}\n")
+  @NotNull
+  public String property(String name) {
+    var property = dependencies.get(name);
+    if (property == null) {
+      throw new IllegalArgumentException("'" + name + "' is unknown key: " + this);
+    }
+    return property;
+  }
+
+  public void copy(Path copy) throws IOException {
+    try (var file = Files.newBufferedWriter(copy, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+      file.write(toString());
     }
   }
 }
