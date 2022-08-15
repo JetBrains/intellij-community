@@ -46,9 +46,12 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   private static @Nullable Editor getEditorFromContext(@NotNull DataContext dataContext, boolean allowSpeedSearch) {
-    // always get host editor for update in EDT
-    Editor editor = (EDT.isCurrentThreadEdt() && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
-                     CommonDataKeys.HOST_EDITOR : CommonDataKeys.EDITOR).getData(dataContext);
+    // try to get host editor in case of injections during action update in EDT
+    Editor editor = EDT.isCurrentThreadEdt() && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
+                    CommonDataKeys.HOST_EDITOR.getData(dataContext) : null;
+    if (editor == null) {
+      editor = CommonDataKeys.EDITOR.getData(dataContext);
+    }
     if (editor != null) return editor;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Object data = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
