@@ -64,5 +64,8 @@ public final class DependenciesProperties {
     try (var file = Files.newBufferedWriter(copy, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
       file.write(toString());
     }
+    if (!dependencies.containsKey("jdkBuild")) {
+      throw new IllegalStateException("'jdkBuild' key is required for backward compatibility with gradle-intellij-plugin");
+    }
   }
 }
