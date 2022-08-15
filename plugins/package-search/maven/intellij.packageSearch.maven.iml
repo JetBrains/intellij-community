@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
