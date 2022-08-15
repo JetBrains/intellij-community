@@ -18,7 +18,6 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
         )
 
     companion object {
-        // TODO: Change onto download eap again once first 1.8.0 eap released
         val TEST_KOTLIN_VERSION by lazy {
             Version.fromString("1.8.0-dev-1660")
         }
