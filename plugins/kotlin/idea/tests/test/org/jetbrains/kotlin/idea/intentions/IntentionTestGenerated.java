@@ -7379,6 +7379,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/double.kt");
         }
 
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/downTo.kt");
+        }
+
         @TestMetadata("forLoop.kt")
         public void testForLoop() throws Exception {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/forLoop.kt");
@@ -7407,6 +7412,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("otherOp.kt")
         public void testOtherOp() throws Exception {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/otherOp.kt");
+        }
+
+        @TestMetadata("rangeUntil.kt")
+        public void testRangeUntil() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/rangeUntil.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/until.kt");
         }
 
         @TestMetadata("withSideEffects.kt")
