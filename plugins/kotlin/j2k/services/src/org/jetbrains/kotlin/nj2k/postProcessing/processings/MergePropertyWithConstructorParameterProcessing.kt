@@ -78,7 +78,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
     }
 
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
-        for (klass in elements.descendantsOfType<KtClass>()) {
+        for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
             convertClass(klass)
         }
     }
