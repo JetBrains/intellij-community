@@ -54,6 +54,8 @@ open class SegmentedActionToolbarComponent(place: String,
 
   init {
     layoutPolicy = NOWRAP_LAYOUT_POLICY
+    setActionButtonBorder(JBUI.Borders.empty(0, 3))
+    setCustomButtonLook(segmentedButtonLook)
   }
 
   private var isActive = false
@@ -68,11 +70,10 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
-    if (!isActive) {
-      return super.createCustomComponent(action, presentation)
-    }
-
     var component = super.createCustomComponent(action, presentation)
+    if (!isActive) {
+      return component
+    }
 
     if (action is ComboBoxAction) {
       UIUtil.uiTraverser(component).filter(ComboBoxButton::class.java).firstOrNull()?.let {
@@ -81,38 +82,11 @@ open class SegmentedActionToolbarComponent(place: String,
       }
     }
 
-    if (component is ActionButton) {
-      val actionButton = component as ActionButton
-      updateActionButtonLook(actionButton)
-    }
-    else {
+    if (component !is ActionButton) {
       component.border = JBUI.Borders.empty()
     }
 
     return component
-  }
-
-  override fun createToolbarButton(action: AnAction,
-                                   look: ActionButtonLook?,
-                                   place: String,
-                                   presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
-
-    val createToolbarButton = if (!isActive) {
-      super.createToolbarButton(action, look, place, presentation, minimumSize)
-    }
-    else {
-      super.createToolbarButton(action, segmentedButtonLook, place, presentation, minimumSize)
-    }
-
-    updateActionButtonLook(createToolbarButton)
-
-    return createToolbarButton
-  }
-
-  private fun updateActionButtonLook(actionButton: ActionButton) {
-    actionButton.border = JBUI.Borders.empty(0, 3)
-    actionButton.setLook(segmentedButtonLook)
   }
 
   override fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {

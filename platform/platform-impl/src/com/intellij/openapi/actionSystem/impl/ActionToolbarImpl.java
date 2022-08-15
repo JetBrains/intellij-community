@@ -47,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -134,6 +135,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   /** @see ActionToolbar#adjustTheSameSize(boolean) */
   private boolean myAdjustTheSameSize;
+
+  private @Nullable ActionButtonLook myCustomButtonLook;
+  private @Nullable Border myActionButtonBorder;
 
   private final ActionButtonLook myMinimalButtonLook = ActionButtonLook.INPLACE_LOOK;
 
@@ -432,7 +436,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       customComponent.putClientProperty(CustomComponentAction.ACTION_KEY, action);
       ((CustomComponentAction)action).updateCustomComponent(customComponent, presentation);
     }
-    tweakActionComponentUI(customComponent);
 
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
@@ -449,7 +452,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected @NotNull JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
     JComponent result = action.createCustomComponent(presentation, myPlace);
-    ToolbarActionTracker.followToolbarComponent(presentation, result, getComponent());
+    applyToolbarLook(getActionButtonLook(), presentation, result);
     return result;
   }
 
@@ -465,8 +468,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
-  private @NotNull JBEmptyBorder getActionButtonBorder() {
-    return new JBEmptyBorder(0) {
+  private @NotNull Border getActionButtonBorder() {
+    return myActionButtonBorder != null ? myActionButtonBorder : new JBEmptyBorder(0) {
       @Override
       public Insets getBorderInsets(Component c, Insets insets) {
         Insets x = getBorderInsets();
@@ -498,7 +501,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(), KeyStroke.getKeyStroke(mnemonic,
                                 InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
       }
-      tweakActionComponentUI(buttonWithText);
+      applyToolbarLook(look, presentation, buttonWithText);
       return buttonWithText;
     }
 
@@ -518,33 +521,48 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     };
 
-    actionButton.setLook(look);
-    actionButton.setBorder(getActionButtonBorder());
-
-    ToolbarActionTracker.followToolbarComponent(presentation, actionButton, getComponent());
+    applyToolbarLook(look, presentation, actionButton);
     return actionButton;
+  }
+
+  protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
+    if (component instanceof ActionButton) {
+      ((ActionButton)component).setLook(look);
+    }
+    component.setBorder(getActionButtonBorder());
+    tweakActionComponentUI(component);
+    ToolbarActionTracker.followToolbarComponent(presentation, component, getComponent());
   }
 
   final protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
     return createToolbarButton(
       action,
-      myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new ActionButtonLook() {
-        @Override
-        public void paintBorder(Graphics g, JComponent c, int state) {
-          g.setColor(JBColor.border());
-          g.drawLine(c.getWidth() - 1, 0, c.getWidth() - 1, c.getHeight());
-        }
-
-        @Override
-        public void paintBackground(Graphics g, JComponent component, int state) {
-          if (state == ActionButtonComponent.PUSHED) {
-            g.setColor(component.getBackground().darker());
-            ((Graphics2D)g).fill(g.getClip());
-          }
-        }
-      } : null,
+      getActionButtonLook(),
       myPlace, myPresentationFactory.getPresentation(action),
       myMinimumButtonSize.size());
+  }
+
+  @Nullable
+  protected ActionButtonLook getActionButtonLook() {
+    if (myCustomButtonLook != null) {
+      return myCustomButtonLook;
+    }
+
+    return myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new ActionButtonLook() {
+      @Override
+      public void paintBorder(Graphics g, JComponent c, int state) {
+        g.setColor(JBColor.border());
+        g.drawLine(c.getWidth() - 1, 0, c.getWidth() - 1, c.getHeight());
+      }
+
+      @Override
+      public void paintBackground(Graphics g, JComponent component, int state) {
+        if (state == ActionButtonComponent.PUSHED) {
+          g.setColor(component.getBackground().darker());
+          ((Graphics2D)g).fill(g.getClip());
+        }
+      }
+    } : null;
   }
 
   @Override
@@ -991,6 +1009,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
    */
   public void setForceMinimumSize(boolean force) {
     myForceMinimumSize = force;
+  }
+
+  public final void setCustomButtonLook(@Nullable ActionButtonLook customButtonLook) {
+    myCustomButtonLook = customButtonLook;
+  }
+
+  public final void setActionButtonBorder(@Nullable Border actionButtonBorder) {
+    myActionButtonBorder = actionButtonBorder;
   }
 
   /**
