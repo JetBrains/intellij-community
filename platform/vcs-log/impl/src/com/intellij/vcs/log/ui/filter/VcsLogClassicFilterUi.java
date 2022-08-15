@@ -23,7 +23,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.FilterComponent;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -227,8 +226,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
         return ClientProperty.get(component, ACTION_KEY) == this;
       });
-      if (actionComponent instanceof FilterComponent) {
-        ((FilterComponent)actionComponent).showPopupMenu();
+      if (actionComponent instanceof VcsLogPopupComponent) {
+        ((VcsLogPopupComponent)actionComponent).showPopupMenu();
       }
     }
   }

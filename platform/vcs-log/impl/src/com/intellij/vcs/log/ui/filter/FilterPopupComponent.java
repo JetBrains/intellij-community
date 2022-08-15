@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ui.FilterComponent;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import org.jetbrains.annotations.Nls;
@@ -17,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
-abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> extends FilterComponent {
+abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> extends VcsLogPopupComponent {
 
   /**
    * Special value that indicates that no filtering is on.

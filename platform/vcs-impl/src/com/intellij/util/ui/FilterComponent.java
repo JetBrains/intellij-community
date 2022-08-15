@@ -2,18 +2,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.Gaps;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.Nls;
@@ -37,11 +30,11 @@ public abstract class FilterComponent extends JPanel {
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
 
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   @NotNull private final Supplier<@NlsContexts.Label String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
   @NotNull private InlineIconButton myFilterActionButton;
+  @Nullable private Runnable myShowPopupAction;
 
   protected FilterComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
     super(null);
@@ -72,7 +65,7 @@ public abstract class FilterComponent extends JPanel {
         resetAction.run();
       }
       else {
-        showPopupMenu();
+        showPopup();
       }
     });
 
@@ -126,11 +119,6 @@ public abstract class FilterComponent extends JPanel {
   }
 
   /**
-   * Create popup actions available under this filter.
-   */
-  protected abstract ActionGroup createActionGroup();
-
-  /**
    * @return an action that resets filter to its default state
    */
   protected abstract Runnable createResetAction();
@@ -154,7 +142,7 @@ public abstract class FilterComponent extends JPanel {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_DOWN) {
-          showPopupMenu();
+          showPopup();
         }
       }
     });
@@ -164,7 +152,7 @@ public abstract class FilterComponent extends JPanel {
     ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        showPopupMenu();
+        showPopup();
         return true;
       }
     };
@@ -201,19 +189,12 @@ public abstract class FilterComponent extends JPanel {
     myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
-  public void showPopupMenu() {
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-    ListPopup popup = createPopupMenu();
-    myPopupState.prepareToShow(popup);
-    popup.showUnderneathOf(this);
-  }
-
-  @NotNull
-  protected ListPopup createPopupMenu() {
-    return JBPopupFactory.getInstance().
-      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()),
-                             DataManager.getInstance().getDataContext(this),
-                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+  private void showPopup() {
+    if (myShowPopupAction == null) {
+      return;
+    } else {
+      myShowPopupAction.run();
+    }
   }
 
   protected Border createFocusedBorder() {
@@ -222,6 +203,10 @@ public abstract class FilterComponent extends JPanel {
 
   protected Border createUnfocusedBorder() {
     return JBUI.Borders.empty(BORDER_SIZE);
+  }
+
+  public void setShowPopupAction(@NotNull Runnable showPopupAction) {
+    this.myShowPopupAction = showPopupAction;
   }
 
   private static Border wrapBorder(Border outerBorder) {
