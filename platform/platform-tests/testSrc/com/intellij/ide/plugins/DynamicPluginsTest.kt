@@ -327,26 +327,38 @@ class DynamicPluginsTest {
 
   @Test
   fun loadOptionalDependencyOwnExtension() {
-    val barBuilder = PluginBuilder().randomId("bar").packagePrefix("bar")
-    val fooBuilder = PluginBuilder().randomId("foo").packagePrefix("foo")
+    val barBuilder = PluginBuilder()
+      .randomId("bar")
+      .packagePrefix("bar")
+
+    val fooBuilder = PluginBuilder()
+      .randomId("foo")
+      .packagePrefix("foo")
       .extensionPoints(
         """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
-      .module("intellij.foo.sub",
+      .module("intellij.foo.bar",
               PluginBuilder()
                 .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
-                .packagePrefix("foo1")
+                .packagePrefix("foo.bar")
                 .pluginDependency(barBuilder.id)
       )
+
     loadPluginWithText(fooBuilder).use {
       val ep = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("foo.barExtension")
       assertThat(ep).isNotNull()
+
       loadPluginWithText(barBuilder).use {
-        val extension = ep!!.extensionList.single()
+        assertThat(ep.extensionList).hasSize(1)
+
+        val extension = ep.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
+
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(findEnabledModuleByName("intellij.foo.sub")!!)
+          .isNotNull
+          .isEqualTo(findEnabledModuleByName("intellij.foo.bar"))
       }
-      assertThat(ep!!.extensionList).isEmpty()
+
+      assertThat(ep.extensionList).isEmpty()
     }
   }
 
