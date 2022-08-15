@@ -1,0 +1,7 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.j2k.post.processing">
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <j2kConverterExtension implementation="org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kConverterExtension"/>
+  </extensions>
+
+</idea-plugin>

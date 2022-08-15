@@ -84,7 +84,7 @@
     <orderEntry type="module" module-name="kotlin.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.new" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
-    <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.post-processing" exported="" />
     <orderEntry type="module" module-name="kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" exported="" />
