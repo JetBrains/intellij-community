@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 interface CodeVisionProvider<T> {
   companion object {
-    val EP_NAME: String = "com.intellij.codeInsight.codeVisionProvider"
+    const val EP_NAME: String = "com.intellij.codeInsight.codeVisionProvider"
     val providersExtensionPoint: ExtensionPointName<CodeVisionProvider<*>> = ExtensionPointName.create(EP_NAME)
   }
 
@@ -79,11 +79,11 @@ interface CodeVisionProvider<T> {
   /**
    * Handle click on an extra action on a lens at a given range
    */
-  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String) = Unit
+  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
 
   /**
    * Calls on background BEFORE editor opening
-   * Returns ranges where placeholders should be when editor opens
+   * @return ranges where placeholders should be when editor opens
    */
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()

@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit
 class CodeVisionProvidersWatcher {
 
   companion object {
-    const val Threshold = 30
-    const val MinThreshold = 10
+    const val Threshold: Int = 30
+    const val MinThreshold: Int = 10
   }
 
   private val providersWaitingTime = mutableMapOf<String, Long>()

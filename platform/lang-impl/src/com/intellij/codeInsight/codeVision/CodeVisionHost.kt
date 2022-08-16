@@ -60,9 +60,9 @@ import java.util.concurrent.CompletableFuture
 open class CodeVisionHost(val project: Project) {
   companion object {
     private val logger = getLogger<CodeVisionHost>()
-    const val defaultVisibleLenses = 5
-    const val settingsLensProviderId = "!Settings"
-    const val moreLensProviderId = "!More"
+    const val defaultVisibleLenses: Int = 5
+    const val settingsLensProviderId: String = "!Settings"
+    const val moreLensProviderId: String = "!More"
 
     /**
      * Flag which is enabled when executed test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
@@ -81,7 +81,7 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  protected val codeVisionLifetime = project.createLifetime()
+  protected val codeVisionLifetime: Lifetime = project.createLifetime()
 
   /**
    * Pass empty list to update ALL providers in editor
@@ -94,7 +94,7 @@ open class CodeVisionHost(val project: Project) {
 
   @Suppress("MemberVisibilityCanBePrivate")
   // Uses in Rider
-  protected val lifeSettingModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
+  protected val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
 

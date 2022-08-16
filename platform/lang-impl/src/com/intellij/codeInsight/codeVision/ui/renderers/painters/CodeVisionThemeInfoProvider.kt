@@ -33,5 +33,5 @@ open class CodeVisionThemeInfoProvider {
     }
   }
 
-  open fun lensFontSize(editor: Editor) = HintUtil.getSize(editor)
+  open fun lensFontSize(editor: Editor): Float = HintUtil.getSize(editor)
 }
