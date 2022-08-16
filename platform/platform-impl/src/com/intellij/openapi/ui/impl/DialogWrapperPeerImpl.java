@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -594,8 +595,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public Object getData(@NotNull String dataId) {
       DialogWrapper wrapper = myDialogWrapper.get();
-      if (wrapper instanceof DataProvider) {
-        return ((DataProvider)wrapper).getData(dataId);
+      Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
+      if (wrapperData != null) {
+        return DataValidators.validOrNull(wrapperData, dataId, wrapper);
       }
       return null;
     }
