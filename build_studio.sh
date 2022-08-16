@@ -47,8 +47,6 @@ declare -ar BUILD_PROPERTIES=(
 
 "${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build AndroidStudioBuildTarget
 
-"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "-Dintellij.build.output.root=${OUT}/updater" "${PROG_DIR}" intellij.idea.community.build FullUpdaterBuildTarget
-
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
-cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar
+cp -Rfv "$OUT"/artifacts/updater-full.jar "$DIST"
