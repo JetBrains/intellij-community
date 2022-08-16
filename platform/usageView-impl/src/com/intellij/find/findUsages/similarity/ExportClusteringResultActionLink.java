@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,33 +16,33 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
-
 public class ExportClusteringResultActionLink extends ActionLink {
   public static final String FILENAME = "filename";
-  public static final String CLUSTER_NUMBER = "\"cluster_number\": ";
+  public static final String CLUSTER_NUMBER = "cluster_number";
+  public static final String SNIPPET = "snippet";
+  public static final String FEATURES = "features";
 
   public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
@@ -50,7 +52,12 @@ public class ExportClusteringResultActionLink extends ActionLink {
               "similar.usages.internal.exporting.clustering.data.progress.title")) {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
-                buildSessionDataFile(project, clusters, indicator, fileName);
+                try {
+                  buildSessionDataFile(project, clusters, indicator, fileName);
+                }
+                catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
               }
             };
             ProgressIndicator indicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
@@ -59,57 +66,47 @@ public class ExportClusteringResultActionLink extends ActionLink {
           });
   }
 
-  private static void createScratchFile(@NotNull Project project, @NotNull String fileContent, @NotNull String fileName)
+  private static void createScratchFile(@NotNull String fileContent, @NotNull String fileName)
     throws IOException {
     ScratchFileService fileService = ScratchFileService.getInstance();
     VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), fileName + ".json",
                                                    ScratchFileService.Option.create_new_always);
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(scratchFile);
-    assert psiFile != null;
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document != null) {
-      document.insertString(document.getTextLength(), fileContent);
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-    }
+    VfsUtil.saveText(scratchFile, fileContent);
   }
 
   private static void buildSessionDataFile(@NotNull Project project,
                                            @NotNull List<UsageCluster> clusters,
-                                           @NotNull ProgressIndicator indicator, @NotNull String fileName) {
+                                           @NotNull ProgressIndicator indicator, @NotNull String fileName) throws IOException {
     int counter = 0;
-    StringBuilder sb = new StringBuilder();
-    sb.append("[");
-    boolean isFirst = true;
+    StringWriter stringWriter = new StringWriter();
+    JsonGenerator generator = new JsonFactory().createGenerator(stringWriter);
+    generator.writeStartArray();
     for (UsageCluster cluster : clusters) {
       indicator.setFraction(counter++ / (double)clusters.size());
       HashSet<SimilarUsage> usages = new HashSet<>(cluster.getUsages());
       for (SimilarUsage usage : usages) {
         if (usage instanceof UsageInfo2UsageAdapter) {
-          if (isFirst) {
-            isFirst = false;
-          }
-          else {
-            sb.append(",\n");
-          }
           indicator.checkCanceled();
           PsiElement element = getElement((UsageInfo2UsageAdapter)usage);
-          sb.append("{\"" + FILENAME + "\":").append("\"").append(getUsageId(element)).append("\",\n");
-          sb.append("\"snippet\":").append("\"").append(getUsageLineSnippet(project, element))
-            .append("\",\n");
-          sb.append(CLUSTER_NUMBER).append(counter).append(",\n");
-          sb.append("\"features\":").append(createJsonForFeatures(usage.getFeatures())).append("}");
+          generator.writeStartObject();
+          generator.writeStringField(FILENAME, getUsageId(element));
+          generator.writeStringField(SNIPPET, getUsageLineSnippet(project, element));
+          generator.writeNumberField(CLUSTER_NUMBER, counter);
+          generator.writeObjectFieldStart(FEATURES);
+          for (Object2IntMap.Entry<String> entry : usage.getFeatures().getBag().object2IntEntrySet()) {
+            generator.writeNumberField(entry.getKey(), entry.getIntValue());
+          }
+          generator.writeEndObject();
+          generator.writeEndObject();
         }
       }
     }
-    sb.append("]");
-    try {
-      writeCommandAction(project).run(() -> {
-        createScratchFile(project, sb.toString(), fileName);
-      });
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    generator.writeEndArray();
+    generator.close();
+
+    writeCommandAction(project).run(() -> {
+      createScratchFile(stringWriter.toString(), fileName);
+    });
   }
 
   public static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {
@@ -150,10 +147,5 @@ public class ExportClusteringResultActionLink extends ActionLink {
 
   private static @NotNull String removeNewLines(@NotNull String snippet) {
     return snippet.replace("\n", " ").replace("\t", " ").replace("\r", " ");
-  }
-
-  private static @NotNull String createJsonForFeatures(@NotNull Bag bag) {
-    return bag.getBag().object2IntEntrySet().stream().map(entry -> "\"" + entry.getKey() + "\":" + entry.getIntValue())
-      .collect(Collectors.joining(",\n", "{", "}"));
   }
 }

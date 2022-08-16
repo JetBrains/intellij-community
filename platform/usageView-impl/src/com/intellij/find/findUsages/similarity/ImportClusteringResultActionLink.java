@@ -65,13 +65,13 @@ public class ImportClusteringResultActionLink extends ActionLink {
     List<Map<String, Object>> list = JsonUtil.nextList(json);
     Int2ObjectMap<UsageCluster> clusters = new Int2ObjectOpenHashMap<>();
     list.forEach(e -> {
-      int cluster_number = (int)(double)e.get("cluster_number");
+      int cluster_number = (int)(double)e.get(CLUSTER_NUMBER);
       UsageCluster cluster = clusters.get(cluster_number);
       if (cluster == null) {
         cluster = new UsageCluster();
         clusters.put(cluster_number, cluster);
       }
-      Object filename = e.get("filename");
+      Object filename = e.get(FILENAME);
       if (filename != null) {
         SimilarUsage usage = usageIndex.get(filename);
         if (usage == null) {
