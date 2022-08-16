@@ -267,8 +267,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
 
-  override fun doExecuteDefault(sessionInfo: CommitSessionInfo): Boolean {
-    if (!isBackgroundCommitChecks()) return super.doExecuteDefault(sessionInfo)
+  override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
+    if (!sessionInfo.isVcsCommit) {
+      return workflow.executeCustom(sessionInfo)
+    }
+
+    if (!isBackgroundCommitChecks()) {
+      return workflow.executeDefault(sessionInfo)
+    }
 
     coroutineScope.launch {
       workflow.executeDefault(sessionInfo) {

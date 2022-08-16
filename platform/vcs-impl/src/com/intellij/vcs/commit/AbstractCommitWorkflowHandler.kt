@@ -111,12 +111,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         CommitSessionInfo.Default
       }
 
-      if (sessionInfo.isVcsCommit) {
-        executeDefault(sessionInfo)
-      }
-      else {
-        executeCustom(sessionInfo)
-      }
+      executeSession(sessionInfo)
     }
 
   override fun executionStarted() = Unit
@@ -126,7 +121,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) =
     ui.endBeforeCommitChecks(result)
 
-  private fun executeDefault(sessionInfo: CommitSessionInfo): Boolean {
+  @RequiresEdt
+  private fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = checkCommit(sessionInfo) &&
                   prepareForCommitExecution(sessionInfo) &&
                   saveCommitOptionsOnCommit()
@@ -138,25 +134,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     refreshChanges {
       workflow.continueExecution {
         updateWorkflow()
-        doExecuteDefault(sessionInfo)
-      }
-    }
-    return true
-  }
-
-  private fun executeCustom(sessionInfo: CommitSessionInfo): Boolean {
-    val proceed = checkCommit(sessionInfo) &&
-                  prepareForCommitExecution(sessionInfo) &&
-                  saveCommitOptionsOnCommit()
-    if (!proceed) return false
-
-    saveCommitMessage(true)
-    logCommitEvent(sessionInfo)
-
-    refreshChanges {
-      workflow.continueExecution {
-        updateWorkflow()
-        doExecuteCustom(sessionInfo)
+        doExecuteSession(sessionInfo)
       }
     }
     return true
@@ -193,12 +171,13 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
   }
 
-  protected open fun doExecuteDefault(sessionInfo: CommitSessionInfo): Boolean {
-    return workflow.executeDefault(sessionInfo)
-  }
-
-  private fun doExecuteCustom(sessionInfo: CommitSessionInfo): Boolean {
-    return workflow.executeCustom(sessionInfo)
+  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      return workflow.executeDefault(sessionInfo)
+    }
+    else {
+      return workflow.executeCustom(sessionInfo)
+    }
   }
 
   protected open fun saveCommitOptionsOnCommit(): Boolean {
