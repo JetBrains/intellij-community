@@ -49,7 +49,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -536,8 +535,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     return null;
   }
 
-  static PsiFile getFileForNode(DefaultMutableTreeNode node) {
-    Object obj = node.getUserObject();
+  static @Nullable PsiFile getFileForNodeDescriptor(@NotNull NodeDescriptor<?> obj) {
     if (obj instanceof TodoFileNode) {
       return ((TodoFileNode)obj).getValue();
     }
