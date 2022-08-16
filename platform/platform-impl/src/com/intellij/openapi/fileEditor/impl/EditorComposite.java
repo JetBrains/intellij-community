@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -564,21 +565,22 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
 
     @Override
     public final Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
       if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile.isValid() ? myFile : null;
+        return myFile;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFile.isValid() ? new VirtualFile[]{myFile} : null;
-      }
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return getProject();
+        return new VirtualFile[]{myFile};
       }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
-        return ((DataProvider)component).getData(dataId);
+        Object data = ((DataProvider)component).getData(dataId);
+        return data == null ? null : DataValidators.validOrNull(data, dataId, component);
       }
       return null;
     }
