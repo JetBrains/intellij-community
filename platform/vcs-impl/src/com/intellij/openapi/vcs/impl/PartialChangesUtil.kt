@@ -118,6 +118,29 @@ object PartialChangesUtil {
     }
   }
 
+  suspend fun <T> underChangeList(project: Project,
+                                  targetChangeList: LocalChangeList?,
+                                  task: suspend () -> T): T {
+    val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+    val oldDefaultList = changeListManager.defaultChangeList
+    if (targetChangeList == null ||
+        targetChangeList == oldDefaultList ||
+        !changeListManager.areChangeListsEnabled()) {
+      return task()
+    }
+
+    switchChangeList(changeListManager, targetChangeList, oldDefaultList)
+    val clmConflictTracker = ChangelistConflictTracker.getInstance(project)
+    try {
+      clmConflictTracker.setIgnoreModifications(true)
+      return task()
+    }
+    finally {
+      clmConflictTracker.setIgnoreModifications(false)
+      restoreChangeList(changeListManager, targetChangeList, oldDefaultList)
+    }
+  }
+
   @JvmStatic
   fun <T> computeUnderChangeListSync(project: Project,
                                      targetChangeList: LocalChangeList?,

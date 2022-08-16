@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
@@ -36,8 +35,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     }
   }
 
-  override fun doRunBeforeCommitChecks(checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
+  override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
   private fun doCommit() {
     LOG.debug("Do actual commit")

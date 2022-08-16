@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import org.jetbrains.annotations.Nls
@@ -74,8 +73,7 @@ open class SingleChangeListCommitWorkflow(
     }
   }
 
-  override fun doRunBeforeCommitChecks(checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
+  override fun getBeforeCommitChecksChangelist(): LocalChangeList? = commitState.changeList
 
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")

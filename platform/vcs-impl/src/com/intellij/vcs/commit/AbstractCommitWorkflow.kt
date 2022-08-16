@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
@@ -211,12 +212,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         LOG.error(e)
       }
     }
-    doRunBeforeCommitChecks(task)
+    PartialChangesUtil.runUnderChangeList(project, getBeforeCommitChecksChangelist(), checks)
 
     return result ?: CommitChecksResult.ExecutionError.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
-  protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
+  open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
 
   protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
     Runnable {

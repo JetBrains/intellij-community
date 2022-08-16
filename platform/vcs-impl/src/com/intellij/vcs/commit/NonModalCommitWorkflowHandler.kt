@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -48,6 +49,7 @@ import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecuto
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable
+import kotlin.coroutines.resume
 import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
@@ -292,7 +294,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         })
         try {
           indicator.start()
-          runAllHandlers(sessionInfo, indicator, isOnlyRunCommitChecks)
+
+          PartialChangesUtil.underChangeList(project, workflow.getBeforeCommitChecksChangelist()) {
+            runAllHandlers(sessionInfo, indicator, isOnlyRunCommitChecks)
+          }
         }
         finally {
           indicator.stop()
