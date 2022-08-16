@@ -20,7 +20,7 @@ internal object TipUiSettings {
     get() = JBUI.scale(16)
   @JvmStatic
   val tipPanelBottomIndent: Int
-    get() = JBUI.scale(8)
+    get() = JBUI.scale(2)
   @JvmStatic
   val feedbackPanelTopIndent: Int
     get() = JBUI.scale(12)

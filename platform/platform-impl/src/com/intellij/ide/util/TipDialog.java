@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,8 @@ public final class TipDialog extends DialogWrapper {
   @Override
   protected JComponent createSouthPanel() {
     JComponent component = super.createSouthPanel();
-    component.setBorder(JBUI.Borders.empty(8, 12));
+    component.setBorder(JBUI.Borders.empty(8, 24, 15, 24));
+    UIUtil.setBackgroundRecursively(component, UIUtil.getTextFieldBackground());
     return component;
   }
 
@@ -64,9 +66,9 @@ public final class TipDialog extends DialogWrapper {
   protected Action @NotNull [] createActions() {
     if (myShowActions) {
       if (Registry.is("ide.show.open.button.in.tip.dialog")) {
-        return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+        return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction};
       }
-      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction};
     }
     else {
       return new Action[]{getCancelAction()};

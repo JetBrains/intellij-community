@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -73,9 +72,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-    Border insideBorder = TipUiSettings.getTipPanelBorder();
-    Border outsideBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0);
-    centerPanel.setBorder(JBUI.Borders.compound(outsideBorder, insideBorder));
+    centerPanel.setBorder(TipUiSettings.getTipPanelBorder());
     centerPanel.setBackground(UIUtil.getTextFieldBackground());
 
     // scroll will not be shown in a regular case
