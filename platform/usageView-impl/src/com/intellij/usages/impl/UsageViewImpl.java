@@ -6,6 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -1834,12 +1835,6 @@ public class UsageViewImpl implements UsageViewEx {
     return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
-  private boolean hasSelectedNodes() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    return selectionPaths != null && ContainerUtil.or(selectionPaths, p -> p.getLastPathComponent() instanceof TreeNode);
-  }
-
   private @NotNull List<@NotNull TreeNode> allSelectedNodes() {
     return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse().toList();
   }
@@ -2007,19 +2002,12 @@ public class UsageViewImpl implements UsageViewEx {
         return myTextFileExporter;
       }
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class)).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
-      else if (USAGES_KEY.is(dataId) && !hasSelectedNodes()) {
-        return Usage.EMPTY_ARRAY;
-      }
-      else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && !hasSelectedNodes()) {
-        return PsiElement.EMPTY_ARRAY;
+        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class))
+          .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       else if (USAGE_TARGETS_KEY.is(dataId)) {
-        return ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null).toArray(UsageTarget.EMPTY_ARRAY);
-      }
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && !hasSelectedNodes()) {
-        return VirtualFile.EMPTY_ARRAY;
+        return ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+          .toArray(UsageTarget.EMPTY_ARRAY);
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
@@ -2028,8 +2016,9 @@ public class UsageViewImpl implements UsageViewEx {
           DataProvider selectedBgtProvider = selectedProvider == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedProvider);
           return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedNodes), selectedBgtProvider);
         }
-        if (selectedProvider != null) {
-          return selectedProvider.getData(dataId);
+        Object nodeData = selectedProvider != null ? selectedProvider.getData(dataId) : null;
+        if (nodeData != null) {
+          return DataValidators.validOrNull(nodeData, dataId, selectedProvider);
         }
       }
       return null;
