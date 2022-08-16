@@ -68,7 +68,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.python.sdk.PyEditorNotificationProvider.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
+import static com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
