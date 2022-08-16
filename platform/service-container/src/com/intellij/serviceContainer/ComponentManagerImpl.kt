@@ -632,13 +632,17 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  final override suspend fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
-    val key = serviceClass.name
-    val adapter = componentKeyToAdapter.get(key)
+  final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
+    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for key ${keyClass.name}")
+  }
+
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
+    val key = keyClass.name
+    val adapter = componentKeyToAdapter.get(key) ?: return null
     if (adapter !is ServiceComponentAdapter) {
       throw RuntimeException("$adapter is not a service (key=$key)")
     }
-    return adapter.getInstanceAsync(componentManager = this, serviceClass)
+    return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
   }
 
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null

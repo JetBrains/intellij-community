@@ -10,7 +10,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -46,18 +45,12 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
-import kotlin.Unit;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.GlobalScope;
-import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -362,29 +355,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
-  }
-
-
-  @Override
-  public final void load() {
-    PluginManagerCore.scheduleDescriptorLoading(GlobalScope.INSTANCE);
-    List<IdeaPluginDescriptorImpl> modules = FutureKt.asCompletableFuture(PluginManagerCore.getInitPluginFuture())
-      .join().getEnabledModules();
-
-    registerComponents(modules, this, null, null);
-    ApplicationLoader.initConfigurationStore(this);
-    try {
-      BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
-        preloadServices(modules, "", scope, false);
-        loadComponents();
-
-        ApplicationLoader.callAppInitialized(scope, ApplicationLoader.getAppInitializedListeners(this), getCoroutineScope());
-        return Unit.INSTANCE;
-      });
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public final void loadComponents() {

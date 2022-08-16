@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
@@ -69,7 +70,10 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     }
 
     runActivity("tracked libraries setup") {
+      // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
+      val jdkTableDeferred = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(ProjectJdkTable::class.java)
       val projectRootManager = componentManagerEx.getServiceAsync(ProjectRootManager::class.java).await() as ProjectRootManagerBridge
+      jdkTableDeferred.join()
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
           projectRootManager.setupTrackedLibrariesAndJdks()

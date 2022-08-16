@@ -5,27 +5,34 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
+import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
@@ -82,10 +89,18 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
-    launch(CoroutineName("laf initialization") + SwingDispatcher) {
+    launch {
       setBaseLaFJob.join()
-      // don't wait for result - we just need to trigger initialization if not yet created
-      app.getServiceAsync(LafManager::class.java)
+
+      val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
+        // don't wait for result - we just need to trigger initialization if not yet created
+        app.getServiceAsync(LafManager::class.java)
+      }
+      if (!app.isHeadlessEnvironment) {
+        // preload only when LafManager is ready
+        lafManagerDeferred.join()
+        app.getServiceAsync(EditorColorsManager::class.java)
+      }
     }
 
     withContext(Dispatchers.Default) {
@@ -110,6 +125,8 @@ private suspend fun initApplicationImpl(args: List<String>,
                                         app: ApplicationImpl,
                                         deferredStarter: Deferred<ApplicationStarter>) {
   val appInitializedListeners = coroutineScope {
+    preloadCriticalServices(app)
+
     app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
 
     launch {
@@ -146,27 +163,46 @@ private suspend fun initApplicationImpl(args: List<String>,
 
   val starter = deferredStarter.await()
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
-    asyncScope.launch {
-      if (starter is ModernApplicationStarter) {
-        starter.start(args)
+    if (starter is ModernApplicationStarter) {
+      starter.start(args)
+    }
+    else {
+      // todo https://youtrack.jetbrains.com/issue/IDEA-298594
+      CompletableFuture.runAsync {
+        starter.main(args)
       }
-      else {
-        // todo https://youtrack.jetbrains.com/issue/IDEA-298594
-        CompletableFuture.runAsync {
-          starter.main(args)
-        }
-      }
-      // no need to use pool once started
-      ZipFilePool.POOL = null
     }
   }
   else {
-    asyncScope.launch(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
         starter.main(args)
       }
-      ZipFilePool.POOL = null
     }
+  }
+  // no need to use pool once started
+  ZipFilePool.POOL = null
+}
+
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
+  launch {
+    // LocalHistory wants ManagingFS, it should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner
+    app.getServiceAsync(ManagingFS::class.java).join()
+    // PlatformVirtualFileManager also wants ManagingFS
+    launch { app.getServiceAsync(VirtualFileManager::class.java) }
+    launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+  }
+  launch {
+    // required for indexing tasks (see JavaSourceModuleNameIndex for example)
+    // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
+    app.getServiceAsync(PropertiesComponent::class.java).join()
+    app.getServiceAsync(FileTypeManager::class.java).join()
+
+    // ProjectJdkTable wants FileTypeManager
+    launch { app.getServiceAsync(ProjectJdkTable::class.java) }
+
+    // wants PropertiesComponent
+    launch { app.getServiceAsync(DebugLogManager::class.java) }
   }
 }
 

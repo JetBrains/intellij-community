@@ -8,10 +8,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.AppMode
-import com.intellij.idea.callAppInitialized
-import com.intellij.idea.getAppInitializedListeners
-import com.intellij.idea.initConfigurationStore
+import com.intellij.idea.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -123,6 +120,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
       coroutineScope {
         withTimeout(Duration.ofSeconds(40).toMillis()) {
+          preloadCriticalServices(app)
           app.preloadServices(
             modules = pluginSet.getEnabledModules(),
             activityPrefix = "",

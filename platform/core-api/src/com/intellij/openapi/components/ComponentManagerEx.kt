@@ -14,7 +14,7 @@ interface ComponentManagerEx {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  suspend fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
+  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
     throw AbstractMethodError()
   }
 }
