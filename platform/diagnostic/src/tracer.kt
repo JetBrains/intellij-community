@@ -100,6 +100,7 @@ private class CoroutineTimeMeasurer(
   override fun toString(): String {
     val activity = CURRENT_ACTIVITY.getVolatile(this) as Activity?
     return when {
+      activity === noActivity -> "no parent and no name"
       activity != null -> (activity as ActivityImpl).name
       parentActivity != null -> "uninitialized child of ${parentActivity.name}"
       else -> "uninitialized"
