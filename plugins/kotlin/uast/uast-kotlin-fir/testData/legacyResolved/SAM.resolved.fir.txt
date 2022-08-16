@@ -56,8 +56,8 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
 UTypeReferenceExpression (name = java.util.function.Supplier<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Supplier) -> Decompiled_Class: Supplier
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
 UTypeReferenceExpression (name = java.util.concurrent.Callable<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Callable) -> Decompiled_Class: Callable
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO

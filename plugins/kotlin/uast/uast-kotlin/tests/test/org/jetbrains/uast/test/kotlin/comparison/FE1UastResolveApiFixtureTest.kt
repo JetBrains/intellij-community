@@ -95,6 +95,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkListIterator(myFixture)
     }
 
+    fun testStringJVM() {
+        checkStringJVM(myFixture)
+    }
+
     fun testArgumentMappingDefaultValue() {
         checkArgumentMappingDefaultValue(myFixture)
     }

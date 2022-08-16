@@ -149,6 +149,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ListIterator", ::checkListIterator)
     }
 
+    fun testStringJVM() {
+        doCheck("StringJVM", ::checkStringJVM)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
