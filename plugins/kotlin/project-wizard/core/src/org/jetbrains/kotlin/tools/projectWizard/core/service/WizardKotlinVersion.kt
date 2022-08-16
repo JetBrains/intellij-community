@@ -8,6 +8,18 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 data class WizardKotlinVersion(
     val version: Version,
     val kind: KotlinVersionKind,
-    val repository: Repository,
+    val repositories: List<Repository>,
     val buildSystemPluginRepository: (BuildSystemType) -> Repository?,
-)
+) {
+    constructor(
+        version: Version,
+        kind: KotlinVersionKind,
+        repository: Repository,
+        buildSystemPluginRepository: (BuildSystemType) -> Repository?
+    ) : this(
+        version,
+        kind,
+        listOf(repository),
+        buildSystemPluginRepository
+    )
+}
