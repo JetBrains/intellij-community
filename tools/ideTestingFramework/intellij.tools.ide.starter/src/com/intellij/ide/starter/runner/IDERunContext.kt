@@ -273,6 +273,8 @@ data class IDERunContext(
     }
     finally {
 
+      collectJBRDiagnosticFilesIfExist(testContext)
+
       try {
         if (SystemInfo.isWindows) {
           destroyGradleDaemonProcessIfExists()

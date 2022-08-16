@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
@@ -13,6 +14,7 @@ import java.nio.charset.Charset
 import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
@@ -203,6 +205,16 @@ fun takeScreenshot(logsDir: Path) {
   }
   else {
     error("Couldn't take screenshot")
+  }
+}
+
+fun collectJBRDiagnosticFilesIfExist(context: IDETestContext) {
+  val userHome = System.getProperty("user.home")
+  val pathUserHome = Paths.get(userHome)
+  val listOfJavaErrorFiles = pathUserHome.toFile().listFiles().filter { it.nameWithoutExtension.startsWith("java_error_in_idea_") && it.extension == "log" }
+  if(listOfJavaErrorFiles.isNotEmpty()) {
+    listOfJavaErrorFiles.forEach { it.copyTo(context.paths.jbrDiagnostic.resolve(it.name).toFile()) }
+    context.publishArtifact(context.paths.jbrDiagnostic)
   }
 }
 
