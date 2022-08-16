@@ -131,7 +131,7 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
             +DefaultRepository.GRADLE_PLUGIN_PORTAL
             +DefaultRepository.GOOGLE
             +DefaultRepository.JCENTER
-            +kotlinVersion.repository
+            +kotlinVersion.repositories
         }
     }
 }
