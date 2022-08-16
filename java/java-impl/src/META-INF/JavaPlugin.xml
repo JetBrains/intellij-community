@@ -1284,7 +1284,7 @@
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
     <registryKey key="jvm.debugger.gray.out" defaultValue="false" restartRequired="false"
                  description="Gray out unreachable code blocks when debugging Java applications (experimental)"/>
-    <registryKey key="java.jspecify.annotations.available" defaultValue="false" restartRequired="true"
+    <registryKey key="java.jspecify.annotations.available" defaultValue="true" restartRequired="true"
                  description="Experimental support for experimental annotations"/>
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
