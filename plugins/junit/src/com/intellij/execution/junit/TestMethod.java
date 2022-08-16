@@ -19,8 +19,6 @@ import org.jetbrains.uast.UastContextKt;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -52,20 +50,8 @@ public class TestMethod extends TestObject {
 
   @Override
   public String suggestActionName() {
-    Integer index = null;
     String parameters = getConfiguration().getPersistentData().getProgramParameters();
-    Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
-    if (parameters != null) {
-      Matcher matcher = pattern.matcher(parameters);
-      if (matcher.find()) {
-        String group = matcher.group(1);
-        try {
-          index = Integer.parseInt(group);
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
+    Integer index = JUnitConfiguration.Data.getIndexFromParameters(parameters);
     String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
     return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()" + indexStr;
   }
