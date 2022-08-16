@@ -4,15 +4,14 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForTypeDeclaration
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class TypeHighlighter(
     holder: AnnotationHolder,
@@ -37,27 +36,49 @@ internal class TypeHighlighter(
             // Do nothing: 'super' and 'this' are highlighted as a keyword
             return
         }
-        val target = expression.mainReference.resolve() ?: return
-        if (isAnnotationCall(expression, target)) {
+        if (expression.isConstructorCallReference()) {
+            // Do not highlight constructor call as class reference
+            return
+        }
+
+        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return
+        if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor
             return
         }
-        textAttributesKeyForTypeDeclaration(target)?.let { key ->
-            if (expression.isConstructorCallReference() && key != KotlinHighlightingColors.ANNOTATION) {
-                // Do not highlight constructor call as class reference
-                return@let
+
+        val color = when (symbol) {
+            is KtAnonymousObjectSymbol -> Colors.CLASS
+            is KtNamedClassOrObjectSymbol -> when (symbol.classKind) {
+                KtClassKind.CLASS -> when (symbol.modality) {
+                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> Colors.CLASS
+                    Modality.ABSTRACT -> Colors.ABSTRACT_CLASS
+                }
+                KtClassKind.ENUM_CLASS -> Colors.ENUM
+                KtClassKind.ANNOTATION_CLASS -> Colors.ANNOTATION
+                KtClassKind.OBJECT -> Colors.OBJECT
+                KtClassKind.COMPANION_OBJECT -> Colors.OBJECT
+                KtClassKind.INTERFACE -> Colors.TRAIT
+                KtClassKind.ANONYMOUS_OBJECT -> Colors.CLASS
             }
-            highlightName(expression.project, expression.textRange, key)
+
+            is KtTypeAliasSymbol -> Colors.TYPE_ALIAS
+            is KtTypeParameterSymbol -> Colors.TYPE_PARAMETER
         }
+
+        highlightName(expression.textRange, color)
     }
 
-    private fun isAnnotationCall(expression: KtSimpleNameExpression, target: PsiElement): Boolean {
-        val isKotlinAnnotation = target is KtPrimaryConstructor && target.containingClassOrObject?.isAnnotation() == true
+    context(KtAnalysisSession)
+    private fun isAnnotationCall(expression: KtSimpleNameExpression, target: KtSymbol): Boolean {
+        val isKotlinAnnotation = target is KtConstructorSymbol
+                && target.isPrimary
+                && (target.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.ANNOTATION_CLASS
 
         if (!isKotlinAnnotation) {
-            val targetIsAnnotation = when (target) {
-                is KtClass -> target.isAnnotation()
-                is PsiClass -> target.isAnnotationType
+            val targetIsAnnotation = when (val targePsi = target.psi) {
+                is KtClass -> targePsi.isAnnotation()
+                is PsiClass -> targePsi.isAnnotationType
                 else -> false
             }
 
@@ -67,9 +88,9 @@ internal class TypeHighlighter(
         }
 
         val annotationEntry = PsiTreeUtil.getParentOfType(
-          expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
+            expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
         )
-       return annotationEntry?.atSymbol != null
+        return annotationEntry?.atSymbol != null
     }
 }
 

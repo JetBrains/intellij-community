@@ -33,7 +33,7 @@ internal abstract class AfterResolveHighlighter(
         }
     }
 
-    protected fun highlightName(project: Project, textRange: TextRange, attributesKey: TextAttributesKey, message: String? = null) {
+    protected fun highlightName(textRange: TextRange, attributesKey: TextAttributesKey, message: String? = null) {
         if (project.isNameHighlightingEnabled) {
             createInfoAnnotation(textRange, message, attributesKey)
         }

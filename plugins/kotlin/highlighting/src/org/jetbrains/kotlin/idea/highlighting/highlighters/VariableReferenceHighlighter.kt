@@ -4,13 +4,10 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForPropertyDeclaration
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -37,54 +34,68 @@ internal class VariableReferenceHighlighter(
         if (expression.isByNameArgumentReference()) return
         if (expression.parent is KtInstanceExpressionWithLabel) return
 
-        if (expression.isAutoCreatedItParameter()) {
-            createInfoAnnotation(
-                expression,
-                KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
-                KotlinHighlightingColors.FUNCTION_LITERAL_DEFAULT_PARAMETER
-            )
-            return
-        }
-
-        val targetSymbol = expression.mainReference.resolveToSymbol()
-        val targetPsi = targetSymbol?.psi
-        when {
-            targetSymbol is KtBackingFieldSymbol -> Colors.BACKING_FIELD_VARIABLE
-            targetSymbol is KtSyntheticJavaPropertySymbol -> Colors.SYNTHETIC_EXTENSION_PROPERTY
-            targetPsi != null -> textAttributesKeyForPropertyDeclaration(targetPsi)
-            else -> null
-        }?.let { attribute ->
-            highlightName(expression, attribute)
-            if (isMutableVariable(targetSymbol) == true
-                || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)
-            ) {
-                highlightName(expression, Colors.MUTABLE_VARIABLE)
-            }
+        when (val symbol = expression.mainReference.resolveToSymbol()) {
+            is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
+            is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
+            is KtLocalVariableSymbol -> highlightName(expression, Colors.LOCAL_VARIABLE)
+            is KtSyntheticJavaPropertySymbol -> highlightName(expression, Colors.SYNTHETIC_EXTENSION_PROPERTY)
+            is KtValueParameterSymbol -> highlightValueParameter(symbol, expression)
+            is KtEnumEntrySymbol -> highlightName(expression, Colors.ENUM_ENTRY)
         }
 
     }
 
     context(KtAnalysisSession)
-    private fun isBackingFieldReferencingMutableVariable(symbol: KtSymbol): Boolean {
-        if (symbol !is KtBackingFieldSymbol) return false
-        return !symbol.owningProperty.isVal
+    private fun highlightValueParameter(symbol: KtValueParameterSymbol, expression: KtSimpleNameExpression) {
+        when {
+            symbol.isImplicitLambdaParameter -> {
+                createInfoAnnotation(
+                    expression,
+                    KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
+                    Colors.FUNCTION_LITERAL_DEFAULT_PARAMETER
+                )
+            }
+
+            else -> highlightName(expression, Colors.PARAMETER)
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun highlightProperty(
+        symbol: KtKotlinPropertySymbol,
+        expression: KtSimpleNameExpression
+    ) {
+        if (!symbol.isVal) {
+            highlightName(expression, Colors.MUTABLE_VARIABLE)
+        }
+        val hasExplicitGetterOrSetter = symbol.getter?.hasBody == true || symbol.setter?.hasBody == true
+        val color = when {
+            symbol.isExtension -> Colors.EXTENSION_PROPERTY
+            symbol.symbolKind == KtSymbolKind.TOP_LEVEL -> when {
+                hasExplicitGetterOrSetter -> Colors.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                else -> Colors.PACKAGE_PROPERTY
+            }
+
+            else -> when {
+                hasExplicitGetterOrSetter -> Colors.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                else -> Colors.INSTANCE_PROPERTY
+            }
+        }
+        highlightName(expression, color)
+    }
+
+    context(KtAnalysisSession)
+    private fun highlightBackingField(symbol: KtBackingFieldSymbol, expression: KtSimpleNameExpression) {
+        if (!symbol.owningProperty.isVal) {
+            highlightName(expression, Colors.MUTABLE_VARIABLE)
+        }
+        highlightName(expression, Colors.BACKING_FIELD_VARIABLE)
     }
 
     private fun KtSimpleNameExpression.isByNameArgumentReference() =
         parent is KtValueArgumentName
-
-
-    private fun KtSimpleNameExpression.isAutoCreatedItParameter(): Boolean {
-        return getReferencedName() == "it" // todo
-    }
 }
 
-
-@Suppress("UnusedReceiverParameter")
-private fun KtAnalysisSession.isMutableVariable(symbol: KtSymbol?): Boolean = when (symbol) {
-    is KtVariableSymbol -> !symbol.isVal
-    else -> false
-}
 
 private fun KtSimpleNameExpression.isAssignmentReference(): Boolean {
     if (this !is KtOperationReferenceExpression) return false

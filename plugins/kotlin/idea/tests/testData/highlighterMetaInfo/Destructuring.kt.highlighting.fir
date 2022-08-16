@@ -5,9 +5,9 @@ fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>some<!>()
     val (s) = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Box<!>(0)
     var (x) = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Box<!>(1)
 
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(s)
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(x)
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>s<!>)
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!>)
 
-    x = x * 2 + 2
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(x)
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!> * 2 + 2
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>consume<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>x<!>)
 }
