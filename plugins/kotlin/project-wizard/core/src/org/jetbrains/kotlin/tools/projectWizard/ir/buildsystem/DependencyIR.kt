@@ -122,7 +122,7 @@ abstract class KotlinLibraryDependencyIR(
 
     override val artifact: LibraryArtifact
         get() = MavenArtifact(
-            kotlinVersion.repository,
+            kotlinVersion.repositories,
             "org.jetbrains.kotlin",
             "kotlin-$artifactName"
         )
