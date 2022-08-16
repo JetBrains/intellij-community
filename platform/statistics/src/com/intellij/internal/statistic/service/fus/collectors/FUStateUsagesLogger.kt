@@ -62,7 +62,7 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
                 logMetricsOrError(project = project,
                                   recorderLoggers = recorderLoggers,
                                   usagesCollector = usagesCollector,
-                                  metrics = metrics.asDeferred().await())
+                                  metrics = metrics.asDeferred().await() ?: emptySet())
               }
             }
           }
