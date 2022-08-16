@@ -161,13 +161,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected fun getCommitEventDispatcher(): CommitResultHandler = EdtCommitResultHandler(commitEventDispatcher.multicaster)
   protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
 
-  fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
-    if (unversionedFiles.isEmpty()) return true
-
-    FileDocumentManager.getInstance().saveAllDocuments()
-    return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
-  }
-
   fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
     processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)

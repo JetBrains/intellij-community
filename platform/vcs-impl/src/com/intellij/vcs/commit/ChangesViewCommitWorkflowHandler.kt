@@ -252,7 +252,7 @@ internal class ChangesViewCommitWorkflowHandler(
   override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
     if (sessionInfo.isVcsCommit) {
       val changeList = workflow.getAffectedChangeList(getIncludedChanges())
-      if (!addUnversionedFiles(changeList, inclusionModel)) return false
+      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), changeList, inclusionModel)) return false
     }
     return super.prepareForCommitExecution(sessionInfo)
   }

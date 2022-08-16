@@ -105,7 +105,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
     if (sessionInfo.isVcsCommit) {
-      if (!addUnversionedFiles(getChangeList(), ui.getInclusionModel())) return false
+      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())) return false
     }
     return super.prepareForCommitExecution(sessionInfo)
   }

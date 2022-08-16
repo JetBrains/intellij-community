@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
@@ -166,13 +168,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   @RequiresEdt
   protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
-  protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
-    val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
-    return workflow.addUnversionedFiles(changeList, unversionedFiles) { newChanges ->
-      inclusionModel.addInclusion(newChanges)
-    }
-  }
-
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
     return workflow.executeSession(sessionInfo)
   }
@@ -218,6 +213,18 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
       }
       return true
+    }
+
+    fun addUnversionedFiles(project: Project,
+                            unversionedFilePaths: Iterable<FilePath>,
+                            changeList: LocalChangeList,
+                            inclusionModel: InclusionModel): Boolean {
+      val unversionedFiles = unversionedFilePaths.mapNotNull { it.virtualFile }
+      if (unversionedFiles.isEmpty()) return true
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return ScheduleForAdditionAction.addUnversionedFilesToVcs(project, changeList, unversionedFiles,
+                                                                { newChanges -> inclusionModel.addInclusion(newChanges) }, null)
     }
   }
 }
