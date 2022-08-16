@@ -37,7 +37,12 @@ internal class VariableReferenceHighlighter(
         when (val symbol = expression.mainReference.resolveToSymbol()) {
             is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
             is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
-            is KtLocalVariableSymbol -> highlightName(expression, Colors.LOCAL_VARIABLE)
+            is KtLocalVariableSymbol -> {
+                if (!symbol.isVal) {
+                    highlightName(expression, Colors.MUTABLE_VARIABLE)
+                }
+                highlightName(expression, Colors.LOCAL_VARIABLE)
+            }
             is KtSyntheticJavaPropertySymbol -> highlightName(expression, Colors.SYNTHETIC_EXTENSION_PROPERTY)
             is KtValueParameterSymbol -> highlightValueParameter(symbol, expression)
             is KtEnumEntrySymbol -> highlightName(expression, Colors.ENUM_ENTRY)

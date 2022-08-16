@@ -39,6 +39,16 @@ internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : Abstra
         super.visitProperty(property)
     }
 
+    override fun visitDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration) {
+        val isVar = destructuringDeclaration.isVar
+        for (entry in destructuringDeclaration.entries) {
+            highlightName(entry, Colors.LOCAL_VARIABLE)
+            if (isVar) {
+                highlightName(entry, Colors.MUTABLE_VARIABLE)
+            }
+        }
+    }
+
     override fun visitParameter(parameter: KtParameter) {
         highlightNamedDeclaration(parameter, textAttributesForKtParameterDeclaration(parameter))
         highlightMutability(parameter)

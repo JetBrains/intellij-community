@@ -67,13 +67,13 @@ internal class FunctionCallHighlighter(
             is KtConstructorSymbol -> Colors.CONSTRUCTOR_CALL
             is KtAnonymousFunctionSymbol -> null
             is KtFunctionSymbol -> when {
+                function.isSuspend -> Colors.SUSPEND_FUNCTION_CALL
                 call.isImplicitInvoke -> if (function.isBuiltinFunctionInvoke) {
                     Colors.VARIABLE_AS_FUNCTION_CALL
                 } else {
                     Colors.VARIABLE_AS_FUNCTION_LIKE_CALL
                 }
 
-                function.isSuspend -> Colors.SUSPEND_FUNCTION_CALL
                 function.callableIdIfNonLocal == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID -> Colors.KEYWORD
                 function.isExtension -> Colors.EXTENSION_FUNCTION_CALL
                 function.symbolKind == KtSymbolKind.TOP_LEVEL -> Colors.PACKAGE_FUNCTION_CALL
