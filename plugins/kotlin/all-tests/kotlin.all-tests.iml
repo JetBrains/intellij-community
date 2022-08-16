@@ -47,7 +47,7 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
