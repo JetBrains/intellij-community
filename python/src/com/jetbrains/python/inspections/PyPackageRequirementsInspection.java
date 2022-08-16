@@ -41,6 +41,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.PyEditorNotificationProvider;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -352,7 +353,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       final int answer = askToConfigureInterpreter(project, sdk);
       switch (answer) {
         case Messages.YES:
-          new PyInterpreterInspection.ConfigureInterpreterFix().applyFix(project, descriptor);
+          new PyEditorNotificationProvider.ConfigureInterpreterFix().applyFix(project, descriptor);
           return true;
         case Messages.CANCEL:
         case -1:

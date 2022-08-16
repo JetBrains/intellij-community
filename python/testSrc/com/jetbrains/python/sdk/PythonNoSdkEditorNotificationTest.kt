@@ -11,7 +11,6 @@ import com.intellij.ui.EditorNotificationsImpl
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.inspections.PyInterpreterInspection
 import org.assertj.core.api.AssertionsForClassTypes
 
 class PythonNoSdkEditorNotificationTest : PyTestCase() {
@@ -45,7 +44,7 @@ class PythonNoSdkEditorNotificationTest : PyTestCase() {
       }
     }
 
-    fun getNotificationPanel(fileEditor: FileEditor) = EditorNotificationsImpl.getNotificationPanels(fileEditor)[PyInterpreterInspection::class.java]
+    fun getNotificationPanel(fileEditor: FileEditor) = EditorNotificationsImpl.getNotificationPanels(fileEditor)[PyEditorNotificationProvider::class.java]
 
     fun openFileInEditor(fileName: String, fileText: String, fixture: CodeInsightTestFixture) : FileEditor {
       UIUtil.dispatchAllInvocationEvents()

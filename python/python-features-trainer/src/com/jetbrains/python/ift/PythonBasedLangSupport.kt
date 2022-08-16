@@ -15,7 +15,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.sdk.PyEditorNotificationProvider
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -152,7 +152,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       }
       val configureCallbackId = LearningUiManager.addCallback {
         val module = project.modules.singleOrNull() ?: return@addCallback
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+        PyEditorNotificationProvider.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
       }
       if (useUserProjects || isLearningProject(project, this@PythonBasedLangSupport)) {
         showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),
