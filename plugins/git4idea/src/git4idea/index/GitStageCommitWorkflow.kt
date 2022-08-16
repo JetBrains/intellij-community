@@ -34,8 +34,9 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
 
   override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean = error("Not supported currently")
 
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result.shouldCommit) doCommit()
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    assert(sessionInfo.isVcsCommit)
+    doCommit()
   }
 
   private fun doCommit() {

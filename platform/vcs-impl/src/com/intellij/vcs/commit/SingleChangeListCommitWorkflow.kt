@@ -58,23 +58,24 @@ open class SingleChangeListCommitWorkflow(
 
   internal lateinit var commitState: ChangeListCommitState
 
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) = when {
-    result.shouldCommit -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-    result.shouldCloseWindow ->
+  override fun processExecuteChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    if (result.shouldCloseWindow) {
       moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-    else -> Unit
+    }
+    super.processExecuteChecksResult(sessionInfo, result)
+  }
+
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    if (sessionInfo.isVcsCommit) {
+      DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+    }
+    else {
+      doCommitCustom(sessionInfo)
+    }
   }
 
   override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean =
     executeCustom(sessionInfo, commitState.changes, commitState.commitMessage)
-
-  override fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
-    when {
-      result.shouldCommit -> doCommitCustom(sessionInfo)
-      result.shouldCloseWindow ->
-        moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-      else -> Unit
-    }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)

@@ -27,16 +27,17 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
     changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result.shouldCommit) doCommit()
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    if (sessionInfo.isVcsCommit) {
+      doCommit()
+    }
+    else {
+      doCommitCustom(sessionInfo)
+    }
   }
 
   override fun executeCustom(sessionInfo: CommitSessionInfo): Boolean =
     executeCustom(sessionInfo, commitState.changes, commitState.commitMessage)
-
-  override fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
-    if (result.shouldCommit) doCommitCustom(sessionInfo)
-  }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)

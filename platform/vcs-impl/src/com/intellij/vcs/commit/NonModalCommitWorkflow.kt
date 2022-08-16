@@ -38,7 +38,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(sessionInfo, checker)
-      processExecuteDefaultChecksResult(result)
+      processExecuteChecksResult(sessionInfo, result)
     }
     finally {
       if (!result.shouldCommit) endExecution()

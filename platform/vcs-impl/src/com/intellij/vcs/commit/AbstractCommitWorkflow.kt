@@ -171,11 +171,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   fun executeDefault(sessionInfo: CommitSessionInfo): Boolean {
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
-    processExecuteDefaultChecksResult(beforeCommitChecksResult)
+    processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)
     return beforeCommitChecksResult.shouldCommit
   }
 
-  protected open fun processExecuteDefaultChecksResult(result: CommitChecksResult) = Unit
+  protected open fun processExecuteChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    if (result.shouldCommit) {
+      performCommit(sessionInfo)
+    }
+  }
+
+  protected abstract fun performCommit(sessionInfo: CommitSessionInfo)
 
   protected fun runBeforeCommitChecksWithEvents(sessionInfo: CommitSessionInfo): CommitChecksResult {
     fireBeforeCommitChecksStarted()
@@ -284,7 +290,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     configureCommitSession(sessionInfo, changes, commitMessage) &&
     run {
       val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
-      processExecuteCustomChecksResult(sessionInfo, beforeCommitChecksResult)
+      processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)
       beforeCommitChecksResult.shouldCommit
     }
 
@@ -299,9 +305,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       return true
     }
   }
-
-  protected open fun processExecuteCustomChecksResult(sessionInfo: CommitSessionInfo,
-                                                      result: CommitChecksResult) = Unit
 
   companion object {
     @JvmStatic
