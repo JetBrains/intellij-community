@@ -213,7 +213,10 @@ fun collectJBRDiagnosticFilesIfExist(context: IDETestContext) {
   val pathUserHome = Paths.get(userHome)
   val listOfJavaErrorFiles = pathUserHome.toFile().listFiles().filter { it.nameWithoutExtension.startsWith("java_error_in_idea_") && it.extension == "log" }
   if(listOfJavaErrorFiles.isNotEmpty()) {
-    listOfJavaErrorFiles.forEach { it.copyTo(context.paths.jbrDiagnostic.resolve(it.name).toFile()) }
+    listOfJavaErrorFiles.forEach {
+    if (!context.paths.jbrDiagnostic.resolve(it.name).toFile().exists())
+      it.copyTo(context.paths.jbrDiagnostic.resolve(it.name).toFile())
+    }
     context.publishArtifact(context.paths.jbrDiagnostic)
   }
 }
