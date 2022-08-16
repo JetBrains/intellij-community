@@ -7,8 +7,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
+import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownTextUtil
 import org.intellij.plugins.markdown.lang.psi.util.children
-import org.intellij.plugins.markdown.util.MarkdownTextUtil
 
 /**
  * Markdown special formatting block that puts all it [MarkdownTokenTypes.TEXT] children inside wrap.
@@ -38,7 +38,7 @@ internal class MarkdownWrappingFormattingBlock(
     for (node in filtered) {
       when (node.elementType) {
         MarkdownTokenTypes.TEXT -> {
-          val splits = MarkdownTextUtil.getSplitBySpacesRanges(node.text, node.textRange.startOffset)
+          val splits = MarkdownTextUtil.splitTextForWrapping(node.text, node.textRange.startOffset)
           for (split in splits) {
             result.add(MarkdownRangedFormattingBlock(node, split, settings, spacing, alignment, wrapping))
           }
