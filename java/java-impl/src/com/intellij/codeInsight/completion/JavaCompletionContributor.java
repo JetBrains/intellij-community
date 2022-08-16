@@ -904,7 +904,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return false;
+      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
