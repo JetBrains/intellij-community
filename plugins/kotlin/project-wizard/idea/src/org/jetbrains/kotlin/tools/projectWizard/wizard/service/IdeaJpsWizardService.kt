@@ -226,7 +226,7 @@ private class ProjectImporter(
             true,
             true,
             librariesPath.toString(),
-            listOf(artifact.repository.asJPSRepository())
+            artifact.repositories.map { it.asJPSRepository() }
         )
 
         return LibraryClassesAndSources.fromOrderRoots(orderRoots)
