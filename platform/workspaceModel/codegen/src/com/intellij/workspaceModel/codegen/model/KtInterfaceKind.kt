@@ -80,8 +80,22 @@ interface WsPropertyClass
 object WsEnum : WsEntityInterface(), WsPropertyClass {
   override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
                               childAnnotation: KtAnnotation?): ValueType<*> {
-    return TBlob<Any>(ktType.classifier)
+    return TBlob<Any>(generateName(ktInterface?.scope) ?: ktType.classifier)
   }
+}
+
+// Generates a correct name in case of inner classes
+private fun generateName(scope: KtScope?): String? {
+  if (scope == null) return null
+  var topLevelClass: KtScope = scope
+  val outerNames = mutableListOf<String>()
+  do {
+    if (topLevelClass.isRoot) break
+    outerNames.add(topLevelClass.ktInterface!!.name)
+    topLevelClass = topLevelClass.parent!!
+  }
+  while (true)
+  return outerNames.reversed().joinToString(".")
 }
 
 object WsData : WsEntityInterface(), WsPropertyClass {
