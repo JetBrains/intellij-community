@@ -11,18 +11,11 @@ function die() {
   exit 1
 }
 
-function get_absolute_path() {
-  ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
-}
-
 OUT="${OUT_DIR:-${PROG_DIR}/out/studio}"
 DIST="${DIST_DIR:-"${OUT}/dist"}"
 
 mkdir -p "$OUT"
 mkdir -p "$DIST"
-# ensure OUT and DIST are absolute paths
-OUT="$(get_absolute_path "$OUT")"
-DIST="$(get_absolute_path "$DIST")"
 
 INCREMENTAL=false
 while [[ $# -gt 0 ]]; do
