@@ -48,8 +48,6 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addChangeListListener(this, this)
   }
 
-  override fun vcsesChanged() = Unit
-
   fun activate(): Boolean {
     initCommitHandlers()
 

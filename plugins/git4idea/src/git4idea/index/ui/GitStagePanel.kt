@@ -44,7 +44,9 @@ import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitStatusPanel
+import com.intellij.vcs.commit.CommitWorkflowListener
+import com.intellij.vcs.commit.EditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -473,11 +475,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         update()
       }
     }
-
-    override fun vcsesChanged() = Unit
-    override fun executionStarted() = Unit
-    override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = Unit
-    override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = Unit
   }
 
   companion object {

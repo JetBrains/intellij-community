@@ -51,13 +51,13 @@ private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCl
 var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
 
 interface CommitWorkflowListener : EventListener {
-  fun vcsesChanged()
+  fun vcsesChanged() = Unit
 
-  fun executionStarted()
-  fun executionEnded()
+  fun executionStarted() = Unit
+  fun executionEnded() = Unit
 
-  fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo)
-  fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult)
+  fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = Unit
+  fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = Unit
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
