@@ -251,7 +251,7 @@ private class ProjectImporter(
             true,
             true,
             null,
-            listOf(artifact.repository.asJPSRepository())
+            artifact.repositories.map { it.asJPSRepository() }
         )
 
         return LibraryClassesAndSources.fromOrderRoots(orderRoots)
