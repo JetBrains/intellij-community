@@ -399,8 +399,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.device-explorer", "android.jar")
       withModule("intellij.android.emulator", "android.jar")
-      withModule("intellij.android.gradle-tooling.api", "android.jar")
-      withModule("intellij.android.gradle-tooling.impl", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
       withModule("intellij.android.lang-databinding", "android.jar")
@@ -435,6 +433,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       withModule("intellij.android.server-flags", "android.jar")
       withModule("intellij.android.codenavigation", "android.jar")
+
+      //android-gradle-tooling.jar
+      withModule("intellij.android.gradle-tooling.api", "android-gradle-tooling.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android-gradle-tooling.jar")
 
       // artwork.jar
       withModule("intellij.android.artwork", "artwork.jar")
