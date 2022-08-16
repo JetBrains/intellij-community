@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
@@ -28,7 +28,7 @@ class CreationCoroutineStackFrameItem(
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess.project)
+            val position = location.findPosition(debugProcess)
             CreationCoroutineStackFrame(frame, position, first, location)
         }
     }
@@ -45,7 +45,7 @@ class SuspendCoroutineStackFrameItem(
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess.project)
+            val position = location.findPosition(debugProcess)
             CoroutineStackFrame(frame, position, spilledVariables, includeFrameVariables = false, location)
         }
     }
@@ -61,7 +61,7 @@ class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess.project)
+            val position = location.findPosition(debugProcess)
             CoroutineStackFrame(frame, position, spilledVariables, false, location)
         }
     }
@@ -86,7 +86,7 @@ open class RunningCoroutineStackFrameItem(
 ) : CoroutineStackFrameItem(location, spilledVariables) {
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
-            val position = location.findPosition(debugProcess.project)
+            val position = location.findPosition(debugProcess)
             CoroutineStackFrame(frame, position)
         }
     }
@@ -99,7 +99,7 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess.project)
+            val position = location.findPosition(debugProcess)
             CoroutineStackFrame(frame, position, spilledVariables, false, location)
         }
     }
