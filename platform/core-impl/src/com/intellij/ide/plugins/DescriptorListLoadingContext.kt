@@ -19,7 +19,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
-  @JvmField val disabledPlugins: Set<PluginId>,
+  @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
   private val brokenPluginVersions: Map<PluginId, Set<String?>> = PluginManagerCore.getBrokenPluginVersions(),
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
   override val isMissingIncludeIgnored: Boolean = false,
