@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
@@ -165,6 +166,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
 
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
+
+  private @NotNull Function<String, Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -371,7 +374,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(SEPARATOR_CONSTRAINT, new MySeparator(myShowSeparatorTitles ? ((Separator)action).getText() : null));
+          add(SEPARATOR_CONSTRAINT, mySeparatorCreator.apply(myShowSeparatorTitles ? ((Separator)action).getText() : null));
           isLastElementSeparator = true;
           continue;
         }
@@ -1017,6 +1020,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public final void setActionButtonBorder(@Nullable Border actionButtonBorder) {
     myActionButtonBorder = actionButtonBorder;
+  }
+
+  public final void setSeparatorCreator(@NotNull Function<String, Component> separatorCreator) {
+    mySeparatorCreator = separatorCreator;
   }
 
   /**
