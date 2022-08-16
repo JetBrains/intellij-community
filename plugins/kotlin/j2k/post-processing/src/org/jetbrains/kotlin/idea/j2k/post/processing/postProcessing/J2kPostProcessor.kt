@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptyClassBodyInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersInspection
 import org.jetbrains.kotlin.idea.inspections.*
@@ -177,7 +178,7 @@ private val removeRedundantElementsProcessingGroup =
           RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
           ExplicitThisInspectionBasedProcessing(),
           RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
-          intentionBasedProcessing(RemoveEmptyClassBodyIntention())
+          inspectionBasedProcessing(RemoveEmptyClassBodyInspection())
         )
     )
 
