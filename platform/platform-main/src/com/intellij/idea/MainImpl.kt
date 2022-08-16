@@ -12,8 +12,6 @@ internal class MainImpl : AppStarter {
   }
 
   override suspend fun start(args: List<String>, appDeferred: Deferred<Any>) {
-    withContext(Dispatchers.Default) {
-      doInitApplication(args, appDeferred)
-    }
+    doInitApplication(args, appDeferred)
   }
 }

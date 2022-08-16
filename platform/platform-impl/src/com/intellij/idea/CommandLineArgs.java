@@ -4,13 +4,12 @@ package com.intellij.idea;
 import org.jetbrains.annotations.NotNull;
 
 public final class CommandLineArgs {
-  public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
-  public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   public static final String SPLASH = "splash";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String NO_SPLASH = "nosplash";
 
   public static boolean isKnownArgument(@NotNull String arg) {
-    return SPLASH.equals(arg) || NO_SPLASH.equals(arg) || DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg) || DONT_REOPEN_PROJECTS.equalsIgnoreCase(arg);
+    return SPLASH.equals(arg) || NO_SPLASH.equals(arg) ||
+           AppMode.DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg) || AppMode.DONT_REOPEN_PROJECTS.equalsIgnoreCase(arg);
   }
 }

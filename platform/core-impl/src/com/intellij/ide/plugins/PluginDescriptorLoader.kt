@@ -5,7 +5,7 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -374,8 +374,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
-  val resultDeferred = async(Dispatchers.Default) {
-    val activity = StartUpMeasurer.startActivity("plugin descriptor loading")
+  val resultDeferred = async(CoroutineName("plugin descriptor loading") + Dispatchers.Default) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
     val isRunningFromSources = PluginManagerCore.isRunningFromSources()
     val result = DescriptorListLoadingContext(
@@ -391,7 +390,6 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
         zipFilePoolDeferred = zipFilePoolDeferred,
       )
     }
-    activity.end()
     result
   }
   val pluginSetDeferred = async(Dispatchers.Default) {
@@ -410,7 +408,7 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
 private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
                        context: DescriptorListLoadingContext,
                        loadingResult: PluginLoadingResult) {
-  if (IdeaPluginDescriptorImpl.disableNonBundledPlugins) {
+  if (AppMode.isDisableNonBundledPlugins()) {
     LOG.info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
   }
 

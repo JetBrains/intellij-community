@@ -102,7 +102,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
 
   fun getServer(): BuiltInServer? = serverFuture?.asCompletableFuture()?.join()
 
-  fun lockAndTryActivate(args: Array<String>, scope: CoroutineScope): Map.Entry<ActivationStatus, CliResult?> {
+  fun lockAndTryActivate(args: Array<String>, mainScope: CoroutineScope): Pair<ActivationStatus, CliResult?> {
     log("enter: lock(config=%s system=%s)", configPath, systemPath)
     lockPortFiles()
     val portToPath = HashMap<Int, MutableList<String>>()
@@ -111,15 +111,15 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     if (!portToPath.isEmpty()) {
       for ((key, value) in portToPath) {
         val status = tryActivate(key, value, args)
-        if (status.key != ActivationStatus.NO_INSTANCE) {
-          log("exit: lock(): " + status.value)
+        if (status.first != ActivationStatus.NO_INSTANCE) {
+          log("exit: lock(): " + status.second)
           unlockPortFiles()
           return status
         }
       }
     }
 
-    serverFuture = scope.async(Dispatchers.IO) {
+    serverFuture = mainScope.async(Dispatchers.IO) {
       val activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT)
       val token = UUID.randomUUID().toString()
       val lockedPaths = arrayOf(configPath, systemPath)
@@ -146,7 +146,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
       server
     }
     log("exit: lock(): succeed")
-    return AbstractMap.SimpleEntry(ActivationStatus.NO_INSTANCE, null)
+    return ActivationStatus.NO_INSTANCE to null
   }
 
   /**
@@ -182,7 +182,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     lockedFiles.clear()
   }
 
-  private fun tryActivate(portNumber: Int, paths: List<String>, args: Array<String>): Map.Entry<ActivationStatus, CliResult?> {
+  private fun tryActivate(portNumber: Int, paths: List<String>, args: Array<String>): Pair<ActivationStatus, CliResult?> {
     log("trying: port=%s", portNumber)
     try {
       Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
@@ -206,7 +206,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
             val response = readStringSequence(input)
             log("read: response=%s", java.lang.String.join(";", response))
             if (!response.isEmpty() && OK_RESPONSE == response[0]) {
-              return AbstractMap.SimpleEntry(ActivationStatus.ACTIVATED, mapResponseToCliResult(response))
+              return ActivationStatus.ACTIVATED to mapResponseToCliResult(response)
             }
           }
           catch (e: IOException) {
@@ -215,7 +215,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
           catch (e: IllegalArgumentException) {
             log(e)
           }
-          return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.CANNOT_ACTIVATE, null)
+          return ActivationStatus.CANNOT_ACTIVATE to null
         }
       }
     }
@@ -225,7 +225,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     catch (e: IOException) {
       log(e)
     }
-    return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.NO_INSTANCE, null)
+    return ActivationStatus.NO_INSTANCE to null
   }
 }
 

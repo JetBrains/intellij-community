@@ -225,21 +225,6 @@ public final class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass() {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
-      return;
-    }
-
-    try {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Class<? extends Toolkit> aClass = toolkit.getClass();
-      if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
-        ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
-      }
-    }
-    catch (Exception ignore) { }
-  }
-
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
     String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition().toLowerCase(Locale.ENGLISH)

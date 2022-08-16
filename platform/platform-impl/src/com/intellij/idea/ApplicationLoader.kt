@@ -27,7 +27,6 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -55,17 +54,12 @@ import kotlin.system.exitProcess
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  val job = ComponentManagerImpl.mainScope!!.launch(Dispatchers.Default) {
+  runBlocking(rootTask()) {
     doInitApplication(rawArgs, appDeferred)
-  }
-
-  // block the thread
-  runBlocking {
-    job.join()
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>): Unit = coroutineScope {
+suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
@@ -87,17 +81,34 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     initConfigurationStore(app)
   }
 
-  val args = processProgramArguments(rawArgs)
-  val deferredStarter = initAppActivity.runChild("app starter creation") {
-    createAppStarterAsync(args)
-  }
+  coroutineScope {
+    launch(CoroutineName("laf initialization") + SwingDispatcher) {
+      setBaseLaFJob.join()
+      // don't wait for result - we just need to trigger initialization if not yet created
+      app.getServiceAsync(LafManager::class.java)
+    }
 
-  launchAndMeasure("laf initialization", SwingDispatcher) {
-    setBaseLaFJob.join()
-    // don't wait for result - we just need to trigger initialization if not yet created
-    app.getServiceAsync(LafManager::class.java)
-  }
+    withContext(Dispatchers.Default) {
+      val args = processProgramArguments(rawArgs)
 
+      val deferredStarter = initAppActivity.runChild("app starter creation") {
+        createAppStarterAsync(args)
+      }
+
+      initApplicationImpl(args = args,
+                          initAppActivity = initAppActivity,
+                          pluginSet = pluginSet,
+                          app = app,
+                          deferredStarter = deferredStarter)
+    }
+  }
+}
+
+private suspend fun initApplicationImpl(args: List<String>,
+                                        initAppActivity: Activity,
+                                        pluginSet: PluginSet,
+                                        app: ApplicationImpl,
+                                        deferredStarter: Deferred<ApplicationStarter>) {
   val appInitializedListeners = coroutineScope {
     app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
 
@@ -129,7 +140,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
 
   initAppActivity.end()
 
-  launch {
+  asyncScope.launch {
     addActivateAndWindowsCliListeners()
   }
 
@@ -168,13 +179,13 @@ fun getAppInitializedListeners(app: Application): List<ApplicationInitializedLis
 }
 
 private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
-  launchAndMeasure("create locator file", Dispatchers.IO) {
+  launch(CoroutineName("create locator file") + Dispatchers.IO) {
     createAppLocatorFile()
   }
 
   if (!AppMode.isLightEdit()) {
     // this functionality should be used only by plugin functionality that is used after start-up
-    launchAndMeasure("system properties setting") {
+    launch(CoroutineName("system properties setting")) {
       SystemPropertyBean.initSystemProperties()
     }
   }
@@ -194,7 +205,7 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     return
   }
 
-  launchAndMeasure("icons preloading", Dispatchers.IO) {
+  launch(CoroutineName("icons preloading") + Dispatchers.IO) {
     if (app.isInternal) {
       IconLoader.setStrictGlobally(true)
     }

@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "KDocUnresolvedReference")
 
 package com.intellij.idea
 
@@ -16,7 +16,6 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -48,6 +47,7 @@ import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.lang.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
@@ -119,27 +119,22 @@ fun start(args: Array<String>) {
 
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
-  runBlocking {
+  runBlocking(rootTask()) {
     val isHeadless = AppMode.isHeadless()
 
     val exceptionHandler = StartupAbortedExceptionHandler()
     val asyncDispatcher = Dispatchers.Default + exceptionHandler
-    launch(asyncDispatcher) {
-      val activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
+    launch(CoroutineName("ForkJoin CommonPool configuration") + asyncDispatcher) {
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
-      activity.end()
     }
 
-    var activity = StartUpMeasurer.startActivity("main class loading scheduling")
     // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-    val appStarterFuture = async(asyncDispatcher) {
-      val aClass = startupStart.runChild("main class loading") {
-        AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
-      }
+    val appStarterFuture = async(CoroutineName("main class loading") + asyncDispatcher) {
+      val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
 
-    val appInfoDeferred = async(Dispatchers.IO + exceptionHandler) {
+    val appInfoDeferred = async(CoroutineName("app info") + Dispatchers.IO) {
       // required for DisabledPluginsState and EUA
       ApplicationInfoImpl.getShadowInstance()
     }
@@ -147,98 +142,97 @@ fun start(args: Array<String>) {
     // On startup 2 dialogs must be shown:
     // - gdpr agreement
     // - eu(l)a
-    val euaDocumentFuture = if (isHeadless) null else async(Dispatchers.IO) { loadEuaDocument(appInfoDeferred) }
-
-    // This must happen before LaF loading
-    if (args.isNotEmpty() && (AppMode.CWM_HOST_COMMAND == args[0] || AppMode.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
-      activity = activity.endAndStart("cwm host init")
-      val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
-      MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
-        .findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)).invoke()
+    val euaDocumentDeferred = if (isHeadless) {
+      null
     }
-    activity = activity.endAndStart("graphics environment checking")
-
-    if (!isHeadless && !checkGraphics()) {
-      exitProcess(AppExitCodes.NO_GRAPHICS)
+    else {
+      async(CoroutineName("eua document") + Dispatchers.IO) {
+        loadEuaDocument(appInfoDeferred)
+      }
     }
 
-    activity = activity.endAndStart("config path computing")
-    val configPath = canonicalPath(PathManager.getConfigPath())
-    val systemPath = canonicalPath(PathManager.getSystemPath())
-    activity = activity.endAndStart("system dirs locking")
+    // this must happen before LaF loading
+    val beforeLafLoadingJob = if (args.isNotEmpty() &&
+                                  (AppMode.CWM_HOST_COMMAND == args[0] || AppMode.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
+      launch(CoroutineName("cwm host init") + asyncDispatcher) {
+        val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
+        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
+          projectorMainClass, "runProjectorServer",
+          MethodType.methodType(Boolean::class.javaPrimitiveType)
+        ).invoke()
+      }
+    }
+    else {
+      null
+    }
+
+    val checkGraphicsJob = launch(CoroutineName("graphics environment checking") + asyncDispatcher) {
+      beforeLafLoadingJob?.join()
+      if (!isHeadless && !checkGraphics()) {
+        exitProcess(AppExitCodes.NO_GRAPHICS)
+      }
+    }
+
+    val (configPath, systemPath) = withContext(subtask("config path computing") + Dispatchers.IO) {
+      Pair(
+        canonicalPath(PathManager.getConfigPath()),
+        canonicalPath(PathManager.getSystemPath())
+      )
+    }
+
     // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    val configImportNeeded = withContext(Dispatchers.IO) {
-      lockSystemDirs(checkConfig = !isHeadless, configPath = configPath, systemPath = systemPath, args = args)
+    val configImportNeededDeferred = async(CoroutineName("system dirs locking") + Dispatchers.IO) {
+      lockSystemDirs(checkConfig = !isHeadless, configPath = configPath, systemPath = systemPath, args = args, mainScope = this@runBlocking)
     }
-    activity = activity.endAndStart("LaF init scheduling")
+
+    launch(CoroutineName("console logger configuration") + asyncDispatcher) {
+      configureJavaUtilLogging()
+    }
+
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
     val initUiJob = async(asyncDispatcher) {
+      beforeLafLoadingJob?.join()
+      checkGraphicsJob.join()
+      configImportNeededDeferred.join()
       initUi(busyThread = busyThread, isHeadless = isHeadless)
     }
-    if (!isHeadless) {
-      launch(asyncDispatcher) {
-        initUiJob.join()
-        launch(asyncDispatcher) {
-          updateFrameClassAndWindowIcon()
-        }
-        launch(Dispatchers.IO) {
-          loadSystemFonts()
-        }
-      }
-    }
 
-    activity = activity.endAndStart("console logger configuration")
-    configureJavaUtilLogging()
+    ComponentManagerImpl.mainScope = this@runBlocking
 
-    activity = activity.endAndStart("eua and splash scheduling")
     val showEuaIfNeededJob: Deferred<Boolean> = async(asyncDispatcher) {
-      if (euaDocumentFuture == null) {
+      if (euaDocumentDeferred == null) {
         true
       }
       else {
-        showEuaIfNeeded(euaDocumentFuture.await(), initUiJob.await())
-      }
-    }
-
-    if (!isHeadless && !AppMode.isLightEdit()) {
-      launch(asyncDispatcher) {
-        // A splash instance must not be created before base LaF is created.
-        // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
-        // https://youtrack.jetbrains.com/issue/IDEA-286544
-        initUiJob.join()
-
-        // before showEuaIfNeededJob to prepare during showing EUA dialog
-        val runnable = prepareSplash(args)
-        if (runnable != null) {
-          showEuaIfNeededJob.join()
-          withContext(SwingDispatcher) {
-            runnable.run()
-          }
-        }
-
-        // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
-        launchAndMeasure("DnD setup", SwingDispatcher) {
-          DragSource.getDefaultDragSource()
+        val euaDocument = euaDocumentDeferred.await()
+        val baseLaF = initUiJob.await()
+        withContext(subtask("show eua")) {
+          showEuaIfNeeded(euaDocument, baseLaF)
         }
       }
     }
 
-    activity = activity.endAndStart("system dirs checking")
-    if (!checkSystemDirs(configPath, systemPath)) {
-      // must happen after locking system dirs
-      exitProcess(AppExitCodes.DIR_CHECK_FAILED)
-    }
+    val logDeferred = async(asyncDispatcher) {
+      // this must happen after locking system dirs
+      configImportNeededDeferred.join()
 
-    activity = activity.endAndStart("file logger configuration")
-    // log initialization should happen only after locking the system directory
-    val log = setupLogger()
-    activity.end()
+      withContext(subtask("system dirs checking")) {
+        if (!checkSystemDirs(configPath, systemPath)) {
+          exitProcess(AppExitCodes.DIR_CHECK_FAILED)
+        }
+      }
+
+      // log initialization should happen only after locking the system directory
+      runActivity("file logger configuration") {
+        setupLogger()
+      }
+    }
 
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     Java11Shim.INSTANCE = Java11ShimImpl()
-    if (!configImportNeeded) {
+    if (!configImportNeededDeferred.await()) {
       PluginManagerCore.scheduleDescriptorLoading(this@runBlocking, async(Dispatchers.IO) {
         // ZipFilePoolImpl uses Guava for Striped lock - load in parallel
         val result = ZipFilePoolImpl()
@@ -247,8 +241,6 @@ fun start(args: Array<String>) {
       })
     }
 
-    ComponentManagerImpl.mainScope = this@runBlocking
-
     val setBaseLafJob = launch(asyncDispatcher) {
       showEuaIfNeededJob.join()
       val baseLaF = initUiJob.await() as LookAndFeel
@@ -256,12 +248,37 @@ fun start(args: Array<String>) {
         DarculaLaf.setPreInitializedBaseLaf(baseLaF)
       }
     }
+
     if (!isHeadless) {
       launch(asyncDispatcher) {
-        setBaseLafJob.join()
-        launchAndMeasure("html style patching", SwingDispatcher) {
-          patchHtmlStyle()
+        // A splash instance must not be created before base LaF is created.
+        // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
+        // https://youtrack.jetbrains.com/issue/IDEA-286544
+        initUiJob.join()
+
+        updateFrameClassAndWindowIconAndPreloadSystemFonts()
+
+        if (!AppMode.isLightEdit()) {
+          // before showEuaIfNeededJob to prepare during showing EUA dialog
+          val runnable = prepareSplash(args)
+          if (runnable != null) {
+            launch {
+              showEuaIfNeededJob.join()
+              withContext(SwingDispatcher) {
+                runnable.run()
+              }
+            }
+          }
+
+          // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+          launch(CoroutineName("DnD setup") + SwingDispatcher) {
+            DragSource.getDefaultDragSource()
+          }
         }
+
+        setBaseLafJob.join()
+
+        patchHtmlStyle()
         launch(SwingDispatcher) {
           WeakFocusStackManager.getInstance()
         }
@@ -269,15 +286,33 @@ fun start(args: Array<String>) {
     }
 
     if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
-      launchAndMeasure("coroutine debug probes init", Dispatchers.Default) {
+      launch(CoroutineName("coroutine debug probes init") + Dispatchers.Default) {
         enableCoroutineDump()
       }
     }
 
+    shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
+      EnvironmentUtil.loadEnvironment()
+    }
+
     launch(asyncDispatcher) {
-      setupSystemLibraries()
-      withContext(Dispatchers.IO) {
-        loadSystemLibraries(log)
+      // this must happen after locking system dirs
+      val log = logDeferred.await()
+
+      withContext(subtask("system libs setup")) {
+        setupSystemLibraries()
+      }
+
+      withContext(subtask("system libs loading") + Dispatchers.IO) {
+        JnaLoader.load(log)
+        if (SystemInfoRt.isWindows) {
+          IdeaWin32.isAvailable()
+        }
+      }
+
+      val appInfo = appInfoDeferred.await()
+      launch(CoroutineName("essential IDE info logging") + Dispatchers.IO) {
+        logEssentialInfoAboutIde(log, appInfo, args)
       }
 
       if (!isHeadless && SystemInfoRt.isMac) {
@@ -285,52 +320,47 @@ fun start(args: Array<String>) {
         launch {
           initUiJob.join()
 
-          runActivity("mac app init") {
+          withContext(subtask("mac app init")) {
             MacOSApplicationProvider.initApplication(log)
           }
         }
       }
-      withContext(Dispatchers.IO) {
-        logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
-      }
 
       val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
       if (isInternal) {
-        runActivity("assert on missed keys enabling") {
+        launch(CoroutineName("assert on missed keys enabling")) {
           BundleBase.assertOnMissedKeys(true)
         }
       }
-      runActivity("disposer debug mode enabling if needed") {
+      launch(CoroutineName("disposer debug mode enabling if needed")) {
         if (isInternal || Disposer.isDebugDisposerOn()) {
           Disposer.setDebugMode(true)
         }
       }
     }
 
-    shellEnvDeferred = async(Dispatchers.IO) {
-      EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
-    }
-
     val telemetryInitJob = launch(asyncDispatcher) {
       appInfoDeferred.join()
-      runActivity("opentelemetry configuration") {
+      withContext(subtask("opentelemetry configuration")) {
         TraceManager.init()
       }
     }
 
-    if (!configImportNeeded) {
+    val log = logDeferred.await()
+
+    if (!configImportNeededDeferred.await()) {
       runPreAppClass(log, args)
     }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     val argsAsList = java.util.List.of(*args)
 
-    // we must wait for UI before creating application - EDT thread is required
+    // we must wait for UI before creating application and before AppStarter.start (some appStarter dialogs) - EDT thread is required
     val baseLaf = startupStart.runChild("prepare ui waiting") {
       initUiJob.await()
     }
 
-    if (!isHeadless && configImportNeeded) {
+    if (!isHeadless && configImportNeededDeferred.await()) {
       val imported = importConfig(
         args = argsAsList,
         log = log,
@@ -366,16 +396,18 @@ fun start(args: Array<String>) {
   }
 }
 
-private fun patchHtmlStyle() {
-  // patch html styles
-  val uiDefaults = UIManager.getDefaults()
-  // create a separate copy for each case
-  val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-  uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-  uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+private fun CoroutineScope.patchHtmlStyle() {
+  launch(CoroutineName("html style patching") + SwingDispatcher) {
+    // patch html styles
+    val uiDefaults = UIManager.getDefaults()
+    // create a separate copy for each case
+    val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+    uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+    uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
-  runActivity("global styleSheet updating") {
-    GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+    runActivity("global styleSheet updating") {
+      GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+    }
   }
 }
 
@@ -423,13 +455,13 @@ private fun prepareSplash(args: Array<String>): Runnable? {
 }
 
 private fun checkGraphics(): Boolean {
-  if (GraphicsEnvironment.isHeadless()) {
+  return if (GraphicsEnvironment.isHeadless()) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
                                      BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-    return false
+    false
   }
   else {
-    return true
+    true
   }
 }
 
@@ -545,18 +577,24 @@ private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
     }
 
     // IdeaLaF uses AllIcons - icon manager must be activated
-    launchAndMeasure("icon manager activation") {
+    launch(CoroutineName("icon manager activation")) {
       if (!isHeadless) {
         IconManager.activate(CoreIconManager())
       }
     }
 
-    launchAndMeasure("LaF class preloading") {
+    val classLoader = AppStarter::class.java.classLoader
+
+    launch(CoroutineName("LaF class preloading")) {
       // preload class not in EDT
-      val classLoader = AppStarter::class.java.classLoader
       Class.forName(DarculaLaf::class.java.name, true, classLoader)
       Class.forName(IdeaLaf::class.java.name, true, classLoader)
       Class.forName(JBUIScale::class.java.name, true, classLoader)
+    }
+
+    launch(CoroutineName("IdeEventQueue class preloading")) {
+      // preload class not in EDT
+      Class.forName(IdeEventQueue::class.java.name, true, classLoader)
     }
   }
 
@@ -628,15 +666,6 @@ private fun blockATKWrapper() {
   activity.end()
 }
 
-private fun loadSystemFonts() {
-  runActivity("system fonts loading") {
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
-    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
-    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
-  }
-}
-
 // executed not in EDT
 private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
   val activity = StartUpMeasurer.startActivity("eua showing")
@@ -674,16 +703,37 @@ internal object SwingDispatcher : CoroutineDispatcher() {
   override fun toString() = "Swing"
 }
 
-private fun updateFrameClassAndWindowIcon() {
-  var activity = StartUpMeasurer.startActivity("frame class updating")
-  AppUIUtil.updateFrameClass()
-  activity = activity.endAndStart("update window icon")
-  // `updateWindowIcon` should be called after `UIUtil#initSystemFontData`, because it uses computed system font data for scale context
-  if (!AppUIUtil.isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
-    // most of the time is consumed by loading SVG and can be done in parallel
-    AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+// must be after initUiJob
+private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts() {
+  launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
+    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
   }
-  activity.end()
+
+  if (!SystemInfoRt.isWindows && !SystemInfoRt.isMac) {
+    launch(CoroutineName("frame class updating")) {
+      try {
+        val toolkit = Toolkit.getDefaultToolkit()
+        val aClass = toolkit.javaClass
+        if (aClass.name == "sun.awt.X11.XToolkit") {
+          val field = ReflectionUtil.findAssignableField(aClass, null, "awtAppClassName")
+          field.set(toolkit, AppUIUtil.getFrameClass())
+        }
+      }
+      catch (ignore: Exception) {
+      }
+    }
+  }
+
+  launch(CoroutineName("update window icon")) {
+    // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
+    if (!AppUIUtil.isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
+      // most of the time is consumed by loading SVG and can be done in parallel
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    }
+  }
 }
 
 private fun configureJavaUtilLogging() {
@@ -709,48 +759,51 @@ private suspend fun checkSystemDirs(configPath: Path, systemPath: Path): Boolean
     withContext(SwingDispatcher) {
       StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
                                        BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
-                                               PathManager.PROPERTY_CONFIG_PATH,
-                                               PathManager.PROPERTY_SYSTEM_PATH), true)
+                                                               PathManager.PROPERTY_CONFIG_PATH,
+                                                               PathManager.PROPERTY_SYSTEM_PATH), true)
     }
     return false
   }
 
   return withContext(Dispatchers.IO) {
-    if (!checkDirectory(directory = configPath,
-                        kind = "Config",
-                        property = PathManager.PROPERTY_CONFIG_PATH,
-                        checkWrite = true,
-                        checkLock = true,
-                        checkExec = false)) {
-      return@withContext false
-    }
-
-    if (!checkDirectory(directory = systemPath,
-                        kind = "System",
-                        property = PathManager.PROPERTY_SYSTEM_PATH,
-                        checkWrite = true,
-                        checkLock = true,
-                        checkExec = false)) {
-      return@withContext false
-    }
-
     val logPath = Path.of(PathManager.getLogPath()).normalize()
-    if (!checkDirectory(directory = logPath,
-                        kind = "Log",
-                        property = PathManager.PROPERTY_LOG_PATH,
-                        checkWrite = !logPath.startsWith(systemPath),
-                        checkLock = false,
-                        checkExec = false)) {
-      return@withContext false
-    }
-
     val tempPath = Path.of(PathManager.getTempPath()).normalize()
-    return@withContext checkDirectory(directory = tempPath,
-                                      kind = "Temp",
-                                      property = PathManager.PROPERTY_SYSTEM_PATH,
-                                      checkWrite = !tempPath.startsWith(systemPath),
-                                      checkLock = false,
-                                      checkExec = SystemInfoRt.isUnix && !SystemInfoRt.isMac)
+
+    listOf(
+      async {
+        checkDirectory(directory = configPath,
+                       kind = "Config",
+                       property = PathManager.PROPERTY_CONFIG_PATH,
+                       checkWrite = true,
+                       checkLock = true,
+                       checkExec = false)
+      },
+      async {
+        checkDirectory(directory = systemPath,
+                       kind = "System",
+                       property = PathManager.PROPERTY_SYSTEM_PATH,
+                       checkWrite = true,
+                       checkLock = true,
+                       checkExec = false)
+      },
+      async {
+        checkDirectory(directory = logPath,
+                       kind = "Log",
+                       property = PathManager.PROPERTY_LOG_PATH,
+                       checkWrite = !logPath.startsWith(systemPath),
+                       checkLock = false,
+                       checkExec = false)
+      },
+      async {
+        checkDirectory(directory = tempPath,
+                       kind = "Temp",
+                       property = PathManager.PROPERTY_SYSTEM_PATH,
+                       checkWrite = !tempPath.startsWith(systemPath),
+                       checkLock = false,
+                       checkExec = SystemInfoRt.isUnix && !SystemInfoRt.isMac)
+
+      }
+    ).awaitAll().all { it }
   }
 }
 
@@ -825,7 +878,11 @@ private fun checkDirectory(directory: Path,
 }
 
 /** Returns `true` when `checkConfig` is requested and config import is needed.  */
-private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean, configPath: Path, systemPath: Path, args: Array<String>): Boolean {
+private fun lockSystemDirs(checkConfig: Boolean,
+                           configPath: Path,
+                           systemPath: Path,
+                           args: Array<String>,
+                           mainScope: CoroutineScope): Boolean {
   if (socketLock != null) {
     throw AssertionError("Already initialized")
   }
@@ -834,8 +891,8 @@ private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean, configPath: Path
   val importNeeded = checkConfig &&
                      (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
   socketLock = SocketLock(configPath, systemPath)
-  val status = socketLock!!.lockAndTryActivate(args = args, scope = this)
-  when (status.key) {
+  val status = socketLock!!.lockAndTryActivate(args = args, mainScope = mainScope)
+  when (status.first) {
     ActivationStatus.NO_INSTANCE -> {
       ShutDownTracker.getInstance().registerShutdownTask {
         synchronized(AppStarter::class.java) {
@@ -845,7 +902,7 @@ private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean, configPath: Path
       }
     }
     ActivationStatus.ACTIVATED -> {
-      val result = status.value!!
+      val result = status.second!!
       println(result.message ?: "Already running")
       exitProcess(result.exitCode)
     }
@@ -879,7 +936,6 @@ private fun setupLogger(): Logger {
 
 @Suppress("SpellCheckingInspection")
 private fun setupSystemLibraries() {
-  val subActivity = StartUpMeasurer.startActivity("system libs setup")
   val ideTempPath = PathManager.getTempPath()
   if (System.getProperty("jna.tmpdir") == null) {
     // to avoid collisions and work around no-exec /tmp
@@ -898,20 +954,9 @@ private fun setupSystemLibraries() {
   if (System.getProperty("pty4j.preferred.native.folder") == null) {
     System.setProperty("pty4j.preferred.native.folder", Path.of(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString())
   }
-  subActivity.end()
-}
-
-private fun loadSystemLibraries(log: Logger) {
-  val activity = StartUpMeasurer.startActivity("system libs loading")
-  JnaLoader.load(log)
-  if (SystemInfoRt.isWindows) {
-    IdeaWin32.isAvailable()
-  }
-  activity.end()
 }
 
 private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: Array<String>) {
-  val activity = StartUpMeasurer.startActivity("essential IDE info logging")
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.buildDate.time)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildDate)")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION}, ${System.getProperty("os.arch")})")
@@ -922,9 +967,8 @@ private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
   }
 
-  val jvmOptions = ManagementFactory.getRuntimeMXBean().inputArguments
-  if (jvmOptions != null) {
-    log.info("JVM options: $jvmOptions")
+  ManagementFactory.getRuntimeMXBean().inputArguments?.let {
+    log.info("JVM options: $it")
   }
   log.info("args: ${args.joinToString()}")
   log.info("library path: ${System.getProperty("java.library.path")}")
@@ -942,7 +986,6 @@ private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
   log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
-  activity.end()
 }
 
 private fun logEnvVar(log: Logger, variable: String) {
