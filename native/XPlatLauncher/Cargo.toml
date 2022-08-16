@@ -31,6 +31,7 @@ libloading = "0.7.3"
 jni-sys = "0.3.0"
 copy_dir = "0.1.2"
 path-absolutize = "3.0.13"
+junction = "0.2.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"

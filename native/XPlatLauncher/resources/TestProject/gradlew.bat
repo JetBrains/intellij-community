@@ -39,10 +39,10 @@ set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
 setlocal
 set BUILD_DIR=gradle-jvm
-set JVM_TARGET_DIR=%BUILD_DIR%\jbrsdk-17.0.3-windows-x64-b469.37-e07e4d\
+set JVM_TARGET_DIR=%BUILD_DIR%\jdk-18.0.1.1_windows-x64_bin-9b19cf\
 
 set JVM_TEMP_FILE=gradle-jvm.zip
-set JVM_URL=https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-windows-x64-b469.37.tar.gz
+set JVM_URL=https://download.oracle.com/java/18/archive/jdk-18.0.1.1_windows-x64_bin.zip
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 

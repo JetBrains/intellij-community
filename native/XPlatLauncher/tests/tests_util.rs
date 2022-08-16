@@ -5,13 +5,26 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
-    let command_to_ecxecute = Command::new("./gradlew")
+    let executable_name = get_gradlew_executable_name();
+    let executable = PathBuf::from("resources/TestProject").join(executable_name);
+
+    let command_to_execute = Command::new(executable)
         .arg(gradle_command)
         .current_dir("resources/TestProject")
         .output()
         .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
 
-    command_handler(&command_to_ecxecute);
+    command_handler(&command_to_execute);
+}
+
+#[cfg(target_os = "windows")]
+fn get_gradlew_executable_name() -> String {
+    "gradlew.bat".to_string()
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn get_gradlew_executable_name() -> String {
+    "gradlew".to_string()
 }
 
 fn command_handler(command: &Output) {
@@ -160,12 +173,12 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat_launcher.exe");
     assert!(launcher.exists());
 
     fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    std::os::windows::fs::symlink_dir(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
+    junction::create(jbr_absolute_path, "jbr").expect("Failed to create junction for jbr");
     File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
     File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }

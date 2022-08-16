@@ -81,10 +81,17 @@ fn main_impl() -> Result<()> {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ProductInfo {
     pub productCode: String,
-    pub bootClassPathJarNames: Vec<String>,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub vmOptionsBaseFileName: String
+    pub launch: ProductInfoLaunchField
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone)]
+pub struct ProductInfoLaunchField {
+    pub vmOptionsFilePath: String,
+    pub bootClassPathJarNames: Vec<String>,
+    pub additionalJvmArguments: Vec<String>
 }
 
 trait LaunchConfiguration {

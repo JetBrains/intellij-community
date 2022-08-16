@@ -136,8 +136,8 @@ if [ "$darwin" = "true" ]; then
         ;;
     esac
 elif [ "$cygwin" = "true" ] || [ "$msys" = "true" ]; then
-    JVM_URL=https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.3-windows-x64-b469.37.tar.gz
-    JVM_TARGET_DIR=$BUILD_DIR/jbrsdk-17.0.3-windows-x64-b469.37-e07e4d
+    JVM_URL=https://download.oracle.com/java/18/archive/jdk-18.0.1.1_windows-x64_bin.zip
+    JVM_TARGET_DIR=$BUILD_DIR/jdk-18.0.1.1_windows-x64_bin-9b19cf
 else
     JVM_ARCH=$(linux$(getconf LONG_BIT) uname -m)
      case $JVM_ARCH in

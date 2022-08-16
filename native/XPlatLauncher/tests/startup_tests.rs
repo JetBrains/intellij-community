@@ -2,7 +2,7 @@ use crate::tests_util::{get_child_dir, gradle_command_wrapper, layout_into_test_
 use std::env;
 use std::env::temp_dir;
 use std::fs::create_dir;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Once;
 use std::time::SystemTime;
 
@@ -23,11 +23,17 @@ pub fn initialize() {
             .join("TestProject")
             .join("gradle-jvm");
 
+        // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
+        let java_dir_prefix = match env::consts::OS {
+            "windows" => { "jdk" }
+            _ => { "jbrsdk" }
+        };
+
         // jbrsdk-17.0.3-osx-x64-b469.37-f87880
-        let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, "jbrsdk").expect("");
+        let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix).expect("");
 
         // jbrsdk-17.0.3-x64-b469
-        let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, "jbrsdk").expect("");
+        let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix).expect("");
 
         let product_info_path = Path::new("resources/product_info.json");
         let jar_path = Path::new("resources/TestProject/build/libs/app.jar");

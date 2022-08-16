@@ -12,7 +12,8 @@ pub struct DefaultLaunchConfiguration {
     pub ide_home: PathBuf,
     pub config_home: PathBuf,
     pub ide_bin: PathBuf,
-    pub args: Vec<String>
+    pub args: Vec<String>,
+    pub vm_options_base_filename: String
 }
 
 impl LaunchConfiguration for DefaultLaunchConfiguration {
@@ -41,7 +42,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.product_info.bootClassPathJarNames;
+        let class_path = &self.product_info.launch.bootClassPathJarNames;
         let lib_path = get_lib_path(&self.ide_home);
 
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
@@ -107,17 +108,54 @@ impl DefaultLaunchConfiguration {
         debug!("Resolved config home as '{config_home:?}'");
 
         // TODO: this is a behaviour change (as we're not patching the binary the same way we are patching the executable template)
-        let product_info = get_product_info(&ide_home).unwrap();
+        let product_info = get_product_info(&ide_home).expect("Failed to read product info file");
+
+        let vm_options_file_path = product_info.launch.vmOptionsFilePath.as_str();
+        let vm_options_base_filename = Self::get_base_executable_name(vm_options_file_path);
 
         let config = DefaultLaunchConfiguration {
             product_info,
             ide_home,
             config_home,
             ide_bin,
-            args
+            args,
+            vm_options_base_filename
         };
 
         Ok(config)
+    }
+
+    // "bin/idea64.exe.vmoptions" -> idea
+    // "bin/idea64.vmoptions -> idea
+    // "../bin/idea.vmoptions" -> idea
+    fn get_base_executable_name(vm_options_file_path: &str) -> String {
+        debug!("vm_options_file_path={vm_options_file_path}");
+
+        // split on last path separator
+        // bin/idea64.exe.vmoptions -> idea64.exe.vmoptions
+        let vm_options_filename = match vm_options_file_path.rsplit_once(std::path::MAIN_SEPARATOR) {
+            Some((_, suffix)) => { suffix }
+            None => vm_options_file_path
+        };
+        debug!("vm_options_filename={vm_options_filename}");
+
+        // split on first dot
+        // idea64.exe.vmoptions -> idea64
+        let vm_options_filename_no_last_extension = match vm_options_filename.split_once(".") {
+            Some((prefix, _)) => { prefix }
+            None => vm_options_filename
+        };
+        debug!("vm_options_filename_no_last_extension={vm_options_filename_no_last_extension}");
+
+        // drop the 64 if it's there
+        // idea64 -> idea
+        let base_product_name = match vm_options_filename_no_last_extension.split_once("64") {
+            Some((prefix, _)) => { prefix }
+            None => vm_options_filename_no_last_extension
+        };
+        debug!("base_product_name={base_product_name}");
+
+        vm_options_filename_no_last_extension.to_string()
     }
 
     // TODO: potentially a behaviour change if _JDK env var is defined
@@ -224,8 +262,18 @@ impl DefaultLaunchConfiguration {
     // if [ -x "$USER_JRE/bin/java" ]; then
     // JRE="$USER_JRE"
     // fi
+
+    // seems different from windows:
+    // GetModuleFileName(NULL, buffer, _MAX_PATH);
+    // std::wstring module(buffer);
+    // IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
+    // if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH)) {
+    // ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
+    // std::wstring path(copy);
+    // path += module.substr(module.find_last_of('\\')) + L".jdk";
+
     fn get_user_jre(&self) -> Result<PathBuf> {
-        let jre_path_file_name = self.product_info.vmOptionsBaseFileName.to_owned() + ".jdk";
+        let jre_path_file_name = self.vm_options_base_filename.to_owned() + ".jdk";
         let jre_path_file = self.config_home
             .join(&self.product_info.productVendor)
             .join(&self.product_info.dataDirectoryName)
@@ -337,7 +385,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_vm_options_file_name(&self) -> Result<String> {
-        let vm_options_base_file_name = (&self.product_info.vmOptionsBaseFileName).to_owned();
+        let vm_options_base_file_name = (&self.vm_options_base_filename).to_owned();
         // TODO: there is a relative path in product-info json (launch), maybe use that?
         let vm_options_file_name = vm_options_base_file_name +
             match env::consts::OS {
