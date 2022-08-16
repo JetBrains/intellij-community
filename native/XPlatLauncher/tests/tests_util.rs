@@ -167,7 +167,7 @@ pub fn layout_into_test_dir(
     fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     junction::create(jbr_absolute_path, "jbr").expect("Failed to create junction for jbr");
-    File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("bin/idea64.exe.vmoptions").expect("Failed to create idea.vmoptions");
     File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }
 

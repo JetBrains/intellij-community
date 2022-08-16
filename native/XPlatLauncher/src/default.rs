@@ -42,7 +42,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.product_info.launch.bootClassPathJarNames;
+        let class_path = &self.product_info.launch[0].bootClassPathJarNames;
         let lib_path = get_lib_path(&self.ide_home);
 
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
@@ -109,8 +109,9 @@ impl DefaultLaunchConfiguration {
 
         // TODO: this is a behaviour change (as we're not patching the binary the same way we are patching the executable template)
         let product_info = get_product_info(&ide_home).expect("Failed to read product info file");
+        assert!(!product_info.launch.is_empty());
 
-        let vm_options_file_path = product_info.launch.vmOptionsFilePath.as_str();
+        let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();
         let vm_options_base_filename = Self::get_base_executable_name(vm_options_file_path);
 
         let config = DefaultLaunchConfiguration {
@@ -133,7 +134,7 @@ impl DefaultLaunchConfiguration {
 
         // split on last path separator
         // bin/idea64.exe.vmoptions -> idea64.exe.vmoptions
-        let vm_options_filename = match vm_options_file_path.rsplit_once(std::path::MAIN_SEPARATOR) {
+        let vm_options_filename = match vm_options_file_path.rsplit_once("/") {
             Some((_, suffix)) => { suffix }
             None => vm_options_file_path
         };
@@ -155,7 +156,7 @@ impl DefaultLaunchConfiguration {
         };
         debug!("base_product_name={base_product_name}");
 
-        vm_options_filename_no_last_extension.to_string()
+        base_product_name.to_string()
     }
 
     // TODO: potentially a behaviour change if _JDK env var is defined

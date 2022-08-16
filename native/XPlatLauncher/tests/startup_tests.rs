@@ -35,7 +35,9 @@ pub fn initialize() {
         // jbrsdk-17.0.3-x64-b469
         let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix).expect("");
 
-        let product_info_path = Path::new("resources/product_info.json");
+        let os = env::consts::OS;
+        let kek = format!("resources/product_info_{os}.json");
+        let product_info_path = Path::new(&kek);
         let jar_path = Path::new("resources/TestProject/build/libs/app.jar");
         let jar_absolute_path = env::current_dir().unwrap().join(jar_path);
         let product_info_absolute_path = env::current_dir().unwrap().join(product_info_path);
@@ -84,6 +86,7 @@ mod tests {
         let mut launcher_process = Command::new(test_dir.join("xplat_launcher")) // for windows xplat_launcher.exe???
             .current_dir(test_dir)
             .args(["test_argument1", "test_argument2"])
+            .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
             .spawn()
             .expect("Failed to spawn launcher process");
 
@@ -142,12 +145,13 @@ mod tests {
 
         let classpath = read_file("java.class.path.txt");
 
+        let separator = std::path::MAIN_SEPARATOR;
         assert!(
-            classpath.contains("lib/app.jar"),
+            classpath.contains(format!("lib{separator}app.jar").as_str()),
             "Classpath does not contain app.jar"
         );
         assert!(
-            classpath.contains("lib/test.jar"),
+            classpath.contains(format!("lib{separator}test.jar").as_str()),
             "Dummy classpath wasn't read from product_info.json"
         );
     }
@@ -163,7 +167,7 @@ mod tests {
             "The exit code of the launcher is not successful"
         );
 
-        let vm_options = read_file("vm.options.txt");
+        let _vm_options = read_file("vm.options.txt");
         // TODO asserts
     }
 

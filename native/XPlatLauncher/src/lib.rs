@@ -97,7 +97,7 @@ pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub launch: ProductInfoLaunchField,
+    pub launch: Vec<ProductInfoLaunchField>,
 }
 
 #[allow(non_snake_case)]
@@ -149,6 +149,8 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     }
 }
 
+pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
+
 fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
     match result {
         Ok(x) => { x }
@@ -166,8 +168,10 @@ fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
             eprintln!("{}", message);
             error!("{}", message);
 
-            // TODO: detect if there's no UI?
-            show_fail_to_start_message("Failed to start", format!("{message:?}").as_str());
+            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+                Ok(_) => {  }
+                Err(_) => { show_fail_to_start_message("Failed to start", format!("{message:?}").as_str()) }
+            }
 
             std::process::exit(1);
         }
