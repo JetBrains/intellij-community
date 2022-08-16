@@ -3,7 +3,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -19,20 +18,20 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
   private static final Logger LOG = Logger.getInstance(SuppressManager.class);
 
   @Override
-  public SuppressIntentionAction @NotNull [] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
+  public SuppressIntentionAction @NotNull [] createSuppressActions(@NotNull HighlightDisplayKey displayKey) {
     SuppressQuickFix[] batchSuppressActions = createBatchSuppressActions(displayKey);
     return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions);
   }
 
   @Override
   public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
-    final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
+    HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
     LOG.assertTrue(displayKey != null, "Display key is null for `" + toolId + "` tool");
     return createBatchSuppressActions(displayKey);
   }
 
   @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }
 
@@ -44,17 +43,17 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
 
   @Override
   @Nullable
-  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
+  public PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, @NotNull String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
   }
 
   @Override
-  public boolean canHave15Suppressions(@NotNull final PsiElement file) {
+  public boolean canHave15Suppressions(@NotNull PsiElement file) {
     return JavaSuppressionUtil.canHave15Suppressions(file);
   }
 
   @Override
-  public boolean alreadyHas14Suppressions(@NotNull final PsiDocCommentOwner commentOwner) {
+  public boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner) {
     return JavaSuppressionUtil.alreadyHas14Suppressions(commentOwner);
   }
   
@@ -71,7 +70,7 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
 
   @Nullable
   @Override
-  public TextRange getHighlightingRange(PsiElement elementWithSuppression, String toolId) {
+  public TextRange getHighlightingRange(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
     PsiElement annotationOrTagElement = elementWithSuppression instanceof PsiComment ? null : getElementToolSuppressedIn(elementWithSuppression, toolId);
     if (annotationOrTagElement != null) {
       int shiftInParent = annotationOrTagElement.getTextRange().getStartOffset() - elementWithSuppression.getTextRange().getStartOffset();
