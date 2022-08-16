@@ -307,8 +307,8 @@ private fun showSystemData(project: Project?,
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Like)
-  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Dislike)
+  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Like)
+  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
   val likeAnswer = FeedbackOption(likeIcon)
   votePanel.add(likeAnswer)

@@ -48,7 +48,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     container.background = UISettings.getInstance().shortcutBackgroundColor
 
     val promotionLabel = JLabel(LearnBundle.message("tip.and.trick.promotion.label"))
-    promotionLabel.icon = FeaturesTrainerIcons.Img.FeatureTrainerBanner
+    promotionLabel.icon = FeaturesTrainerIcons.FeatureTrainerBanner
     promotionLabel.iconTextGap = JBUI.scale(6)
     container.add(Box.createRigidArea(JBDimension(12, 28)))
     container.add(promotionLabel)

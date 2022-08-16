@@ -70,7 +70,7 @@
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
-                icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
+                icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"
                 factoryClass="training.ui.LearnToolWindowFactory"
     />
 
@@ -99,7 +99,7 @@
     <!-- Help -->
     <group id="LearnGroup">
       <separator/>
-      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"/>
+      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"/>
       <separator/>
       <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
     </group>

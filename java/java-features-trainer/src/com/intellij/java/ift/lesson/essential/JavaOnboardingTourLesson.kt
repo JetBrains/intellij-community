@@ -201,7 +201,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
                                                                               LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(JavaLessonsBundle.message("java.onboarding.finish.exit"))
         .noText(JavaLessonsBundle.message("java.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.Img.PluginIcon)
+        .icon(FeaturesTrainerIcons.PluginIcon)
         .show(project)
 
       when (result) {

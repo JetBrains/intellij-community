@@ -85,7 +85,7 @@ class MessageFactoryTest : BasePlatformTestCase() {
   }
 
   fun testIconIdx() {
-    val icon = FeaturesTrainerIcons.Img.PluginIcon
+    val icon = FeaturesTrainerIcons.PluginIcon
     val index = LearningUiManager.getIconIndex(icon)
     val parts: List<TextPart> = convertOneParagraph("Press <icon_idx>$index</icon_idx>")
 
@@ -95,7 +95,7 @@ class MessageFactoryTest : BasePlatformTestCase() {
   }
 
   fun testIllustration() {
-    val icon = FeaturesTrainerIcons.Img.PluginIcon
+    val icon = FeaturesTrainerIcons.PluginIcon
     val index = LearningUiManager.getIconIndex(icon)
     val parts: List<TextPart> = convertOneParagraph("<illustration>$index</illustration>")
 
