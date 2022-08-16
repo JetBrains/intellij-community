@@ -79,13 +79,11 @@ internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (current
       }
     }
   }
-  catch (ce: CancellationException) {
-    val cause = Cancellation.getCause(ce)
-    when {
-      cause is ProcessCanceledException -> throw cause
-      cause != null -> throw ProcessCanceledException(cause) // some child failure
-      else -> throw ce // manually thrown CE
-    }
+  catch (ce: IndicatorCancellationException) {
+    throw ProcessCanceledException(ce)
+  }
+  catch (ce: CurrentJobCancellationException) {
+    throw ProcessCanceledException(ce)
   }
   finally {
     indicatorWatcher.cancel()
@@ -121,11 +119,12 @@ fun <X> executeWithJobAndCompleteIt(
     job.complete()
     return result
   }
-  catch (e: Throwable) {
-    val ce = CancellationException().apply {
-      initCause(e)
-    }
+  catch (ce: CancellationException) {
     job.cancel(ce)
+    throw ce
+  }
+  catch (e: Throwable) {
+    job.cancel(CancellationException(null, e))
     throw e
   }
 }
