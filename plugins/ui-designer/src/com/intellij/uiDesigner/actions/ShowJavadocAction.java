@@ -7,16 +7,19 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import org.jetbrains.annotations.NotNull;
@@ -28,21 +31,23 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class ShowJavadocAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance(ShowJavadocAction.class);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
-    if (inspector == null) return;
+    GuiEditor guiEditor = e.getData(GuiEditor.DATA_KEY);
+    if (inspector == null || guiEditor == null) return;
     IntrospectedProperty<?> introspectedProperty = inspector.getSelectedIntrospectedProperty();
-    PsiClass aClass = inspector.getComponentClass();
-    if (introspectedProperty == null || aClass == null) return;
+    String radComponentClassName = inspector.getSelectedRadComponentClassName();
+    if (introspectedProperty == null || radComponentClassName == null) return;
+    Module module = guiEditor.getModule();
+    PsiClass aClass = JavaPsiFacade.getInstance(module.getProject()).findClass(
+      radComponentClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    if (aClass == null) return;
 
     PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
-    LOG.assertTrue(getter != null);
-
     PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-    LOG.assertTrue(setter != null);
+    if (getter == null || setter == null) return;
 
     DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());
 
@@ -83,6 +88,8 @@ public final class ShowJavadocAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
-    e.getPresentation().setEnabled(inspector != null && inspector.getSelectedIntrospectedProperty() != null);
+    e.getPresentation().setEnabled(inspector != null &&
+                                   inspector.getSelectedIntrospectedProperty() != null &&
+                                   inspector.getSelectedRadComponentClassName() != null);
   }
 }
