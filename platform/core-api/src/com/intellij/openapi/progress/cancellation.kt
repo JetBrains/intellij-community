@@ -92,7 +92,7 @@ internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (current
   }
 }
 
-private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicator): Job {
+private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
   return CoroutineScope(Dispatchers.IO).launch(CoroutineName("indicator watcher")) {
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
@@ -102,7 +102,7 @@ private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicato
       error("A cancelled indicator must throw PCE")
     }
     catch (pce: ProcessCanceledException) {
-      job.completeExceptionally(pce)
+      job.cancel(IndicatorCancellationException(pce))
     }
   }
 }
