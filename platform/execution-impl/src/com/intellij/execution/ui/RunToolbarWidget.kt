@@ -34,6 +34,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
@@ -72,7 +73,10 @@ import kotlin.properties.Delegates
 private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
 
 internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
-  override fun createWidget(project: Project): JComponent = RunToolbarWidget(project)
+  override fun createWidget(project: Project): JComponent =
+    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) createRunToolbarWithoutStop(project).component
+    else RunToolbarWidget(project)
+
   override fun getPosition() = MainToolbarWidgetFactory.Position.Right
 }
 

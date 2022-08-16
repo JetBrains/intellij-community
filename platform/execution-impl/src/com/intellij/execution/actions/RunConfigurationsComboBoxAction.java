@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,6 +195,16 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     );
   }
 
+  /**
+   * @deprecated It is a temporary function just to reuse existing code. Will be soon deleted.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.Internal
+  @NotNull
+  public DefaultActionGroup createPopupActionGroupOpen(final JComponent button) {
+    return createPopupActionGroup(button);
+  }
 
   @Override
   @NotNull
