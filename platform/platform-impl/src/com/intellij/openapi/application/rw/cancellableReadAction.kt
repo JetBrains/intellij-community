@@ -4,6 +4,7 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ensureCurrentJob
 import com.intellij.openapi.progress.executeWithJobAndCompleteIt
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
@@ -16,7 +17,8 @@ internal fun <X> cancellableReadAction(action: () -> X): X = ensureCurrentJob { 
     cancellableReadActionInternal(currentJob, action)
   }
   catch (e: CancellationException) {
-    throw e.cause as? CannotReadException // cancelled normally by a write action
+    val cause = Cancellation.getCause(e)
+    throw cause as? CannotReadException // cancelled normally by a write action
           ?: e // exception from the computation
   }
 }

@@ -80,7 +80,7 @@ internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (current
     }
   }
   catch (ce: CancellationException) {
-    val cause = ce.cause
+    val cause = Cancellation.getCause(ce)
     when {
       cause is ProcessCanceledException -> throw cause
       cause != null -> throw ProcessCanceledException(cause) // some child failure
