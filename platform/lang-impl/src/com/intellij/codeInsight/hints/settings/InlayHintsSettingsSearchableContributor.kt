@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
@@ -11,6 +13,13 @@ import com.intellij.ide.ui.search.SearchableOptionProcessor
 
 private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
+    for (settingsProvider in CodeVisionGroupSettingProvider.EP.EXTENSION_POINT_NAME.extensionList) {
+      addOption(processor, settingsProvider.description, null)
+      addOption(processor, settingsProvider.groupName, null)
+    }
+    for (codeVisionProvider in CodeVisionProvider.providersExtensionPoint.extensionList) {
+      addOption(processor, codeVisionProvider.name, null)
+    }
     for (providerInfo in InlayHintsProviderFactory.EP.extensionList.flatMap(InlayHintsProviderFactory::getProvidersInfo)) {
       val provider = providerInfo.provider
       val name = provider.name
