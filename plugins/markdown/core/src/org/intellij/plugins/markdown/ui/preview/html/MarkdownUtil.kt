@@ -20,6 +20,7 @@ import java.math.BigInteger
 import java.util.*
 
 object MarkdownUtil {
+  @ApiStatus.Internal
   fun md5(buffer: String?, @NonNls key: String): String {
     val md5 = DigestUtil.md5()
     Objects.requireNonNull(md5).update(buffer?.toByteArray(Charsets.UTF_8))
