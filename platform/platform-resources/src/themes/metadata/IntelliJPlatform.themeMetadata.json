@@ -3,8 +3,29 @@
   "fixed": false,
   "ui": [
     {
+      "key": "Banner.infoBackground"
+    },
+    {
+      "key": "Banner.infoBorderColor"
+    },
+    {
+      "key": "Banner.successBackground"
+    },
+    {
+      "key": "Banner.successBorderColor"
+    },
+    {
       "key": "Banner.warningBackground",
       "description": "The background of banners (experimental UI only)"
+    },
+    {
+      "key": "Banner.warningBorderColor"
+    },
+    {
+      "key": "Banner.errorBackground"
+    },
+    {
+      "key": "Banner.errorBorderColor"
     },
     {
       "key": "Bookmark.iconBackground",

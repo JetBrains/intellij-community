@@ -700,17 +700,26 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && ExperimentalUI.isNewUI()) {
+      if (!isHideTabs() && ExperimentalUI.isNewUI() && paintBorder()) {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
           Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
           g.setColor(color);
-          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h); // XXX
         }
       }
       super.paintChildren(g);
       drawBorder(g);
+    }
+
+    private boolean paintBorder() {
+      TabInfo info = getSelectedInfo();
+      if (info == null) {
+        return true;
+      }
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      return !composite.selfBorder();
     }
 
     @Override
