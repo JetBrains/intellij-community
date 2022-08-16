@@ -34,10 +34,7 @@ public final class ExtensionProcessingHelper {
       try {
         extensionConsumer.accept(t);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (CancellationException e) {
+      catch (ProcessCanceledException | CancellationException e) {
         throw e;
       }
       catch (Throwable e) {

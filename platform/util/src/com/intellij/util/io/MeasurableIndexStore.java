@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Internal
 public interface MeasurableIndexStore {
-  static final int KEYS_COUNT_UNKNOWN = -1;
+  int KEYS_COUNT_UNKNOWN = -1;
 
   /**
    * Method was introduced for analytics purposes, and for that it is not required to be precise,

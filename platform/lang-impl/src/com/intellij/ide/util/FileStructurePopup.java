@@ -436,7 +436,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return PropertiesComponent.getInstance().getBoolean(NARROW_DOWN_PROPERTY_KEY, true);
   }
 
-  protected static @NonNls String getDimensionServiceKey() {
+  private static @NonNls String getDimensionServiceKey() {
     return "StructurePopup";
   }
 
