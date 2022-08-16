@@ -122,14 +122,14 @@ fun start(args: Array<String>) {
   runBlocking(rootTask()) {
     val isHeadless = AppMode.isHeadless()
 
-    val exceptionHandler = StartupAbortedExceptionHandler()
-    val asyncDispatcher = Dispatchers.Default + exceptionHandler
+    val asyncDispatcher = Dispatchers.Default + StartupAbortedExceptionHandler()
+
     launch(CoroutineName("ForkJoin CommonPool configuration") + asyncDispatcher) {
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
     }
 
     // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-    val appStarterFuture = async(CoroutineName("main class loading") + asyncDispatcher) {
+    val appStarterDeferred = async(CoroutineName("main class loading") + asyncDispatcher) {
       val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
       MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
     }
@@ -139,62 +139,30 @@ fun start(args: Array<String>) {
       ApplicationInfoImpl.getShadowInstance()
     }
 
-    // On startup 2 dialogs must be shown:
-    // - gdpr agreement
-    // - eu(l)a
-    val euaDocumentDeferred = if (isHeadless) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document") + Dispatchers.IO) {
-        loadEuaDocument(appInfoDeferred)
-      }
-    }
+    val euaDocumentDeferred = loadEuaDocument(isHeadless, appInfoDeferred)
 
     // this must happen before LaF loading
-    val beforeLafLoadingJob = if (args.isNotEmpty() &&
-                                  (AppMode.CWM_HOST_COMMAND == args[0] || AppMode.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
-      launch(CoroutineName("cwm host init") + asyncDispatcher) {
-        val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
-        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
-          projectorMainClass, "runProjectorServer",
-          MethodType.methodType(Boolean::class.javaPrimitiveType)
-        ).invoke()
-      }
-    }
-    else {
-      null
+    val beforeLafLoadingJob = initProjectorIfNeeded(args, asyncDispatcher)
+    val checkGraphicsJob = checkGraphics(isHeadless, beforeLafLoadingJob, asyncDispatcher)
+
+    val pathDeferred = async(CoroutineName("config path computing") + Dispatchers.IO) {
+      Pair(canonicalPath(PathManager.getConfigPath()), canonicalPath(PathManager.getSystemPath()))
     }
 
-    val checkGraphicsJob = launch(CoroutineName("graphics environment checking") + asyncDispatcher) {
-      beforeLafLoadingJob?.join()
-      if (!isHeadless && !checkGraphics()) {
-        exitProcess(AppExitCodes.NO_GRAPHICS)
-      }
-    }
-
-    val (configPath, systemPath) = withContext(subtask("config path computing") + Dispatchers.IO) {
-      Pair(
-        canonicalPath(PathManager.getConfigPath()),
-        canonicalPath(PathManager.getSystemPath())
-      )
-    }
-
-    // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // this should happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    val configImportNeededDeferred = async(CoroutineName("system dirs locking") + Dispatchers.IO) {
-      lockSystemDirs(checkConfig = !isHeadless, configPath = configPath, systemPath = systemPath, args = args, mainScope = this@runBlocking)
-    }
+    val configImportNeededDeferred = lockSystemDirs(checkConfig = !isHeadless,
+                                                    pathDeferred = pathDeferred,
+                                                    args = args,
+                                                    mainScope = this@runBlocking)
 
-    launch(CoroutineName("console logger configuration") + asyncDispatcher) {
-      configureJavaUtilLogging()
-    }
+    configureJavaUtilLogging(asyncDispatcher)
 
     val busyThread = Thread.currentThread()
     // LookAndFeel type is not specified to avoid class loading
     val initUiJob = async(asyncDispatcher) {
       beforeLafLoadingJob?.join()
-      checkGraphicsJob.join()
+      checkGraphicsJob?.join()
       configImportNeededDeferred.join()
       initUi(busyThread = busyThread, isHeadless = isHeadless)
     }
@@ -218,6 +186,7 @@ fun start(args: Array<String>) {
       // this must happen after locking system dirs
       configImportNeededDeferred.join()
 
+      val (configPath, systemPath) = pathDeferred.await()
       withContext(subtask("system dirs checking")) {
         if (!checkSystemDirs(configPath, systemPath)) {
           exitProcess(AppExitCodes.DIR_CHECK_FAILED)
@@ -364,7 +333,7 @@ fun start(args: Array<String>) {
       val imported = importConfig(
         args = argsAsList,
         log = log,
-        appStarter = appStarterFuture.await(),
+        appStarter = appStarterDeferred.await(),
         agreementShown = showEuaIfNeededJob,
         baseLaf = baseLaf,
       )
@@ -389,10 +358,23 @@ fun start(args: Array<String>) {
     appInitPreparationActivity = startupStart
 
     startupStart.runChild("main class loading waiting") {
-      appStarterFuture.await()
+      appStarterDeferred.await()
     }.start(argsAsList, appDeferred)
 
     awaitCancellation()
+  }
+}
+
+private fun CoroutineScope.initProjectorIfNeeded(args: Array<String>, asyncDispatcher: CoroutineContext): Job? {
+  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0])) {
+    return null
+  }
+
+  return launch(CoroutineName("cwm host init") + asyncDispatcher) {
+    val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
+    MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
+      projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
+    ).invoke()
   }
 }
 
@@ -454,14 +436,20 @@ private fun prepareSplash(args: Array<String>): Runnable? {
   }
 }
 
-private fun checkGraphics(): Boolean {
-  return if (GraphicsEnvironment.isHeadless()) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                                     BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-    false
+private fun CoroutineScope.checkGraphics(isHeadless: Boolean, beforeLafLoadingJob: Job?, asyncDispatcher: CoroutineContext): Job? {
+  if (isHeadless) {
+    return null
   }
-  else {
-    true
+
+  return launch(asyncDispatcher) {
+    beforeLafLoadingJob?.join()
+    runActivity("graphics environment checking") {
+      if (GraphicsEnvironment.isHeadless()) {
+        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                                         BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+        exitProcess(AppExitCodes.NO_GRAPHICS)
+      }
+    }
   }
 }
 
@@ -491,20 +479,24 @@ fun getServer(): BuiltInServer? = socketLock?.getServer()
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
 
-private suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): Any? {
-  val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-  if (if (vendorAsProperty.isEmpty()) !appInfoDeferred.await().isVendorJetBrains else vendorAsProperty != "JetBrains") {
+// On startup 2 dialogs must be shown:
+// - gdpr agreement
+// - eu(l)a
+private fun CoroutineScope.loadEuaDocument(isHeadless: Boolean, appInfoDeferred: Deferred<ApplicationInfoEx>): Deferred<Any?>? {
+  if (isHeadless) {
     return null
   }
 
-  var activity = StartUpMeasurer.startActivity("eua getting")
-  var document: EndUserAgreement.Document? = EndUserAgreement.getLatestDocument()
-  activity = activity.endAndStart("eua is accepted checking")
-  if (document!!.isAccepted) {
-    document = null
+  return async(CoroutineName("eua document") + Dispatchers.IO) {
+    val vendorAsProperty = System.getProperty("idea.vendor.name", "")
+    if (if (vendorAsProperty.isEmpty()) !appInfoDeferred.await().isVendorJetBrains else vendorAsProperty != "JetBrains") {
+      null
+    }
+    else {
+      val document = runActivity("eua getting") { EndUserAgreement.getLatestDocument() }
+      if (runActivity("eua is accepted checking") { document.isAccepted }) null else document
+    }
   }
-  activity.end()
-  return document
 }
 
 private fun runPreAppClass(log: Logger, args: Array<String>) {
@@ -577,8 +569,8 @@ private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
     }
 
     // IdeaLaF uses AllIcons - icon manager must be activated
-    launch(CoroutineName("icon manager activation")) {
-      if (!isHeadless) {
+    if (!isHeadless) {
+      launch(CoroutineName("icon manager activation")) {
         IconManager.activate(CoreIconManager())
       }
     }
@@ -613,10 +605,7 @@ private suspend fun initUi(busyThread: Thread, isHeadless: Boolean): Any {
     activity = activity.endAndStart("system font data initialization")
     if (!isHeadless) {
       JBUIScale.getSystemFontData {
-        val subActivity = StartUpMeasurer.startActivity("base LaF defaults getting")
-        val result = baseLaF.defaults
-        subActivity.end()
-        result
+        runActivity("base LaF defaults getting") { baseLaF.defaults }
       }
       activity = activity.endAndStart("scale initialization")
       JBUIScale.scale(1f)
@@ -636,12 +625,8 @@ and thus will effectively disable auto shutdown behavior for this application.
   }
 
   if (isUsingSeparateWriteThread) {
-    val activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading")
-    try {
+    runActivity("Write Intent Lock UI class transformer loading") {
       WriteIntentLockInstrumenter.instrument()
-    }
-    finally {
-      activity.end()
     }
   }
   return baseLaF
@@ -736,13 +721,15 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts() 
   }
 }
 
-private fun configureJavaUtilLogging() {
-  val rootLogger = java.util.logging.Logger.getLogger("")
-  if (rootLogger.handlers.isEmpty()) {
-    rootLogger.level = Level.WARNING
-    val consoleHandler = ConsoleHandler()
-    consoleHandler.level = Level.WARNING
-    rootLogger.addHandler(consoleHandler)
+private fun CoroutineScope.configureJavaUtilLogging(asyncDispatcher: CoroutineContext) {
+  launch(CoroutineName("console logger configuration") + asyncDispatcher) {
+    val rootLogger = java.util.logging.Logger.getLogger("")
+    if (rootLogger.handlers.isEmpty()) {
+      rootLogger.level = Level.WARNING
+      val consoleHandler = ConsoleHandler()
+      consoleHandler.level = Level.WARNING
+      rootLogger.addHandler(consoleHandler)
+    }
   }
 }
 
@@ -756,12 +743,10 @@ fun checkHiDPISettings() {
 
 private suspend fun checkSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
-    withContext(SwingDispatcher) {
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
-                                       BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
-                                                               PathManager.PROPERTY_CONFIG_PATH,
-                                                               PathManager.PROPERTY_SYSTEM_PATH), true)
-    }
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
+                                     BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
+                                                             PathManager.PROPERTY_CONFIG_PATH,
+                                                             PathManager.PROPERTY_SYSTEM_PATH), true)
     return false
   }
 
@@ -877,43 +862,47 @@ private fun checkDirectory(directory: Path,
   }
 }
 
-/** Returns `true` when `checkConfig` is requested and config import is needed.  */
-private fun lockSystemDirs(checkConfig: Boolean,
-                           configPath: Path,
-                           systemPath: Path,
-                           args: Array<String>,
-                           mainScope: CoroutineScope): Boolean {
+// returns `true` when `checkConfig` is requested and config import is needed
+private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean,
+                                          pathDeferred: Deferred<Pair<Path, Path>>,
+                                          args: Array<String>,
+                                          mainScope: CoroutineScope): Deferred<Boolean> {
   if (socketLock != null) {
     throw AssertionError("Already initialized")
   }
 
-  // this check must be performed before system directories are locked
-  val importNeeded = checkConfig &&
-                     (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
-  socketLock = SocketLock(configPath, systemPath)
-  val status = socketLock!!.lockAndTryActivate(args = args, mainScope = mainScope)
-  when (status.first) {
-    ActivationStatus.NO_INSTANCE -> {
-      ShutDownTracker.getInstance().registerShutdownTask {
-        synchronized(AppStarter::class.java) {
-          socketLock!!.dispose()
-          socketLock = null
+  return async(Dispatchers.IO) {
+    val (configPath, systemPath) = pathDeferred.await()
+    withContext(subtask("system dirs locking")) {
+      // this check must be performed before system directories are locked
+      val importNeeded = checkConfig &&
+                         (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
+      socketLock = SocketLock(configPath, systemPath)
+      val status = socketLock!!.lockAndTryActivate(args = args, mainScope = mainScope)
+      when (status.first) {
+        ActivationStatus.NO_INSTANCE -> {
+          ShutDownTracker.getInstance().registerShutdownTask {
+            synchronized(AppStarter::class.java) {
+              socketLock!!.dispose()
+              socketLock = null
+            }
+          }
+        }
+        ActivationStatus.ACTIVATED -> {
+          val result = status.second!!
+          println(result.message ?: "Already running")
+          exitProcess(result.exitCode)
+        }
+        ActivationStatus.CANNOT_ACTIVATE -> {
+          val message = BootstrapBundle.message("bootstrap.error.message.only.one.instance.of.0.can.be.run.at.a.time",
+                                                ApplicationNamesInfo.getInstance().productName)
+          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true)
+          exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
         }
       }
-    }
-    ActivationStatus.ACTIVATED -> {
-      val result = status.second!!
-      println(result.message ?: "Already running")
-      exitProcess(result.exitCode)
-    }
-    ActivationStatus.CANNOT_ACTIVATE -> {
-      val message = BootstrapBundle.message("bootstrap.error.message.only.one.instance.of.0.can.be.run.at.a.time",
-                                            ApplicationNamesInfo.getInstance().productName)
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true)
-      exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
+      importNeeded
     }
   }
-  return importNeeded
 }
 
 private fun setupLogger(): Logger {
