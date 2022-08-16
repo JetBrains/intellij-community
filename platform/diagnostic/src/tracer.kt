@@ -4,7 +4,8 @@
 package com.intellij.diagnostic
 
 import kotlinx.coroutines.*
-import java.util.concurrent.atomic.AtomicReference
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -77,16 +78,27 @@ private class CoroutineTimeMeasurer(
   private val parentActivity: ActivityImpl?,
 ) : CopyableThreadContextElement<Unit> {
 
+  companion object {
+    private val CURRENT_ACTIVITY: VarHandle
+    private val LAST_SUSPENSION_TIME: VarHandle
+
+    init {
+      val lookup = MethodHandles.privateLookupIn(CoroutineTimeMeasurer::class.java, MethodHandles.lookup())
+      CURRENT_ACTIVITY = lookup.findVarHandle(CoroutineTimeMeasurer::class.java, "currentActivity", Activity::class.java)
+      LAST_SUSPENSION_TIME = lookup.findVarHandle(CoroutineTimeMeasurer::class.java, "lastSuspensionTime", Long::class.javaPrimitiveType)
+    }
+  }
+
   override val key: CoroutineContext.Key<*> get() = CoroutineTimeMeasurerKey
 
   private val creationTime: Long = StartUpMeasurer.getCurrentTime()
-  private val currentActivity: AtomicReference<Activity> = AtomicReference(noActivity)
-
-  @Volatile
+  @Suppress("unused")
+  private var currentActivity: Activity? = null
+  @Suppress("unused")
   private var lastSuspensionTime: Long = -1
 
   override fun toString(): String {
-    val activity = currentActivity.get()
+    val activity = CURRENT_ACTIVITY.getVolatile(this) as Activity?
     return when {
       activity != null -> (activity as ActivityImpl).name
       parentActivity != null -> "uninitialized child of ${parentActivity.name}"
@@ -95,47 +107,54 @@ private class CoroutineTimeMeasurer(
   }
 
   override fun updateThreadContext(context: CoroutineContext) {
-    if (currentActivity.get() != noActivity) {
+    if (CURRENT_ACTIVITY.getVolatile(this) != null) {
       // already initialized
       return
     }
+
     val coroutineName = context[CoroutineName]?.name
     if (parentActivity != null) {
       if (coroutineName == null || parentActivity.name == coroutineName) {
         // name was not specified for child => propagate parent activity
-        currentActivity.set(parentActivity)
+        CURRENT_ACTIVITY.setVolatile(this, parentActivity)
         return
       }
     }
     if (coroutineName == null) {
       // no parent and no name => don't report
-      currentActivity.set(noActivity)
+      CURRENT_ACTIVITY.setVolatile(this, noActivity)
       return
     }
+
     // report time between scheduling and start of the execution
     val activity = ActivityImpl("${coroutineName}: scheduled", creationTime, parentActivity)
       // start main activity right away
       .endAndStart(coroutineName)
-    currentActivity.set(activity)
+    CURRENT_ACTIVITY.setVolatile(this, activity)
 
     val job = context.job
     job.invokeOnCompletion {
+      var lastSuspensionTime = LAST_SUSPENSION_TIME.getVolatile(this) as Long
+      if (lastSuspensionTime == -1L) {
+        lastSuspensionTime = StartUpMeasurer.getCurrentTime()
+      }
       // After the last suspension, the coroutine was waiting for its children => end main activity
-      activity.endAndStart(lastSuspensionTime, "${coroutineName}: completing")
-        // This invokeOnCompletion handler is executed after all children are completed => end 'completing' activity
-        .end()
+      val end = StartUpMeasurer.getCurrentTime()
+      ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity).end(end)
+      // This invokeOnCompletion handler is executed after all children are completed => end 'completing' activity
+      activity.end(end)
     }
   }
 
   override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-    lastSuspensionTime = StartUpMeasurer.getCurrentTime()
+    LAST_SUSPENSION_TIME.setVolatile(this, StartUpMeasurer.getCurrentTime())
   }
 
   override fun copyForChild(): CopyableThreadContextElement<Unit> {
-    val activity = checkNotNull(currentActivity.get()) {
+    val activity = checkNotNull(CURRENT_ACTIVITY.getVolatile(this)) {
       "updateThreadContext was never called"
     }
-    if (activity == noActivity) {
+    if (activity === noActivity) {
       return CoroutineTimeMeasurer(null)
     }
     else {
