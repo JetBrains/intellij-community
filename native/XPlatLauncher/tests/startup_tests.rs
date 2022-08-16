@@ -2,7 +2,7 @@ use crate::tests_util::{get_child_dir, gradle_command_wrapper, layout_into_test_
 use std::env;
 use std::env::temp_dir;
 use std::fs::create_dir;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::sync::Once;
 use std::time::SystemTime;
 

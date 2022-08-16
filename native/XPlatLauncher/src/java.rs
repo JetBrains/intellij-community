@@ -1,14 +1,15 @@
-use std::{mem, panic, thread};
+use std::{mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
-use std::thread::JoinHandle;
-use std::thread::sleep;
-use std::time::Duration;
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
-use log::{debug, error, info, Log};
+use log::{debug, error, info};
 use crate::{err_from_string, errors};
 use crate::errors::{LauncherError, Result};
+
+#[cfg(target_os = "linux")] use {
+    std::thread::sleep
+};
 
 #[cfg(target_os = "macos")] use {
     core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef},
@@ -34,7 +35,7 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
     // JNI docs says that JVM should not be created on primordial thread
     // See Chapter 5: The Invocation API
-    let join_handle = thread::spawn(move || {
+    let _join_handle = thread::spawn(move || {
         unsafe {
             debug!("Trying to spin up VM and call IntelliJ main from non-primordial thread");
             match intellij_main_thread(&java_home, vm_options, args) {
@@ -244,7 +245,7 @@ fn get_jni_vm_opts(opts: Vec<String>) -> Result<Vec<jni_sys::JavaVMOption>> {
 }
 
 #[cfg(target_os = "windows")]
-fn run_event_loop() -> Result<()> {
+unsafe fn run_event_loop() -> Result<()> {
     loop {
 
     }
@@ -287,7 +288,7 @@ unsafe fn run_event_loop() -> Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn run_event_loop() -> Result<()> {
+unsafe fn run_event_loop() -> Result<()> {
     debug!("Running event loop on primordial thread");
     // TODO: proper run loop so that we can exit
     loop {

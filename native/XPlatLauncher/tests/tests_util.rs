@@ -38,18 +38,6 @@ fn command_handler(command: &Output) {
     }
 }
 
-pub fn get_java_parameter_from_output(java_output: &str, parameter: String) -> String {
-    let split = java_output.split("\n");
-    for s in split {
-        if s.starts_with(&parameter) {
-            return s.to_string();
-        }
-    }
-
-    return "".to_string();
-}
-
-
 pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     let read_dir = fs::read_dir(parent)?;
 

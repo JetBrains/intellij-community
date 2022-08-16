@@ -4,7 +4,7 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use crate::{canonical_non_unc, err_from_string, LaunchConfiguration, LauncherError, ProductInfo};
-use crate::errors::{Result};
+use crate::errors::Result;
 use crate::utils::{get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
 
 pub struct DefaultLaunchConfiguration {
@@ -193,10 +193,11 @@ impl DefaultLaunchConfiguration {
         // else
         //   JAVA_BIN="$JRE/bin/java"
         // fi
-        let mut command = std::process::Command::new("command");
-        command.arg("-v").arg("java");
 
-        let default_java_output = command.output()?;
+        let default_java_output = std::process::Command::new("command")
+            .arg("-v")
+            .arg("java")
+            .output()?;
 
         let stderr = String::from_utf8_lossy(&default_java_output.stderr);
         let stdout = String::from_utf8_lossy(&default_java_output.stdout);
@@ -206,7 +207,7 @@ impl DefaultLaunchConfiguration {
         };
 
         if !default_java_output.status.success() {
-            let message = format!("{command:?} didn't succeed, exit code: {exit_code}, stdout: {stdout}, stderr: {stderr}");
+            let message = format!("'command -v java' didn't succeed, exit code: {exit_code}, stdout: {stdout}, stderr: {stderr}");
             return err_from_string(message)
         }
 

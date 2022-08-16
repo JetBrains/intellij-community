@@ -1,4 +1,25 @@
-extern crate core;
+// #![deny(bad_style,
+// const_err,
+// dead_code,
+// improper_ctypes,
+// non_shorthand_field_patterns,
+// no_mangle_generic_items,
+// overflowing_literals,
+// path_statements,
+// patterns_in_fns_without_body,
+// private_in_public,
+// unconditional_recursion,
+// unused,
+// unused_allocation,
+// unused_comparisons,
+// unused_parens,
+// while_true,
+// missing_debug_implementations,
+// trivial_numeric_casts,
+// unused_extern_crates,
+// unused_import_braces,
+// unused_qualifications,
+// unused_results)]
 
 mod errors;
 mod java;
@@ -7,27 +28,20 @@ mod remote_dev;
 mod default;
 
 use serde::{Deserialize, Serialize};
-use std::{env};
-use std::fs::{File};
-use std::io::{BufReader};
-use std::path::{Path, PathBuf};
-use log::{debug, error, info, LevelFilter, Log, warn};
+use std::env;
+use std::fs::File;
+use std::path::PathBuf;
+use log::{debug, error, LevelFilter};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
 use crate::errors::{err_from_string, LauncherError, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
-use crate::utils::{canonical_non_unc};
+use crate::utils::canonical_non_unc;
 
 pub fn main_lib() {
     let main_result = main_impl();
     unwrap_with_human_readable_error(main_result);
-    match main_impl() {
-        Ok(_) => {}
-        Err(e) => {
-
-        }
-    }
 }
 
 fn main_impl() -> Result<()> {
@@ -78,16 +92,16 @@ fn main_impl() -> Result<()> {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub launch: ProductInfoLaunchField
+    pub launch: ProductInfoLaunchField,
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
@@ -171,7 +185,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
             let vm_option = format!("-Didea.properties.file={path_string}");
             full_vm_options.push(vm_option);
         }
-        Err(e) => {
+        Err(_) => {
             debug!("IDE properties file is not set, skipping setting vm option")
         }
     };
