@@ -205,8 +205,8 @@ internal class RecentProjectFilteringTree(
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
     }
 
-    override fun mousePressed(mouseEvent: MouseEvent) {
-      super.mousePressed(mouseEvent)
+    override fun mouseReleased(mouseEvent: MouseEvent) {
+      super.mouseReleased(mouseEvent)
 
       if (mouseEvent.isConsumed) {
         return
