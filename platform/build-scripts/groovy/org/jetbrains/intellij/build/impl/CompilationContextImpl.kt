@@ -152,11 +152,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
                        "\' is specified, so the archive with the compiled project output metadata won\'t be used to fetch compile output")
       options.pathToCompiledClassesArchivesMetadata = null
     }
-    if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
-      messages.warning(
-        "Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
-    }
   }
 
   override fun findRequiredModule(name: String): JpsModule {
