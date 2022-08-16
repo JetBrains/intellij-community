@@ -53,6 +53,12 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
 
+  @Nullable
+  public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
+    LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getDefaultCommonSettings() : null;
+  }
+
   /**
    * Override this method if file extension to be used with samples is different from the one returned by associated file type.
    *
