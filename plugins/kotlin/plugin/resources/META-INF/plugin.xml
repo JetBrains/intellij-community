@@ -20,7 +20,7 @@ The plugin supports Kotlin 1.7 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.7.20-Beta</h3>
+    <h3>1.7.20-RC</h3>
     <ul>
       <li>K2: support for the `all-open, `no-arg`, SAM-with-receiver, Lombok, Parcelize, AtomicFU, and `jvm-abi-gen` compiler plugins</li>
       <li>Language: experimental `..<` (`rangeUntil`) operator for ranges with the excluded end bound, deprecated inferring type variables into an empty intersection type, warning on potentially empty intersection types, improved script handling in source roots</li>
@@ -30,7 +30,7 @@ The plugin supports Kotlin 1.7 and lower.
       <li>Libraries: a new experimental interface for ranges with the excluded end bound, new walk and visit extensions for `java.nio.file.Path`</li>
       <li>Gradle: simplified configuration method for the JVM Toolchain, fixed deprecations and ensured compatibility with Gradle 7.1</li>
     </ul>
-    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.20-Beta">changelog</a>.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.20-RC">changelog</a>.
     <br><br>
     <h3>1.7.0</h3>
     <ul>
