@@ -11,6 +11,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
@@ -179,7 +180,7 @@ class PluginDescriptorTest {
   fun testStandaloneMetaInf() {
     val tempDir = directoryContent {
       dir("classes") {
-        file("Empty.class", "") // `com.intellij.util.io.java.classFile` requires dependency on `intellij.java.testFramework`
+        classFile("Empty") {}
       }
       dir("lib") {
         zip("empty.jar") {}

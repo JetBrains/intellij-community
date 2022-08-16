@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.java.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -12,7 +12,9 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import kotlin.reflect.KClass
 
+@Suppress("unused")
 class ClassFileBuilderImpl(private val name: String) : ClassFileBuilder() {
+
   private val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 
   override fun field(name: String, type: String, access: AccessModifier) {
@@ -27,7 +29,7 @@ class ClassFileBuilderImpl(private val name: String) : ClassFileBuilder() {
     writer.visitField(access.toAsmCode(), name, typeDescriptor, null, null).visitEnd()
   }
 
-  fun generate(targetRoot: DirectoryContentBuilder) {
+  override fun generate(targetRoot: DirectoryContentBuilder) {
     writer.visit(javaVersion.toAsmCode(), access.toAsmCode(), toJvmName(name), null,
                  superclass.replace('.', '/'),
                  interfaces.map(::toJvmName).toTypedArray())
