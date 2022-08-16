@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.core" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="TEST" />
   </component>
 </module>
