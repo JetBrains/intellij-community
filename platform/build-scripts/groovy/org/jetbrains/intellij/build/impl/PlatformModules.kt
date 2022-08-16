@@ -120,6 +120,7 @@ object PlatformModules {
     "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
     "github.jnr.ffi" to LibraryPackMode.STANDALONE_SEPARATE,
+    "ion" to LibraryPackMode.STANDALONE_SEPARATE,
   )
 
   fun collectPlatformModules(to: MutableCollection<String>) {
