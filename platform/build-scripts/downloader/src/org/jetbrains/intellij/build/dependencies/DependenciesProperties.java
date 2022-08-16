@@ -26,16 +26,17 @@ public final class DependenciesProperties {
     //noinspection SimplifyStreamApiCallChains
     var propertyFiles = Stream.concat(
       Stream.of(customPropertyFiles), Stream.of(communityPropertiesFile)
-    ).collect(Collectors.toList());
+    ).distinct().collect(Collectors.toList());
     for (Path propertyFile : propertyFiles) {
-      if (Files.exists(propertyFile)) {
-        try (var file = Files.newInputStream(propertyFile)) {
-          var properties = new Properties();
-          properties.load(file);
-          properties.forEach((key, value) -> {
-            dependencies.putIfAbsent(key.toString(), value.toString());
-          });
-        }
+      try (var file = Files.newInputStream(propertyFile)) {
+        var properties = new Properties();
+        properties.load(file);
+        properties.forEach((key, value) -> {
+          if (dependencies.containsKey(key)) {
+            throw new IllegalStateException("Key '" + key + "' from " + propertyFile + " is already defined");
+          }
+          dependencies.put(key.toString(), value.toString());
+        });
       }
     }
     if (dependencies.isEmpty()) {
