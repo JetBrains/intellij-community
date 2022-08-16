@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.highlighting.visitors
+package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,11 +14,21 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-internal class TypeHighlightingVisitor(
-    analysisSession: KtAnalysisSession,
-    holder: AnnotationHolder
-) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
-    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+internal class TypeHighlighter(
+    holder: AnnotationHolder,
+    project: Project,
+) : AfterResolveHighlighter(holder, project) {
+
+    context(KtAnalysisSession)
+    override fun highlight(element: KtElement) {
+        when (element) {
+            is KtSimpleNameExpression -> highlightSimpleNameExpression(element)
+            else -> {}
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (!expression.project.isNameHighlightingEnabled) return
         if (expression.isCalleeExpression()) return
         val parent = expression.parent

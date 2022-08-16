@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.highlighting.visitors
+package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
@@ -17,11 +18,22 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal class FunctionCallHighlightingVisitor(
-    analysisSession: KtAnalysisSession,
-    holder: AnnotationHolder
-) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
-    override fun visitBinaryExpression(expression: KtBinaryExpression) = with(analysisSession) {
+internal class FunctionCallHighlighter(
+    holder: AnnotationHolder,
+    project: Project
+) : AfterResolveHighlighter(holder, project) {
+
+    context(KtAnalysisSession)
+    override fun highlight(element: KtElement) {
+        when (element) {
+            is KtBinaryExpression -> highlightBinaryExpression(element)
+            is KtCallExpression -> highlightCallExpression(element)
+            else -> {}
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun highlightBinaryExpression(expression: KtBinaryExpression) {
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return
         if (operationReference.isAssignment()) return
         val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
@@ -29,13 +41,13 @@ internal class FunctionCallHighlightingVisitor(
         getTextAttributesForCall(call)?.let { attributes ->
             highlightName(operationReference, attributes)
         }
-        super.visitBinaryExpression(expression)
     }
 
     private fun KtReferenceExpression.isAssignment() =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 
-    override fun visitCallExpression(expression: KtCallExpression) = with(analysisSession) {
+    context(KtAnalysisSession)
+    private fun highlightCallExpression(expression: KtCallExpression) {
         expression.calleeExpression
             ?.takeUnless { it is KtLambdaExpression }
             ?.takeUnless { it is KtCallExpression /* KT-16159 */ }
@@ -46,10 +58,10 @@ internal class FunctionCallHighlightingVisitor(
                     }
                 }
             }
-        super.visitCallExpression(expression)
     }
 
-    private fun KtAnalysisSession.getTextAttributesForCall(call: KtCall): TextAttributesKey? {
+    context(KtAnalysisSession)
+    private fun getTextAttributesForCall(call: KtCall): TextAttributesKey? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {
             is KtConstructorSymbol -> Colors.CONSTRUCTOR_CALL
@@ -60,17 +72,20 @@ internal class FunctionCallHighlightingVisitor(
                 } else {
                     Colors.VARIABLE_AS_FUNCTION_LIKE_CALL
                 }
+
                 function.isSuspend -> Colors.SUSPEND_FUNCTION_CALL
                 function.callableIdIfNonLocal == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID -> Colors.KEYWORD
                 function.isExtension -> Colors.EXTENSION_FUNCTION_CALL
                 function.symbolKind == KtSymbolKind.TOP_LEVEL -> Colors.PACKAGE_FUNCTION_CALL
                 else -> Colors.FUNCTION_CALL
             }
+
             else -> Colors.FUNCTION_CALL //TODO ()
         }
     }
 
     companion object {
-        private val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID = CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
+        private val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID =
+            CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
     }
 }

@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.highlighting.visitors
+package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
@@ -9,11 +10,21 @@ import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.psi.*
 
-internal class ExpressionsSmartcastHighlightingVisitor(
-    analysisSession: KtAnalysisSession,
-    holder: AnnotationHolder
-) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
-    override fun visitExpression(expression: KtExpression) = with(analysisSession) {
+internal class ExpressionsSmartcastHighlighter(
+    holder: AnnotationHolder,
+    project: Project,
+) : AfterResolveHighlighter(holder, project) {
+
+    context(KtAnalysisSession)
+    override fun highlight(element: KtElement) {
+        when (element) {
+            is KtExpression -> higlightExpression(element)
+            else -> {}
+        }
+    }
+
+    context(KtAnalysisSession)
+    fun higlightExpression(expression: KtExpression) {
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
@@ -32,7 +43,7 @@ internal class ExpressionsSmartcastHighlightingVisitor(
         }
         expression.getSmartCastInfo()?.let { info ->
             createInfoAnnotation(
-              getSmartCastTarget(expression),
+                getSmartCastTarget(expression),
                 KotlinBaseHighlightingBundle.message(
                     "smart.cast.to.0",
                     info.smartCastType.asStringForDebugging()
@@ -41,7 +52,6 @@ internal class ExpressionsSmartcastHighlightingVisitor(
             )
         }
 
-        super.visitExpression(expression)
     }
 }
 

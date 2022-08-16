@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.highlighting.visitors
+package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -13,17 +14,24 @@ import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForPropertyD
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal class VariableReferenceHighlightingVisitor(
-    analysisSession: KtAnalysisSession,
-    holder: AnnotationHolder
-) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
-    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+internal class VariableReferenceHighlighter(
+    holder: AnnotationHolder,
+    project: Project
+) : AfterResolveHighlighter(holder, project) {
+
+    context(KtAnalysisSession)
+    override fun highlight(element: KtElement) {
+        when (element) {
+            is KtSimpleNameExpression -> highlightSimpleNameExpression(element)
+            else -> {}
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (!expression.project.isNameHighlightingEnabled) return
         if (expression.isAssignmentReference()) return
         if (expression.isByNameArgumentReference()) return
@@ -31,34 +39,33 @@ internal class VariableReferenceHighlightingVisitor(
 
         if (expression.isAutoCreatedItParameter()) {
             createInfoAnnotation(
-              expression,
-              KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
-              KotlinHighlightingColors.FUNCTION_LITERAL_DEFAULT_PARAMETER
+                expression,
+                KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
+                KotlinHighlightingColors.FUNCTION_LITERAL_DEFAULT_PARAMETER
             )
             return
         }
 
-        with(analysisSession) {
-            val targetSymbol = expression.mainReference.resolveToSymbol()
-            val targetPsi = targetSymbol?.psi
-            when {
-                targetSymbol is KtBackingFieldSymbol -> Colors.BACKING_FIELD_VARIABLE
-                targetSymbol is KtSyntheticJavaPropertySymbol -> Colors.SYNTHETIC_EXTENSION_PROPERTY
-                targetPsi != null -> textAttributesKeyForPropertyDeclaration(targetPsi)
-                else -> null
-            }?.let { attribute ->
-                highlightName(expression, attribute)
-                if (isMutableVariable(targetSymbol) == true
-                    || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)
-                ) {
-                    highlightName(expression, Colors.MUTABLE_VARIABLE)
-                }
+        val targetSymbol = expression.mainReference.resolveToSymbol()
+        val targetPsi = targetSymbol?.psi
+        when {
+            targetSymbol is KtBackingFieldSymbol -> Colors.BACKING_FIELD_VARIABLE
+            targetSymbol is KtSyntheticJavaPropertySymbol -> Colors.SYNTHETIC_EXTENSION_PROPERTY
+            targetPsi != null -> textAttributesKeyForPropertyDeclaration(targetPsi)
+            else -> null
+        }?.let { attribute ->
+            highlightName(expression, attribute)
+            if (isMutableVariable(targetSymbol) == true
+                || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)
+            ) {
+                highlightName(expression, Colors.MUTABLE_VARIABLE)
             }
         }
+
     }
 
-    @Suppress("UnusedReceiverParameter")
-    private fun KtAnalysisSession.isBackingFieldReferencingMutableVariable(symbol: KtSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun isBackingFieldReferencingMutableVariable(symbol: KtSymbol): Boolean {
         if (symbol !is KtBackingFieldSymbol) return false
         return !symbol.owningProperty.isVal
     }
