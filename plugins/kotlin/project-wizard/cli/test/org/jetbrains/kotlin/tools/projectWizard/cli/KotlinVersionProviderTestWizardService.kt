@@ -20,7 +20,10 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
             WizardKotlinVersion(
                 version,
                 getKotlinVersionKind(version),
-                Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
+                listOf(
+                    getKotlinVersionRepository(version),
+                    Repositories.JETBRAINS_KOTLIN_BOOTSTRAP
+                ),
                 getBuildSystemPluginRepository(getKotlinVersionKind(version), Repositories.JETBRAINS_KOTLIN_BOOTSTRAP),
             )
         }
