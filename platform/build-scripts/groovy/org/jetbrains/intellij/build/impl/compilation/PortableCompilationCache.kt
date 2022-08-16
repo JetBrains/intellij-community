@@ -14,9 +14,13 @@ import java.nio.file.Path
 class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
     @JvmStatic
-    val CAN_BE_USED = ProjectStamps.PORTABLE_CACHES && IS_CONFIGURED
+    val IS_ENABLED = ProjectStamps.PORTABLE_CACHES && IS_CONFIGURED
 
     private var isAlreadyUpdated = false
+  }
+
+  init {
+    require(IS_ENABLED)
   }
 
   private val git = Git(context.paths.projectHome)
@@ -24,7 +28,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * JPS data structures allowing incremental compilation for [CompilationOutput]
    */
-  internal class JpsCaches(context: CompilationContext) {
+  private class JpsCaches(context: CompilationContext) {
     val skipDownload = bool(SKIP_DOWNLOAD_PROPERTY)
     val skipUpload = bool(SKIP_UPLOAD_PROPERTY)
     val dir: Path by lazy { context.compilationData.dataStorageRoot }
@@ -40,17 +44,14 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * Server which stores [PortableCompilationCache]
    */
   private class RemoteCache(context: CompilationContext) {
-    val url  by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
+    val url by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
     val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url", context) }
   }
 
   private val forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
   private val forceRebuild = bool(FORCE_REBUILD_PROPERTY)
   private val remoteCache = RemoteCache(context)
-
   private val jpsCaches by lazy { JpsCaches(context) }
-  val canBeUsed = CAN_BE_USED
-
   private val remoteGitUrl by lazy {
     val result = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url", context)
     context.messages.info("Git remote url $result")
@@ -70,7 +71,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   /**
-   * Download the latest available [PortableCompilationCache] and perform incremental compilation if necessary
+   * Download the latest available [PortableCompilationCache],
+   * [org.jetbrains.intellij.build.CompilationTasks.resolveProjectDependencies]
+   * and perform incremental compilation if necessary.
    *
    * When force rebuilding incremental compilation flag has to be set to false otherwise backward-refs won't be created.
    * During rebuild JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
@@ -78,31 +81,30 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
   fun downloadCacheAndCompileProject() {
-    //noinspection GroovySynchronizationOnNonFinalField
-    synchronized (PortableCompilationCache) {
+    synchronized(PortableCompilationCache) {
       if (isAlreadyUpdated) {
         context.messages.info("PortableCompilationCache is already updated")
         return
       }
-
-      if (forceRebuild) {
+      if (forceRebuild || forceDownload) {
         clean()
       }
-      else if (!isLocalCacheUsed()) {
+      if (!isLocalCacheUsed()) {
         downloadCache()
       }
       CompilationTasks.create(context).resolveProjectDependencies()
       if (isCompilationRequired()) {
         context.options.incrementalCompilation = !forceRebuild
-        compileProject(context)
+        context.messages.block("Compiling project") {
+          compileProject(context)
+        }
       }
       isAlreadyUpdated = true
       context.options.incrementalCompilation = true
-      context.options.useCompiledClassesFromProjectOutput = false
     }
   }
 
-  fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
+  private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
 
   private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
 
@@ -132,8 +134,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     uploader.updateCommitHistory()
   }
 
-  fun buildJpsCacheZip(): Path = uploader.buildJpsCacheZip()
-
   /**
    * Publish already uploaded [PortableCompilationCache] to [PortableCompilationCache.RemoteCache] overriding existing [CommitsHistory].
    * Used in force rebuild and cleanup.
@@ -156,6 +156,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
                              "please execute `git config --global core.autocrlf input` before checkout " +
                              "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
     }
+    context.compilationData.statisticsReported = false
     val jps = JpsCompilationRunner(context)
     try {
       jps.buildAll()
@@ -189,7 +190,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private fun downloadCache() {
-    downloader.download()
+    context.messages.block("Downloading Portable Compilation Cache") {
+      downloader.download()
+    }
   }
 }
 

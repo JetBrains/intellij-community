@@ -66,15 +66,12 @@ internal class PortableCompilationCacheUploader(
     uploadMetadata()
   }
 
-  fun buildJpsCacheZip(): Path {
+  private fun uploadJpsCaches() {
     val dataStorageRoot = context.compilationData.dataStorageRoot
     val zipFile = dataStorageRoot.parent.resolve(commitHash)
-    zipBinaryData(zipFile, dataStorageRoot)
-    return zipFile
-  }
-
-  private fun uploadJpsCaches() {
-    val zipFile = buildJpsCacheZip()
+    Compressor.Zip(zipFile).use { zip ->
+      zip.addDirectory(dataStorageRoot)
+    }
     val cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
@@ -110,12 +107,6 @@ internal class PortableCompilationCacheUploader(
         }
         moveFile(zipFile, Path.of(syncFolder, sourcePath))
       }
-    }
-  }
-
-  private fun zipBinaryData(zipFile: Path, dir: Path) {
-    Compressor.Zip(zipFile).use { zip ->
-      zip.addDirectory(dir)
     }
   }
 

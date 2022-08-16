@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
-import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -441,9 +440,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     })
 
-    if (PortableCompilationCache.CAN_BE_USED) {
-      systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
-    }
+    systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = context.options.useCompiledClassesFromProjectOutput.toString()
 
     var suspendDebugProcess = options.isSuspendDebugProcess
     if (options.isPerformanceTestsOnly) {
@@ -480,6 +477,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 
   override fun runTestsSkippedInHeadlessEnvironment() {
+    create(context).compileAllModulesAndTests()
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
       options.batchTestIncludes = it.getFirst()

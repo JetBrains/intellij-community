@@ -17,7 +17,7 @@ class BuildOptions {
     /**
      * Use this property to change the project compiled classes output directory.
      *
-     * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl.getProjectOutputDirectory}
+     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.projectOutputDirectory]
      */
     const val PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory"
     const val OS_LINUX = "linux"
@@ -143,7 +143,7 @@ class BuildOptions {
      * If `true` compilation step is skipped and compiled classes from the project output are used instead.
      * True if [BuildOptions.isInDevelopmentMode] is enabled.
      *
-     * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl.getProjectOutputDirectory}
+     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.projectOutputDirectory]
      */
     const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
 

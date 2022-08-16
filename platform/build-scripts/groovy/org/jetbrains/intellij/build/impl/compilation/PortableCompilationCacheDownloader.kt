@@ -38,7 +38,7 @@ internal class PortableCompilationCacheDownloader(
   private fun downloadString(url: String) = httpClient.get(url).useSuccessful { it.body.string() }
 
   private fun downloadToFile(url: String, file: Path, spanName: String) {
-    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "path").useWithScope {
+    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
       Files.createDirectories(file.parent)
       httpClient.get(url).useSuccessful { response ->
         Files.newOutputStream(file).use {
@@ -69,11 +69,8 @@ internal class PortableCompilationCacheDownloader(
   }
 
   fun download() {
-    if (availableCommitDepth != -1) {
+    if (availableCommitDepth in 0 until lastCommits.count()) {
       val lastCachedCommit = lastCommits.get(availableCommitDepth)
-      if (lastCachedCommit == null) {
-        context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
-      }
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
       val tasks = mutableListOf<ForkJoinTask<*>>()
       if (!downloadCompilationOutputsOnly || anyLocalChanges) {
@@ -98,7 +95,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private fun saveJpsCache(commitHash: String) {
-     var cacheArchive: Path? = null
+    var cacheArchive: Path? = null
     try {
       cacheArchive = downloadJpsCache(commitHash)
 

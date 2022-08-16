@@ -6,13 +6,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.streams.toList
 
-class Git(dir: Path) {
-  private val dir: Path
-
-  init {
-    this.dir = dir
-  }
-
+class Git(private val dir: Path) {
   fun log(commitsCount: Int): List<String> {
     return execute("git", "log", "-$commitsCount", "--pretty=tformat:%H")
   }

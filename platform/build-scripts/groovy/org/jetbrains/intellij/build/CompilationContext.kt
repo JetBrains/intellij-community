@@ -18,7 +18,6 @@ interface CompilationContext {
   val projectModel: JpsModel
   val dependenciesProperties: DependenciesProperties
   val bundledRuntime: BundledRuntime
-
   val compilationData: JpsCompilationData
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
@@ -36,7 +35,7 @@ interface CompilationContext {
   val stableJdkHome: Path
 
   /**
-   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
+   * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
   val projectOutputDirectory: Path
 
@@ -66,16 +65,18 @@ interface CompilationTasks {
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 
+  /**
+   * See [compileModules]
+   */
   fun compileAllModulesAndTests()
 
+  /**
+   * [resolveProjectDependencies] is guaranteed to be called
+   */
   fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
   fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
-
-  fun resolveProjectDependenciesAndCompileAll()
-
-  fun reuseCompiledClassesIfProvided()
 }
 

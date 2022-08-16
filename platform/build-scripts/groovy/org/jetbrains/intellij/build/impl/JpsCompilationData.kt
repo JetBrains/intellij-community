@@ -7,7 +7,6 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
   val compiledModules: MutableSet<String> = LinkedHashSet()
   val compiledModuleTests: MutableSet<String> = LinkedHashSet()
   val builtArtifacts: MutableSet<String> = LinkedHashSet()
-  var compiledClassesAreLoaded: Boolean = false
   var statisticsReported: Boolean = false
   var projectDependenciesResolved: Boolean = false
 

@@ -226,10 +226,11 @@ private fun upload(config: CompilationCacheUploadConfiguration,
 
 @VisibleForTesting
 fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: String) -> Unit,
+                                  withScope: (name: String, operation: () -> Unit) -> Unit,
                                   classOutput: Path,
                                   metadataFile: Path,
                                   saveHash: Boolean) {
-  spanBuilder("fetch and unpack compiled classes").useWithScope {
+  withScope("fetch and unpack compiled classes") {
     val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
     val tempDownloadStorage = (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: classOutput.parent)
       .resolve("idea-compile-parts-v2")
@@ -286,7 +287,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     // toUnpack is performed as part of download
     toDownload.forEach(toUnpack::remove)
 
-    spanBuilder("cleanup outdated compiled class archives").useWithScope {
+    withScope("cleanup outdated compiled class archives") {
       val start = System.nanoTime()
       var count = 0
       var bytes = 0L
@@ -321,7 +322,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
       reportStatisticValue("compile-parts:removed:count", count.toString())
     }
 
-    spanBuilder("fetch compiled classes archives").useWithScope {
+    withScope("fetch compiled classes archives") {
       val start = System.nanoTime()
 
       val prefix = metadata.prefix
@@ -350,12 +351,11 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
       reportStatisticValue("compile-parts:downloaded:count", toDownload.size.toString())
 
       if (!failed.isEmpty()) {
-        throw RuntimeException(
-          "Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
+        error("Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
       }
     }
 
-    spanBuilder("unpack compiled classes archives").useWithScope {
+    withScope("unpack compiled classes archives") {
       val start = System.nanoTime()
 
       ForkJoinTask.invokeAll(toUnpack.map { item ->

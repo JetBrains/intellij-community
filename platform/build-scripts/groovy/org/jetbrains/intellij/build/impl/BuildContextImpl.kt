@@ -221,12 +221,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
-
-    /**
-     * FIXME compiled classes are assumed to be already fetched in the FIXME from [CompilationContextImpl.prepareForBuild], please change them together
-     */
     val options = BuildOptions()
-    options.useCompiledClassesFromProjectOutput = true
+    options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,

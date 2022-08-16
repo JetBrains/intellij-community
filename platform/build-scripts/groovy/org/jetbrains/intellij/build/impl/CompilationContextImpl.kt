@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
@@ -21,6 +22,7 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
+import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -77,82 +79,48 @@ class CompilationContextImpl private constructor(model: JpsModel,
   }
 
   fun prepareForBuild() {
-    checkCompilationOptions()
+    CompiledClasses.checkOptions(this)
     NioFiles.deleteRecursively(paths.logDir)
     Files.createDirectories(paths.logDir)
-    compilationData = JpsCompilationData(
-      dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
-      buildLogFile = paths.logDir.resolve("compilation.log"),
-      categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
-    )
-    val projectArtifactsDirName = "project-artifacts"
+    if (!this::compilationData.isInitialized) {
+      compilationData = JpsCompilationData(
+        dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
+        buildLogFile = paths.logDir.resolve("compilation.log"),
+        categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
+      )
+    }
     overrideProjectOutputDirectory()
-    val baseArtifactsOutput = "${paths.buildOutputRoot}/$projectArtifactsDirName"
+    val baseArtifactsOutput = paths.buildOutputDir.resolve("project-artifacts")
     JpsArtifactService.getInstance().getArtifacts(project).forEach {
       setOutputPath(it, "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}")
-    }
-    if (!options.useCompiledClassesFromProjectOutput) {
-      messages.info("Incremental compilation: ${options.incrementalCompilation}")
     }
     suppressWarnings(project)
     flush()
     setPathRoot(paths.buildOutputDir)
-    /**
-     * FIXME should be called lazily, yet it breaks [TestingTasks.runTests], needs investigation
-     */
-    CompilationTasks.create(this).reuseCompiledClassesIfProvided()
+    cleanOutput(keepCompilationState = CompiledClasses.keepCompilationState(options))
   }
 
   private fun overrideProjectOutputDirectory() {
-    if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isNullOrEmpty()) {
-      setProjectOutputDirectory0(this, options.projectClassesOutputDirectory!!)
-    }
-    else if (options.useCompiledClassesFromProjectOutput) {
-      val outputDir = projectOutputDirectory
-      if (!outputDir.exists()) {
-        throw RuntimeException("${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled," +
-                               " but the project output directory $outputDir doesn\'t exist")
+    val override = options.projectClassesOutputDirectory
+    when {
+      !override.isNullOrEmpty() -> projectOutputDirectory = Path.of(override)
+      options.useCompiledClassesFromProjectOutput -> require(projectOutputDirectory.exists()) {
+        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the project output directory $projectOutputDirectory doesn't exist"
       }
+      else -> projectOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
-    else {
-      setProjectOutputDirectory0(this, "${paths.buildOutputRoot}/classes")
-    }
+    messages.info("Project output directory is $projectOutputDirectory")
   }
 
-  override val projectOutputDirectory: Path
-    get() = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl).toPath()
-
-  fun setProjectOutputDirectory(outputDirectory: String) {
-    val url = "file://${FileUtilRt.toSystemIndependentName(outputDirectory)}"
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
-  }
-
-  private fun checkCompilationOptions() {
-    if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
-      messages.warning(
-        "\'" + BuildOptions.USE_COMPILED_CLASSES_PROPERTY + "\' is specified, so \'incremental compilation\' option will be ignored")
-      options.incrementalCompilation = false
+  override var projectOutputDirectory: Path
+    get() {
+      val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
+      return JpsPathUtil.urlToFile(url).toPath()
     }
-    if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
-      messages.warning("Paths to the compiled project output is specified, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
+    set(outputDirectory) {
+      val url = "file://" + FileUtilRt.toSystemIndependentName("$outputDirectory")
+      JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
     }
-    if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
-      messages.warning(
-        "\'" + BuildOptions.USE_COMPILED_CLASSES_PROPERTY + "\' is specified, so the archive with compiled project output won\'t be used")
-      options.pathToCompiledClassesArchive = null
-    }
-    if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
-      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
-    }
-    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
-      messages.warning("\'" +
-                       BuildOptions.USE_COMPILED_CLASSES_PROPERTY +
-                       "\' is specified, so the archive with the compiled project output metadata won\'t be used to fetch compile output")
-      options.pathToCompiledClassesArchivesMetadata = null
-    }
-  }
 
   override fun findRequiredModule(name: String): JpsModule {
     val module = findModule(name)
@@ -268,7 +236,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries)
-      val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome.communityRoot, messages)
+      val oldToNewModuleName = loadModuleRenamingHistory(projectHome) + loadModuleRenamingHistory(communityHome.communityRoot)
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
                                            projectHome = projectHome,
@@ -348,11 +316,6 @@ private fun <Value : String?> setOutputPath(propOwner: JpsArtifact, outputPath: 
   return outputPath
 }
 
-private fun setProjectOutputDirectory0(propOwner: CompilationContextImpl, outputDirectory: String): String {
-  propOwner.setProjectOutputDirectory(outputDirectory)
-  return outputDirectory
-}
-
 private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, projectHome: Path, buildOut: Path, logDir: Path)
   : BuildPaths(communityHomeDir = communityHome,
                buildOutputDir = buildOut,
@@ -406,7 +369,7 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-private fun loadModuleRenamingHistory(projectHome: Path, messages: BuildMessages): Map<String, String> {
+private fun loadModuleRenamingHistory(projectHome: Path): Map<String, String> {
   val modulesXml = projectHome.resolve(".idea/modules.xml")
   check(Files.exists(modulesXml)) {
     "Incorrect project home: $modulesXml doesn\'t exist"
@@ -416,4 +379,39 @@ private fun loadModuleRenamingHistory(projectHome: Path, messages: BuildMessages
            ?.children("module")
            ?.associate { it.getAttributeValue("old-name")!! to it.getAttributeValue("new-name")!! }
          ?: emptyMap()
+}
+
+private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
+  val outDir = paths.buildOutputDir
+  if (!options.cleanOutputFolder) {
+    Span.current().addEvent("skip output cleaning", Attributes.of(
+      AttributeKey.stringKey("dir"), "$outDir",
+    ))
+    return
+  }
+  val outputDirectoriesToKeep = HashSet<String>(4)
+  outputDirectoriesToKeep.add("log")
+  if (keepCompilationState) {
+    outputDirectoriesToKeep.add(compilationData.dataStorageRoot.fileName.toString())
+    outputDirectoriesToKeep.add("classes")
+    outputDirectoriesToKeep.add("project-artifacts")
+  }
+  TraceManager.spanBuilder("clean output")
+    .setAttribute("path", outDir.toString())
+    .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
+    .use { span ->
+      Files.newDirectoryStream(outDir).use { dirStream ->
+        for (file in dirStream) {
+          val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
+          if (outputDirectoriesToKeep.contains(file.fileName.toString())) {
+            span.addEvent("skip cleaning", attributes)
+          }
+          else {
+            span.addEvent("delete", attributes)
+            NioFiles.deleteRecursively(file)
+          }
+        }
+      }
+      null
+    }
 }
