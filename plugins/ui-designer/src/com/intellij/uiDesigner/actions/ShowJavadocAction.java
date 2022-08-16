@@ -32,23 +32,25 @@ public final class ShowJavadocAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
-    final IntrospectedProperty introspectedProperty = inspector.getSelectedIntrospectedProperty();
-    final PsiClass aClass = inspector.getComponentClass();
+    PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
+    if (inspector == null) return;
+    IntrospectedProperty<?> introspectedProperty = inspector.getSelectedIntrospectedProperty();
+    PsiClass aClass = inspector.getComponentClass();
+    if (introspectedProperty == null || aClass == null) return;
 
-    final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
+    PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
     LOG.assertTrue(getter != null);
 
-    final PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
+    PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     LOG.assertTrue(setter != null);
 
-    final DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());
+    DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());
 
-    final DocumentationComponent component1 = new DocumentationComponent(documentationManager);
-    final DocumentationComponent component2 = new DocumentationComponent(documentationManager);
+    DocumentationComponent component1 = new DocumentationComponent(documentationManager);
+    DocumentationComponent component2 = new DocumentationComponent(documentationManager);
 
-    final Disposable disposable = Disposer.newDisposable();
-    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(disposable);
+    Disposable disposable = Disposer.newDisposable();
+    TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(disposable);
 
     tabbedPane.addTab(UIDesignerBundle.message("tab.getter"), component1);
     tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
@@ -80,9 +82,7 @@ public final class ShowJavadocAction extends AnAction {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    final PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
-    e.getPresentation().setEnabled(inspector != null &&
-                                   inspector.getSelectedIntrospectedProperty() != null &&
-                                   inspector.getComponentClass() != null);
+    PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
+    e.getPresentation().setEnabled(inspector != null && inspector.getSelectedIntrospectedProperty() != null);
   }
 }
