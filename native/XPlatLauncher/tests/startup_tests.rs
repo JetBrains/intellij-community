@@ -66,14 +66,13 @@ pub fn initialize() {
 // | PATH, LD_LIBRARY_PATH... |   X    |  writeEnvironmentVariableInFile(String envVariable)
 // | setup JRE                |   X    |
 
-// TODO: readable test-fail messages
 mod tests {
     use crate::initialize;
+    use crate::tests_util::resolve_test_dir;
+    use std::path::PathBuf;
     use std::process::{Command, ExitStatus};
     use std::time::Duration;
     use std::{fs, thread, time};
-    use std::path::{PathBuf};
-    use crate::tests_util::resolve_test_dir;
 
     fn start_launcher(test_dir: PathBuf) -> ExitStatus {
         let mut launcher_process = Command::new(test_dir.join("xplat_launcher")) // for windows xplat_launcher.exe???
@@ -91,14 +90,12 @@ mod tests {
             }
 
             match launcher_process.try_wait() {
-                Ok(opt) => {
-                    match opt {
-                        None => {
-                            println!("Waiting for launcher process to exit");
-                        }
-                        Some(es) => {return es},
+                Ok(opt) => match opt {
+                    None => {
+                        println!("Waiting for launcher process to exit");
                     }
-                }
+                    Some(es) => return es,
+                },
                 Err(e) => {
                     panic!("Failed to get launcher process status: {e:?}")
                 }
@@ -110,7 +107,7 @@ mod tests {
 
     fn read_file(filename: &str) -> String {
         let file_to_open = resolve_test_dir().join(filename);
-        return  fs::read_to_string(file_to_open).expect(format!("Can't read {filename}").as_str());
+        return fs::read_to_string(file_to_open).expect(format!("Can't read {filename}").as_str());
     }
 
     #[test]
@@ -119,7 +116,10 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
     }
 
     #[test]
@@ -129,12 +129,21 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let classpath = read_file("java.class.path.txt");
 
-        assert!(classpath.contains("lib/app.jar"));
-        assert!(classpath.contains("lib/test.jar"), "dummy classpath wasn't read from product_info.json");
+        assert!(
+            classpath.contains("lib/app.jar"),
+            "Classpath does not contain app.jar"
+        );
+        assert!(
+            classpath.contains("lib/test.jar"),
+            "Dummy classpath wasn't read from product_info.json"
+        );
     }
 
     #[test]
@@ -143,7 +152,10 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let vm_options = read_file("vm.options.txt");
         // TODO asserts
@@ -156,16 +168,35 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
-        let launcher_dir = resolve_test_dir().join("xplat_launcher").into_os_string().into_string().unwrap();
+        let launcher_dir = resolve_test_dir()
+            .join("xplat_launcher")
+            .into_os_string()
+            .into_string()
+            .unwrap();
         let arguments = read_file("arguments.txt");
         let mut arguments_lines = arguments.lines();
 
         assert_eq!(launcher_dir, arguments_lines.next().unwrap());
-        assert_eq!(Some("test_argument1"), arguments_lines.next());
-        assert_eq!(Some("test_argument2"), arguments_lines.next());
-        assert_eq!(0, arguments_lines.count());
+        assert_eq!(
+            Some("test_argument1"),
+            arguments_lines.next(),
+            "Incorrect dummy arguments"
+        );
+        assert_eq!(
+            Some("test_argument2"),
+            arguments_lines.next(),
+            "Incorrect dummy arguments"
+        );
+        assert_eq!(
+            0,
+            arguments_lines.count(),
+            "Extra command line arguments detected"
+        );
     }
 
     #[test]
@@ -174,10 +205,13 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let java_home = read_file("java.home.txt");
-        assert!(!java_home.is_empty());
+        assert!(!java_home.is_empty(), "Java Home is empty");
     }
 
     #[test]
@@ -186,10 +220,16 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let java_version = read_file("java.version.txt");
-        assert!(java_version.starts_with("17"));
+        assert!(
+            java_version.starts_with("17"),
+            "Incorrect Java version. Expected 17"
+        );
     }
 
     #[test]
@@ -198,10 +238,16 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let java_version = read_file("java.vendor.txt");
-        assert!(java_version.starts_with("JetBrains"));
+        assert!(
+            java_version.starts_with("JetBrains"),
+            "Incorrect Java vendor"
+        );
     }
 
     #[test]
@@ -210,9 +256,16 @@ mod tests {
         let test_dir = resolve_test_dir();
 
         let launcher_exit_status = start_launcher(test_dir);
-        assert!(launcher_exit_status.success());
+        assert!(
+            launcher_exit_status.success(),
+            "The exit code of the launcher is not successful"
+        );
 
         let user_dir = read_file("user.dir.txt");
-        assert_eq!(resolve_test_dir().into_os_string().into_string().unwrap(), user_dir);
+        assert_eq!(
+            resolve_test_dir().into_os_string().into_string().unwrap(),
+            user_dir,
+            "Incorrect launcher work dir"
+        );
     }
 }
