@@ -536,6 +536,10 @@
 
     "TipOfTheDay": {
       "Image.borderColor": "Grey3"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "Grey5"
     }
   },
 
