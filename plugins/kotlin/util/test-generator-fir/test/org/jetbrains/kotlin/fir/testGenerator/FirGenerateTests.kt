@@ -38,10 +38,10 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    generateTests()
+    generateK2Tests()
 }
 
-internal fun generateTests(isUpToDateCheck: Boolean = false) {
+fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
