@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import java.util.concurrent.TimeUnit
 
-internal fun loadDependenciesSync(project: Project) {
+fun loadDependenciesSync(project: Project) {
   val libs = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
   if (libs.isEmpty()) return
 
