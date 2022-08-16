@@ -20,6 +20,7 @@
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.debug.HttpDebugListener"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
