@@ -11,7 +11,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
-fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
+fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJob(job, ThrowableComputable(action))
+
+@Deprecated(
+  "Renamed to `withCurrentJob`",
+  replaceWith = ReplaceWith(
+    "withCurrentJob(job, action)",
+    "com.intellij.openapi.progress.withCurrentJob"
+  )
+)
+fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
 
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
@@ -108,7 +117,7 @@ fun <X> executeWithJobAndCompleteIt(
   action: () -> X,
 ): X {
   try {
-    val result: X = withJob(job, action)
+    val result: X = withCurrentJob(job, action)
     job.complete()
     return result
   }

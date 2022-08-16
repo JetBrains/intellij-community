@@ -52,7 +52,7 @@ public final class Cancellation {
    * of the special {@link ProcessCanceledException} subclass inside the given action,
    * and this method will throw the original cancellation exception of the job.
    */
-  public static <T, E extends Throwable> T withJob(
+  public static <T, E extends Throwable> T withCurrentJob(
     @NotNull Job job,
     @NotNull ThrowableComputable<T, E> action
   ) throws E, CancellationException {

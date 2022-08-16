@@ -31,7 +31,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
   fun cancellation() {
     val t = object : Throwable() {}
     val ce = assertThrows<CancellationException> {
-      withJob(Job()) {
+      withCurrentJob<Unit>(Job()) {
         throw assertThrows<JobCanceledException> {
           ensureCurrentJob { currentJob ->
             testNoExceptions()
@@ -58,7 +58,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
     val job = Job()
     val t = Throwable()
     val ce = assertThrows<CancellationException> {
-      withJob(job) {
+      withCurrentJob<Unit>(job) {
         throw assertThrows<JobCanceledException> {
           ensureCurrentJob { currentJob ->
             testNoExceptions()

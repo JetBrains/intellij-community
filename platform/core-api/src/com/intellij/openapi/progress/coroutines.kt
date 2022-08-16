@@ -136,7 +136,7 @@ suspend fun <T> blockingContext(action: () -> T): T {
   return replaceThreadContext(currentContext).use {
     // this will catch com.intellij.openapi.progress.JobCanceledException
     // and throw original java.util.concurrent.CancellationException instead
-    withJob(currentContext.job, action)
+    withCurrentJob(currentContext.job, action)
   }
 }
 
