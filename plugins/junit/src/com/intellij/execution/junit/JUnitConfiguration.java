@@ -858,24 +858,29 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
-        Integer index = null;
-        if (PARAMETERS != null) {
-          Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
-          Matcher matcher = pattern.matcher(PARAMETERS);
-          if (matcher.find()) {
-            String group = matcher.group(1);
-            try {
-              index = Integer.parseInt(group);
-            }
-            catch (NumberFormatException ignored) {
-            }
-          }
-        }
+        Integer index = getIndexFromParameters(PARAMETERS);
         String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
         return className + '.' + getMethodName() + indexStr;
       }
 
       return className;
+    }
+
+    public static Integer getIndexFromParameters(String parameters) {
+      Integer index = null;
+      if (parameters != null && !parameters.isEmpty()) {
+        Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
+        Matcher matcher = pattern.matcher(parameters);
+        if (matcher.find()) {
+          String group = matcher.group(1);
+          try {
+            index = Integer.parseInt(group);
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+      }
+      return index;
     }
 
     public @NlsSafe @NotNull String getMainClassName() {

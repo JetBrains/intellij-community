@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -14,7 +15,6 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
-import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -31,8 +30,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
@@ -219,22 +218,23 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
 
   @Nullable
   private static JvmAnnotationAttribute getAnnotationValue(PsiJavaToken token) {
-    PsiAnnotation psiAnnotation = PsiTreeUtil.getParentOfType(token, PsiAnnotation.class);
+    PsiAnnotation psiAnnotation = PsiTreeUtil.getParentOfType(token, PsiAnnotation.class, true, PsiMethod.class);
     if (psiAnnotation == null) return null;
     String annotationName = psiAnnotation.getQualifiedName();
     if (annotationName == null) return null;
     boolean match = ContainerUtil.exists(SOURCE_ANNOTATIONS, anno ->
       annotationName.equals(anno));
     if (!match) return null;
-    PsiElement parent = psiAnnotation.getParent();
-    if (!(parent instanceof PsiModifierListImpl)) return null;
-    boolean hasParameterizedAnno = ((PsiModifierListImpl)parent).hasAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
-    if (!hasParameterizedAnno) return null;
-    Optional<JvmAnnotationAttribute> annotationArrayValue = psiAnnotation.getAttributes().stream().findFirst();
-    if (annotationArrayValue.isEmpty()) {
-      return null;
+    PsiElement annotationContext = psiAnnotation.getContext();
+    if (annotationContext == null) return null;
+    PsiElement parent = annotationContext.getParent();
+    if (parent instanceof PsiModifierListOwner) {
+      boolean isMetaAnnotated = MetaAnnotationUtil.isMetaAnnotated((PsiModifierListOwner)parent,
+                                                             Collections.singleton(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST));
+      if (!isMetaAnnotated) return null;
+      return ContainerUtil.getFirstItem(psiAnnotation.getAttributes());
     }
-    return annotationArrayValue.get();
+    return null;
   }
 
   private static Integer getSourceValueIndex(PsiJavaToken token, JvmAnnotationAttribute attribute) {
@@ -242,17 +242,9 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     if (annotationValues instanceof JvmAnnotationArrayValue) {
       JvmAnnotationArrayValue values = (JvmAnnotationArrayValue)annotationValues;
       List<JvmAnnotationAttributeValue> valuesAttr = values.getValues();
-      Optional<JvmAnnotationAttributeValue> first = valuesAttr.stream().filter(val -> {
-        if (val instanceof JvmAnnotationConstantValue) {
-          Object value = ((JvmAnnotationConstantValue)val).getConstantValue();
-          if (value == null) return false;
-          return token.getText().equals("\"" + value + "\"");
-        }
-        return false;
-      }).findFirst();
-      if (first.isPresent()) {
-        JvmAnnotationAttributeValue value = first.get();
-        return valuesAttr.indexOf(value);
+      JvmAnnotationAttributeValue first = ContainerUtil.getFirstItem(valuesAttr);
+      if (first != null) {
+        return valuesAttr.indexOf(first);
       }
     }
     return null;
