@@ -67,7 +67,7 @@ public class ExpectedHighlightingData {
   private static final String INJECTED_SYNTAX_MARKER = "injectedSyntax";
   private static final String SYMBOL_NAME_MARKER = "symbolName";
   private static final String LINE_MARKER = "lineMarker";
-  protected static final String ANY_TEXT = "*";
+  private static final String ANY_TEXT = "*";
 
   private static final HighlightInfoType WHATEVER =
     new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.TEXT);
@@ -90,9 +90,9 @@ public class ExpectedHighlightingData {
   }
 
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
-  protected final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new HashMap<>();
-  protected final Document myDocument;
-  protected final String myText;
+  private final Map<RangeMarker, LineMarkerInfo<?>> myLineMarkerInfos = new HashMap<>();
+  private final Document myDocument;
+  private final String myText;
   private boolean myIgnoreExtraHighlighting;
   private final ResourceBundle[] myMessageBundles;
 
@@ -417,7 +417,7 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
-          .append(": '").append(info.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(info)).append('\'');
         Icon icon = info.getIcon();
         if (icon != null && !icon.toString().equals(ANY_TEXT)) {
           failMessage.append(" icon='").append(icon).append('\'');
@@ -430,7 +430,7 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
-          .append(": '").append(expectedLineMarker.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(expectedLineMarker)).append('\'');
         Icon icon = expectedLineMarker.getIcon();
         if (icon != null && !icon.toString().equals(ANY_TEXT)) {
           failMessage.append(" icon='").append(icon).append('\'');
@@ -450,6 +450,10 @@ public class ExpectedHighlightingData {
     }
   }
 
+  protected String sanitizedLineMarkerTooltip(@NotNull LineMarkerInfo info) {
+    return info.getLineMarkerTooltip();
+  }
+
   @NotNull
   private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
@@ -466,7 +470,7 @@ public class ExpectedHighlightingData {
       if (info.second == expectedLineMarker.startOffset) {
         result
           .append("<lineMarker descr=\"")
-          .append(expectedLineMarker.getLineMarkerTooltip())
+          .append(sanitizedLineMarkerTooltip(expectedLineMarker))
           .append("\">");
       }
       else {
@@ -478,19 +482,22 @@ public class ExpectedHighlightingData {
     return result.toString();
   }
 
-  protected boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
-    String infoTooltip = info.getLineMarkerTooltip();
+  protected boolean containsLineMarker(@NotNull LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     Icon icon = info.getIcon();
     for (LineMarkerInfo markerInfo : where) {
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip()) &&
+          matchLineMarkersTooltip(info, markerInfo) &&
           matchIcons(icon, markerInfo.getIcon())) {
         return true;
       }
     }
 
     return false;
+  }
+
+  protected boolean matchLineMarkersTooltip(@NotNull LineMarkerInfo info, @NotNull LineMarkerInfo markerInfo) {
+    return matchDescriptions(false, info.getLineMarkerTooltip(), markerInfo.getLineMarkerTooltip());
   }
 
   protected static boolean matchIcons(Icon icon1, Icon icon2) {
@@ -842,7 +849,7 @@ public class ExpectedHighlightingData {
     return matchDescriptions(false, t1, t2);
   }
 
-  protected static String rangeString(String text, int startOffset, int endOffset) {
+  private static String rangeString(String text, int startOffset, int endOffset) {
     LineColumn start = StringUtil.offsetToLineColumn(text, startOffset);
     assert start != null: "textLength = " + text.length() + ", startOffset = " + startOffset;
 
