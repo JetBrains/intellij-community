@@ -124,6 +124,7 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.android.gradle.dsl") {
       withModule("intellij.android.gradle.dsl.kotlin")
+      withModule("intellij.android.gradle.dsl.toml")
     },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
@@ -403,7 +404,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.gradle-tooling.impl", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
-      withModule("intellij.android.gradle.dsl.toml", "android.jar")
+      //withModule("intellij.android.gradle.dsl.toml", "android.jar")  <= REMOVED
       withModule("intellij.android.lang-databinding", "android.jar")
       withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.layout-inspector", "android.jar")
