@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.RectangularShape;
 import java.awt.image.BufferedImage;
 
 /**
@@ -47,13 +49,32 @@ public abstract class IconWithOverlay extends LayeredIcon {
       super.paintIcon(c, g, x, y);
       return;
     }
+    if (dontPaintHere instanceof RectangularShape) {
+      paintIconWithoutAA(dontPaintHere, c, g, x, y);
+    } else {
+      paintIconWithAA(dontPaintHere, c, g, x, y);
+    }
+  }
+
+  @SuppressWarnings("GraphicsSetClipInspection")
+  private void paintIconWithoutAA(Shape hole, Component c, Graphics g, int x, int y) {
+    Shape clip = g.getClip();
+    Area newClip = new Area(clip);
+    newClip.subtract(new Area(hole));
+    g.setClip(newClip);
+    super.paintIcon(c, g, x, y);
+    g.setClip(clip);
+    getOverlayIcon().paintIcon(c, g, x, y);
+  }
+
+  private void paintIconWithAA(Shape hole, Component c, Graphics g, int x, int y) {
     BufferedImage img = UIUtil.createImage(((Graphics2D)g).getDeviceConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.CEIL);
     Graphics2D g2 = img.createGraphics();
     getMainIcon().paintIcon(c, g2, 0, 0);
     GraphicsConfig config = new GraphicsConfig(g2);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
-    g2.fill(dontPaintHere);
+    g2.fill(hole);
     config.restore();
     UIUtil.drawImage(g,img, x, y, null);
     getOverlayIcon().paintIcon(c, g, x, y);
