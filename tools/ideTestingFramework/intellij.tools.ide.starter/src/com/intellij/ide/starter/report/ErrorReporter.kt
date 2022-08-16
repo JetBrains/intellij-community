@@ -35,8 +35,8 @@ object ErrorReporter {
         val stacktraceFile = errorDir.resolve("stacktrace.txt").toFile()
 
         if (messageFile.exists() && stacktraceFile.exists()) {
-          val messageText = generifyErrorMessage(messageFile.readText().trim())
-          val stackTraceContent = stacktraceFile.readText().trim()
+          val messageText = generifyErrorMessage(messageFile.readText().trimIndent().trim())
+          val stackTraceContent = stacktraceFile.readText().trimIndent().trim()
 
           val testName: String
 
@@ -51,13 +51,11 @@ object ErrorReporter {
             testName = "($onlyLettersHash ${messageText.substring(0, MAX_TEST_NAME_LENGTH.coerceAtMost(messageText.length)).trim()})"
           }
 
-          val stackTrace = """
-                Test: $testMethodName
-                
-                $stackTraceContent
-              """.trimIndent().trimMargin().trim()
+          val stackTrace = "Test: $testMethodName${System.lineSeparator()}$stackTraceContent"
 
-          di.direct.instance<CIServer>().reportTestFailure(generifyErrorMessage(testName), messageText, stackTrace)
+          di.direct.instance<CIServer>().reportTestFailure(testName = generifyErrorMessage(testName),
+                                                           message = messageText,
+                                                           details = stackTrace)
         }
 
         Pair(messageFile, stacktraceFile)
