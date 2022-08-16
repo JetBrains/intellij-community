@@ -53,7 +53,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private lateinit var replaceWithStorage: AbstractEntityStorage
   private lateinit var entityFilter: (EntitySource) -> Boolean
 
-  internal val operations = Long2ObjectOpenHashMap<Operation>()
+  internal val replaceOperations = ArrayList<RelabelElement>()
+  internal val removeOperations = ArrayList<RemoveElement>()
   internal val addOperations = ArrayList<AddElement>()
   internal val targetState = Long2ObjectOpenHashMap<ReplaceState>()
   internal val replaceWithState = Long2ObjectOpenHashMap<ReplaceWithState>()
@@ -111,27 +112,24 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         addElement(parents, addOperation.replaceWithSource, replaceToTarget)
       }
 
-      for ((id, operation) in operations) {
-        when (operation) {
-          is Operation.Relabel -> {
-            val targetEntity = targetStorage.entityDataByIdOrDie(id).createEntity(targetStorage)
-            val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
-            val parents = operation.parents?.mapTo(HashSet()) {
-              val targetEntityId = when (it) {
-                is ParentsRef.AddedElement -> replaceToTarget.getValue(it.replaceWithEntityId)
-                is ParentsRef.TargetRef -> it.targetEntityId
-              }
-              targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
-            }
-            targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
-              (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
-            }
-            targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, id, replaceWithStorage.indexes)
+      for (operation in replaceOperations) {
+        val targetEntity = targetStorage.entityDataByIdOrDie(operation.targetEntityId).createEntity(targetStorage)
+        val replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(operation.replaceWithEntityId).createEntity(replaceWithStorage)
+        val parents = operation.parents?.mapTo(HashSet()) {
+          val targetEntityId = when (it) {
+            is ParentsRef.AddedElement -> replaceToTarget.getValue(it.replaceWithEntityId)
+            is ParentsRef.TargetRef -> it.targetEntityId
           }
-          Operation.Remove -> {
-            targetStorage.removeEntityByEntityId(id)
-          }
+          targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
         }
+        targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
+          (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
+        }
+        targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, operation.targetEntityId, replaceWithStorage.indexes)
+      }
+
+      for (removeOperation in removeOperations) {
+        targetStorage.removeEntityByEntityId(removeOperation.targetEntityId)
       }
     }
 
@@ -183,7 +181,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         appendLine("---- No More New Entities -------")
         appendLine("---- Removes -------")
 
-        operations.filterValues { it is Operation.Remove }.forEach { entityId, _ ->
+        removeOperations.map { it.targetEntityId }.forEach { entityId ->
           appendLine(infoOf(entityId, targetStorage, true))
           targetEntities += entityId
         }
@@ -192,11 +190,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         appendLine()
         appendLine("---- Replaces -------")
 
-        operations.filterValues { it is Operation.Relabel }.forEach { entityId, operation ->
-          operation as Operation.Relabel
-          appendLine(infoOf(entityId, targetStorage, true) + " -> " + infoOf(operation.replaceWithEntityId, replaceWithStorage,
-                                                                             true) + " | " + "Count of parents: ${operation.parents?.size}")
-          targetEntities += entityId
+        replaceOperations.forEach { operation ->
+          appendLine(
+            infoOf(operation.targetEntityId, targetStorage, true) + " -> " + infoOf(operation.replaceWithEntityId, replaceWithStorage,
+                                                                                    true) + " | " + "Count of parents: ${operation.parents?.size}")
+          targetEntities += operation.targetEntityId
           replaceWithEntities += operation.replaceWithEntityId
         }
 
@@ -682,13 +680,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   private fun replaceWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId, parents: Set<ParentsRef>?) {
-    targetEntityId operation Operation.Relabel(replaceWithEntityId, parents)
+    replaceOperations.add(RelabelElement(targetEntityId, replaceWithEntityId, parents))
     targetEntityId.addState(ReplaceState.Relabel(replaceWithEntityId, parents))
     replaceWithEntityId.addState(ReplaceWithState.Relabel(targetEntityId))
   }
 
   private fun removeWorkspaceData(targetEntityId: EntityId, replaceWithEntityId: EntityId?) {
-    targetEntityId operation Operation.Remove
+    removeOperations.add(RemoveElement(targetEntityId))
     targetEntityId.addState(ReplaceState.Remove)
     replaceWithEntityId?.addState(ReplaceWithState.NoChangeTraceLost)
   }
@@ -711,15 +709,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     require(currentState == null)
     replaceWithState[this] = state
   }
-
-  private infix fun EntityId.operation(state: Operation) {
-    val currentState = operations[this]
-    require(currentState == null) {
-      "Unexpected existing state for ${this.asString()}: $currentState"
-    }
-    operations[this] = state
-  }
-
 
   private fun findEntityInTargetStore(replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>,
                                       targetParentEntityId: EntityId,
@@ -825,11 +814,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 }
 
-internal sealed interface Operation {
-  object Remove : Operation
-  class Relabel(val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) : Operation
-}
-
+internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?)
+internal data class RemoveElement(val targetEntityId: EntityId)
 internal data class AddElement(val parents: Set<ParentsRef>?, val replaceWithSource: EntityId)
 
 internal sealed interface ReplaceState {

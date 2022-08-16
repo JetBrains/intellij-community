@@ -1349,6 +1349,40 @@ class ReplaceBySourceTest {
   }
 
   @RepeatedTest(10)
+  fun `unbind ref`() {
+    val doubleRooted = TreeMultiparentLeafEntity("data", MySource)
+    builder add TreeMultiparentRootEntity("data", AnotherSource) {
+      this.children = listOf(
+        doubleRooted
+      )
+    }
+    builder add TreeMultiparentRootEntity("data2", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("SomeEntity", AnotherSource) {
+          this.children = listOf(doubleRooted)
+        }
+      )
+    }
+
+    replacement add TreeMultiparentRootEntity("data2", AnotherSource) {
+      children = listOf(
+        TreeMultiparentLeafEntity("SomeEntity", AnotherSource) {
+          this.children = listOf(TreeMultiparentLeafEntity("data", MySource))
+        }
+      )
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    val parent = builder.entities(TreeMultiparentRootEntity::class.java).single()
+    assertEquals("data2", parent.data)
+    val single = parent.children.single().children.single()
+    assertEquals("data", single.data)
+  }
+
+  @RepeatedTest(10)
   fun `same child`() {
     builder add NamedEntity("data", MySource) {
       children = listOf(
