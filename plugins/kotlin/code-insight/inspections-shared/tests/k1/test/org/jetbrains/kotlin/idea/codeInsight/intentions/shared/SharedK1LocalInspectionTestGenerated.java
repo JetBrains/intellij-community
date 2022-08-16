@@ -144,34 +144,6 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
-    public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK1LocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("comment.kt")
-        public void testComment() throws Exception {
-            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/comment.kt");
-        }
-
-        @TestMetadata("primaryConstructor.kt")
-        public void testPrimaryConstructor() throws Exception {
-            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/primaryConstructor.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/simple.kt");
-        }
-
-        @TestMetadata("withStatement.kt")
-        public void testWithStatement() throws Exception {
-            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/withStatement.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptyClassBody")
     public static class RemoveEmptyClassBody extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -296,6 +268,34 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("object.kt")
         public void testObject() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptyClassBody/object.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
+    public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/comment.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/primaryConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/simple.kt");
+        }
+
+        @TestMetadata("withStatement.kt")
+        public void testWithStatement() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody/withStatement.kt");
         }
     }
 
