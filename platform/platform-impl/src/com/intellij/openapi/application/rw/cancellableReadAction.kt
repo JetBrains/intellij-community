@@ -16,7 +16,7 @@ internal fun <X> cancellableReadAction(action: () -> X): X = ensureCurrentJob { 
   try {
     cancellableReadActionInternal(currentJob, action)
   }
-  catch (e: CancellationException) {
+  catch (ce: CancellationException) {
     // One of two variants is thrown:
     // 1.
     // CannotReadException(
@@ -28,12 +28,12 @@ internal fun <X> cancellableReadAction(action: () -> X): X = ensureCurrentJob { 
     // CannotReadException(
     //   CancellationException(original CannotReadException)
     // )
-    val cause = Cancellation.getCause(e)
+    val cause = Cancellation.getCause(ce)
     if (cause is CannotReadException) {
       // cancelled normally by a write action
-      throw CannotReadException(e)
+      throw CannotReadException(ce)
     }
-    throw e // exception from the computation
+    throw ce // exception from the computation
   }
 }
 
