@@ -89,16 +89,22 @@ class SingleChangeListCommitWorkflowHandler(
     super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
-    getCommitMessage().isNotEmpty() ||
-    !VcsConfiguration.getInstance(project).FORCE_NON_EMPTY_COMMENT ||
-    ui.confirmCommitWithEmptyMessage()
+    super.checkCommit(sessionInfo) &&
+    (
+      getCommitMessage().isNotEmpty() ||
+      !VcsConfiguration.getInstance(project).FORCE_NON_EMPTY_COMMENT ||
+      ui.confirmCommitWithEmptyMessage()
+    )
 
   override fun updateWorkflow() {
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean {
-    return addUnversionedFiles(getChangeList(), ui.getInclusionModel())
+  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      if (!addUnversionedFiles(getChangeList(), ui.getInclusionModel())) return false
+    }
+    return super.prepareForCommitExecution(sessionInfo)
   }
 
   private fun initCommitMessage() {

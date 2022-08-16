@@ -44,17 +44,18 @@ class GitStageCommitWorkflowHandler(
     workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
   }
 
-  override fun addUnversionedFiles(): Boolean = true
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
   override fun refreshChanges(callback: () -> Unit) = callback()
 
   private fun initCommitMessage(isAfterCommit: Boolean) = setCommitMessage(commitMessagePolicy.getCommitMessage(isAfterCommit))
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
+    val superCheckResult = super.checkCommit(sessionInfo)
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
     ui.commitProgressUi.isUnmerged = ui.conflictedRoots.any { ui.rootsToCommit.contains(it) }
-    val superCheckResult = super.checkCommit(sessionInfo)
-    return superCheckResult && !ui.commitProgressUi.isEmptyRoots && !ui.commitProgressUi.isUnmerged
+    return superCheckResult &&
+           !ui.commitProgressUi.isEmptyRoots &&
+           !ui.commitProgressUi.isUnmerged
   }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {

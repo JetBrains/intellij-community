@@ -246,9 +246,12 @@ internal class ChangesViewCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean {
-    val changeList = workflow.getAffectedChangeList(getIncludedChanges())
-    return addUnversionedFiles(changeList, inclusionModel)
+  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      val changeList = workflow.getAffectedChangeList(getIncludedChanges())
+      if (!addUnversionedFiles(changeList, inclusionModel)) return false
+    }
+    return super.prepareForCommitExecution(sessionInfo)
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)

@@ -166,15 +166,15 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
            executors.map { DefaultCommitExecutorAction(it) }
   }
 
-  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
-    ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = sessionInfo.executor?.areChangesRequired() == false
-
-      isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
-      isEmptyMessage = getCommitMessage().isBlank()
-
-      !isEmptyChanges && !isEmptyMessage
-    }
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
+    val superCheckResult = super.checkCommit(sessionInfo)
+    val executorWithoutChangesAllowed = sessionInfo.executor?.areChangesRequired() == false
+    ui.commitProgressUi.isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
+    ui.commitProgressUi.isEmptyMessage = getCommitMessage().isBlank()
+    return superCheckResult &&
+           !ui.commitProgressUi.isEmptyChanges &&
+           !ui.commitProgressUi.isEmptyMessage
+  }
 
   /**
    * Subscribe to VFS and documents changes to reset commit checks results

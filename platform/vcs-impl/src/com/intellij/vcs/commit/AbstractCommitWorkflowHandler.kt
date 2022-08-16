@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
@@ -127,7 +128,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   private fun executeDefault(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = checkCommit(sessionInfo) &&
-                  addUnversionedFiles() &&
+                  prepareForCommitExecution(sessionInfo) &&
                   saveCommitOptionsOnCommit()
     if (!proceed) return false
 
@@ -145,7 +146,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   private fun executeCustom(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = checkCommit(sessionInfo) &&
-                  canExecute(sessionInfo) &&
+                  prepareForCommitExecution(sessionInfo) &&
                   saveCommitOptionsOnCommit()
     if (!proceed) return false
 
@@ -169,9 +170,21 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected open fun updateWorkflow() = Unit
 
-  protected abstract fun checkCommit(sessionInfo: CommitSessionInfo): Boolean
+  /**
+   * Check that commit can be performed with given parameters.
+   */
+  @RequiresEdt
+  protected open fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
+    return workflow.canExecute(sessionInfo, getIncludedChanges())
+  }
 
-  protected abstract fun addUnversionedFiles(): Boolean
+  /**
+   * Prepare for the commit operation. Ex: add selected unversioned files into VCS.
+   *
+   * @return false if commit operation should be cancelled.
+   */
+  @RequiresEdt
+  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
   protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
     val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
@@ -184,7 +197,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.executeDefault(sessionInfo)
   }
 
-  private fun canExecute(sessionInfo: CommitSessionInfo): Boolean = workflow.canExecute(sessionInfo, getIncludedChanges())
   private fun doExecuteCustom(sessionInfo: CommitSessionInfo): Boolean {
     return workflow.executeCustom(sessionInfo)
   }
