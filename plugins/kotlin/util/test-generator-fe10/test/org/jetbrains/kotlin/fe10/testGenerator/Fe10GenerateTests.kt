@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest2
 import org.jetbrains.kotlin.idea.intentions.AbstractMultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
@@ -1358,6 +1359,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("inspections", pattern = pattern)
             model("inspectionsLocal", pattern = pattern)
+        }
+
+        testClass<AbstractSharedK1KDocHighlightingTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("kdoc/highlighting", pattern = pattern)
         }
     }
 }

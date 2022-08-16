@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2LocalInspectionTest
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -40,6 +41,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("inspections", pattern = pattern)
             model("inspectionsLocal", pattern = pattern)
+        }
+
+        testClass<AbstractSharedK2KDocHighlightingTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("kdoc/highlighting", pattern = pattern)
         }
     }
 }
