@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -223,5 +224,10 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
     result = 31 * result + description.hashCode()
     result = 31 * result + anotherVersion.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(AnotherDataClass::class.java)
+    collector.sameForAllEntities = true
   }
 }

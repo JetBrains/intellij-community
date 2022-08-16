@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import java.util.Date
@@ -183,5 +184,10 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
     var result = javaClass.hashCode()
     result = 31 * result + date.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(Date::class.java)
+    collector.sameForAllEntities = true
   }
 }

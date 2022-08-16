@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
@@ -444,5 +445,17 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     result = 31 * result + related.hashCode()
     result = 31 * result + sealedClassWithLinks.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(SimpleId::class.java)
+    collector.add(SealedClassWithLinks.Many.Ordered::class.java)
+    collector.add(SealedClassWithLinks.Many::class.java)
+    collector.add(SealedClassWithLinks.Many.Unordered::class.java)
+    collector.add(SealedClassWithLinks::class.java)
+    collector.add(SealedClassWithLinks.Single::class.java)
+    collector.addObject(SealedClassWithLinks.Nothing::class.java)
+    this.sealedClassWithLinks?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = true
   }
 }

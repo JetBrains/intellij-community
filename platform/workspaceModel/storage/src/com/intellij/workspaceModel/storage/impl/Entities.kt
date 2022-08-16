@@ -592,6 +592,10 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     throw NotImplementedError()
   }
 
+  open fun collectClassUsagesData(collector: UsedClassesCollector) {
+    throw NotGeneratedMethodRuntimeException("collectClassUsagesData")
+  }
+
   /**
    * Temporally solution.
    * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
@@ -619,4 +623,18 @@ fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) 
  */
 interface WithAssertableConsistency {
   fun assertConsistency(storage: EntityStorage)
+}
+
+class UsedClassesCollector(
+  var sameForAllEntities: Boolean = false,
+  var collection: MutableSet<Class<out Any>> = HashSet(),
+  var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
+) {
+  fun add(clazz: Class<out Any>) {
+    collection.add(clazz)
+  }
+
+  fun addObject(clazz: Class<out Any>) {
+    collectionObjects.add(clazz)
+  }
 }

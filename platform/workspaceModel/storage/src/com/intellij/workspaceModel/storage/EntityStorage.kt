@@ -310,3 +310,7 @@ sealed class EntityChange<T : WorkspaceEntity> {
   }
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
+
+open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
+class NotGeneratedMethodRuntimeException(val methodName: String)
+  : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")

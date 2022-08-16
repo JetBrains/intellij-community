@@ -16,6 +16,7 @@ import com.esotericsoftware.kryo.kryo5.serializers.MapSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
@@ -78,7 +79,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v39"
+    const val SERIALIZER_VERSION = "v40"
   }
 
   internal val KRYO_BUFFER_SIZE = 64 * 1024
@@ -327,10 +328,23 @@ class EntityStorageSerializerImpl(
 
       saveContributedVersions(kryo, output)
 
-      val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
-        family.entities.asSequence().filterNotNull()
+      var newCacheType = Registry.`is`("ide.workspace.model.generated.code.for.cache", true)
+      if (newCacheType) {
+        try {
+          collectAndRegisterClasses(kryo, output, storage)
+        }
+        catch (e: NotGeneratedRuntimeException) {
+          LOG.error(e)
+          newCacheType = false
+        }
       }
-      collectAndRegisterClasses(kryo, output, entityDataSequence)
+      if (!newCacheType) {
+        val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
+          family.entities.asSequence().filterNotNull()
+        }
+        collectAndRegisterClasses(kryo, output, entityDataSequence)
+      }
+
 
       // Serialize and register persistent ids
       val persistentIdClasses = storage.indexes.persistentIdIndex.entries().mapTo(HashSet()) { it::class.java }
@@ -375,6 +389,47 @@ class EntityStorageSerializerImpl(
       output.reset()
       LOG.warn("Exception at project serialization", e)
       SerializationResult.Fail(e.message)
+    }
+  }
+
+  private fun collectAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: EntityStorageSnapshotImpl) {
+    val collector = UsedClassesCollector()
+    for (entityFamily in entityStorage.entitiesByType.entityFamilies) {
+      entityFamily?.entities?.forEach { entity ->
+        if (entity == null) return@forEach
+        collector.add(entity::class.java)
+        entity.collectClassUsagesData(collector)
+        if (collector.sameForAllEntities) {
+          return@forEach
+        }
+      }
+    }
+
+    val simpleClasses = HashMap<TypeInfo, Class<out Any>>()
+    val objectClasses = HashMap<TypeInfo, Class<out Any>>()
+    entityStorage.indexes.entitySourceIndex.entries().forEach {
+      collector.add(it::class.java)
+      recursiveClassFinder(kryo, it, simpleClasses, objectClasses)
+    }
+    simpleClasses.forEach { collector.add(it.value) }
+    objectClasses.forEach { collector.add(it.value) }
+
+    entityStorage.indexes.virtualFileIndex.vfu2EntityId.forEach { virtualFileUrl, object2LongOpenHashMap ->
+      collector.add(virtualFileUrl::class.java)
+    }
+
+    output.writeVarInt(collector.collectionObjects.size, true)
+    collector.collectionObjects.forEach { clazz ->
+      kryo.register(clazz)
+      // TODO switch to only write object
+      kryo.writeClassAndObject(output, clazz.typeInfo)
+    }
+
+    output.writeVarInt(collector.collection.size, true)
+    collector.collection.forEach { clazz ->
+      kryo.register(clazz)
+      // TODO switch to only write object
+      kryo.writeClassAndObject(output, clazz.typeInfo)
     }
   }
 

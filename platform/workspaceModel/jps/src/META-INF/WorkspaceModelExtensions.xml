@@ -30,5 +30,7 @@
                  description="Enable workspace model consistency checking after every update"/>
     <registryKey key="ide.workspace.model.rbs.as.tree" defaultValue="true" restartRequired="false"
                  description="Enable new algorithm for ReplaceBySource operation"/>
+    <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
+                 description="Enable new method of workspace model caching"/>
   </extensions>
 </idea-plugin>

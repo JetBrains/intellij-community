@@ -133,7 +133,21 @@ sealed class ValueType<T> {
     //todo always store qualified name 
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
-  ) : JvmClass<T>(javaClassName, javaSuperClasses)
+  ) : JvmClass<T>(javaClassName, javaSuperClasses) {
+    init {
+      println("")
+    }
+  }
+
+  class Object<T>(
+    //todo always store qualified name
+    javaClassName: kotlin.String,
+    javaSuperClasses: kotlin.collections.List<kotlin.String>,
+  ) : JvmClass<T>(javaClassName, javaSuperClasses) {
+    init {
+      println("")
+    }
+  }
 
   /**
    * Tuple of fields with fixed [ValueType]s.

@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -1205,5 +1206,28 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     result = 31 * result + justListProperty.hashCode()
     result = 31 * result + deepSealedClass.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(DeepContainer::class.java)
+    collector.add(SealedContainer.SmallContainer::class.java)
+    collector.add(SealedContainer.BigContainer::class.java)
+    collector.add(SealedContainer.EmptyContainer::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
+    collector.add(Container::class.java)
+    collector.add(DeepSealedOne::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
+    collector.add(OnePersistentId::class.java)
+    collector.add(TooDeepContainer::class.java)
+    collector.add(SealedContainer::class.java)
+    collector.add(SealedContainer.ContainerContainer::class.java)
+    this.inContainerList?.let { collector.add(it::class.java) }
+    this.sealedContainer?.let { collector.add(it::class.java) }
+    this.justListProperty?.let { collector.add(it::class.java) }
+    this.listSealedContainer?.let { collector.add(it::class.java) }
+    this.manyLinks?.let { collector.add(it::class.java) }
+    this.deepContainer?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }
