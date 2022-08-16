@@ -26,7 +26,7 @@ abstract class KotlinVersionProviderService : WizardService {
 
     protected open fun getDevVersionRepository(): Repository = Repositories.JETBRAINS_KOTLIN_DEV
 
-    private fun getKotlinVersionRepository(version: Version) =
+    protected fun getKotlinVersionRepository(version: Version) =
         getKotlinVersionRepository(getKotlinVersionKind(version))
 
     protected fun getKotlinVersionKind(version: Version) = when {
