@@ -1,415 +1,363 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots.impl
 
-import com.intellij.ProjectTopics;
-import com.intellij.configurationStore.BatchUpdateListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.project.ProjectKt;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.EntityIndexingService;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ProjectTopics
+import com.intellij.configurationStore.BatchUpdateListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.project.stateStore
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.WorkspaceEventRescanningInfo
+import kotlinx.coroutines.*
+import java.lang.Runnable
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+private val LOG = logger<ProjectRootManagerComponent>()
+private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
+  ApplicationManager.getApplication().isInternal && !ApplicationManager.getApplication().isUnitTestMode
+}
+private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProvider>("com.intellij.roots.watchedRootsProvider")
 
 /**
  * ProjectRootManager extended with ability to watch events.
  */
-public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements Disposable {
-  private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
-  private static final boolean LOG_CACHES_UPDATE =
-    ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
+open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImpl(project), Disposable {
+  private var isStartupActivityPerformed = false
 
-  private final static ExtensionPointName<WatchedRootsProvider> WATCHED_ROOTS_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
+  // accessed in EDT only
+  private var collectWatchRootsJob = AtomicReference<Job>()
+  private var pointerChangesDetected = false
+  private var insideWriteAction = 0
 
-  private boolean isStartupActivityPerformed;
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val sequentialDispatcher = Dispatchers.Default.limitedParallelism(1)
 
-  private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
-                                             ? ConcurrencyUtil.newSameThreadExecutorService()
-                                             : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
-  private @NotNull Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
+  var rootsToWatch: MutableSet<WatchRequest> = CollectionFactory.createSmallMemoryFootprintSet()
+    private set
 
-  private boolean myPointerChangesDetected;
-  private int myInsideWriteAction;
-  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = CollectionFactory.createSmallMemoryFootprintSet();
-  private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
+  // accessed in EDT
+  private var rootPointersDisposable = Disposer.newDisposable()
 
-  public ProjectRootManagerComponent(@NotNull Project project) {
-    super(project);
+  private val rootsChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {
+    private fun getPointersChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
+      var result: RootsChangeRescanningInfo? = null
+      for (pointer in pointers) {
+        if (pointer.isValid) {
+          return RootsChangeRescanningInfo.TOTAL_RESCAN
+        }
+        else {
+          if (result == null) {
+            result = RootsChangeRescanningInfo.NO_RESCAN_NEEDED
+          }
+        }
+      }
+      return ObjectUtils.notNull(result, RootsChangeRescanningInfo.TOTAL_RESCAN)
+    }
 
-    if (!myProject.isDefault()) {
-      registerListeners();
+    override fun beforeValidityChanged(pointers: Array<VirtualFilePointer>) {
+      if (myProject.isDisposed) {
+        return
+      }
+      if (!isInsideWriteAction && !pointerChangesDetected) {
+        pointerChangesDetected = true
+        //this is the first pointer changing validity
+        myRootsChanged.levelUp()
+      }
+      myRootsChanged.beforeRootsChanged()
+      if (LOG_CACHES_UPDATE || LOG.isTraceEnabled) {
+        LOG.trace(Throwable(if (pointers.size > 0) pointers[0].presentableUrl else ""))
+      }
+    }
+
+    override fun validityChanged(pointers: Array<VirtualFilePointer>) {
+      val changeInfo = getPointersChanges(pointers)
+      if (myProject.isDisposed) {
+        return
+      }
+      if (isInsideWriteAction) {
+        myRootsChanged.rootsChanged(changeInfo)
+      }
+      else {
+        clearScopesCaches()
+      }
+    }
+
+    private val isInsideWriteAction: Boolean
+      get() = insideWriteAction == 0
+  }
+
+  init {
+    if (!myProject.isDefault) {
+      registerListeners()
     }
   }
 
-  @NotNull Set<LocalFileSystem.WatchRequest> getRootsToWatch() {
-    return myRootsToWatch;
-  }
-
-  private void registerListeners() {
-    MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (project == myProject) {
-          addRootsToWatch();
-          ApplicationManager.getApplication().addApplicationListener(new AppListener(), myProject);
+  private fun registerListeners() {
+    val connection = myProject.messageBus.connect(this)
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        if (project === myProject) {
+          addRootsToWatch()
+          ApplicationManager.getApplication().addApplicationListener(AppListener(), myProject)
         }
       }
 
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        if (project == myProject) {
-          ProjectRootManagerComponent.this.projectClosed();
+      override fun projectClosed(project: Project) {
+        if (project === myProject) {
+          this@ProjectRootManagerComponent.projectClosed()
         }
       }
-    });
-    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      @Override
-      public void beforeFileTypesChanged(@NotNull FileTypeEvent event) {
-        myFileTypesChanged.beforeRootsChanged();
+    })
+    connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
+      override fun beforeFileTypesChanged(event: FileTypeEvent) {
+        myFileTypesChanged.beforeRootsChanged()
       }
 
-      @Override
-      public void fileTypesChanged(@NotNull FileTypeEvent event) {
-        myFileTypesChanged.rootsChanged();
+      override fun fileTypesChanged(event: FileTypeEvent) {
+        myFileTypesChanged.rootsChanged()
       }
-    });
-
-    StartupManager.getInstance(myProject).registerStartupActivity(() -> isStartupActivityPerformed = true);
-
-    connection.subscribe(BatchUpdateListener.TOPIC, new BatchUpdateListener() {
-      @Override
-      public void onBatchUpdateStarted() {
-        myRootsChanged.levelUp();
-        myFileTypesChanged.levelUp();
+    })
+    StartupManager.getInstance(myProject).registerStartupActivity { isStartupActivityPerformed = true }
+    connection.subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+      override fun onBatchUpdateStarted() {
+        myRootsChanged.levelUp()
+        myFileTypesChanged.levelUp()
       }
 
-      @Override
-      public void onBatchUpdateFinished() {
-        myRootsChanged.levelDown();
-        myFileTypesChanged.levelDown();
+      override fun onBatchUpdateFinished() {
+        myRootsChanged.levelDown()
+        myFileTypesChanged.levelDown()
       }
-    });
-    Runnable rootsExtensionPointListener = () -> ApplicationManager.getApplication().invokeLater(() ->
-      WriteAction.run(() -> makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN))
-    );
-    AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
-    OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
+    })
+
+    val rootsExtensionPointListener = Runnable {
+      ApplicationManager.getApplication().invokeLater {
+        ApplicationManager.getApplication().runWriteAction {
+          makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
+        }
+      }
+    }
+    AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this)
+    OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this)
   }
 
-  protected void projectClosed() {
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+  protected open fun projectClosed() {
+    LocalFileSystem.getInstance().removeWatchedRoots(rootsToWatch)
   }
 
   @RequiresEdt
-  private void addRootsToWatch() {
-    if (myProject.isDefault()) return;
-    ApplicationManager.getApplication().assertIsWriteThread();
-    Disposable oldDisposable = myRootPointersDisposable;
-    Disposable newDisposable = Disposer.newDisposable();
+  private fun addRootsToWatch() {
+    if (myProject.isDefault) {
+      return
+    }
 
-    myCollectWatchRootsFuture.cancel(false);
-    myCollectWatchRootsFuture = myExecutor.submit(() -> {
-      Pair<Set<String>, Set<String>> watchRoots = ReadAction.compute(() -> myProject.isDisposed() ? null : collectWatchRoots(newDisposable));
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
-        if (myProject.isDisposed()) return;
-        myRootPointersDisposable = newDisposable;
-        // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
-        // instead, just increment/decrement their usage count
-        Disposer.dispose(oldDisposable);
-        myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, watchRoots.first, watchRoots.second);
-      });
-    });
+    ApplicationManager.getApplication().assertIsWriteThread()
+    val oldDisposable = rootPointersDisposable
+    val newDisposable = Disposer.newDisposable()
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val watchRoots = collectWatchRoots(newDisposable)
+      postCollect(newDisposable, oldDisposable, watchRoots)
+    }
+    else {
+      myProject.coroutineScope.launch {
+        val job = launch(start = CoroutineStart.LAZY) {
+          val watchRoots = readAction { collectWatchRoots(newDisposable) }
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            postCollect(newDisposable, oldDisposable, watchRoots)
+          }
+        }
+        collectWatchRootsJob.getAndSet(job)?.cancelAndJoin()
+        job.start()
+      }
+    }
   }
 
-  @Override
-  protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
-    isFiringEvent = true;
+  private fun postCollect(newDisposable: Disposable, oldDisposable: Disposable, watchRoots: Pair<Set<String>, Set<String>>) {
+    rootPointersDisposable = newDisposable
+    // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
+    // instead, just increment/decrement their usage count
+    Disposer.dispose(oldDisposable)
+    rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+  }
+
+  override fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
+    isFiringEvent = true
     try {
-      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
-      if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
-      }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
+      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
+      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
     }
     finally {
-      isFiringEvent = false;
+      isFiringEvent = false
     }
   }
 
-  @Override
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
-    isFiringEvent = true;
+  override fun fireRootsChangedEvent(fileTypes: Boolean, indexingInfos: List<RootsChangeRescanningInfo>) {
+    isFiringEvent = true
     try {
-      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
-      if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
-      }
-      ThreeState isFromWorkspaceOnly = ThreeState.UNSURE;
-      for (RootsChangeRescanningInfo info : indexingInfos) {
-        if (info instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo
-            && ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent()) {
+      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
+
+      var isFromWorkspaceOnly = ThreeState.UNSURE
+      for (info in indexingInfos) {
+        if (info is WorkspaceEventRescanningInfo && info.isFromWorkspaceModelEvent) {
           if (isFromWorkspaceOnly == ThreeState.UNSURE) {
-            isFromWorkspaceOnly = ThreeState.YES;
+            isFromWorkspaceOnly = ThreeState.YES
           }
         }
         else {
-          isFromWorkspaceOnly = ThreeState.NO;
-          break;
+          isFromWorkspaceOnly = ThreeState.NO
+          break
         }
       }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(
-        new ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES));
+      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
+        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES))
     }
     finally {
-      isFiringEvent = false;
+      isFiringEvent = false
     }
-
     if (isStartupActivityPerformed) {
-      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
+      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos)
     }
-    addRootsToWatch();
+    addRootsToWatch()
   }
 
-  private @NotNull Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    Set<String> recursivePathsToWatch = CollectionFactory.createFilePathSet();
-    Set<String> flatPaths = CollectionFactory.createFilePathSet();
-
-    IProjectStore store = ProjectKt.getStateStore(myProject);
-    Path projectFilePath = store.getProjectFilePath();
-    if (!Project.DIRECTORY_STORE_FOLDER.equals(projectFilePath.getParent().getFileName().toString())) {
-      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()));
-      flatPaths.add(FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()));
+  private fun collectWatchRoots(disposable: Disposable): Pair<Set<String>, Set<String>> {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    val recursivePathsToWatch = CollectionFactory.createFilePathSet()
+    val flatPaths = CollectionFactory.createFilePathSet()
+    val store = myProject.stateStore
+    val projectFilePath = store.projectFilePath
+    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName.toString()) {
+      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()))
+      flatPaths.add(FileUtil.toSystemIndependentName(store.workspacePath.toString()))
     }
-
-    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
+    for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
+      val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
-        for (VirtualFile file : toWatch) {
-          recursivePathsToWatch.add(file.getPath());
+        for (file in toWatch) {
+          recursivePathsToWatch.add(file.path)
         }
       }
     }
-
-    for (WatchedRootsProvider extension : WATCHED_ROOTS_PROVIDER_EP_NAME.getExtensionList()) {
-      Set<String> toWatch = extension.getRootsToWatch(myProject);
+    for (extension in WATCHED_ROOTS_PROVIDER_EP_NAME.extensionList) {
+      val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
-        for (String path : toWatch) {
-          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path));
+        for (path in toWatch) {
+          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path))
         }
       }
     }
-
-    Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
+    val excludedUrls = CollectionFactory.createSmallMemoryFootprintSet<String>()
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
-      Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
+    for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+      excludedUrls.addAll(excludePolicy.excludeUrlsForProject)
     }
 
     // avoid creating empty unnecessary container
     if (!excludedUrls.isEmpty()) {
-      Disposer.register(this, disposable);
+      Disposer.register(this, disposable)
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
-      VirtualFilePointerContainer container =
-        VirtualFilePointerManager.getInstance().createContainer(disposable, getRootsValidityChangedListener());
-      ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
+      val container = VirtualFilePointerManager.getInstance().createContainer(disposable, rootsValidityChangedListener)
+      (container as VirtualFilePointerContainerImpl).addAll(excludedUrls)
     }
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    collectModuleWatchRoots(recursivePathsToWatch, flatPaths);
-    return new Pair<>(recursivePathsToWatch, flatPaths);
+    collectModuleWatchRoots(recursivePaths = recursivePathsToWatch, flatPaths = flatPaths)
+    return Pair(recursivePathsToWatch, flatPaths)
   }
 
-  private void collectModuleWatchRoots(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {
-    Set<String> urls = CollectionFactory.createFilePathSet();
-
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-
-      ContainerUtil.addAll(urls, rootManager.getContentRootUrls());
-
-      rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach(entry -> {
-        for (OrderRootType type : OrderRootType.getAllTypes()) {
-          ContainerUtil.addAll(urls, entry.getUrls(type));
+  private fun collectModuleWatchRoots(recursivePaths: MutableSet<in String>, flatPaths: MutableSet<in String>) {
+    val urls = CollectionFactory.createFilePathSet()
+    for (module in ModuleManager.getInstance(myProject).modules) {
+      val rootManager = ModuleRootManager.getInstance(module)
+      urls.addAll(rootManager.contentRootUrls)
+      rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
+        for (type in OrderRootType.getAllTypes()) {
+          urls.addAll(entry.getUrls(type))
         }
-        return true;
-      });
+        true
+      }
     }
-
-    for (String url : urls) {
-      String protocol = VirtualFileManager.extractProtocol(url);
-      if (protocol == null || StandardFileSystems.FILE_PROTOCOL.equals(protocol)) {
-        recursivePaths.add(extractLocalPath(url));
-      }
-      else if (StandardFileSystems.JAR_PROTOCOL.equals(protocol)) {
-        flatPaths.add(extractLocalPath(url));
-      }
-      else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
-        recursivePaths.add(extractLocalPath(url));
+    for (url in urls) {
+      val protocol = VirtualFileManager.extractProtocol(url)
+      when {
+        protocol == null || StandardFileSystems.FILE_PROTOCOL == protocol -> recursivePaths.add(extractLocalPath(url))
+        StandardFileSystems.JAR_PROTOCOL == protocol -> flatPaths.add(extractLocalPath(url))
+        StandardFileSystems.JRT_PROTOCOL == protocol -> recursivePaths.add(extractLocalPath(url))
       }
     }
   }
 
-  @Override
-  protected void clearScopesCaches() {
-    super.clearScopesCaches();
+  override fun clearScopesCaches() {
+    super.clearScopesCaches()
 
-    LibraryScopeCache libraryScopeCache = myProject.getServiceIfCreated(LibraryScopeCache.class);
-    if (libraryScopeCache != null) {
-      libraryScopeCache.clear();
+    myProject.getServiceIfCreated(LibraryScopeCache::class.java)?.clear()
+  }
+
+  override fun clearScopesCachesForModules() {
+    super.clearScopesCachesForModules()
+
+    for (module in ModuleManager.getInstance(myProject).modules) {
+      (module as ModuleEx).clearScopesCache()
     }
   }
 
-  @Override
-  public void clearScopesCachesForModules() {
-    super.clearScopesCachesForModules();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      ((ModuleEx)module).clearScopesCache();
-    }
-  }
-
-  @Override
-  public void markRootsForRefresh() {
-    Set<String> paths = CollectionFactory.createFilePathSet();
-    collectModuleWatchRoots(paths, paths);
-
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    for (String path : paths) {
-      VirtualFile root = fs.findFileByPath(path);
-      if (root instanceof NewVirtualFile) {
-        ((NewVirtualFile)root).markDirtyRecursively();
+  override fun markRootsForRefresh() {
+    val paths = CollectionFactory.createFilePathSet()
+    collectModuleWatchRoots(paths, paths)
+    val fs = LocalFileSystem.getInstance()
+    for (path in paths) {
+      val root = fs.findFileByPath(path)
+      if (root is NewVirtualFile) {
+        root.markDirtyRecursively()
       }
     }
   }
 
-  @Override
-  public void dispose() {
-    myCollectWatchRootsFuture.cancel(false);
-    myExecutor.shutdownNow();
-  }
+  override fun dispose() {}
 
-  private class AppListener implements ApplicationListener {
-    @Override
-    public void beforeWriteActionStart(@NotNull Object action) {
-      myInsideWriteAction++;
+  private inner class AppListener : ApplicationListener {
+    override fun beforeWriteActionStart(action: Any) {
+      insideWriteAction++
     }
 
-    @Override
-    public void writeActionFinished(@NotNull Object action) {
-      if (--myInsideWriteAction == 0 && myPointerChangesDetected) {
-        myPointerChangesDetected = false;
-        myRootsChanged.levelDown();
+    override fun writeActionFinished(action: Any) {
+      if (--insideWriteAction == 0 && pointerChangesDetected) {
+        pointerChangesDetected = false
+        myRootsChanged.levelDown()
       }
     }
   }
 
-  private final VirtualFilePointerListener myRootsChangedListener = new VirtualFilePointerListener() {
-    @NotNull
-    private RootsChangeRescanningInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeRescanningInfo result = null;
-      for (VirtualFilePointer pointer : pointers) {
-        if (pointer.isValid()) {
-          return RootsChangeRescanningInfo.TOTAL_RESCAN;
-        }
-        else {
-          if (result == null) {
-            result = RootsChangeRescanningInfo.NO_RESCAN_NEEDED;
-          }
-        }
-      }
-      return ObjectUtils.notNull(result, RootsChangeRescanningInfo.TOTAL_RESCAN);
-    }
-
-    @Override
-    public void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      if (!isInsideWriteAction() && !myPointerChangesDetected) {
-        myPointerChangesDetected = true;
-        //this is the first pointer changing validity
-        myRootsChanged.levelUp();
-      }
-
-      myRootsChanged.beforeRootsChanged();
-      if (LOG_CACHES_UPDATE || LOG.isTraceEnabled()) {
-        LOG.trace(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl() : ""));
-      }
-    }
-
-    @Override
-    public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeRescanningInfo changeInfo = getPointersChanges(pointers);
-
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      if (isInsideWriteAction()) {
-        myRootsChanged.rootsChanged(changeInfo);
-      }
-      else {
-        clearScopesCaches();
-      }
-    }
-
-    private boolean isInsideWriteAction() {
-      return myInsideWriteAction == 0;
-    }
-  };
-
-  @Override
-  public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
-    return myRootsChangedListener;
-  }
+  override fun getRootsValidityChangedListener(): VirtualFilePointerListener = rootsChangedListener
 }
