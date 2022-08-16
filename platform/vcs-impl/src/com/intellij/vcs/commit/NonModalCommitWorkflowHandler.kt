@@ -273,15 +273,17 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
 
     if (!isBackgroundCommitChecks()) {
-      return workflow.executeDefault(sessionInfo)
+      return workflow.executeSession(sessionInfo)
     }
 
     coroutineScope.launch {
-      workflow.executeDefault(sessionInfo) {
+      workflow.executeBackgroundSession(sessionInfo) {
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
-        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault CommitChecksResult.Passed(toCommit = true)
+        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) {
+          return@executeBackgroundSession CommitChecksResult.Passed(toCommit = true)
+        }
 
         val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {

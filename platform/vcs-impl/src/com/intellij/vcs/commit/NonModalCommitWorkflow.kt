@@ -34,7 +34,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  suspend fun executeDefault(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult) {
+  suspend fun executeBackgroundSession(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult) {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(sessionInfo, checker)

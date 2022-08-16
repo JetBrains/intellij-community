@@ -169,7 +169,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
   }
 
-  fun executeDefault(sessionInfo: CommitSessionInfo): Boolean {
+  fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
     processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)
     return beforeCommitChecksResult.shouldCommit
@@ -288,11 +288,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected fun executeCustom(sessionInfo: CommitSessionInfo, changes: List<Change>, commitMessage: String): Boolean =
     configureCommitSession(sessionInfo, changes, commitMessage) &&
-    run {
-      val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
-      processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)
-      beforeCommitChecksResult.shouldCommit
-    }
+    executeSession(sessionInfo)
 
   private fun configureCommitSession(sessionInfo: CommitSessionInfo,
                                      changes: List<Change>,

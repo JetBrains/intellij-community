@@ -173,7 +173,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
     if (sessionInfo.isVcsCommit) {
-      return workflow.executeDefault(sessionInfo)
+      return workflow.executeSession(sessionInfo)
     }
     else {
       return workflow.executeCustom(sessionInfo)
