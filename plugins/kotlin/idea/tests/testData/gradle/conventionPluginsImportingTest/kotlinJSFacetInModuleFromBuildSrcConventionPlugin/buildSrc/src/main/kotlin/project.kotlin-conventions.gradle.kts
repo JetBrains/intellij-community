@@ -13,12 +13,6 @@ dependencies {
 kotlin {
     js(LEGACY) {
         binaries.executable()
-        browser {
-            commonWebpackConfig {
-                cssSupport {
-                    enabled.set(true)
-                }
-            }
-        }
+        browser()
     }
 }
