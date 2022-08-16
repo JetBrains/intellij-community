@@ -472,6 +472,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myProfile.resetToEmpty(getProject());
         loadDescriptorsConfigs(false);
@@ -955,6 +959,11 @@ public class SingleInspectionProfilePanel extends JPanel {
               if (dlg.showAndGet()) {
                 tableSettings.onScopesOrderChanged();
               }
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
             }
           });
         severityPanel = wrappedTable.createPanel();
