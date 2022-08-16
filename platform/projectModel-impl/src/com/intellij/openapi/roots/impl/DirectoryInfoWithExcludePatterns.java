@@ -25,8 +25,10 @@ class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
     super(root, module, contentRoot, sourceRoot, sourceFolder, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, unloadedModuleName);
     myContentExcludePatterns = contentExcludePatterns;
     myLibraryExcludeCondition = libraryExcludeCondition;
-    LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludeCondition != null,
-                   "Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + this);
+
+    if (myContentExcludePatterns == null && myLibraryExcludeCondition == null) {
+      LOG.error("Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + this);
+    }
   }
 
   @Override
