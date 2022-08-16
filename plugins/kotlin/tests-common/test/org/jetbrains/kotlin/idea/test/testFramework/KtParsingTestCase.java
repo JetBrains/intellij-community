@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -72,7 +72,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
     protected void setUp() throws Exception {
         super.setUp();
         initApplication();
-        ComponentAdapter component = getApplication().getPicoContainer().getComponentAdapter(ProgressManager.class.getName());
+        ComponentAdapter component = getApplication().getComponentAdapter(ProgressManager.class.getName());
 
         myProject = new MockProjectEx(getTestRootDisposable());
         myPsiManager = new MockPsiManager(myProject);

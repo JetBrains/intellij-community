@@ -634,7 +634,7 @@ abstract class ComponentManagerImpl(
 
   final override suspend fun <T : Any> getServiceAsync(serviceClass: Class<T>): Deferred<T> {
     val key = serviceClass.name
-    val adapter = componentKeyToAdapter.get(serviceClass.name)
+    val adapter = componentKeyToAdapter.get(key)
     if (adapter !is ServiceComponentAdapter) {
       throw RuntimeException("$adapter is not a service (key=$key)")
     }
@@ -1288,21 +1288,10 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  final override fun getComponentAdapter(componentKey: Any): ComponentAdapter? {
+  internal fun getComponentAdapter(keyClass: Class<*>): ComponentAdapter? {
     assertComponentsSupported()
-
-    val adapter = getFromCache(componentKey)
-    return if (adapter == null && parent != null) parent.getComponentAdapter(componentKey) else adapter
-  }
-
-  private fun getFromCache(componentKey: Any): ComponentAdapter? {
-    val adapter = componentKeyToAdapter.get(componentKey)
-    if (adapter == null) {
-      return if (componentKey is Class<*>) componentKeyToAdapter.get(componentKey.name) else null
-    }
-    else {
-      return adapter
-    }
+    val adapter = componentKeyToAdapter.get(keyClass) ?: componentKeyToAdapter.get(keyClass.name)
+    return if (adapter == null && parent != null) parent.getComponentAdapter(keyClass) else adapter
   }
 
   fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {
@@ -1317,13 +1306,9 @@ abstract class ComponentManagerImpl(
   final override fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()
 
-    val adapter = getFromCache(componentKey)
-    if (adapter == null) {
-      return parent?.getComponentInstance(componentKey)
-    }
-    else {
-      return adapter.getComponentInstance(this)
-    }
+    val adapter = componentKeyToAdapter.get(componentKey)
+                  ?: if (componentKey is Class<*>) componentKeyToAdapter.get(componentKey.name) else null
+    return if (adapter == null) parent?.getComponentInstance(componentKey) else adapter.getComponentInstance(this)
   }
 
   final override fun getComponentInstanceOfType(componentType: Class<*>): Any? {

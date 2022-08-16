@@ -44,4 +44,14 @@ public interface MutablePicoContainer extends PicoContainer {
    * @return the ComponentAdapter that was associated with this component.
    */
   ComponentAdapter unregisterComponent(Object componentKey);
+
+  /**
+   * Find a component adapter associated with the specified key. If a component adapter cannot be found in this
+   * container, the parent container (if one exists) will be searched.
+   *
+   * @param componentKey the key that the component was registered with.
+   * @return the component adapter associated with this key, or {@code null} if no component has been
+   * registered for the specified key.
+   */
+  ComponentAdapter getComponentAdapter(@NotNull Object componentKey);
 }
