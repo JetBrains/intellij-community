@@ -45,6 +45,15 @@ data class JetBrainsSpace(val repository: String) : CustomMavenRepository {
         get() = "jetbrains." + repository.replace('/', '.')
 }
 
+data class CacheRedirector(val redirectedRepositoryBase: String, val repository: String) : CustomMavenRepository {
+    override val url: String = "https://cache-redirector.jetbrains.com/$redirectedRepositoryBase/$repository"
+
+    override val idForMaven: String
+        get() = "cache-redirector.jetbrains" +
+                redirectedRepositoryBase.replace('/', '.') +
+                repository.replace('/', '.')
+}
+
 object Repositories {
     val KTOR = DefaultRepository.MAVEN_CENTRAL
     val KOTLINX_HTML = JetBrainsSpace("public/p/kotlinx-html/maven")
@@ -52,4 +61,8 @@ object Repositories {
     val KOTLIN_EAP_MAVEN_CENTRAL = DefaultRepository.MAVEN_CENTRAL
     val JETBRAINS_COMPOSE_DEV = JetBrainsSpace("public/p/compose/dev")
     val JETBRAINS_KOTLIN_DEV = JetBrainsSpace("kotlin/p/kotlin/dev")
+    val JETBRAINS_KOTLIN_BOOTSTRAP = CacheRedirector(
+        "maven.pkg.jetbrains.space",
+        "kotlin/p/kotlin/bootstrap"
+    )
 }
