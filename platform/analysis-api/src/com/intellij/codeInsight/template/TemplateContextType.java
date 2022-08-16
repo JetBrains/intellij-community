@@ -5,13 +5,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiFile;
-import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.LiveTemplateContextBean.EVERYWHERE_CONTEXT_ID;
+import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
@@ -20,7 +20,7 @@ import static com.intellij.openapi.util.NlsContexts.Label;
  */
 public abstract class TemplateContextType {
   String myContextId;
-  DeferredTemplateContextType myBaseContextType;
+  ClearableLazyValue<@Nullable TemplateContextType> myBaseContextType;
 
   private final @NotNull @Label String myPresentableName;
 
@@ -45,7 +45,8 @@ public abstract class TemplateContextType {
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
-    myBaseContextType = new ClassTemplateContextTypeCache(baseContextType);
+    Class<? extends TemplateContextType> actualBaseClass = baseContextType != null ? baseContextType : EverywhereContextType.class;
+    myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
   }
 
   /**
@@ -108,13 +109,12 @@ public abstract class TemplateContextType {
    *   enabled for the template.</li>
    * </ol>
    */
-  @Nullable
-  public TemplateContextType getBaseContextType() {
+  public @Nullable TemplateContextType getBaseContextType() {
     return myBaseContextType != null ? myBaseContextType.getValue() : null;
   }
 
   @ApiStatus.Internal
-  public void clearCachedBaseContextType() {
+  void clearCachedBaseContextType() {
     if (myBaseContextType != null) {
       myBaseContextType.drop();
     }
@@ -126,73 +126,5 @@ public abstract class TemplateContextType {
    */
   public Document createDocument(CharSequence text, Project project) {
     return EditorFactory.getInstance().createDocument(text);
-  }
-
-  interface DeferredTemplateContextType {
-    TemplateContextType getValue();
-    void drop();
-  }
-
-  static final class TemplateContextTypeCache implements DeferredTemplateContextType {
-
-    public static final TemplateContextTypeCache EVERYWHERE_CONTEXT = new TemplateContextTypeCache(EVERYWHERE_CONTEXT_ID);
-
-    private final @Nullable String myBaseContextTypeId;
-    private boolean myComputed;
-    private @Nullable TemplateContextType myValue;
-
-    TemplateContextTypeCache(@Nullable String baseContextTypeId) {
-      myBaseContextTypeId = baseContextTypeId;
-    }
-
-    @Override
-    public synchronized @Nullable TemplateContextType getValue() {
-      if (!myComputed) {
-        myValue = myBaseContextTypeId == null ? null : LiveTemplateContextBean.EP_NAME.getExtensionList().stream()
-          .filter(t -> t.getContextId().equals(myBaseContextTypeId))
-          .map(BaseKeyedLazyInstance::getInstance)
-          .findFirst()
-          .orElseThrow();
-
-        myComputed = true;
-      }
-      return myValue;
-    }
-
-    @Override
-    public synchronized void drop() {
-      myComputed = false;
-      myValue = null;
-    }
-  }
-
-  private static class ClassTemplateContextTypeCache implements DeferredTemplateContextType {
-    private final @Nullable Class<? extends TemplateContextType> myBaseContextType;
-    private boolean myComputed;
-    private @Nullable TemplateContextType myValue;
-
-    private ClassTemplateContextTypeCache(@Nullable Class<? extends TemplateContextType> baseContextType) {
-      myBaseContextType = baseContextType;
-    }
-
-    @Override
-    public synchronized @Nullable TemplateContextType getValue() {
-      if (!myComputed) {
-        myValue = myBaseContextType == null ? null : LiveTemplateContextBean.EP_NAME.getExtensionList().stream()
-          .filter(t -> myBaseContextType.getName().equals(t.implementationClass))
-          .map(BaseKeyedLazyInstance::getInstance)
-          .findFirst()
-          .orElseThrow(() -> new IllegalStateException("Unable to find base context type with implementation class " + myBaseContextType));
-
-        myComputed = true;
-      }
-      return myValue;
-    }
-
-    @Override
-    public synchronized void drop() {
-      myComputed = false;
-      myValue = null;
-    }
   }
 }

@@ -50,6 +50,8 @@
       <with attribute="implementation" implements="com.intellij.codeInsight.template.TemplateContextType"/>
     </extensionPoint>
 
+    <extensionPoint name="liveTemplateContextProvider" interface="com.intellij.codeInsight.template.LiveTemplateContextProvider" dynamic="true"/>
+
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
 
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>

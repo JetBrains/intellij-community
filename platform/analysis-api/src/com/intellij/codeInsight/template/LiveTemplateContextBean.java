@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.template.TemplateContextType.TemplateContextTypeCache;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -12,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 
 @ApiStatus.Internal
-public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<TemplateContextType> {
+public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<TemplateContextType> implements LiveTemplateContext {
   @ApiStatus.Internal
   public static final ExtensionPointName<LiveTemplateContextBean> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
 
@@ -32,20 +31,11 @@ public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<Templat
   @Attribute("baseContextId")
   public String baseContextId;
 
-  private final TemplateContextType instanceOverride;
-
-  @SuppressWarnings("unused")
   public LiveTemplateContextBean() {
-    this.instanceOverride = null;
   }
 
-  // Required for dynamic registration from SqlDialectTemplateRegistrar
-  @ApiStatus.Internal
-  public LiveTemplateContextBean(@NotNull TemplateContextType instance) {
-    this.instanceOverride = instance;
-  }
-
-  public String getContextId() {
+  @Override
+  public @NotNull String getContextId() {
     if (contextId == null) {
       TemplateContextType instance = getInstance();
       return instance.myContextId;
@@ -54,6 +44,7 @@ public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<Templat
     return contextId;
   }
 
+  @Override
   public @Nullable String getBaseContextId() {
     if (contextId == null) {
       TemplateContextType instance = getInstance();
@@ -66,17 +57,9 @@ public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<Templat
     return baseContextId == null ? EVERYWHERE_CONTEXT_ID : baseContextId;
   }
 
-  public @Nullable LiveTemplateContextBean getBaseContextType() {
-    String myBaseContextId = getBaseContextId();
-    if (myBaseContextId == null) return null;
-
-    for (LiveTemplateContextBean liveTemplateContext : EP_NAME.getExtensionList()) {
-      if (Objects.equals(liveTemplateContext.getContextId(), myBaseContextId)) {
-        return liveTemplateContext;
-      }
-    }
-
-    return null;
+  @Override
+  public @NotNull TemplateContextType getTemplateContextType() {
+    return getInstance();
   }
 
   @Override
@@ -87,17 +70,24 @@ public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<Templat
   @Override
   public @NotNull TemplateContextType createInstance(@NotNull ComponentManager componentManager,
                                                      @NotNull PluginDescriptor pluginDescriptor) {
-    if (instanceOverride != null) return instanceOverride;
-
     TemplateContextType instance = super.createInstance(componentManager, pluginDescriptor);
     if (instance.myContextId == null) { // new declaration syntax
       instance.myContextId = contextId;
 
       if (!EVERYWHERE_CONTEXT_ID.equals(contextId)) {
-        instance.myBaseContextType = baseContextId != null ?
-                                     new TemplateContextTypeCache(baseContextId) : TemplateContextTypeCache.EVERYWHERE_CONTEXT;
+        String actualBaseId = baseContextId != null ? baseContextId : EVERYWHERE_CONTEXT_ID;
+        instance.myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseId));
       }
     }
     return instance;
+  }
+
+  @Override
+  public String toString() {
+    return "LiveTemplateContextBean{" +
+           "contextId='" + contextId + '\'' +
+           ", baseContextId='" + baseContextId + '\'' +
+           ", implementationClass='" + implementationClass + '\'' +
+           '}';
   }
 }
