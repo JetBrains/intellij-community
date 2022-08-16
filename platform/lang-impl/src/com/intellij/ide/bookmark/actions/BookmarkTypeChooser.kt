@@ -9,6 +9,8 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.RowGridLayout
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
@@ -39,6 +41,14 @@ private val SHARED_LAYOUT by lazy {
   }
 }
 
+private object MySpacingConfiguration: IntelliJSpacingConfiguration() {
+  override val verticalComponentGap: Int
+    get() = 0
+
+  override val verticalSmallGap: Int
+    get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 8)
+}
+
 internal class BookmarkTypeChooser(
   private var current: BookmarkType?,
   assigned: Set<BookmarkType>,
@@ -57,46 +67,48 @@ internal class BookmarkTypeChooser(
 
   init {
     add(panel {
-      row {
-        val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
-        comment(message("mnemonic.chooser.comment"), lineLength).apply {
-          if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(0, 4)
-        }
-      }
-
-      row {
-        cell(bookmarkLayoutGrid)
-          .horizontalAlign(HorizontalAlign.CENTER)
-      }
-
-      row {
-        descriptionField = textField()
-          .horizontalAlign(HorizontalAlign.FILL)
-          .applyToComponent {
-            text = description ?: ""
-            emptyText.text = message("mnemonic.chooser.description")
-            isOpaque = false
-            addKeyListener(object: KeyListener {
-              override fun keyTyped(e: KeyEvent?) = Unit
-              override fun keyReleased(e: KeyEvent?) = Unit
-              override fun keyPressed(e: KeyEvent?) {
-                if (e != null && e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) {
-                  save()
-                }
-              }
-            })
+      customizeSpacingConfiguration(MySpacingConfiguration) {
+        row {
+          val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
+          comment(message("mnemonic.chooser.comment"), lineLength).apply {
+            if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(2, 4, 0, 4)
           }
-          .component
-      }
+        }.bottomGap(BottomGap.SMALL)
 
-      row {
-        cell(createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
-        cell(createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
+        row {
+          cell(bookmarkLayoutGrid)
+            .horizontalAlign(HorizontalAlign.CENTER)
+        }.bottomGap(BottomGap.SMALL)
+
+        row {
+          descriptionField = textField()
+            .horizontalAlign(HorizontalAlign.FILL)
+            .applyToComponent {
+              text = description ?: ""
+              emptyText.text = message("mnemonic.chooser.description")
+              isOpaque = false
+              addKeyListener(object : KeyListener {
+                override fun keyTyped(e: KeyEvent?) = Unit
+                override fun keyReleased(e: KeyEvent?) = Unit
+                override fun keyPressed(e: KeyEvent?) {
+                  if (e != null && e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) {
+                    save()
+                  }
+                }
+              })
+            }
+            .component
+        }.bottomGap(BottomGap.SMALL)
+
+        row {
+          cell(createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
+          cell(createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
+        }
       }
     }.apply {
       border = when {
-        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 8, 20)
-        else -> JBUI.Borders.empty(7, 11)
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 14, 20)
+        else -> JBUI.Borders.empty(12, 11)
       }
       isOpaque = false
       isFocusCycleRoot = true
@@ -140,7 +152,7 @@ private class BookmarkLayoutGrid(
   init {
     addToLeft(JPanel(SHARED_LAYOUT).apply {
       border = when {
-        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(10, 0, 14, 14)
+        ExperimentalUI.isNewUI() -> JBUI.Borders.emptyRight(14)
         else -> JBUI.Borders.empty(5)
       }
       isOpaque = false
@@ -150,7 +162,7 @@ private class BookmarkLayoutGrid(
     })
     addToRight(JPanel(SHARED_LAYOUT).apply {
       border = when {
-        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(10, 0, 14, 0)
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty()
         else -> JBUI.Borders.empty(5)
       }
       isOpaque = false
