@@ -652,10 +652,7 @@
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
-
       <add-to-group group-id="ToolsMenu" anchor="first"/>
-
-      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction"/>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
@@ -1581,6 +1578,10 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+
+    <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </action>
 
     <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
