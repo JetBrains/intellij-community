@@ -60,7 +60,7 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static DependenciesProperties getCommunityDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+  public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
     try {
       return new DependenciesProperties(communityRoot);
     }
