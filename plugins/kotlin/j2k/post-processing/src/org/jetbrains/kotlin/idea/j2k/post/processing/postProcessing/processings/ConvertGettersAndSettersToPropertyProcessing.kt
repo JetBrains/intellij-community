@@ -56,6 +56,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.JKInMemoryFilesSearcher
 
