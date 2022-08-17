@@ -32,8 +32,16 @@ open class LocalChangesCommitter(
   protected var isSuccess = false
 
   override fun commit() {
-    val committedVcses = commitChanges()
-    commitWithoutChanges(committedVcses)
+    vetoDocumentSaving(project, changes) {
+      val committedVcses = commitChanges()
+      commitWithoutChanges(committedVcses)
+    }
+
+    if (pathsToRefresh.isNotEmpty()) {
+      ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
+    }
+
+    myAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
   }
 
   private fun commitChanges(): Set<AbstractVcs> {
@@ -48,14 +56,6 @@ open class LocalChangesCommitter(
   private fun commitWithoutChanges(committedVcses: Set<AbstractVcs>) {
     val commitWithoutChangesVcses = commitContext.commitWithoutChangesRoots.mapNotNullTo(mutableSetOf()) { it.vcs }
     (commitWithoutChangesVcses - committedVcses).forEach { vcsCommit(it, emptyList()) }
-  }
-
-  override fun afterCommit() {
-    if (pathsToRefresh.isNotEmpty()) {
-      ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
-    }
-
-    myAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
   }
 
   override fun onSuccess() {

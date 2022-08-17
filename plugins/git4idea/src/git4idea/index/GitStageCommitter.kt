@@ -28,7 +28,7 @@ internal class GitStageCommitter(
   private val commitState: GitStageCommitState,
   private val toStage: Map<VirtualFile, Collection<FilePath>>,
   commitContext: CommitContext
-) : AbstractCommitter(project, emptyList(), commitState.commitMessage, commitContext) {
+) : AbstractCommitter(project, commitState.commitMessage, commitContext) {
 
   val successfulRepositories = mutableSetOf<GitRepository>()
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
@@ -58,8 +58,6 @@ internal class GitStageCommitter(
       }
     }
   }
-
-  override fun afterCommit() = Unit
 
   override fun onSuccess() {
     if (commitContext.isPushAfterCommit) {

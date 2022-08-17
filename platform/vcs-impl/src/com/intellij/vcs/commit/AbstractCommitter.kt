@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nls
 
 abstract class AbstractCommitter(
   val project: Project,
-  val changes: List<Change>,
   val commitMessage: @NlsSafe String,
   val commitContext: CommitContext
 ) {
@@ -67,8 +65,6 @@ abstract class AbstractCommitter(
 
   protected abstract fun commit()
 
-  protected abstract fun afterCommit()
-
   protected abstract fun onSuccess()
 
   protected abstract fun onFailure()
@@ -107,8 +103,7 @@ abstract class AbstractCommitter(
   private fun doRunCommit() {
     var canceled = false
     try {
-      SaveCommittingDocumentsVetoer.run(project, changes) { commit() }
-      afterCommit()
+      commit()
     }
     catch (e: ProcessCanceledException) {
       canceled = true

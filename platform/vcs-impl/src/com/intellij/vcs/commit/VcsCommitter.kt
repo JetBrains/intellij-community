@@ -12,10 +12,10 @@ import com.intellij.openapi.vcs.changes.CommitContext
 
 abstract class VcsCommitter(
   project: Project,
-  changes: List<Change>,
+  val changes: List<Change>,
   commitMessage: @NlsSafe String,
   commitContext: CommitContext
-) : AbstractCommitter(project, changes, commitMessage, commitContext) {
+) : AbstractCommitter(project, commitMessage, commitContext) {
 
   private val _feedback = mutableSetOf<String>()
   private val _failedToCommitChanges = mutableListOf<Change>()

@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.vcs.commit.VcsCommitter
+import com.intellij.vcs.commit.vetoDocumentSaving
 
 class AlienCommitter(
   private val vcs: AbstractVcs,
@@ -13,9 +14,11 @@ class AlienCommitter(
   commitContext: CommitContext
 ) : VcsCommitter(vcs.project, changes, commitMessage, commitContext) {
 
-  override fun commit() = vcsCommit(vcs, changes)
-
-  override fun afterCommit() = Unit
+  override fun commit() {
+    vetoDocumentSaving(project, changes) {
+      vcsCommit(vcs, changes)
+    }
+  }
 
   override fun onSuccess() = Unit
 
