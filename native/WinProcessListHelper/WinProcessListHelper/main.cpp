@@ -189,6 +189,10 @@ int main(int argc, char **argv)
         hr = pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
         INT pid = SUCCEEDED(hr) ? vtId.intVal : 0;
         wcout << "pid:" << pid << "\n";
+        VARIANT vtParentId = { 0 };
+        hr = pclsObj->Get(L"ParentProcessId", 0, &vtParentId, nullptr, nullptr);
+        INT parentPid = SUCCEEDED(hr) ? vtParentId.intVal : 0;
+        wcout << "parentPid:" << parentPid << "\n";
         VARIANT vtName = { 0 };
         hr = pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
         if (SUCCEEDED(hr) && vtName.bstrVal != nullptr)
