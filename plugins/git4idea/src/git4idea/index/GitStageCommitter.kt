@@ -34,40 +34,41 @@ internal class GitStageCommitter(
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
 
   override fun commit() {
-    val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
+    try {
+      val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
 
-    for (root in roots) {
-      try {
-        val toStageInRoot = toStage[root]
-        if (toStageInRoot?.isNotEmpty() == true) {
-          addPaths(project, root, toStageInRoot, true)
+      for (root in roots) {
+        try {
+          val toStageInRoot = toStage[root]
+          if (toStageInRoot?.isNotEmpty() == true) {
+            addPaths(project, root, toStageInRoot, true)
+          }
+
+          val repository = getRepositoryForFile(project, root)
+          commitRepository(repository)
+          successfulRepositories.add(repository)
         }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          val rootError = e.asVcsException()
 
-        val repository = getRepositoryForFile(project, root)
-        commitRepository(repository)
-        successfulRepositories.add(repository)
+          addException(rootError)
+          failedRoots[root] = rootError
+        }
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        val rootError = e.asVcsException()
 
-        addException(rootError)
-        failedRoots[root] = rootError
+      if (failedRoots.isEmpty() && commitContext.isPushAfterCommit) {
+        GitPushAfterCommitDialog.showOrPush(project, successfulRepositories)
       }
+    }
+    finally {
+      refreshChanges()
     }
   }
 
-  override fun onSuccess() {
-    if (commitContext.isPushAfterCommit) {
-      GitPushAfterCommitDialog.showOrPush(project, successfulRepositories)
-    }
-  }
-
-  override fun onFailure() = Unit
-
-  override fun onFinish() {
+  private fun refreshChanges() {
     for (repository in successfulRepositories) {
       GitUtil.getRepositoryManager(project).updateRepository(repository.root)
       if (repository.isSubmodule()) {

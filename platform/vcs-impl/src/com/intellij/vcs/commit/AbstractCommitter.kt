@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -33,8 +32,7 @@ abstract class AbstractCommitter(
   private val _exceptions = mutableListOf<VcsException>()
 
   val exceptions: List<VcsException> get() = _exceptions.toList()
-
-  val configuration: VcsConfiguration = VcsConfiguration.getInstance(project)
+  val commitErrors: List<VcsException> get() = collectErrors(_exceptions)
 
   fun addResultHandler(resultHandler: CommitResultHandler) {
     resultHandlers += resultHandler
@@ -54,12 +52,6 @@ abstract class AbstractCommitter(
   }
 
   protected abstract fun commit()
-
-  protected abstract fun onSuccess()
-
-  protected abstract fun onFailure()
-
-  protected abstract fun onFinish()
 
   private fun delegateCommitToVcsThread() {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
@@ -114,7 +106,6 @@ abstract class AbstractCommitter(
     }
     finally {
       finishCommit(canceled)
-      onFinish()
     }
   }
 
@@ -125,7 +116,7 @@ abstract class AbstractCommitter(
   }
 
   private fun finishCommit(canceled: Boolean) {
-    val errors = collectErrors(_exceptions)
+    val errors = commitErrors
     val noErrors = errors.isEmpty()
 
     if (canceled) {
@@ -133,11 +124,9 @@ abstract class AbstractCommitter(
     }
     else if (noErrors) {
       resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
-      onSuccess()
     }
     else {
       resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
-      onFailure()
     }
   }
 

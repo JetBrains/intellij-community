@@ -19,10 +19,4 @@ class AlienCommitter(
       vcsCommit(vcs, changes)
     }
   }
-
-  override fun onSuccess() = Unit
-
-  override fun onFailure() = Unit
-
-  override fun onFinish() = Unit
 }
