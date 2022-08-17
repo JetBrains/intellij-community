@@ -31,15 +31,15 @@ internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(thi
 @Nls
 internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
 
-open class SingleChangeListCommitWorkflow(
+class SingleChangeListCommitWorkflow(
   project: Project,
   affectedVcses: Set<AbstractVcs>,
   val initiallyIncluded: Collection<*>,
-  val initialChangeList: LocalChangeList? = null,
-  executors: List<CommitExecutor> = emptyList(),
-  final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  val initialCommitMessage: String? = null,
-  private val resultHandler: CommitResultHandler? = null
+  val initialChangeList: LocalChangeList?,
+  executors: List<CommitExecutor>,
+  override val isDefaultCommitEnabled: Boolean,
+  initialCommitMessage: String?,
+  private val resultHandler: CommitResultHandler?
 ) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
 
   init {
@@ -59,9 +59,9 @@ open class SingleChangeListCommitWorkflow(
     }
   }
 
-  override fun getBeforeCommitChecksChangelist(): LocalChangeList? = commitState.changeList
+  override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  protected open fun doCommit(commitState: ChangeListCommitState) {
+  private fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
 
     with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE) {
@@ -103,7 +103,7 @@ abstract class CommitChangeListDialogWorkflow(
   lateinit var commitState: ChangeListCommitState
 }
 
-private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
+class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
   private val listName = commitState.changeList.name
