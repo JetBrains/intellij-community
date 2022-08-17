@@ -859,16 +859,43 @@ public final class PluginManagerCore {
 
   @ReviseWhenPortedToJDK(value = "10", description = "Set.of")
   private static @NotNull Set<PluginId> get3rdPartyPluginIds() {
-    Path file = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
+    Path path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
     try {
-      Set<PluginId> ids = DisabledPluginsState.Companion.readPluginIdsFromFile$intellij_platform_core_impl(file);
+      Set<PluginId> ids = readPluginIdsFromFile(path);
       if (!ids.isEmpty()) {
-        Files.delete(file);
+        Files.delete(path);
       }
       return ids;
     }
     catch (IOException e) {
-      getLogger().error(file.toString(), e);
+      getLogger().error(path.toString(), e);
+      return Collections.emptySet();
+    }
+  }
+
+  @ReviseWhenPortedToJDK(value = "10, 11", description = "toUnmodifiableSet, Set.of, String.isBlank")
+  @ApiStatus.Internal
+  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
+    try (Stream<String> lines = Files.lines(path)) {
+      return lines
+        .map(String::trim)
+        .filter(line -> !line.isEmpty())
+        .map(PluginId::getId)
+        .collect(Collectors.toSet());
+    }
+    catch (NoSuchFileException ignored) {
+      return Collections.emptySet();
+    }
+  }
+
+  @ApiStatus.Internal
+  public synchronized static @NotNull Set<PluginId> tryReadPluginIdsFromFile(@NotNull Path path,
+                                                                             @NotNull Logger logger) {
+    try {
+      return readPluginIdsFromFile(path);
+    }
+    catch (IOException e) {
+      logger.warn("Unable to read plugin id list from: " + path, e);
       return Collections.emptySet();
     }
   }
@@ -880,6 +907,21 @@ public final class PluginManagerCore {
     writePluginIdsToFile(path,
                          pluginIds.stream(),
                          openOptions);
+  }
+
+  @ApiStatus.Internal
+  public synchronized static boolean tryWritePluginIdsToFile(@NotNull Path path,
+                                                             @NotNull Set<PluginId> pluginIds,
+                                                             @NotNull Logger logger,
+                                                             OpenOption... openOptions) {
+    try {
+      writePluginIdsToFile(path, pluginIds, openOptions);
+      return true;
+    }
+    catch (IOException e) {
+      logger.warn("Unable to write plugin id list to: " + path, e);
+      return false;
+    }
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableList")
@@ -900,6 +942,17 @@ public final class PluginManagerCore {
     Files.write(path,
                 new TreeSet<>(pluginIds),
                 openOptions);
+  }
+
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
+  @VisibleForTesting
+  public static @NotNull Set<PluginId> toPluginIds(@NotNull Collection<String> pluginIdStrings) {
+    Set<PluginId> pluginIds = pluginIdStrings.stream()
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .map(PluginId::getId)
+      .collect(Collectors.toSet());
+    return Collections.unmodifiableSet(pluginIds);
   }
 
   private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {

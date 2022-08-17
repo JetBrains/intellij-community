@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 import java.nio.file.Path
 
 @ApiStatus.Experimental
@@ -42,7 +41,10 @@ class EnabledOnDemandPluginsState : PluginEnabler {
         synchronized(EnabledOnDemandPluginsState::class.java) {
           var result = enabledPluginIds_
           if (result == null) {
-            result = LinkedHashSet(if (IdeaPluginDescriptorImpl.isOnDemandEnabled) readEnabledPlugins() else emptySet())
+            result = if (IdeaPluginDescriptorImpl.isOnDemandEnabled)
+              LinkedHashSet(PluginManagerCore.tryReadPluginIdsFromFile(defaultFilePath, logger))
+            else
+              mutableSetOf()
             enabledPluginIds_ = result
           }
           return result
@@ -63,29 +65,8 @@ class EnabledOnDemandPluginsState : PluginEnabler {
       logger.info(pluginIds.joinedPluginIds("load on demand"))
 
       val enabledPluginIds = enabledPluginIds as MutableSet
-      val changed = if (enabled) enabledPluginIds.addAll(pluginIds) else enabledPluginIds.removeAll(pluginIds)
-      return changed && writeEnabledPlugins(enabledPluginIds)
-    }
-
-    private fun readEnabledPlugins(): Set<PluginId> {
-      return try {
-        DisabledPluginsState.readPluginIdsFromFile(defaultFilePath)
-      }
-      catch (e: IOException) {
-        logger.info("Unable to load enabled plugins list", e)
-        emptySet()
-      }
-    }
-
-    private fun writeEnabledPlugins(pluginIds: Set<PluginId>): Boolean {
-      try {
-        PluginManagerCore.writePluginIdsToFile(defaultFilePath, pluginIds)
-        return true
-      }
-      catch (e: IOException) {
-        logger.warn("Unable to save enabled plugins list", e)
-        return false
-      }
+      return (if (enabled) enabledPluginIds.addAll(pluginIds) else enabledPluginIds.removeAll(pluginIds))
+             && PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, logger)
     }
   }
 

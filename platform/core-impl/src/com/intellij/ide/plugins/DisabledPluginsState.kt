@@ -10,12 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.streams.asSequence
 
 @ApiStatus.Internal
 class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
@@ -38,7 +35,6 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     // do not use class reference here
     @Suppress("SSBasedInspection")
     private val logger: Logger
-      // do not use class reference here
       get() = Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState")
 
     @JvmStatic
@@ -51,17 +47,6 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       ourDisabledPluginListeners.remove(listener)
     }
 
-    internal fun readPluginIdsFromFile(path: Path): Set<PluginId> {
-      try {
-        Files.lines(path).use { lines ->
-          return lines.asSequence().toPluginSet()
-        }
-      }
-      catch (ignored: NoSuchFileException) {
-        return emptySet()
-      }
-    }
-
     @JvmStatic
     fun loadDisabledPlugins(): Set<PluginId> {
       val disabledPlugins = LinkedHashSet<PluginId>()
@@ -69,7 +54,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       val requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
       var updateFile = false
       try {
-        val pluginIdsFromFile = readPluginIdsFromFile(path)
+        val pluginIdsFromFile = PluginManagerCore.tryReadPluginIdsFromFile(path, logger)
         val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
 
         if (pluginIdsFromFile.isEmpty() && suppressedPluginIds.isEmpty()) {
@@ -93,19 +78,12 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
         }
         return disabledPlugins
       }
-      catch (e: IOException) {
-        logger.info("Unable to load disabled plugins list from $path", e)
-        return emptySet()
-      }
       finally {
         if (updateFile) {
           trySaveDisabledPlugins(disabledPlugins, false)
         }
       }
     }
-
-    @JvmStatic
-    fun disabledPlugins(): Set<PluginId> = getDisabledIds()
 
     @JvmStatic
     fun getDisabledIds(): Set<PluginId> {
@@ -147,13 +125,10 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
-      try {
-        PluginManagerCore.writePluginIdsToFile(defaultFilePath, pluginIds)
-      }
-      catch (e: IOException) {
-        logger.warn("Unable to save disabled plugins list", e)
+      if (!PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, logger)) {
         return false
       }
+
       if (invalidate) {
         invalidate()
       }
@@ -179,14 +154,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       return if (property.isEmpty())
         emptySet()
       else
-        property.split(',').asSequence().toPluginSet()
-    }
-
-    private fun Sequence<String>.toPluginSet(): Set<PluginId> {
-      return map { it.trim() }
-        .filterNot { it.isBlank() }
-        .map { PluginId.getId(it) }
-        .toSet()
+        property.split(',').toPluginIds()
     }
   }
 

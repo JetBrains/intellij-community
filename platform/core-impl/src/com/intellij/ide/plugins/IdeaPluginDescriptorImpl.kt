@@ -23,6 +23,9 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+
+fun Collection<String>.toPluginIds(): Set<PluginId> = PluginManagerCore.toPluginIds(this)
+
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
 fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
