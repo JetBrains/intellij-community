@@ -2,17 +2,10 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
-import com.intellij.lang.ASTNode
-import com.intellij.lang.LangBundle
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -21,46 +14,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
 import com.intellij.util.LocalTimeCounter
-import org.jetbrains.annotations.Nls
-
-sealed class FormattingChange(val file: PsiFile, val range: TextRange) {
-  fun toProblemDescriptor(manager: InspectionManager, isOnTheFly: Boolean): ProblemDescriptor? {
-    val fixes = fixes() ?: return null
-    return manager.createProblemDescriptor(file, range, message(), ProblemHighlightType.WEAK_WARNING, isOnTheFly, *fixes)
-  }
-
-  @Nls
-  abstract fun message(): String
-
-  abstract fun fixes(): Array<LocalQuickFix>?
-}
-
-class ReplaceChange(file: PsiFile, range: TextRange, val replacement: String) : FormattingChange(file, range) {
-
-  override fun message() = if (range.isEmpty) {
-    LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.whitespace")
-  }
-  else {
-    LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.incorrect.whitespace")
-  }
-
-  override fun fixes(): Array<LocalQuickFix>? {
-    val doc: Document = file.viewProvider.document
-    val original = doc.text
-    if (original.count { it == '\n' } == replacement.count { it == '\n' }) {
-      if (original.substringAfterLast('\n') == replacement.substringAfterLast('\n')) {
-        // This change affects only trailing whitespaces in blank lines, skipping
-        return null
-      }
-    }
-    return arrayOf(ReplaceQuickFix(listOf(doc.createRangeMarker(range) to replacement)), ReformatQuickFix, HideDetailedReportIntention)
-  }
-}
-
-class ShiftIndentChange(file: PsiFile, range: TextRange, val node: ASTNode?, val indent: Int) : FormattingChange(file, range) {
-  override fun message() = LangBundle.message("inspection.incorrect.formatting.wrong.indent.problem.descriptor")
-  override fun fixes() = arrayOf(ReformatQuickFix, HideDetailedReportIntention)
-}
 
 data class FormattingChanges(val preFormatText: CharSequence, val postFormatText: CharSequence, val mismatches: List<WhitespaceMismatch>) {
   data class WhitespaceMismatch(val preFormatRange: TextRange, val postFormatRange: TextRange)
@@ -129,7 +82,7 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
 private fun diffWhitespace(pre: CharSequence,
                            post: CharSequence,
                            whiteSpaceFormattingStrategy: WhiteSpaceFormattingStrategy): List<FormattingChanges.WhitespaceMismatch> {
-  val changes = mutableListOf<FormattingChanges.WhitespaceMismatch>()
+  val mismatches = mutableListOf<FormattingChanges.WhitespaceMismatch>()
   var i = 0
   var j = 0
   while (i < pre.length && j < post.length) {
@@ -151,7 +104,7 @@ private fun diffWhitespace(pre: CharSequence,
       }
 
       if (changeDetected || iWsLen != jWsLen) {
-        changes += FormattingChanges.WhitespaceMismatch(TextRange(iWsStart, iWsEnd), TextRange(jWsStart, jWsEnd))
+        mismatches += FormattingChanges.WhitespaceMismatch(TextRange(iWsStart, iWsEnd), TextRange(jWsStart, jWsEnd))
       }
 
       i = iWsEnd
@@ -165,5 +118,5 @@ private fun diffWhitespace(pre: CharSequence,
       ++j
     }
   }
-  return changes
+  return mismatches
 }
