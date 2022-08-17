@@ -16,7 +16,7 @@ abstract class KotlinVersionProviderService : WizardService {
         version,
         getKotlinVersionKind(version),
         getKotlinVersionRepository(version),
-        getBuildSystemPluginRepository(getKotlinVersionKind(version), getDevVersionRepository()),
+        getBuildSystemPluginRepository(getKotlinVersionKind(version), listOf(getDevVersionRepository())),
     )
 
     private fun getKotlinVersionRepository(versionKind: KotlinVersionKind): Repository = when (versionKind) {
@@ -40,17 +40,17 @@ abstract class KotlinVersionProviderService : WizardService {
     companion object {
         fun getBuildSystemPluginRepository(
             versionKind: KotlinVersionKind,
-            devRepository: Repository
-        ): (BuildSystemType) -> Repository? =
+            devRepositories: List<Repository>
+        ): (BuildSystemType) -> List<Repository> =
             when (versionKind) {
                 KotlinVersionKind.STABLE, KotlinVersionKind.EAP, KotlinVersionKind.M -> { buildSystem ->
                     when (buildSystem) {
-                        BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> DefaultRepository.GRADLE_PLUGIN_PORTAL
-                        BuildSystemType.Maven -> DefaultRepository.MAVEN_CENTRAL
-                        BuildSystemType.Jps -> null
+                        BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> listOf(DefaultRepository.GRADLE_PLUGIN_PORTAL)
+                        BuildSystemType.Maven -> listOf(DefaultRepository.MAVEN_CENTRAL)
+                        BuildSystemType.Jps -> emptyList()
                     }
                 }
-                KotlinVersionKind.DEV -> { _ -> devRepository }
+                KotlinVersionKind.DEV -> { _ -> devRepositories }
             }
     }
 }

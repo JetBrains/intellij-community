@@ -59,7 +59,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
                 Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
                 KotlinVersionProviderService.getBuildSystemPluginRepository(
                     KotlinVersionKind.M,
-                    devRepository = Repositories.JETBRAINS_KOTLIN_DEV
+                    devRepositories = listOf(Repositories.JETBRAINS_KOTLIN_DEV)
                 )
             )
         )

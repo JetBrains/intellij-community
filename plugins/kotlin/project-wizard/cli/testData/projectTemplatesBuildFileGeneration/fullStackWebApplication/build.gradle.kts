@@ -9,6 +9,8 @@ version = "1.0-SNAPSHOT"
 repositories {
     jcenter()
     mavenCentral()
+    maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_REPO")
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
 
