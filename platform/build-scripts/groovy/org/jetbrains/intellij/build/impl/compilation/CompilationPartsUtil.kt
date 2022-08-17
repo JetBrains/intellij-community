@@ -66,9 +66,11 @@ class CompilationCacheUploadConfiguration(
   }
 }
 
+const val COMPILATION_CACHE_METADATA_JSON = "metadata.json"
+
 fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
   val items = if (config.uploadOnly) {
-    Json.decodeFromString<CompilationPartsMetadata>(Files.readString(zipDir.resolve("metadata.json"))).files.map {
+    Json.decodeFromString<CompilationPartsMetadata>(Files.readString(zipDir.resolve(COMPILATION_CACHE_METADATA_JSON))).files.map {
       val item = PackAndUploadItem(output = Path.of(""), name = it.key, archive = zipDir.resolve(it.key + ".jar"))
       item.hash = it.value
       item
@@ -198,8 +200,8 @@ private fun upload(config: CompilationCacheUploadConfiguration,
 
   // save metadata file
   if (!config.uploadOnly) {
-    val metadataFile = zipDir.resolve("metadata.json")
-    val gzippedMetadataFile = zipDir.resolve("metadata.json.gz")
+    val metadataFile = zipDir.resolve(COMPILATION_CACHE_METADATA_JSON)
+    val gzippedMetadataFile = zipDir.resolve("$COMPILATION_CACHE_METADATA_JSON.gz")
     Files.createDirectories(metadataFile.parent)
     Files.writeString(metadataFile, metadataJson)
 
