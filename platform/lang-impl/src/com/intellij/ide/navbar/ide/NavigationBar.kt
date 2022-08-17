@@ -85,7 +85,7 @@ private sealed class ExpandResult {
 internal class NavigationBar(
   val myProject: Project,
   val cs: CoroutineScope,
-  myEventFlow: SharedFlow<NavBarEvent>
+  myEventFlow: SharedFlow<Unit>
 ) {
 
   // Flag to block external model changes while user click is being processed
@@ -110,12 +110,7 @@ internal class NavigationBar(
     cs.launch(Dispatchers.EDT) {
       myEventFlow
         .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
-        .collectLatest {
-          when (it) {
-            is NavBarEvent.ModelChangeEvent -> rebuildModel()
-            is NavBarEvent.PresentationChangeEvent -> rebuildModel()
-          }
-        }
+        .collectLatest { rebuildModel() }
     }
 
     // handle clicks on navigation bar
