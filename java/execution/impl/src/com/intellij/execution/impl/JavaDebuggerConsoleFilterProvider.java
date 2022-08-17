@@ -1,18 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.impl.attach;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.debugger.actions.JavaDebuggerActionsCollector;
+import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.impl.InlayProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,33 +20,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider {
+  static final Pattern PATTERN = Pattern.compile("Listening for transport (\\S+) at address: (\\S+)");
+
   @Override
   public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
-    return new Filter[]{new JavaDebuggerAttachFilter(project)};
+    return new Filter[]{new JavaDebuggerAttachFilter()};
+  }
+
+  static Matcher getConnectionMatcher(String line) {
+    if (line.contains("Listening for transport")) {
+      Matcher matcher = PATTERN.matcher(line);
+      if (matcher.find()) {
+        return matcher;
+      }
+    }
+    return null;
   }
 
   private static class JavaDebuggerAttachFilter implements Filter {
-    static final Pattern PATTERN = Pattern.compile("Listening for transport (\\S+) at address: (\\S+)");
-    private final Project myProject;
-
-    private JavaDebuggerAttachFilter(Project project) {
-      myProject = project;
-    }
-
     @Override
     public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
-      if (!line.contains("Listening for transport")) return null;
-      Matcher matcher = PATTERN.matcher(line);
-      if (!matcher.find()) {
+      Matcher matcher = getConnectionMatcher(line);
+      if (matcher == null) {
         return null;
       }
       String transport = matcher.group(1);
       String address = matcher.group(2);
       int start = entireLength - line.length();
-
-      if (Registry.is("debugger.auto.attach.from.console")) {
-        JavaAttachDebuggerProvider.attach(transport, address, null, myProject);
-      }
 
       // to trick the code unwrapping single results in com.intellij.execution.filters.CompositeFilter#createFinalResult
       return new Result(Arrays.asList(
