@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenImportUtil
-import org.jetbrains.idea.maven.importing.MavenModuleType
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.importing.tree.dependency.*
@@ -59,7 +59,7 @@ internal class WorkspaceModuleImporter(
 
   private fun createModuleEntity(moduleName: String,
                                  mavenProject: MavenProject,
-                                 mavenModuleType: MavenModuleType,
+                                 mavenModuleType: StandardMavenModuleType,
                                  dependencies: List<ModuleDependencyItem>,
                                  entitySource: EntitySource): ModuleEntity {
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
@@ -238,7 +238,7 @@ internal class WorkspaceModuleImporter(
     val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
   }
 
-  class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: MavenModuleType) {
+  class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {
     fun write(entity: ExternalSystemModuleOptionsEntity.Builder) {
       entity.externalSystemModuleVersion = VERSION
       entity.module = moduleEntity
@@ -268,7 +268,7 @@ internal class WorkspaceModuleImporter(
         }
 
         val moduleType = try {
-          MavenModuleType.valueOf(typeName)
+          StandardMavenModuleType.valueOf(typeName)
         }
         catch (e: Exception) {
           MavenLog.LOG.debug(e)

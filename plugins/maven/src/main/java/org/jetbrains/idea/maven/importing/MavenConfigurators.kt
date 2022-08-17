@@ -116,8 +116,8 @@ interface MavenWorkspaceConfigurator {
   }
 
   /**
-   * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.MavenModuleType] for the list of possible module types.
-   * Configuration implementation should be careful when configuring each [Module], e.g. [org.jetbrains.idea.maven.importing.MavenModuleType.TEST_ONLY] should be configured for test sources only.
+   * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.StandardMavenModuleType] for the list of possible module types.
+   * Configuration implementation should be careful when configuring each [Module] and distinguish between modules with code, pure main or test modules.
    *
    */
   interface MavenProjectWithModules<M> {

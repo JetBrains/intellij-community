@@ -188,7 +188,7 @@ public class MavenAnnotationProcessorImporter extends MavenImporter implements M
       @NotNull
       @Override
       public MavenModuleType getType() {
-        return MavenModuleType.SINGLE_MODULE;
+        return StandardMavenModuleType.SINGLE_MODULE;
       }
     };
     var projectWithModules = new MavenProjectWithProcessorModules(mavenProject,

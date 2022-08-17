@@ -1,7 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-enum class MavenModuleType(val containsCode: Boolean, val containsMain: Boolean, val containsTest: Boolean) {
+import org.jetbrains.annotations.ApiStatus.Internal
+
+sealed interface MavenModuleType {
+  /**
+   * Module contains main, test or both folders and dependencies
+   */
+  val containsCode: Boolean
+
+  /**
+   * Module contains main folders and dependencies
+   */
+  val containsMain: Boolean
+
+  /**
+   * Module contains test folders and dependencies
+   */
+  val containsTest: Boolean
+}
+
+@Internal
+enum class StandardMavenModuleType(override val containsCode: Boolean,
+                                   override val containsMain: Boolean,
+                                   override val containsTest: Boolean) : MavenModuleType {
   /**
    * Maven aggregator project (packaging = 'pom')
    */

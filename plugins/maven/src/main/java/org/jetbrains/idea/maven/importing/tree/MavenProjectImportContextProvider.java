@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModuleType;
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType;
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -153,31 +153,31 @@ public class MavenProjectImportContextProvider {
                                                        Map<String, Module> legacyModuleByName,
                                                        MavenProjectChanges changes) {
     MavenJavaVersionHolder javaVersions = getMavenJavaVersions(project);
-    MavenModuleType type = getModuleType(project, javaVersions);
+    StandardMavenModuleType type = getModuleType(project, javaVersions);
 
     ModuleData moduleData = getModuleData(project, moduleName, type, javaVersions, legacyModuleByName);
-    if (type != MavenModuleType.COMPOUND_MODULE) {
+    if (type != StandardMavenModuleType.COMPOUND_MODULE) {
       return new MavenProjectImportData(project, moduleData, changes, null);
     }
     String moduleMainName = moduleName + MAIN_SUFFIX;
-    ModuleData mainData = getModuleData(project, moduleMainName, MavenModuleType.MAIN_ONLY, javaVersions, legacyModuleByName);
+    ModuleData mainData = getModuleData(project, moduleMainName, StandardMavenModuleType.MAIN_ONLY, javaVersions, legacyModuleByName);
 
     String moduleTestName = moduleName + TEST_SUFFIX;
-    ModuleData testData = getModuleData(project, moduleTestName, MavenModuleType.TEST_ONLY, javaVersions, legacyModuleByName);
+    ModuleData testData = getModuleData(project, moduleTestName, StandardMavenModuleType.TEST_ONLY, javaVersions, legacyModuleByName);
 
     SplittedMainAndTestModules mainAndTestModules = new SplittedMainAndTestModules(mainData, testData);
     return new MavenProjectImportData(project, moduleData, changes, mainAndTestModules);
   }
 
-  private static MavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
+  private static StandardMavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
     if (needSplitMainAndTest(project, mavenJavaVersions)) {
-      return MavenModuleType.COMPOUND_MODULE;
+      return StandardMavenModuleType.COMPOUND_MODULE;
     }
     else if (project.isAggregator()) {
-      return MavenModuleType.AGGREGATOR;
+      return StandardMavenModuleType.AGGREGATOR;
     }
     else {
-      return MavenModuleType.SINGLE_MODULE;
+      return StandardMavenModuleType.SINGLE_MODULE;
     }
   }
 
@@ -186,7 +186,7 @@ public class MavenProjectImportContextProvider {
   }
 
   protected ModuleData getModuleData(MavenProject project, String moduleName,
-                                     MavenModuleType type,
+                                     StandardMavenModuleType type,
                                      MavenJavaVersionHolder javaVersionHolder,
                                      Map<String, Module> legacyModuleByName) {
     return new ModuleData(moduleName, type, javaVersionHolder);

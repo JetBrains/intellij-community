@@ -112,11 +112,11 @@ class MavenLegacyFoldersImporter {
     configExcludedAggregatorFolders();
   }
 
-  public void configMainAndTest(MavenModuleType type) {
+  public void configMainAndTest(StandardMavenModuleType type) {
     if (!myImportingSettings.isKeepSourceFolders()) {
       myModel.clearSourceFolders();
     }
-    boolean isTest = type == MavenModuleType.TEST_ONLY;
+    boolean isTest = type == StandardMavenModuleType.TEST_ONLY;
     Map<String, JpsModuleSourceRootType<?>> sourceFolders = isTest
                                                             ? getTestSourceFolders(myMavenProject)
                                                             : getMainSourceFolders(myMavenProject);
