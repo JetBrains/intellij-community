@@ -50,7 +50,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources() || !isEnabled(app)) {
       throw ExtensionNotApplicableException.create();
     }
 
@@ -114,6 +114,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         }
       });
     });
+  }
+
+  private static boolean isEnabled(Application app) {
+    return app.isEAP() || app.isInternal() || Boolean.getBoolean("idea.force.freeze.reports");
   }
 
   static void setAppInfo(IdeaLoggingEvent event, String appInfo) {
