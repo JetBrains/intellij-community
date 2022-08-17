@@ -285,7 +285,7 @@ public class DefaultTreeUI extends BasicTreeUI {
           if (separatorAbovePredicate != null && separatorAbovePredicate.test(path)) {
             Rectangle rowBounds = getPathBounds(tree, path);
             if (rowBounds != null) {
-              int offset = JBUI.scale(3);
+              int offset = JBUI.scale(SeparatorWithText.DEFAULT_H_GAP);
               paintHorizontalLine(g, paintBounds.x + offset, rowBounds.y,
                                   paintBounds.x + paintBounds.width - offset, rowBounds.y);
             }
