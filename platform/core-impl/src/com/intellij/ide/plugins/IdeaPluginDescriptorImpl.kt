@@ -95,10 +95,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @ApiStatus.Internal
-    @JvmField
-    var disableNonBundledPlugins = false
-
     @VisibleForTesting
     const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
 

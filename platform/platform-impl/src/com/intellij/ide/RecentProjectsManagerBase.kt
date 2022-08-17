@@ -46,7 +46,6 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.text.nullize
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
@@ -54,9 +53,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.util.JpsPathUtil
-import java.awt.AWTEvent
-import java.awt.Toolkit
-import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.ByteBuffer
@@ -194,7 +190,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
     }
     set(value) {
-      val newValue = value.nullize(nullizeSpaces = true)?.let { FileUtilRt.toSystemIndependentName(it) }
+      val newValue = value?.takeIf { it.isNotBlank() }?.let { FileUtilRt.toSystemIndependentName(it) }
       synchronized(stateLock) {
         state.lastProjectLocation = newValue
       }
