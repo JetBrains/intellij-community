@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -427,8 +427,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     PsiFile file = getElement().getContainingFile();
     PsiElement contextPsiFile = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
     if (contextPsiFile != null) file = contextPsiFile.getContainingFile(); // use host file!
-    final VirtualFile curVFile = file.getVirtualFile();
-    if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
+    VirtualFile curVFile = file.getVirtualFile();
+    if (curVFile == null) {
+      curVFile = file.getOriginalFile().getVirtualFile();
+      if (curVFile == null) {
+        throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
+      }
+    }
 
     final Project project = element.getProject();
 
