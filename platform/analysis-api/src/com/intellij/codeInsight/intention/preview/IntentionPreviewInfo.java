@@ -286,7 +286,7 @@ public interface IntentionPreviewInfo {
   static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
                                             @NotNull String addedOption,
                                             @NotNull @Nls String title) {
-    int maxToList = 7;
+    int maxToList = Math.min(7, updatedList.size() + 2);
     if (updatedList.size() > maxToList) {
       int index = updatedList.indexOf(addedOption);
       int start = MathUtil.clamp(index - maxToList / 2, 0, updatedList.size() - maxToList);
