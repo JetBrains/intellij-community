@@ -45,10 +45,6 @@ class CommitDialogConfigurable(private val project: Project)
         checkBox(VcsBundle.message("checkbox.force.non.empty.messages"))
           .bindSelected(settings::FORCE_NON_EMPTY_COMMENT)
       }
-      row {
-        checkBox(VcsBundle.message("settings.show.unversioned.files"))
-          .bindSelected(settings::SHOW_UNVERSIONED_FILES_WHILE_COMMIT)
-      }
 
       row {
         checkBox(VcsBundle.message("checkbox.changelist.move.offer"))

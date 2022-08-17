@@ -40,7 +40,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, conf, confDefault, { it.CLEAR_INITIAL_COMMIT_MESSAGE }, COMMIT_CLEAR_INITIAL_COMMENT)
     addBoolIfDiffers(set, conf, confDefault, { it.USE_COMMIT_MESSAGE_MARGIN }, COMMIT_USE_RIGHT_MARGIN)
-    addBoolIfDiffers(set, conf, confDefault, { it.SHOW_UNVERSIONED_FILES_WHILE_COMMIT }, COMMIT_SHOW_UNVERSIONED)
 
     addBoolIfDiffers(set, conf, confDefault, { it.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN }, SHOW_CHANGES_PREVIEW)
     addBoolIfDiffers(set, conf, confDefault, { it.INCLUDE_TEXT_INTO_SHELF }, INCLUDE_TEXT_INTO_SHELF)
@@ -91,7 +90,7 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.settings", 3)
+    private val GROUP = EventLogGroup("vcs.settings", 4)
     private val OFFER_MOVE_PARTIALLY_COMMITTED = GROUP.registerVarargEvent("offer.move.partially.committed", EventFields.Enabled)
 
     private val OFFER_MOVE_FAILED_COMMITTED = GROUP.registerEvent("offer.move.failed.committed", EventFields.Enum("value", ConfirmationOption::class.java))
@@ -108,7 +107,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     private val COMMIT_BEFORE_REARRANGE = GROUP.registerVarargEvent("commit.before.rearrange", EventFields.Enabled)
     private val COMMIT_CLEAR_INITIAL_COMMENT = GROUP.registerVarargEvent("commit.clear.initial.comment", EventFields.Enabled)
     private val COMMIT_USE_RIGHT_MARGIN = GROUP.registerVarargEvent("commit.use.right.margin", EventFields.Enabled)
-    private val COMMIT_SHOW_UNVERSIONED = GROUP.registerVarargEvent("commit.show.unversioned", EventFields.Enabled)
     private val SHOW_CHANGES_PREVIEW = GROUP.registerVarargEvent("show.changes.preview", EventFields.Enabled)
     private val INCLUDE_TEXT_INTO_SHELF = GROUP.registerVarargEvent("include.text.into.shelf", EventFields.Enabled)
     private val CHECK_CONFLICTS_IN_BACKGROUND = GROUP.registerVarargEvent("check.conflicts.in.background", EventFields.Enabled)
