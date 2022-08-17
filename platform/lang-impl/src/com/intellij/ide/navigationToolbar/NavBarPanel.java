@@ -51,6 +51,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -240,6 +241,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   public NavBarUpdateQueue getUpdateQueue() {
     return myUpdateQueue;
+  }
+
+  boolean isNodePopupSpeedSearchActive() {
+    return isNodePopupActive() && SpeedSearchSupply.getSupply(myNodePopup.getList()) != null;
   }
 
   public void escape() {
