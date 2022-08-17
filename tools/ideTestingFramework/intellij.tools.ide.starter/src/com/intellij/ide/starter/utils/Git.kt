@@ -59,7 +59,7 @@ object Git {
     // Takes first line from output like this:
     // /opt/REPO/intellij
     // 1916dc2bef46b51cfb02ad9f7e87d12aa1aa9fdc
-    return Path(stdout.read().split(System.lineSeparator()).first().trim()).toAbsolutePath()
+    return Path(stdout.read().split("\n").first().trim()).toAbsolutePath()
   }
 }
 
