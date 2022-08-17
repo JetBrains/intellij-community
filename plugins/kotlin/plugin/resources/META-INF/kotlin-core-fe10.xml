@@ -200,7 +200,7 @@
   <!-- Navigation -->
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService
+    <projectService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtIdeReferenceProviderService"/>
   </extensions>
