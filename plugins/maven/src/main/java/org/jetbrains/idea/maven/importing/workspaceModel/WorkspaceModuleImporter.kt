@@ -78,13 +78,7 @@ internal class WorkspaceModuleImporter(
     val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
                                                                stats)
 
-    when (importData.moduleData.type) {
-      MavenModuleType.MAIN_ONLY -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)
-      MavenModuleType.TEST_ONLY -> importJavaSettingsTest(moduleEntity, importData, importFolderHolder)
-      MavenModuleType.COMPOUND_MODULE -> importJavaSettingsMainAndTestAggregator(moduleEntity, importData)
-      MavenModuleType.AGGREGATOR -> importJavaSettingsAggregator(moduleEntity, importData)
-      else -> importJavaSettings(moduleEntity, importData, importFolderHolder)
-    }
+    importJavaSettings(moduleEntity, importData, importFolderHolder)
   }
 
   private fun collectDependencies(moduleName: String,
@@ -209,66 +203,24 @@ internal class WorkspaceModuleImporter(
                                  importData: MavenModuleImportData,
                                  importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
     val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrl: VirtualFileUrl?
-    val compilerOutputUrlForTests: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
+
+    var inheritCompilerOutput = true
+    var compilerOutputUrl: VirtualFileUrl? = null
+    var compilerOutputUrlForTests: VirtualFileUrl? = null
+
+    val moduleType = importData.moduleData.type
+
+    if (moduleType.containsCode && importingSettings.isUseMavenOutput) {
+
       inheritCompilerOutput = false
-      compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
-      compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrl = null
-      compilerOutputUrlForTests = null
+      if (moduleType.containsMain) {
+        compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
+      }
+      if (moduleType.containsTest) {
+        compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
+      }
     }
     builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, compilerOutputUrlForTests,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsMainAndTestAggregator(moduleEntity: ModuleEntity, importData: MavenModuleImportData) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsAggregator(moduleEntity: ModuleEntity, importData: MavenModuleImportData) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsMain(moduleEntity: ModuleEntity,
-                                     importData: MavenModuleImportData,
-                                     importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrl: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
-      inheritCompilerOutput = false
-      compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrl = null
-    }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, null,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsTest(moduleEntity: ModuleEntity,
-                                     importData: MavenModuleImportData,
-                                     importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrlForTests: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
-      inheritCompilerOutput = false
-      compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrlForTests = null
-    }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, null, compilerOutputUrlForTests,
                                         languageLevel.name, moduleEntity, moduleEntity.entitySource)
   }
 
