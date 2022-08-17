@@ -34,6 +34,9 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
 /**
  * Collects dependencies for the given project, so that the IDE can offer to enable/install plugins supporting those dependencies.
  * Implementations of this interface are registered through the `dependencyCollector` extension point.
+ *
+ * The plugins which need to be suggested must define "dependencySupport"
+ * with a coordinate that corresponding to one of the dependencies with the same "kind".
  */
 interface DependencyCollector {
   /**
