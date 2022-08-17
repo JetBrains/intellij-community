@@ -1651,6 +1651,10 @@ private class ProjectNotificationModel {
                                notifications: List<Notification>,
                                closeBalloons: Boolean) {
     UIUtil.invokeLaterIfNeeded {
+      if (project.isDisposed) {
+        return@invokeLaterIfNeeded
+      }
+
       EventLog.getLogModel(project).setStatusMessage(stateNotification)
 
       if (closeBalloons) {
