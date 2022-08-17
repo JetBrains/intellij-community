@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,13 +190,13 @@ public final class PyExtractMethodUtil {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(anchor);
     if (owner instanceof PsiFile) return Collections.emptyList();
     final List<PsiElement> scope = new ArrayList<>();
-    if (owner instanceof PyFunction) {
-      scope.add(owner);
+    if (owner instanceof PyFunction pyFunction) {
+      scope.add(pyFunction.getStatementList());
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
         for (PyFunction function : containingClass.getMethods()) {
           if (!function.equals(owner) && !function.equals(generatedMethod)) {
-            scope.add(function);
+            scope.add(function.getStatementList());
           }
         }
       }
@@ -339,7 +340,12 @@ public final class PyExtractMethodUtil {
         }
 
         PyPsiUtils.assertValid(expression);
-        final List<SimpleMatch> duplicates = collectDuplicates(finder, expression, insertedMethod);
+        List<SimpleMatch> duplicates = collectDuplicates(finder, expression, insertedMethod);
+        // When a single reference is extracted into an identity function, prevent unrelated expressions being replaced with calls to it
+        if (expression instanceof PyReferenceExpression) {
+          duplicates = ContainerUtil.filter(duplicates, it -> it.getStartElement() == it.getEndElement() &&
+                                                              expression.getText().equals(it.getStartElement().getText()));
+        }
 
         // replace statements with call
         PsiElement insertedCallElement = null;
