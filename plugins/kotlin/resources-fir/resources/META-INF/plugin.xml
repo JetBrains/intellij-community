@@ -231,7 +231,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
 <!--    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>-->
 
-    <applicationService
+    <projectService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService"/>
 
