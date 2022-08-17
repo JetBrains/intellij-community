@@ -549,7 +549,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
 
     @Override
-    public @Nullable ActionUpdateThread getActionUpdateThread() {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
     }
   }
