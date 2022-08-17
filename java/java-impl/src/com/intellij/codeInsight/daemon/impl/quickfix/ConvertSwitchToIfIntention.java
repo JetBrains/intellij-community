@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -62,12 +63,12 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     return StreamEx.of(labels).pairMap((prev, next) -> {
-        if (SwitchUtils.isDefaultLabel(prev)) {
-          Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
-          return targets.contains(prev) || targets.contains(next);
-        }
-        return false;
-      }).has(true);
+      if (SwitchUtils.isDefaultLabel(prev)) {
+        Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
+        return targets.contains(prev) || targets.contains(next);
+      }
+      return false;
+    }).has(true);
   }
 
   @Override
@@ -96,13 +97,6 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-    boolean useEquals = isSwitchOnString;
-    if (!useEquals) {
-      final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
-      String fqn;
-      useEquals = aClass != null && !aClass.isEnum() && ((fqn = aClass.getQualifiedName()) == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
-    }
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {
       return;
@@ -114,6 +108,17 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (converter == null) return;
     converter.process();
     final List<SwitchStatementBranch> allBranches = extractBranches(body, fallThroughTargets);
+    boolean needNullCheck = false;
+    final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+    boolean useEquals = isSwitchOnString;
+    if (!useEquals) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
+      if (aClass != null) {
+        String fqn = aClass.getQualifiedName();
+        useEquals = !aClass.isEnum() && (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
+        needNullCheck = (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn)) && !hasNullCase(allBranches);
+      }
+    }
 
     final String declarationString;
     final boolean hadSideEffects;
@@ -142,14 +147,21 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     final StringBuilder ifStatementBuilder = new StringBuilder();
     boolean firstBranch = true;
     SwitchStatementBranch defaultBranch = null;
+    boolean java7plus = PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_1_7);
     for (SwitchStatementBranch branch : allBranches) {
       if (branch.isDefault()) {
         defaultBranch = branch;
       }
       else {
-        dumpBranch(branch, expressionText, firstBranch, useEquals, ifStatementBuilder, commentTracker);
+        dumpBranch(branch, expressionText, firstBranch, useEquals, needNullCheck && java7plus, ifStatementBuilder, commentTracker);
         firstBranch = false;
       }
+    }
+    if (needNullCheck && !java7plus) {
+      if (!firstBranch) {
+        ifStatementBuilder.append("else ");
+      }
+      ifStatementBuilder.append("if(").append(expressionText).append("==null) { throw new NullPointerException(); }");
     }
     boolean unwrapDefault = false;
     if (defaultBranch != null) {
@@ -202,6 +214,11 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     else {
       javaCodeStyleManager.shortenClassReferences(commentTracker.replaceAndRestoreComments(switchStatement, ifStatement));
     }
+  }
+
+  private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), element -> element instanceof PsiExpression expr &&
+                                                                                                 ExpressionUtils.isNullLiteral(expr)));
   }
 
   @NotNull
@@ -277,7 +294,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
 
   private static Set<PsiSwitchLabelStatementBase> getFallThroughTargets(PsiCodeBlock body) {
     return StreamEx.of(body.getStatements())
-      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && !(s1 instanceof PsiSwitchLabeledRuleStatement) && 
+      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && !(s1 instanceof PsiSwitchLabeledRuleStatement) &&
                            ControlFlowUtils.statementMayCompleteNormally(s1) ? (PsiSwitchLabelStatement)s2 : null)
       .nonNull().collect(Collectors.toSet());
   }
@@ -286,18 +303,21 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
                                  String expressionText,
                                  boolean firstBranch,
                                  boolean useEquals,
+                                 boolean useRequireNonNullMethod,
                                  @NonNls StringBuilder out,
                                  CommentTracker commentTracker) {
     if (!firstBranch) {
       out.append("else ");
     }
-    dumpCaseValues(expressionText, branch.getCaseElements(), useEquals, commentTracker, out);
+    dumpCaseValues(expressionText, branch.getCaseElements(), firstBranch, useEquals, useRequireNonNullMethod, commentTracker, out);
     dumpBody(branch, out, commentTracker);
   }
 
   private static void dumpCaseValues(String expressionText,
                                      List<PsiElement> caseElements,
+                                     boolean firstBranch,
                                      boolean useEquals,
+                                     boolean useRequireNonNullMethod,
                                      CommentTracker commentTracker,
                                      @NonNls StringBuilder out) {
     out.append("if(");
@@ -306,6 +326,10 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       if (!firstCaseValue) {
         out.append("||");
       }
+      final String newExpressionText =
+        firstBranch && firstCaseValue && useRequireNonNullMethod
+        ? "java.util.Objects.requireNonNull(" + expressionText + ")"
+        : expressionText;
       firstCaseValue = false;
       if (caseElement instanceof PsiExpression) {
         PsiExpression caseExpression = PsiUtil.skipParenthesizedExprDown((PsiExpression)caseElement);
@@ -314,20 +338,20 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
           if (PsiPrecedenceUtil.getPrecedence(caseExpression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) {
             caseValue = "(" + caseValue + ")";
           }
-          out.append(caseValue).append(".equals(").append(expressionText).append(')');
+          out.append(expressionText).append(".equals(").append(caseValue).append(')');
         }
         else if (caseValue.equals("true")) {
-          out.append(expressionText);
+          out.append(newExpressionText);
         }
         else if (caseValue.equals("false")) {
-          out.append("!(").append(expressionText).append(")");
+          out.append("!(").append(newExpressionText).append(")");
         }
         else {
-          out.append(expressionText).append("==").append(caseValue);
+          out.append(newExpressionText).append("==").append(caseValue);
         }
       }
       else if (caseElement instanceof PsiPattern) {
-        String patternCondition = createIfCondition((PsiPattern)caseElement, expressionText, commentTracker);
+        String patternCondition = createIfCondition((PsiPattern)caseElement, newExpressionText, commentTracker);
         if (patternCondition != null) {
           out.append(patternCondition);
         } else {

@@ -4,10 +4,10 @@ import java.util.Objects;
 class Test {
     void test() {
         enum P {
-            s;
+            s, l;
         }
         P p = null;
-        if (Objects.requireNonNull(p) == P.s) {
+        if (Objects.requireNonNull(p) == P.s || p == P.l) {
         }
     }
 }

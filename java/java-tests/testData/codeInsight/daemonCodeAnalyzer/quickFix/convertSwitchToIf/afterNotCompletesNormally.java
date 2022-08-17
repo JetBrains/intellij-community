@@ -2,7 +2,7 @@
 class X {
 
   void m(String s, int a) throws IOException {
-      if ("a".equals(s)) {
+      if (s.equals("a")) {
           a();
       } else {
           d();
