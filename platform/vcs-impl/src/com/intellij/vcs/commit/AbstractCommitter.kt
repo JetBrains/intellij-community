@@ -5,9 +5,9 @@ import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -41,26 +41,16 @@ abstract class AbstractCommitter(
   }
 
   fun runCommit(taskName: @Nls String, sync: Boolean) {
-    val task = object : Task.Backgroundable(project, taskName, true) {
-      override fun run(indicator: ProgressIndicator) {
-        val vcsManager = ProjectLevelVcsManager.getInstance(project)
-        val activity = COMMIT_ACTIVITY.started(myProject) // NON-NLS
-        vcsManager.startBackgroundVcsOperation()
-        try {
-          delegateCommitToVcsThread()
-        }
-        finally {
-          vcsManager.stopBackgroundVcsOperation()
-          activity.finished()
-        }
+    if (sync) {
+      runModalTask(taskName, project, true) {
+        delegateCommitToVcsThread()
       }
-
-      override fun shouldStartInBackground(): Boolean = !sync && super.shouldStartInBackground()
-
-      override fun isConditionalModal(): Boolean = sync
     }
-
-    task.queue()
+    else {
+      runBackgroundableTask(taskName, project, true) {
+        delegateCommitToVcsThread()
+      }
+    }
   }
 
   protected abstract fun commit()
@@ -72,32 +62,41 @@ abstract class AbstractCommitter(
   protected abstract fun onFinish()
 
   private fun delegateCommitToVcsThread() {
-    val indicator = DelegatingProgressIndicator()
-    TransactionGuard.getInstance().assertWriteSafeContext(indicator.modalityState)
-    val endSemaphore = Semaphore()
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val activity = COMMIT_ACTIVITY.started(project)
+    vcsManager.startBackgroundVcsOperation()
+    try {
+      val indicator = DelegatingProgressIndicator()
+      TransactionGuard.getInstance().assertWriteSafeContext(indicator.modalityState)
+      val endSemaphore = Semaphore()
 
-    endSemaphore.down()
-    ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
-      indicator.text = message("message.text.commit.progress")
-      try {
-        ProgressManager.getInstance().runProcess(
-          {
-            indicator.checkCanceled()
-            doRunCommit()
-          }, indicator)
+      endSemaphore.down()
+      ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
+        indicator.text = message("message.text.commit.progress")
+        try {
+          ProgressManager.getInstance().runProcess(
+            {
+              indicator.checkCanceled()
+              doRunCommit()
+            }, indicator)
+        }
+        catch (ignored: ProcessCanceledException) {
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+        finally {
+          endSemaphore.up()
+        }
       }
-      catch (ignored: ProcessCanceledException) {
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-      finally {
-        endSemaphore.up()
-      }
+
+      indicator.text = message("message.text.background.tasks")
+      ProgressIndicatorUtils.awaitWithCheckCanceled(endSemaphore, indicator)
     }
-
-    indicator.text = message("message.text.background.tasks")
-    ProgressIndicatorUtils.awaitWithCheckCanceled(endSemaphore, indicator)
+    finally {
+      vcsManager.stopBackgroundVcsOperation()
+      activity.finished()
+    }
   }
 
   private fun doRunCommit() {
