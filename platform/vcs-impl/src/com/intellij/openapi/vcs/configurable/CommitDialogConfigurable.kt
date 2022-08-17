@@ -41,10 +41,6 @@ class CommitDialogConfigurable(private val project: Project)
         checkBox(VcsBundle.message("checkbox.clear.initial.commit.message"))
           .bindSelected(settings::CLEAR_INITIAL_COMMIT_MESSAGE)
       }
-      row {
-        checkBox(VcsBundle.message("checkbox.force.non.empty.messages"))
-          .bindSelected(settings::FORCE_NON_EMPTY_COMMENT)
-      }
 
       row {
         checkBox(VcsBundle.message("checkbox.changelist.move.offer"))

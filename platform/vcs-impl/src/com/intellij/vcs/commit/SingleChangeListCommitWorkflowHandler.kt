@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
@@ -90,7 +89,6 @@ class SingleChangeListCommitWorkflowHandler(
     super.checkCommit(sessionInfo) &&
     (
       getCommitMessage().isNotEmpty() ||
-      !VcsConfiguration.getInstance(project).FORCE_NON_EMPTY_COMMENT ||
       ui.confirmCommitWithEmptyMessage()
     )
 
