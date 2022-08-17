@@ -101,7 +101,6 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.scripting",
     "kotlin.compiler-plugins.android-extensions-stubs",
     "kotlin.maven",
-    "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
@@ -226,6 +225,7 @@ final class KotlinPluginBuilder {
       for (String moduleName : MODULES) {
         withModule(moduleName)
       }
+      withModule("kotlin.gradle.gradle-tooling", "kotlin-gradle-tooling.jar")
       for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
