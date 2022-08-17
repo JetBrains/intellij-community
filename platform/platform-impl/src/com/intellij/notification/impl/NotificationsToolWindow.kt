@@ -63,7 +63,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
-import kotlin.streams.toList
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -1524,8 +1523,8 @@ internal class ApplicationNotificationModel {
 
     synchronized(myLock) {
       myNotifications.remove(notification)
-      for (model in myProjectToModel.values) {
-        model.expire(notification, runnables)
+      for ((project , model) in myProjectToModel) {
+        model.expire(project, notification, runnables)
       }
     }
 
@@ -1541,8 +1540,8 @@ internal class ApplicationNotificationModel {
     synchronized(myLock) {
       notifications.addAll(myNotifications)
       myNotifications.clear()
-      for (model in myProjectToModel.values) {
-        model.expireAll(notifications, runnables)
+      for ((project, model) in myProjectToModel) {
+        model.expireAll(project, notifications, runnables)
       }
     }
 
@@ -1586,12 +1585,7 @@ private class ProjectNotificationModel {
       notifications.addAll(myNotifications)
 
       runnables.add(Runnable {
-        EventLog.getLogModel(project).setStatusMessage(notification)
-
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-        if (toolWindow != null) {
-          UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
-        }
+        updateToolWindow(project, notification, notifications, false)
       })
     }
     else {
@@ -1619,17 +1613,25 @@ private class ProjectNotificationModel {
     return myContent!!.getNotifications()
   }
 
-  fun expire(notification: Notification, runnables: MutableList<Runnable>) {
+  fun expire(project: Project, notification: Notification, runnables: MutableList<Runnable>) {
     myNotifications.remove(notification)
-    if (myContent != null) {
+    if (myContent == null) {
+      runnables.add(Runnable {
+        updateToolWindow(project, null, myNotifications, false)
+      })
+    }
+    else {
       runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) } })
     }
   }
 
-  fun expireAll(notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
+  fun expireAll(project: Project, notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
     notifications.addAll(myNotifications)
     myNotifications.clear()
-    if (myContent != null) {
+    if (myContent == null) {
+      updateToolWindow(project, null, emptyList(), true)
+    }
+    else {
       runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) } })
     }
   }
@@ -1637,16 +1639,26 @@ private class ProjectNotificationModel {
   fun clearAll(project: Project) {
     myNotifications.clear()
     if (myContent == null) {
-      UIUtil.invokeLaterIfNeeded {
-        EventLog.getLogModel(project).setStatusMessage(null)
-        project.closeAllBalloons()
-
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-        toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(emptyList()))
-      }
+      updateToolWindow(project, null, emptyList(), true)
     }
     else {
       UIUtil.invokeLaterIfNeeded { myContent!!.clearAll() }
+    }
+  }
+
+  private fun updateToolWindow(project: Project,
+                               stateNotification: Notification?,
+                               notifications: List<Notification>,
+                               closeBalloons: Boolean) {
+    UIUtil.invokeLaterIfNeeded {
+      EventLog.getLogModel(project).setStatusMessage(stateNotification)
+
+      if (closeBalloons) {
+        project.closeAllBalloons()
+      }
+
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+      toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
     }
   }
 }
