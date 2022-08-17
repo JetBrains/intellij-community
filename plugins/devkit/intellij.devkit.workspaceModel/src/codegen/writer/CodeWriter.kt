@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen
+package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -21,22 +21,17 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
 import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
+import com.intellij.workspaceModel.codegen.javaFullName
 import com.intellij.workspaceModel.codegen.model.convertToObjModules
 import com.intellij.workspaceModel.codegen.utils.Imports
-import com.intellij.workspaceModel.storage.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
-
-val SKIPPED_TYPES = setOf(WorkspaceEntity::class.simpleName,
-                          ReferableWorkspaceEntity::class.simpleName,
-                          ModifiableWorkspaceEntity::class.simpleName,
-                          ModifiableReferableWorkspaceEntity::class.simpleName,
-                          WorkspaceEntityWithPersistentId::class.simpleName)
 
 private val LOG = logger<CodeWriter>()
 
@@ -96,7 +91,7 @@ object CodeWriter {
             addInnerDeclarations(apiClass, code, apiImports)
             val topLevelCode = code.topLevelCode
             if (topLevelCode != null) {
-              val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode)).declarations
+              val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode!!)).declarations
               topLevelDeclarations.putValue(apiFile, apiClass to declarations)
             }
             val implementationClassText = code.implementationClass

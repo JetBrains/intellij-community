@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen
+package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import java.io.File
@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 class EntityCodeGenTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
-    get() = File(PathManagerEx.getCommunityHomePath() + "/platform/workspaceModel/codegen/test/testData/$testDirectoryName")
+    get() = File(PathManagerEx.getCommunityHomePath() + "/plugins/devkit/intellij.devkit.workspaceModel/tests/testData/$testDirectoryName")
 
   override fun setUp() {
     super.setUp()

@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen
+package com.intellij.devkit.workspaceModel
 
+import com.intellij.workspaceModel.codegen.InterfaceTraverser
+import com.intellij.workspaceModel.codegen.InterfaceVisitor
 import com.intellij.workspaceModel.codegen.deft.model.*
 import com.intellij.workspaceModel.codegen.deft.*
 import com.intellij.workspaceModel.codegen.deft.Field
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 class InterfaceTraverserTest {
   @Test
