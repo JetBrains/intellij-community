@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import java.nio.file.Path
 
-open class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
+abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     val settings = EditorSettingsExternalizable.getInstance()
