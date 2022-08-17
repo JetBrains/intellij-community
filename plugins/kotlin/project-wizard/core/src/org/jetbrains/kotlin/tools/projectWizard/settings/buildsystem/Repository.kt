@@ -49,8 +49,8 @@ data class CacheRedirector(val redirectedRepositoryBase: String, val repository:
     override val url: String = "https://cache-redirector.jetbrains.com/$redirectedRepositoryBase/$repository"
 
     override val idForMaven: String
-        get() = "cache-redirector.jetbrains" +
-                redirectedRepositoryBase.replace('/', '.') +
+        get() = "cache-redirector.jetbrains." +
+                redirectedRepositoryBase.replace('/', '.') + "." +
                 repository.replace('/', '.')
 }
 

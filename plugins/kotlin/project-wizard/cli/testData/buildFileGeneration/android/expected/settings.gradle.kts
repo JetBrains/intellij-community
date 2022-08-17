@@ -3,7 +3,8 @@ pluginManagement {
         google()
         jcenter()
         gradlePluginPortal()
-        mavenCentral()
+        maven("KOTLIN_BOOTSTRAP_REPO")
+        maven("KOTLIN_REPO")
     }
 
 }

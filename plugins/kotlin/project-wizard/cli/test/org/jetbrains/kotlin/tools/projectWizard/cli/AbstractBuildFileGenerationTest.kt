@@ -36,7 +36,12 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         }
     }
 
-    private fun doTest(directory: Path, buildSystem: BuildSystem, testParameters: DefaultTestParameters, additionalChecks: ((Path, Path) -> Unit)) {
+    private fun doTest(
+        directory: Path,
+        buildSystem: BuildSystem,
+        testParameters: DefaultTestParameters,
+        additionalChecks: ((Path, Path) -> Unit)
+    ) {
         val tempDirectory = Files.createTempDirectory(null)
         val wizard = createWizard(directory, buildSystem, tempDirectory)
         val result = wizard.apply(Services.IDEA_INDEPENDENT_SERVICES, GenerationPhase.ALL)
@@ -56,14 +61,22 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
                 when {
                     pathString.endsWith("pom.xml") ->
                         fileContent.replaceKotlinVersion(MAVEN_KOTLIN_VERSION_REPLACE_REGEX, KOTLIN_VERSION_PLACEHOLDER)
+
                     pathString.endsWith("build.gradle") || path.endsWith("build.gradle.kts") ->
                         fileContent.replaceKotlinVersion(GRADLE_KOTLIN_VERSION_REPLACE_REGEX, KOTLIN_VERSION_PLACEHOLDER)
+
                     else -> fileContent.replace(ACTUAL_KOTLIN_VERSION_STRING, KOTLIN_VERSION_PLACEHOLDER)
                 }
-            }).replaceAllTo(
-                listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
-                KOTLIN_REPO_PLACEHOLDER
-            ).replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
+            })
+                .replaceAllTo(
+                    listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
+                    KOTLIN_REPO_PLACEHOLDER
+                )
+                .replaceAllTo(
+                    listOf(Repositories.JETBRAINS_KOTLIN_BOOTSTRAP.url),
+                    KOTLIN_REPO_BOOTSTRAP_PLACEHOLDER
+                )
+                .replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
                 .replace("gradle-${Versions.GRADLE_VERSION_FOR_COMPOSE.text}-bin.zip", "gradle-GRADLE_VERSION_FOR_COMPOSE-bin.zip")
         }
         additionalChecks(expectedDirectory, tempDirectory)
@@ -79,6 +92,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         private const val EXPECTED_DIRECTORY_NAME = "expected"
         private const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
         private const val KOTLIN_REPO_PLACEHOLDER = "KOTLIN_REPO"
+        private const val KOTLIN_REPO_BOOTSTRAP_PLACEHOLDER = "KOTLIN_BOOTSTRAP_REPO"
 
         private val ACTUAL_KOTLIN_VERSION_STRING = KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString()
 
@@ -96,5 +110,5 @@ private fun String.replaceAllTo(oldValues: Collection<String>, newValue: String)
     }
 
 private fun String.replaceKotlinVersion(pattern: Regex, placeholder: String): String {
-    return replace(pattern) { "${it.groupValues[1]}$placeholder${it.groupValues[2]}"}
+    return replace(pattern) { "${it.groupValues[1]}$placeholder${it.groupValues[2]}" }
 }
