@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -85,7 +86,10 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
         override val entityClass: Class<LibraryEntity>
             get() = LibraryEntity::class.java
 
-        override fun map(storage: EntityStorage, entity: LibraryEntity): Library? = entity.findLibraryBridge(storage)
+        override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
+            entity.findLibraryBridge(storage) ?:
+            // TODO: workaround to bypass bug with new modules not present in storageAfter
+            entity.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
 
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)
