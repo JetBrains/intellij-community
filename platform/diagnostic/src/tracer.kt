@@ -135,13 +135,12 @@ private class CoroutineTimeMeasurer(
 
     val job = context.job
     job.invokeOnCompletion {
-      var lastSuspensionTime = LAST_SUSPENSION_TIME.getVolatile(this) as Long
-      if (lastSuspensionTime == -1L) {
-        lastSuspensionTime = StartUpMeasurer.getCurrentTime()
-      }
-      // After the last suspension, the coroutine was waiting for its children => end main activity
       val end = StartUpMeasurer.getCurrentTime()
-      ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity).end(end)
+      val lastSuspensionTime = LAST_SUSPENSION_TIME.getVolatile(this) as Long
+      if (lastSuspensionTime != -1L) {
+        // after the last suspension, the coroutine was waiting for its children => end main activity
+        ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity).end(end)
+      }
       // This invokeOnCompletion handler is executed after all children are completed => end 'completing' activity
       activity.end(end)
     }
