@@ -22,7 +22,30 @@
             <id>mavenCentral</id>
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
+        <repository>
+            <id>cache-redirector.jetbrains.maven.pkg.jetbrains.space.kotlin.p.kotlin.bootstrap</id>
+            <url>KOTLIN_BOOTSTRAP_REPO</url>
+        </repository>
+        <repository>
+            <id>jetbrains.kotlin.p.kotlin.dev</id>
+            <url>KOTLIN_REPO</url>
+        </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>mavenCentral</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>cache-redirector.jetbrains.maven.pkg.jetbrains.space.kotlin.p.kotlin.bootstrap</id>
+            <url>KOTLIN_BOOTSTRAP_REPO</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>jetbrains.kotlin.p.kotlin.dev</id>
+            <url>KOTLIN_REPO</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
