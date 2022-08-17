@@ -51,11 +51,13 @@ object ErrorReporter {
             testName = "($onlyLettersHash ${messageText.substring(0, MAX_TEST_NAME_LENGTH.coerceAtMost(messageText.length)).trim()})"
           }
 
-          val stackTrace = "Test: $testMethodName${System.lineSeparator()}$stackTraceContent"
+          val failureDetails = "Test: $testMethodName" + System.lineSeparator() +
+                               "You can find an idea.log and other useful info in TC artifacts under the path $contextName" + System.lineSeparator() +
+                               stackTraceContent
 
           di.direct.instance<CIServer>().reportTestFailure(testName = generifyErrorMessage(testName),
                                                            message = messageText,
-                                                           details = stackTrace)
+                                                           details = failureDetails)
         }
 
         Pair(messageFile, stacktraceFile)
