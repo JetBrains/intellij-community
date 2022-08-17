@@ -16,21 +16,26 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
         if (projectKind == ProjectKind.COMPOSE) {
             kotlinVersionWithDefaultValues(Versions.KOTLIN_VERSION_FOR_COMPOSE)
         } else {
-            val version = Version(KotlinGradlePluginVersions.latest.toString())
             WizardKotlinVersion(
-                version,
-                getKotlinVersionKind(version),
+                TEST_KOTLIN_VERSION,
+                getKotlinVersionKind(TEST_KOTLIN_VERSION),
                 listOf(
-                    getKotlinVersionRepository(version),
-                    Repositories.JETBRAINS_KOTLIN_BOOTSTRAP
+                    Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
+                    getKotlinVersionRepository(TEST_KOTLIN_VERSION)
                 ),
-                getBuildSystemPluginRepository(getKotlinVersionKind(version), Repositories.JETBRAINS_KOTLIN_BOOTSTRAP),
+                getBuildSystemPluginRepository(
+                    getKotlinVersionKind(TEST_KOTLIN_VERSION),
+                    listOf(
+                        Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
+                        getKotlinVersionRepository(TEST_KOTLIN_VERSION)
+                    )
+                ),
             )
         }
 
     companion object {
         val TEST_KOTLIN_VERSION by lazy {
-            EapVersionDownloader.getLatestEapVersion()!!
+            Version(KotlinGradlePluginVersions.latest.toString())
         }
     }
 }

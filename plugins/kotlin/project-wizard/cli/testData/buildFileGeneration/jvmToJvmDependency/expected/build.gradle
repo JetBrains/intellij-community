@@ -4,5 +4,7 @@ version = '1.0-SNAPSHOT'
 allprojects {
     repositories {
         mavenCentral()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
     }
 }
