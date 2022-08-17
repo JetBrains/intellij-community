@@ -9,8 +9,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
-import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.Nls
@@ -54,15 +52,6 @@ open class SingleChangeListCommitter(
 
     if (!localList.isDefault) {
       changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
-    }
-    else {
-      val changes = localList.changes
-      if (configuration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !changes.isEmpty() && isDefaultChangeListFullyIncluded) {
-        val dialog = ChangelistMoveOfferDialog(configuration)
-        if (dialog.showAndGet()) {
-          MoveChangesToAnotherListAction.askAndMove(project, changes, emptyList())
-        }
-      }
     }
   }
 

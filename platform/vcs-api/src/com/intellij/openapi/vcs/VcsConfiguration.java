@@ -33,7 +33,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
 
-  public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = false;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
   public String CODE_SMELLS_PROFILE = null;

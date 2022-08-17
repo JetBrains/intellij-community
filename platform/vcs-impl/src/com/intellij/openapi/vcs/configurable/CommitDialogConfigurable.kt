@@ -42,10 +42,6 @@ class CommitDialogConfigurable(private val project: Project)
           .bindSelected(settings::CLEAR_INITIAL_COMMIT_MESSAGE)
       }
 
-      row {
-        checkBox(VcsBundle.message("checkbox.changelist.move.offer"))
-          .bindSelected(settings::OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT)
-      }.enabledIf(changelistsEnabled)
       row(VcsBundle.message("create.changelist.on.failed.commit")) {
         comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
                  SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText))
