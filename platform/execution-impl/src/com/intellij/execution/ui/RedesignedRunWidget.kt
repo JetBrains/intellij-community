@@ -7,7 +7,6 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
@@ -18,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -57,15 +57,14 @@ internal fun createRunToolbarWithoutStop(project: Project): ActionToolbar {
 }
 
 private fun createRunActionToolbar(project: Project): ActionToolbar {
-  val runners = CustomActionsSchema.getInstance().getCorrectedAction("RunnerActions") as ActionGroup
   val actionGroup = DefaultActionGroup()
 
   actionGroup.add(RunConfigurationSelector())
   actionGroup.addSeparator()
-
-  val runActions = runners.getChildren(null).asList()
-  actionGroup.add(runActions[0])
-  actionGroup.add(runActions[1])
+  val topLevelRunActions = listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER).mapNotNull {
+    ActionManager.getInstance().getAction(it)
+  }
+  actionGroup.addAll(topLevelRunActions)
   actionGroup.add(OtherRunOptions())
 
   return ActionManager.getInstance().createActionToolbar(
@@ -206,11 +205,14 @@ private abstract class TogglePopupAction : ToggleAction {
 private class OtherRunOptions : TogglePopupAction(
   IdeBundle.message("show.options.menu"), IdeBundle.message("show.options.menu"), AllIcons.Actions.More
 ), DumbAware {
-  override fun getActionGroup(e: AnActionEvent): ActionGroup {
-    val runners = CustomActionsSchema.getInstance().getCorrectedAction("RunnerActions") as ActionGroup
+  override fun getActionGroup(e: AnActionEvent): ActionGroup? {
+    val project = e.project ?: return null
+    val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
 
-    val runActions = runners.getChildren(e).asList()
-    return DefaultActionGroup(runActions.subList(2, runActions.size))
+    return RunConfigurationsComboBoxAction.SelectConfigAction(selectedConfiguration, project) {
+      // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+      it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+    }
   }
 }
 
