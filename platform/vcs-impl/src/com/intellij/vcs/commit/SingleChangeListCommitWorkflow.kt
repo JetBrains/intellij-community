@@ -40,19 +40,15 @@ open class SingleChangeListCommitWorkflow(
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
-) : AbstractCommitWorkflow(project) {
+) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
 
   init {
     updateVcses(affectedVcses)
     initCommitExecutors(executors)
   }
 
-  val isPartialCommitEnabled: Boolean =
+  override val isPartialCommitEnabled: Boolean =
     vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || commitExecutors.any { it.supportsPartialCommit() })
-
-  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
-
-  internal lateinit var commitState: ChangeListCommitState
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
@@ -93,6 +89,18 @@ open class SingleChangeListCommitWorkflow(
       runCommit(sessionInfo.executor.actionText)
     }
   }
+}
+
+abstract class CommitChangeListDialogWorkflow(
+  project: Project,
+  initialCommitMessage: String?
+) : AbstractCommitWorkflow(project) {
+
+  abstract val isPartialCommitEnabled: Boolean
+
+  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
+
+  lateinit var commitState: ChangeListCommitState
 }
 
 private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {

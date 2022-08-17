@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.vcs.commit.*
 import org.jetbrains.annotations.Nls
 
-class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, changes: List<Change>, commitMessage: String?) :
+class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val changes: List<Change>, commitMessage: String?) :
   SingleChangeListCommitWorkflow(vcs.project, setOf(vcs), changes, initialCommitMessage = commitMessage) {
   val changeList = AlienLocalChangeList(changes, changeListName)
 

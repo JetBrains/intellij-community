@@ -12,9 +12,9 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
-  override val workflow: SingleChangeListCommitWorkflow,
+  override val workflow: CommitChangeListDialogWorkflow,
   override val ui: SingleChangeListCommitWorkflowUi
-) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
+) : AbstractCommitWorkflowHandler<CommitChangeListDialogWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
 
