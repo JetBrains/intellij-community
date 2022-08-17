@@ -16,7 +16,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -31,6 +30,7 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
@@ -44,13 +44,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
@@ -168,9 +168,16 @@ open class CodeVisionHost(val project: Project) {
   }
 
 
-  // run in read action
+  @RequiresReadLock
   fun collectPlaceholders(editor: Editor,
                           psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
+    return ProgressIndicatorUtils.withTimeout(100) {
+      collectPlaceholdersInner(editor, psiFile)
+    } ?: emptyList()
+  }
+
+  private fun collectPlaceholdersInner(editor: Editor,
+                    psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
     if (psiFile != null && psiFile.virtualFile != null &&
