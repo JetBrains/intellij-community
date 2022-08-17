@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -70,6 +71,8 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
     boolean hasChanges;
 
+    StructuredIdeActivity activity = MavenImportCollector.LEGACY_IMPORT.started(myProject);
+
     // in the case projects are changed during importing we must memorise them
     myAllProjects = new LinkedHashSet<>(myProjectsTree.getProjects());
 
@@ -86,8 +89,10 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     final List<MavenLegacyModuleImporter.ExtensionImporter> extensionImporters = new ArrayList<>();
     if (projectsHaveChanges) {
       hasChanges = true;
+      StructuredIdeActivity createModulesPhase = MavenImportCollector.LEGACY_CREATE_MODULES_PHASE.startedWithParent(myProject, activity);
       extensionImporters.addAll(importModules());
       scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+      createModulesPhase.finished();
     }
 
     if (projectsHaveChanges || myImportModuleGroupsRequired) {
@@ -102,6 +107,8 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     hasChanges |= isDeleteObsoleteModules;
 
     if (hasChanges) {
+      StructuredIdeActivity deleteObsoletePhase = MavenImportCollector.LEGACY_DELETE_OBSOLETE_PHASE.startedWithParent(myProject, activity);
+
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
         ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
           setMavenizedModules(obsoleteModules, false);
@@ -128,11 +135,17 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         });
       });
 
+      deleteObsoletePhase.finished();
+
+      StructuredIdeActivity importersPhase = MavenImportCollector.LEGACY_IMPORTERS_PHASE.startedWithParent(myProject, activity);
       importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks);
+      importersPhase.finished();
     }
     else {
       finalizeImport(obsoleteModules);
     }
+
+    activity.finished(() -> List.of(MavenImportCollector.NUMBER_OF_MODULES.with(myMavenProjectToModule.size())));
 
     return postTasks;
   }
