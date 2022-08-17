@@ -12,8 +12,7 @@ use crate::errors::{LauncherError, Result};
 };
 
 #[cfg(target_os = "macos")] use {
-    core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef},
-    core_foundation::date::{CFAbsoluteTime, CFTimeInterval},
+    core_foundation::base::{CFRelease, kCFAllocatorDefault, TCFTypeRef},
     core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished},
 };
 
@@ -64,7 +63,9 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
 unsafe fn intellij_main_thread(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
     debug!("Preparing JNI env");
-    let jni_env = prepare_jni_env(&java_home, vm_options)?;
+    let jni_env = unsafe {
+        prepare_jni_env(&java_home, vm_options)?
+    };
 
     debug!("Calling main");
     call_intellij_main(jni_env, args)
@@ -79,13 +80,19 @@ unsafe fn prepare_jni_env(
     debug!("libjvm resolved as {libjvm_path:?}");
 
     debug!("Loading libjvm");
-    let libjvm = load_libjvm(libjvm_path)?;
+    let libjvm = unsafe {
+        load_libjvm(libjvm_path)?
+    };
     debug!("libjvm loaded");
 
     debug!("Getting JNI_CreateJavaVM symbol from libjvm");
     let create_jvm_call:
-        libloading::Symbol<unsafe extern fn(*mut *mut jni_sys::JavaVM, *mut *mut c_void, *mut c_void) -> jni_sys::jint>
-        = libjvm.get(b"JNI_CreateJavaVM")?;
+        libloading::Symbol<
+            '_,
+            unsafe extern "C" fn(*mut *mut jni_sys::JavaVM, *mut *mut c_void, *mut c_void) -> jni_sys::jint>
+        = unsafe {
+            libjvm.get(b"JNI_CreateJavaVM")?
+        };
     debug!("Got JNI_CreateJavaVM symbol from libjvm");
 
     let mut java_vm: *mut jni_sys::JavaVM = std::ptr::null_mut();
@@ -94,21 +101,25 @@ unsafe fn prepare_jni_env(
     debug!("Constructed VM init args");
 
     debug!("Creating VM");
-    let create_jvm_result = create_jvm_call(
-        &mut java_vm as *mut *mut jni_sys::JavaVM,
-        &mut jni_env as *mut *mut jni_sys::JNIEnv as *mut *mut c_void,
-        &args as *const jni_sys::JavaVMInitArgs as *mut c_void);
+    let create_jvm_result = unsafe {
+        create_jvm_call(
+            &mut java_vm as *mut *mut jni_sys::JavaVM,
+            &mut jni_env as *mut *mut jni_sys::JNIEnv as *mut *mut c_void,
+            &args as *const jni_sys::JavaVMInitArgs as *mut c_void)
+    };
     debug!("Create VM result={create_jvm_result}");
 
     errors::JniError::check_result(create_jvm_result)?;
 
-    let jni_env = jni::JNIEnv::from_raw(jni_env)?;
+    let jni_env = unsafe {
+        jni::JNIEnv::from_raw(jni_env)?
+    };
     debug!("Got JNI env");
 
     Ok(jni_env)
 }
 
-pub fn call_intellij_main(jni_env: jni::JNIEnv, args: Vec<String>) -> Result<()> {
+pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result<()> {
     let main_args = jni_env.new_object_array(
         args.len() as jni_sys::jsize,
         "java/lang/String",
@@ -163,7 +174,7 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    match libloading::Library::new(libjvm_path.as_os_str()) {
+    match unsafe { libloading::Library::new(libjvm_path.as_os_str()) } {
         Ok(l) => { Ok(l)}
         Err(e) => { Err(LauncherError::LibloadingError(e))}
     }
@@ -258,25 +269,31 @@ unsafe fn run_event_loop() -> Result<()> {
 
     extern "C" fn timer_empty(_timer: CFRunLoopTimerRef, _info: *mut c_void) {}
 
-    let timer = CFRunLoopTimerCreate(
-        kCFAllocatorDefault,
-        FOREVER,
-        0.0 as CFTimeInterval,
-        0,
-        0,
-        timer_empty,
-        std::ptr::null_mut()
-    );
+    let timer = unsafe {
+        CFRunLoopTimerCreate(
+            kCFAllocatorDefault,
+            FOREVER,
+            0.0,
+            0,
+            0,
+            timer_empty,
+            std::ptr::null_mut()
+        )
+    };
 
-    CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
-    CFRelease(timer.as_void_ptr());
+    unsafe {
+        CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
+        CFRelease(timer.as_void_ptr());
+    }
 
     loop {
-        let result = CFRunLoopRunInMode(
+        let result = unsafe {
+            CFRunLoopRunInMode(
             kCFRunLoopDefaultMode,
             FOREVER,
-            0 as core_foundation::base::Boolean
-        );
+            0
+            )
+        };
 
         if result == kCFRunLoopRunFinished {
             info!("Core foundation loop has exited");
