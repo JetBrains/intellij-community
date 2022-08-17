@@ -1629,7 +1629,7 @@ private class ProjectNotificationModel {
     notifications.addAll(myNotifications)
     myNotifications.clear()
     if (myContent == null) {
-      updateToolWindow(project, null, emptyList(), true)
+      updateToolWindow(project, null, emptyList(), false)
     }
     else {
       runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) } })
