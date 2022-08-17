@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
-class ShowNotificationCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) : CommitResultHandler {
   private val notifier = VcsNotifier.getInstance(committer.project)
 
   override fun onSuccess(commitMessage: String) = reportResult()

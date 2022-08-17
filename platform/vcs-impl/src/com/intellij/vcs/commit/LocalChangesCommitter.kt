@@ -25,7 +25,7 @@ open class LocalChangesCommitter(
   commitMessage: String,
   commitContext: CommitContext,
   private val localHistoryActionName: @Nls String = message("commit.changes")
-) : AbstractCommitter(project, changes, commitMessage, commitContext) {
+) : VcsCommitter(project, changes, commitMessage, commitContext) {
 
   private var myAction = LocalHistoryAction.NULL
 
@@ -40,14 +40,14 @@ open class LocalChangesCommitter(
     val committedVcses = mutableSetOf<AbstractVcs>()
     processChangesByVcs(project, changes) { vcs, vcsChanges ->
       committedVcses += vcs
-      commit(vcs, vcsChanges)
+      vcsCommit(vcs, vcsChanges)
     }
     return committedVcses
   }
 
   private fun commitWithoutChanges(committedVcses: Set<AbstractVcs>) {
     val commitWithoutChangesVcses = commitContext.commitWithoutChangesRoots.mapNotNullTo(mutableSetOf()) { it.vcs }
-    (commitWithoutChangesVcses - committedVcses).forEach { commit(it, emptyList()) }
+    (commitWithoutChangesVcses - committedVcses).forEach { vcsCommit(it, emptyList()) }
   }
 
   override fun afterCommit() {

@@ -4,16 +4,16 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.vcs.commit.AbstractCommitter
+import com.intellij.vcs.commit.VcsCommitter
 
 class AlienCommitter(
   private val vcs: AbstractVcs,
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext
-) : AbstractCommitter(vcs.project, changes, commitMessage, commitContext) {
+) : VcsCommitter(vcs.project, changes, commitMessage, commitContext) {
 
-  override fun commit() = commit(vcs, changes)
+  override fun commit() = vcsCommit(vcs, changes)
 
   override fun afterCommit() = Unit
 

@@ -11,9 +11,14 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.forEachLoggingErrors
@@ -27,15 +32,9 @@ abstract class AbstractCommitter(
 ) {
   private val resultHandlers = mutableListOf<CommitResultHandler>()
 
-  private val _feedback = mutableSetOf<String>()
-  private val _failedToCommitChanges = mutableListOf<Change>()
   private val _exceptions = mutableListOf<VcsException>()
-  private val _pathsToRefresh = mutableListOf<FilePath>()
 
-  val feedback: Set<String> get() = _feedback.toSet()
-  val failedToCommitChanges: List<Change> get() = _failedToCommitChanges.toList()
   val exceptions: List<VcsException> get() = _exceptions.toList()
-  val pathsToRefresh: List<FilePath> get() = _pathsToRefresh.toList()
 
   val configuration: VcsConfiguration = VcsConfiguration.getInstance(project)
 
@@ -75,18 +74,6 @@ abstract class AbstractCommitter(
   protected abstract fun onFailure()
 
   protected abstract fun onFinish()
-
-  protected fun commit(vcs: AbstractVcs, changes: List<Change>) {
-    val environment = vcs.checkinEnvironment
-    if (environment != null) {
-      _pathsToRefresh.addAll(ChangesUtil.getPaths(changes))
-      val exceptions = environment.commit(changes, commitMessage, commitContext, _feedback)
-      if (!exceptions.isNullOrEmpty()) {
-        _exceptions.addAll(exceptions)
-        _failedToCommitChanges.addAll(changes)
-      }
-    }
-  }
 
   private fun delegateCommitToVcsThread() {
     val indicator = DelegatingProgressIndicator()

@@ -4,15 +4,15 @@ package com.intellij.tasks.vcs;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -35,13 +35,12 @@ import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import org.easymock.EasyMock;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 
@@ -505,6 +504,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myVcs = new MockAbstractVcs(getProject());
     myChangeProvider = new MyMockChangeProvider();
     myVcs.setChangeProvider(myChangeProvider);
+    myVcs.setCheckinEnvironment(new MyMockCheckinEnvironment());
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
@@ -563,6 +563,44 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     @Override
     public boolean isModifiedDocumentTrackingRequired() {
       return false;
+    }
+  }
+
+  private static class MyMockCheckinEnvironment implements CheckinEnvironment {
+    @Override
+    public @Nullable String getHelpId() {
+      return null;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Title)
+    @Override
+    public String getCheckinOperationName() {
+      return "Commit";
+    }
+
+    @Override
+    public @Nullable List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files) {
+      return null;
+    }
+
+    @Override
+    public @Nullable List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files) {
+      return null;
+    }
+
+    @Override
+    public boolean isRefreshAfterCommitNeeded() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                     @NotNull @NlsSafe String commitMessage,
+                                     @NotNull CommitContext commitContext,
+                                     @NotNull Set<? super @NlsContexts.DetailedDescription String> feedback) {
+      LOG.info("Commit for " + changes);
+      return null;
     }
   }
 
