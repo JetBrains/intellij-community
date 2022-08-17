@@ -786,6 +786,7 @@ public final class PluginManagerCore {
                                                                                                      disabledRequired,
                                                                                                      context.disabledPlugins,
                                                                                                      pluginErrorsById);
+
       PluginId pluginId = descriptor.getPluginId();
       boolean isLoadable = loadingError == null;
       if (!isLoadable) {
@@ -793,8 +794,8 @@ public final class PluginManagerCore {
         disabledAfterInit.add(descriptor);
       }
 
-      boolean shouldLoad = !descriptor.isOnDemand() ||
-                           context.enabledOnDemandPlugins.contains(pluginId);
+      boolean shouldLoad = !context.expiredPlugins.contains(pluginId) &&
+                           (!descriptor.isOnDemand() || context.enabledOnDemandPlugins.contains(pluginId));
 
       descriptor.setEnabled(descriptor.isEnabled()
                             && isLoadable && shouldLoad);

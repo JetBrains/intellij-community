@@ -576,6 +576,27 @@ class PluginDescriptorTest {
     }
   }
 
+  @Test
+  fun testExpiredPluginNotLoaded() {
+    PluginBuilder()
+      .noDepends()
+      .id("foo")
+      .build(pluginDirPath.resolve("foo"))
+
+    PluginBuilder()
+      .noDepends()
+      .id("bar")
+      .build(pluginDirPath.resolve("bar"))
+
+    val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
+      .withExpiredPlugins("foo")
+      .build()
+      .enabledPlugins
+
+    assertThat(enabledPlugins).hasSize(1)
+    assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("bar")
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)

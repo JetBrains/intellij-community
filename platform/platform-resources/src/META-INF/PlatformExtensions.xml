@@ -612,6 +612,8 @@
                         preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.EnabledOnDemandPluginsState"
                         preload="true"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState"
+                        preload="true"/>
     <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
                      order="first"/>
     <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>

@@ -1148,9 +1148,9 @@ public final class ConfigImportHelper {
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
     if (oldConfig.equals(path.getParent())) {
-      String name = path.getFileName().toString();
-      return shouldSkipFileDuringImport(name) ||
-             Files.exists(newConfig.resolve(path.getFileName())) ||
+      Path fileName = path.getFileName();
+      return shouldSkipFileDuringImport(fileName.toString()) ||
+             Files.exists(newConfig.resolve(fileName)) ||
              path.startsWith(oldPluginsDir);
     }
     return false;
@@ -1158,6 +1158,7 @@ public final class ConfigImportHelper {
 
   private static boolean shouldSkipFileDuringImport(String fileName) {
     return SESSION_FILES.contains(fileName) ||
+           fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(CHROME_USER_DATA) ||
            fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName()));
   }
