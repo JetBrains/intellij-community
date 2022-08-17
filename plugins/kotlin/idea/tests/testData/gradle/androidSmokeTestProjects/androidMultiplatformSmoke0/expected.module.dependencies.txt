@@ -8,7 +8,6 @@ project.androidApp.androidTest
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
     -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.jvmMain(Test)
@@ -18,7 +17,6 @@ project.androidApp.main
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.main(Compile)
-    -> project.multiplatformAndroidLibrary.commonMain(Compile)
     -> project.multiplatformAndroidLibrary.main(Compile)
     -> project.multiplatformJvmLibrary.commonMain(Compile)
     -> project.multiplatformJvmLibrary.jvmMain(Compile)
@@ -29,7 +27,6 @@ project.androidApp.unitTest
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
     -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.jvmMain(Test)
@@ -55,55 +52,29 @@ project.multiplatformAndroidApp
 
 project.multiplatformAndroidApp.androidTest
     -> project.jvmLibrary.main(Test)
-    -> project.multiplatformAndroidApp.commonMain(Test)
-    -> project.multiplatformAndroidApp.commonTest(Test)
     -> project.multiplatformAndroidApp.main(Test)
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
-    -> project.multiplatformJvmLibrary.commonMain(Test)
-    -> project.multiplatformJvmLibrary.jvmMain(Test)
-
-project.multiplatformAndroidApp.commonMain
-    -> project.jvmLibrary.main(Compile)
-    -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Compile)
-    -> project.multiplatformAndroidJvmIosLibrary.commonMain(Compile)
-    -> project.multiplatformAndroidLibrary.commonMain(Compile)
-    -> project.multiplatformJvmLibrary.commonMain(Compile)
-    -> project.multiplatformJvmLibrary.commonMain(Compile)
-    -> project.multiplatformJvmLibrary.jvmMain(Compile)
-
-project.multiplatformAndroidApp.commonTest
-    -> project.jvmLibrary.main(Test)
-    -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
-    -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
-    -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.jvmMain(Test)
 
 project.multiplatformAndroidApp.main
     -> project.jvmLibrary.main(Compile)
-    -> project.multiplatformAndroidApp.commonMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.main(Compile)
-    -> project.multiplatformAndroidLibrary.commonMain(Compile)
     -> project.multiplatformAndroidLibrary.main(Compile)
     -> project.multiplatformJvmLibrary.commonMain(Compile)
     -> project.multiplatformJvmLibrary.jvmMain(Compile)
 
 project.multiplatformAndroidApp.unitTest
     -> project.jvmLibrary.main(Test)
-    -> project.multiplatformAndroidApp.commonMain(Test)
-    -> project.multiplatformAndroidApp.commonTest(Test)
     -> project.multiplatformAndroidApp.main(Test)
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
     -> project.multiplatformJvmLibrary.commonMain(Test)
     -> project.multiplatformJvmLibrary.jvmMain(Test)
@@ -168,7 +139,6 @@ project.multiplatformAndroidJvmIosLibrary2.androidTest
     -> project.multiplatformAndroidJvmIosLibrary2.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary2.commonTest(Test)
     -> project.multiplatformAndroidJvmIosLibrary2.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
 
 project.multiplatformAndroidJvmIosLibrary2.commonMain
@@ -224,7 +194,6 @@ project.multiplatformAndroidJvmIosLibrary2.main
     -> project.multiplatformAndroidJvmIosLibrary.main(Compile)
     -> project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary2.commonMain(Compile)
-    -> project.multiplatformAndroidLibrary.commonMain(Compile)
     -> project.multiplatformAndroidLibrary.main(Compile)
 
 project.multiplatformAndroidJvmIosLibrary2.unitTest
@@ -235,7 +204,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     -> project.multiplatformAndroidJvmIosLibrary2.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary2.commonTest(Test)
     -> project.multiplatformAndroidJvmIosLibrary2.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
 
 project.multiplatformAndroidLibrary
@@ -244,30 +212,17 @@ project.multiplatformAndroidLibrary.androidTest
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
-    -> project.multiplatformAndroidLibrary.commonTest(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
-
-project.multiplatformAndroidLibrary.commonMain
-    -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Compile)
-    -> project.multiplatformAndroidJvmIosLibrary.commonMain(Compile)
-
-project.multiplatformAndroidLibrary.commonTest
-    -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
-    -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
 
 project.multiplatformAndroidLibrary.main
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Compile)
     -> project.multiplatformAndroidJvmIosLibrary.main(Compile)
-    -> project.multiplatformAndroidLibrary.commonMain(Compile)
 
 project.multiplatformAndroidLibrary.unitTest
     -> project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.commonMain(Test)
     -> project.multiplatformAndroidJvmIosLibrary.main(Test)
-    -> project.multiplatformAndroidLibrary.commonMain(Test)
-    -> project.multiplatformAndroidLibrary.commonTest(Test)
     -> project.multiplatformAndroidLibrary.main(Test)
 
 project.multiplatformJvmLibrary
