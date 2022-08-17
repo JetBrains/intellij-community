@@ -9,13 +9,13 @@ data class WizardKotlinVersion(
     val version: Version,
     val kind: KotlinVersionKind,
     val repositories: List<Repository>,
-    val buildSystemPluginRepository: (BuildSystemType) -> Repository?,
+    val buildSystemPluginRepository: (BuildSystemType) -> List<Repository>,
 ) {
     constructor(
         version: Version,
         kind: KotlinVersionKind,
         repository: Repository,
-        buildSystemPluginRepository: (BuildSystemType) -> Repository?
+        buildSystemPluginRepository: (BuildSystemType) -> List<Repository>
     ) : this(
         version,
         kind,
