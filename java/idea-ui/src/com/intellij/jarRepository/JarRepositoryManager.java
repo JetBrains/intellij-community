@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.RepositoryOfflineException;
@@ -83,12 +83,11 @@ public final class JarRepositoryManager {
     ourClassifierToRootType.put(ArtifactKind.ANNOTATIONS.getClassifier(), AnnotationOrderRootType.getInstance());
   }
 
-  private static final class JobExecutor {
-    static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader",
-                                                                                                           ProcessIOExecutorService.INSTANCE);
-  }
+  static final ExecutorService DOWNLOADER_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("RemoteLibraryDownloader",
+                                                                                                          ProcessIOExecutorService.INSTANCE,
+                                                                                                          4);
 
-  public static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
+  public final static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
 
   public static boolean hasRunningTasks() {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
@@ -254,14 +253,6 @@ public final class JarRepositoryManager {
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
     return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
-  }
-
-  public static @NotNull Promise<Collection<Artifact>> loadArtifactForDependenciesAsync(@NotNull Project project,
-                                                                                        @NotNull JpsMavenRepositoryLibraryDescriptor desc,
-                                                                                        @NotNull final Set<ArtifactKind> artifactKinds,
-                                                                                        @Nullable List<RemoteRepositoryDescription> repos) {
-    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
-    return submitBackgroundJob(new LibraryResolveJob(desc, artifactKinds, effectiveRepos));
   }
 
   @Nullable
@@ -468,7 +459,7 @@ public final class JarRepositoryManager {
   public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
-    JobExecutor.INSTANCE.execute(() -> {
+    DOWNLOADER_EXECUTOR.execute(() -> {
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
