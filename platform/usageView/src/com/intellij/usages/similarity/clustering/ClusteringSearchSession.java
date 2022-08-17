@@ -146,7 +146,7 @@ public class ClusteringSearchSession {
   public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
     final int cardinality1 = bag1.getCardinality();
     final int cardinality2 = bag2.getCardinality();
-    if (!(cardinality1 * similarityThreshold <= cardinality2 && cardinality2 <= cardinality1 / similarityThreshold)) {
+    if (lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
       return 0;
     }
     int intersectionSize = Bag.intersectionSize(bag1, bag2);
