@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
@@ -25,6 +26,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final Project myProject;
 
@@ -68,47 +70,46 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
   }
 
-  protected void configFacets(List<MavenLegacyModuleImporter> importers,
-                              List<MavenProjectsProcessorTask> postTasks,
-                              boolean isWorkspaceImport) {
-    List<MavenLegacyModuleImporter> toRun =
-      ContainerUtil.filter(importers, it -> !it.isModuleDisposed()
-                                            && !it.isAggregatorMainTestModule()
-                                            && it.initFacetsImporters(isWorkspaceImport));
+  public static void importExtensions(Project project,
+                                      IdeModifiableModelsProvider modifiableModelsProvider,
+                                      List<MavenLegacyModuleImporter.ExtensionImporter> extensionImporters,
+                                      List<MavenProjectsProcessorTask> postTasks) {
+    extensionImporters = ContainerUtil.filter(extensionImporters, it -> !it.isModuleDisposed());
 
-    if (!toRun.isEmpty()) {
-      IdeModifiableModelsProvider provider;
-      if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
-        provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
+    if (extensionImporters.isEmpty()) return;
+
+    IdeModifiableModelsProvider provider;
+    if (modifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
+      provider = modifiableModelsProvider; // commit does nothing for this provider, so it should be reused
+    }
+    else {
+      provider = ProjectDataManager.getInstance().createModifiableModelsProvider(project);
+    }
+
+    try {
+      Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.ExtensionImporter.CountAndTime> counters = new HashMap<>();
+
+      extensionImporters.forEach(importer -> importer.init(provider));
+      extensionImporters.forEach(importer -> importer.preConfig(counters));
+      extensionImporters.forEach(importer -> importer.config(postTasks, counters));
+      extensionImporters.forEach(importer -> importer.postConfig(counters));
+
+      for (Map.Entry<Class<? extends MavenImporter>, MavenLegacyModuleImporter.ExtensionImporter.CountAndTime> each : counters.entrySet()) {
+        MavenImportCollector.IMPORTER_RUN.log(project, each.getKey(), each.getValue().count,
+                                              TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
       }
-      else {
-        provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
-      }
-
-      try {
-        Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.CountAndTime> counters = new HashMap<>();
-
-        toRun.forEach(importer -> importer.prepareForFacets(provider));
-        toRun.forEach(importer -> importer.preConfigFacets(counters));
-        toRun.forEach(importer -> importer.configFacets(postTasks, counters));
-        toRun.forEach(importer -> importer.postConfigFacets(counters));
-
-        for (Map.Entry<Class<? extends MavenImporter>, MavenLegacyModuleImporter.CountAndTime> each : counters.entrySet()) {
-          MavenImportCollector.IMPORTER_RUN.log(myProject, each.getKey(), each.getValue().count,
-                                                TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
-        }
-      }
-      finally {
-        MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
-          ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-            provider.commit();
-          });
+    }
+    finally {
+      MavenUtil.invokeAndWaitWriteAction(project, () -> {
+        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
+          provider.commit();
         });
-      }
+      });
     }
   }
 
-  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Iterable<MavenProject> projectsToRefresh) {
+  public static void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks,
+                                                      Iterable<MavenProject> projectsToRefresh) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
