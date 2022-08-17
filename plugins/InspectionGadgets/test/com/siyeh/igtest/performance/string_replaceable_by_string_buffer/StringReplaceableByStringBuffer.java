@@ -10,7 +10,7 @@ public class StringReplaceableByStringBuffer {
 
     public void foo2()
     {
-        String <warning descr="Non-constant 'String buffer' should probably be declared as ''StringBuilder''">buffer</warning> = "bar";
+        String <warning descr="Non-constant String 'buffer' should probably be declared as 'StringBuilder'">buffer</warning> = "bar";
         for (int i = 0; i < 10; i++) {
             buffer += "foo";
         }
@@ -26,7 +26,7 @@ public class StringReplaceableByStringBuffer {
 
     public void foobar2()
     {
-        String <warning descr="Non-constant 'String buffer' should probably be declared as ''StringBuilder''">buffer</warning> = "bar";
+        String <warning descr="Non-constant String 'buffer' should probably be declared as 'StringBuilder'">buffer</warning> = "bar";
         for (int i = 0; i < 10; i++) {
             buffer = buffer + "foo" + buffer;
         }
