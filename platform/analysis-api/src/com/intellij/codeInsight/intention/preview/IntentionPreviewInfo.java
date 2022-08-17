@@ -287,11 +287,6 @@ public interface IntentionPreviewInfo {
                                             @NotNull String addedOption,
                                             @NotNull @Nls String title) {
     int maxToList = Math.min(7, updatedList.size() + 2);
-    if (updatedList.size() > maxToList) {
-      int index = updatedList.indexOf(addedOption);
-      int start = MathUtil.clamp(index - maxToList / 2, 0, updatedList.size() - maxToList);
-      updatedList = updatedList.subList(start, start + maxToList);
-    }
     HtmlChunk select = HtmlChunk.tag("select").attr("size", maxToList)
       .children(ContainerUtil.map2Array(updatedList, HtmlChunk.class, pref -> {
         HtmlChunk.Element chunk = HtmlChunk.tag("option").addText(pref);
