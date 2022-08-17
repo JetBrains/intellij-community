@@ -23,7 +23,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     val conf = VcsConfiguration.getInstance(project)
     val confDefault = VcsConfiguration()
 
-    addConfirmationIfDiffers(set, conf, confDefault, { it.MOVE_TO_FAILED_COMMIT_CHANGELIST }, OFFER_MOVE_FAILED_COMMITTED)
     addConfirmationIfDiffers(set, conf, confDefault, { it.REMOVE_EMPTY_INACTIVE_CHANGELISTS }, OFFER_REMOVE_EMPTY_CHANGELIST)
 
     addBoolIfDiffers(set, conf, confDefault, { it.MAKE_NEW_CHANGELIST_ACTIVE }, CHANGELIST_MAKE_NEW_ACTIVE)
@@ -90,7 +89,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("vcs.settings", 4)
 
-    private val OFFER_MOVE_FAILED_COMMITTED = GROUP.registerEvent("offer.move.failed.committed", EventFields.Enum("value", ConfirmationOption::class.java))
     private val OFFER_REMOVE_EMPTY_CHANGELIST = GROUP.registerEvent("offer.remove.empty.changelist", EventFields.Enum("value", ConfirmationOption::class.java))
 
     private val CHANGELIST_MAKE_NEW_ACTIVE = GROUP.registerVarargEvent("changelist.make.new.active", EventFields.Enabled)

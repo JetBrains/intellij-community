@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -13,7 +12,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
@@ -55,13 +53,6 @@ open class SingleChangeListCommitWorkflow(
   internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
   internal lateinit var commitState: ChangeListCommitState
-
-  override fun processExecuteChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
-    if (result.shouldCloseWindow) {
-      moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-    }
-    super.processExecuteChecksResult(sessionInfo, result)
-  }
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
