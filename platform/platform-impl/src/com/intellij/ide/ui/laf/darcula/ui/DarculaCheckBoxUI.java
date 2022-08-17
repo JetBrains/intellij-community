@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalCheckBoxUI;
-import javax.swing.text.View;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
@@ -72,37 +70,15 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    Dimension size = c.getSize();
+    AbstractButton button = (AbstractButton)c;
+    AbstractButtonLayout layout = new AbstractButtonLayout(button, removeInsetsBeforeLayout(button), getDefaultIcon());
 
-    AbstractButton b = (AbstractButton)c;
-    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
-    Rectangle iconRect = new Rectangle();
-    Rectangle textRect = new Rectangle();
-
-    Font f = c.getFont();
-    g.setFont(f);
-    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
-
-    String text = SwingUtilities.layoutCompoundLabel(
-      c, fm, b.getText(), getDefaultIcon(),
-      b.getVerticalAlignment(), b.getHorizontalAlignment(),
-      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, b.getIconTextGap());
-
-    if (c.isOpaque()) {
-      g.setColor(b.getBackground());
-      g.fillRect(0, 0, size.width, size.height);
-    }
-
-    drawCheckIcon(c, g, b, iconRect, b.isSelected(), b.isEnabled());
-    drawText(c, g, b, fm, textRect, text);
+    layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
+    drawCheckIcon(c, g, button, layout.iconRect, button.isSelected(), button.isEnabled());
   }
 
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
-      JBInsets.removeFrom(viewRect, b.getInsets());
-    }
-    return viewRect;
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return !(b.getBorder() instanceof DarculaCheckBoxBorder);
   }
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
@@ -132,19 +108,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     }
     finally {
       g2.dispose();
-    }
-  }
-
-  protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
-    if (text != null) {
-      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
-      if (v != null) {
-        v.paint(g, textRect);
-      }
-      else {
-        g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, getMnemonicIndex(b), textRect.x, textRect.y + fm.getAscent());
-      }
     }
   }
 
