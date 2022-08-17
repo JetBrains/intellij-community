@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -63,6 +64,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       val language = file.language
 
       if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
+
+      val virtualFile = file.virtualFile ?: return@runReadAction READY_EMPTY
+      val directoryInfo = DirectoryIndex.getInstance(project).getInfoForFile(virtualFile)
+      if (!directoryInfo.isInModuleSource(virtualFile)) return@runReadAction READY_EMPTY
 
       val aspect = when (val aspectResult = getAspect(file, editor)) {
         AnnotationResult.NoAnnotation -> return@runReadAction CodeVisionState.Ready(emptyList())
