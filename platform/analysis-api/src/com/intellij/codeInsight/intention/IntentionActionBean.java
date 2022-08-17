@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ResourceBundle;
 
 public final class IntentionActionBean extends CustomLoadingExtensionPointBean<IntentionAction> {
-  private static final Logger LOG = Logger.getInstance(IntentionActionBean.class);
-
   @Tag
   @RequiredElement
   public String className;
@@ -41,7 +39,7 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
 
     String baseName = bundleName != null ? bundleName : getPluginDescriptor().getResourceBundleBaseName();
     if (baseName == null) {
-      LOG.error("No resource bundle specified for " + getPluginDescriptor());
+      Logger.getInstance(IntentionActionBean.class).error("No resource bundle specified for " + getPluginDescriptor());
       return null;
     }
 
