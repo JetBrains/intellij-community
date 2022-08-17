@@ -83,7 +83,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
-    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
+    setDataContext(() -> DataManager.getInstance().getDataContext(component));
+  }
+
+  @Override
+  public void setDataContext(@NotNull Supplier<? extends DataContext> dataProvider) {
+    myDataContextProvider = dataProvider;
   }
 
   private class MyMenu extends JBPopupMenu implements PlaceProvider {
