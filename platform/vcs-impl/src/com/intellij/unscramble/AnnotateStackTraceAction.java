@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -60,6 +61,11 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
 
   private boolean myIsLoading = false;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -254,8 +260,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     private int myMaxDateLength = 0;
 
     MyActiveAnnotationGutter(@NotNull Project project,
-                                    @NotNull EditorHyperlinkSupport hyperlinks,
-                                    @NotNull ProgressIndicator indicator) {
+                             @NotNull EditorHyperlinkSupport hyperlinks,
+                             @NotNull ProgressIndicator indicator) {
       myProject = project;
       myHyperlinks = hyperlinks;
       myIndicator = indicator;
