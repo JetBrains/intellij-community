@@ -794,7 +794,7 @@ public final class PluginManagerCore {
       }
 
       boolean shouldLoad = !descriptor.isOnDemand() ||
-                           EnabledOnDemandPluginsState.isEnabled(pluginId);
+                           context.enabledOnDemandPlugins.contains(pluginId);
 
       descriptor.setEnabled(descriptor.isEnabled()
                             && isLoadable && shouldLoad);

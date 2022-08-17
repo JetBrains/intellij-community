@@ -272,6 +272,7 @@ public class PluginManagerTest {
     Path file = Path.of(getTestDataPath(), testDataName);
     BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Set.of(),
+                                                                                  Set.of(),
                                                                                   Map.of(),
                                                                                   () -> buildNumber,
                                                                                   false,

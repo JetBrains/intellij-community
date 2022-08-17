@@ -554,6 +554,28 @@ class PluginDescriptorTest {
     }
   }
 
+  @Test
+  fun testLoadEnabledOnDemandPlugin() {
+    PluginBuilder()
+      .noDepends()
+      .id("foo")
+      .onDemand()
+      .build(pluginDirPath.resolve("foo"))
+
+    PlatformTestUtil.withSystemProperty<Throwable>(
+      /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
+      /* value = */ "true",
+    ) {
+      val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
+        .withEnabledOnDemandPlugins("foo")
+        .build()
+        .enabledPlugins
+
+      assertThat(enabledPlugins).hasSize(1)
+      assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("foo")
+    }
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)

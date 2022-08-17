@@ -10,6 +10,7 @@ import java.nio.file.Path
 class PluginSetTestBuilder(private val path: Path) {
 
   private var disabledPluginIds = mutableSetOf<String>()
+  private var enabledOnDemandPluginIds = mutableSetOf<String>()
   private var productBuildNumber = PluginManagerCore.getBuildNumber()
 
   private var context: DescriptorListLoadingContext? = null
@@ -19,6 +20,10 @@ class PluginSetTestBuilder(private val path: Path) {
     this.disabledPluginIds += disabledPluginIds
   }
 
+  fun withEnabledOnDemandPlugins(vararg enabledOnDemandPluginIds: String) = apply {
+    this.enabledOnDemandPluginIds += enabledOnDemandPluginIds
+  }
+
   fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
     this.productBuildNumber = productBuildNumber
   }
@@ -26,6 +31,7 @@ class PluginSetTestBuilder(private val path: Path) {
   fun withLoadingContext() = apply {
     context = DescriptorListLoadingContext(
       disabledPlugins = disabledPluginIds.toPluginIds(),
+      enabledOnDemandPlugins = enabledOnDemandPluginIds.toPluginIds(),
       brokenPluginVersions = emptyMap(),
       productBuildNumber = { productBuildNumber },
     )
