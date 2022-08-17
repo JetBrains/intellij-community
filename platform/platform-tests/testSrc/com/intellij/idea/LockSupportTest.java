@@ -4,7 +4,6 @@ package com.intellij.idea;
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtil;
 import kotlin.Pair;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +12,7 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,7 +46,7 @@ public class LockSupportTest {
   public void testLock() {
     SocketLock lock = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
     try {
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE).getFirst());
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(Collections.emptyList(), GlobalScope.INSTANCE).getFirst());
     }
     finally {
       lock.dispose();
@@ -77,7 +77,7 @@ public class LockSupportTest {
   }
 
   private static SocketLock.ActivationStatus tryActivate(@NotNull SocketLock lock) {
-    Pair<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE);
+    Pair<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(Collections.emptyList(), GlobalScope.INSTANCE);
     lock.getServer();
     return result.getFirst();
   }

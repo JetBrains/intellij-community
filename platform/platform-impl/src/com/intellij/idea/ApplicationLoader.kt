@@ -67,14 +67,14 @@ fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
 }
 
 suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
+  val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, setBaseLaFJob) = initAppActivity.runChild("app waiting") {
+  val (app, patchHtmlStyleJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job>
+    appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
 
   initAppActivity.runChild("app component registration") {
@@ -89,8 +89,9 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
+    // executed in main thread
     launch {
-      setBaseLaFJob.join()
+      patchHtmlStyleJob?.join()
 
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
@@ -106,7 +107,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     withContext(Dispatchers.Default) {
       val args = processProgramArguments(rawArgs)
 
-      val deferredStarter = initAppActivity.runChild("app starter creation") {
+      val deferredStarter = runActivity("app starter creation") {
         createAppStarterAsync(args)
       }
 
@@ -436,7 +437,6 @@ private fun processProgramArguments(args: List<String>): List<String> {
   }
   return arguments
 }
-
 
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {

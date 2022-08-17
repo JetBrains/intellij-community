@@ -102,7 +102,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
 
   fun getServer(): BuiltInServer? = serverFuture?.asCompletableFuture()?.join()
 
-  fun lockAndTryActivate(args: Array<String>, mainScope: CoroutineScope): Pair<ActivationStatus, CliResult?> {
+  fun lockAndTryActivate(args: List<String>, mainScope: CoroutineScope): Pair<ActivationStatus, CliResult?> {
     log("enter: lock(config=%s system=%s)", configPath, systemPath)
     lockPortFiles()
     val portToPath = HashMap<Int, MutableList<String>>()
@@ -182,7 +182,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     lockedFiles.clear()
   }
 
-  private fun tryActivate(portNumber: Int, paths: List<String>, args: Array<String>): Pair<ActivationStatus, CliResult?> {
+  private fun tryActivate(portNumber: Int, paths: List<String>, args: List<String>): Pair<ActivationStatus, CliResult?> {
     log("trying: port=%s", portNumber)
     try {
       Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
@@ -200,7 +200,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
               currentDirectory = "."
             }
             out.writeUTF(
-              ACTIVATE_COMMAND + token + '\u0000' + Paths.get(currentDirectory).toAbsolutePath() + '\u0000' + java.lang.String.join("\u0000", *args))
+              ACTIVATE_COMMAND + token + '\u0000' + Path.of(currentDirectory).toAbsolutePath() + '\u0000' + args.joinToString(separator = "\u0000"))
             out.flush()
             socket.soTimeout = 0
             val response = readStringSequence(input)

@@ -41,21 +41,20 @@ public final class BootstrapClassLoaderUtil {
     if (isDevServer()) {
       return loadClassPathFromDevBuildServer(distDir);
     }
-    else {
-      Path libDir = distDir.resolve("lib");
-      Collection<Path> classpath = new LinkedHashSet<>();
 
-      parseClassPathString(System.getProperty("java.class.path"), classpath);
+    Path libDir = distDir.resolve("lib");
+    Collection<Path> classpath = new LinkedHashSet<>();
 
-      Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
-      String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      assert selfRootPath != null;
-      Path selfRoot = Path.of(selfRootPath);
-      classpath.add(selfRoot);
-      addLibraries(classpath, libDir, selfRoot);
-      addLibraries(classpath, libDir.resolve("ant/lib"), null);
-      return classpath;
-    }
+    parseClassPathString(System.getProperty("java.class.path"), classpath);
+
+    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
+    String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    assert selfRootPath != null;
+    Path selfRoot = Path.of(selfRootPath);
+    classpath.add(selfRoot);
+    addLibraries(classpath, libDir, selfRoot);
+    addLibraries(classpath, libDir.resolve("ant/lib"), null);
+    return classpath;
   }
 
   public static void initClassLoader(boolean addCwmLibs) throws Throwable {
@@ -70,8 +69,7 @@ public final class BootstrapClassLoaderUtil {
       }
 
       List<Path> paths = loadClassPathFromDevBuildServer(distDir);
-      PathClassLoader result = (PathClassLoader)classLoader;
-      result.getClassPath().appendFiles(paths);
+      ((PathClassLoader)classLoader).getClassPath().appendFiles(paths);
       return;
     }
 
