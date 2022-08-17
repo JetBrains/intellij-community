@@ -40,7 +40,6 @@ open class SingleChangeListCommitWorkflow(
   val initialChangeList: LocalChangeList? = null,
   executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
 ) : AbstractCommitWorkflow(project) {
@@ -78,7 +77,7 @@ open class SingleChangeListCommitWorkflow(
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
 
-    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE, isDefaultChangeListFullyIncluded) {
+    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE) {
       override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
     }) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))

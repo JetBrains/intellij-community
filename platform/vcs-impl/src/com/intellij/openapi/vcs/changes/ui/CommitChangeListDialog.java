@@ -216,10 +216,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     }
 
-    boolean isDefaultChangeListFullyIncluded = new HashSet<>(changes).containsAll(defaultList.getChanges());
     SingleChangeListCommitWorkflow workflow =
       new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialSelection, executors, showVcsCommit,
-                                         isDefaultChangeListFullyIncluded, comment, customResultHandler);
+                                         comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();

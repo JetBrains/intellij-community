@@ -23,8 +23,14 @@ open class SingleChangeListCommitter(
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,
   localHistoryActionName: @Nls String,
-  private val isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
+
+  @Deprecated("Use another constructor")
+  constructor(project: Project,
+              commitState: ChangeListCommitState,
+              commitContext: CommitContext,
+              localHistoryActionName: @Nls String,
+              isDefaultChangeListFullyIncluded: Boolean) : this(project, commitState, commitContext, localHistoryActionName)
 
   private val changeList get() = commitState.changeList
 
