@@ -177,6 +177,7 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   private var lastIds: List<String> = emptyList()
+  private var lastActions: List<AnAction> = emptyList()
 
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
@@ -185,9 +186,13 @@ open class SegmentedActionToolbarComponent(place: String,
     val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
 
     traceState(lastIds, filteredIds, ides)
-    lastIds = filteredIds
+
     isActive = newVisibleActions.size > 1
-    super.actionsUpdated(forced, if (filtered.size > 1) filtered else newVisibleActions)
+
+    super.actionsUpdated(forced, if (filtered.size > 1) filtered else if(lastActions.isEmpty()) newVisibleActions else lastActions)
+
+    lastIds = filteredIds
+    lastActions = filtered
     ApplicationManager.getApplication().messageBus.syncPublisher(ToolbarActionsUpdatedListener.TOPIC).actionsUpdated()
   }
 

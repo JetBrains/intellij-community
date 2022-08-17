@@ -81,7 +81,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   override fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-    if(logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    if(logNeeded() && filteredIds != lastIds ) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   internal var isOpened = false
@@ -102,7 +102,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       if(action is RTBarAction) {
         action.checkMainSlotVisibility(it)
       } else true
-    } ?: false
+    } ?: true
   }
 
   override fun addNotify() {
