@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.jarRepository.SyncLoadingKt.loadDependenciesSync;
 
-final class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
+public final class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
 
   static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
