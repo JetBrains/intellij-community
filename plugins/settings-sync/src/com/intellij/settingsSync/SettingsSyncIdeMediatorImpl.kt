@@ -65,10 +65,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
     if (pluginsFileState != null) {
       val pluginManager = SettingsSyncPluginManager.getInstance()
-      pluginManager.doWithNoUpdateFromIde {
-        updateSettings(listOf(pluginsFileState))
-        pluginManager.pushChangesToIde()
-      }
+      updateSettings(listOf(pluginsFileState))
+      pluginManager.pushChangesToIde()
     }
 
     // 3. after that update the rest of changed settings
