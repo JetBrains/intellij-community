@@ -167,9 +167,11 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
     let load_path = canonical_non_unc(&libjvm_path)?;
     debug!("Loading libvjm by path {load_path:?}");
 
-    match libloading::Library::new(load_path) {
-        Ok(l) => { Ok(l)}
-        Err(e) => { Err(LauncherError::LibloadingError(e))}
+    unsafe {
+        match libloading::Library::new(load_path) {
+            Ok(l) => { Ok(l) }
+            Err(e) => { Err(LauncherError::LibloadingError(e)) }
+        }
     }
 }
 
