@@ -47,17 +47,19 @@ public abstract class ExternalLibraryResolver {
     private final String myQualifiedClassName;
     private final ExternalLibraryDescriptor myLibrary;
 
-    public ExternalClassResolveResult(String qualifiedClassName,
-                                      ExternalLibraryDescriptor library) {
+    public ExternalClassResolveResult(@NotNull String qualifiedClassName,
+                                      @NotNull ExternalLibraryDescriptor library) {
       myQualifiedClassName = qualifiedClassName;
       myLibrary = library;
     }
 
+    @NotNull
     public String getQualifiedClassName() {
       return myQualifiedClassName;
     }
 
-    public ExternalLibraryDescriptor getLibrary() {
+    @NotNull
+    public ExternalLibraryDescriptor getLibraryDescriptor() {
       return myLibrary;
     }
   }
