@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 sealed class BodyType(val requiresReturn: Boolean = true) {
     object NoBody : BodyType()
     object EmptyOrTemplate : BodyType(requiresReturn = false)
