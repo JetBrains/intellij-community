@@ -52,8 +52,6 @@ suspend fun subtask(name: String): CoroutineContext {
   return CoroutineName(name) + childMeasurer
 }
 
-private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
-
 private val noActivity: Activity = object : Activity {
   override fun end(): Unit = error("must not be invoked")
   override fun setDescription(description: String): Unit = error("must not be invoked")
@@ -61,6 +59,8 @@ private val noActivity: Activity = object : Activity {
   override fun startChild(name: String): Activity = error("must not be invoked")
   override fun updateThreadName(): Unit = error("must not be invoked")
 }
+
+private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
 
 private object MeasureCoroutineTime : CopyableThreadContextElement<Unit> {
 
