@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.ui.popup.Balloon
@@ -42,8 +43,8 @@ fun showActionKeyPopup(parent: Component,
   val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
   for (shortcut in shortcuts) {
     if (shortcut is KeyboardShortcut) {
-      @NonNls val keyStrokeText = ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut).first
-      val shortcutLabel = JLabel(keyStrokeText).also {
+      @NonNls val shortcutText = KeymapUtil.getShortcutText(shortcut)
+      val shortcutLabel = JLabel(shortcutText).also {
         it.font = it.font.deriveFont((it.font.size - 1).toFloat())
         it.foreground = JBUI.CurrentTheme.Tooltip.shortcutForeground()
       }
