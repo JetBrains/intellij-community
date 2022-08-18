@@ -6,7 +6,7 @@ import com.intellij.ide.starter.runner.IDERunContext
 import org.kodein.di.direct
 import org.kodein.di.instance
 
-interface FailureDetailsConstructable {
+interface FailureDetailsOnCI {
   fun getTestMethodName(): String {
     val method = di.direct.instance<CurrentTestMethod>().get()
     return if (method == null) "" else "${method.declaringClass.name}.${method.name}"

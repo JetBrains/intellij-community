@@ -45,7 +45,7 @@ object ErrorReporter {
           testName = "($onlyLettersHash ${messageText.substring(0, MAX_TEST_NAME_LENGTH.coerceAtMost(messageText.length)).trim()})"
         }
 
-        val failureDetails = di.direct.instance<FailureDetailsConstructable>().getFailureDetails(runContext, stackTraceContent)
+        val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext, stackTraceContent)
 
         di.direct.instance<CIServer>().reportTestFailure(testName = generifyErrorMessage(testName),
                                                          message = messageText,

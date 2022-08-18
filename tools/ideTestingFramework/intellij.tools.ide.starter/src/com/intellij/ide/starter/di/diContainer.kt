@@ -12,7 +12,7 @@ import com.intellij.ide.starter.models.IdeProductImp
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.InstallerGlobalPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
-import com.intellij.ide.starter.report.FailureDetailsConstructable
+import com.intellij.ide.starter.report.FailureDetailsOnCI
 import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.report.publisher.impl.ConsoleTestResultPublisher
 import com.intellij.ide.starter.report.publisher.impl.QodanaTestResultPublisher
@@ -38,7 +38,7 @@ import org.kodein.di.bindSingleton
 var di = DI {
   bindSingleton<GlobalPaths> { InstallerGlobalPaths() }
   bindSingleton<CIServer> { NoCIServer }
-  bindSingleton<FailureDetailsConstructable> { object : FailureDetailsConstructable {} }
+  bindSingleton<FailureDetailsOnCI> { object : FailureDetailsOnCI {} }
   bindSingleton<CodeInjector> { CodeBuilderHost() }
   bindFactory { testContext: IDETestContext -> PluginConfigurator(testContext) }
   bindSingleton<IdeDownloader> { PublicIdeDownloader }

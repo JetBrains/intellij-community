@@ -2,7 +2,7 @@ package com.intellij.ide.starter.tests.unit
 
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.junit5.hyphenateWithClass
-import com.intellij.ide.starter.report.FailureDetailsConstructable
+import com.intellij.ide.starter.report.FailureDetailsOnCI
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.convertToHashCodeWithOnlyLetters
@@ -91,11 +91,11 @@ class ReportingTest {
     val testName = testInfo.hyphenateWithClass()
     Mockito.doReturn(testName).`when`(runContextMock).contextName
 
-    val failureDetails = di.direct.instance<FailureDetailsConstructable>().getFailureDetails(runContext = runContextMock,
-                                                                                             stackTraceContent = "Stacktrace content")
+    val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext = runContextMock,
+                                                                                    stackTraceContent = "Stacktrace content")
     failureDetails.shouldBe("""
-      Test: reporting-test/validate-default-error-details-generation
-      You can find logs and other useful info in CI artifacts under the path reporting-test/validate-default-error-details-generation
+      Test: $testName
+      You can find logs and other useful info in CI artifacts under the path $testName
       Stacktrace content
     """.trimIndent())
   }
