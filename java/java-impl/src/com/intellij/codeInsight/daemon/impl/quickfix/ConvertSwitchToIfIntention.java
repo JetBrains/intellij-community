@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -116,7 +118,9 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       if (aClass != null) {
         String fqn = aClass.getQualifiedName();
         useEquals = !aClass.isEnum() && (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
-        needNullCheck = (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn)) && !hasNullCase(allBranches);
+        Nullability nullability = NullabilityUtil.getExpressionNullability(switchExpression, true);
+        needNullCheck =
+          nullability != Nullability.NOT_NULL && (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn)) && !hasNullCase(allBranches);
       }
     }
 
