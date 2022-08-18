@@ -14,8 +14,9 @@ abstract class VcsCommitter(
   project: Project,
   val changes: List<Change>,
   commitMessage: @NlsSafe String,
-  commitContext: CommitContext
-) : AbstractCommitter(project, commitMessage, commitContext) {
+  commitContext: CommitContext,
+  useCustomPostRefresh: Boolean
+) : AbstractCommitter(project, commitMessage, commitContext, useCustomPostRefresh) {
 
   private val _feedback = mutableSetOf<String>()
   private val _failedToCommitChanges = mutableListOf<Change>()

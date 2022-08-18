@@ -12,7 +12,7 @@ class AlienCommitter(
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext
-) : VcsCommitter(vcs.project, changes, commitMessage, commitContext) {
+) : VcsCommitter(vcs.project, changes, commitMessage, commitContext, false) {
 
   override fun commit() {
     vetoDocumentSaving(project, changes) {

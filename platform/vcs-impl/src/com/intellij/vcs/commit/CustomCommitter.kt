@@ -20,7 +20,7 @@ class CustomCommitter(
     addResultHandler(CustomCommitResultHandler(this, taskName))
 
     runModalTask(removeMnemonic(taskName), project, true) {
-      runCommitTask {
+      runCommitTask(false) {
         session.execute(changes, commitMessage)
       }
     }

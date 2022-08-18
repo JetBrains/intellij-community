@@ -28,7 +28,7 @@ internal class GitStageCommitter(
   private val commitState: GitStageCommitState,
   private val toStage: Map<VirtualFile, Collection<FilePath>>,
   commitContext: CommitContext
-) : AbstractCommitter(project, commitState.commitMessage, commitContext) {
+) : AbstractCommitter(project, commitState.commitMessage, commitContext, false) {
 
   val successfulRepositories = mutableSetOf<GitRepository>()
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()

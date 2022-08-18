@@ -33,7 +33,7 @@ abstract class Committer(
   }
 
   @RequiresBackgroundThread
-  protected fun runCommitTask(task: () -> Unit) {
+  protected fun runCommitTask(useCustomPostRefresh: Boolean, task: () -> Unit) {
     var canceled = false
     try {
       ProgressManager.checkCanceled()
@@ -48,12 +48,12 @@ abstract class Committer(
     }
     finally {
       runInEdt {
-        finishCommit(canceled)
+        finishCommit(useCustomPostRefresh, canceled)
       }
     }
   }
 
-  private fun finishCommit(canceled: Boolean) {
+  private fun finishCommit(useCustomPostRefresh: Boolean, canceled: Boolean) {
     val errors = commitErrors
 
     if (canceled) {
@@ -68,6 +68,14 @@ abstract class Committer(
       LOG.debug("Commit failed")
       resultHandlers.forEachLoggingErrors(LOG) { it.onFailure() }
     }
+
+    if (!useCustomPostRefresh) {
+      fireAfterRefresh()
+    }
+  }
+
+  protected fun fireAfterRefresh() {
+    resultHandlers.forEachLoggingErrors(LOG) { it.onAfterRefresh() }
   }
 
   companion object {
@@ -84,6 +92,11 @@ interface CommitterResultHandler : EventListener {
   fun onSuccess() {}
   fun onCancel() {}
   fun onFailure() {}
+
+  /**
+   * 'onFinally' that might be delayed until VFS/CLM refreshes are done.
+   */
+  fun onAfterRefresh() {}
 }
 
 class CommitResultHandlerNotifier(private val committer: Committer,

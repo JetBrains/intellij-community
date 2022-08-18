@@ -20,7 +20,8 @@ import org.jetbrains.annotations.Nls
 abstract class AbstractCommitter(
   project: Project,
   commitMessage: @NlsSafe String,
-  val commitContext: CommitContext
+  val commitContext: CommitContext,
+  private val useCustomPostRefresh: Boolean
 ) : Committer(project, commitMessage) {
 
   fun runCommit(taskName: @Nls String, sync: Boolean) {
@@ -54,7 +55,7 @@ abstract class AbstractCommitter(
         try {
           ProgressManager.getInstance().runProcess(
             {
-              runCommitTask {
+              runCommitTask(useCustomPostRefresh) {
                 commit()
               }
             }, indicator)
