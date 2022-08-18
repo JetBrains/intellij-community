@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.async.CancellingScopedDisposable
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -68,7 +69,10 @@ object GHPRStatisticsCollector {
 }
 
 @Service
-private class GHServerVersionsCollector(private val project: Project) : CancellingScopedDisposable() {
+private class GHServerVersionsCollector(private val project: Project) : Disposable {
+
+  private val scope = disposingScope()
+
   init {
     val accountsFlow = project.service<GHAccountManager>().createAccountsFlow(this)
     scope.launch {
@@ -94,4 +98,6 @@ private class GHServerVersionsCollector(private val project: Project) : Cancelli
       project.service<GHServerVersionsCollector>()
     }
   }
+
+  override fun dispose() = Unit
 }

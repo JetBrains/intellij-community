@@ -21,19 +21,17 @@ fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope =
   }
 
 @ApiStatus.Experimental
-interface ScopedDisposable : Disposable {
-  val scope: CoroutineScope
-}
+@Suppress("FunctionName")
+fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = SupervisorJob()): CoroutineScope =
+  CoroutineScope(context).also {
+    Disposer.register(parentDisposable) {
+      it.cancel()
+    }
+  }
 
 @ApiStatus.Experimental
-open class CancellingScopedDisposable(context: CoroutineContext = SupervisorJob()) : ScopedDisposable {
-
-  final override val scope: CoroutineScope = CoroutineScope(context)
-
-  override fun dispose() {
-    scope.cancel()
-  }
-}
+fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope =
+  DisposingScope(this, context)
 
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(scope: CoroutineScope,

@@ -21,7 +21,9 @@ abstract class MappingHostedGitRepositoriesManager<S : ServerPath, M : HostedGit
   private val logger: Logger,
   project: Project,
   serverDataSupplier: ServersDataSupplier<S>
-) : HostedGitRepositoriesManager<M>, CancellingScopedDisposable() {
+) : HostedGitRepositoriesManager<M>, Disposable {
+
+  protected val scope = disposingScope()
 
   final override val knownRepositoriesState: StateFlow<Set<M>>
 
@@ -47,6 +49,8 @@ abstract class MappingHostedGitRepositoriesManager<S : ServerPath, M : HostedGit
   }
 
   protected abstract fun createMapping(server: S, remote: GitRemoteUrlCoordinates): M?
+
+  override fun dispose() = Unit
 }
 
 interface ServersDataSupplier<S : ServerPath> : Disposable {
@@ -56,7 +60,9 @@ interface ServersDataSupplier<S : ServerPath> : Disposable {
 abstract class DiscoveringAuthenticatingServersStateSupplier<A : ServerAccount, S : ServerPath>(
   project: Project,
   private val defaultServer: S? = null
-) : ServersDataSupplier<S>, CancellingScopedDisposable() {
+) : ServersDataSupplier<S>, Disposable {
+
+  protected val scope = disposingScope()
 
   private val accountManager: AccountManager<out A, *> get() = accountManager()
   protected abstract fun accountManager(): AccountManager<out A, *>
@@ -113,6 +119,8 @@ abstract class DiscoveringAuthenticatingServersStateSupplier<A : ServerAccount, 
   protected abstract fun getServer(account: A): S
 
   protected abstract suspend fun checkForDedicatedServer(remote: GitRemoteUrlCoordinates): S?
+
+  override fun dispose() = Unit
 
   companion object {
     private const val URLS_CHECK_PARALLELISM = 10
