@@ -567,14 +567,7 @@ public abstract class DebuggerUtils {
     return ourPrimitiveTypeNames.contains(typeName);
   }
 
-  protected static class ArrayClass {
-    public String className;
-    public int dims;
-
-    public ArrayClass(String className, int dims) {
-      this.className = className;
-      this.dims = dims;
-    }
+  protected record ArrayClass(String className, int dims) {
   }
 
   public static DebuggerUtils getInstance() {
