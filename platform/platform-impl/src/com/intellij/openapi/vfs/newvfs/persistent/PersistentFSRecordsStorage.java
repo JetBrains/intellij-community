@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.ResizeableMappedFile;
@@ -18,20 +17,31 @@ import java.nio.file.Path;
 abstract class PersistentFSRecordsStorage {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
 
-  static boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
+  enum RecordsStorageKind {
+    REGULAR,
+    LOCK_FREE,
+    IN_MEMORY
+  }
+  //static final boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
+  static final RecordsStorageKind
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
   static int recordsLength() {
-    return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    //return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    return RECORDS_STORAGE_KIND == RecordsStorageKind.LOCK_FREE ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
   }
 
   static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
     ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
 
-    FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+    //FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+    FSRecords.LOG.info("using " + RECORDS_STORAGE_KIND + " storage for VFS records");
 
-    return useLockFreeRecordsStorage
-           ? new PersistentFSLockFreeRecordsStorage(resizeableMappedFile)
-           : new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+    return switch (RECORDS_STORAGE_KIND){
+      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(resizeableMappedFile);
+      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1<<24);
+    };
   }
 
   @VisibleForTesting

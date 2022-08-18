@@ -79,7 +79,7 @@ public final class FSRecords {
   }
 
   private static int calculateVersion() {
-    return nextMask(59 + (PersistentFSRecordsStorage.useLockFreeRecordsStorage ? 1 : 0),  // acceptable range is [0..255]
+    return nextMask(59 + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
                     nextMask(IOUtil.useNativeByteOrderForByteBuffers(),

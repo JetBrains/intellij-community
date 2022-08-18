@@ -10,6 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -44,8 +45,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @NotNull
-  protected abstract T openStorage(final File storageFile,
-                                   final int maxRecordsToInsert) throws IOException;
+  protected abstract T openStorage(final Path storageFile) throws IOException;
 
   @Test
   public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
