@@ -1197,5 +1197,33 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             return true
         }
     }
+    
+    fun checkResolveToSubstituteOverride(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class Box<T>(
+                  open val t: T
+                ) {
+                  fun foo(): T { return t }
+                }
+                
+                class SubBox(
+                  override val t: String
+                ) : Box<String>(t)
+                
+                fun box() {
+                  val b = SubBox("hi")
+                  b.fo<caret>o()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val foo = uCallExpression.resolve()
+            .orFail("cant resolve $uCallExpression")
+        // NB: the return type is not a substituted type, String, but the original one, T, since it's resolved to
+        // the original function Box#foo()T, not a fake overridden one in SubBox.
+        TestCase.assertEquals("PsiType:T", foo.returnType?.toString())
+    }
 
 }

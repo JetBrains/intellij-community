@@ -205,6 +205,12 @@ internal fun KtAnalysisSession.psiForUast(ktSymbol: KtSymbol, project: Project):
         KtSymbolOrigin.LIBRARY -> {
             findPsi(ktSymbol, project) ?: ktSymbol.psi
         }
+        KtSymbolOrigin.INTERSECTION_OVERRIDE,
+        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
+            (ktSymbol as? KtCallableSymbol)?.originalOverriddenSymbol?.let {
+                psiForUast(it, project)
+            }
+        }
         else -> ktSymbol.psi
     }
 }
