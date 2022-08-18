@@ -232,6 +232,8 @@
     <module name="kotlin.code-insight.intentions-k2"/>
     <module name="kotlin.code-insight.inspections-k2"/>
 
+    <module name="kotlin.refactorings.rename.k2"/>
+
     <module name="kotlin.navigation"/>
   </content>
 </idea-plugin>
