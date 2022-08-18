@@ -325,7 +325,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     SingleChangeListCommitter committer =
       new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), "Commit");
 
-    committer.addResultHandler(new CommitHandlersNotifier(singletonList(checkinHandler)));
+    committer.addResultHandler(new CommitHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
   }
 

@@ -67,9 +67,14 @@ class SingleChangeListCommitWorkflow(
     with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE) {
       override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
     }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(getCommitEventDispatcher(this))
+      if (resultHandler != null) {
+        addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
+      }
+      else {
+        addResultHandler(ShowNotificationCommitResultHandler(this))
+      }
 
       runCommit(DIALOG_TITLE, false)
     }
@@ -80,10 +85,16 @@ class SingleChangeListCommitWorkflow(
     val cleaner = DefaultNameChangeListCleaner(project, commitState)
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(CommitResultHandler { cleaner.clean() })
-      addResultHandler(getCommitCustomEventDispatcher())
-      resultHandler?.let { addResultHandler(it) }
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(object : CommitterResultHandler {
+        override fun onSuccess() {
+          cleaner.clean()
+        }
+      })
+      addResultHandler(getCommitCustomEventDispatcher(this))
+      if (resultHandler != null) {
+        addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
+      }
       addResultHandler(getEndExecutionHandler())
 
       runCommit(sessionInfo.executor.actionText)

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -10,19 +11,20 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.forEachLoggingErrors
+import java.util.*
 
 abstract class Committer(
   val project: Project,
   val commitMessage: @NlsSafe String,
 ) {
-  private val resultHandlers = mutableListOf<CommitResultHandler>()
+  private val resultHandlers = mutableListOf<CommitterResultHandler>()
 
   private val _exceptions = mutableListOf<VcsException>()
 
   val exceptions: List<VcsException> get() = _exceptions.toList()
   val commitErrors: List<VcsException> get() = collectErrors(_exceptions)
 
-  fun addResultHandler(resultHandler: CommitResultHandler) {
+  fun addResultHandler(resultHandler: CommitterResultHandler) {
     resultHandlers += resultHandler
   }
 
@@ -45,7 +47,9 @@ abstract class Committer(
       addException(e)
     }
     finally {
-      finishCommit(canceled)
+      runInEdt {
+        finishCommit(canceled)
+      }
     }
   }
 
@@ -58,11 +62,11 @@ abstract class Committer(
     }
     else if (errors.isEmpty()) {
       LOG.debug("Commit successful")
-      resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess() }
     }
     else {
       LOG.debug("Commit failed")
-      resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onFailure() }
     }
   }
 
@@ -73,5 +77,34 @@ abstract class Committer(
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 
     fun Throwable.asVcsException(): VcsException = if (this is VcsException) this else VcsException(this)
+  }
+}
+
+interface CommitterResultHandler : EventListener {
+  fun onSuccess() {}
+  fun onCancel() {}
+  fun onFailure() {}
+}
+
+class CommitResultHandlerNotifier(private val committer: Committer,
+                                  private val handlers: List<CommitResultHandler>) : CommitterResultHandler {
+  constructor(committer: Committer, handler: CommitResultHandler) : this(committer, listOf(handler))
+
+  override fun onSuccess() {
+    val commitMessage = committer.commitMessage
+    handlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
+  }
+
+  override fun onCancel() {
+    handlers.forEachLoggingErrors(LOG) { it.onCancel() }
+  }
+
+  override fun onFailure() {
+    val errors = committer.commitErrors
+    handlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
+  }
+
+  companion object {
+    private val LOG = logger<CommitResultHandlerNotifier>()
   }
 }

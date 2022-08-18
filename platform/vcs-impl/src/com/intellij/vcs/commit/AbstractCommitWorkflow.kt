@@ -3,7 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
@@ -154,14 +152,16 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     eventDispatcher.multicaster.executionEnded()
   }
 
-  protected fun getEndExecutionHandler(): CommitResultHandler = EndExecutionCommitResultHandler(this)
+  protected fun getEndExecutionHandler(): CommitterResultHandler = EndExecutionCommitResultHandler(this)
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
   fun addCommitListener(listener: CommitResultHandler, parent: Disposable) = commitEventDispatcher.addListener(listener, parent)
   fun addCommitCustomListener(listener: CommitResultHandler, parent: Disposable) = commitCustomEventDispatcher.addListener(listener, parent)
 
-  protected fun getCommitEventDispatcher(): CommitResultHandler = EdtCommitResultHandler(commitEventDispatcher.multicaster)
-  protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
+  protected fun getCommitEventDispatcher(committer: Committer): CommitterResultHandler =
+    CommitResultHandlerNotifier(committer, commitEventDispatcher.multicaster)
+  protected fun getCommitCustomEventDispatcher(committer: Committer): CommitterResultHandler =
+    CommitResultHandlerNotifier(committer, commitCustomEventDispatcher.multicaster)
 
   fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     fireBeforeCommitChecksStarted(sessionInfo)
@@ -293,19 +293,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 }
 
-class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
-  override fun onCancel() = runInEdt { handler.onCancel() }
-  override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }
-}
-
-private class EndExecutionCommitResultHandler(private val workflow: AbstractCommitWorkflow) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = endExecution()
+private class EndExecutionCommitResultHandler(private val workflow: AbstractCommitWorkflow) : CommitterResultHandler {
+  override fun onSuccess() = endExecution()
   override fun onCancel() = endExecution()
-  override fun onFailure(errors: List<VcsException>) = endExecution()
+  override fun onFailure() = endExecution()
 
   private fun endExecution() {
-    runInEdt { workflow.endExecution() }
+    workflow.endExecution()
   }
 }
 

@@ -47,8 +47,8 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
 
     val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
     with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(GitStageShowNotificationCommitResultHandler(this))
       addResultHandler(getEndExecutionHandler())
 

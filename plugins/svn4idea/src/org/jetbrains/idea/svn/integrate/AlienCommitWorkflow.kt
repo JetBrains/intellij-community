@@ -27,8 +27,8 @@ class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val
 
   private fun doCommit(commitState: ChangeListCommitState) {
     with(AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
       addResultHandler(getEndExecutionHandler())
 

@@ -45,8 +45,8 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
         super.afterRefreshChanges()
       }
     }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
 
       runCommit(VcsBundle.message("commit.changes"), false)
@@ -57,8 +57,8 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     sessionInfo as CommitSessionInfo.Custom
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitCustomEventDispatcher())
+      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(getCommitCustomEventDispatcher(this))
       addResultHandler(getEndExecutionHandler())
 
       runCommit(sessionInfo.executor.actionText)

@@ -24,6 +24,11 @@ open class SingleChangeListCommitter(
               localHistoryActionName: @Nls String,
               isDefaultChangeListFullyIncluded: Boolean) : this(project, commitState, commitContext, localHistoryActionName)
 
+  @Deprecated("Prefer using CommitterResultHandler")
+  fun addResultHandler(resultHandler: CommitResultHandler) {
+    addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
+  }
+
   private val changeList get() = commitState.changeList
 
   override fun afterRefreshChanges() {

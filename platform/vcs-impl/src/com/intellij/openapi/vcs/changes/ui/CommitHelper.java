@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * @deprecated use Committer directly
  */
@@ -43,8 +41,13 @@ public class CommitHelper {
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
     myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName);
 
-    myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
-    myCommitter.addResultHandler(notNull(resultHandler, new ShowNotificationCommitResultHandler(myCommitter)));
+    myCommitter.addResultHandler(new CommitHandlersNotifier(myCommitter, handlers));
+    if (resultHandler != null) {
+      myCommitter.addResultHandler(new CommitResultHandlerNotifier(myCommitter, resultHandler));
+    }
+    else {
+      myCommitter.addResultHandler(new ShowNotificationCommitResultHandler(myCommitter));
+    }
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.

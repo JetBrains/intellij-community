@@ -2,17 +2,23 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.containers.forEachLoggingErrors
 
 private val LOG = logger<CommitHandlersNotifier>()
 
-class CommitHandlersNotifier(private val handlers: List<CheckinHandler>) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = handlers.forEachLoggingErrors(LOG) { it.checkinSuccessful() }
+class CommitHandlersNotifier(private val committer: Committer,
+                             private val handlers: List<CheckinHandler>) : CommitterResultHandler {
+  override fun onSuccess() {
+    handlers.forEachLoggingErrors(LOG) { it.checkinSuccessful() }
+  }
 
-  override fun onCancel() = onFailure(emptyList())
+  override fun onCancel() {
+    onFailure()
+  }
 
-  override fun onFailure(errors: List<VcsException>) = handlers.forEachLoggingErrors(LOG) { it.checkinFailed(errors) }
+  override fun onFailure() {
+    val errors = committer.commitErrors
+    handlers.forEachLoggingErrors(LOG) { it.checkinFailed(errors) }
+  }
 }
