@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlEditorTest extends LightJavaCodeInsightTestCase {
   private String getTestFilePath(boolean isOriginal) {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;

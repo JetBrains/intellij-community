@@ -1,4 +1,4 @@
-// "Cast 2nd argument to 'char'" "true"
+// "Cast 2nd argument to 'char'" "true-preview"
 class a {
     private void test()  {}
     private void test(int i)  {}

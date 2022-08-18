@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
-  public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
+  private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
   static {
     boolean parallelCapable = registerAsParallelCapable();
@@ -67,11 +67,16 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.CoroutineContext",
       "kotlin.coroutines.CoroutineContext$Element",
       "kotlin.coroutines.CoroutineContext$Key",
+      "kotlin.Result",
+      "kotlin.Result$Failure",
       // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
       "kotlin.coroutines.AbstractCoroutineContextElement",
-      "kotlin.coroutines.AbstractCoroutineContextKey"
+      "kotlin.coroutines.AbstractCoroutineContextKey",
+      "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {
@@ -212,7 +217,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   /**
-   * See https://stackoverflow.com/a/5428795 about resolve flag.
+   * See <a href="https://stackoverflow.com/a/5428795">https://stackoverflow.com/a/5428795</a> about resolve flag.
    */
   @Override
   public @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
@@ -349,7 +354,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return result;
   }
 
-  private void collectClassLoaders(@NotNull Deque<ClassLoader> queue) {
+  private void collectClassLoaders(@NotNull Deque<? super ClassLoader> queue) {
     for (IdeaPluginDescriptorImpl parent : parents) {
       ClassLoader classLoader = parent.getPluginClassLoader();
       if (classLoader != null && classLoader != coreLoader) {
@@ -370,10 +375,23 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise, if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               (className.startsWith("kotlin.reflect.") &&
-                                                className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
-                                               KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+    return className.startsWith("kotlin.") &&
+           (className.startsWith("kotlin.jvm.functions.") ||
+            // Those are kotlin-reflect related classes but unfortunately, they are placed in kotlin-stdlib. Since we always
+            // want to load reflect from platform, we should force those classes with platform classloader as well
+            className.startsWith("kotlin.reflect.") ||
+            className.startsWith("kotlin.jvm.internal.CallableReference") ||
+            className.startsWith("kotlin.jvm.internal.ClassReference") ||
+            className.startsWith("kotlin.jvm.internal.FunInterfaceConstructorReference") ||
+            className.startsWith("kotlin.jvm.internal.FunctionReference") ||
+            className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
+            className.startsWith("kotlin.jvm.internal.PropertyReference") ||
+            className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
+            className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
+            className.equals("kotlin.jvm.internal.ReflectionFactory") ||
+            className.equals("kotlin.jvm.internal.Reflection") ||
+            KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Override
@@ -498,7 +516,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return doFindResource(name, f1, f2);
   }
 
-  private <T> @Nullable T doFindResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
+  private <T> @Nullable T doFindResource(String name, Function<? super Resource, ? extends T> f1, BiFunction<? super ClassLoader, ? super String, ? extends T> f2) {
     String canonicalPath = toCanonicalPath(name);
 
     Resource resource = classPath.findResource(canonicalPath);
@@ -589,10 +607,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   private static final class DeepEnumeration implements Enumeration<URL> {
-    private final @NotNull List<Enumeration<URL>> list;
+    private final @NotNull List<? extends Enumeration<URL>> list;
     private int myIndex;
 
-    DeepEnumeration(@NotNull List<Enumeration<URL>> enumerations) {
+    private DeepEnumeration(@NotNull List<? extends Enumeration<URL>> enumerations) {
       list = enumerations;
     }
 

@@ -8,9 +8,9 @@ allprojects {
         configure<KotlinPm20ProjectExtension> {
             mainAndTest {
                 jvm
-                val linuxX64 by fragments.creating(KotlinLinuxX64Variant::class)
-                val iosArm64 by fragments.creating(KotlinIosArm64Variant::class)
-                val iosX64 by fragments.creating(KotlinIosX64Variant::class)
+                val linuxX64 by fragments.creating(GradleKpmLinuxX64Variant::class)
+                val iosArm64 by fragments.creating(GradleKpmIosArm64Variant::class)
+                val iosX64 by fragments.creating(GradleKpmIosX64Variant::class)
 
                 val ios by fragments.creating {
                     iosArm64.refines(this)

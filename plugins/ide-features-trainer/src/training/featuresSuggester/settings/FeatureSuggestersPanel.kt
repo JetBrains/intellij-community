@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.settings
 
 import com.intellij.util.ui.JBUI
@@ -13,7 +14,7 @@ import javax.swing.border.EmptyBorder
 
 private typealias ActionListener = (ActionEvent) -> Unit
 
-@Suppress("MagicNumber", "DialogTitleCapitalization")
+@Suppress("MagicNumber")
 class FeatureSuggestersPanel(
   suggesterIdToName: Map<String, String>,
   private val settings: FeatureSuggesterSettings

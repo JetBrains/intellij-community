@@ -105,7 +105,7 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     return isEventSystemEnabled();
   }
 
-  default void performNonPhysically(Runnable runnable) {
+  default void performNonPhysically(@NotNull Runnable runnable) {
     synchronized (getLock()) {
       SingleRootInjectedFileViewProvider.disabledTemporarily.set(true);
       try {
@@ -141,10 +141,10 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
   @NotNull
   DocumentWindowImpl getDocument();
 
-  static InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
-                                         @NotNull VirtualFileWindowImpl file,
-                                         @NotNull DocumentWindowImpl window,
-                                         @NotNull Language language) {
+  static @NotNull InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
+                                                  @NotNull VirtualFileWindowImpl file,
+                                                  @NotNull DocumentWindowImpl window,
+                                                  @NotNull Language language) {
     AbstractFileViewProvider original = (AbstractFileViewProvider)manager.getFileManager().createFileViewProvider(file, false);
     return original instanceof TemplateLanguageFileViewProvider ?
              new MultipleRootsInjectedFileViewProvider.Template(manager, file, window, language, original) :

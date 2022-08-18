@@ -16,11 +16,6 @@ interface GHListLoader<T> : Disposable {
   @get:RequiresEdt
   val loadedData: List<T>
 
-  @get:Deprecated("Use loadedData", replaceWith = ReplaceWith("loadedData.isNotEmpty()"))
-  @get:ApiStatus.ScheduledForRemoval
-  @get:RequiresEdt
-  val hasLoadedItems: Boolean
-
   @RequiresEdt
   fun canLoadMore(): Boolean
 

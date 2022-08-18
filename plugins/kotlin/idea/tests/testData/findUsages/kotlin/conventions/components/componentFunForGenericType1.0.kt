@@ -11,3 +11,7 @@ fun f() = X<String>()
 fun test() {
     val (x, y) = f()
 }
+
+// FIR_COMPARISON
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+// IGNORE_FIR_LOG

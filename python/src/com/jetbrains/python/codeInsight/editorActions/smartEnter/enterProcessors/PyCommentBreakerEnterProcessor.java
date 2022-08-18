@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyCommentBreakerEnterProcessor implements EnterProcessor {

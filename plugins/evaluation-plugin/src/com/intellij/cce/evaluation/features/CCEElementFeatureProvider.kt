@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.util.idString
 
-@Suppress("UnstableApiUsage")
 class CCEElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "cce"
 

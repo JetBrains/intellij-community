@@ -459,17 +459,7 @@ NSString *getOverridePropertiesPath() {
         exit(-1);
     }
 
-    char *answer = strdup([jvmInfo[@"MainClass"] UTF8String]);
-
-    char *cur = answer;
-    while (*cur) {
-        if (*cur == '.') {
-            *cur = '/';
-        }
-        cur++;
-    }
-
-    return answer;
+    return [jvmInfo[@"MainClass"] UTF8String];
 }
 
 - (void)process_cwd {

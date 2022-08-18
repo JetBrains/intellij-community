@@ -1,4 +1,4 @@
-// "Replace with 'Files.newOutputStream'" "true"
+// "Replace with 'Files.newOutputStream()'" "true-preview"
 import java.io.*;
 
 class Foo {

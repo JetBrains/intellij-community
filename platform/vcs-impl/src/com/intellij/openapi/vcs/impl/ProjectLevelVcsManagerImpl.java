@@ -159,7 +159,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull VirtualFile file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -167,7 +167,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull FilePath file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable FilePath file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -629,7 +629,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       String vcsName = checker.getSupportedVcs().getName();
       checkedVcses.add(vcsName);
 
-      if (checker.isRoot(file.getPath())) {
+      if (checker.isRoot(file)) {
         return findVcsByName(vcsName);
       }
     }
@@ -937,6 +937,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
+      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
       getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 

@@ -30,6 +30,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
 
+  private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
@@ -139,9 +140,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       LinkController oldLinkController = listeners1.get(0);
       pane.removeMouseListener(oldLinkController);
       pane.removeMouseMotionListener(oldLinkController);
-      MouseExitSupportLinkController newLinkController = new MouseExitSupportLinkController();
-      pane.addMouseListener(newLinkController);
-      pane.addMouseMotionListener(newLinkController);
+      pane.addMouseListener(myLinkController);
+      pane.addMouseMotionListener(myLinkController);
     }
   }
 
@@ -157,6 +157,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public void deinstall(@NotNull JEditorPane c) {
+    c.removeMouseListener(myLinkController);
+    c.removeMouseMotionListener(myLinkController);
     c.removeHyperlinkListener(myHyperlinkListener);
     super.deinstall(c);
   }
@@ -171,7 +173,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8202529
+  // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
   private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {

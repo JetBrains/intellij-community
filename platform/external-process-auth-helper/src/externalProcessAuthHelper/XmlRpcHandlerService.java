@@ -95,7 +95,7 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
   @NotNull
   public UUID registerHandler(@NotNull T handler) {
     synchronized (HANDLERS_LOCK) {
-      XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+      XmlRpcServer xmlRpcServer = XmlRpcServer.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
         xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }

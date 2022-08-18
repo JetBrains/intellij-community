@@ -4,6 +4,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
@@ -23,9 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +49,7 @@ public class XmlTextExtractor extends TextExtractor {
   @Override
   protected @Nullable TextContent buildTextContent(@NotNull PsiElement element,
                                                    @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    IElementType type = PsiUtilCore.getElementType(element);
-    if (isText(type) && hasSuitableDialect(element)) {
+    if (isText(element) && hasSuitableDialect(element)) {
       var classifier = tagClassifier(element);
       PsiElement container = SyntaxTraverser.psiApi().parents(element)
         .find(e -> e instanceof XmlDocument || e instanceof XmlTag && classifier.apply((XmlTag)e) != TagKind.Inline);
@@ -62,6 +60,7 @@ public class XmlTextExtractor extends TextExtractor {
       }
     }
 
+    IElementType type = PsiUtilCore.getElementType(element);
     if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS) && hasSuitableDialect(element)) {
       return builder.build(element, COMMENTS);
     }
@@ -104,7 +103,7 @@ public class XmlTextExtractor extends TextExtractor {
           unknownBefore = true;
         }
 
-        if (isText(PsiUtilCore.getElementType(each))) {
+        if (isText(each)) {
           group.add(each);
         }
         super.visitElement(each);
@@ -118,7 +117,7 @@ public class XmlTextExtractor extends TextExtractor {
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
-          content = content.removeIndents(Set.of(' ', '\t')).trimWhitespace();
+          content = HtmlUtilsKt.nbspToSpace(content.removeIndents(Set.of(' ', '\t')));
           if (content != null) {
             for (PsiElement e : group) {
               result.put(e, content);
@@ -137,7 +136,15 @@ public class XmlTextExtractor extends TextExtractor {
     return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
   }
 
-  private static boolean isText(IElementType type) {
+  private static boolean isText(PsiElement leaf) {
+    PsiElement parent = leaf.getParent();
+    if (!(parent instanceof XmlText) &&
+        !(PsiUtilCore.getElementType(parent) == XmlElementType.XML_CDATA && parent.getParent() instanceof XmlText) &&
+        !(parent instanceof XmlDocument)) {
+      return false;
+    }
+
+    IElementType type = PsiUtilCore.getElementType(leaf);
     return type == XmlTokenType.XML_WHITE_SPACE || type == TokenType.WHITE_SPACE ||
            type == XmlTokenType.XML_CHAR_ENTITY_REF || type == XmlTokenType.XML_DATA_CHARACTERS;
   }

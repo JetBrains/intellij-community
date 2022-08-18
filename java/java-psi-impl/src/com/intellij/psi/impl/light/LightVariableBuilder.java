@@ -48,6 +48,15 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public String toString() {
     return "LightVariableBuilder:" + getName();
   }

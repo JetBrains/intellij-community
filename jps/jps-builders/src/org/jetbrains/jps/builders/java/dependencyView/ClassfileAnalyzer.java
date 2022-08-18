@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
- * @author: db
+ * @author db
  */
 final class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
@@ -724,7 +724,6 @@ final class ClassfileAnalyzer {
     }
 
     /**
-     * @param handle
      * @return corresponding field access opcode or -1 if the handle does not represent field access handle
      */
     private int getFieldAccessOpcode(Handle handle) {

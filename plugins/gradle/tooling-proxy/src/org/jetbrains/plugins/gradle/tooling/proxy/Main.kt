@@ -69,7 +69,7 @@ object Main {
       LOG.debug("operation result: $result")
       val adapted = maybeConvert(result)
       val bos = ByteArrayOutputStream()
-      var bytes = ByteArray(1);
+      var bytes = ByteArray(1)
       ObjectOutputStream(bos).use {
         it.writeObject(adapted)
         it.flush()

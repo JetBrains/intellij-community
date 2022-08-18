@@ -29,6 +29,8 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   @get:Attribute("active")
   override var isActiveOnStart by property(false)
 
+  override var toolWindowPaneId by string(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
@@ -123,7 +125,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   }
 
   override fun hashCode(): Int {
-    return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
+    return anchor.hashCode() + safeToolWindowPaneId.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
   override fun toString() = "id: $id, ${super.toString()}"

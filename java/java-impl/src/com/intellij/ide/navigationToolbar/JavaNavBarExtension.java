@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
@@ -28,7 +27,7 @@ import static com.intellij.psi.util.PsiFormatUtilBase.*;
  * @author anna
  */
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
-  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+  private final List<NodeProvider<?>> myNodeProviders = List.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
 
   @Nullable
   @Override

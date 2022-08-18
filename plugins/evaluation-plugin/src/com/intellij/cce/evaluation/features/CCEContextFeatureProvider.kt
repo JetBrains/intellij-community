@@ -1,7 +1,6 @@
-@file:Suppress("UnstableApiUsage")
-
 package com.intellij.cce.evaluation.features
 
+import com.intellij.cce.interpreter.Interpreter.Companion.CCE_SESSION_UID
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
@@ -11,7 +10,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.cce.interpreter.Interpreter.Companion.CCE_SESSION_UID
 import java.util.*
 
 class CCEContextFeatureProvider(private val logLocation: Boolean) : ContextFeatureProvider {

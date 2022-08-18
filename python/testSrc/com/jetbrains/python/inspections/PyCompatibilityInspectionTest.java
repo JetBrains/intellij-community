@@ -61,6 +61,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void testPrintStatement() {
     doTest();
   }
@@ -251,6 +256,16 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   // PY-41305
   public void testExpressionInDecorators() {
     doTest(LanguageLevel.PYTHON39);
+  }
+
+  // PY-53776
+  public void testStarExpressionInIndexes() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
+  // PY-53776
+  public void testStarExpressionInTypeAnnotation() {
+    doTest(LanguageLevel.PYTHON311);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

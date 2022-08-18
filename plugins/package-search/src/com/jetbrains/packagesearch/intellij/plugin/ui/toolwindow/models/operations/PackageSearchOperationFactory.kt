@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -69,7 +85,7 @@ internal class PackageSearchOperationFactory {
             .flatMap { usageInfo ->
                 createRemovePackageOperations(
                     packageModel = packageModel,
-                    version = usageInfo.version,
+                    version = usageInfo.declaredVersion,
                     scope = usageInfo.scope,
                     targetModules = TargetModules.from(moduleModel)
                 )
@@ -141,9 +157,9 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .flatMap { (module, usageInfo) ->
                 val packageOperation = PackageSearchOperation.Package.ChangeInstalled(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
-                    currentVersion = usageInfo.version,
+                    currentVersion = usageInfo.declaredVersion,
                     currentScope = usageInfo.scope,
                     newVersion = newVersion,
                     newScope = newScope
@@ -195,7 +211,7 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .map { (module, usageInfo) ->
                 PackageSearchOperation.Package.Remove(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
                     currentVersion = version,
                     currentScope = scope

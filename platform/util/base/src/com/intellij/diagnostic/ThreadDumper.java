@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,11 @@ public final class ThreadDumper {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines();
+    if (coroutineDump != null) {
+      writer.write("\n---------- Coroutine dump ----------\n");
+      writer.write(coroutineDump);
+    }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
@@ -56,6 +62,14 @@ public final class ThreadDumper {
     catch (Exception ignored) {
       threads = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE);
     }
+    int o = 0;
+    for (int i = 0; i < threads.length; i++) {
+      ThreadInfo info = threads[i];
+      if (info != null) {
+        threads[o++] = info;
+      }
+    }
+    threads = ArrayUtil.realloc(threads, o, ThreadInfo[]::new);
     if (sort) {
       sort(threads);
     }
@@ -87,7 +101,10 @@ public final class ThreadDumper {
     Arrays.sort(threads, Comparator
       .comparing((ThreadInfo threadInfo) -> !isEDT(threadInfo.getThreadName())) // show EDT first
       .thenComparing(threadInfo -> threadInfo.getThreadState() != Thread.State.RUNNABLE) // then all runnable
-      .thenComparingInt(threadInfo -> -threadInfo.getStackTrace().length) // show meaningful stacktraces first
+      .thenComparingInt(threadInfo -> {
+        StackTraceElement[] trace = threadInfo.getStackTrace();
+        return trace == null ? 0 : -trace.length;
+      }) // show meaningful stacktraces first
       .thenComparing(threadInfo -> threadInfo.getThreadName()) // sorted by name among same stacktraces
     );
     return threads;

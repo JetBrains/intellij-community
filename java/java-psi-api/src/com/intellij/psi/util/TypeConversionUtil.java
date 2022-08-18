@@ -254,7 +254,7 @@ public final class TypeConversionUtil {
     PsiManager manager = fromClass.getManager();
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     //  jep-397
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_16_PREVIEW)) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_17)) {
       if (fromClass.isInterface() || toClass.isInterface()) {
         if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
           if (!canConvertSealedTo(fromClass, toClass)) return false;
@@ -393,14 +393,14 @@ public final class TypeConversionUtil {
 
     sealedClass.getContainingFile().accept(new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         for (PsiClass psiClass : file.getClasses()) {
           visitClass(psiClass);
         }
       }
 
       @Override
-      public void visitClass(PsiClass psiClass) {
+      public void visitClass(@NotNull PsiClass psiClass) {
         for (PsiClass inner : psiClass.getInnerClasses()) {
           visitClass(inner);
         }

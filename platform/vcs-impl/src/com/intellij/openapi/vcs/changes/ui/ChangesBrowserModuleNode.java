@@ -14,7 +14,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
+public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> implements ChangesBrowserNode.NodeWithFilePath {
   @NotNull private final FilePath myModuleRoot;
 
   protected ChangesBrowserModuleNode(Module userObject) {
@@ -24,7 +24,10 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer,
+                     final boolean selected,
+                     final boolean expanded,
+                     final boolean hasFocus) {
     final Module module = (Module)userObject;
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -34,7 +37,8 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
     if (module.isDisposed()) {
       renderer.setIcon(ModuleType.EMPTY.getIcon());
-    } else {
+    }
+    else {
       renderer.setIcon(ModuleType.get(module).getIcon());
     }
   }
@@ -42,6 +46,11 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   @NotNull
   public FilePath getModuleRoot() {
     return myModuleRoot;
+  }
+
+  @Override
+  public @NotNull FilePath getNodeFilePath() {
+    return getModuleRoot();
   }
 
   @Override

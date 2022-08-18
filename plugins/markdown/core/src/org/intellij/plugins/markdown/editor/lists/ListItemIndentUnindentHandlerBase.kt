@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
@@ -40,20 +41,22 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     val firstLinesOfSelectedItems = getFirstLinesOfSelectedItems(caret, document, file)
 
     // use lines instead of items, because items may become invalid before used
+    var indentPerformed = false
     for (line in firstLinesOfSelectedItems) {
       psiDocumentManager.commitDocument(document)
       val item = file.getListItemAtLine(line, document)!!
-
-      if (!doIndentUnindent(item, file, document)) continue
-
-      psiDocumentManager.commitDocument(document)
-      run {
+      if (!doIndentUnindent(item, file, document)) {
+        continue
+      }
+      indentPerformed = true
+      if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+        psiDocumentManager.commitDocument(document)
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
         val item = file.getListItemAtLine(line, document)!!
         updateNumbering(item, file, document)
       }
     }
-    return firstLinesOfSelectedItems.isNotEmpty()
+    return firstLinesOfSelectedItems.isNotEmpty() && indentPerformed
   }
 
   private fun getFirstLinesOfSelectedItems(caret: Caret, document: Document, file: MarkdownFile): List<Int> {

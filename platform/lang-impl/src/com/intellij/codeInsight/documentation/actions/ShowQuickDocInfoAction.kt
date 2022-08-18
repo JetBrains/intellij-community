@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.codeInsight.documentation.actions
 
@@ -8,7 +7,7 @@ import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enab
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.lang.documentation.ide.actions.documentationTargets
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
@@ -20,7 +19,6 @@ open class ShowQuickDocInfoAction : AnAction(),
                                     ActionToIgnore,
                                     DumbAware,
                                     PopupAction,
-                                    UpdateInBackground,
                                     PerformWithDocumentsCommitted {
 
   init {
@@ -29,9 +27,11 @@ open class ShowQuickDocInfoAction : AnAction(),
     setInjectedContext(true)
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     if (isDocumentationV2Enabled()) {
-      e.presentation.isEnabled = documentationTargets(e.dataContext).isNotEmpty()
+      e.presentation.isEnabled = e.dataContext.getData(DOCUMENTATION_TARGETS)?.isNotEmpty() ?: false
       return
     }
     val presentation = e.presentation

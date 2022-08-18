@@ -48,7 +48,7 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
         assert resolve instanceof PsiField;
         DeprecationInspectionBase.checkDeprecated((PsiField)resolve, iconExpressionPsi, reference.getRangeInElement(), false,
                                                   false, true, false,
-                                                  holder, false, false, ProblemHighlightType.LIKE_DEPRECATED);
+                                                  holder, false, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }
     return holder.getResultsArray();

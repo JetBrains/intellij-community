@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.PlatformIcons;
@@ -36,6 +37,11 @@ public class GroupByLeavesAction extends AnAction {
                                 (myTreeBuilder.analysisInProgress
                                  ? " " + LangBundle.message("action.GroupByLeavesAction.analysis.in.progress.text") : ""));
     e.getPresentation().setEnabled(isAvailable());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean isAvailable() {

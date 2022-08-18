@@ -32,8 +32,7 @@ object PyReceiverMlCompletionFeatures {
   }
 
   private fun getReceivers(position: PsiElement, typeEvalContext: TypeEvalContext): List<PsiElement> {
-    val scope = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java, PyAssignmentStatement::class.java)
-    return when (scope) {
+    return when (val scope = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java, PyAssignmentStatement::class.java)) {
       is PyCallExpression -> getReceivers(position, scope, typeEvalContext)
       is PyAssignmentStatement -> getReceivers(position, scope)
       else -> emptyList()

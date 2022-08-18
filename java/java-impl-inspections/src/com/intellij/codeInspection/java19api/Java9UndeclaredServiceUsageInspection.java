@@ -24,7 +24,7 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
       return new JavaElementVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           checkMethodCall(expression, holder);
           super.visitMethodCallExpression(expression);
         }

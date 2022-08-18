@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ide.DataManager
@@ -20,14 +20,20 @@ internal open class DefaultPopupContext(
   private val editor: Editor?,
 ) : PopupContext {
 
-  private var myComponentReference: WeakReference<Component>? = null
-
   override fun preparePopup(builder: ComponentPopupBuilder) {
     builder.setRequestFocus(true)
     builder.setCancelOnClickOutside(true)
   }
 
-  private fun dataContext(popup: AbstractPopup): DataContext {
+  override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {}
+
+  override fun boundsHandler(): PopupBoundsHandler {
+    return DataContextPopupBoundsHandler(::dataContext)
+  }
+
+  private var myComponentReference: WeakReference<Component>? = null
+
+  private fun dataContext(): DataContext? {
     EDT.assertIsEdt()
     if (editor is EditorEx && editor.component.isShowing) {
       return editor.dataContext
@@ -41,23 +47,33 @@ internal open class DefaultPopupContext(
     else {
       componentReference.get()?.takeIf {
         it.isShowing
-      } ?: popup.component
+      }
+    }
+    if (component == null) {
+      return null
     }
     return DataManager.getInstance().getDataContext(component)
   }
+}
 
-  override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
-    val resized = popupUI.useStoredSize()
-    popupUI.updatePopup {
-      if (!resized.get()) {
-        resizePopup(popup)
-        yield()
-      }
-      popup.setLocation(popup.getBestPositionFor(dataContext(popup)))
-    }
+internal class DataContextPopupBoundsHandler(
+  private val dataContext: () -> DataContext?,
+) : PopupBoundsHandler {
+
+  private fun dataContext(popup: AbstractPopup): DataContext {
+    return dataContext()
+           ?: DataManager.getInstance().getDataContext(popup.component)
   }
 
   override fun showPopup(popup: AbstractPopup) {
     popup.showInBestPositionFor(dataContext(popup))
+  }
+
+  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
+    if (!resized) {
+      resizePopup(popup)
+      yield()
+    }
+    popup.setLocation(popup.getBestPositionFor(dataContext(popup)))
   }
 }

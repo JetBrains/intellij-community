@@ -40,7 +40,6 @@ abstract class AnnotationTestFixtureBase(
         }
     }
 
-    @Suppress("UnstableApiUsage")
     private fun enableBatchMode() {
         // Unfortunately, `DefaultHighlightVisitor` has package private visibility
         // so use reflection to create its instance

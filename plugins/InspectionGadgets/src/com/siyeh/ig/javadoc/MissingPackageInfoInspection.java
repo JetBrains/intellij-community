@@ -2,15 +2,20 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreatePackageInfoAction;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -21,6 +26,8 @@ import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
@@ -101,6 +108,13 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
                        new CreatePackageInfoAction().actionPerformed(event);
                      });
         }
+
+        @Override
+        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+          Icon icon = FileTypeRegistry.getInstance().getFileTypeByFileName("package-info.java").getIcon();
+          HtmlChunk fragment = HtmlChunk.fragment(HtmlChunk.text(getFamilyName()), HtmlChunk.icon("file", icon));
+          return new IntentionPreviewInfo.Html(fragment);
+        }
       };
     }
 
@@ -120,7 +134,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     public BaseInspectionVisitor buildVisitor() {
       return new BaseInspectionVisitor() {
         @Override
-        public void visitJavaFile(PsiJavaFile file) {
+        public void visitJavaFile(@NotNull PsiJavaFile file) {
           final PsiPackageStatement packageStatement = file.getPackageStatement();
           if (packageStatement == null) {
             return;

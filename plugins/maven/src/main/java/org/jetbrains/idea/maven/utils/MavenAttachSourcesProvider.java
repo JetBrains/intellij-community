@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -25,22 +25,25 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Stream;
 
-public class MavenAttachSourcesProvider implements AttachSourcesProvider {
-  @Override
-  @NotNull
-  public Collection<AttachSourcesAction> getActions(final List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
-    Collection<MavenProject> projects = getMavenProjects(psiFile);
-    if (projects.isEmpty()) return Collections.emptyList();
-    if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
+final class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
-    return Collections.singleton(new AttachSourcesAction() {
+  @Override
+  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                                       @NotNull PsiFile psiFile) {
+    Collection<? extends MavenProject> projects = getMavenProjects(psiFile);
+    if (projects.isEmpty()) return List.of();
+    if (findArtifacts(projects, orderEntries).isEmpty()) return List.of();
+
+    return List.of(new AttachSourcesAction() {
       @Override
       public String getName() {
         return MavenProjectBundle.message("maven.action.download.sources");
@@ -52,7 +55,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
       }
 
       @Override
-      public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
+      public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
         // may have been changed by this time...
         Collection<MavenProject> mavenProjects = getMavenProjects(psiFile);
         if (mavenProjects.isEmpty()) {
@@ -129,7 +132,8 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     return name.contains("-" + type.getDefaultClassifier()) && name.contains("." + type.getDefaultExtension());
   }
 
-  private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {
+  private static @NotNull Collection<MavenArtifact> findArtifacts(@NotNull Collection<? extends MavenProject> mavenProjects,
+                                                                  @NotNull List<? extends LibraryOrderEntry> orderEntries) {
     Collection<MavenArtifact> artifacts = new HashSet<>();
     for (MavenProject each : mavenProjects) {
       for (LibraryOrderEntry entry : orderEntries) {
@@ -142,7 +146,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     return artifacts;
   }
 
-  private static Collection<MavenProject> getMavenProjects(PsiFile psiFile) {
+  private static @NotNull Collection<MavenProject> getMavenProjects(@NotNull PsiFile psiFile) {
     Project project = psiFile.getProject();
     Collection<MavenProject> result = new ArrayList<>();
     for (OrderEntry each : ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {

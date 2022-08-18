@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.injection
 
@@ -30,8 +30,13 @@ import org.intellij.plugins.intelliLang.inject.config.Injection
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
+import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
+import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -41,19 +46,15 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
-import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
@@ -73,7 +74,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     )
 
     private fun getBaseInjection(ktHost: KtElement, support: LanguageInjectionSupport): Injection {
-        if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return absentKotlinInjection
+        if (!RootKindFilter.projectAndLibrarySources.matches(ktHost.containingFile.originalFile)) return absentKotlinInjection
 
         val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread }
         val kotlinCachedInjection = ktHost.cachedInjectionWithModification
@@ -116,7 +117,6 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return getBaseInjection(context, support).takeIf { it != absentKotlinInjection }
     }
 
-    @Suppress("FoldInitializerAndIfToElvis")
     private fun computeBaseInjection(
         ktHost: KtElement,
         support: LanguageInjectionSupport
@@ -410,12 +410,10 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     }
 
     private fun injectionInfoByAnnotation(annotated: Annotated): InjectionInfo? {
-        val injectAnnotation = annotated.annotations.findAnnotation(FqName(AnnotationUtil.LANGUAGE)) ?: return null
-
-        val languageId = injectAnnotation.argumentValue("value")?.safeAs<StringValue>()?.value ?: return null
-        val prefix = injectAnnotation.argumentValue("prefix")?.safeAs<StringValue>()?.value
-        val suffix = injectAnnotation.argumentValue("suffix")?.safeAs<StringValue>()?.value
-
+        val injectAnnotation = annotated.findAnnotation<LanguageAnnotation>() ?: return null
+        val languageId = injectAnnotation.getStringValue(LanguageAnnotation::value) ?: return null
+        val prefix = injectAnnotation.getStringValue(LanguageAnnotation::prefix)
+        val suffix = injectAnnotation.getStringValue(LanguageAnnotation::suffix)
         return InjectionInfo(languageId, prefix, suffix)
     }
 
@@ -433,7 +431,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return Configuration.getProjectInstance(project).advancedConfiguration.dfaOption == Configuration.DfaOption.OFF
     }
 
-    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo? {
+    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo {
         val id = AnnotationUtilEx.calcAnnotationValue(annotations, "value")
         val prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix")
         val suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix")
@@ -460,7 +458,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
     private fun getCallableShortName(annotationEntry: KtCallElement): String? {
         val referencedName = getNameReference(annotationEntry.calleeExpression)?.getReferencedName() ?: return null
-        return annotationEntry.containingKtFile.aliasImportMap()[referencedName].singleOrNull() ?: referencedName
+        return KotlinPsiHeuristics.unwrapImportAlias(annotationEntry.containingKtFile, referencedName).singleOrNull() ?: referencedName
     }
 
     private fun retrieveJavaPlaceTargetClassesFQNs(place: InjectionPlace): Collection<String> {

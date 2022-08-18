@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiElement elementAtStartLineEnd = psiFile.findElementAt(start);
     PsiElement elementAtNextLineStart = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
-    if (!(elementAtStartLineEnd instanceof PsiJavaToken) || ((PsiJavaToken)elementAtStartLineEnd).getTokenType() != JavaTokenType.LBRACE) {
+    if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.LBRACE)) {
       return -1;
     }
     final PsiElement codeBlock = elementAtStartLineEnd.getParent();
@@ -47,9 +48,7 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiElement foundStatement = null;
     for (PsiElement element = elementAtStartLineEnd.getNextSibling(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiWhiteSpace) continue;
-      if (element instanceof PsiJavaToken &&
-          ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE &&
-          element.getParent() == codeBlock) {
+      if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE) && element.getParent() == codeBlock) {
         if (foundStatement == null) return -1;
         break;
       }

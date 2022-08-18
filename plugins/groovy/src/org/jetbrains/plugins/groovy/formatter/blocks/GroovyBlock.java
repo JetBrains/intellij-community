@@ -51,6 +51,9 @@ public class GroovyBlock implements Block, ASTBlock {
 
   protected List<Block> mySubBlocks = null;
 
+  /**
+   * Consider using {@link FormattingContext#createBlock(ASTNode, Indent, Wrap)}
+   */
   public GroovyBlock(@NotNull final ASTNode node,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
@@ -90,7 +93,7 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Indent getIndent() {
     return myIndent;
   }

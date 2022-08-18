@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.inspections
 
@@ -22,22 +22,22 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
-import org.jetbrains.kotlin.idea.versions.MAVEN_STDLIB_ID
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.utils.PathUtil
 import java.util.*
 
 class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
-    companion object {
-        private val JVM_STDLIB_IDS = JvmIdePlatformKind.tooling
+    private object Holder {
+        val JVM_STDLIB_IDS = JvmIdePlatformKind.tooling
             .mavenLibraryIds.map { MavenId(KotlinMavenConfigurator.GROUP_ID, it, null) }
 
-        private val JS_STDLIB_MAVEN_ID = MavenId(KotlinMavenConfigurator.GROUP_ID, MAVEN_JS_STDLIB_ID, null)
+        val JS_STDLIB_MAVEN_ID = MavenId(KotlinMavenConfigurator.GROUP_ID, MAVEN_JS_STDLIB_ID, null)
     }
 
     override fun getStaticDescription() = KotlinMavenBundle.message("inspection.description")
@@ -118,19 +118,21 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
                     }
                 }
 
-                if (hasJvmExecution && pom.findDependencies(JVM_STDLIB_IDS).isEmpty()) {
-                    val stdlibDependencies = mavenProject.findDependencies(KotlinMavenConfigurator.GROUP_ID, MAVEN_STDLIB_ID)
+                if (hasJvmExecution && pom.findDependencies(Holder.JVM_STDLIB_IDS).isEmpty()) {
+                    val stdlibDependencies = mavenProject
+                        .findDependencies(KotlinMavenConfigurator.GROUP_ID, PathUtil.KOTLIN_JAVA_STDLIB_NAME)
+
                     if (stdlibDependencies.isEmpty()) {
                         holder.createProblem(
-                            kotlinPlugin.artifactId.createStableCopy(),
-                            HighlightSeverity.WARNING,
-                            KotlinMavenBundle.message("inspection.jvm.no.stdlib.dependency", MAVEN_STDLIB_ID),
-                            FixAddStdlibLocalFix(domFileElement.file, MAVEN_STDLIB_ID, kotlinPlugin.version.rawText)
+                          kotlinPlugin.artifactId.createStableCopy(),
+                          HighlightSeverity.WARNING,
+                          KotlinMavenBundle.message("inspection.jvm.no.stdlib.dependency", PathUtil.KOTLIN_JAVA_STDLIB_NAME),
+                          FixAddStdlibLocalFix(domFileElement.file, PathUtil.KOTLIN_JAVA_STDLIB_NAME, kotlinPlugin.version.rawText)
                         )
                     }
                 }
 
-                if (hasJsExecution && pom.findDependencies(JVM_STDLIB_IDS).isEmpty()) {
+                if (hasJsExecution && pom.findDependencies(Holder.JVM_STDLIB_IDS).isEmpty()) {
                     val jsDependencies = mavenProject.findDependencies(KotlinMavenConfigurator.GROUP_ID, MAVEN_JS_STDLIB_ID)
                     if (jsDependencies.isEmpty()) {
                         holder.createProblem(
@@ -144,7 +146,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
             }
         }
 
-        val jvmStdlibDependencies = pom.findDependencies(JVM_STDLIB_IDS)
+        val jvmStdlibDependencies = pom.findDependencies(Holder.JVM_STDLIB_IDS)
         if (!hasJvmExecution && jvmStdlibDependencies.isNotEmpty()) {
             jvmStdlibDependencies.forEach { dep ->
                 holder.createProblem(
@@ -156,7 +158,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
             }
         }
 
-        val stdlibJsDependencies = pom.findDependencies(JS_STDLIB_MAVEN_ID)
+        val stdlibJsDependencies = pom.findDependencies(Holder.JS_STDLIB_MAVEN_ID)
         if (!hasJsExecution && stdlibJsDependencies.isNotEmpty()) {
             stdlibJsDependencies.forEach { dep ->
                 holder.createProblem(

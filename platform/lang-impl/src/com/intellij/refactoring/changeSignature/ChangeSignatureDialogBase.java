@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -33,6 +34,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -49,6 +51,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -82,7 +85,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected final ParameterTableModel myParametersTableModel;
   protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
-  private final Alarm myUpdateSignatureAlarm = new Alarm();
+  private final Alarm myUpdateSignatureAlarm;
 
   protected VisibilityPanelBase<Visibility> myVisibilityPanel;
 
@@ -106,7 +109,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   @Nullable
-  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<Method>> callback);
+  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<? super Set<Method>> callback);
 
   @Nullable
   protected abstract @NlsContexts.DialogMessage String validateAndCommitData();
@@ -127,13 +130,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     setTitle(RefactoringBundle.message("changeSignature.refactoring.name"));
     init();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    doUpdateSignature();
-    Disposer.register(myDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myUpdateSignatureAlarm.cancelAllRequests();
-      }
-    });
+    myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
   }
 
   public void setParameterInfos(@NotNull List<? extends ParamInfo> parameterInfos) {
@@ -221,6 +218,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
       myNameField.addDocumentListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> myNameField.removeDocumentListener(mySignatureUpdater));
       myNameField.setPreferredWidth(200);
     }
     myNamePanel.add(nameLabel, BorderLayout.NORTH);
@@ -250,6 +248,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         myReturnTypeField.setPreferredWidth(200);
         myReturnTypeField.addDocumentListener(mySignatureUpdater);
+        Disposer.register(myDisposable, () -> myReturnTypeField.removeDocumentListener(mySignatureUpdater));
       }
       else {
         myReturnTypeField.setEnabled(false);
@@ -366,6 +365,11 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
           }
           chooser.get().show();
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       };
 
     final JPanel result = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
@@ -459,7 +463,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
         .addExtraAction(myPropagateParamChangesButton)
         .createPanel();
-      myParametersList.getTable().getModel().addTableModelListener(mySignatureUpdater);
+      TableModel tableModel = myParametersList.getTable().getModel();
+      tableModel.addTableModelListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> tableModel.removeTableModelListener(mySignatureUpdater));
       return buttonsPanel;
     }
     else {
@@ -472,6 +478,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       myPropagateParamChangesButton.setVisible(false);
 
       myParametersTableModel.addTableModelListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> myParametersTableModel.removeTableModelListener(mySignatureUpdater));
 
       customizeParametersTable(myParametersTable);
       return buttonsPanel;
@@ -588,6 +595,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = () -> {
+      if (myUpdateSignatureAlarm.isDisposed()) return;
       myUpdateSignatureAlarm.cancelAllRequests();
       myUpdateSignatureAlarm.addRequest(() -> {
         if (myProject.isDisposed()) return;
@@ -604,7 +612,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   private void doUpdateSignature() {
     LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
-    mySignatureArea.setSignature(calculateSignature());
+    ReadAction.nonBlocking(() -> calculateSignature())
+      .finishOnUiThread(ModalityState.current(), signature -> mySignatureArea.setSignature(signature))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   protected void updatePropagateButtons() {

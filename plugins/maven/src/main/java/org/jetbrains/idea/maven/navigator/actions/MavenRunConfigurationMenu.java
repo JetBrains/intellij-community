@@ -6,10 +6,7 @@ import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Constraints;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +54,11 @@ public final class MavenRunConfigurationMenu extends DefaultActionGroup implemen
     super.update(e);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static final class ExecuteMavenRunConfigurationAction extends AnAction {
     private final Executor myExecutor;
     private final boolean myEnabled;
@@ -79,6 +81,11 @@ public final class MavenRunConfigurationMenu extends DefaultActionGroup implemen
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

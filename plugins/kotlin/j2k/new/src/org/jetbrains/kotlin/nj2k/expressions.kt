@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.conversions.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
@@ -16,7 +21,10 @@ import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.nj2k.types.replaceJavaClassWithKotlinClassType
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.annotations.KOTLIN_THROWS_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -40,7 +48,7 @@ fun untilToExpression(
     rangeExpression(
         from,
         to,
-        "until",
+        if (from.psi?.isPossibleToUseRangeUntil(context = null) == true) "..<" else "until",
         conversionContext
     )
 
@@ -56,8 +64,8 @@ fun downToExpression(
         conversionContext
     )
 
-fun JKExpression.parenthesizeIfBinaryExpression() = when (this) {
-    is JKBinaryExpression -> JKParenthesizedExpression(this)
+fun JKExpression.parenthesizeIfCompoundExpression() = when (this) {
+    is JKIfElseExpression, is JKBinaryExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
@@ -250,7 +258,10 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                     element.literalType = JKClassLiteralExpression.ClassLiteralType.KOTLIN_CLASS
                 }
             is JKTypeElement ->
-                JKTypeElement(element.type.replaceJavaClassWithKotlinClassType(symbolProvider))
+                JKTypeElement(
+                    element.type.replaceJavaClassWithKotlinClassType(symbolProvider),
+                    element::annotationList.detached()
+                )
             else -> applyRecursive(element, ::handleAnnotationParameter)
         }
 
@@ -362,3 +373,11 @@ val JKTreeElement.identifier: JKSymbol?
 
 val JKClass.isObjectOrCompanionObject
     get() = classKind == JKClass.ClassKind.OBJECT || classKind == JKClass.ClassKind.COMPANION
+
+fun PsiElement.isPossibleToUseRangeUntil(context: Lazy<BindingContext>?): Boolean {
+    val annotationFqName = FqName("kotlin.ExperimentalStdlibApi")
+    val languageVersionSettings = languageVersionSettings
+    return languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator) &&
+            (annotationFqName.asString() in languageVersionSettings.getFlag(AnalysisFlags.optIn) ||
+                    context?.let { isOptInAllowed(annotationFqName, languageVersionSettings, it.value) } == true)
+}

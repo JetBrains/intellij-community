@@ -1,4 +1,4 @@
-// "Qualify the call with 'A.this'" "true"
+// "Qualify the call with 'A.this'" "true-preview"
 class A {
   class B {
     String name(String key) {

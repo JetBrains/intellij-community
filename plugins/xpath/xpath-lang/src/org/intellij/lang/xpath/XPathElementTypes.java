@@ -17,13 +17,10 @@ package org.intellij.lang.xpath;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public final class XPathElementTypes {
     public static final IElementType EMBEDDED_CONTENT = new IElementType("EMBEDDED_CONTENT", Language.findInstance(XPathLanguage.class));
-
-    public static final IFileElementType FILE = new IFileElementType("XPATH_FILE", XPathFileType.XPATH.getLanguage());
 
     public static final IElementType BINARY_EXPRESSION = new XPathElementType("BINARY_EXPRESSION");
     public static final IElementType PREFIX_EXPRESSION = new XPathElementType("PREFIX_EXPRESSION");

@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.ui.svg
 
@@ -97,14 +97,14 @@ class SvgCacheManager(dbFile: Path) {
                     imageBytes: ByteArray,
                     scale: Float,
                     isDark: Boolean,
-                    docSize: ImageLoader.Dimension2DDouble): Image? {
+                    docSize: ImageLoader.Dimension2DDouble?): Image? {
     val key = getCacheKey(themeDigest, imageBytes)
     val map = getMap(scale, isDark, scaleToMap, store, mapBuilder)
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      docSize.setSize((data.w / scale).toDouble(), (data.h / scale).toDouble())
+      docSize?.setSize((data.w / scale).toDouble(), (data.h / scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }

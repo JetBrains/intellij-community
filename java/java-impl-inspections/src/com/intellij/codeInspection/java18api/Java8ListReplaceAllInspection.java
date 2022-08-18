@@ -74,7 +74,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         super.visitForStatement(statement);
         PsiStatement body = statement.getBody();
         PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);

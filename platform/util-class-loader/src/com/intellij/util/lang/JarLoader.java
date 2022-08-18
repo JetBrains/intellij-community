@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
 final class JarLoader implements Loader {
-  public enum Attribute {
+  enum Attribute {
     SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, CLASS_PATH, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
   }
 
@@ -64,7 +64,7 @@ final class JarLoader implements Loader {
   }
 
   // Path.toUri is broken — do not use it
-  public static @NotNull URI fileToUri(@NotNull Path file) {
+  private static @NotNull URI fileToUri(@NotNull Path file) {
     String path = file.toString().replace(File.separatorChar, '/');
     if (!path.startsWith("/")) {
       path = '/' + path;

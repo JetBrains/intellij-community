@@ -13,16 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
-  private List<RefParameter> myParameters;
-  private boolean hasEmptyBody;
 
-  protected RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
+  RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);
   }
 
@@ -60,7 +57,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
       RefMethod resolvedRefMethod = ObjectUtils.tryCast(getRefManager().getReference(resolvedMethod), RefMethod.class);
       if (resolvedRefMethod != null) {
         resolvedRefMethod.addDerivedReference(this);
-        resolvedRefMethod.waitForInitialized();
+        resolvedRefMethod.initializeIfNeeded();
         RefClass refClass = resolvedRefMethod.getOwnerClass();
         if (refClass != null) {
           refClass.addDerivedReference(this);
@@ -79,7 +76,6 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         addReference(parameter, parameter.getPsiElement(), element, false, true, null);
       }
     }
-    getRefManager().fireBuildReferences(this);
   }
 
   @Override
@@ -97,7 +93,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   @Override
   public synchronized List<RefParameter> getParameters() {
     LOG.assertTrue(isInitialized());
-    return ObjectUtils.notNull(myParameters, Collections.emptyList());
+    return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class);
   }
 
   @Nullable
@@ -109,7 +105,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   @Override
   public synchronized boolean hasEmptyBody() {
     LOG.assertTrue(isInitialized());
-    return hasEmptyBody;
+    return checkFlag(RefMethodImpl.IS_BODY_EMPTY_MASK);
   }
 
   @Override
@@ -127,28 +123,22 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     assert element != null;
     UElement pDeclaration = UastUtils.getParentOfType(element, true, UMethod.class, UClass.class, ULambdaExpression.class, UField.class);
     if (pDeclaration != null) {
-      RefElement pDeclarationRef = getRefManager().getReference(KotlinPropertiesDetector.getPropertyElement(pDeclaration));
+      RefElement pDeclarationRef = getRefManager().getReference(pDeclaration.getSourcePsi());
       if (pDeclarationRef != null) {
         ((WritableRefEntity)pDeclarationRef).add(this);
       }
     }
   }
 
-  private void setParameters(@Nullable List<UParameter> parameters) {
-    if (ContainerUtil.isEmpty(parameters)) return;
+  private void setParameters(@NotNull List<UParameter> parameters) {
+    if (parameters.isEmpty()) return;
     UExpression element = getUastElement();
     assert element != null;
-    List<RefParameter> refParameters = new ArrayList<>(parameters.size());
     for (int i = 0; i < parameters.size(); i++) {
       UParameter param = parameters.get(i);
       if (param.getSourcePsi() != null) {
-        RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
-        if (refParameter == null) continue;
-        refParameters.add(refParameter);
+        getRefJavaManager().getParameterReference(param, i, this);
       }
-    }
-    synchronized (this) {
-      myParameters = refParameters;
     }
   }
 
@@ -163,9 +153,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         isEmptyBody = true;
       }
     }
-    synchronized (this) {
-      hasEmptyBody = isEmptyBody;
-    }
+    setFlag(isEmptyBody, RefMethodImpl.IS_BODY_EMPTY_MASK);
   }
 
   private static boolean checkIfOnlyCallsSuper(@NotNull UBlockExpression body, @Nullable PsiType type) {

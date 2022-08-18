@@ -6,6 +6,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
@@ -67,6 +68,10 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
     val component = event.getData(CONTEXT_COMPONENT)
     val editor = ComponentUtil.getParentOfType(SettingsEditor::class.java, component)
     event.presentation.isEnabledAndVisible = editor != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {

@@ -1,4 +1,4 @@
-package com.intellij.cce.report;
+package com.intellij.cce.report
 
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.workspace.info.FileErrorInfo

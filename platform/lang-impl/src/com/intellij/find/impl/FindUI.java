@@ -31,4 +31,6 @@ public interface FindUI {
   Disposable getDisposable();
 
   void saveSettings();
+
+  void closeIfPossible();
 }

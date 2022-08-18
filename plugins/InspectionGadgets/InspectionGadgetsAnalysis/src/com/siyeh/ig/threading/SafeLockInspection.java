@@ -131,7 +131,7 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
       final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       statement.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           super.visitExpression(expression);
           result.set(Boolean.FALSE);
           stopWalking();

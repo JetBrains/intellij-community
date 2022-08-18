@@ -64,6 +64,11 @@ public class PinActiveTabAction extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   protected Handler getHandler(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EditorWindow currentWindow = e.getData(EditorWindow.DATA_KEY);
@@ -146,8 +151,7 @@ public class PinActiveTabAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) file = window.getSelectedFile();
+    VirtualFile file = window.getSelectedFile();
     if (file != null && window.isFileOpen(file)) return file;
     return null;
   }

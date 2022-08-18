@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,15 @@ public class ReplaceWithTypePatternFix extends BaseIntentionAction {
     myExprToReplace = SmartPointerManager.createPointer(exprToReplace);
     myResolvedExprClass = SmartPointerManager.createPointer(resolvedExprClass);
     myPatternVarName = patternVarName;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiReferenceExpression exprToReplace = myExprToReplace.getElement();
+    PsiClass resolvedExprClass = myResolvedExprClass.getElement();
+    if (exprToReplace == null || resolvedExprClass == null) return null;
+    return new ReplaceWithTypePatternFix(PsiTreeUtil.findSameElementInCopy(exprToReplace, target),
+                                         resolvedExprClass, myPatternVarName);
   }
 
   @Override

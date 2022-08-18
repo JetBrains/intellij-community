@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.util
 
 class CollectionDelta<out T>(oldCollection: Collection<T>, val newCollection: Collection<T>) {
-  val newItems: Collection<T> = newCollection - oldCollection
-  val removedItems: Collection<T> = oldCollection - newCollection
+  val newItems: Collection<T> = newCollection - oldCollection.toSet()
+  val removedItems: Collection<T> = oldCollection - newCollection.toSet()
 
   val isEmpty = newItems.isEmpty() && removedItems.isEmpty()
 }

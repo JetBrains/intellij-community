@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CompletableDeferred
 import org.picocontainer.ComponentAdapter
 
 internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   override val implementationClassName: String,
                                   pluginDescriptor: PluginDescriptor,
                                   componentManager: ComponentManagerImpl,
-                                  implementationClass: Class<*>?) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
+                                  deferred: CompletableDeferred<Any>,
+                                  implementationClass: Class<*>?) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
   override fun getComponentKey() = componentKey
 
   override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
@@ -30,7 +31,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     }
   }
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
     try {
       val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
       if (instance is Disposable) {
@@ -52,8 +53,6 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
           })
         }
       }
-
-      componentManager.componentCreated(indicator)
       return instance
     }
     catch (t: Throwable) {

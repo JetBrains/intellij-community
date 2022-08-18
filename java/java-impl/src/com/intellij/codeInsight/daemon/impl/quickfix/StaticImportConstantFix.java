@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -31,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
+class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
   StaticImportConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(file, referenceElement);
   }
@@ -50,12 +39,17 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
                                                PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return generatePreview(file, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
+  }
+
   @NotNull
   @Override
-  protected List<PsiField> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    final Project project = myRef.getProject();
+  List<PsiField> getMembersToImport(boolean applicableOnly, int maxResults) {
+    Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    final PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
@@ -63,9 +57,9 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), searchMode) {
+    StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), maxResults) {
       @Override
-      protected boolean isApplicable(PsiField field, PsiElement place) {
+      protected boolean isApplicable(@NotNull PsiField field, @NotNull PsiElement place) {
         ProgressManager.checkCanceled();
         PsiType fieldType = field.getType();
         return isApplicableFor(fieldType);
@@ -77,8 +71,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myReferencePointer) {
       @NotNull
       @Override
       protected String getPopupTitle() {
@@ -89,26 +83,20 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Nullable
   @Override
-  protected PsiElement getElement() {
-    return myRef.getElement();
-  }
-
-  @Nullable
-  @Override
   protected PsiElement getQualifierExpression() {
-    final PsiJavaCodeReferenceElement element = myRef.getElement();
+    PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     return element != null ? element.getQualifier() : null;
   }
 
   @Nullable
   @Override
   protected PsiElement resolveRef() {
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
+    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return true;
   }
 }

@@ -630,7 +630,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
-  public void testSameArguments() { doTest(); }
   public void testMaxLoop() { doTest(); }
   public void testExplicitBoxing() { doTest(); }
   public void testBoxedBoolean() { doTest(); }
@@ -688,6 +687,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInferenceInPrivateOrLocalClass() { doTest(); }
   public void testArraysCopyOf() { doTest(); }
   public void testArrayNegativeSize() { doTest(); }
+  public void testArrayWriteFlush() { doTest(); }
   public void testPresizedList() { doTest(); }
   public void testCollectionToArray() { doTest(); }
   public void testStringToCharArray() { doTest(); }
@@ -698,6 +698,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxedDivisionComparison() { doTest(); }
   public void testUnknownComparedToNullable() { doTest(); }
   public void testCastInCatch() { doTest(); }
+  public void testFieldUpdateViaSetter() { doTest(); }
   public void testInitArrayInConstructor() { doTest(); }
   public void testGetterNullityAfterCheck() { doTest(); }
   public void testInferenceNullityMismatch() { doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
@@ -720,4 +721,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxingInConstructorArguments() { doTest(); }
   public void testBoxingInArrayDeclaration() { doTest(); }
   public void testNestedVersusSuper() { doTest(); }
+  public void testChangeFieldUsedInPureMethod() { doTest(); }
 }

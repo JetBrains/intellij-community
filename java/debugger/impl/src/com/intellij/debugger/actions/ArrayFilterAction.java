@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.render.ArrayFilterInplaceEditor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.ArrayUtil;
@@ -22,6 +23,11 @@ public abstract class ArrayFilterAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getFilterNode(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public static boolean isArrayFilter(TreeNode node) {

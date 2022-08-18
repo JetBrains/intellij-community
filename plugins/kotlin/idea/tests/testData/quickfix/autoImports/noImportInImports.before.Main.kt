@@ -1,8 +1,8 @@
 // "Import" "false"
 // ACTION: Create annotation 'SomeTest'
 // ACTION: Create class 'SomeTest'
-// ACTION: Create interface 'SomeTest'
 // ACTION: Create enum 'SomeTest'
+// ACTION: Create interface 'SomeTest'
 // ACTION: Create object 'SomeTest'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: SomeTest

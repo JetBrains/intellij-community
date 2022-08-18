@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.actions.documentationTargets
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalResolveLinkResult
@@ -45,6 +47,8 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   }
 
   private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
+  // separate scope is needed for the ability to cancel its children
+  private val popupScope: CoroutineScope = CoroutineScope(SupervisorJob(parent = cs.coroutineContext.job))
 
   override fun dispose() {
     cs.cancel()
@@ -64,10 +68,9 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       return
     }
 
-    val lookup = LookupManager.getActiveLookup(editor)
-    val quickSearchComponent = quickSearchComponent(project)
-
-    if (lookup == null && quickSearchComponent == null) {
+    val secondaryPopupContext = lookupPopupContext(editor)
+                                ?: quickSearchPopupContext(project)
+    if (secondaryPopupContext == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
         // Explicit invocation moves focus to a visible preview tab.
@@ -82,20 +85,15 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       }
     }
 
-    val targets = documentationTargets(dataContext)
-    val target = targets.firstOrNull() ?: return // TODO multiple targets
+    val targets = dataContext.getData(DOCUMENTATION_TARGETS)
+    val target = targets?.firstOrNull() ?: return // TODO multiple targets
 
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
-
-    val popupContext = when {
-      lookup != null -> LookupPopupContext(lookup)
-      quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
-      else -> DefaultPopupContext(project, editor)
-    }
-    cs.showDocumentation(request, popupContext)
+    val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
+    showDocumentation(request, popupContext)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -131,7 +129,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     }
   }
 
-  private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -143,11 +141,11 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (getPopup() != null) {
       return
     }
-    val browser = DocumentationBrowser.createBrowser(project, request)
-    val popup = createDocumentationPopup(project, browser, popupContext)
-    setPopup(popup)
-
-    showPopupLater(popup, browser, popupContext)
+    popupScope.coroutineContext.job.cancelChildren()
+    popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+      val popup = showDocumentationPopup(project, request, popupContext)
+      setPopup(popup)
+    }
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
@@ -203,9 +201,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (request == null) {
       return
     }
-    coroutineScope {
-      showDocumentation(request, LookupPopupContext(lookup))
-    }
+    showDocumentation(request, LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(

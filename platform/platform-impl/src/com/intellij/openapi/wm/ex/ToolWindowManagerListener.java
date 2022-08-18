@@ -37,6 +37,10 @@ public interface ToolWindowManagerListener extends EventListener {
     stateChanged();
   }
 
+  default void stateChanged(@NotNull ToolWindowManager toolWindowManager, @NotNull ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
+    stateChanged(toolWindowManager);
+  }
+
   /**
    * Invoked when tool window is shown.
    *
@@ -59,5 +63,11 @@ public interface ToolWindowManagerListener extends EventListener {
    */
   @Deprecated
   default void stateChanged() {
+  }
+
+  enum ToolWindowManagerEventType {
+    ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
+    SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
+    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, Resized
   }
 }

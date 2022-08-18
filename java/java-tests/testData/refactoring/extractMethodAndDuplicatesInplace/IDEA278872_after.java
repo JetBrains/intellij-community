@@ -8,7 +8,7 @@ class Test {
     }
 
     @NotNull
-    private String getString() {
+    private static String getString() {
         final String str = "atata";
         do {
           System.out.println();

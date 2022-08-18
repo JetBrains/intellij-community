@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.DataManager
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -276,6 +277,8 @@ class SingleLanguageInlayHintsSettingsPanel(
     updateWarningPanel()
     updateHints()
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun performCopy(dataContext: DataContext) {
     val selectedIndex = myProviderList.selectedIndex

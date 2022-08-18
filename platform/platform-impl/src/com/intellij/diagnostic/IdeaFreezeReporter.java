@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
@@ -31,7 +32,7 @@ import java.util.function.Function;
 final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
 
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 15 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 20; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   private static final String MESSAGE_FILE_NAME = ".message";
@@ -50,10 +51,6 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
-      throw ExtensionNotApplicableException.create();
-    }
-
     NonUrgentExecutor.getInstance().execute(() -> {
       app.getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
@@ -62,12 +59,26 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         }
       });
 
-      PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
-        try {
-          // report deadly freeze
-          File[] files = dir.listFiles();
-          if (files != null) {
-            if (duration > FREEZE_THRESHOLD) {
+      reportUnfinishedFreezes();
+    });
+
+    if (!DEBUG && PluginManagerCore.isRunningFromSources() || !isEnabled(app)) {
+      throw ExtensionNotApplicableException.create();
+    }
+  }
+
+  private static void reportUnfinishedFreezes() {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources()) return;
+
+    Application app = ApplicationManager.getApplication();
+    PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
+      try {
+        // report deadly freeze
+        File[] files = dir.listFiles();
+        if (files != null) {
+          if (duration > FREEZE_THRESHOLD) {
+            LifecycleUsageTriggerCollector.onDeadlockDetected();
+            if (isEnabled(app)) {
               List<Attachment> attachments = new ArrayList<>();
               String message = null;
               String appInfo = null;
@@ -107,13 +118,17 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                 report(event);
               }
             }
-            cleanup(dir);
           }
+          cleanup(dir);
         }
-        catch (IOException ignored) {
-        }
-      });
+      }
+      catch (IOException ignored) {
+      }
     });
+  }
+
+  private static boolean isEnabled(Application app) {
+    return app.isEAP() || app.isInternal() || Boolean.getBoolean("idea.force.freeze.reports");
   }
 
   static void setAppInfo(IdeaLoggingEvent event, String appInfo) {

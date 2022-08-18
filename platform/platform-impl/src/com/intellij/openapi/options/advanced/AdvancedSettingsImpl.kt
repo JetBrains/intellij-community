@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.advanced
 
 import com.intellij.BundleBase
@@ -25,10 +25,10 @@ import java.util.*
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   private var pluginDescriptor: PluginDescriptor? = null
 
-  val enumKlass: Class<Enum<*>>? by lazy {
+  val enumKlass: Class<out Enum<*>>? by lazy {
     @Suppress("UNCHECKED_CAST")
     if (enumClass.isNotBlank())
-      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<Enum<*>>
+      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<out Enum<*>>
     else
       null
   }
@@ -181,7 +181,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
                      ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
-    return DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+    return DynamicBundle.getResourceBundle(classLoader, bundleName)
   }
 
   val serviceInstance: Any? by lazy {

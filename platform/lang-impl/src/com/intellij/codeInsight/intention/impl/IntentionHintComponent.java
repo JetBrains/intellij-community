@@ -37,7 +37,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
@@ -49,6 +48,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,16 +219,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @NotNull
   private static Icon getIcon(CachedIntentions cachedIntentions) {
-    boolean showRefactoringsBulb = ContainerUtil.exists(cachedIntentions.getInspectionFixes(),
-                                                        descriptor -> IntentionActionDelegate
-                                                          .unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction);
-    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(cachedIntentions.getErrorFixes(),
-                                                                    descriptor -> IntentionManagerSettings.getInstance()
-                                                                      .isShowLightBulb(descriptor.getAction()));
+    boolean showFix = ContainerUtil.exists(cachedIntentions.getErrorFixes(),
+                                           descriptor -> IntentionManagerSettings.getInstance()
+                                             .isShowLightBulb(descriptor.getAction()));
 
-    return showRefactoringsBulb
-           ? AllIcons.Actions.RefactoringBulb
-           : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
+    return showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
   }
 
   @NotNull
@@ -327,23 +322,22 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
 
-      realPoint = new Point(- (AllIcons.Actions.RealIntentionBulb.getIconWidth() / 2) - 4, - (AllIcons.Actions.RealIntentionBulb
-                                                                                                .getIconHeight() / 2));
+      realPoint = new Point(- (EmptyIcon.ICON_16.getIconWidth() / 2) - 4, - (EmptyIcon.ICON_16.getIconHeight() / 2));
     }
     else {
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       if (position.y < visibleArea.y || position.y >= visibleArea.y + visibleArea.height) return null;
 
       // try to place bulb on the same line
-      int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
+      int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(NORMAL_BORDER_SIZE + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+        yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
       }
       else if (position.y < visibleArea.y + editor.getLineHeight()) {
         yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
-      int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
+      int xShift = EmptyIcon.ICON_16.getIconWidth();
 
       realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
     }
@@ -362,7 +356,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
     Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
+    return point.x > EmptyIcon.ICON_16.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
   }
 
   private IntentionHintComponent(@NotNull Project project,
@@ -645,24 +639,24 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         boolean shouldShow = !processor.isShown();
         EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
         if (shouldShow) {
+          processor.activate();
           showPreview(that);
         }
         else {
           processor.hide();
-          advertisePopup(that, true);
         }
       }
     };
     ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview",
                                                    KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
-    advertisePopup(that, true);
+    advertisePopup(that);
   }
 
-  private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
+  private static void advertisePopup(@NotNull IntentionPopup that) {
     ListPopup popup = that.myListPopup;
     if (!popup.isDisposed()) {
       popup.setAdText(CodeInsightBundle.message(
-        show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+        "intention.preview.adv.toggle.text",
         IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
     }
   }
@@ -677,7 +671,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
       }
     }
-    advertisePopup(that, false);
   }
 
   private static final class MyComponentHint extends LightweightHint {

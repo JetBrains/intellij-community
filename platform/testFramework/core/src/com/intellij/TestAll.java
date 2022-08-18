@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -14,6 +16,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +35,11 @@ import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.TestCaseLoader.*;
 
@@ -126,6 +128,51 @@ public class TestAll implements Test {
   }
 
   public static List<Path> getClassRoots() {
+    return TeamCityLogger.block("Collecting tests from ...", () -> {
+      return doGetClassRoots();
+    });
+  }
+
+  private static List<Path> doGetClassRoots() {
+    String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
+    if (jarsToRunTestsFrom != null) {
+      String[] jars = jarsToRunTestsFrom.split(";");
+      List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
+      List<Path> testPaths = Arrays.stream(jars)
+        .map(jarName -> {
+               List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
+               if (resultJars.size() != 1) {
+                 String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+                 throw new IllegalStateException(
+                   (resultJars.isEmpty() ? "Cannot find " : "More than one ") + jarName + " in " + classpathPretty
+                 );
+               }
+
+               return resultJars.get(0);
+             }
+        )
+        .map(Path::normalize)
+        .map(jar -> {
+          try {
+            if (!Files.exists(jar)) {
+              throw new IllegalStateException(jar + " doesn't exist");
+            }
+
+            String jarNameWithoutExtension = StringUtil.substringBefore(jar.getFileName().toString(), ".");
+            Path out = Paths.get(PathManager.getHomePath(), "out", "jar-dependencies-to-test", jarNameWithoutExtension);
+            new Decompressor.Zip(jar).extract(out);
+            return out;
+          }
+          catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .collect(Collectors.toList());
+
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests property: " + testPaths);
+      return testPaths;
+    }
+
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
@@ -408,7 +455,7 @@ public class TestAll implements Test {
       JUnit4TestAdapterCache cache;
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         try {
-          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5Runner")
+          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
                 .getMethod("createJUnit4TestAdapterCache")
                 .invoke(null);
         }
@@ -459,5 +506,10 @@ public class TestAll implements Test {
       String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
       fail("Bomb created by " + myBombed.user() + description + " now explodes!");
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
   }
 }

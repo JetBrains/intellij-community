@@ -17,13 +17,9 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement> extends AutomaticUsageRenamer<T> {
   private static final Logger LOG = Logger.getInstance(PsiNamedElementAutomaticRenamer.class);
 
@@ -37,29 +33,14 @@ public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement>
   }
 
   @Override
-  protected void doRenameElement(final T t) throws IncorrectOperationException {
-    t.setName(getNewElementName(t));
-  }
-
-  @Override
   protected String suggestName(T element) {
     String elementName = getName(element);
     final NameSuggester suggester = new NameSuggester(getOldName(), getNewName());
-    String canonicalName = nameToCanonicalName(elementName, element);
-    final String newCanonicalName = suggester.suggestName(canonicalName);
+    final String newCanonicalName = suggester.suggestName(elementName);
     if (newCanonicalName.length() == 0) {
       LOG.error("oldName = " + getOldName() + ", newName = " + getNewName() + ", name = " + elementName + ", canonicalName = " +
-                canonicalName + ", newCanonicalName = " + newCanonicalName);
+                elementName + ", newCanonicalName = " + newCanonicalName);
     }
-    return canonicalNameToName(newCanonicalName, element);
+    return newCanonicalName;
   }
-
-  protected String canonicalNameToName(String canonicalName, T element) {
-    return canonicalName;
-  }
-
-  protected String nameToCanonicalName(String name, T element) {
-    return name;
-  }
-
 }

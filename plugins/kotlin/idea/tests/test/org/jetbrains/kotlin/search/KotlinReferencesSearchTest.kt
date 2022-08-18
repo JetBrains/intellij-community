@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.search
 
@@ -10,11 +10,11 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -57,7 +57,7 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
     private val myFixtureProxy: JavaCodeInsightTestFixture get() = myFixture
 
     private inline fun <reified T : PsiElement> doTest(): List<PsiReference> {
-        val psiFile = myFixtureProxy.configureByFile(testDataFile())
+        val psiFile = myFixtureProxy.configureByFile(dataFile())
         val func = myFixtureProxy.elementAtCaret.getParentOfType<T>(false)!!
         val refs = ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset }
 

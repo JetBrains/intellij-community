@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import org.gradle.tooling.model.idea.IdeaModule
@@ -21,10 +21,10 @@ abstract class CompilerArgumentsCacheMergeManager {
 
 object KotlinCompilerArgumentsCacheMergeManager : CompilerArgumentsCacheMergeManager() {
     override fun doCollectCacheAware(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext): CompilerArgumentsCacheAware? =
-        resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.partialCacheAware
+        resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.cacheAware
 }
 
 object KotlinMPPCompilerArgumentsCacheMergeManager : CompilerArgumentsCacheMergeManager() {
     override fun doCollectCacheAware(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext): CompilerArgumentsCacheAware? =
-        resolverCtx.getMppModel(gradleModule)?.partialCacheAware
+        resolverCtx.getMppModel(gradleModule)?.cacheAware
 }

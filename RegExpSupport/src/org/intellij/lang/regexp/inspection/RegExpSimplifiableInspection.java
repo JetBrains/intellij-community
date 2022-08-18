@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public class RegExpSimplifiableInspection extends LocalInspectionTool {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new RegExpSimplifiableVisitor(holder);
   }
 
@@ -28,7 +27,6 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
     private final ProblemsHolder myHolder;
 
     RegExpSimplifiableVisitor(@NotNull ProblemsHolder holder) {
-      super();
       myHolder = holder;
     }
 
@@ -58,51 +56,16 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
               registerProblem(regExpClass, text);
             }
           }
-          else if (isDigitRange(element)) {
-            // [^0-9] -> \D
-            registerProblem(regExpClass, "\\D");
-          }
-        }
-        else {
-          if (isWordCharClassExpression(elements)) {
-            // [^0-9a-zA-Z_] -> \W
-            registerProblem(regExpClass, "\\W");
-            return;
-          }
-          for (RegExpClassElement element : elements) {
-            if (isDigitRange(element)) {
-              // [^0-9abc] ->  [^\dabc]
-              registerProblem(element, "\\d");
-            }
-          }
         }
       }
       else {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
+          if (element instanceof RegExpPosixBracketExpression) return;
           if (!(element instanceof RegExpCharRange)) {
             if (!(element instanceof RegExpChar) || !"{}().*+?|$".contains(element.getText())) {
               // [a] -> a
               registerProblem(regExpClass, element.getUnescapedText());
-            }
-          }
-          else {
-            if (isDigitRange(element)) {
-              // [0-9] -> \d
-              registerProblem(regExpClass, "\\d");
-            }
-          }
-        }
-        else {
-          if (isWordCharClassExpression(elements)) {
-            // [0-9a-zA-Z_] -> \w
-            registerProblem(regExpClass, "\\w");
-            return;
-          }
-          for (RegExpClassElement element : elements) {
-            // [0-9abc] -> [\dabc]
-            if (isDigitRange(element)) {
-              registerProblem(element, "\\d");
             }
           }
         }
@@ -118,7 +81,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       }
       PsiElement sibling = closure.getPrevSibling();
       RegExpAtom atom = closure.getAtom();
-      if (sibling instanceof RegExpElement && atom.getClass() == sibling.getClass() && sibling.textMatches(atom) && !containsGroup(atom)) {
+        if (sibling instanceof RegExpElement && atom.getClass() == sibling.getClass() && sibling.textMatches(atom) && !containsGroup(atom)) {
         final String text = atom.getUnescapedText() + '+';
         myHolder.registerProblem(closure.getParent(),
                                  TextRange.from(sibling.getStartOffsetInParent(), sibling.getTextLength() + closure.getTextLength()),
@@ -188,60 +151,6 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
 
     private static boolean containsGroup(RegExpAtom atom) {
       return atom instanceof RegExpGroup || PsiTreeUtil.findChildOfType(atom, RegExpGroup.class) != null;
-    }
-
-    private static boolean isDigitRange(RegExpElement element) {
-      if (!(element instanceof RegExpCharRange)) {
-        return false;
-      }
-      final RegExpCharRange charRange = (RegExpCharRange)element;
-      final RegExpChar from = charRange.getFrom();
-      final RegExpChar to = charRange.getTo();
-      return from.getValue() == '0' && to != null && to.getValue() == '9';
-    }
-
-    private static boolean isWordCharClassExpression(RegExpClassElement[] elements) {
-      if (elements.length != 4) {
-        return false;
-      }
-      boolean lowerCaseChars = false;
-      boolean upperCaseChars = false;
-      boolean digits = false;
-      boolean underscore = false;
-      for (RegExpClassElement element : elements) {
-        if (element instanceof RegExpChar) {
-          final RegExpChar aChar = (RegExpChar)element;
-          if (aChar.getValue() == '_') {
-            underscore = true;
-          }
-        }
-        else if (element instanceof RegExpSimpleClass) {
-          final RegExpSimpleClass simpleClass = (RegExpSimpleClass)element;
-          if (simpleClass.getKind() == RegExpSimpleClass.Kind.DIGIT) {
-            digits = true;
-          }
-        }
-        else if (element instanceof RegExpCharRange) {
-          final RegExpCharRange range = (RegExpCharRange)element;
-          final RegExpChar from = range.getFrom();
-          final RegExpChar to = range.getTo();
-          if (to == null) {
-            break;
-          }
-          final int fromValue = from.getValue();
-          final int toValue = to.getValue();
-          if (fromValue == '0' && toValue == '9') {
-            digits = true;
-          }
-          else if (fromValue == 'A' && toValue == 'Z') {
-            upperCaseChars = true;
-          }
-          else if (fromValue == 'a' && toValue == 'z') {
-            lowerCaseChars = true;
-          }
-        }
-      }
-      return underscore && digits && lowerCaseChars && upperCaseChars;
     }
 
     private static String getInverseSimpleClassText(RegExpSimpleClass simpleClass) {

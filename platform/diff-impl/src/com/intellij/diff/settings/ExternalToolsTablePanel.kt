@@ -2,55 +2,45 @@
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
-import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolConfiguration
+import com.intellij.diff.tools.external.ExternalDiffSettings.*
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ComboBoxTableRenderer
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.Component
+import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JList
 import javax.swing.JTable
+import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
-internal class ExternalToolsTablePanel : BorderLayoutPanel() {
-  private val columnInfos = arrayOf(FileTypeColumn(), ExternalDiffToolColumn(), ExternalMergeToolColumn())
+internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+  val component: JComponent
 
-  val model: ListTableModel<ExternalToolConfiguration> = ListTableModel<ExternalToolConfiguration>(columnInfos, mutableListOf(), 0)
-
+  private val model: ListTableModel<ExternalToolConfiguration> = models.tableModel
   private val table: TableView<ExternalToolConfiguration> = TableView(model).apply {
     visibleRowCount = 8
-    addMouseListener(object : MouseAdapter() {
-      override fun mousePressed(mouseEvent: MouseEvent) {
-        if (mouseEvent.clickCount == 2 && selectedRow != -1) {
-          editData()
-        }
-      }
-    })
-  }
+    rowSelectionAllowed = false
+    tableHeader.reorderingAllowed = false
 
-  val component: JComponent
+    setExpandableItemsEnabled(false)
+  }
 
   init {
     val toolbarTable = ToolbarDecorator.createDecorator(table)
       .setAddAction { addData() }
       .setRemoveAction { removeData() }
-      .setEditAction { editData() }
       .disableUpDownActions()
       .createPanel()
 
@@ -79,15 +69,16 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
 
   fun onReset(settings: ExternalDiffSettings) {
     repeat(model.items.size) { model.removeRow(0) }
-    model.addRow(settings.defaultToolConfiguration)
-    model.addRows(settings.externalToolsConfiguration)
+    model.addRow(settings.defaultToolConfiguration.copy())
+    model.addRows(settings.externalToolsConfiguration.map { it.copy() })
   }
 
   private fun addData() {
-    val dialog = AddToolConfigurationDialog()
-    if (dialog.showAndGet()) {
-      model.addRow(dialog.createExternalToolConfiguration())
-    }
+    val fileTypes = FileTypeManager.getInstance().registeredFileTypes.map { it.name }.toSet()
+    val configuredFileTypes = models.tableModel.items.map { it.fileTypeName }.toSet()
+    val availableFileTypes = fileTypes - configuredFileTypes
+
+    model.addRow(ExternalToolConfiguration(availableFileTypes.first()))
   }
 
   private fun removeData() {
@@ -102,212 +93,107 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
     }
   }
 
-  private fun editData() {
-    val selectedRow = table.selectedRow
-    val selectedToolConfiguration = model.getItem(selectedRow)
-    val dialog = AddToolConfigurationDialog(selectedToolConfiguration)
-
-    if (dialog.showAndGet()) {
-      val toolConfiguration = dialog.createExternalToolConfiguration()
-
-      model.removeRow(selectedRow)
-      model.insertRow(selectedRow, toolConfiguration)
-    }
-  }
-
-  private class FileTypeColumn : ColumnInfo<ExternalToolConfiguration, String>(
+  class FileTypeColumn(private val models: ExternalToolsModels) : ColumnInfo<ExternalToolConfiguration, String>(
     DiffBundle.message("settings.external.diff.table.filetype.column")
   ) {
+
     override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String {
       return externalToolConfiguration.fileTypeName
     }
 
-    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer {
-      return object : ColoredTableCellRenderer() {
-        override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-          if (item.fileTypeName == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
-            append(DiffBundle.message("settings.external.diff.table.default.tool.name"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-            return
+    override fun setValue(item: ExternalToolConfiguration, value: String) {
+      item.fileTypeName = value
+    }
+
+    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor = createComboBoxRendererAndEditor()
+
+    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer = createComboBoxRendererAndEditor()
+
+    override fun isCellEditable(item: ExternalToolConfiguration): Boolean = true
+
+    private fun createComboBoxRendererAndEditor(): ComboBoxTableRenderer<String> {
+      val fileTypes = FileTypeManager.getInstance().registeredFileTypes.map { it.name }.toSet()
+      val configuredFileTypes = models.tableModel.items.map { it.fileTypeName }.toSet()
+      val availableFileTypes = fileTypes - configuredFileTypes
+
+      return FileTypeCellComboBox(availableFileTypes.toTypedArray()).withClickCount(1)
+    }
+
+    private class FileTypeCellComboBox(values: Array<String>) : ComboBoxTableRenderer<String>(values) {
+      private val fileTypes = FileTypeManager.getInstance().registeredFileTypes.associateBy { type -> type.name }
+
+      override fun getTextFor(value: String): String {
+        // renderer for DEFAULT_TOOL_NAME is overridden
+        return fileTypes[value]?.displayName
+               ?: DiffBundle.message("settings.external.diff.comboBox.value.unknown.filetype.text", value)
+      }
+
+      override fun getTableCellRendererComponent(table: JTable, value: Any,
+                                                 isSelected: Boolean, hasFocus: Boolean,
+                                                 row: Int, column: Int): Component {
+        if ((value as String) == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
+          return SimpleColoredComponent().apply {
+            append(value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
           }
-
-          val fileTypeManager = FileTypeManager.getInstance()
-          val fileType = fileTypeManager.findFileTypeByName(item.fileTypeName)
-
-          icon = fileType.icon
-          append(fileType.description)
         }
+
+        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
       }
+
+      override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component? {
+        if ((value as String) == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
+          return null
+        }
+
+        return super.getTableCellEditorComponent(table, value, isSelected, row, column)
+      }
+
+      override fun getIconFor(value: String): Icon? = fileTypes[value]?.icon
     }
   }
 
-  private class ExternalDiffToolColumn : ColumnInfo<ExternalToolConfiguration, String>(
-    DiffBundle.message("settings.external.diff.table.difftool.column")
-  ) {
-    override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String {
-      return externalToolConfiguration.diffToolName
+  class ExternalToolColumn(
+    private val externalToolGroup: ExternalToolGroup,
+    private val treeModel: DefaultTreeModel,
+    @NlsContexts.ColumnName columnMessage: String
+  ) : ColumnInfo<ExternalToolConfiguration, String>(columnMessage) {
+    override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String = when (externalToolGroup) {
+      ExternalToolGroup.DIFF_TOOL -> externalToolConfiguration.diffToolName
+      ExternalToolGroup.MERGE_TOOL -> externalToolConfiguration.mergeToolName
     }
 
-    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer {
-      return ToolCellRenderer(item.diffToolName)
-    }
-  }
-
-  private class ExternalMergeToolColumn : ColumnInfo<ExternalToolConfiguration, String>(
-    DiffBundle.message("settings.external.diff.table.mergetool.column")
-  ) {
-    override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String {
-      return externalToolConfiguration.mergeToolName
-    }
-
-    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer {
-      return ToolCellRenderer(item.mergeToolName)
-    }
-  }
-
-  private class ToolCellRenderer(private val toolName: String) : ColoredTableCellRenderer() {
-    override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (toolName == ExternalToolConfiguration.BUILTIN_TOOL) {
-        append(DiffBundle.message("settings.external.diff.table.default.tool.builtin"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        return
-      }
-
-      append(toolName) // NON-NLS
-    }
-  }
-
-  private inner class AddToolConfigurationDialog(private val oldFileType: String? = null) : DialogWrapper(null) {
-    private val fileTypeManager = FileTypeManager.getInstance()
-    private val fileTypes = fileTypeManager.registeredFileTypes.map { it.name }.toList()
-
-    private val builtinTool = ExternalDiffSettings.ExternalTool(ExternalToolConfiguration.BUILTIN_TOOL)
-    private val tools = ExternalDiffSettings.instance.externalTools
-    private val externalDiffTools = mutableListOf(builtinTool).apply {
-      tools[ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL]?.let { addAll(it) }
-    }
-    private val externalMergeTools = mutableListOf(builtinTool).apply {
-      tools[ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL]?.let { addAll(it) }
-    }
-
-    private val fileTypeField = ComboBox(fileTypes.toTypedArray()).apply {
-      renderer = FileTypeCellRenderer()
-    }
-    private val diffToolField = ComboBox(externalDiffTools.toTypedArray()).apply {
-      renderer = ExternalToolCellRenderer()
-    }
-    private val mergeToolField = ComboBox(externalMergeTools.toTypedArray()).apply {
-      renderer = ExternalToolCellRenderer()
-    }
-
-    private lateinit var fileTypeRow: Row
-
-    constructor(externalToolConfiguration: ExternalToolConfiguration) : this(externalToolConfiguration.fileTypeName) {
-      if (externalToolConfiguration.fileTypeName == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
-        customizeWithDefaultTool(externalToolConfiguration)
-        return
-      }
-
-      fileTypeField.selectedItem = externalToolConfiguration.fileTypeName // NON-NLS
-      diffToolField.selectedItem = externalDiffTools.find { it.name == externalToolConfiguration.diffToolName }
-      mergeToolField.selectedItem = externalMergeTools.find { it.name == externalToolConfiguration.mergeToolName }
-    }
-
-    init {
-      JBUI.size(400, 200).let {
-        rootPane.minimumSize = it
-        rootPane.preferredSize = it
-      }
-
-      title = DiffBundle.message("settings.external.diff.table.add.dialog.title")
-      init()
-    }
-
-    override fun createCenterPanel(): JComponent = panel {
-      fileTypeRow = row(DiffBundle.message("settings.external.diff.table.add.dialog.filetype")) {
-        cell(fileTypeField).horizontalAlign(HorizontalAlign.FILL).validationOnApply { fileTypeValidation(it.item) }
-      }
-      row(DiffBundle.message("settings.external.diff.table.add.dialog.difftool")) {
-        cell(diffToolField).horizontalAlign(HorizontalAlign.FILL).validationOnApply { comboBoxValidation(it.item) }
-      }
-      row(DiffBundle.message("settings.external.diff.table.add.dialog.mergetool")) {
-        cell(mergeToolField).horizontalAlign(HorizontalAlign.FILL).validationOnApply { comboBoxValidation(it.item) }
+    override fun setValue(item: ExternalToolConfiguration, value: String) {
+      when (externalToolGroup) {
+        ExternalToolGroup.DIFF_TOOL -> item.diffToolName = value
+        ExternalToolGroup.MERGE_TOOL -> item.mergeToolName = value
       }
     }
 
-    fun createExternalToolConfiguration(): ExternalToolConfiguration = ExternalToolConfiguration(fileTypeField.item,
-                                                                                                 diffToolField.item.name,
-                                                                                                 mergeToolField.item.name)
+    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer = createComboBoxRendererAndEditor()
 
-    private fun customizeWithDefaultTool(externalToolConfiguration: ExternalToolConfiguration) {
-      fileTypeField.removeAllItems()
-      fileTypeField.addItem(ExternalToolConfiguration.DEFAULT_TOOL_NAME) // NON-NLS
-      fileTypeField.item = ExternalToolConfiguration.DEFAULT_TOOL_NAME // NON-NLS
+    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor = createComboBoxRendererAndEditor()
 
-      diffToolField.selectedItem = getExternalToolOrDefault(externalToolConfiguration.diffToolName, externalDiffTools)
-      mergeToolField.selectedItem = getExternalToolOrDefault(externalToolConfiguration.mergeToolName, externalMergeTools)
+    override fun isCellEditable(item: ExternalToolConfiguration): Boolean = true
 
-      fileTypeRow.visible(false)
+    private fun createComboBoxRendererAndEditor(): ComboBoxTableRenderer<String> {
+      val values = treeModel.collectTools(externalToolGroup).toTypedArray()
+      return ComboBoxTableRenderer(values).withClickCount(1)
     }
 
-    private fun fileTypeValidation(fileTypeName: String): ValidationInfo? {
-      model.fireTableDataChanged()
-      if (model.items.any { it.fileTypeName == fileTypeName } && fileTypeName != oldFileType) {
-        return ValidationInfo(DiffBundle.message("settings.external.diff.table.validation.filetype.registered"))
-      }
-
-      return null
-    }
-
-    private fun comboBoxValidation(externalTool: ExternalDiffSettings.ExternalTool?): ValidationInfo? {
-      if (externalTool == null) {
-        return ValidationInfo(DiffBundle.message("settings.external.diff.table.validation.empty"))
-      }
-
-      return null
-    }
-
-    private fun getExternalToolOrDefault(toolName: String,
-                                         tools: List<ExternalDiffSettings.ExternalTool>): ExternalDiffSettings.ExternalTool? {
-      return if (toolName == ExternalToolConfiguration.BUILTIN_TOOL) builtinTool
-      else tools.find { tool -> tool.name == toolName }
-    }
-
-    private inner class FileTypeCellRenderer : ColoredListCellRenderer<String>() {
-      override fun customizeCellRenderer(list: JList<out String>,
-                                         value: String,
-                                         index: Int,
-                                         selected: Boolean,
-                                         hasFocus: Boolean) {
-        if (value == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
-          append(DiffBundle.message("settings.external.diff.table.default.tool.name"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-          return
+    private fun DefaultTreeModel.collectTools(externalToolGroup: ExternalToolGroup): List<String> {
+      val tools = mutableListOf(ExternalToolConfiguration.BUILTIN_TOOL)
+      for (child in (root as CheckedTreeNode).children()) {
+        val treeNode = child as DefaultMutableTreeNode
+        if (treeNode.userObject as ExternalToolGroup == externalToolGroup) {
+          tools.addAll(treeNode.children().asSequence().map {
+            val node = it as DefaultMutableTreeNode
+            val tool = node.userObject as ExternalTool
+            tool.name
+          }.toList())
         }
-
-        val fileType = fileTypeManager.findFileTypeByName(value)
-        if (fileType == null) return
-
-        icon = fileType.icon
-        append(fileType.description)
       }
-    }
 
-    private inner class ExternalToolCellRenderer : ColoredListCellRenderer<ExternalDiffSettings.ExternalTool>() {
-      override fun customizeCellRenderer(list: JList<out ExternalDiffSettings.ExternalTool>,
-                                         value: ExternalDiffSettings.ExternalTool?,
-                                         index: Int,
-                                         selected: Boolean,
-                                         hasFocus: Boolean) {
-        if (value == null) {
-          append("")
-          return
-        }
-
-        if (value.name == ExternalToolConfiguration.BUILTIN_TOOL) {
-          append(DiffBundle.message("settings.external.diff.table.default.tool.builtin"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-          return
-        }
-
-        append(value.name) // NON-NLS
-      }
+      return tools
     }
   }
 }

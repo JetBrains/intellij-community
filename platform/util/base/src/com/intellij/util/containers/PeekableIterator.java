@@ -6,6 +6,8 @@ import java.util.NoSuchElementException;
 
 /**
  * An iterator with additional ability to {@link #peek()} the current element without moving the cursor.
+ * <p>
+ * Consider using {@link com.google.common.collect.PeekingIterator} instead.
  */
 public interface PeekableIterator<T> extends Iterator<T> {
   /**

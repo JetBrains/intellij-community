@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
@@ -38,8 +40,11 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 @ApiStatus.NonExtendable
@@ -72,7 +77,7 @@ public class VcsUtil {
   }
 
   public static void markFileAsDirty(final Project project, @NonNls String path) {
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
+    final FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(new File(path));
     VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
   }
 
@@ -199,27 +204,32 @@ public class VcsUtil {
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile file) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    return VcsContextFactory.getInstance().createFilePathOn(file);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull File file) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    return VcsContextFactory.getInstance().createFilePathOn(file);
+  }
+
+  @NotNull
+  public static FilePath getFilePath(@NotNull Path path, boolean isDirectory) {
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePathOnNonLocal(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePathOnNonLocal(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull File file, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
+    return VcsContextFactory.getInstance().createFilePathOn(file, isDirectory);
   }
 
   /**
@@ -227,17 +237,17 @@ public class VcsUtil {
    */
   @Deprecated(forRemoval = true)
   public static @NotNull FilePath getFilePathForDeletedFile(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String name) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(parent, name);
+    return VcsContextFactory.getInstance().createFilePathOn(parent, name);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(parent, fileName, isDirectory);
   }
 
   @Nullable
@@ -385,7 +395,7 @@ public class VcsUtil {
   @NonNls
   public static String getCanonicalLocalPath(@NonNls String localPath) {
     localPath = chopTrailingChars(localPath.trim().replace('\\', '/'), ourCharsToBeChopped);
-    if (localPath.length() == 2 && localPath.charAt(1) == ':') {
+    if (localPath.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(localPath)) {
       localPath += '/';
     }
     return localPath;
@@ -466,6 +476,85 @@ public class VcsUtil {
   @Nls
   public static String getPathForProgressPresentation(@NotNull File file) {
     return file.getName() + " (" + FileUtil.getLocationRelativeToUserHome(file.getParent()) + ")";
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
+    VirtualFile projectDir = project.getBaseDir();
+
+    String repositoryPath = root.getPresentableUrl();
+    if (projectDir != null) {
+      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
+      if (relativePath != null) {
+        repositoryPath = relativePath;
+      }
+    }
+
+    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+  }
+
+  @NotNull
+  public static @NlsSafe String getPresentablePath(@Nullable Project project,
+                                                   @NotNull VirtualFile file,
+                                                   boolean useRelativeRootPaths,
+                                                   boolean acceptEmptyPath) {
+    return getPresentablePath(project, getFilePath(file), useRelativeRootPaths, acceptEmptyPath);
+  }
+
+  @NotNull
+  public static @NlsSafe String getPresentablePath(@Nullable Project project,
+                                                   @NotNull FilePath filePath,
+                                                   boolean useRelativeRootPaths,
+                                                   boolean acceptEmptyPath) {
+    String projectDir = project != null ? project.getBasePath() : null;
+    if (projectDir != null) {
+      if (useRelativeRootPaths) {
+        String relativePath = getRootRelativePath(project, projectDir, filePath, acceptEmptyPath);
+        if (relativePath != null) return toSystemDependentName(relativePath);
+      }
+
+      String path = filePath.getPath();
+      String relativePath = getRelativePathIfSuccessor(projectDir, path);
+      if (relativePath != null) {
+        return toSystemDependentName(VcsBundle.message("label.relative.project.path.presentation", relativePath));
+      }
+    }
+
+    return FileUtil.getLocationRelativeToUserHome(toSystemDependentName(filePath.getPath()));
+  }
+
+  @Nullable
+  @SystemIndependent
+  private static String getRootRelativePath(@NotNull Project project,
+                                            @NotNull String projectBaseDir,
+                                            @NotNull FilePath filePath,
+                                            boolean acceptEmptyPath) {
+    String path = filePath.getPath();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    VirtualFile root = vcsManager.getVcsRootFor(filePath);
+    if (root == null) return null;
+
+    String rootPath = root.getPath();
+
+    VcsRoot[] roots = vcsManager.getAllVcsRoots();
+    if (roots.length == 1) {
+      if (rootPath.equals(path)) return acceptEmptyPath ? "" : root.getName();
+      return getRelativePathIfSuccessor(rootPath, path);
+    }
+
+    if (projectBaseDir.equals(path)) {
+      return root.getName();
+    }
+    String relativePath = getRelativePathIfSuccessor(projectBaseDir, path);
+    if (relativePath == null) return null;
+    return projectBaseDir.equals(rootPath) ? root.getName() + '/' + relativePath : relativePath;
+  }
+
+  @Nullable
+  private static String getRelativePathIfSuccessor(@NotNull String ancestor, @NotNull String path) {
+    return FileUtil.isAncestor(ancestor, path, true) ? FileUtil.getRelativePath(ancestor, path, '/') : null;
   }
 
   @NotNull

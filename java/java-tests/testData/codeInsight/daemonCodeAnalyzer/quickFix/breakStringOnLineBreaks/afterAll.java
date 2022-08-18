@@ -1,4 +1,4 @@
-// "Break string on '\n'" "true"
+// "Break string on '\n'" "true-preview"
 
 class A {
     String s = "Hello,\n\r" +

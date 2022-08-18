@@ -126,7 +126,7 @@ open class MarketplacePluginDownloadService {
       LOG.info("Plugin's download percent is = %.2f".format(downloadPercent * 100))
       if (downloadPercent > MAXIMUM_DOWNLOAD_PERCENT) {
         LOG.info(IdeBundle.message("too.large.download.size"))
-        return downloadPlugin(pluginFileUrl, indicator)
+        return downloadPlugin(pluginUrl, indicator)
       }
 
       val file = getPluginTempFile()
@@ -136,7 +136,7 @@ open class MarketplacePluginDownloadService {
       val curFileHash = FileInputStream(file).use { input -> FileHash(input, newPluginHash.algorithm) }
       if (curFileHash != newPluginHash) {
         LOG.info(IdeBundle.message("hashes.doesnt.match"))
-        return downloadPlugin(pluginFileUrl, indicator)
+        return downloadPlugin(pluginUrl, indicator)
       }
 
       return if (pluginFileUrl.endsWith(".zip")) {
@@ -146,10 +146,28 @@ open class MarketplacePluginDownloadService {
         guessPluginFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
       }
     }
-    catch (e: Exception) {
-      LOG.info(IdeBundle.message("error.download.plugin.via.blockmap"), e)
-      return downloadPlugin(pluginFileUrl, indicator)
+    catch (e: HttpRequests.HttpStatusException) {
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator)
     }
+    catch (e: Exception) {
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator, true)
+    }
+  }
+
+  private fun processBlockmapDownloadProblem(
+    exception: Exception,
+    pluginUrl: String,
+    indicator: ProgressIndicator,
+    printStackTrace: Boolean = false
+  ): File {
+    val message = IdeBundle.message("error.download.plugin.via.blockmap", pluginUrl)
+    if (printStackTrace) {
+      LOG.info(message, exception)
+    }
+    else {
+      LOG.info("$message: ${exception.message}")
+    }
+    return downloadPlugin(pluginUrl, indicator)
   }
 
   @Throws(IOException::class)
@@ -234,7 +252,7 @@ private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<Stri
     .connect { request ->
       val connection = request.connection
       Pair(getPluginFileUrl(connection),
-        GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+           GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
     }
 }
 

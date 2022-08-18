@@ -16,6 +16,11 @@ public class FileTemplateSeparator extends ActionGroup {
     return new AnAction[]{Separator.create(shouldShowNamedSeparator(e) ? IdeBundle.message("action.separator.file.templates") : null)};
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static boolean shouldShowNamedSeparator(@Nullable AnActionEvent e) {
     if (e == null || e.isFromContextMenu()) return false; // popup menus show the name, but no separator currently, which looks ugly
     return new CreateFromTemplateGroup().getChildren(e).length > 0;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -172,7 +172,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     else {
       for ((rowIndex, row) in physicalRows.withIndex()) {
         val isLastRow = rowIndex == physicalRows.size - 1
-        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex];
+        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex]
         if (row.noGrid) {
           rowConstraints.noGrid(rowIndex)
         }
@@ -309,7 +309,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (flag) {
       LCFlags.noGrid -> isNoGrid = true
 

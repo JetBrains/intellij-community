@@ -382,7 +382,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
      * @return list of joining expressions
      */
     @Nullable("when failed to extract")
-    private static List<PsiExpression> extractJoinParts(@NotNull List<PsiStatement> statements) {
+    private static List<PsiExpression> extractJoinParts(@NotNull List<? extends PsiStatement> statements) {
       List<PsiExpression> joinParts = new ArrayList<>();
       for (PsiStatement statement : statements) {
         PsiExpressionStatement expressionStatement = tryCast(statement, PsiExpressionStatement.class);
@@ -696,7 +696,6 @@ public class JoiningMigration extends BaseStreamApiMigration {
        * @param firstAppendSuccessor - statement before which expected prefix append and possibly some declarations used in loop
        * @param targetBuilder - string builder used
        * @param possibleVariablesBeforeLoop - variable, which declarations that can be before loop
-       * @param allowedReferencePlaces
        * @return prefix and suffix data
        */
       @Nullable
@@ -890,8 +889,8 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiLocalVariable boolVar = specialFirstIterationLoop.getVariable();
         if (boolVar == null) return null;
         if (nonFinalVariables != null && !nonFinalVariables.get(0).equals(boolVar)) return null;
-        List<PsiStatement> firstIterationStatements = specialFirstIterationLoop.getFirstIterationStatements();
-        List<PsiStatement> otherIterationStatements = specialFirstIterationLoop.getOtherIterationStatements();
+        List<? extends PsiStatement> firstIterationStatements = specialFirstIterationLoop.getFirstIterationStatements();
+        List<? extends PsiStatement> otherIterationStatements = specialFirstIterationLoop.getOtherIterationStatements();
         if (firstIterationStatements.isEmpty() || otherIterationStatements.isEmpty()) return null;
 
         List<PsiExpression> firstIterationJoinParts = extractJoinParts(firstIterationStatements);
@@ -1153,8 +1152,8 @@ public class JoiningMigration extends BaseStreamApiMigration {
         SpecialFirstIterationLoop specialFirstIterationLoop =
           SpecialFirstIterationLoop.IndexBasedLoop.extract(terminalBlock, countingLoopSource);
         if (specialFirstIterationLoop == null) return null;
-        List<PsiStatement> firstIterationStatements = specialFirstIterationLoop.getFirstIterationStatements();
-        List<PsiStatement> otherIterationStatements = specialFirstIterationLoop.getOtherIterationStatements();
+        List<? extends PsiStatement> firstIterationStatements = specialFirstIterationLoop.getFirstIterationStatements();
+        List<? extends PsiStatement> otherIterationStatements = specialFirstIterationLoop.getOtherIterationStatements();
         if (firstIterationStatements.isEmpty() || otherIterationStatements.isEmpty()) return null;
 
         int additionalPrefix = 0;

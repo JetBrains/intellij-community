@@ -9,18 +9,16 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.containers.toMutableSmartList
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.shortenReferences
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.renderer.render
@@ -29,10 +27,10 @@ object SpecifySuperTypeFixFactory {
 
     class TypeStringWithoutArgs(val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
-    class Input(val superTypes: List<TypeStringWithoutArgs>) : HLApplicatorInput
+    class Input(val superTypes: List<TypeStringWithoutArgs>) : KotlinApplicatorInput
 
     val applicator = applicator<KtSuperExpression, Input> {
-        familyAndActionName(KotlinBundle.lazyMessage("specify.super.type"))
+        familyAndActionName(KotlinBundle.lazyMessage("intention.name.specify.supertype"))
         applyToWithEditorRequired { psi, input, project, editor ->
             when (input.superTypes.size) {
                 0 -> return@applyToWithEditorRequired
@@ -46,7 +44,7 @@ object SpecifySuperTypeFixFactory {
     }
 
     private fun KtSuperExpression.specifySuperType(superType: TypeStringWithoutArgs) {
-        project.executeWriteCommand(KotlinBundle.getMessage("specify.super.type")) {
+        project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
             val replaced =
                 replace(KtPsiFactory(this).createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
@@ -55,7 +53,7 @@ object SpecifySuperTypeFixFactory {
     }
 
     private fun createListPopupStep(superExpression: KtSuperExpression, superTypes: List<TypeStringWithoutArgs>): ListPopupStep<*> {
-        return object : BaseListPopupStep<TypeStringWithoutArgs>(KotlinBundle.getMessage("choose.super.type"), superTypes) {
+        return object : BaseListPopupStep<TypeStringWithoutArgs>(KotlinBundle.getMessage("popup.title.choose.supertype"), superTypes) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: TypeStringWithoutArgs, finalChoice: Boolean): PopupStep<*>? {

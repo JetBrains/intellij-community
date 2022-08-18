@@ -1,10 +1,7 @@
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.actions.*
-import com.intellij.cce.core.JvmProperties
-import com.intellij.cce.core.PropertyAdapters
-import com.intellij.cce.core.SymbolLocation
-import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.core.*
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -37,8 +34,8 @@ class ActionsGenerationStep(
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               strategy: CompletionStrategy, evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy)
-    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
+    val actionsGenerator = ActionsGenerator(strategy, Language.resolve(languageName))
+    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, strategy.completionGolf)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0
@@ -114,11 +111,8 @@ class ActionsGenerationStep(
                 inc(javaProperties.tokenType.toString().toLowerCase())
                 group(action.kind().toString().toLowerCase()) {
                   inc("total")
-                  when (javaProperties.isStatic) {
-                    true -> inc("static")
-                    false -> inc("nonstatic")
-                    else -> inc("unknown")
-                  }
+                  if (javaProperties.isStatic) inc("static")
+                  else inc("nonstatic")
 
                   countingGroup("popular symbols", 3000) {
                     inc("${javaProperties.containingClass}#${action.expectedText}")

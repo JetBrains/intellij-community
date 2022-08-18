@@ -172,10 +172,4 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   override fun dispose() {
     PluginStateManager.removeStateListener(pluginStateListener)
   }
-
-  class StartupInitializer : ApplicationInitializedListener {
-    override fun componentsInitialized() {
-      getInstance()
-    }
-  }
 }

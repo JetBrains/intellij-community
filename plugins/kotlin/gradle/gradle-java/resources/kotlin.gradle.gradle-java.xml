@@ -2,7 +2,8 @@
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.gradle.gradle-idea"/>
+    <module name="kotlin.gradle.gradle"/>
+    <module name="kotlin.gradle.code-insight-common"/>
   </dependencies>
 
   <extensionPoints>
@@ -43,12 +44,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade"
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade"
                         serviceImplementation="org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.SdkValidator"/>
 
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleSourceSetDataService"/>
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService"/>
@@ -118,6 +117,16 @@
     <loader order="first" implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleLegacyScriptConfigurationLoader"/>
     <scriptingSupport implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager"/>
     <settings.provider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.settings.GradleSettingsProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.kpm">
+    <moduleInitialize implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinBasicModuleDataInitializer"/>
+    <moduleInitialize implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinGradleSourceSetDataInitializer"/>
+    <moduleInitialize implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinBasicFragmentDataInitializer"/>
+    <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentContentRootsCreator"/>
+    <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinGradleModuleContentRootsCreator"/>
+    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinExtrasSerializationService"/>
+
   </extensions>
 
   <actions>

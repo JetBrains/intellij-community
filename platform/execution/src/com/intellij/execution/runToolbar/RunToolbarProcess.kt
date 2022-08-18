@@ -16,12 +16,8 @@ interface RunToolbarProcess {
     const val ACTIVE_STATE_BUTTONS_COUNT = 3
 
     @JvmStatic
-    val isAvailable: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar")
-
-    @JvmStatic
     val isSettingsAvailable: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available") && isAvailable
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available")
 
     val logNeeded: Boolean
       get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.logging")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -13,18 +13,19 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryPackageSourceElement
@@ -36,17 +37,16 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMemberSignature
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
@@ -74,9 +74,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
-
-internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
-    (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 internal fun KotlinType.toPsiType(
     source: UElement?,
@@ -122,11 +119,7 @@ internal fun KotlinType.toPsiType(
             StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit.asSingleFqName() -> {
-                if (typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction)
-                    PsiType.VOID.orBoxed()
-                else null
-            }
+            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, typeOwnerKind, boxed)
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
                 when (val typeConstructor = this.constructor) {
@@ -233,7 +226,6 @@ internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false
     return (analyze()[BindingContext.TYPE, this] ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
 }
 
-@Suppress("NAME_SHADOWING")
 internal fun KtElement.analyze(): BindingContext {
     if (!canAnalyze()) return BindingContext.EMPTY
     return project.getService(KotlinUastResolveProviderService::class.java)
@@ -296,6 +288,13 @@ internal fun resolveToPsiMethod(
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
     }
 
+    // For synthetic members in enum classes, `source` points to their containing enum class.
+    if (source is KtClass && source.isEnum() && descriptor is SimpleFunctionDescriptor) {
+        val lightClass = source.toLightClass() ?: return null
+        lightClass.methods.find { it.name == descriptor.name.identifier }?.let { return it }
+    }
+
+    // Default primary constructor
     if (descriptor is ConstructorDescriptor && descriptor.isPrimary
         && source is KtClassOrObject && source.primaryConstructor == null
         && source.secondaryConstructors.isEmpty()
@@ -356,7 +355,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         declarationDescriptor = declarationDescriptor.callableFromObject
     }
     if (declarationDescriptor is SyntheticJavaPropertyDescriptor) {
-        declarationDescriptor = when (sourcePsi.readWriteAccess(useResolveForReadWrite = false)) {
+        declarationDescriptor = when (sourcePsi.readWriteAccess()) {
             ReferenceAccess.WRITE, ReferenceAccess.READ_WRITE ->
                 declarationDescriptor.setMethod ?: declarationDescriptor.getMethod
             ReferenceAccess.READ -> declarationDescriptor.getMethod
@@ -385,6 +384,13 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         if (parentDeclaration is PsiClass && parentDeclaration.isAnnotationType) {
             parentDeclaration.findMethodsByName(declarationDescriptor.name.asString(), false).firstOrNull()?.let { return it }
         }
+        // Implicit lambda parameter `it`
+        if (declarationDescriptor.isImplicitLambdaParameter(sourcePsi)) {
+            // From its containing lambda (of function literal), build ULambdaExpression
+            val lambda = declarationDescriptor.containingDeclaration.findPsi().toUElementOfType<ULambdaExpression>()
+            // and return javaPsi of the corresponding lambda implicit parameter
+            return lambda?.valueParameters?.singleOrNull()?.javaPsi
+        }
     }
 
     if (declarationDescriptor is CallableMemberDescriptor && declarationDescriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
@@ -394,9 +400,18 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
             ?.let { return it }
     }
 
-    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess(useResolveForReadWrite = false))?.let { return it }
+    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
 
     return null
+}
+
+private fun ValueParameterDescriptor.isImplicitLambdaParameter(sourcePsi: KtExpression): Boolean {
+    return containingDeclaration is AnonymousFunctionDescriptor &&
+            name.identifierOrNullIfSpecial == "it" &&
+            // Implicit lambda parameter doesn't have a source PSI.
+            source.getPsi() == null &&
+            // But, that could be the case for a declaration from Library. Double-check the slice in the binding context
+            sourcePsi.analyze().get(BindingContext.AUTO_CREATED_IT, this) != null
 }
 
 private fun resolveContainingDeserializedClass(context: KtElement, memberDescriptor: DeserializedCallableMemberDescriptor): PsiClass? {

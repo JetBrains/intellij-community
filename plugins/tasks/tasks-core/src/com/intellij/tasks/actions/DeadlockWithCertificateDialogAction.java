@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,5 +32,10 @@ public class DeadlockWithCertificateDialogAction extends AnAction {
                                  TaskBundle.message("dialog.message.this.dialog.may.not.be.shown"),
                                  TaskBundle.message("dialog.title.deadlocking.dialog"), new ImageIcon(location));
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

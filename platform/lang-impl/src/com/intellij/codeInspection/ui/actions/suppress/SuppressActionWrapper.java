@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui.actions.suppress;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
@@ -37,6 +35,11 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
 
   public SuppressActionWrapper() {
     super(InspectionsBundle.messagePointer("suppress.inspection.problem"), false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -69,14 +72,16 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     }
 
     @Override
-    protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      InspectionResultsView view = getView(e);
+      final InspectionToolWrapper wrapper = getToolWrapper(e);
+      LOG.assertTrue(wrapper != null);
+      final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(e);
+      Project project = e.getProject();
       ApplicationManager.getApplication().invokeLater(() -> {
-        Project project = view.getProject();
         final String templatePresentationText = getTemplatePresentation().getText();
         LOG.assertTrue(templatePresentationText != null);
-        final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
-        LOG.assertTrue(wrapper != null);
-        final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
+
         final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[0]);
         CommandProcessor.getInstance().executeCommand(project, () -> {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
@@ -98,13 +103,13 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final Set<SuppressableInspectionTreeNode> nodesToSuppress = getNodesToSuppress(view);
+      final Set<SuppressableInspectionTreeNode> nodesToSuppress = getNodesToSuppress(e);
       if (nodesToSuppress.isEmpty()) return false;
       if (nodesToSuppress.size() == 1) {
         final PsiElement element = Objects.requireNonNull(ContainerUtil.getFirstItem(nodesToSuppress)).getSuppressContent().getFirst();
         String text = mySuppressAction.getFamilyName();
         if (element != null) {
-          mySuppressAction.isAvailable(view.getProject(), null, element);
+          mySuppressAction.isAvailable(e.getProject(), null, element);
           text = mySuppressAction.getText();
         }
         e.getPresentation().setText(text);
@@ -118,14 +123,12 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
       return mySuppressAction.isSuppressAll();
     }
 
-    private Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
-      final TreePath[] paths = view.getTree().getSelectionPaths();
-      if (paths == null) return Collections.emptySet();
+    private Set<SuppressableInspectionTreeNode> getNodesToSuppress(AnActionEvent e) {
+      Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (selectedNodes == null) return Collections.emptySet();
       final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
-      for (TreePath path : paths) {
-        final Object node = path.getLastPathComponent();
-        if (!(node instanceof TreeNode)) continue;
-        if (!TreeUtil.treeNodeTraverser((TreeNode)node).traverse().processEach(node1 -> {    //fetch leaves
+      for (Object selectedNode : selectedNodes) {
+        if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode).traverse().processEach(node1 -> {    //fetch leaves
           final InspectionTreeNode n = (InspectionTreeNode)node1;
           if (n instanceof SuppressableInspectionTreeNode &&
               ((SuppressableInspectionTreeNode)n).canSuppress() &&
@@ -143,6 +146,5 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
       }
       return result;
     }
-
   }
 }

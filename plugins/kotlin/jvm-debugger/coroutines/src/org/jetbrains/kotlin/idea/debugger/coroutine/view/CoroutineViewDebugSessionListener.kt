@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
@@ -12,18 +12,18 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class CoroutineViewDebugSessionListener(
     private val session: XDebugSession,
-    private val xCoroutineView: XCoroutineView
+    private val coroutineView: CoroutineView
 ) : XDebugSessionListener {
     val log by logger
 
     override fun sessionPaused() {
         val suspendContext = session.suspendContext ?: return requestClear()
-        xCoroutineView.alarm.cancel()
+        coroutineView.alarm.cancel()
         renew(suspendContext)
     }
 
     override fun sessionResumed() {
-        xCoroutineView.saveState()
+        coroutineView.saveState()
         val suspendContext = session.suspendContext ?: return requestClear()
         renew(suspendContext)
     }
@@ -34,7 +34,7 @@ class CoroutineViewDebugSessionListener(
     }
 
     override fun stackFrameChanged() {
-        xCoroutineView.saveState()
+        coroutineView.saveState()
     }
 
     override fun beforeSessionResume() {
@@ -48,16 +48,16 @@ class CoroutineViewDebugSessionListener(
     private fun renew(suspendContext: XSuspendContext) {
         if (suspendContext is SuspendContextImpl) {
             DebuggerUIUtil.invokeLater {
-                xCoroutineView.renewRoot(suspendContext)
+                coroutineView.renewRoot(suspendContext)
             }
         }
     }
 
     private fun requestClear() {
         if (isUnitTestMode()) { // no delay in tests
-            xCoroutineView.resetRoot()
+            coroutineView.resetRoot()
         } else {
-            xCoroutineView.alarm.cancelAndRequest()
+            coroutineView.alarm.cancelAndRequest()
         }
     }
 }

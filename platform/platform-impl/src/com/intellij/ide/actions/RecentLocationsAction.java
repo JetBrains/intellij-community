@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -85,8 +86,8 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
                                @NotNull @NlsContexts.PopupTitle String title1,
                                @NotNull @NlsContexts.PopupTitle String title2,
                                @NotNull @NlsContexts.StatusText String emptyText,
-                               @Nullable Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
-                               @Nullable Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
+                               @Nullable Function<? super Boolean, ? extends List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
+                               @Nullable Consumer<? super List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project, supplier, remover);
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
@@ -233,6 +234,11 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void showPopup(@NotNull Project project, @NotNull JBPopup popup) {

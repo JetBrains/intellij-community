@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationSettings;
@@ -35,11 +35,14 @@ public class JavaDocInfoGeneratorFactory {
   }
 
   public static @NotNull JavaDocInfoGeneratorBuilder getBuilder(@NotNull Project project) {
+    return getInstance().getBuilderImpl(project);
+  }
+
+  protected @NotNull JavaDocInfoGeneratorBuilder getBuilderImpl(@NotNull Project project) {
     return new JavaDocInfoGeneratorBuilder(project);
   }
 
-
-  public static final class JavaDocInfoGeneratorBuilder {
+  public static class JavaDocInfoGeneratorBuilder {
     private final @NotNull Project myProject;
     private @Nullable PsiElement myElement;
     private @NotNull JavaDocHighlightingManager myManager = new JavaDocHighlightingManagerImpl();

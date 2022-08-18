@@ -1,4 +1,4 @@
-// "Make 'Anonymous class derived from a class initializer' not static" "true"
+// "Make 'Anonymous class derived from a class initializer' not static" "true-preview"
 import java.io.*;
 
 class a {

@@ -23,10 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -127,6 +124,10 @@ public class FileUtil extends FileUtilRt {
    */
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull Path ancestor, @NotNull Path file, boolean strict) {
+    return isAncestor(ancestor.toString(), file.toString(), strict);
   }
 
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
@@ -863,7 +864,7 @@ public class FileUtil extends FileUtilRt {
   @Nullable
   public static String extractRootPath(@NotNull String normalizedPath) {
     if (SystemInfoRt.isWindows) {
-      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(normalizedPath)) {
         // drive letter
         return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
       }
@@ -871,9 +872,12 @@ public class FileUtil extends FileUtilRt {
         // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
         int p1 = normalizedPath.indexOf('/', 2);
         if (p1 > 2) {
-          int p2 = normalizedPath.indexOf('/', p1 + 1);
-          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
-          if (p2 < 0) return normalizedPath;
+          if (PathUtilRt.isWindowsUNCRoot(normalizedPath, p1)) {
+            int p2 = normalizedPath.indexOf('/', p1 + 1);
+            if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
+            if (p2 < 0) return normalizedPath;
+          }
+          // else the path doesn't look like UNC, e.g. "//.."
         }
       }
     }
@@ -1267,12 +1271,8 @@ public class FileUtil extends FileUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
-    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
-    if (ok && path.length() > 2) {
-      char separatorChar = path.charAt(2);
-      ok = separatorChar == '/' || separatorChar == '\\';
-    }
-    return ok;
+    return path.length() <= 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)
+           || OSAgnosticPathUtil.isAbsoluteDosPath(path);
   }
 
   @Contract("null -> null; !null -> !null")
@@ -1503,6 +1503,10 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
+  }
+
+  public static boolean deleteWithRenamingIfExists(@NotNull Path file) {
+    return Files.exists(file) && deleteWithRenaming(file);
   }
 
   public static boolean deleteWithRenaming(@NotNull Path file) {

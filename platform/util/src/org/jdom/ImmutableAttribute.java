@@ -55,9 +55,4 @@ final class ImmutableAttribute extends Attribute {
   public Attribute setValue(@NotNull String value) {
     throw ImmutableElement.immutableError(this);
   }
-
-  @Override
-  public Attribute setAttributeType(int type) {
-    throw ImmutableElement.immutableError(this);
-  }
 }

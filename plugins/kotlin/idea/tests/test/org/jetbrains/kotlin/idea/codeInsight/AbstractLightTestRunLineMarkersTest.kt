@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExtensionTestUtil
-import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
+import org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 
 abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
     fun doLightTest(path: String) {
@@ -17,7 +18,7 @@ abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
             } catch (e: FileComparisonFailure) {
                 val lines = e.actual.split("\n")
                 e.message?.let { msg ->
-                    val regex = "^${Regex.escapeReplacement(testDataFile().name)}: missing \\((\\d+):".toRegex()
+                    val regex = "^${Regex.escapeReplacement(dataFile().name)}: missing \\((\\d+):".toRegex()
                     regex.findAll(msg).toList().takeIf { it.isNotEmpty() }?.forEach {
                         val lineNo = it.groupValues[1].toInt()
                         val line = lines[lineNo - 1]
@@ -38,14 +39,14 @@ abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
     }
 
     private fun doRunTest(lightClass: Boolean, task: () -> Unit) {
-        val extensionList = LightTestFramework.EXTENSION_NAME.extensionList
+        val extensionList = KotlinTestFramework.EXTENSION_NAME.extensionList
         ExtensionTestUtil.maskExtensions(
-            LightTestFramework.EXTENSION_NAME,
-            extensionList.filter {
-                val filter = it.name == "LightClass"
+          KotlinTestFramework.EXTENSION_NAME,
+          extensionList.filter {
+                val filter = it is KotlinDelegatingTestFramework
                 if (lightClass) filter else !filter
              },
-            testRootDisposable
+          testRootDisposable
         )
         task()
     }

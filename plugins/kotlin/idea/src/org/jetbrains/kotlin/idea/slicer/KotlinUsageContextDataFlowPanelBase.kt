@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.slicer
 
@@ -21,7 +21,7 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageContextPanelBase
 import com.intellij.usages.impl.UsageViewImpl
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtDeclaration
 import java.awt.BorderLayout
 import javax.swing.JLabel
@@ -73,7 +73,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(
     }
 
     public override fun updateLayoutLater(infos: List<UsageInfo>?) {
-        if (infos == null) {
+        if (infos.isNullOrEmpty()) {
             removeAll()
             val title = UsageViewBundle.message("select.the.usage.to.preview")
             add(JLabel(title, SwingConstants.CENTER), BorderLayout.CENTER)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
@@ -19,8 +19,7 @@ class SafeDeleteImportDirectiveUsageInfo(
 
 private fun KtImportDirective.isSafeToDelete(element: PsiElement): Boolean {
     val referencedDescriptor = targetDescriptors().singleOrNull() ?: return false
-    val unwrappedElement = element.unwrapped
-    val declarationDescriptor = when (unwrappedElement) {
+    val declarationDescriptor = when (val unwrappedElement = element.unwrapped) {
         is KtDeclaration -> unwrappedElement.resolveToDescriptorIfAny(BodyResolveMode.FULL)
         is PsiMember -> unwrappedElement.getJavaMemberDescriptor()
         else -> return false

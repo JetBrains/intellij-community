@@ -54,6 +54,9 @@ internal class EclipseJavaCodeStyleMappingDefinitionBuilder(codeStyleSettings: C
   fun SettingMapping<Boolean>.convertParenPosition(eclipseValueToExportIfTrue: String) =
     convert(parenPositionConvertor.ifInternalIsTrueExport(eclipseValueToExportIfTrue))
 
+  // IDEA-206840
+  var eclipseTabChar: String = EclipseFormatterOptions.TAB_CHAR_SPACE
+
   override fun preprocessId(id: String): String = EclipseFormatterOptions.completeId(id)
 }
 

@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FilePatch {
-  private String myBeforeName;
-  private String myAfterName;
+  private @Nullable String myBeforeName;
+  private @Nullable String myAfterName;
   @Nullable private @Nls String myBeforeVersionId;
   @Nullable private @Nls String myAfterVersionId;
-  private String myBaseRevisionText;
   // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the patch
   private int myNewFileMode = -1;
 
@@ -22,21 +20,25 @@ public abstract class FilePatch {
     return myAfterName;
   }
 
+  @Nullable
   public String getBeforeFileName() {
+    if (myBeforeName == null) return null;
     String[] pathNameComponents = myBeforeName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
+    return pathNameComponents[pathNameComponents.length - 1];
   }
 
+  @Nullable
   public String getAfterFileName() {
+    if (myAfterName == null) return null;
     String[] pathNameComponents = myAfterName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
+    return pathNameComponents[pathNameComponents.length - 1];
   }
 
-  public void setBeforeName(final String fileName) {
+  public void setBeforeName(@Nullable String fileName) {
     myBeforeName = fileName;
   }
 
-  public void setAfterName(final String fileName) {
+  public void setAfterName(@Nullable String fileName) {
     myAfterName = fileName;
   }
 
@@ -56,19 +58,6 @@ public abstract class FilePatch {
 
   public void setAfterVersionId(@Nullable @Nls String afterVersionId) {
     myAfterVersionId = afterVersionId;
-  }
-
-  public String getAfterNameRelative(int skipDirs) {
-    String[] components = myAfterName.split("/");
-    return StringUtil.join(components, skipDirs, components.length, "/");
-  }
-
-  public String getBaseRevisionText() {
-    return myBaseRevisionText;
-  }
-
-  public void setBaseRevisionText(String baseRevisionText) {
-    myBaseRevisionText = baseRevisionText;
   }
 
   public abstract boolean isNewFile();

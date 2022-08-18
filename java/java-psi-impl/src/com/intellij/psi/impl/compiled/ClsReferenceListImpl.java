@@ -60,6 +60,9 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
         case IMPLEMENTS_LIST:
           buffer.append(PsiKeyword.IMPLEMENTS).append(' ');
           break;
+        case PERMITS_LIST:
+          buffer.append(PsiKeyword.PERMITS).append(' ');
+          break;
         case THROWS_LIST:
           buffer.append(PsiKeyword.THROWS).append(' ');
           break;

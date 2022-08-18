@@ -1,5 +1,11 @@
 // "Create parameter 'foo'" "true"
+// ACTION: Convert to multi-line lambda
 // ACTION: Create local variable 'foo'
+// ACTION: Create object 'foo'
+// ACTION: Create parameter 'foo'
+// ACTION: Create property 'foo'
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Rename reference
 
 fun test(n: Int, foo: Any) {
     val f = { a: Int, b: Int -> foo }

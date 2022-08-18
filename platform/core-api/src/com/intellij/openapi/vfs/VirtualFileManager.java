@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,7 @@ import java.nio.file.Path;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   @Topic.AppLevel
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
@@ -84,6 +84,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * Looks for a related {@link VirtualFile} for a given {@link Path}
+   *
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
@@ -129,19 +130,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated When possible, migrate to {@link AsyncFileListener} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES} message bus topic to avoid early initialization of {@link VirtualFileManager}.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
@@ -183,10 +185,18 @@ public abstract class VirtualFileManager implements ModificationTracker {
     return URLUtil.extractPath(url);
   }
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,

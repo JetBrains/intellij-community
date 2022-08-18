@@ -1,7 +1,6 @@
-// "Wrap in <a> tag" "true"
-class Main {
-  /**
-   * https://en.wikipedia.org/<caret>
-   */
-  void foo() {}
-}
+// "Replace URL with HTML link" "true-preview"
+
+/**
+ * abc https://en.wikipedia.org/<caret> def
+ */
+class Main { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
@@ -145,7 +145,7 @@ object PyNamesMatchingMlCompletionFeatures {
 
   private fun getPyScopeMatchingFeatures(names: Map<String, Int>,
                                          tokens: Map<String, Int>,
-                                         lookupString: String): PyScopeMatchingFeatures? {
+                                         lookupString: String): PyScopeMatchingFeatures {
     val sumMatches = names[lookupString] ?: 0
     val sumTokensMatches = tokensMatched(lookupString, tokens)
     val total = names.toList().sumBy { it.second }

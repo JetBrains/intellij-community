@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
@@ -13,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 
 import java.util.BitSet;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -23,16 +20,12 @@ import java.util.stream.Stream;
  */
 class TypeDfaState {
 
-  private static final Logger LOG = Logger.getInstance(TypeDfaState.class);
-
-  static final TypeDfaState EMPTY_STATE = new TypeDfaState(new Int2ObjectOpenHashMap<>(), new BitSet(), null);
+  static final TypeDfaState EMPTY_STATE = new TypeDfaState(new Int2ObjectOpenHashMap<>(), new BitSet());
 
   /**
-   * Mapping of variable descriptor IDs to their types. The mapping of descriptors to IDs resides in {@link InferenceCache#myVarIndexes}.
+   * Mapping of variable descriptor IDs to their types.
    */
   private final Int2ObjectMap<DFAType> myVarTypes;
-
-  private final @Nullable FList<ClosureFrame> myPreviousClosureState;
 
   /**
    * During the DFA process, types of some descriptors become inferred.
@@ -46,10 +39,9 @@ class TypeDfaState {
    */
   private final BitSet myProhibitedCachingVars;
 
-  private TypeDfaState(Int2ObjectMap<DFAType> varTypes, BitSet prohibitedCachingVars, @Nullable FList<ClosureFrame> frame) {
+  private TypeDfaState(Int2ObjectMap<DFAType> varTypes, BitSet prohibitedCachingVars) {
     myVarTypes = varTypes;
     myProhibitedCachingVars = prohibitedCachingVars;
-    myPreviousClosureState = frame;
   }
 
   @Contract(pure = true)
@@ -67,8 +59,7 @@ class TypeDfaState {
     }
     BitSet resultSet = mergeProhibitedVariables(left.myProhibitedCachingVars, right.myProhibitedCachingVars);
     Int2ObjectMap<DFAType> resultMap = dominantMap != null ? dominantMap : mergeTypeMaps(left.myVarTypes, right.myVarTypes, manager, resultSet);
-    FList<ClosureFrame> frame = left.myPreviousClosureState == null ? right.myPreviousClosureState : left.myPreviousClosureState;
-    return new TypeDfaState(resultMap, resultSet, frame);
+    return new TypeDfaState(resultMap, resultSet);
   }
 
   @Contract(pure = true)
@@ -94,7 +85,7 @@ class TypeDfaState {
       return this;
     }
     else {
-      return new TypeDfaState(newTypes, newSet, myPreviousClosureState);
+      return new TypeDfaState(newTypes, newSet);
     }
   }
 
@@ -106,64 +97,17 @@ class TypeDfaState {
     }
     BitSet newProhibitedVars = (BitSet)myProhibitedCachingVars.clone();
     newProhibitedVars.set(variableIndex, true);
-    return new TypeDfaState(myVarTypes, newProhibitedVars, myPreviousClosureState);
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withNewClosureState(@NotNull ClosureFrame frame) {
-    if (myPreviousClosureState != null && frame == myPreviousClosureState.getHead()) {
-      return this;
-    }
-    else {
-      FList<ClosureFrame> frames = myPreviousClosureState == null ? FList.emptyList() : myPreviousClosureState;
-      return new TypeDfaState(myVarTypes, myProhibitedCachingVars, frames.prepend(frame));
-    }
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withoutTopClosureState() {
-    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
-    FList<ClosureFrame> tail = myPreviousClosureState.getTail();
-    return new TypeDfaState(myVarTypes, myProhibitedCachingVars, tail.isEmpty() ? null : tail);
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withNewMap(@NotNull Int2ObjectMap<DFAType> types) {
-    if (Objects.equals(types, myVarTypes)) {
-      return this;
-    }
-    else {
-      return new TypeDfaState(types, myProhibitedCachingVars, myPreviousClosureState);
-    }
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withRemovedBindings(BitSet newBindings) {
-    if (this.myProhibitedCachingVars.equals(newBindings)) {
-      return this;
-    }
-    else {
-      return new TypeDfaState(this.myVarTypes, newBindings, this.myPreviousClosureState);
-    }
+    return new TypeDfaState(myVarTypes, newProhibitedVars);
   }
 
   boolean contentsEqual(TypeDfaState another) {
     return myVarTypes.equals(another.myVarTypes) &&
-           myProhibitedCachingVars.equals(another.myProhibitedCachingVars) &&
-           another.myPreviousClosureState == myPreviousClosureState;
+           myProhibitedCachingVars.equals(another.myProhibitedCachingVars);
   }
 
   @Nullable
   DFAType getVariableType(int descriptor) {
     return descriptor != 0 && !myProhibitedCachingVars.get(descriptor) ? myVarTypes.get(descriptor) : null;
-  }
-
-  public BitSet getRemovedBindings() {
-    return myProhibitedCachingVars;
   }
 
   Int2ObjectMap<DFAType> getRawVarTypes() {
@@ -177,21 +121,11 @@ class TypeDfaState {
     return result == null ? DFAType.NULL_DFA_TYPE : result;
   }
 
-  @NotNull ClosureFrame getTopClosureFrame() {
-    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
-    return myPreviousClosureState.getHead();
-  }
-
   @Override
   @NonNls
   public String toString() {
     String evicted = myProhibitedCachingVars.isEmpty() ? "" : ", (caching prohibited: " + myProhibitedCachingVars + ")";
-    String frame = (myPreviousClosureState == null || myPreviousClosureState.isEmpty()) ? "" : ", frame size: " + myPreviousClosureState.size();
-    return myVarTypes.toString() + evicted + frame;
-  }
-
-  public boolean containsVariable(int varIndex) {
-    return myVarTypes.containsKey(varIndex);
+    return myVarTypes.toString() + evicted;
   }
 
   boolean isProhibited(int index) {
@@ -215,7 +149,7 @@ class TypeDfaState {
     Int2ObjectMap<DFAType> newFMap = new Int2ObjectOpenHashMap<>();
     Stream.concat(rightMap.int2ObjectEntrySet().stream(), leftMap.int2ObjectEntrySet().stream()).forEach(entry -> {
       int descriptorId = entry.getIntKey();
-      if (descriptorId == 0 || prohibited.get(descriptorId)) {
+      if (descriptorId == 0 || prohibited.get(descriptorId) || !leftMap.containsKey(descriptorId) || !rightMap.containsKey(descriptorId)) {
         return;
       }
       DFAType candidate = entry.getValue();
@@ -262,11 +196,7 @@ class TypeDfaState {
   private static boolean dominates(TypeDfaState dominator, TypeDfaState dominated, Int2ObjectMap<DFAType> dominantMap) {
     boolean dominateByTypes = dominated.myVarTypes.isEmpty() || dominantMap == dominator.myVarTypes;
     if (!dominateByTypes) return false;
-    boolean dominateByMask = dominator.myProhibitedCachingVars.equals(dominated.myProhibitedCachingVars);
-    if (!dominateByMask) return false;
-    return dominator.myPreviousClosureState == dominated.myPreviousClosureState ||
-           dominated.myPreviousClosureState == null ||
-           dominated.myPreviousClosureState.isEmpty();
+    return dominator.myProhibitedCachingVars.equals(dominated.myProhibitedCachingVars);
   }
 }
 

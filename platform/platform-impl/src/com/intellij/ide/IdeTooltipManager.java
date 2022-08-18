@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -688,24 +687,24 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     hideRunnable = null;
   }
 
-  public static JEditorPane initPane(@Tooltip String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
+  public static JEditorPane initPane(@Tooltip String text, HintHint hintHint, @Nullable JLayeredPane layeredPane) {
     return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@Tooltip Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
-                                     boolean limitWidthToScreen) {
-    final Ref<Dimension> prefSize = new Ref<>(null);
+  public static JEditorPane initPane(@Tooltip Html html, HintHint hintHint, @Nullable JLayeredPane layeredPane, boolean limitWidthToScreen) {
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
 
-    final boolean[] prefSizeWasComputed = {false};
-    final JEditorPane pane = limitWidthToScreen ? new JEditorPane() {
+    boolean[] prefSizeWasComputed = {false};
+    JEditorPane pane = !limitWidthToScreen ? new JEditorPane() : new JEditorPane() {
+      private Dimension prefSize = null;
+
       @Override
       public Dimension getPreferredSize() {
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
             JRootPane rootPane = UIUtil.getRootPane(this);
-            if (rootPane != null) {
+            if (rootPane != null && rootPane.getSize().width > 0) {
               lp = rootPane.getLayeredPane();
             }
           }
@@ -725,14 +724,14 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
             setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
             Dimension fixedWidthSize = super.getPreferredSize();
             Dimension minSize = super.getMinimumSize();
-            prefSize.set(new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height));
+            prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
           }
           else {
-            prefSize.set(new Dimension(prefSizeOriginal));
+            prefSize = new Dimension(prefSizeOriginal);
           }
         }
 
-        Dimension s = prefSize.get() != null ? new Dimension(prefSize.get()) : super.getPreferredSize();
+        Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
         Border b = getBorder();
         if (b != null) {
           JBInsets.addTo(s, b.getBorderInsets(this));
@@ -743,30 +742,26 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       @Override
       public void setPreferredSize(Dimension preferredSize) {
         super.setPreferredSize(preferredSize);
-        prefSize.set(preferredSize);
+        prefSize = preferredSize;
       }
-    } : new JEditorPane();
+    };
 
-    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactoryExtensions((elem, view) -> {
-      AttributeSet attrs = elem.getAttributes();
-      Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-      Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-      if (o instanceof HTML.Tag) {
-        HTML.Tag kind = (HTML.Tag)o;
-        if (kind == HTML.Tag.HR) {
+    HTMLEditorKit kit = new HTMLEditorKitBuilder()
+      .withViewFactoryExtensions((elem, view) -> {
+        AttributeSet attrs = elem.getAttributes();
+        if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
+            attrs.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HR) {
           try {
             Field field = view.getClass().getDeclaredField("size");
             field.setAccessible(true);
             field.set(view, JBUIScale.scale(1));
-            return view;
           }
-          catch (Exception ignored) {
-            //ignore
-          }
+          catch (Exception ignored) { }
         }
-      }
-      return view;
-    }).build();
+        return view;
+      })
+      .build();
+
     String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     if (editorFontName != null) {
       String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
@@ -775,7 +770,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     }
     pane.setEditorKit(kit);
     pane.setText(text);
-
     pane.setCaretPosition(0);
     pane.setEditable(false);
 
@@ -791,11 +785,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       prefSizeWasComputed[0] = true;
     }
 
-    final boolean opaque = hintHint.isOpaqueAllowed();
-    pane.setOpaque(opaque);
+    pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());
 
-    if (!limitWidthToScreen) AppUIUtil.targetToDevice(pane, layeredPane);
+    if (!limitWidthToScreen) {
+      AppUIUtil.targetToDevice(pane, layeredPane);
+    }
 
     return pane;
   }
@@ -807,8 +802,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public static void setBorder(JComponent pane) {
-    pane.setBorder(
-      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), JBUI.Borders.empty(0, 5)));
+    //noinspection UseJBColor
+    pane.setBorder(BorderFactory.createCompoundBorder(
+      BorderFactory.createLineBorder(Color.black),
+      JBUI.Borders.empty(0, 5)));
   }
 
   public boolean isQueuedToShow(IdeTooltip tooltip) {

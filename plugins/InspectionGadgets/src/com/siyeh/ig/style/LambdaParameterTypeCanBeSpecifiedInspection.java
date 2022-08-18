@@ -48,7 +48,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
 
   private static class InferLambdaParameterTypeVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpression) {
       super.visitLambdaExpression(lambdaExpression);
       PsiParameterList parameterList = lambdaExpression.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();

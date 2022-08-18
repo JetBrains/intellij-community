@@ -15,8 +15,16 @@ public interface EventLogEndpointSubstitutor {
    ExtensionPointName<EventLogEndpointSubstitutor> EP_NAME = new ExtensionPointName<>("com.intellij.statistic.eventLog.eventLogEndpointSubstitutor");
 
   /**
-   * Provides a custom endpoint for fetching configuration of a recorder specified by the recorderId
-   * @return Remote endpoint URL of the related recorder or null if platform default should be used
+   * @deprecated Endpoint shouldn't depend on recorder id. Use {@link #getTemplateUrl()}
    */
+  @Deprecated
   @Nullable String getTemplateUrl(@NotNull String recorderId);
+
+  /**
+   * Provides a custom endpoint for fetching configuration
+   * @return Remote endpoint URL or null if platform default should be used
+   */
+  default @Nullable String getTemplateUrl() {
+    return getTemplateUrl("UNDEFINED");
+  }
 }

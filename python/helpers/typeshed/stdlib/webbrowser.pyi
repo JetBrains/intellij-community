@@ -3,6 +3,8 @@ from abc import abstractmethod
 from typing import Callable, Sequence
 from typing_extensions import Literal
 
+__all__ = ["Error", "open", "open_new", "open_new_tab", "get", "register"]
+
 class Error(Exception): ...
 
 if sys.version_info >= (3, 7):

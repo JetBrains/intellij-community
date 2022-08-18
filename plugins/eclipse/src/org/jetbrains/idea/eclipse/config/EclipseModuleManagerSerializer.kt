@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleCompon
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
  */
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
-  override fun loadComponent(builder: WorkspaceEntityStorageBuilder,
+  override fun loadComponent(builder: MutableEntityStorage,
                              moduleEntity: ModuleEntity,
                              reader: JpsFileContentReader,
                              imlFileUrl: VirtualFileUrl,
@@ -27,13 +27,13 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
                              virtualFileManager: VirtualFileUrlManager) {
     val componentTag = reader.loadComponent(imlFileUrl.url, "EclipseModuleManager") ?: return
     val entity = builder.addEclipseProjectPropertiesEntity(moduleEntity, moduleEntity.entitySource)
-    builder.modifyEntity(ModifiableEclipseProjectPropertiesEntity::class.java, entity) {
+    builder.modifyEntity(entity) {
       componentTag.getChildren(LIBELEMENT).forEach {
         eclipseUrls.add(virtualFileManager.fromUrl(it.getAttributeValue(VALUE_ATTR)!!))
       }
       componentTag.getChildren(VARELEMENT).forEach {
-        variablePaths[it.getAttributeValue(VAR_ATTRIBUTE)!!] =
-          it.getAttributeValue(PREFIX_ATTR, "") + it.getAttributeValue(VALUE_ATTR)
+        variablePaths = variablePaths.toMutableMap().also { map -> map[it.getAttributeValue(VAR_ATTRIBUTE)!!] =
+          it.getAttributeValue(PREFIX_ATTR, "") + it.getAttributeValue(VALUE_ATTR) }
       }
       componentTag.getChildren(CONELEMENT).forEach {
         unknownCons.add(it.getAttributeValue(VALUE_ATTR)!!)
@@ -43,7 +43,9 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
       if (srcDescriptionTag != null) {
         expectedModuleSourcePlace = srcDescriptionTag.getAttributeValue(EXPECTED_POSITION)?.toInt() ?: 0
         srcDescriptionTag.getChildren(SRC_FOLDER).forEach {
-          srcPlace[it.getAttributeValue(VALUE_ATTR)!!] = it.getAttributeValue(EXPECTED_POSITION)!!.toInt()
+          srcPlace = srcPlace.toMutableMap().also { map ->
+            map[it.getAttributeValue(VALUE_ATTR)!!] = it.getAttributeValue(EXPECTED_POSITION)!!.toInt()
+          }
         }
       }
     }

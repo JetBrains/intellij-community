@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Kryo5" type="repository">
+    <properties maven-id="com.esotericsoftware.kryo:kryo5:5.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo5/5.3.0/kryo5-5.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo5/5.3.0/kryo5-5.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

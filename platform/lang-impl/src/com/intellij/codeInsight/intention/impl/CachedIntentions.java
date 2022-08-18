@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -245,7 +244,6 @@ public final class CachedIntentions {
     if (cachedActions.equals(wrappedNew)) {
       return false;
     }
-    cachedActions.clear();
     cachedActions.addAll(wrappedNew);
     return true;
   }
@@ -340,7 +338,7 @@ public final class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
-  @NotNull
+  @Nullable
   public Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
@@ -367,11 +365,11 @@ public final class CachedIntentions {
     if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
       return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
                                           : myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-                                            AllIcons.Actions.RealIntentionBulb;
+                                            null;
     }
     else {
       if (myErrorFixes.contains(value)) return AllIcons.Actions.QuickfixOffBulb;
-      return IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
+      return null;
     }
   }
 

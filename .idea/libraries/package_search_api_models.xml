@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="package-search-api-models" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.packagesearch:pkgs-api-models:2.2.8" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.2.8/pkgs-api-models-2.2.8.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

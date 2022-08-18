@@ -59,6 +59,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Condition<? super ScopeDescriptor> myScopeFilter;
   private BrowseListener myBrowseListener;
 
+  private SearchScope preselectedScope;
+
   public ScopeChooserCombo() {
     super(new MyComboBox());
   }
@@ -105,6 +107,23 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
+
+    if (selection != null) {
+      var provider = PredefinedSearchScopeProvider.getInstance();
+      var scopes = provider.getPredefinedScopes(project,
+                                                null,
+                                                suggestSearchInLibs,
+                                                prevSearchWholeFiles,
+                                                false,
+                                                false,
+                                                false);
+      for (SearchScope s : scopes) {
+        if (selection.equals(s.getDisplayName())) {
+          preselectedScope = s;
+          break;
+        }
+      }
+    }
 
     return rebuildModelAndSelectScopeOnSuccess(selection);
   }
@@ -230,6 +249,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       .onSuccess(__ -> {
         getComboBox().setModel(model);
         selectItem(selection);
+        preselectedScope = null;
       })
     );
   }
@@ -276,17 +296,30 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   @Nullable
   public SearchScope getSelectedScope() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    return item == null ? null : item.getScope();
+    return item == null ? preselectedScope : item.getScope();
   }
 
   public @Nullable @Nls String getSelectedScopeName() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    return item == null ? null : item.getDisplayName();
+    if (item == null) {
+      return preselectedScope == null ? null : preselectedScope.getDisplayName();
+    }
+    return item.getDisplayName();
   }
 
   public @Nullable @NonNls String getSelectedScopeId() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    String scopeName = item != null ? item.getDisplayName() : null;
+    String scopeName;
+    if (item != null) {
+      scopeName = item.getDisplayName();
+    }
+    else {
+      if (preselectedScope != null) {
+        scopeName = preselectedScope.getDisplayName();
+      } else {
+        scopeName = null;
+      }
+    }
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
   }
 

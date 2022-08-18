@@ -45,7 +45,7 @@ public class ErrorRethrownInspection extends BaseInspection {
   private static class ErrorRethrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       super.visitCatchSection(section);
       final PsiParameter parameter = section.getParameter();
       if (parameter == null) {

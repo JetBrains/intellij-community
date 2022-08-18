@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
-import com.esotericsoftware.kryo.DefaultSerializer
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.Serializer
-import com.esotericsoftware.kryo.io.Input
-import com.esotericsoftware.kryo.io.Output
+import com.esotericsoftware.kryo.kryo5.DefaultSerializer
+import com.esotericsoftware.kryo.kryo5.Kryo
+import com.esotericsoftware.kryo.kryo5.Serializer
+import com.esotericsoftware.kryo.kryo5.io.Input
+import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -26,16 +27,27 @@ sealed class JpsProjectConfigLocation {
   val baseDirectoryUrlString: String
     get() = baseDirectoryUrl.url
 
+  /**
+   * Same as [Project.getProjectFilePath]
+   */
+  abstract val projectFilePath: String
+
   abstract val baseDirectoryUrl: VirtualFileUrl
 
   data class DirectoryBased(val projectDir: VirtualFileUrl, val ideaFolder: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
+
+    override val projectFilePath: String
+      get() = JpsPathUtil.urlToPath(ideaFolder.append("misc.xml").url)
   }
 
   data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = iprFileParent
+
+    override val projectFilePath: String
+      get() = JpsPathUtil.urlToPath(iprFile.url)
   }
 }
 
@@ -164,7 +176,7 @@ internal class FileInDirectorySerializer : Serializer<JpsFileEntitySource.FileIn
     kryo.writeClassAndObject(output, o.projectLocation)
   }
 
-  override fun read(kryo: Kryo, input: Input, type: Class<JpsFileEntitySource.FileInDirectory>): JpsFileEntitySource.FileInDirectory {
+  override fun read(kryo: Kryo, input: Input, type: Class<out JpsFileEntitySource.FileInDirectory>): JpsFileEntitySource.FileInDirectory {
     val fileUrl = kryo.readClassAndObject(input) as VirtualFileUrl
     val location = kryo.readClassAndObject(input) as JpsProjectConfigLocation
     return JpsFileEntitySource.FileInDirectory(fileUrl, location)

@@ -103,7 +103,8 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR], null);
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY], null);
 
-    myUniqueIdField = new RawCommandLineEditor();
+    myUniqueIdField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\u001B")),
+                                              strings -> StringUtil.join(strings, "\u001B"));
     setupField(UNIQUE_ID, myUniqueIdField, null, null, null);
 
     myTagsField = new RawCommandLineEditor();
@@ -190,7 +191,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   @Override
   protected void resetEditorFrom(@NotNull JUnitConfiguration s) {
     String[] ids = s.getPersistentData().getUniqueIds();
-    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, " ") : null);
+    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, "\u001B") : null);
     myTagsField.setText(s.getPersistentData().getTags());
     myChangeLists.setSelectedItem(s.getPersistentData().getChangeList());
     myModel.reset(s);

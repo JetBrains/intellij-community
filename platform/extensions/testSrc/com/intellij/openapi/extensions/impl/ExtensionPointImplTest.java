@@ -363,6 +363,11 @@ public class ExtensionPointImplTest {
     }
 
     @Override
+    public boolean hasComponent(@NotNull Class<?> interfaceClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
       throw new UnsupportedOperationException();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
-@Suppress("UnstableApiUsage")
 class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     override fun getDefaultBlackList(): Set<String> =
@@ -40,19 +39,6 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
             "org.gradle.kotlin.dsl.kotlin(module,version)",
             "org.gradle.kotlin.dsl.project(path,configuration)"
         )
-
-    override fun getSettingsPreview(): String {
-        return """
-            fun callsAnotherFun() {
-                anotherFunction(1, 2)            
-            }
-            
-            fun anotherFunction(a: Int = 10, b: Int = 5): Int {
-                val sum = a + b
-                return sum * 2
-            } 
-        """.trimIndent()
-    }
 
     override fun getHintInfo(element: PsiElement): HintInfo? {
         if (!(HintType.PARAMETER_HINT.isApplicable(element))) return null

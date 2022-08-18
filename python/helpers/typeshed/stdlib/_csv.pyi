@@ -1,6 +1,8 @@
 from typing import Any, Iterable, Iterator, Protocol, Union
 from typing_extensions import Literal
 
+__version__: str
+
 QUOTE_ALL: Literal[1]
 QUOTE_MINIMAL: Literal[0]
 QUOTE_NONE: Literal[3]

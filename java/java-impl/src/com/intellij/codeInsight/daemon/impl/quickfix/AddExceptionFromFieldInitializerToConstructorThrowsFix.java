@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,10 +54,12 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  public FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new AddExceptionFromFieldInitializerToConstructorThrowsFix(PsiTreeUtil.findSameElementInCopy(myWrongElement, target));
+  }
 
+  @Override
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final NavigatablePsiElement field =
       PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class, PsiFunctionalExpression.class, PsiField.class);
     if (field instanceof PsiField) {
@@ -67,14 +68,14 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
         PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(aClass);
-          ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, null, file));
+          defaultConstructorFix.invoke(project, null, file);
           constructors = aClass.getConstructors();
           LOG.assertTrue(constructors.length != 0);
         }
 
         Set<PsiClassType> unhandledExceptions = new HashSet<>(ExceptionUtil.getUnhandledExceptions(field));
         for (PsiMethod constructor : constructors) {
-          AddExceptionToThrowsFix.addExceptionsToThrowsList(project, constructor, unhandledExceptions);
+          AddExceptionToThrowsFix.processMethod(project, constructor, unhandledExceptions);
         }
       }
     }
@@ -85,10 +86,5 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
   @Override
   public String getFamilyName() {
     return QuickFixBundle.message("add.exception.from.field.initializer.to.constructor.throws.family.text");
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

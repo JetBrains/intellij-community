@@ -2,7 +2,6 @@
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
-import org.jetbrains.annotations.NonNls
 
 class GitNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
@@ -48,6 +47,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       FIX_TRACKED_NOT_ON_BRANCH,
       INIT_ERROR,
       INIT_FAILED,
+      INIT_STAGE_FAILED,
       LOCAL_CHANGES_NOT_RESTORED,
       MERGE_ABORT_FAILED,
       MERGE_ABORT_SUCCESS,
@@ -86,8 +86,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       STAGE_COMMIT_SUCCESS,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
-      TAG_NOT_CREATED,
       TAG_CREATED,
+      TAG_NOT_CREATED,
       TAG_DELETED,
       TAG_DELETION_ROLLBACK_ERROR,
       TAG_REMOTE_DELETION_ERROR,
@@ -101,7 +101,13 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       UPDATE_DETACHED_HEAD_ERROR,
       UPDATE_ERROR,
       UPDATE_NO_TRACKED_BRANCH,
-      UPDATE_NOTHING_TO_UPDATE
+      UPDATE_NOTHING_TO_UPDATE,
+      BAD_EXECUTABLE,
+      REBASE_STOPPED_ON_CONFLICTS,
+      REBASE_STOPPED_ON_EDITING,
+      REBASE_FAILED,
+      UNTRACKED_FIES_OVERWITTEN,
+      TAGS_LOADING_FAILED
     )
   }
 
@@ -118,7 +124,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val BRANCHES_UPDATE_SUCCESSFUL = "git.branches.update.successful"
     const val CANNOT_RESOLVE_CONFLICT = "git.cannot.resolve.conflict"
     const val CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_ERROR = "git.checkout.new.branch.operation.rollback.error"
-    const val CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_SUCCESSFUL =  "git.checkout.new.branch.operation.rollback.successful"
+    const val CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_SUCCESSFUL = "git.checkout.new.branch.operation.rollback.successful"
     const val CHECKOUT_ROLLBACK_ERROR = "git.checkout.rollback.error"
     const val CHECKOUT_SUCCESS = "git.checkout.success"
     const val CHERRY_PICK_ABORT_FAILED = "git.cherry.pick.abort.failed"
@@ -147,9 +153,10 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val FIX_TRACKED_NOT_ON_BRANCH = "git.fix.tracked.not.on.branch"
     const val INIT_ERROR = "git.init.error"
     const val INIT_FAILED = "git.init.failed"
+    const val INIT_STAGE_FAILED = "git.init.stage.failed"
     const val LOCAL_CHANGES_NOT_RESTORED = "git.local.changes.not.restored"
     const val MERGE_ABORT_FAILED = "git.merge.abort.failed"
-    const val MERGE_ABORT_SUCCESS ="git.merge.abort.success"
+    const val MERGE_ABORT_SUCCESS = "git.merge.abort.success"
     const val MERGE_ERROR = "git.merge.error"
     const val MERGE_FAILED = "git.merge.failed"
     const val LOCAL_CHANGES_DETECTED = "git.merge.local.changes.detected"
@@ -201,5 +208,11 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val UPDATE_ERROR = "git.update.error"
     const val UPDATE_NO_TRACKED_BRANCH = "git.update.no.tracked.branch.error"
     const val UPDATE_NOTHING_TO_UPDATE = "git.update.nothing.to.update"
+    const val BAD_EXECUTABLE = "git.bad.executable"
+    const val REBASE_STOPPED_ON_CONFLICTS = "git.rebase.stopped.due.to.conflicts"
+    const val REBASE_STOPPED_ON_EDITING = "git.rebase.stopped.for.editing"
+    const val REBASE_FAILED = "git.rebase.failed"
+    const val UNTRACKED_FIES_OVERWITTEN = "untracked.files.overwritten"
+    const val TAGS_LOADING_FAILED = "git.tags.loading.failed"
   }
 }

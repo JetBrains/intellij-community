@@ -3,13 +3,12 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 
 public class PlatformVcsPathPresenter extends VcsPathPresenter {
@@ -28,7 +27,7 @@ public class PlatformVcsPathPresenter extends VcsPathPresenter {
   }
 
   public static @NlsSafe @NotNull String getPresentableRelativePath(@NotNull FilePath path, @NotNull FilePath originalPath) {
-    RelativePathCalculator calculator = new RelativePathCalculator(path.getPath(), originalPath.getPath());
-    return calculator.execute().replace("/", File.separator);
+    String relativePath = RelativePathCalculator.computeRelativePath(path.getPath(), originalPath.getPath(), false);
+    return FileUtilRt.toSystemDependentName(relativePath);
   }
 }

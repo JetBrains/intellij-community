@@ -1,4 +1,4 @@
-// "Remove unreachable branches" "true"
+// "Remove unreachable branches" "true-preview"
 class Test {
     Number n = 1;
     int result = switch (n) {

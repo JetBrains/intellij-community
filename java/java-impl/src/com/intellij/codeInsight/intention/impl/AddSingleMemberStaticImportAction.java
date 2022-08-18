@@ -125,12 +125,12 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   private static PsiImportStatementBase findExistingImport(PsiFile file, PsiClass aClass, String refName) {
-    if (file instanceof PsiJavaFile) {
+    if (file instanceof PsiJavaFile && aClass != null) {
       PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
         for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
           if (staticStatement.isOnDemand()) {
-            if (staticStatement.resolveTargetClass() == aClass) {
+            if (aClass.isEquivalentTo(staticStatement.resolveTargetClass())) {
               return staticStatement;
             }
           }
@@ -138,7 +138,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
 
         final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refName);
         if (importStatement instanceof PsiImportStaticStatement &&
-            ((PsiImportStaticStatement)importStatement).resolveTargetClass() == aClass) {
+            aClass.isEquivalentTo(((PsiImportStaticStatement)importStatement).resolveTargetClass())) {
           return importStatement;
         }
       }
@@ -210,7 +210,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         if (referenceName != null && referenceName.equals(reference.getReferenceName())) {
@@ -232,11 +232,11 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
 
     file.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitImportList(PsiImportList list) {
+      public void visitImportList(@NotNull PsiImportList list) {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
 
         try {
           if (checkParameterizedReference(reference)) return;
@@ -272,7 +272,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
                   }
-                  if (!Comparing.equal(reference.resolve(), referent)) {
+                  if (referent == null ? reference.resolve() != null : !referent.isEquivalentTo(reference.resolve())) {
                     reference = rebind(reference, resolvedClass);
                   }
                 }

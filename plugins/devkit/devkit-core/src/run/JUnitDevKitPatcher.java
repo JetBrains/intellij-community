@@ -15,9 +15,10 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.JavaModuleOptions;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +50,9 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     ParametersList vm = javaParameters.getVMParametersList();
 
     if (PsiUtil.isIdeaProject(project)) {
-      if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
+      if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
         // check that UrlClassLoader is available in the test module classpath
+        // if module-path is used, skip custom loader
         String qualifiedName = "com.intellij.util.lang.UrlClassLoader";
         if (loaderValid(project, module, qualifiedName)) {
           vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
@@ -66,22 +68,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, Path.of(basePath, "config/test").toAbsolutePath().toString());
       }
 
-      JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
-      if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-        try {
-          URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
-          if (resource != null) {
-            FileUtil.loadLines(resource.getFile())
-              .forEach(l -> vm.add("--add-opens " + l));
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e; //unreachable
-        }
-        catch (Throwable e) {
-          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
-        }
-      }
+      appendAddOpensWhenNeeded(jdk, vm);
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);
@@ -138,6 +125,24 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
+  }
+
+  static void appendAddOpensWhenNeeded(@NotNull Sdk jdk, @NotNull ParametersList vm) {
+    JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
+    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
+      URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
+      if (resource != null) {
+        try {
+          JavaModuleOptions.readOptions(resource.openStream(), OS.CURRENT).forEach(vm::add);
+        }
+        catch (ProcessCanceledException e) {
+          throw e; //unreachable
+        }
+        catch (Throwable e) {
+          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
+        }
+      }
+    }
   }
 
   private static boolean loaderValid(Project project, Module module, String qualifiedName) {

@@ -257,7 +257,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertType("X", assignment.type)
+    assertType("java.util.Date", assignment.type)
   }
 
   void testAllTypeParamsAreSubstituted() {
@@ -1856,7 +1856,7 @@ class A {
   }
 
   void 'test cyclic flow with closure'() {
-    allowNestedContext(3, testRootDisposable)
+    allowNestedContext(2, testRootDisposable)
     doTest '''
 def x
 for (def i = 0; i < 10; i++) {
@@ -1965,7 +1965,7 @@ protected void onLoadConfig (Map configSection) {
   void 'test soe with large flow'() {
     RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    allowNestedContext(4, testRootDisposable)
+    allowNestedContext(5, testRootDisposable)
     doTest """
 static _getTreeData() {
     def filterData  = []
@@ -2002,5 +2002,12 @@ def foo() {
     x<caret>x
 }
 """, "java.util.Collection<java.lang.Integer>"
+  }
+
+  void 'test boxing on nullable receiver'() {
+    doTest """
+def xx = ""?.length()
+x<caret>x
+""", "java.lang.Integer"
   }
 }

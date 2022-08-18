@@ -91,7 +91,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
       final PsiExpressionList argList = aClass.getArgumentList();
       if (argList != null) {
         argList.accept(this);
@@ -99,19 +99,19 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (isComputedPropertyExpression(expression)) {
         return;
@@ -236,7 +236,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       if (isComputedPropertyExpression(expression)) return;
       visitPropertyKeyAnnotationParameter(expression, computeStringValue(expression), expression);
     }
@@ -283,17 +283,12 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
     private static boolean isComputedPropertyExpression(PsiExpression expression) {
       PsiElement parent = expression.getParent();
-      while (true) {
-        if (parent instanceof PsiParenthesizedExpression ||
-            parent instanceof PsiConditionalExpression &&
-            (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
-             expression == ((PsiConditionalExpression)parent).getElseExpression())) {
-          expression = (PsiExpression)parent;
-          parent = expression.getParent();
-        }
-        else {
-          break;
-        }
+      while (parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression &&
+             (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
+              expression == ((PsiConditionalExpression)parent).getElseExpression())) {
+        expression = (PsiExpression)parent;
+        parent = expression.getParent();
       }
       return parent instanceof PsiExpression;
     }

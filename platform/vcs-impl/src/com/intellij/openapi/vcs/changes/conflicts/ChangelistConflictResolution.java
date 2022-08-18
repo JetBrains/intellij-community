@@ -60,7 +60,7 @@ public enum ChangelistConflictResolution {
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, selected);
       if (dialog.showAndGet()) {
-        manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(new Change[0]));
+        manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(Change.EMPTY_CHANGE_ARRAY));
         return true;
       }
       return false;

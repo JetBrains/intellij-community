@@ -559,11 +559,6 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) { //clear text after building analysis scope set
-      indicator.setText("");
-      indicator.setText2("");
-    }
     return getFileSet().size();
   }
 
@@ -712,6 +707,13 @@ public class AnalysisScope {
     }
   }
 
+  /**
+   * @return true iff the scope covers the whole project so no external (non-scope) usages of project's code is possible
+   */
+  public boolean isTotalScope() {
+    return getScopeType() == PROJECT && isIncludeTestSource();
+  }
+  
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
   }

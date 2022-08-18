@@ -41,7 +41,7 @@ public class MarkdownTodoTest extends BasePlatformTestCase {
 
   private void doTest(@NotNull String text, int expectedTodos) {
     myFixture.configureByText(MarkdownFileType.INSTANCE, text);
-    assertEquals(expectedTodos, PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(myFixture.getFile()).length);
+    assertEquals(expectedTodos, PsiTodoSearchHelper.getInstance(getProject()).findTodoItems(myFixture.getFile()).length);
   }
 
   public void testCustomTodo() {

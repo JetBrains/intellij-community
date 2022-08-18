@@ -1,4 +1,4 @@
-// "Insert '(String)x' declaration" "true"
+// "Insert '(String)x' declaration" "true-preview"
 
 class C {
   Object s = new Object();

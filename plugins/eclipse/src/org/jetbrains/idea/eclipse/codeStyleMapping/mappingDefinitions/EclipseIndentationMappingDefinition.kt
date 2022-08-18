@@ -6,6 +6,7 @@ import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
+import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.TabCharacterConvertor
 import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions
 
 internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addIndentationMapping() {
@@ -23,22 +24,50 @@ internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addIndentationMapping(
           EclipseFormatterOptions.TAB_CHAR_SPACE -> indent.USE_TAB_CHARACTER = false
           else -> throw UnexpectedIncomingValue(value)
         }
+        eclipseTabChar = value
       },
       export = {
         if (indent.USE_TAB_CHARACTER)
           EclipseFormatterOptions.TAB_CHAR_MIXED
         else
           EclipseFormatterOptions.TAB_CHAR_SPACE
-      })
+      }).convert(TabCharacterConvertor)
   "use_tabs_only_for_leading_indentations" mapTo
     field(indent::SMART_TABS)
       .convertBoolean()
   "indentation.size" mapTo
-    field(indent::INDENT_SIZE)
-      .convertInt()
+    compute(
+      import = { value ->
+        when (eclipseTabChar) {
+          EclipseFormatterOptions.TAB_CHAR_MIXED -> indent.INDENT_SIZE = value
+          EclipseFormatterOptions.TAB_CHAR_TAB -> { /* do nothing */ }
+          EclipseFormatterOptions.TAB_CHAR_SPACE -> indent.TAB_SIZE = value
+          else -> throw UnexpectedIncomingValue(value)
+        }
+      },
+      export = {
+        if (indent.USE_TAB_CHARACTER) indent.INDENT_SIZE
+        else indent.TAB_SIZE
+      }
+    ).convertInt()
   "tabulation.size" mapTo
-    field(indent::TAB_SIZE)
-      .convertInt()
+    compute(
+      import = { value ->
+        when (eclipseTabChar) {
+          EclipseFormatterOptions.TAB_CHAR_MIXED -> indent.TAB_SIZE = value
+          EclipseFormatterOptions.TAB_CHAR_TAB -> {
+            indent.TAB_SIZE = value
+            indent.INDENT_SIZE = value
+          }
+          EclipseFormatterOptions.TAB_CHAR_SPACE -> indent.INDENT_SIZE = value
+          else -> throw UnexpectedIncomingValue(value)
+        }
+      },
+      export = {
+        if (indent.USE_TAB_CHARACTER) indent.TAB_SIZE
+        else indent.INDENT_SIZE
+      }
+    ).convertInt()
   "text_block_indentation" mapTo
     compute(
       import = { value ->

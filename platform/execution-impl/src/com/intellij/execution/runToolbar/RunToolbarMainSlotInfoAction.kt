@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.ProcessesByType
+import com.intellij.execution.runToolbar.data.RWActiveProcesses
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -20,18 +21,19 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration {
+internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
+                                              RTRunConfiguration {
+
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
     private val PROP_ACTIVE_PROCESSES_COUNT = Key<Int>("PROP_ACTIVE_PROCESSES_COUNT")
-    private val PROP_ACTIVE_PROCESSES = Key<ActiveProcesses>("PROP_ACTIVE_PROCESSES")
+    private val PROP_ACTIVE_PROCESSES = Key<RWActiveProcesses>("PROP_ACTIVE_PROCESSES")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -39,29 +41,29 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = e.project?.let { project ->
+    val presentation = e.presentation
+    presentation.isVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
       val activeProcesses = manager.activeProcesses
 
       manager.getMainOrFirstActiveProcess()?.let {
-        e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
+        presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
-      e.presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
-      e.presentation.putClientProperty(PROP_ACTIVE_PROCESSES_COUNT, activeProcesses.getActiveCount())
-      e.presentation.putClientProperty(PROP_ACTIVE_PROCESSES, activeProcesses)
+      presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
+      presentation.putClientProperty(PROP_ACTIVE_PROCESSES_COUNT, activeProcesses.getActiveCount())
+      presentation.putClientProperty(PROP_ACTIVE_PROCESSES, activeProcesses)
 
       activeProcesses.processes.isNotEmpty()
     } ?: false
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+        presentation.isVisible = presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
     traceLog(LOG, e)
   }
-
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
     return RunToolbarMainSlotInfo(presentation)
@@ -69,7 +71,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
-    private val dragArea = DraggablePane()
+    private val dragArea = RunWidgetResizePane()
 
     private val processComponents = mutableListOf<ProcessesByType>()
     private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
@@ -82,8 +84,11 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
+
           val d = preferredSize
-          d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+          getProject()?.let {
+            d.width = RunWidgetWidthHelper.getInstance(it).arrow
+          }
 
           preferredSize = d
         })

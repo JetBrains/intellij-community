@@ -7,7 +7,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Misc. code wrapping functions
- * @author rvishnyakov
  */
 public final class WrappingUtil {
 

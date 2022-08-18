@@ -57,7 +57,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
   private class SynchronizationOnLocalVariableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       if (!reportLocalVariables && !reportMethodParameters) {
         return;
@@ -161,7 +161,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (escaping) {
         return;
       }

@@ -5,9 +5,10 @@ import com.intellij.openapi.project.Project
 import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskContext
+import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 
-internal class OpenPassedContext(private val project: Project) : LessonContext() {
+internal class OpenPassedContext(private val project: Project, override val lesson: KLesson) : LessonContext() {
   override fun task(taskContent: TaskContext.() -> Unit) {
     OpenPassedTaskContext(project).apply(taskContent)
   }

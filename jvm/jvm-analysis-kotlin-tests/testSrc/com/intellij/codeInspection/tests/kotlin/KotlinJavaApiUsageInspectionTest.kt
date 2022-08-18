@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
+import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
@@ -108,6 +109,20 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
           }
         }
       }
+    """.trimIndent())
+  }
+
+  fun `test single method multiple overrides`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+        class CustomList : java.util.AbstractList<Int>() {
+          override val size: Int = 0
+
+          override fun get(index: Int): Int = 0
+
+          override fun <error descr="Usage of API documented as @since 1.8+">spliterator</error>(): java.util.<error descr="Usage of API documented as @since 1.8+">Spliterator</error><Int> =
+            java.util.<error descr="Usage of API documented as @since 1.8+">Spliterators</error>.spliterator(this, 0)
+        }
     """.trimIndent())
   }
 

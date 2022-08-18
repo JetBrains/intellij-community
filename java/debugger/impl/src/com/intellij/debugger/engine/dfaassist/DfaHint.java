@@ -1,10 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-enum DfaHint {
-  NONE(null), ANY_VALUE(null, true), TRUE("= true", true), FALSE("= false", true), 
+/**
+ * Representation of DfaAssist hint
+ */
+@ApiStatus.Experimental
+public enum DfaHint {
+  NONE(null), ANY_VALUE(null, true), TRUE("= true", true), FALSE("= false", true), NULL("= null", true),
   NPE("[NullPointerException]"), NULL_AS_NOT_NULL("[Null passed where not-null expected]"), CCE("[ClassCastException]"),
   ASE("[ArrayStoreException]"), AIOOBE("[ArrayIndexOutOfBoundsException]"), FAIL("[Method will fail]", true);
 
@@ -20,16 +25,24 @@ enum DfaHint {
     myValue = value;
   }
 
-  String getTitle() {
+  /**
+   * @return hint text to display in the editor. May return null if the hint is technical (not intended to be displayed)
+   */
+  public String getTitle() {
     return myTitle;
   }
 
+  /**
+   * Merges two states for the same code location
+   * @return merged state
+   */
   @NotNull
-  DfaHint merge(@NotNull DfaHint other) {
+  public DfaHint merge(@NotNull DfaHint other) {
     if (other == this) return this;
     if (this.myValue && other.myValue) return ANY_VALUE;
     if (this.myValue) return other;
     if (other.myValue) return this;
+    if (this == CCE && other == NPE || this == NPE && other == CCE) return NPE;
     return NONE;
   }
 }

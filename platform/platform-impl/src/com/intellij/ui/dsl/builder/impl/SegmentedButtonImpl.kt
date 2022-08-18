@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ComboBox
@@ -13,11 +14,15 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenItemSelectedFromUi
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
@@ -33,6 +38,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
 
   init {
     comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
+    segmentedButtonComponent.isOpaque = false
     rebuild()
   }
 
@@ -80,8 +86,20 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   override fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T> {
     this.property = property
     comboBox.bind(property)
-    bindSegmentedButtonComponent(property)
+    segmentedButtonComponent.bind(property)
     rebuild()
+    return this
+  }
+
+  override fun whenItemSelected(parentDisposable: Disposable?, listener: (T) -> Unit): SegmentedButton<T> {
+    comboBox.whenItemSelected(parentDisposable, listener)
+    segmentedButtonComponent.whenItemSelected(parentDisposable, listener)
+    return this
+  }
+
+  override fun whenItemSelectedFromUi(parentDisposable: Disposable?, listener: (T) -> Unit): SegmentedButton<T> {
+    comboBox.whenItemSelectedFromUi(parentDisposable, listener)
+    segmentedButtonComponent.whenItemSelectedFromUi(parentDisposable, listener)
     return this
   }
 
@@ -137,22 +155,6 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
       comboBox -> comboBox.selectedItem as? T
       segmentedButtonComponent -> segmentedButtonComponent.selectedItem
       else -> null
-    }
-  }
-
-  private fun bindSegmentedButtonComponent(property: ObservableMutableProperty<T>) {
-    val mutex = AtomicBoolean()
-    property.afterChange {
-      mutex.lockOrSkip {
-        segmentedButtonComponent.selectedItem = it
-      }
-    }
-    segmentedButtonComponent.addSelectedItemListener {
-      segmentedButtonComponent.selectedItem?.let {
-        mutex.lockOrSkip {
-          property.set(it)
-        }
-      }
     }
   }
 }

@@ -42,12 +42,14 @@ import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -324,10 +326,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       // mark the window as "last activated" windows and thus
       // some action like navigation up/down in stacktrace wont
       // work correctly
-      getToolWindowManager().getToolWindow(toolWindowId)!!.activate(
-        descriptor.activationCallback,
-        descriptor.isAutoFocusContent,
-        descriptor.isAutoFocusContent)
+      var focus = descriptor.isAutoFocusContent
+      if (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner == null) {
+        // This is to cover the case, when the focus was in Run tool window already,
+        // and it was reset due to us replacing tool window content.
+        // We're restoring focus in the tool window in this case.
+        // It shouldn't harm in any case - having no focused component isn't useful at all.
+        focus = true
+      }
+      getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
     }, project.disposed)
   }
 
@@ -666,7 +673,7 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 }
 
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
-  val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
+  val content = ContentFactory.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
   if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon

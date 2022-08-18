@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -16,19 +16,14 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
@@ -59,7 +54,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                   "<name>1</name>");
 
     assertModules("project");
-    assertEquals("1", myProjectsTree.getRootProjects().get(0).getName());
+    assertEquals("1", getProjectsTree().getRootProjects().get(0).getName());
 
     MavenServerManager.getInstance().shutdown(true);
 
@@ -69,7 +64,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                   "<name>2</name>");
 
     assertModules("project");
-    assertEquals("2", myProjectsTree.getRootProjects().get(0).getName());
+    assertEquals("2", getProjectsTree().getRootProjects().get(0).getName());
   }
 
   @Test
@@ -79,18 +74,18 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                            "  <mirror>" +
                            "  </mirror>" +
                            "  <mirror>" +
-                           "    <id></id>" +
-                           "    <url></url>" +
-                           "    <mirrorOf></mirrorOf>" +
+                           "    <id/>" +
+                           "    <url/>" +
+                           "    <mirrorOf/>" +
                            "  </mirror>" +
                            "  <mirror>" +
-                           "    <id></id>" +
+                           "    <id/>" +
                            "    <url>foo</url>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "  <mirror>" +
                            "    <id>foo</id>" +
-                           "    <url></url>" +
+                           "    <url/>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "</mirrors>" +
@@ -139,6 +134,21 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                   "<version>1</version>");
 
     assertRootsChanged(1);
+  }
+
+  @Test
+  public void testDoRootChangesOnProjectReimportWhenNothingChanges() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertRootsChanged(1);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertRootsChanged(supportsZeroEventsOnNoProjectChange() ? 0 : 1);
   }
 
   @Test
@@ -222,16 +232,13 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     myProjectsManager.listenForExternalChanges();
 
-    // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
     updateSettingsXml("<proxies>" +
                       " <proxy>" +
                       "    <id>my</id>" +
                       "    <active>true</active>" +
                       "    <protocol>http</protocol>" +
-                      "    <host>proxy-auth-test.labs.intellij.net</host>" +
+                      "    <host>invalid.host.in.intellij.net</host>" +
                       "    <port>3128</port>" +
-                      "    <username>user1</username>" +
-                      "    <password>invalid</password>" +
                       "  </proxy>" +
                       "</proxies>");
 
@@ -277,7 +284,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                     "  </extensions>" +
                     "</build>");
 
-      List<MavenProject> projects = myProjectsTree.getProjects();
+      List<MavenProject> projects = getProjectsTree().getProjects();
       assertEquals(1, projects.size());
       MavenProject mavenProject = projects.get(0);
       assertEquals("Name for test:project generated by MyMavenExtension.", mavenProject.getFinalName());
@@ -285,8 +292,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
       PlatformTestUtil.assertPathsEqual(myProjectPom.getPath(), mavenProject.getProperties().getProperty("workspace-info"));
     }
     finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().shutdown(true);  // to unlock files
     }
   }
 
@@ -312,7 +318,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                      "</build>");
     importProjectWithErrors();
 
-    List<MavenProject> projects = myProjectsTree.getProjects();
+    List<MavenProject> projects = getProjectsTree().getProjects();
     assertEquals(1, projects.size());
     MavenProject mavenProject = projects.get(0);
     assertEquals(mavenProject.getProblems().toString(), 1, mavenProject.getProblems().size());
@@ -378,9 +384,12 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals("name-from-properties", project.getName());
   }
 
-  private void assertRootsChanged(int count) {
+  private void assertRootsChanged(@SuppressWarnings("SameParameterValue") int count) {
     assertEquals(count, rootsChangedCount);
     assertEquals(rootsChangedCount, beforeRootsChangedCount);
+
+    rootsChangedCount = 0;
+    beforeRootsChangedCount = 0;
   }
 
   private static class NameSettingMavenImporter extends MavenImporter {
@@ -399,24 +408,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     @Override
     public boolean isApplicable(MavenProject mavenProject) {
       return true;
-    }
-
-    @Override
-    public void preProcess(Module module,
-                           MavenProject mavenProject,
-                           MavenProjectChanges changes,
-                           IdeModifiableModelsProvider modifiableModelsProvider) {
-    }
-
-    @Override
-    public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                        Module module,
-                        MavenRootModelAdapter rootModel,
-                        MavenProjectsTree mavenModel,
-                        MavenProject mavenProject,
-                        MavenProjectChanges changes,
-                        Map<MavenProject, String> mavenProjectToModuleName,
-                        List<MavenProjectsProcessorTask> postTasks) {
     }
   }
 }

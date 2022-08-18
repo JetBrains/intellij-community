@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -25,13 +24,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static java.util.Collections.emptyMap;
-
 public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
   /**
-   * The default time-out to read the environment, in milliseconds.
+   * The default time-out to read the environment (in milliseconds).
    */
   private static final long DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS = 20_000L;
 
@@ -98,7 +95,7 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Boolean loadEnvironment(@NotNull Activity activity) {
+  public static @Nullable Boolean loadEnvironment() {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       return null;
@@ -108,19 +105,21 @@ public final class EnvironmentUtil {
     ourEnvGetter.set(envFuture);
     Boolean result = Boolean.TRUE;
     try {
-      Map<String, String> env = getShellEnv();
+      Map<String, String> env = getShellEnv(Long.getLong("ij.load.shell.env.timeout", DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS));
       setCharsetVar(env);
       envFuture.complete(Collections.unmodifiableMap(env));
     }
     catch (Throwable t) {
       result = Boolean.FALSE;
       LOG.warn("can't get shell environment", t);
-    }
-    finally {
-      activity.end();
+      if (t instanceof ExceptionWithAttachments) {
+        for (Attachment attachment : ((ExceptionWithAttachments)t).getAttachments()) {
+          LOG.warn(attachment.getPath() + ":\n" + attachment.getDisplayText());
+        }
+      }
     }
 
-    // execution time of handlers of envFuture should be not included into load env activity
+    // execution time of 'envFuture' handlers should not be included in the "load environment" activity
     if (result == Boolean.FALSE) {
       envFuture.complete(getSystemEnv());
     }
@@ -139,7 +138,7 @@ public final class EnvironmentUtil {
       return false;
     }
 
-    // On macOS, login shell session is not run when a user logs in, so 'SHLVL > 0' likely means that IDE started from a terminal.
+    // On macOS, a login shell session is not run when a user logs in, so 'SHLVL > 0' likely means that the IDE is started from a terminal.
     String shLvl = System.getenv(SHLVL);
     try {
       if (shLvl != null && Integer.parseInt(shLvl) > 0) {
@@ -214,8 +213,8 @@ public final class EnvironmentUtil {
   public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
-  private static @NotNull Map<String, String> getShellEnv() throws IOException {
-    return new ShellEnvReader().readShellEnv(null, null);
+  private static Map<String, String> getShellEnv(long timeoutMillis) throws IOException {
+    return new ShellEnvReader(timeoutMillis).readShellEnv(null, null);
   }
 
   public static class ShellEnvReader {
@@ -239,7 +238,7 @@ public final class EnvironmentUtil {
     }
 
     public final @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
-     String reader;
+      String reader;
 
       if (SystemInfoRt.isMac) {
         reader = PathManager.findBinFileWithException(MacOS_LOADER_BINARY).toAbsolutePath().toString();
@@ -248,7 +247,10 @@ public final class EnvironmentUtil {
         reader = SHELL_ENV_COMMAND + "' '" + ENV_ZERO_ARGUMENT;
       }
 
-      Path envDataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
+      // The temporary file is not pre-created, as writing to an already existing file using pipe might not be available
+      // if the 'no-clobber' option is set for the shell
+      Path envDataFileDir = Files.createTempDirectory("ij-env-tmp-dir");
+      Path envDataFile = envDataFileDir.resolve("ij-shell-env-data.tmp");
 
       StringBuilder readerCmd = new StringBuilder();
       if (file != null) {
@@ -272,37 +274,26 @@ public final class EnvironmentUtil {
       }
 
       LOG.info("loading shell env: " + String.join(" ", command));
-      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
+      try {
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
+      }
+      finally {
+        deleteTempFile(envDataFile);
+        deleteTempFile(envDataFileDir);
+      }
     }
 
     /**
-     * @throws IOException if the process fails to start, exits with a non-zero
-     *   code, produces no output or the file used to store the output can't be
-     *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
-     */
-    protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                                   @Nullable Path workingDir,
-                                                                                                   @NotNull Path envDataFile) throws IOException {
-      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap(), envDataFile);
-    }
-
-    /**
-     * @param scriptEnvironment the extra environment to be added to the
-     *                          environment of the new process. If {@code null},
-     *                          the process environment won't be modified.
-     * @throws IOException if the process fails to start, exits with a non-zero
-     *   code, produces no output or the file used to store the output can't be
-     *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @param scriptEnvironment the extra environment to be added to the environment of the new process.
+     *                         If {@code null}, the process environment won't be modified.
+     * @throws IOException if the process fails to start, exits with a non-zero code, produces no output,
+     *                     or the file used to store the output cannot be read.
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                                    @Nullable Path workingDir,
                                                                                                    @Nullable Map<String, String> scriptEnvironment,
-                                                                                                   @NotNull Path envDataFile)
-      throws IOException {
+                                                                                                   @NotNull Path envDataFile) throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
         if (scriptEnvironment != null) {
           // we might need the default environment for a process to launch correctly
@@ -312,13 +303,11 @@ public final class EnvironmentUtil {
     }
 
     /**
-     * @param scriptEnvironmentProcessor the block which accepts the environment
-     *                                   of the new process, allowing to add and
-     *                                   remove environment variables.
+     * @param scriptEnvironmentProcessor a block which accepts the environment of the new process,
+     *                                   allowing to add and remove environment variables.
      * @return Debugging output of the script, and the map of environment variables.
-     * @throws IOException if the process fails to start, exits with a non-zero
-     *   code or produces no output
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @throws IOException if the process fails to start, exits with a non-zero code, produces no output,
+     *                     or the file used to store the output cannot be read.
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
@@ -338,29 +327,25 @@ public final class EnvironmentUtil {
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
 
-      Path logFile = null;
+      Path logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
       try {
-        logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
-        final Process process = builder
+        Process process = builder
           .redirectErrorStream(true)
           .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
           .start();
-        final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
+        int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
-        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
+        String log = Files.exists(logFile) ? new String(Files.readAllBytes(logFile), Charset.defaultCharset()) : "(no log file)";
         if (exitCode != 0 || envData.isEmpty()) {
-          EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
-                                               "\n\texit code: " + exitCode +
-                                               "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                               envData, log);
-          LOG.error(ex);
-          throw ex;
+          if (!log.isEmpty()) {
+            LOG.info("stdout/stderr: " + log);
+          }
+          throw new EnvironmentReaderException("command " + command + ", exit code: " + exitCode, envData, log);
         }
         return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
       }
       finally {
-        deleteTempFile(envDataFile);
         deleteTempFile(logFile);
       }
     }
@@ -396,21 +381,21 @@ public final class EnvironmentUtil {
   /**
    * Builds a login shell command list from the {@code shellScript} path.
    *
-   * @param shellScript   path to the shell script, probably taken from environment variable {@code SHELL}
-   * @param isLogin       true iff it should be login shell, usually {@code -l} parameter
-   * @param isInteractive true iff it should be interactive shell, usually {@code -i} parameter
-   * @param isCommand     true iff command should accept a command, instead of script name, usually {@code -c} parameter
-   * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
+   * @param shell         path to the shell, usually taken from the {@code SHELL} environment variable
+   * @param isLogin       {@code true} if the shell should be started in the login mode, usually with {@code -l} parameter
+   * @param isInteractive {@code true} if the shell should be started in the interactive mode, usually with {@code -i} parameter
+   * @param isCommand     {@code true} if the shell should accept a command and not just a script name, usually via {@code -c} parameter
+   * @return list of commands for starting a process, e.g. {@code ["/bin/bash", "-l", "-i", "-c"]}
    */
   @ApiStatus.Experimental
-  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
+  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shell, boolean isLogin, boolean isInteractive, boolean isCommand) {
     List<String> commands = new ArrayList<>();
-    commands.add(shellScript);
-    if (isLogin && !(shellScript.endsWith("/tcsh") || shellScript.endsWith("/csh"))) {
-      // *csh do not allow using `-l` with any other options
+    commands.add(shell);
+    if (isLogin && !(shell.endsWith("/tcsh") || shell.endsWith("/csh"))) {
+      // Csh/Tcsh does not allow using `-l` with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
-    if (isInteractive && !shellScript.endsWith("/fish")) {
+    if (isInteractive && !shell.endsWith("/fish")) {
       // Fish uses a single config file with conditions
       commands.add(SHELL_INTERACTIVE_ARGUMENT);
     }
@@ -566,7 +551,7 @@ public final class EnvironmentUtil {
 
   @TestOnly
   static Map<String, String> testLoader() throws IOException {
-    return getShellEnv();
+    return getShellEnv(DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS);
   }
 
   @TestOnly
@@ -582,9 +567,9 @@ public final class EnvironmentUtil {
   private static class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
-    private EnvironmentReaderException(String message, String stdout, String stderr) {
+    private EnvironmentReaderException(String message, String data, String log) {
       super(message);
-      myAttachments = new Attachment[]{new Attachment("EnvReaderStdout.txt", stdout), new Attachment("EnvReaderStderr.txt", stderr)};
+      myAttachments = new Attachment[]{new Attachment("EnvReaderData.txt", data), new Attachment("EnvReaderLog.txt", log)};
     }
 
     @Override

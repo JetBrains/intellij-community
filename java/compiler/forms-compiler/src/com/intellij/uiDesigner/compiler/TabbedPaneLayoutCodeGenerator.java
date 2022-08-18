@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -9,7 +9,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 
-public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type myTabbedPaneType = Type.getType(JTabbedPane.class);
   private final Method myAddTabMethod = Method.getMethod("void addTab(java.lang.String,javax.swing.Icon,java.awt.Component,java.lang.String)");
   private final Method mySetDisabledIconAtMethod = Method.getMethod("void setDisabledIconAt(int,javax.swing.Icon)");

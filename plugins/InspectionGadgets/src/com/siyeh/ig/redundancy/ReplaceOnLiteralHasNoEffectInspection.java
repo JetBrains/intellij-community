@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
@@ -30,7 +30,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
                                                  boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!STRING_REPLACE.test(call)) return;
         PsiLiteralExpression qualifier = tryCast(
           PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiLiteralExpression.class);
@@ -42,7 +42,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
         if (!isRedundant(str, pattern, "replace".equals(name))) return;
         PsiElement refName = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
         holder.registerProblem(call, InspectionGadgetsBundle.message("inspection.replace.on.literal.display.name"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                TextRange.create(refName.getTextRangeInParent().getStartOffset(), call.getTextLength()),
                                ExpressionUtils.isVoidContext(call) ? null : new ReplaceWithQualifierFix());
       }

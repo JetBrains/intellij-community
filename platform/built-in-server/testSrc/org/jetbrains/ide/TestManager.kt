@@ -17,7 +17,7 @@ import org.junit.runner.Description
 
 private const val EXCLUDED_DIR_NAME = "excludedDir"
 
-internal class TestManager(private val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
+class TestManager(private val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
   var annotation: TestDescriptor? = null
 
   var filePath: String? = null

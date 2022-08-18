@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
-abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTest() {
+abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTest15() {
 
     override fun isFirPlugin(): Boolean = true
 

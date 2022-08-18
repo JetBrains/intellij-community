@@ -2,17 +2,19 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.psi
-import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
-
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaVoidType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -22,22 +24,28 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
             if (fixToStringMethod(declaration)) continue
             if (fixFinalizeMethod(declaration, element)) continue
             if (fixCloneMethod(declaration)) {
-                val hasNoCloneableInSuperClasses =
+                val cloneableClass = JavaPsiFacade.getInstance(context.project)
+                    .findClass("java.lang.Cloneable", GlobalSearchScope.allScope(context.project)) ?: continue
+                val directlyImplementsCloneable = element.psi<PsiClass>()?.isInheritor(cloneableClass, false) ?: continue
+                val hasCloneableInSuperClasses =
                     declaration.psi<PsiMethod>()
                         ?.findSuperMethods()
-                        ?.all { superMethod ->
-                            superMethod.containingClass?.getKotlinFqName()?.asString() == "java.lang.Object"
+                        ?.any { superMethod ->
+                            superMethod.containingClass?.kotlinFqName?.asString() != "java.lang.Object"
                         } == true
-                if (hasNoCloneableInSuperClasses) {
-                    element.inheritance.implements +=
-                        JKTypeElement(
-                            JKClassType(
-                                JKUnresolvedClassSymbol("Cloneable", typeFactory),
-                                emptyList(), Nullability.NotNull
-                            )
+                if (directlyImplementsCloneable && hasCloneableInSuperClasses) {
+                    val directCloneableSupertype = element.inheritance.implements.find {
+                        it.type.safeAs<JKClassType>()?.classReference?.fqName == "java.lang.Cloneable"
+                    } ?: continue
+                    element.inheritance.implements -= directCloneableSupertype
+                } else if (!directlyImplementsCloneable && !hasCloneableInSuperClasses) {
+                    element.inheritance.implements += JKTypeElement(
+                        JKClassType(
+                            context.symbolProvider.provideClassSymbol("kotlin.Cloneable"),
+                            nullability = NotNull
                         )
+                    )
                 }
-                continue
             }
         }
         return recurse(element)
@@ -48,8 +56,8 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         if (method.parameters.isNotEmpty()) return false
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "String" }
-            ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+            ?.updateNullability(NotNull) ?: return false
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 
@@ -58,8 +66,8 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         if (method.parameters.isNotEmpty()) return false
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "Object" }
-            ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+            ?.updateNullability(NotNull) ?: return false
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 

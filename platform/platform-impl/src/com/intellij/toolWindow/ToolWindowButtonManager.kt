@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.toolWindow
 
@@ -8,8 +7,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.Dimension
-import java.awt.Point
 import javax.swing.JComponent
 
 internal interface ToolWindowButtonManager {
@@ -19,6 +18,8 @@ internal interface ToolWindowButtonManager {
 
   fun addToToolWindowPane(pane: JComponent) {
   }
+
+  fun initMoreButton() {}
 
   fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean
 
@@ -30,9 +31,12 @@ internal interface ToolWindowButtonManager {
 
   fun getBottomHeight(): Int
 
-  fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
+  fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe
 
-  fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe?
+  fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe?
+
+  fun getStripeWidth(anchor: ToolWindowAnchor): Int
+  fun getStripeHeight(anchor: ToolWindowAnchor): Int
 
   fun startDrag()
 
@@ -41,4 +45,6 @@ internal interface ToolWindowButtonManager {
   fun reset()
 
   fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager
+
+  fun hasButtons(): Boolean
 }

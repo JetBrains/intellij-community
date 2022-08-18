@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.*
@@ -18,6 +18,10 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     // nothing
   }
 
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    delegate.preparePreview(editor, file)
+  }
+
   override fun collectPlaceholders(editor: Editor): List<TextRange> {
     return delegate.collectPlaceholders(editor)
   }
@@ -26,21 +30,21 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     return delegate.getPlaceholderCollector(editor, psiFile)
   }
 
-  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit?): Boolean {
     if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
+    val modificationTracker = PsiModificationTracker.getInstance(editor.project)
     val cached = cacheService.getVisionDataForEditor(editor, id) ?: return super.shouldRecomputeForEditor(editor, uiData)
 
     return modificationTracker.modificationCount == cached.modificationStamp
 
   }
 
-  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
-    val project = editor.project ?: return CodeVisionState.NotReady()
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
+    val project = editor.project ?: return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady()
+    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady
     val document = editor.document
     // ranges may be slightly outdated, so we have to unsure that they fit the document
     val lenses = cached.codeVisionEntries.map {

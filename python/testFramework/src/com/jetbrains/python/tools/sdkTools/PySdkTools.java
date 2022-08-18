@@ -85,7 +85,6 @@ public final class PySdkTools {
    * @param addSkeletons add skeletons or only packages
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
-   * @throws IOException         failed to read eggs
    */
   public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
                                                      final boolean addSkeletons,

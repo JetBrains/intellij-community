@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.agent;
 
 import java.io.ByteArrayOutputStream;
@@ -38,7 +38,7 @@ public final class CaptureStorage {
     try {
       Throwable exception = new Throwable();
       if (DEBUG) {
-        System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
+        System.out.println("capture " + getCallerDescriptor(exception) + " - " + getKeyText(key));
       }
       CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
       processQueue();
@@ -62,7 +62,7 @@ public final class CaptureStorage {
       currentStacks.add(stack);
       if (DEBUG) {
         System.out.println(
-          "insert " + getCallerDescriptor(new Throwable()) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
+          "insert " + getCallerDescriptor(new Throwable()) + " -> " + getKeyText(key) + ", stack saved (" + currentStacks.size() + ")");
       }
     }
     catch (Exception e) {
@@ -80,7 +80,7 @@ public final class CaptureStorage {
       currentStacks.removeLast();
       if (DEBUG) {
         System.out.println(
-          "insert " + getCallerDescriptor(new Throwable()) + " <- " + key + ", stack removed (" + currentStacks.size() + ")");
+          "insert " + getCallerDescriptor(new Throwable()) + " <- " + getKeyText(key) + ", stack removed (" + currentStacks.size() + ")");
       }
     }
     catch (Exception e) {
@@ -310,5 +310,14 @@ public final class CaptureStorage {
   private static String getCallerDescriptor(Throwable e) {
     StackTraceElement caller = e.getStackTrace()[1];
     return caller.getClassName() + "." + caller.getMethodName();
+  }
+
+  private static String getKeyText(Object key) {
+    String res = key.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(key));
+    try {
+      return res + "(" + key + ")";
+    } catch (RuntimeException ignored) {
+    }
+    return res;
   }
 }

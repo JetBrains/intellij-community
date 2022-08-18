@@ -259,10 +259,10 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     });
   }
 
-  private void updateDefaultJrePresentation(Consumer<String> uiUpdater) {
+  private void updateDefaultJrePresentation(@NotNull Consumer<? super @Nls String> uiUpdater) {
     ReadAction
       .nonBlocking(myDefaultJreSelector::getDescriptionString)
-      .coalesceBy(this)
+      .coalesceBy(this, uiUpdater)
       .finishOnUiThread(ModalityState.stateForComponent(this), uiUpdater)
       .expireWhen(() -> !myDefaultJreSelector.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -284,7 +284,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     getComponent().addActionListener(listener);
   }
 
-  interface JreComboBoxItem {
+  public interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
 
     String getPresentableText();

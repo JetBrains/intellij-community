@@ -34,6 +34,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testUnboxingBoxingInLambdaReturn() { doTest(); }
   public void testUnboxingInMethodReferences() { doTest(); }
   public void testMethodReferenceOnNullable() { doTest(); }
+  public void testObjectsNonNullWithUnknownNullable() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTestWith(insp -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+  }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
@@ -302,6 +306,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testTernaryExpressionNumericType() { doTest(); }
   public void testEclipseDefaultTypeUse() {
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    doTest();
+  }
+  public void testEclipseDefaultOptionalOrElse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    myFixture.addClass("package org.eclipse.jdt.annotation;import java.lang.annotation.*;" +
+                       "@Target({ElementType.TYPE_USE}) public @interface Nullable {}");
     doTest();
   }
   public void testClassInsideLambda() { doTest(); }

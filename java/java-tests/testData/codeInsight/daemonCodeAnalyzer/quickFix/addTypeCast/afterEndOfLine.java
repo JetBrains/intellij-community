@@ -1,4 +1,4 @@
-// "Cast to 'java.lang.Integer'" "true"
+// "Cast expression to 'java.lang.Integer'" "true-preview"
 class A {
     {
         Number n = 0;

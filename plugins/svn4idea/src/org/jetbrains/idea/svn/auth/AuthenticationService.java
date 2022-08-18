@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
@@ -54,10 +54,10 @@ public final class AuthenticationService {
 
   private static final @NonNls String TERMINAL_SSL_SERVER_AUTH_KIND = "terminal.ssl.server";
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
   private final boolean myIsActive;
   private boolean myProxyCredentialsWereReturned;
-  @NotNull private final SvnConfiguration myConfiguration;
+  private final @NotNull SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
   public AuthenticationService(@NotNull SvnVcs vcs, boolean isActive) {
@@ -67,8 +67,7 @@ public final class AuthenticationService {
     myRequestedCredentials = new HashSet<>();
   }
 
-  @NotNull
-  public SvnVcs getVcs() {
+  public @NotNull SvnVcs getVcs() {
     return myVcs;
   }
 
@@ -76,8 +75,7 @@ public final class AuthenticationService {
     return myIsActive;
   }
 
-  @Nullable
-  public AuthenticationData requestCredentials(final Url repositoryUrl, final String type) {
+  public @Nullable AuthenticationData requestCredentials(final Url repositoryUrl, final String type) {
     AuthenticationData authentication = null;
 
     if (repositoryUrl != null) {
@@ -94,8 +92,7 @@ public final class AuthenticationService {
     return authentication;
   }
 
-  @Nullable
-  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Supplier<T> fromUserProvider) {
+  private @Nullable <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Supplier<T> fromUserProvider) {
     T result = null;
     // Search for stored credentials not only by key but also by "parent" keys. This is useful when we work just with URLs
     // (not working copy) and can't detect repository url beforehand because authentication is required. If found credentials of "parent"
@@ -123,10 +120,9 @@ public final class AuthenticationService {
     return result;
   }
 
-  @Nullable
-  public String requestSshCredentials(@NotNull final String realm,
-                                      @NotNull final SimpleCredentialsDialog.Mode mode,
-                                      @NotNull final String key) {
+  public @Nullable String requestSshCredentials(final @NotNull String realm,
+                                                final @NotNull SimpleCredentialsDialog.Mode mode,
+                                                final @NotNull String key) {
     return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), () -> {
       final Ref<String> answer = new Ref<>();
 
@@ -149,8 +145,7 @@ public final class AuthenticationService {
     });
   }
 
-  @NotNull
-  public AcceptResult acceptCertificate(@NotNull final Url url, @NotNull final String certificateInfo) {
+  public @NotNull AcceptResult acceptCertificate(final @NotNull Url url, final @NotNull String certificateInfo) {
     // TODO: Probably explicitly construct server url for realm here - like in CertificateTrustManager.
     String realm = url.toDecodedString();
     Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(TERMINAL_SSL_SERVER_AUTH_KIND, realm);
@@ -202,8 +197,7 @@ public final class AuthenticationService {
     return message;
   }
 
-  @NotNull
-  private HttpClient getClient(@NotNull Url repositoryUrl) {
+  private @NotNull HttpClient getClient(@NotNull Url repositoryUrl) {
     // TODO: Implement algorithm of resolving necessary enabled protocols (TLSv1 vs SSLv3) instead of just using values from Settings.
     SSLContext sslContext = createSslContext(repositoryUrl);
     List<String> supportedProtocols = getSupportedSslProtocols();
@@ -229,8 +223,7 @@ public final class AuthenticationService {
       .build();
   }
 
-  @NotNull
-  private List<String> getSupportedSslProtocols() {
+  private @NotNull List<String> getSupportedSslProtocols() {
     List<String> result = new ArrayList<>();
 
     switch (myConfiguration.getSslProtocols()) {
@@ -247,8 +240,7 @@ public final class AuthenticationService {
     return result;
   }
 
-  @NotNull
-  private SSLContext createSslContext(@NotNull Url url) {
+  private @NotNull SSLContext createSslContext(@NotNull Url url) {
     SSLContext result = CertificateManager.getSystemSslContext();
     TrustManager trustManager = new CertificateTrustManager(this, url);
 
@@ -262,8 +254,7 @@ public final class AuthenticationService {
     return result;
   }
 
-  @NotNull
-  public SvnAuthenticationManager getAuthenticationManager() {
+  public @NotNull SvnAuthenticationManager getAuthenticationManager() {
     return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs);
   }
 
@@ -273,8 +264,7 @@ public final class AuthenticationService {
     return myConfiguration.isUseDefaultProxy() && (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
-  @Nullable
-  public static Proxy getIdeaDefinedProxy(@NotNull final Url url) {
+  public static @Nullable Proxy getIdeaDefinedProxy(final @NotNull Url url) {
     // TODO: Check if removeNoProxy() is still needed
     // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
     // SvnAuthenticationManager.getProxyManager(). But noProxy() setting is not cleared correctly in all cases - so if svn command
@@ -297,8 +287,7 @@ public final class AuthenticationService {
     return null;
   }
 
-  @Nullable
-  public PasswordAuthentication getProxyAuthentication(@NotNull Url repositoryUrl) {
+  public @Nullable PasswordAuthentication getProxyAuthentication(@NotNull Url repositoryUrl) {
     Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     PasswordAuthentication result = null;
 
@@ -324,8 +313,7 @@ public final class AuthenticationService {
     PopupUtil.showBalloonForActiveComponent(message, MessageType.ERROR);
   }
 
-  @Nullable
-  private static PasswordAuthentication getProxyAuthentication(@NotNull Proxy proxy, @NotNull Url repositoryUrl) {
+  private static @Nullable PasswordAuthentication getProxyAuthentication(@NotNull Proxy proxy, @NotNull Url repositoryUrl) {
     PasswordAuthentication result = null;
 
     try {
@@ -344,8 +332,7 @@ public final class AuthenticationService {
   public void reset() {
   }
 
-  @NotNull
-  public Path getSpecialConfigDir() {
+  public @NotNull Path getSpecialConfigDir() {
     return myConfiguration.getConfigurationPath();
   }
 }

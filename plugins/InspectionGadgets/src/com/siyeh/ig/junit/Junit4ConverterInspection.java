@@ -31,7 +31,7 @@ public class Junit4ConverterInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         if (possibleToConvert(aClass)) {
           registerClassError(aClass);

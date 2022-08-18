@@ -40,9 +40,9 @@ public class NonCodeAnnotationGenerator {
   }
 
   @NotNull
-  public static @Nls String getNonCodeHeaderAvalable(Collection<AnnotationDocGenerator> values) {
-    boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
-    boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
+  public static @Nls String getNonCodeHeaderAvailable(Collection<AnnotationDocGenerator> values) {
+    boolean hasExternal = ContainerUtil.exists(values, AnnotationDocGenerator::isExternal);
+    boolean hasInferred = ContainerUtil.exists(values, AnnotationDocGenerator::isInferred);
 
     if (hasExternal && hasInferred) {
       return JavaBundle.message("non.code.annotations.explanation.external.and.inferred.available");

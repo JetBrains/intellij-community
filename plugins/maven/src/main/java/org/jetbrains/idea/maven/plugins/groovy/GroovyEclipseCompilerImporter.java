@@ -15,31 +15,12 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy;
 
-import org.jetbrains.idea.maven.importing.GroovyImporter;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.project.MavenProject;
-
 /**
  * @author Sergey Evdokimov
  */
-public class GroovyEclipseCompilerImporter extends GroovyImporter {
+public class GroovyEclipseCompilerImporter extends MigratedGroovyImporter {
 
   public GroovyEclipseCompilerImporter() {
-    super("org.apache.maven.plugins", "maven-compiler-plugin");
+    super(GroovyPluginConfigurator.KnownPlugins.GROOVY_ECLIPSE_COMPILER);
   }
-
-  @Override
-   public boolean isApplicable(MavenProject mavenProject) {
-    MavenPlugin compilerPlugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    if (compilerPlugin == null) return false;
-
-    for(MavenId id : compilerPlugin.getDependencies()) {
-      if ("groovy-eclipse-compiler".equals(id.getArtifactId()) && "org.codehaus.groovy".equals(id.getGroupId())) {
-        return true;
-      }
-    }
-
-    return false;
-   }
 }

@@ -33,11 +33,11 @@ java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceE
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
 runRunnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-Runnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtDotQualifiedExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtDotQualifiedExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtDotQualifiedExpression
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
-Runnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
@@ -45,12 +45,12 @@ r -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) fr
 Thread -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 println -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
 Thread -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
-Runnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 println -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
 ambiguousSamAcceptor -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-Supplier -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Supplier -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 ambiguousSamAcceptor -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-Callable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Callable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 Supplier -> USimpleNameReferenceExpression (identifier = Supplier) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression

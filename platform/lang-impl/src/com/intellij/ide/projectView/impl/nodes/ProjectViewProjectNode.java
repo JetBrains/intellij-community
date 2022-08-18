@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -66,7 +66,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       for (VirtualFile file : files) {
         if (!file.isDirectory()) {
           if (projectFileIndex == null) {
-            projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getProject());
+            projectFileIndex = ProjectFileIndex.getInstance(getProject());
           }
           if (projectFileIndex.getModuleForFile(file, false) == null) {
             PsiFile psiFile = psiManager.findFile(file);

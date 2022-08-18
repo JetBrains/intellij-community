@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradlePropertiesUtil")
 package org.jetbrains.plugins.gradle.util
 
@@ -10,6 +10,7 @@ import com.intellij.util.io.isFile
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleProperties.EMPTY
 import org.jetbrains.plugins.gradle.util.GradleProperties.GradleProperty
+import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -39,7 +40,7 @@ private fun findAndMergeProperties(possiblePropertiesFiles: List<Path>): GradleP
 private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
   return listOfNotNull(
     getGradleServiceDirectoryPath(project),
-    getGradleHomePropertiesPath(),
+    getGradleUserHomePropertiesPath(),
     getGradleProjectPropertiesPath(externalProjectPath)
   )
 }
@@ -47,7 +48,7 @@ private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Pa
 private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, externalProjectPath: Path): List<Path> {
   return listOfNotNull(
     getGradleServiceDirectoryPath(serviceDirectoryStr),
-    getGradleHomePropertiesPath(),
+    getGradleUserHomePropertiesPath(),
     getGradleProjectPropertiesPath(externalProjectPath)
   )
 }
@@ -62,7 +63,7 @@ private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?): Path? {
   return serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, PROPERTIES_FILE_NAME) }
 }
 
-private fun getGradleHomePropertiesPath(): Path? {
+fun getGradleUserHomePropertiesPath(): Path? {
   val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
   if (gradleUserHome != null) {
     return Paths.get(gradleUserHome, PROPERTIES_FILE_NAME)
@@ -94,8 +95,12 @@ private fun loadProperties(propertiesFile: Path): Properties? {
   }
 
   val properties = Properties()
-  propertiesFile.inputStream().use {
-    properties.load(it)
+  try {
+    propertiesFile.inputStream().use {
+      properties.load(it)
+    }
+  } catch (_: IOException) {
+    return null
   }
   return properties
 }

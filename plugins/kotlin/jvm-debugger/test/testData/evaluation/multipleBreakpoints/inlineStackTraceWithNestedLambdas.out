@@ -14,7 +14,7 @@ inlineStackTraceWithNestedLambdas.kt:18
 Compile bytecode for fooInt
 InlineStackFrame foo (inlineStackTraceWithNestedLambdas.kt:18)
     JavaValue[local] fooInt: int = 1 (inlineStackTraceWithNestedLambdas.kt:16)
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithNestedLambdas.kt:30)
+KotlinStackFrame (inlineStackTraceWithNestedLambdas.kt:30)
     JavaValue[local] mainInt: int = 1
 inlineStackTraceWithNestedLambdas.kt:12
 Compile bytecode for barInt
@@ -22,7 +22,7 @@ InlineStackFrame bar (inlineStackTraceWithNestedLambdas.kt:12)
     JavaValue[local] barInt: int = 1 (inlineStackTraceWithNestedLambdas.kt:10)
 InlineStackFrame foo (inlineStackTraceWithNestedLambdas.kt:19)
     JavaValue[local] fooInt: int = 1
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithNestedLambdas.kt:30)
+KotlinStackFrame (inlineStackTraceWithNestedLambdas.kt:30)
     JavaValue[local] mainInt: int = 1
 inlineStackTraceWithNestedLambdas.kt:22
 Compile bytecode for fooLambdaInt
@@ -33,7 +33,7 @@ InlineStackFrame bar (inlineStackTraceWithNestedLambdas.kt:12)
     JavaValue[local] barInt: int = 1
 InlineStackFrame foo (inlineStackTraceWithNestedLambdas.kt:19)
     JavaValue[local] fooInt: int = 1 (inlineStackTraceWithNestedLambdas.kt:16)
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithNestedLambdas.kt:30)
+KotlinStackFrame (inlineStackTraceWithNestedLambdas.kt:30)
     JavaValue[local] mainInt: int = 1
 inlineStackTraceWithNestedLambdas.kt:33
 Compile bytecode for mainLambdaInt
@@ -47,7 +47,7 @@ InlineStackFrame bar (inlineStackTraceWithNestedLambdas.kt:12)
     JavaValue[local] barInt: int = 1
 InlineStackFrame foo (inlineStackTraceWithNestedLambdas.kt:19)
     JavaValue[local] fooInt: int = 1
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithNestedLambdas.kt:30)
+KotlinStackFrame (inlineStackTraceWithNestedLambdas.kt:30)
     JavaValue[local] mainInt: int = 1 (inlineStackTraceWithNestedLambdas.kt:27)
 inlineStackTraceWithNestedLambdas.kt:6
 Compile bytecode for bazInt
@@ -63,7 +63,7 @@ InlineStackFrame bar (inlineStackTraceWithNestedLambdas.kt:12)
     JavaValue[local] barInt: int = 1
 InlineStackFrame foo (inlineStackTraceWithNestedLambdas.kt:19)
     JavaValue[local] fooInt: int = 1
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithNestedLambdas.kt:30)
+KotlinStackFrame (inlineStackTraceWithNestedLambdas.kt:30)
     JavaValue[local] mainInt: int = 1
 Disconnected from the target VM
 

@@ -2,93 +2,58 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.observable.util.whenKeyPressed
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import javax.swing.BorderFactory
-import javax.swing.JComponent
-import javax.swing.JPanel
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.KeyEvent
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class FloatingToolbarComponentImpl(
-  parentComponent: JComponent,
-  contextComponent: JComponent,
-  actionGroup: ActionGroup,
-  val autoHideable: Boolean,
+  editor: EditorEx,
+  provider: FloatingToolbarProvider,
   parentDisposable: Disposable
-) : JPanel(), FloatingToolbarComponent {
-
-  private val actionToolbar: ActionToolbar
-  private val visibilityController: VisibilityController
-
-  override fun scheduleShow() = invokeLater {
-    (actionToolbar as ActionToolbarImpl).updateActionsImmediately(true)
-    visibilityController.scheduleShow()
-  }
-
-  override fun scheduleHide() = invokeLater {
-    visibilityController.scheduleHide()
-  }
-
-  override fun paintComponent(g: Graphics) {
-    val graphics = g.create()
-    try {
-      if (graphics is Graphics2D) {
-        val alpha = visibilityController.opacity
-        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      }
-      graphics.color = BACKGROUND
-      graphics.fillRoundRect(0, 0, bounds.width, bounds.height, 6, 6)
-
-      super.paintComponent(graphics)
-    }
-    finally {
-      graphics.dispose()
-    }
-  }
-
-  override fun paintChildren(g: Graphics) {
-    val graphics = g.create()
-    try {
-      if (graphics is Graphics2D) {
-        val alpha = visibilityController.opacity
-        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
-      }
-      super.paintChildren(graphics)
-    }
-    finally {
-      graphics.dispose()
-    }
-  }
+) : AbstractFloatingToolbarComponent(provider.actionGroup, provider.autoHideable) {
 
   init {
-    layout = BorderLayout(0, 0)
-    border = BorderFactory.createEmptyBorder()
-    isOpaque = false
-    isVisible = false
+    init(editor.contentComponent)
 
-    actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true)
-    actionToolbar.setTargetComponent(contextComponent)
-    actionToolbar.setMinimumButtonSize(Dimension(22, 22))
-    actionToolbar.setSkipWindowAdjustments(true)
-    actionToolbar.setReservePlaceAutoPopupIcon(false)
-    actionToolbar.isOpaque = false
-    add(actionToolbar, BorderLayout.CENTER)
+    if (provider.autoHideable) {
+      initAutoHideableListeners(editor)
+    }
 
-    visibilityController = ToolbarVisibilityController(autoHideable, parentComponent, actionToolbar, this)
-    visibilityController.scheduleHide()
-
-    Disposer.register(parentDisposable, visibilityController)
+    provider.register(editor.dataContext, this, this)
+    Disposer.register(parentDisposable, this)
   }
 
-  companion object {
-    private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
+  private fun initAutoHideableListeners(editor: EditorEx) {
+    var ignoreMouseMotionRectangle: Rectangle? = null
+    editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+      override fun mouseMoved(e: EditorMouseEvent) {
+        ignoreMouseMotionRectangle?.let {
+          if (!it.contains(e.mouseEvent.locationOnScreen)) {
+            ignoreMouseMotionRectangle = null
+          }
+        }
+        if (ignoreMouseMotionRectangle == null) {
+          scheduleShow()
+        }
+      }
+    }, this)
+    editor.contentComponent.whenKeyPressed(this) {
+      if (it.keyCode == KeyEvent.VK_ESCAPE) {
+        if (isVisible) {
+          val location = Point()
+          SwingUtilities.convertPointToScreen(location, this)
+          ignoreMouseMotionRectangle = Rectangle(location, size)
+        }
+        hideImmediately()
+      }
+    }
   }
 }

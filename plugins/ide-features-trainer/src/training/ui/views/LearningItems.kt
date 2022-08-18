@@ -72,7 +72,7 @@ class LearningItems(private val project: Project) : JPanel() {
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.alignmentX = LEFT_ALIGNMENT
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
-    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
+    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(createLabelIcon(EmptyIcon.ICON_16))
     result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(checkmarkIconLabel)
@@ -90,7 +90,7 @@ class LearningItems(private val project: Project) : JPanel() {
 
   private fun createModuleItem(module: IftModule): JPanel {
     val modulePanel = JPanel()
-    modulePanel.isOpaque = true
+    modulePanel.isOpaque = false
     modulePanel.layout = BoxLayout(modulePanel, BoxLayout.Y_AXIS)
     modulePanel.alignmentY = TOP_ALIGNMENT
     modulePanel.background = Color(0, 0, 0, 0)
@@ -181,11 +181,11 @@ private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
       }
 
       override fun mouseEntered(e: MouseEvent) {
-        repaint()
+        parent.repaint()
       }
 
       override fun mouseExited(e: MouseEvent) {
-        repaint()
+        parent.repaint()
       }
     })
   }

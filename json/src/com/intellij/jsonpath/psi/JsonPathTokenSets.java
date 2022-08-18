@@ -6,6 +6,10 @@ import com.intellij.psi.tree.TokenSet;
 public final class JsonPathTokenSets {
   private JsonPathTokenSets() {
   }
+  public static final TokenSet JSONPATH_STRINGS_SET = TokenSet.create(
+    JsonPathTypes.SINGLE_QUOTED_STRING,
+    JsonPathTypes.DOUBLE_QUOTED_STRING
+  );
   public static final TokenSet JSONPATH_DOT_NAVIGATION_SET = TokenSet.create(JsonPathTypes.DOT, JsonPathTypes.RECURSIVE_DESCENT);
   public static final TokenSet JSONPATH_EQUALITY_OPERATOR_SET = TokenSet.create(
     JsonPathTypes.EQ_OP,

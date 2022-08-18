@@ -2,31 +2,31 @@
 
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 
-fun WorkspaceEntityStorage.checkConsistency() {
-  if (this is WorkspaceEntityStorageImpl) {
+fun EntityStorage.checkConsistency() {
+  if (this is EntityStorageSnapshotImpl) {
     this.assertConsistency()
     return
   }
 
-  if (this is WorkspaceEntityStorageBuilderImpl) {
+  if (this is MutableEntityStorageImpl) {
     this.assertConsistency()
     return
   }
 }
 
-internal fun createEmptyBuilder(): WorkspaceEntityStorageBuilderImpl {
-  return WorkspaceEntityStorageBuilderImpl.create()
+internal fun createEmptyBuilder(): MutableEntityStorageImpl {
+  return MutableEntityStorageImpl.create()
 }
 
-internal fun createBuilderFrom(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
-  return WorkspaceEntityStorageBuilderImpl.from(storage)
+internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
+  return MutableEntityStorageImpl.from(storage)
 }
 
-internal inline fun makeBuilder(from: WorkspaceEntityStorage? = null, action: WorkspaceEntityStorageBuilder.() -> Unit): WorkspaceEntityStorageBuilderImpl {
+internal inline fun makeBuilder(from: EntityStorage? = null, action: MutableEntityStorage.() -> Unit): MutableEntityStorageImpl {
   val builder = if (from == null) {
     createEmptyBuilder()
   }

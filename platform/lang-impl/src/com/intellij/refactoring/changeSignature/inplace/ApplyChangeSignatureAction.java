@@ -15,18 +15,19 @@
  */
 package com.intellij.refactoring.changeSignature.inplace;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
+public class ApplyChangeSignatureAction extends PsiElementBaseIntentionAction implements HighPriorityAction {
   private final String myMethodName;
 
   public ApplyChangeSignatureAction(String methodName) {

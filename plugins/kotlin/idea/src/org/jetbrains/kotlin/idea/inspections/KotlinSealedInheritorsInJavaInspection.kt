@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -9,7 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.isSealed
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getClassDescriptorIfAny
 
 
@@ -39,17 +39,15 @@ class KotlinSealedInheritorsInJavaInspection : LocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {
-            override fun visitClass(aClass: PsiClass?) {
+            override fun visitClass(aClass: PsiClass) {
                 if (aClass is PsiTypeParameter) return
-                aClass?.listSealedParentReferences()?.forEach {
+                aClass.listSealedParentReferences().forEach {
                     holder.registerProblem(
                         it, KotlinBundle.message("inheritance.of.kotlin.sealed", 0.takeIf { aClass.isInterface } ?: 1),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                     )
                 }
             }
-
-            override fun visitAnonymousClass(aClass: PsiAnonymousClass?) = visitClass(aClass)
         }
     }
 }

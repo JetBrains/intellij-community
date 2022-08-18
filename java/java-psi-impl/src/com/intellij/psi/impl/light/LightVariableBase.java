@@ -42,6 +42,15 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     myModifierList = createModifierList();
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   protected PsiModifierList createModifierList() {
     return new LightModifierList(getManager());
   }

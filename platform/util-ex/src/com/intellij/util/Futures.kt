@@ -154,7 +154,7 @@ object Futures {
     @NlsContexts.DialogTitle title: String,
     canBeCancelled: Boolean = true,
     onCancel: Runnable? = null,
-    action: Function<ProgressIndicator, T>
+    action: Function<in ProgressIndicator, out T>
   ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -189,7 +189,7 @@ object Futures {
     canBeCancelled: Boolean = true,
     performInBackgroundOption: PerformInBackgroundOption? = null,
     onCancel: Runnable? = null,
-    action: Function<ProgressIndicator, T>
+    action: Function<in ProgressIndicator, out T>
   ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -225,7 +225,7 @@ object Futures {
     canBeCancelled: Boolean = true,
     performInBackgroundOption: PerformInBackgroundOption? = null,
     onCancel: Runnable? = null,
-    action: Function<ProgressIndicator, CompletableFuture<T>>
+    action: Function<in ProgressIndicator, out CompletableFuture<T>>
   ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     ApplicationManager.getApplication().executeOnPooledThread {

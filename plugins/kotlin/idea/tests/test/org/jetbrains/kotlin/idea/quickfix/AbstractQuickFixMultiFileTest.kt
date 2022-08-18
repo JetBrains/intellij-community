@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -111,7 +111,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     private fun doMultiFileTest(beforeFileName: String) {
-        val multiFileText = FileUtil.loadFile(File(beforeFileName), true)
+        val mainFile = File(beforeFileName)
+        val multiFileText = FileUtil.loadFile(mainFile, true)
 
         val subFiles = TestFiles.createTestFiles(
             "single.kt",
@@ -150,6 +151,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     }
 
                     doAction(
+                        mainFile,
                         text,
                         file,
                         editor,
@@ -177,7 +179,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                             }
                             actualTestFile.append("// FILE: ").append(afterFile.path).append("\n").append(afterText)
 
-                            KotlinTestUtils.assertEqualsToFile(File(beforeFileName), actualTestFile.toString())
+                            KotlinTestUtils.assertEqualsToFile(mainFile, actualTestFile.toString())
                         }
                     } else {
                         TestCase.assertNull(".after file should not exist", afterFile)
@@ -228,6 +230,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     }
 
                     doAction(
+                        mainFile,
                         text,
                         file,
                         editor,
@@ -281,7 +284,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
         DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
     }
 
-    protected open fun checkAvailableActionsAreExpected(file: PsiFile, actions: Collection<IntentionAction>) {
+    protected open fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {
         DirectiveBasedActionUtils.checkAvailableActionsAreExpected(file, availableActions)
     }
 
@@ -313,6 +316,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             availableActions.firstOrNull { pattern.matcher(it.text).matches() }
 
         fun doAction(
+            mainFile: File,
             text: String,
             file: PsiFile,
             editor: Editor,
@@ -321,7 +325,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             getAvailableActions: () -> List<IntentionAction>,
             doHighlighting: () -> List<HighlightInfo>,
             shouldBeAvailableAfterExecution: Boolean = false,
-            checkAvailableActionsAreExpected: (PsiFile, Collection<IntentionAction>) -> Unit =
+            checkAvailableActionsAreExpected: (File, Collection<IntentionAction>) -> Unit =
                 DirectiveBasedActionUtils::checkAvailableActionsAreExpected
         ) {
             val pattern = if (text.startsWith("/"))
@@ -346,7 +350,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                                 StringUtil.join(infos, "\n")
                     )
                 } else {
-                    checkAvailableActionsAreExpected(file, availableActions)
+                    checkAvailableActionsAreExpected(mainFile, availableActions)
                 }
             } else {
                 if (!actionShouldBeAvailable) {

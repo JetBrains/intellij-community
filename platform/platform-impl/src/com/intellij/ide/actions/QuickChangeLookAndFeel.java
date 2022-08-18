@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   private UIManager.LookAndFeelInfo initialLaf;
@@ -33,9 +35,11 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     LafManager lafMan = LafManager.getInstance();
     UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
+    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
     initialLaf = lafMan.getCurrentLookAndFeel();
 
     for (UIManager.LookAndFeelInfo lf : lfs) {
+      if (excludedThemes.contains(lf.getName())) continue;
       group.add(new LafChangeAction(lf, initialLaf == lf));
     }
 
@@ -84,7 +88,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   @Nullable
   protected Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
-    return (a) -> ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
+    return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
   }
 
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {

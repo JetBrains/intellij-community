@@ -16,12 +16,12 @@
 package com.intellij.testFramework.fixtures
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkType
 
 /**
  * A fixture which provides SDKs and cleanups it when test will be finished.
  * Expected that application will be started before first SDK is set up by this fixture.
  */
 interface SdkTestFixture : IdeaTestFixture {
-  fun setUpSdk(sdkType: SdkType, versionFilter: (String) -> Boolean): Sdk
+
+  fun getSdk(): Sdk
 }

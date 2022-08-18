@@ -1,7 +1,10 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.ml.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.fail
@@ -10,7 +13,7 @@ internal interface FeaturesProviderTestCase {
   val provider: SearchEverywhereElementFeaturesProvider
   val testProject: Project
 
-  fun roundDouble(value: Double) = provider.roundDouble(value)
+  fun roundDouble(value: Double) = SearchEverywhereElementFeaturesProvider.roundDouble(value)
 
   fun checkThatFeature(feature: String) = AssertionElementSelector(this, feature)
 
@@ -36,11 +39,11 @@ internal interface FeaturesProviderTestCase {
     fun <E : Any> ofElement(element: E) = AssertionSpecifier(element)
 
     inner class AssertionSpecifier<E : Any>(private val element: E) {
-      private var features: Map<String, Any> = emptyMap()
+      private var features: List<EventPair<*>> = emptyList()
       private var currentTime = 0L
       private var query = ""
       private var elementPriority = 0
-      private val cache = testCase.provider.getDataToCache(testCase.testProject)
+      private val cache = FeaturesProviderCacheDataProvider().getDataToCache(testCase.testProject)
 
       /**
        * Specifies the current time / session start time that will be passed when obtaining the features,
@@ -70,6 +73,11 @@ internal interface FeaturesProviderTestCase {
       }
 
       /**
+       * Ensures, that features from [features] are not reported
+       */
+      fun withoutFeatures(features: List<EventField<*>>) = withoutMultipleFeatures(features)
+
+      /**
        * Checks if the specified [feature] of the element has the [expectedValue]
        */
       fun isEqualTo(expectedValue: Any?) = assert(expectedValue)
@@ -86,8 +94,20 @@ internal interface FeaturesProviderTestCase {
        */
       fun exists(expected: Boolean) {
         features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
-        val containsFeature = feature in features.keys
+        val containsFeature = feature in features.map { it.field.name }
         assertEquals(expected, containsFeature)
+      }
+
+      private fun withoutMultipleFeatures(expectedMissingFeatures: List<EventField<*>>) {
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+
+        for (missingFeature in expectedMissingFeatures) {
+          val featureName = missingFeature.name
+          val actualFeatureByName = features.find { it.field.name == featureName }
+          if (actualFeatureByName != null) {
+            fail("Feature '$featureName' should not be reported")
+          }
+        }
       }
 
       private fun assert(expectedValue: Any?) {
@@ -106,21 +126,24 @@ internal interface FeaturesProviderTestCase {
       }
 
       private fun assertSingleFeature(key: String, expectedValue: Any?) {
-        val actualValue = features[key]
-        assertEquals("Assertion of the feature $key has failed", expectedValue, actualValue)
+        val actualValue = features.find { it.field.name == key }
+        assertEquals("Assertion of the feature $key has failed", expectedValue, actualValue?.data)
       }
 
       private fun assertMultipleFeatures(expectedValue: Any?) {
         if (expectedValue == null) {
-          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type Map<String, *>, not null")
+          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>, not null")
         }
-        else if (expectedValue !is Map<*, *>) {
-          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type Map<String, *>")
+        else if (expectedValue !is List<*>) {
+          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>")
         }
 
-        expectedValue.forEach { (key, value) ->
-          key as String
-          assertSingleFeature(key, value)
+        for (expected in expectedValue) {
+          if (expected !is EventPair<*>) {
+            throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>")
+          }
+
+          assertSingleFeature(expected.field.name, expected.data)
         }
       }
 

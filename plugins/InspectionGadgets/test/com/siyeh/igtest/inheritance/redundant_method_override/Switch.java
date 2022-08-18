@@ -66,6 +66,12 @@ class Foo {
       default -> 42;
     };
   }
+
+  int foo5(Integer i) {
+    return switch (i) {
+      default -> 42;
+    };
+  }
 }
 
 class Bar extends Foo {
@@ -128,6 +134,12 @@ class Bar extends Foo {
   int foo4(Integer i) {
     return switch (i) {
       case default -> 13;
+    };
+  }
+
+  int foo5(Integer i) {
+    return switch (i) {
+      case 42, default -> 42;
     };
   }
 }

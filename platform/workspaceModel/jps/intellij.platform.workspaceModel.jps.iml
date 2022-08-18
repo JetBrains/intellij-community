@@ -12,10 +12,12 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="Kryo5" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

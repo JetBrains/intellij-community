@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'test.GregorianCalendar'" "true"
+// "Add on-demand static import for 'test.GregorianCalendar'" "true-preview"
 package test;
 
 import static test.GregorianCalendar.*;

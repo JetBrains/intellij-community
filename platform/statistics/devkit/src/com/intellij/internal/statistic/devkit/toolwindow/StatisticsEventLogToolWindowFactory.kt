@@ -70,7 +70,7 @@ private class CreateNewSessionAction(private val project: Project, private val r
 
 private fun createNewTab(project: Project, toolWindow: ToolWindow, recorderId: String) {
   val eventLogToolWindow = StatisticsEventLogToolWindow(project, recorderId)
-  val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
+  val content = ContentFactory.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
   content.preferredFocusableComponent = eventLogToolWindow.component
   toolWindow.contentManager.addContent(content)
   toolWindow.contentManager.setSelectedContent(content)

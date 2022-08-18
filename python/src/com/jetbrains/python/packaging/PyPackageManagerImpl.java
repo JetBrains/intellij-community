@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
@@ -55,9 +54,6 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
     super(sdk);
-    subscribeToLocalChanges();
-    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : PyPackageManagers.getInstance();
-    Disposer.register(parentDisposable, this);
   }
 
   @Override
@@ -150,12 +146,12 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (mySdk instanceof PyLazySdk) {
+    if (getSdk() instanceof PyLazySdk) {
       return List.of();
     }
 
     try {
-      LOG.debug("Collecting installed packages for the SDK " + mySdk.getName(), new Throwable());
+      LOG.debug("Collecting installed packages for the SDK " + getSdk().getName(), new Throwable());
       String output = getHelperResult(List.of("list"), false, false);
       return parsePackagingToolOutput(output);
     }
@@ -247,7 +243,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     throws ExecutionException {
     final String homePath = getSdk().getHomePath();
     if (homePath == null) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", mySdk.getName()));
+      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", getSdk().getName()));
     }
     if (workingDir == null) {
       workingDir = new File(homePath).getParent();
@@ -266,12 +262,12 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       PythonEnvUtil.resetHomePathChanges(homePath, environment);
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getSdk());
       if (flavor != null && flavor.commandLinePatcher() != null) {
         flavor.commandLinePatcher().patchCommandLine(commandLine);
       }
       final Process process;
-      final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
+      final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(getSdk());
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, PySdkBundle.message("python.sdk.packaging.enter.your.password.to.make.changes"));
       }

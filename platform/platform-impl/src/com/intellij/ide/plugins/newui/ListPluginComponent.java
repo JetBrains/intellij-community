@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.application.options.RegistryManager;
@@ -186,7 +186,7 @@ public final class ListPluginComponent extends JPanel {
       myInstallButton.setButtonColors(false);
       myInstallButton.setEnabled(true, IdeBundle.message("plugin.status.not.allowed.but.enabled"));
       myInstallButton.setText(IdeBundle.message("plugin.status.not.allowed.but.enabled"));
-      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
+      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip.but.enabled"));
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
@@ -1049,7 +1049,8 @@ public final class ListPluginComponent extends JPanel {
       x += iconSize.width + myHGap.get();
       y += JBUIScale.scale(2);
 
-      int calcNameWidth = calculateNameWidth();
+      int width20 = JBUIScale.scale(20);
+      int calcNameWidth = Math.max(width20, calculateNameWidth());
       Dimension nameSize = myNameComponent.getPreferredSize();
       int baseline = y + myNameComponent.getBaseline(nameSize.width, nameSize.height);
 
@@ -1061,21 +1062,36 @@ public final class ListPluginComponent extends JPanel {
       int width = getWidth();
 
       if (myProgressComponent == null) {
+        int nextX = x + nameSize.width + myHOffset.get();
+
         if (myTagComponent != null) {
-          setBaselineBounds(x + nameSize.width + myHOffset.get(), baseline, myTagComponent, myTagComponent.getPreferredSize());
+          Dimension size = myTagComponent.getPreferredSize();
+          setBaselineBounds(nextX, baseline, myTagComponent, size);
+          nextX += size.width;
         }
 
         int lastX = width - insets.right;
 
-        for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
-          Component component = myButtonComponents.get(i);
-          if (!component.isVisible()) {
-            continue;
+        if (calcNameWidth > width20) {
+          for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
+            Component component = myButtonComponents.get(i);
+            if (!component.isVisible()) {
+              continue;
+            }
+            Dimension size = component.getPreferredSize();
+            lastX -= size.width;
+            setBaselineBounds(lastX, baseline, component, size);
+            lastX -= myButtonOffset.get();
           }
-          Dimension size = component.getPreferredSize();
-          lastX -= size.width;
-          setBaselineBounds(lastX, baseline, component, size);
-          lastX -= myButtonOffset.get();
+        }
+        else {
+          for (JComponent component : myButtonComponents) {
+            if (component.isVisible()) {
+              Dimension size = component.getPreferredSize();
+              setBaselineBounds(nextX, baseline, component, size);
+              nextX += size.width + myButtonOffset.get();
+            }
+          }
         }
       }
       else {

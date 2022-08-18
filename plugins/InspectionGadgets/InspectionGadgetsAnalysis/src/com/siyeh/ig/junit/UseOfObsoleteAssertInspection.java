@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,7 +32,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UseOfObsoleteAssertInspection extends BaseInspection {
+public class UseOfObsoleteAssertInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -53,7 +54,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
   private static class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final Project project = expression.getProject();
       final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module == null) {
@@ -174,7 +175,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         }
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (expression == methodCallExpression) {
             return;

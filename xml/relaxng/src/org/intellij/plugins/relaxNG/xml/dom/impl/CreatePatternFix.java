@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -34,6 +35,7 @@ import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 // XXX: the tests rely on this still being an intention action
 class CreatePatternFix implements IntentionAction, LocalQuickFix {
@@ -127,13 +129,9 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     return true;
   }
 
-  public static XmlTag getAncestorTag(XmlTag tag, String name, String namespace) {
-    if (tag == null) {
-      return null;
-    }
-    if (tag.getLocalName().equals(name) && tag.getNamespace().equals(namespace)) {
-      return tag;
-    }
-    return getAncestorTag(tag.getParentTag(), name, namespace);
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myReference.getElement(), target);
+    return new CreatePatternFix(copy.getReference());
   }
 }

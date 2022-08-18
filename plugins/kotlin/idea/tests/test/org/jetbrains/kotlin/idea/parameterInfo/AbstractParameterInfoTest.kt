@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.parameterInfo
 
@@ -60,10 +60,24 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
         withCustomCompilerOptions(file.text, project, myFixture.module) {
             val lastChild = file.allChildren.filter { it !is PsiWhiteSpace }.last()
-            val expectedResultText = when (lastChild.node.elementType) {
-                KtTokens.BLOCK_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
-                KtTokens.EOL_COMMENT -> lastChild.text.substring(2).trim()
-                else -> error("Unexpected last file child")
+            val expectedResultText = run {
+                val lines = when (lastChild.node.elementType) {
+                    KtTokens.BLOCK_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
+                    KtTokens.EOL_COMMENT -> lastChild.text.substring(2).trim()
+                    else -> error("Unexpected last file child")
+                }.lines()
+                when (isFirPlugin) {
+                    true -> {
+                        if (lines.any { it.startsWith(TextK2) })
+                            lines.filter { it.startsWith(TextK2) }.joinToString(separator = "\n") { it.replace(TextK2, "Text") }
+                        else
+                            lines.joinToString(separator = "\n")
+                    }
+
+                    false -> {
+                        lines.filterNot { it.startsWith(TextK2) }.joinToString(separator = "\n")
+                    }
+                }
             }
 
             val context = ShowParameterInfoContext(editor, project, file, editor.caretModel.offset, -1, true)
@@ -105,5 +119,9 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
             Assert.assertEquals(expectedResultText, parameterInfoUIContext.resultText)
         }
+    }
+
+    companion object {
+        private const val TextK2 = "Text_K2"
     }
 }

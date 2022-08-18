@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,7 +87,6 @@ public final class ThreadDumpAction extends DumbAwareAction {
       buffer.append("\"").append(threadName).append("\"");
       ReferenceType referenceType = threadReference.referenceType();
       if (referenceType != null) {
-        //noinspection HardCodedStringLiteral
         Field daemon = referenceType.fieldByName("daemon");
         if (daemon != null) {
           Value value = threadReference.getValue(daemon);
@@ -96,7 +96,6 @@ public final class ThreadDumpAction extends DumbAwareAction {
           }
         }
 
-        //noinspection HardCodedStringLiteral
         Field priority = referenceType.fieldByName("priority");
         if (priority != null) {
           Value value = threadReference.getValue(priority);
@@ -298,5 +297,10 @@ public final class ThreadDumpAction extends DumbAwareAction {
     }
     DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
     presentation.setEnabled(debuggerSession != null && debuggerSession.isAttached());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

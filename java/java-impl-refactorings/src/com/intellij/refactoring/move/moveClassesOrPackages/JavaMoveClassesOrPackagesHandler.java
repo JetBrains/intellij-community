@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -178,6 +182,20 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                                          final MoveCallback callback,
                                          final PsiDirectory[] directories) {
     if (targetContainer instanceof PsiDirectory) {
+      String propertyName = "Drag.Drop.Confirmation";
+      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+      if (propertiesComponent.getBoolean(propertyName, true) && 
+          !MessageDialogBuilder.yesNo(JavaRefactoringBundle.message("dialog.title.confirm.move"),
+                                      JavaRefactoringBundle.message("dialog.message.moving.directories.to", ((PsiDirectory)targetContainer).getName()))
+            .yesText(RefactoringBundle.message("refactor.button"))
+            .doNotAsk(new DoNotAskOption.Adapter() {
+        @Override
+        public void rememberChoice(boolean isSelected, int exitCode) {
+          propertiesComponent.setValue(propertyName, !isSelected, true);
+        }
+      }).ask(project)) {
+        return;
+      }
       final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
       final MoveDirectoryWithClassesProcessor processor =
         new MoveDirectoryWithClassesProcessor(project, directories, (PsiDirectory)targetContainer,

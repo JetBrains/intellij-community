@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.increment;
 
 import com.intellij.openapi.project.Project;
@@ -19,11 +19,16 @@ import org.jetbrains.annotations.Nullable;
  * @author Pavel.Dolgov
  */
 public class InlineIncrementIntention extends MutablyNamedIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("inline.increment.intention.family.name");
+  }
+
   @Override
   protected String getTextForElement(PsiElement element) {
     final String operator = IncrementUtil.getOperatorText(element);
-    return operator != null ? IntentionPowerPackBundle.message(
-      "inline.increment.intention.name", operator) : null;
+    return operator != null ? IntentionPowerPackBundle.message("inline.increment.intention.name", operator) : null;
   }
 
   @Override

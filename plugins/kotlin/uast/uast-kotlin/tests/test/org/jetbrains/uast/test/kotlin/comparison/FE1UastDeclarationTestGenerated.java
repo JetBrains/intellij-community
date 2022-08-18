@@ -30,6 +30,11 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
             runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
         }
 
+        @TestMetadata("commentsOnProperties.kt")
+        public void testCommentsOnProperties() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
+        }
+
         @TestMetadata("doWhile.kt")
         public void testDoWhile() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
@@ -50,9 +55,19 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
             runTest("../../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
         }
 
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
+        }
+
         @TestMetadata("labeledExpression.kt")
         public void testLabeledExpression() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
+        }
+
+        @TestMetadata("mangling.kt")
+        public void testMangling() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/mangling.kt");
         }
 
         @TestMetadata("objects.kt")

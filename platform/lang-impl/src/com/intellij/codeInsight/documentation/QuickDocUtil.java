@@ -101,7 +101,7 @@ public final class QuickDocUtil {
   @Deprecated
   public static void updateQuickDocAsync(@NotNull PsiElement element,
                                          @NotNull CharSequence prefix,
-                                         @NotNull Consumer<Consumer<Object>> provider) {
+                                         @NotNull Consumer<? super Consumer<Object>> provider) {
     Project project = element.getProject();
     StringBuilder sb = new StringBuilder(prefix);
     ConcurrentLinkedQueue<Object> queue = new ConcurrentLinkedQueue<>();
@@ -141,7 +141,7 @@ public final class QuickDocUtil {
     }, 100, alarmDisposable);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        provider.consume(str -> {
+        provider.consume((Consumer<Object>)str -> {
           ProgressManager.checkCanceled();
           if (stop.get()) throw new ProcessCanceledException();
           queue.add(str);

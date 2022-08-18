@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -28,7 +29,7 @@ final class KeymapGenerator implements ApplicationStarter {
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     ActionManager actionManager = ActionManager.getInstance();
     StringBuilder xml = new StringBuilder();
     xml.append("<Keymaps>\n");
@@ -63,7 +64,7 @@ final class KeymapGenerator implements ApplicationStarter {
     }
     xml.append("</Keymaps>");
 
-    final String path = args.length == 2 ? args[1] : PathManager.getHomePath() + File.separator + "AllKeymaps.xml";
+    final String path = args.size() == 2 ? args.get(1) : PathManager.getHomePath() + File.separator + "AllKeymaps.xml";
 
     File out = new File(path);
     try {

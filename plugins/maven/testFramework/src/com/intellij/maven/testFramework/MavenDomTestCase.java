@@ -255,12 +255,12 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     assertCompletionVariants(f, LOOKUP_STRING, expected);
   }
 
-  protected void assertCompletionVariants(VirtualFile f, Function<LookupElement, String> lookupElementStringFunction, String... expected) {
+  protected void assertCompletionVariants(VirtualFile f, Function<? super LookupElement, String> lookupElementStringFunction, String... expected) {
     List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
-  protected void assertCompletionVariants(CodeInsightTestFixture f, Function<LookupElement, String> lookupElementStringFunction, String... expected) {
+  protected void assertCompletionVariants(CodeInsightTestFixture f, Function<? super LookupElement, String> lookupElementStringFunction, String... expected) {
     List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
     assertUnorderedElementsAreEqual(actual, expected);
   }
@@ -288,7 +288,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     return getCompletionVariants(f, li -> li.getLookupString());
   }
 
-  protected List<String> getCompletionVariants(VirtualFile f, Function<LookupElement, String> lookupElementStringFunction) {
+  protected List<String> getCompletionVariants(VirtualFile f, Function<? super LookupElement, String> lookupElementStringFunction) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
 
@@ -312,7 +312,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     return result;
   }
 
-  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<LookupElement, String> lookupElementStringFunction) {
+  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<? super LookupElement, String> lookupElementStringFunction) {
     LookupElement[] variants = fixture.getLookupElements();
 
     List<String> result = new ArrayList<>();

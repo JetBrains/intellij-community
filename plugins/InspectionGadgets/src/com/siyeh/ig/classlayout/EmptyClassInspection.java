@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,12 +89,11 @@ public class EmptyClassInspection extends BaseInspection {
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    List<InspectionGadgetsFix> fixes =
-      AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations, new ArrayList<>());
+    InspectionGadgetsFix[] fixes = AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
     if (info instanceof PsiAnonymousClass) {
-      fixes.add(0, new ConvertEmptyAnonymousToNewFix());
+      return ArrayUtil.prepend(new ConvertEmptyAnonymousToNewFix(), fixes);
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes;
   }
 
   @Override
@@ -121,7 +121,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (lBrace != null && rBrace != null) {
         PsiElement prev = lBrace.getPrevSibling();
         PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
-        Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+        Document document = aClass.getContainingFile().getViewProvider().getDocument();
         if (document == null) return;
         int anonymousStart = start.getTextRange().getStartOffset();
         int rBraceEnd = rBrace.getTextRange().getEndOffset();

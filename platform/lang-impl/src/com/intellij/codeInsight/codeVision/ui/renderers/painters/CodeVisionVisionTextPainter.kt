@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
@@ -15,7 +16,7 @@ open class CodeVisionVisionTextPainter<T>(
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<T> {
 
-  val theme = theme ?: CodeVisionTheme()
+  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   override fun paint(
     editor: Editor,
@@ -27,12 +28,13 @@ open class CodeVisionVisionTextPainter<T>(
     hovered: Boolean
   ) {
     g as Graphics2D
+    val themeInfoProvider = service<CodeVisionThemeInfoProvider>()
 
     val inSelectedBlock = textAttributes.backgroundColor == editor.selectionModel.textAttributes.backgroundColor
     g.color = if (inSelectedBlock) editor.selectionModel.textAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
-    else CodeVisionTheme.foregroundColor(editor, hovered)
+    else themeInfoProvider.foregroundColor(editor, hovered)
 
-    g.font = CodeVisionTheme.font(editor)
+    g.font = themeInfoProvider.font(editor)
     val x = point.x + theme.left
     var y = point.y + theme.top
     g.drawString(printer.invoke(value), x, y)
@@ -49,7 +51,7 @@ open class CodeVisionVisionTextPainter<T>(
     state: RangeCodeVisionModel.InlayState,
     value: T
   ): Dimension {
-    val fontMetrics = editor.component.getFontMetrics(CodeVisionTheme.font(editor))
+    val fontMetrics = editor.component.getFontMetrics(service<CodeVisionThemeInfoProvider>().font(editor))
     return Dimension(
       fontMetrics.stringWidth(printer.invoke(value)) + theme.left + theme.right,
       fontMetrics.height + theme.top + theme.bottom

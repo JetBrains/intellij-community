@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with collect" "true-preview"
 
 import java.util.*;
 import java.util.stream.Collectors;

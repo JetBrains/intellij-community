@@ -337,7 +337,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       if (substitutor == null) return;
       ownerClass.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitTypeElement(PsiTypeElement parent) {
+        public void visitTypeElement(@NotNull PsiTypeElement parent) {
           super.visitTypeElement(parent);
           final PsiElement pparent = parent.getParent();
           if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {

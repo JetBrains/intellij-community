@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.SuppressingContext
@@ -18,17 +19,24 @@ import javax.swing.Icon
 
 open class GrazieAddExceptionQuickFix(
   private val suppressionPattern: SuppressionPattern, private val underlineRanges: List<SmartPsiFileRange>
-) : IntentionAndQuickFixAction(), Iconable {
+) : IntentionAndQuickFixAction(), Iconable, Comparable<IntentionAction> {
 
   @Suppress("unused") // used in Grazie Professional
   constructor(suppressionPattern: SuppressionPattern, underlineRange: SmartPsiFileRange) : this(suppressionPattern, listOf(underlineRange))
 
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.AddToDictionary
 
-  override fun getFamilyName(): String = msg("grazie.grammar.quickfix.suppress.sentence.family")
+  override fun getFamilyName(): String = msg("grazie.grammar.quickfix.ignore.family")
 
   override fun getName(): String {
-    return msg("grazie.grammar.quickfix.suppress.sentence.text", suppressionPattern.errorText)
+    return msg(
+      if (suppressionPattern.sentenceText == null) "grazie.grammar.quickfix.ignore.text.no.context"
+      else "grazie.grammar.quickfix.ignore.text.with.context",
+      suppressionPattern.errorText)
+  }
+
+  override fun compareTo(other: IntentionAction): Int {
+    return if (other is GrazieRuleSettingsAction) -1 else 0
   }
 
   override fun startInWriteAction() = false

@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -231,12 +229,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   @Override
-  public void fetchWeightedElements(@NotNull String rawPattern,
+  public void fetchWeightedElements(@NotNull String pattern,
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
     if (myProject == null) return; //nowhere to search
-
-    String pattern = removeCommandFromPattern(rawPattern);
 
     if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
 
@@ -315,41 +311,21 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @Override
   public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    if (Registry.is("search.everywhere.group.contributors.by.type")) {
-      SearchEverywhereCommandInfo command = getFilterCommand();
-      return command == null ? Collections.emptyList() : Collections.singletonList(command);
-    }
-
     return Collections.emptyList();
   }
 
   @NotNull
   protected abstract FilteringGotoByModel<?> createModel(@NotNull Project project);
 
-  @Nullable
-  protected SearchEverywhereCommandInfo getFilterCommand() {
-    return null;
-  }
-
   @NotNull
   @Override
   public String filterControlSymbols(@NotNull String pattern) {
-    pattern = removeCommandFromPattern(pattern);
-
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") ||
         pattern.contains(" line ") ||
         pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, ourPatternToDetectLinesAndColumns);
     }
 
-    return pattern;
-  }
-
-  private String removeCommandFromPattern(@NotNull String pattern) {
-    SearchEverywhereCommandInfo command = getFilterCommand();
-    if (command != null && pattern.startsWith(command.getCommandWithPrefix())) {
-      pattern = pattern.substring(command.getCommandWithPrefix().length()).stripLeading();
-    }
     return pattern;
   }
 
@@ -404,12 +380,15 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return ((PsiElementNavigationItem)element).getTargetElement();
       }
     }
-
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
-      return QualifiedNameProviderUtil.getQualifiedName((PsiElement)element);
-    }
-
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getItemDescription(@NotNull Object element) {
+    return element instanceof PsiElement && ((PsiElement)element).isValid()
+           ? QualifiedNameProviderUtil.getQualifiedName((PsiElement) element)
+           : null;
   }
 
   @Override

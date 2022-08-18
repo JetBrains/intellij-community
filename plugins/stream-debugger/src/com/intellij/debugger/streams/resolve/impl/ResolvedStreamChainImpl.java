@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
@@ -6,7 +6,6 @@ import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,7 +19,7 @@ public class ResolvedStreamChainImpl implements ResolvedStreamChain {
   ResolvedStreamChainImpl(@NotNull ResolvedStreamCall.Terminator terminator,
                           @NotNull List<ResolvedStreamCall.Intermediate> intermediates) {
     myTerminator = terminator;
-    myIntermediateCalls = Collections.unmodifiableList(new ArrayList<>(intermediates));
+    myIntermediateCalls = List.copyOf(intermediates);
   }
 
   @NotNull

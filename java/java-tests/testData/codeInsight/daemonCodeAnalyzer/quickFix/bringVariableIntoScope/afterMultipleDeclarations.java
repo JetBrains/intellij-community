@@ -1,4 +1,4 @@
-// "Bring 'int j' into scope" "true"
+// "Bring 'int j' into scope" "true-preview"
 class a {
     void foo() {
         int j;
@@ -6,6 +6,6 @@ class a {
             int i;
             j = 10;
         }
-        System.out.println(<caret>j); // invoke "bring 'int j' into scope" quickfix here
+        System.out.println(<caret>j);// invoke "bring 'int j' into scope" quickfix here
     }
 }

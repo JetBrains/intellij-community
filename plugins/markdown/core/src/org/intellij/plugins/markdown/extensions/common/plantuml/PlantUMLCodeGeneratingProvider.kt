@@ -6,9 +6,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles.FileEntry
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -17,7 +19,7 @@ import java.io.IOException
 @ApiStatus.Internal
 class PlantUMLCodeGeneratingProvider(
   collector: MarkdownCodeFencePluginCacheCollector? = null
-): MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithDownloadableFiles {
+): MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithDownloadableFiles, MarkdownBrowserPreviewExtension.Provider {
   override val externalFiles: Iterable<String>
     get() = ownFiles
 
@@ -25,11 +27,11 @@ class PlantUMLCodeGeneratingProvider(
     get() = dowloadableFiles
 
   override fun isApplicable(language: String): Boolean {
-    return isEnabled && isAvailable && (language == "puml" || language == "plantuml")
+    return isEnabled && isAvailable && language.lowercase() in extensions
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val key = getUniqueFile(language, raw, "png").toFile()
+    val key = getUniqueFile(language.lowercase(), raw, "png").toFile()
     cacheDiagram(key, raw)
     collector?.addAliveCachedFile(this, key)
     return "<img src=\"${key.toURI()}\"/>"
@@ -45,6 +47,17 @@ class PlantUMLCodeGeneratingProvider(
 
   override fun beforeCleanup() {
     PlantUMLJarManager.getInstance().dropCache()
+  }
+
+  /**
+   * PlantUML support doesn't currently require any actions/resources inside an actual browser.
+   * This implementation is not registered in plugin.xml and is needed to make sure that
+   * PlantUML support extension is treated the same way as other browser extensions (like Mermaid.js one).
+   *
+   * Such code can be found mostly in [org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable].
+   */
+  override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+    return null
   }
 
   private fun cacheDiagram(path: File, text: String) {
@@ -70,6 +83,8 @@ class PlantUMLCodeGeneratingProvider(
     const val jarFilename = "plantuml.jar"
     private val ownFiles = listOf(jarFilename)
     private val dowloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
+
+    private val extensions = setOf("puml", "plantuml")
 
     private fun storeDiagram(source: String, file: File) {
       try {

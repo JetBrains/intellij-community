@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
@@ -33,7 +33,7 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
     return SampleDummyParentCustomModuleEntitySource(internalEntitySource)
   }
 
-  override fun loadRoots(builder: WorkspaceEntityStorageBuilder,
+  override fun loadRoots(builder: MutableEntityStorage,
                          moduleEntity: ModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
@@ -48,7 +48,7 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
                          writer: JpsFileContentWriter,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
-                         storage: WorkspaceEntityStorage,
+                         storage: EntityStorage,
                          virtualFileManager: VirtualFileUrlManager) {
   }
 

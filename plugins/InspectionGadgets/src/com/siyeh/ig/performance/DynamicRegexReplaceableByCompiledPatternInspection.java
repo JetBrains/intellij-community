@@ -179,7 +179,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
   private static class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isCallToRegexMethod(expression)) {
         return;

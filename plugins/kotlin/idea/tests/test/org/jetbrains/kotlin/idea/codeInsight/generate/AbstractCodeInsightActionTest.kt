@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate
 
@@ -12,16 +12,12 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.project.forcedTargetPlatform
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -41,13 +37,13 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
     protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
         val e = TestActionEvent(action)
         if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action,e);
+            ActionUtil.performActionDumbAwareWithCallbacks(action,e)
         }
         return e.presentation
     }
 
     protected open fun doTest(path: String) {
-        val fileText = FileUtil.loadFile(testDataFile(), true)
+        val fileText = FileUtil.loadFile(dataFile(), true)
 
         val conflictFile = File("$path.messages")
         val afterFile = File("$path.after")
@@ -57,7 +53,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
         try {
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
-            val mainFile = testDataFile()
+            val mainFile = dataFile()
             val mainFileName = mainFile.name
             val fileNameBase = mainFile.nameWithoutExtension + "."
             val rootDir = mainFile.parentFile

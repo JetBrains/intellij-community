@@ -23,8 +23,9 @@ public interface FileEditorProvider {
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   FileEditorProvider[] EMPTY_ARRAY = {};
+
   /**
-   * Method is expected to run fast.
+   * The method is expected to run fast.
    *
    * @param file file to be tested for acceptance.
    * @return {@code true} if provider can create valid editor for the specified {@code file}.
@@ -54,7 +55,7 @@ public interface FileEditorProvider {
   }
 
   /**
-   * Deserialize state from the specified {@code sourceElement}.
+   * Deserializes state from the specified {@code sourceElement}.
    */
   @NotNull
   default FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
@@ -68,18 +69,20 @@ public interface FileEditorProvider {
   }
 
   /**
-   * @return id of type of the editors created with this FileEditorProvider. Each FileEditorProvider should have
-   * unique nonnull id. The id is used for saving/loading of EditorStates.
+   * @return editor type ID for the editors created with this FileEditorProvider. Each FileEditorProvider should have
+   * a unique nonnull ID. The ID is used for saving/loading of EditorStates.
    */
   @NotNull
   @NonNls
   String getEditorTypeId();
 
   /**
-   * @return policy that specifies how editor created via this provider should be opened.
+   * @return a policy that specifies how an editor created via this provider should be opened.
    * @see FileEditorPolicy#NONE
    * @see FileEditorPolicy#HIDE_DEFAULT_EDITOR
+   * @see FileEditorPolicy#HIDE_OTHER_EDITORS
    * @see FileEditorPolicy#PLACE_BEFORE_DEFAULT_EDITOR
+   * @see FileEditorPolicy#PLACE_AFTER_DEFAULT_EDITOR
    */
   @NotNull
   FileEditorPolicy getPolicy();

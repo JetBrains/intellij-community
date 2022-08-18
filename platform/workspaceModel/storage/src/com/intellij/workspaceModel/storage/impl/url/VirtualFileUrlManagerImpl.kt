@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.url
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
 import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -10,7 +9,6 @@ import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import org.jetbrains.annotations.ApiStatus
 
 open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
@@ -25,8 +23,17 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(url)
   }
 
+  override fun fromUrlSegments(urls: List<String>): VirtualFileUrl {
+    if (urls.isEmpty()) return getEmptyUrl()
+    return addSegments(null, urls)
+  }
+
   override fun fromPath(path: String): VirtualFileUrl {
-    return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
+    return fromUrl("file://${toSystemIndependentName(path)}")
+  }
+
+  private fun toSystemIndependentName(fileName: String): String {
+    return fileName.replace('\\', '/')
   }
 
   @Synchronized
@@ -75,11 +82,14 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  @ApiStatus.Internal
-  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
+  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
+    return addSegments(parentNode, segments)
+  }
+
+  private fun addSegments(parentNode: FilePathNode?, segments: List<String>): VirtualFileUrl {
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {

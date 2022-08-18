@@ -1,4 +1,4 @@
-// "Add explicit type arguments to 2nd argument" "true"
+// "Add explicit type arguments to 2nd argument" "true-preview"
 import java.util.Collections;
 import java.util.List;
 

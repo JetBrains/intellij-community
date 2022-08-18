@@ -111,7 +111,7 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
     val cachedResult = declarationDescriptorsCache[id]
     if (cachedResult != null) return cachedResult
     val allDescriptors = getOptionDescriptors(false)
-    val declarationDescriptors = allDescriptors.flatMap { it -> EditorConfigDescriptorUtil.collectDeclarations(it, id) }
+    val declarationDescriptors = allDescriptors.flatMap { EditorConfigDescriptorUtil.collectDeclarations(it, id) }
     declarationDescriptorsCache[id] = declarationDescriptors
     return declarationDescriptors
   }

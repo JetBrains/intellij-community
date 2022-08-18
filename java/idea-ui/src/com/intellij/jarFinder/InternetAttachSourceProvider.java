@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.ide.JavaUiBundle;
@@ -39,35 +25,38 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
  * @author Sergey Evdokimov
  */
-public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
+public final class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
+
   private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);
   private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9.\\-_]+");
 
-  @NotNull
   @Override
-  public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, @Nullable PsiFile psiFile) {
+  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                                       @NotNull PsiFile psiFile) {
     final VirtualFile jar = getJarByPsiFile(psiFile);
-    if (jar == null) return Collections.emptyList();
+    if (jar == null) return List.of();
 
     final String jarName = jar.getNameWithoutExtension();
     int index = jarName.lastIndexOf('-');
-    if (index == -1) return Collections.emptyList();
+    if (index == -1) return List.of();
 
     final String version = jarName.substring(index + 1);
     final String artifactId = jarName.substring(0, index);
 
     if (!ARTIFACT_IDENTIFIER.matcher(version).matches() || !ARTIFACT_IDENTIFIER.matcher(artifactId).matches()) {
-      return Collections.emptyList();
+      return List.of();
     }
 
     final Set<Library> libraries = new HashSet<>();
@@ -75,7 +64,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
       ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
     }
 
-    if (libraries.isEmpty()) return Collections.emptyList();
+    if (libraries.isEmpty()) return List.of();
 
     final String sourceFileName = jarName + "-sources.jar";
 
@@ -83,7 +72,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
       for (VirtualFile file : library.getFiles(OrderRootType.SOURCES)) {
         if (file.getPath().contains(sourceFileName)) {
           if (isRootInExistingFile(file)) {
-            return Collections.emptyList(); // Sources already attached, but source-jar doesn't contain current class.
+            return List.of(); // Sources already attached, but source-jar doesn't contain current class.
           }
         }
       }
@@ -94,7 +83,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
     final File sourceFile = new File(libSourceDir, sourceFileName);
 
     if (sourceFile.exists()) {
-      return Collections.singleton(new LightAttachSourcesAction() {
+      return List.of(new LightAttachSourcesAction() {
         @Override
         public @NlsContexts.LinkLabel @Nls(capitalization = Nls.Capitalization.Title) String getName() {
           return JavaUiBundle.message("internet.attach.source.provider.name");
@@ -105,15 +94,16 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
           return getName();
         }
 
+
         @Override
-        public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+        public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
           attachSourceJar(sourceFile, libraries);
           return ActionCallback.DONE;
         }
       });
     }
 
-    return Collections.singleton(new LightAttachSourcesAction() {
+    return List.of(new LightAttachSourcesAction() {
       @Override
       public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
         return JavaUiBundle.message("internet.attach.source.provider.action.name");
@@ -125,7 +115,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
       }
 
       @Override
-      public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+      public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
         final Task task = new Task.Modal(psiFile.getProject(), JavaUiBundle.message("progress.title.searching.source"), true) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {

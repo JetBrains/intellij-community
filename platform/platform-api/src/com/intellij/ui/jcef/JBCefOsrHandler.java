@@ -37,7 +37,7 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
  */
 class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JComponent myComponent;
-  private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
+  private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
@@ -53,7 +53,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private @NotNull Rectangle myPopupBounds = ZERO_RECT;
   private boolean myPopupShown;
 
-  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<JComponent, Rectangle> screenBoundsProvider) {
+  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
     component.setRenderHandler(this);
     myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());

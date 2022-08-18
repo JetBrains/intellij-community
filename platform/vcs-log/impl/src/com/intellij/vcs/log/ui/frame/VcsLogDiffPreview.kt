@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
@@ -12,7 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
+import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.openPreview
+import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
@@ -101,17 +103,12 @@ abstract class EditorDiffPreview(protected val project: Project,
   private val previewFile by previewFileDelegate
 
   protected fun init() {
-    @Suppress("LeakingThis")
     addSelectionListener {
       updatePreview(true)
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    if (isPreviewVisible) openPreviewInEditor(focus) else closePreview()
-  }
-
-  fun openPreviewInEditor(focusEditor: Boolean) {
+  override fun openPreview(requestFocus: Boolean): Boolean {
     val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
     val escapeHandler = Runnable {
       closePreview()
@@ -120,10 +117,11 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
 
     registerEscapeHandler(previewFile, escapeHandler)
-    EditorTabPreview.openPreview(project, previewFile, focusEditor)
+    openPreview(project, previewFile, requestFocus)
+    return true
   }
 
-  fun closePreview() {
+  override fun closePreview() {
     if (previewFileDelegate.isInitialized()) {
       FileEditorManager.getInstance(project).closeFile(previewFile)
     }
@@ -170,6 +168,18 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
     val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {
       changesBrowser.getDiffRequestProducer(it, false)
     }
-    return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
+    return SimpleDiffRequestChain.fromProducers(producers)
+  }
+
+  override fun performDiffAction(): Boolean {
+    if (ExternalDiffTool.isEnabled()) {
+      val diffProducers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
+        .map { change -> changesBrowser.getDiffRequestProducer(change, false) }
+      if (EditorTabPreviewBase.showExternalToolIfNeeded(project, diffProducers)) {
+        return true
+      }
+    }
+
+    return super.performDiffAction()
   }
 }

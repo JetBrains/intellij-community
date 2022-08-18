@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -25,7 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -174,22 +174,17 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
-  internal suspend inline fun <T> withEdtContext(crossinline task: suspend () -> T): T {
-    return withEdtContext(storageManager.componentManager, task)
-  }
-
-  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult, forceSavingAllSettings: Boolean,
+  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult,
+                                             forceSavingAllSettings: Boolean,
                                              saveSessionProducerManager: SaveSessionProducerManager) {
-    withEdtContext {
-      val errors = SmartList<Throwable>()
-      commitComponents(forceSavingAllSettings, saveSessionProducerManager, errors)
-      saveResult.addErrors(errors)
+    withContext(Dispatchers.EDT) {
+      commitComponents(forceSavingAllSettings, saveSessionProducerManager, saveResult)
       saveSessionProducerManager
     }
   }
 
   @RequiresEdt
-  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
     if (components.isEmpty()) {
       return
     }
@@ -197,7 +192,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val names = ArrayUtilRt.toStringArray(components.keys)
-    Arrays.sort(names)
+    names.sort()
     @NonNls var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
@@ -241,7 +236,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
-        errors.add(Exception("Cannot get $name component state", e))
+        saveResult.addError(Exception("Cannot get $name component state", e))
       }
 
       val duration = System.currentTimeMillis() - start
@@ -271,7 +266,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val absolutePath = storageManager.expandMacro(findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
-      runBlocking {
+      runUnderModalProgressIfIsEdt {
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 
@@ -375,7 +370,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   protected fun initComponentWithoutStateSpec(component: PersistentStateComponent<Any>, configurationSchemaKey: String): Boolean {
-    @Suppress("UNCHECKED_CAST")
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
     val state = storage?.getState(component, "", stateClass, null, reload = false)
@@ -670,11 +664,11 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 
   val macros = LinkedHashSet(immutableMacros)
-  @Suppress("IncorrectParentDisposable")
   AppUIExecutor.onUiThread().expireWith(project).submit {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
-    for (notification in manager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+    for (notification in manager.getNotificationsOfType(
+      UnknownMacroNotification::class.java, project)) {
       if (notified == null) {
         notified = SmartList()
       }
@@ -705,16 +699,6 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
   val saveSessionManager = createSaveSessionProducerManager()
   commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionManager)
   saveSessionManager.save().appendTo(result)
-}
-
-internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {
-  var t = AppUIExecutor.onUiThread()
-  disposable?.let {
-    t = t.expireWith(it)
-  }
-  return withContext(t.coroutineDispatchingContext()) {
-    task()
-  }
 }
 
 private fun getComponentName(component: Any): String {

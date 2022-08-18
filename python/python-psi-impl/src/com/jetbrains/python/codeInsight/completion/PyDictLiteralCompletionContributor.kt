@@ -64,7 +64,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       val targetToValue = if (assignment.targets.size == 1) assignment.targets[0] to assignment.assignedValue
       else assignment.targetsToValuesMapping.firstOrNull { it.second == possibleSequenceExpr }?.let { it.first to it.second }
 
-      if (targetToValue != null) {
+      if (targetToValue?.first != null && targetToValue.second != null) {
         val expectedType = typeEvalContext.getType(targetToValue.first as PyTypedElement)
         val actualType = typeEvalContext.getType(targetToValue.second as PyTypedElement)
         addCompletionForTypedDictKeys(expectedType, actualType, result, originalElement !is PyStringLiteralExpression)

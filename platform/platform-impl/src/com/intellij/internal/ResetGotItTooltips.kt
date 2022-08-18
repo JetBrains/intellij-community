@@ -3,15 +3,19 @@ package com.intellij.internal
 
 import com.intellij.ide.util.BasePropertyService
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.GotItTooltip
 
 internal class ResetGotItTooltips : AnAction(), DumbAware {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     (PropertiesComponent.getInstance() as? BasePropertyService)?.removeIf {
-      it.startsWith(GotItTooltip.PROPERTY_PREFIX) || it == "notification.suggestion.dont.show.gotit"
+      it.startsWith(GotItTooltip.PROPERTY_PREFIX)
     }
   }
 }

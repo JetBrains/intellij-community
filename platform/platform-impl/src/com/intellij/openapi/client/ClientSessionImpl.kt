@@ -7,7 +7,6 @@ import com.intellij.configurationStore.StateStorageManager
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
@@ -17,11 +16,12 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectExImpl
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -46,19 +46,21 @@ abstract class ClientSessionImpl(
     registerComponents()
   }
 
-  fun preloadServices() {
+  fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
-    preloadServices(
-      PluginManagerCore.getPluginSet().getEnabledModules(),
-      container = this,
-      activityPrefix = "client ",
-      onlyIfAwait = false
-    ).join()
+    val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+      LOG.error(exception)
+    }
+    this.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                         activityPrefix = "client ",
+                         syncScope = syncScope + exceptionHandler,
+                         onlyIfAwait = false
+    )
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override fun preloadService(service: ServiceDescriptor) {
-    ClientId.withClientId(clientId) {
+  override suspend fun preloadService(service: ServiceDescriptor): Job? {
+    return ClientId.withClientId(clientId) {
       super.preloadService(service)
     }
   }
@@ -72,7 +74,7 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
@@ -191,7 +193,7 @@ open class ClientAppSessionImpl(
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
-  final override val project: ProjectExImpl,
+  final override val project: ProjectImpl,
 ) : ClientSessionImpl(clientId, project), ClientProjectSession {
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

@@ -89,7 +89,7 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     if (myThrowsList != null) {
       return myThrowsList;
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     try {
       myThrowsList = elementFactory.createReferenceList(new PsiJavaCodeReferenceElement[]{
         elementFactory.createFQClassNameReferenceElement(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope())
@@ -105,7 +105,7 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
   @Nullable
   @Override
   public PsiCodeBlock getBody() {
-    final PsiElement child = getFirstChild();
+    PsiElement child = getFirstChild();
     return child instanceof PsiCodeBlock? (PsiCodeBlock)child : null;
   }
 

@@ -566,7 +566,9 @@ public class HintManagerImpl extends HintManager {
 
     hintInfo.initStyleFrom(hint.getComponent());
     if (showByBalloon) {
-      hintInfo.setBorderColor(new JBColor(Color.gray, Gray._140));
+      if (!hintInfo.isBorderColorSet()) {
+        hintInfo.setBorderColor(new JBColor(Color.gray, Gray._140));
+      }
       hintInfo.setFont(hintInfo.getTextFont().deriveFont(Font.PLAIN));
       hintInfo.setCalloutShift((int)(editor.getLineHeight() * 0.1));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test.sequence.exec
 
@@ -15,7 +15,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Computable
 import com.intellij.xdebugger.XDebugSessionListener
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCaseWithStepping
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -37,7 +37,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
 
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         // Sequence expressions are verbose. Disable expression logging for sequence debugger
-        KotlinDebuggerCaches.LOG_COMPILATIONS = false
+        KotlinEvaluator.LOG_COMPILATIONS = false
 
         val session = debuggerSession.xDebugSession ?: kotlin.test.fail("XDebugSession is null")
         assertNotNull(session)
@@ -73,7 +73,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     Computable<StreamChain> {
                         val elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session)
                         val chains = if (elementAtBreakpoint == null) null else chainBuilder.build(elementAtBreakpoint)
-                        if (chains == null || chains.isEmpty()) null else chainSelector.select(chains)
+                        if (chains.isNullOrEmpty()) null else chainSelector.select(chains)
                     })
 
                 if (chain == null) {

@@ -30,13 +30,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ObjectUtils;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.util.Collections;
 
 public class GlobalUndoTest extends UndoTestCase implements TestDialog {
@@ -353,7 +353,10 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     setDocumentText(file[0], "document");
 
-    executeCommand(() -> delete(dir[0]));
+    executeCommand(() -> {
+      delete(file[0]);
+      delete(dir[0]);
+    });
 
     for (int i = 0; i < 2; i++) {
       globalUndo();
@@ -362,6 +365,34 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       file[0] = dir[0].findChild("file.txt");
       assertNotNull(file[0]);
       assertEquals("document", getDocumentText(file[0]));
+
+      globalRedo();
+      assertNull(myRoot.findChild("dir"));
+    }
+  }
+
+  public void testUndoDeleteDirectoryWithFileWithDisabledUndoMustNotRecreateFiles() {
+    final VirtualFile[] dir = new VirtualFile[1];
+    final VirtualFile[] file = new VirtualFile[1];
+    executeCommand(() -> {
+      dir[0] = createChildDirectory(myRoot, "dir");
+      file[0] = createChildData(dir[0], "file.txt");
+    });
+
+    setDocumentText(file[0], "document");
+
+    executeCommand(() -> {
+      UndoUtil.disableUndoFor(file[0]);
+      delete(file[0]);
+      delete(dir[0]);
+    });
+
+    for (int i = 0; i < 2; i++) {
+      globalUndo();
+      dir[0] = myRoot.findChild("dir");
+      assertNotNull(dir);
+      file[0] = dir[0].findChild("file.txt");
+      assertNull(file[0]);
 
       globalRedo();
       assertNull(myRoot.findChild("dir"));
@@ -466,7 +497,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("doc", getDocumentText(f));
     redo(editor);
     assertEquals("external", getDocumentText(f));
-    ObjectUtils.reachabilityFence(doc);
+    Reference.reachabilityFence(doc);
   }
 
   public void testCanUndoAfterFileWasDeletedAndWhenCreatedExternally() throws IOException {
@@ -518,7 +549,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     assertGlobalUndoNotAvailable();
     assertUndoNotAvailable(getEditor(f));
-    ObjectUtils.reachabilityFence(d);
+    Reference.reachabilityFence(d);
   }
 
   public void testGlobalUndoIsAvailableWhenFileChangedExternallyWithForceFlag() {

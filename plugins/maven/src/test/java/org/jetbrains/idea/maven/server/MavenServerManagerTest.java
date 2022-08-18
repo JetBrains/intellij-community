@@ -116,9 +116,8 @@ public class MavenServerManagerTest extends MavenTestCase {
     ensureConnected(connectorFirst);
     MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnector(myProject, second.getAbsolutePath());
     assertSame(connectorFirst, connectorSecond);
-    MavenServerManager.getInstance().cleanUp(connectorFirst);
+    MavenServerManager.getInstance().shutdownConnector(connectorFirst, true);
     assertEmpty(MavenServerManager.getInstance().getAllConnectors());
-    connectorFirst.shutdown(true);
   }
 
   private static void kill(MavenServerConnector connector) {

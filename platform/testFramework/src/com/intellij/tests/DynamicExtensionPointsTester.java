@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestApplicationManagerKt;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -66,24 +66,25 @@ public class DynamicExtensionPointsTester {
     System.gc();
     //noinspection CallToSystemGC
     System.gc();
-    String heapDump = TestApplicationManagerKt.publishHeapDump("dynamicExtension");
+    String heapDump = TestApplicationManager.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
       String testName = escape(namer.fun("Dynamic EP unloading " + ep.getName()));
-      System.out.printf("##teamcity[testStarted name='%s']%n", testName);
+      System.out.printf("##teamcity[testStarted name='%s' nodeId='%s' parentNodeId='%s']%n", testName, testName, 
+                        MapSerializerUtil.escapeStr("[engine:junit-vintage]/[runner:_LastInSuiteTest]/[test:testDynamicExtensions(_LastInSuiteTest)]", MapSerializerUtil.STD_ESCAPER));
       System.out.flush();
 
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
         String aliveExtensions = StringUtil.join(alive, o -> o + " (" + o.getClass() + ")", "\n");
-        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName,
+        System.out.printf("##teamcity[%s name='%s' nodeId='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName, testName,
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();
         failed.set(true);
       }
       else {
-        System.out.printf("##teamcity[testFinished name='%s']%n", testName);
+        System.out.printf("##teamcity[testFinished name='%s' nodeId='%s']%n", testName, testName);
         System.out.flush();
       }
     });

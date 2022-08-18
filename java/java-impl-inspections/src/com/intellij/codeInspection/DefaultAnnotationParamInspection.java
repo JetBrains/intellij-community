@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,7 +38,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNameValuePair(final PsiNameValuePair pair) {
+      public void visitNameValuePair(final @NotNull PsiNameValuePair pair) {
         PsiAnnotationMemberValue value = pair.getValue();
         PsiReference reference = pair.getReference();
         if (reference == null) return;
@@ -58,7 +58,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
               return;
             }
           }
-          holder.registerProblem(value, JavaBundle.message("inspection.message.redundant.default.parameter.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          holder.registerProblem(value, JavaBundle.message("inspection.message.redundant.default.parameter.value.assignment"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  createRemoveParameterFix());
         }
       }

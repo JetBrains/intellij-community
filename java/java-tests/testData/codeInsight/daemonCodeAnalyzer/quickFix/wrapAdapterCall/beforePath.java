@@ -1,4 +1,4 @@
-// "Wrap using 'Paths.get()'" "true"
+// "Adapt using 'Paths.get()'" "true-preview"
 import java.nio.file.*;
 
 class Test {

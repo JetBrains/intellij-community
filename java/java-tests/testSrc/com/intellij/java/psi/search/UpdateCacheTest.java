@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -391,7 +391,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
   private void checkTodos(@NonNls String[] expectedFiles) {
     List<String> names = new ArrayList<>();
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).processFilesWithTodoItems(o -> {
+    PsiTodoSearchHelper.getInstance(myProject).processFilesWithTodoItems(o -> {
       names.add(o.getName());
       return true;
     });

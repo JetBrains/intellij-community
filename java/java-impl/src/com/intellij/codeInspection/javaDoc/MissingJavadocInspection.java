@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -29,6 +31,7 @@ import java.util.Map;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class MissingJavadocInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;
   public boolean IGNORE_ACCESSORS = false;
@@ -38,6 +41,11 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public Options INNER_CLASS_SETTINGS = new Options();
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
+
+  protected static final String PACKAGE_LOCAL = "package";
+  protected static final String PUBLIC = PsiModifier.PUBLIC;
+  protected static final String PROTECTED = PsiModifier.PROTECTED;
+  protected static final String PRIVATE = PsiModifier.PRIVATE;
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
@@ -73,29 +81,29 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkFile(file, holder, isOnTheFly);
         }
       }
 
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         checkModule(module, holder, isOnTheFly);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         checkClass(aClass, holder, isOnTheFly);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkField(field, holder, isOnTheFly);
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkMethod(method, holder, isOnTheFly);
       }
     };
@@ -214,7 +222,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
 
-  private static boolean isDeprecated(PsiDocCommentOwner element) {
+  static boolean isDeprecated(PsiDocCommentOwner element) {
     return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
   }
 
@@ -226,7 +234,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     }
 
     if (docComment.findTagByName("inheritDoc") != null) {
-      JavadocTagInfo tagInfo = JavadocManager.SERVICE.getInstance(psiMethod.getProject()).getTagInfo("inheritDoc");
+      JavadocTagInfo tagInfo = JavadocManager.getInstance(psiMethod.getProject()).getTagInfo("inheritDoc");
       if (tagInfo != null && tagInfo.isValidInContext(psiMethod)) {
         return true;
       }
@@ -235,8 +243,8 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     return false;
   }
 
-  private static boolean isJavadocRequired(PsiMethod method){
-    return JavaDocLocalInspection.EP_NAME.extensions().noneMatch(condition -> condition.value(method));
+  public static boolean isJavadocRequired(PsiMethod method){
+    return EP_NAME.getExtensionList().stream().noneMatch(condition -> condition.value(method));
   }
 
   private static boolean isJavadocRequired(@NotNull Options options, @NotNull PsiModifierListOwner element) {
@@ -269,15 +277,15 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   private static int getAccessNumber(String accessModifier) {
-    if (accessModifier.startsWith(JavaDocLocalInspection.PUBLIC)) return 1;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PROTECTED)) return 2;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PACKAGE_LOCAL)) return 3;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PRIVATE)) return 4;
+    if (accessModifier.startsWith(PUBLIC)) return 1;
+    if (accessModifier.startsWith(PROTECTED)) return 2;
+    if (accessModifier.startsWith(PACKAGE_LOCAL)) return 3;
+    if (accessModifier.startsWith(PRIVATE)) return 4;
 
     return 5;
   }
 
-  private static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
+  static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
     return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
@@ -432,7 +440,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     }
   }
 
-  private static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
+  public static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
         PsiDocTagValue value = tag.getValueElement();

@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.google.common.collect.ImmutableList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
@@ -182,7 +181,6 @@ data class JdkItem(
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
-  @Suppress("unused")
   ZIP("zip") {
     override fun openDecompressor(archiveFile: Path): Decompressor {
       val decompressor = Decompressor.Zip(archiveFile)
@@ -193,7 +191,7 @@ enum class JdkPackageType(@NonNls val type: String) {
     }
   },
 
-  @Suppress("SpellCheckingInspection", "unused")
+  @Suppress("SpellCheckingInspection")
   TAR_GZ("targz") {
     override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile)
   };
@@ -554,7 +552,7 @@ private class RawJdkListImpl(
   private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
     val result = runCatching {
       try {
-        ImmutableList.copyOf(JdkListParser.parseJdkList(json, predicate))
+        java.util.List.copyOf(JdkListParser.parseJdkList(json, predicate))
       }
       catch (t: Throwable) {
         throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)

@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitStatisticsCollector;
+import git4idea.GitRefreshUsageCollector;
 import git4idea.commands.GitHandler;
 import git4idea.index.GitFileStatus;
 import git4idea.index.GitIndexStatusUtilKt;
@@ -103,7 +103,7 @@ public class GitStagingAreaHolder {
     dirtyScope.addAll(dirtyPaths);
 
     boolean everythingDirty = dirtyScope.contains(VcsUtil.getFilePath(root));
-    StructuredIdeActivity activity = GitStatisticsCollector.logStatusRefresh(myProject, everythingDirty);
+    StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, everythingDirty);
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
     activity.finished();
 
@@ -146,7 +146,7 @@ public class GitStagingAreaHolder {
   /**
    * Collect dirty file paths, previous changes are included in collection.
    *
-   * @return the set of dirty paths to check, grouped by root
+   * @return the map whose values are lists of dirty paths to check, grouped by root
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @NotNull

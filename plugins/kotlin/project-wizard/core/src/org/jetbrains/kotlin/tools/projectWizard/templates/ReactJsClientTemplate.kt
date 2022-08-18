@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
@@ -60,7 +60,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
             val kotlinVersion = KotlinPlugin.version.propertyValue
             +Dependencies.KOTLIN_REACT
             +Dependencies.KOTLIN_REACT_DOM
-            +Dependencies.KOTLIN_REACT_CSS
+            +Dependencies.KOTLIN_EMOTION
             if (useReactRouterDom.reference.settingValue) {
                 +Dependencies.KOTLIN_REACT_ROUTER_DOM
             }
@@ -98,9 +98,9 @@ object ReactJsClientTemplate : JsClientTemplate() {
             Versions.JS_WRAPPERS.KOTLIN_REACT_DOM
         )
 
-        val KOTLIN_REACT_CSS = wrapperDependency(
-            "kotlin-react-css",
-            Versions.JS_WRAPPERS.KOTLIN_REACT_CSS
+        val KOTLIN_EMOTION = wrapperDependency(
+            "kotlin-emotion",
+            Versions.JS_WRAPPERS.KOTLIN_EMOTION
         )
 
         val KOTLIN_REACT_ROUTER_DOM = wrapperDependency(

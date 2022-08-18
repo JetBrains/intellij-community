@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.test.common.kotlin
 
@@ -196,5 +196,14 @@ interface UastResolveApiTestBase : UastPluginSelection {
             // Check Retention on a rebuilt UAnnotation
             checkRetentionAndResolve(rebuiltAnnotation)
         }
+    }
+
+    fun checkThreadSafe(uFilePath: String, uFile: UFile) {
+        val safeClass = uFile.classes.find { it.name == "SafeClass" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        val k_delegate = safeClass.fields.find { it.name == "k\$delegate" }
+            ?: throw IllegalStateException("Target field not found at ${safeClass.name}")
+        // Without retrieving delegate expression type, it would be just "Lazy" (w/o type argument).
+        TestCase.assertEquals("PsiType:Lazy<? extends SimpleSafeClass>", k_delegate.type.toString())
     }
 }

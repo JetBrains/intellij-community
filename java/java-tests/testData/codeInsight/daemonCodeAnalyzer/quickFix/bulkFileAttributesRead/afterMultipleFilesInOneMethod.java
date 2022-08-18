@@ -1,4 +1,4 @@
-// "Fix all 'Bulk 'Files.readAttributes' call can be used instead of multiple file attribute calls' problems in file" "true"
+// "Fix all 'Bulk 'Files.readAttributes()' call can be used' problems in file" "true"
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;

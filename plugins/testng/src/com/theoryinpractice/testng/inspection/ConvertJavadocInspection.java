@@ -48,7 +48,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitDocTag(final PsiDocTag tag) {
+      @Override public void visitDocTag(final @NotNull PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
           holder.registerProblem(tag, TestngBundle.message("inspection.message.testng.javadoc.can.be.converted.to.annotations"), new ConvertJavadocQuickfix());
         }

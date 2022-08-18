@@ -3,7 +3,6 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -112,7 +111,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
   private static class UnnecessaryInitCauseVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
@@ -141,7 +140,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
       if (nameToken == null) {
         return;
       }
-      registerError(nameToken, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(nameToken);
     }
 
     private static boolean canExpressionBeMovedBackwards(final PsiExpression cause, final PsiExpression newLocation) {
@@ -154,7 +153,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
       final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       cause.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           if (!result.get().booleanValue()) {
             return;
           }

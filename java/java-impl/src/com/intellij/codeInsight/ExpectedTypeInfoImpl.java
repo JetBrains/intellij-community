@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -174,7 +174,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
       String className = ((PsiClassType)type).getClassName();
       int typeParamCount = ((PsiClassType)type).getParameterCount();
       Project project = context.getProject();
-      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(project);
+      PsiResolveHelper helper = PsiResolveHelper.getInstance(project);
       List<PsiClass> suitableClasses = ContainerUtil.filter(
         PsiShortNamesCache.getInstance(project).getClassesByName(className, context.getResolveScope()),
         c -> (typeParamCount == 0 || c.hasTypeParameters()) &&

@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.xdebugger.impl.actions.handlers.XEvaluateInConsoleFromEditorActionHandler;
@@ -26,6 +27,10 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
     return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));

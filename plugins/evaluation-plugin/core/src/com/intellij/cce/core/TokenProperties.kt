@@ -70,7 +70,7 @@ class JvmProperties(private val props: TokenProperties) : TokenProperties by pro
     }
   }
 
-  val isStatic: Boolean? = props.additionalProperty(STATIC) == "true"
+  val isStatic: Boolean = props.additionalProperty(STATIC) == "true"
   val packageName: String? = props.additionalProperty(PACKAGE)
   val containingClass: String? = props.additionalProperty(CONTAINING_CLASS)
 
@@ -130,5 +130,6 @@ enum class TypeProperty {
   METHOD_CALL,
   FIELD,
   ARGUMENT_NAME,
+  PARAMETER_MEMBER,
   UNKNOWN
 }

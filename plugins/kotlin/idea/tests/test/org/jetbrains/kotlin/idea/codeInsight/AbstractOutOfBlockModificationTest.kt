@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -14,17 +14,16 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -36,7 +35,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
         }
         val expectedOutOfBlock = expectedOutOfBlockResult
         val text = psiFile.text
-        val expectedPackageTrackerChange = InTextDirectivesUtils.isDirectiveDefined(text, PACKAGE_CHANGE_DIRECTIVE)
         val isErrorChecksDisabled = InTextDirectivesUtils.isDirectiveDefined(text, DISABLE_ERROR_CHECKS_DIRECTIVE)
         val isSkipCheckDefined = InTextDirectivesUtils.isDirectiveDefined(text, SKIP_ANALYZE_CHECK_DIRECTIVE)
         val project = myFixture.project
@@ -44,8 +42,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl
         val element = psiFile.findElementAt(myFixture.caretOffset)
         assertNotNull("Should be valid element", element)
-        val packageTracker = KotlinPackageModificationListener.getInstance(project).packageTracker
-        val ptcBeforeType = packageTracker.modificationCount
         val oobBeforeType = ktFile?.outOfBlockModificationCount
         val modificationCountBeforeType = tracker.modificationCount
 
@@ -55,7 +51,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
         myFixture.type(stringToType)
         PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
         val oobAfterCount = ktFile?.outOfBlockModificationCount
-        val ptcAfterType = packageTracker.modificationCount
         val modificationCountAfterType = tracker.modificationCount
         assertTrue(
             "Modification tracker should always be changed after type",
@@ -64,13 +59,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
         assertEquals(
             "Result for out of block test differs from expected on element in file:\n"
-                    + FileUtil.loadFile(testDataFile()),
+                    + FileUtil.loadFile(dataFile()),
             expectedOutOfBlock, oobBeforeType != oobAfterCount
-        )
-        assertEquals(
-            "package modification tracker differs from expected:\n"
-                    + FileUtil.loadFile(testDataFile()),
-            expectedPackageTrackerChange, ptcBeforeType != ptcAfterType
         )
         ktFile?.let {
             if (!isErrorChecksDisabled) {
@@ -149,7 +139,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
     companion object {
         const val OUT_OF_CODE_BLOCK_DIRECTIVE = "OUT_OF_CODE_BLOCK:"
-        const val PACKAGE_CHANGE_DIRECTIVE = "PACKAGE_CHANGE"
         const val DISABLE_ERROR_CHECKS_DIRECTIVE = "DISABLE_ERROR_CHECKS"
         const val SKIP_ANALYZE_CHECK_DIRECTIVE = "SKIP_ANALYZE_CHECK"
         const val TYPE_DIRECTIVE = "TYPE:"

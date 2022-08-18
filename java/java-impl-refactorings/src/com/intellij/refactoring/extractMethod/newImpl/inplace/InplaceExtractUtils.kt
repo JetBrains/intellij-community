@@ -3,8 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
@@ -16,6 +15,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -30,7 +30,8 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
@@ -43,7 +44,7 @@ import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
-  fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
+  private fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
     val project = editor.project ?: return Disposable {}
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
@@ -118,7 +119,7 @@ object InplaceExtractUtils {
     InplaceExtractMethodCollector.show.log(editor.project, FusInputEvent(showEvent, javaClass.simpleName))
   }
 
-  fun logStatisticsOnHide(project: Project, popupProvider: ExtractMethodPopupProvider){
+  private fun logStatisticsOnHide(project: Project, popupProvider: ExtractMethodPopupProvider){
     InplaceExtractMethodCollector.hide.log(project, popupProvider.isChanged)
     if (popupProvider.annotate != popupProvider.annotateDefault) {
       val change = if (popupProvider.annotate == true) ExtractMethodSettingChange.AnnotateOn else ExtractMethodSettingChange.AnnotateOff
@@ -142,44 +143,19 @@ object InplaceExtractUtils {
     }
   }
 
-  fun navigateToFileOffset(project: Project, file: VirtualFile, offset: Int?) {
+  private fun navigateToEditorOffset(editor: Editor, offset: Int?) {
     if (offset == null) return
+    val project: Project = editor.project ?: return
+    val file: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
     val descriptor = OpenFileDescriptor(project, file, offset)
     descriptor.navigate(true)
     descriptor.dispose()
   }
 
-  fun textRangeOf(smartPointer: SmartPsiElementPointer<*>): TextRange? {
-    val segment = smartPointer.range ?: return null
-    return TextRange.create(segment)
-  }
-
-
-  fun getEditedTemplateText(state: TemplateState): String? {
-    val textRange = state.currentVariableRange ?: return null
-    return state.editor.document.getText(textRange)
-  }
-
-  fun addTemplateFinishedListener(templateState: TemplateState, listener: (editedText: String?) -> Unit){
-    templateState.addTemplateStateListener(object : TemplateEditingAdapter() {
-      var editedTemplateText: String? = null
-
-      override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        editedTemplateText = getEditedTemplateText(state)
-      }
-
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (!brokenOff) {
-          listener(editedTemplateText)
-        }
-      }
-    })
-  }
-
-  fun addInlaySettingsElement(templateState: TemplateState, settingsPopup: ExtractMethodPopupProvider){
-    val editor = templateState.editor as? EditorImpl ?: return
-    val project = editor.project ?: return
-    val offset = templateState.currentVariableRange?.endOffset ?: return
+  fun addInlaySettingsElement(templateState: TemplateState, settingsPopup: ExtractMethodPopupProvider): Inlay<PresentationRenderer>? {
+    val editor = templateState.editor as? EditorImpl ?: return null
+    val project = editor.project ?: return null
+    val offset = templateState.currentVariableRange?.endOffset ?: return null
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
 
     val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
@@ -188,35 +164,18 @@ object InplaceExtractUtils {
         logStatisticsOnShow(editor)
       }
     }
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, settingsPopup.panel, templateElement) {
-      logStatisticsOnHide(project, settingsPopup)
+    presentation.addSelectionListener { isSelected ->
+      if (!isSelected) {
+        logStatisticsOnHide(project, settingsPopup)
+      }
     }
+    return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel, templateElement)
   }
 
-  fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? {
-    return call?.methodExpression?.referenceNameElement as? PsiIdentifier
-  }
-
-  fun createCodePreview(editor: Editor,
-                        extractedRange: TextRange?,
-                        getMethod: () -> PsiMethod?,
-                        getCall: () -> PsiMethodCallExpression?): EditorCodePreview {
-    val preview = EditorCodePreview.create(editor)
-    val project = editor.project ?: return preview
-    val document = editor.document
-    val file = FileDocumentManager.getInstance().getFile(document) ?: return preview
-
-    if (extractedRange != null) {
-      val callLines = findLines(document, extractedRange)
-      preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(getCall())?.textRange?.endOffset) }
-    }
-    val methodRange = getMethod()?.textRange
-    if (methodRange != null) {
-      val methodLines = findLines(document, methodRange).trimToLength(4)
-      preview.addPreview(methodLines) { navigateToFileOffset(project, file, getMethod()?.nameIdentifier?.textRange?.endOffset) }
-    }
-
-    return preview
+  private fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
+    val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
+    Disposer.register(preview) { navigatableMarker.dispose() }
+    preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.range?.endOffset) })
   }
 
   inline fun <reified T: PsiElement> findElementAt(file: PsiFile, range: RangeMarker?): T? {
@@ -231,10 +190,19 @@ object InplaceExtractUtils {
     }
   }
 
-  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+  private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
-  private fun findLines(document: Document, range: TextRange): IntRange {
+  private fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+  }
+
+  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange, callOffset: Int): EditorCodePreview {
+    val codePreview = EditorCodePreview.create(editor)
+    val highlighting = createInsertedHighlighting(editor, methodRange)
+    Disposer.register(codePreview, highlighting)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange).trim(4), methodOffset)
+    return codePreview
   }
 
 }

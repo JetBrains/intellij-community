@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -19,6 +19,7 @@ abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCode
         if (!isFirPlugin()) {
             invalidateLibraryCache(project)
         }
+        checkPluginIsCorrect(isFirPlugin())
     }
 
     override fun tearDown() {
@@ -28,13 +29,13 @@ abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCode
         )
     }
 
-    protected fun testDataFile(fileName: String): File = File(testDataPath, fileName)
+    protected fun dataFile(fileName: String): File = File(testDataPath, fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
-    protected fun testPath(fileName: String = fileName()): String = testDataFile(fileName).toString()
+    protected fun dataPath(fileName: String = fileName()): String = dataFile(fileName).toString()
 
-    protected fun testPath(): String = testPath(fileName())
+    protected fun dataPath(): String = dataPath(fileName())
 
     protected open fun fileName(): String = KotlinTestUtils.getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 

@@ -23,11 +23,11 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.projectStructure.getMigratedSourceRootTypeWithProperties
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
-import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil
-import org.jetbrains.kotlin.idea.framework.getLibraryJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -47,13 +47,13 @@ private val rootTypesToMigrate: List<JpsModuleSourceRootType<*>> = listOf(
 // TODO(dsavvinov): review how it behaves in HMPP environment
 private val PLATFORM_TO_STDLIB_DETECTORS: Map<TargetPlatform, (Array<VirtualFile>) -> Boolean> = mapOf(
     JvmPlatforms.unspecifiedJvmPlatform to { roots: Array<VirtualFile> ->
-        JavaRuntimeDetectionUtil.getRuntimeJar(roots.toList()) != null
+        KotlinJvmStdlibDetectorFacility.getStdlibJar(roots.toList()) != null
     },
     JsPlatforms.defaultJsPlatform to { roots: Array<VirtualFile> ->
-        JsLibraryStdDetectionUtil.getJsStdLibJar(roots.toList()) != null
+        KotlinJavaScriptStdlibDetectorFacility.getStdlibJar(roots.toList()) != null
     },
     CommonPlatforms.defaultCommonPlatform to { roots: Array<VirtualFile> ->
-        getLibraryJar(roots, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN) != null
+        roots.any { PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN.matcher(it.name).matches() }
     }
 )
 
@@ -179,7 +179,6 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
                         .flatMap { it.getChildren(SOURCE_FOLDER_TAG) }
                 }
 
-                @Suppress("UnstableApiUsage")
                 private fun ModuleSettings.isExternalModule(): Boolean {
                     return when {
                         rootElement.getAttributeValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY) != null -> true

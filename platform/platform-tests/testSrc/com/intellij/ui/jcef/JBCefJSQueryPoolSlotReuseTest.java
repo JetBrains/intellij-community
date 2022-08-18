@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -13,7 +12,10 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.*;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+import static com.intellij.ui.jcef.JBCefTestHelper.showAndWaitForLoad;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * IDEA-286693 a pool slot is not freed after JBCefJSQuery gets disposed
@@ -62,13 +64,13 @@ public class JBCefJSQueryPoolSlotReuseTest {
     } catch (IllegalStateException ex) {
       isIllegal = true;
     }
-    TestCase.assertTrue(isIllegal);
+    assertTrue(isIllegal);
 
     /*
      * Create and use a JS query again and make sure it reuses the same function under the hood.
      */
     var jsQuery2 = JBCefJSQuery.create((JBCefBrowserBase)browser);
-    TestCase.assertEquals(funcName, jsQuery2.getFuncName());
+    assertEquals(funcName, jsQuery2.getFuncName());
     doTest(browser, jsQuery2);
 
     Disposer.dispose(client);
@@ -80,7 +82,7 @@ public class JBCefJSQueryPoolSlotReuseTest {
 
     jsQuery.addHandler(result -> {
       System.out.println("JBCefJSQuery result: " + result);
-      TestCase.assertEquals(expectedResult, result);
+      assertEquals(expectedResult, result);
       latch.countDown();
       return null;
     });
@@ -92,4 +94,3 @@ public class JBCefJSQueryPoolSlotReuseTest {
     });
   }
 }
-

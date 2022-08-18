@@ -211,7 +211,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     MyVisitor(final ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;
     }
-    @Override public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (variable.hasInitializer()) {
         PsiExpression expr = variable.getInitializer();
         if (expr instanceof PsiReferenceExpression) {
@@ -222,7 +222,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       PsiExpression rhs = expression.getRExpression();
       if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
@@ -232,7 +232,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Override public void visitCallExpression(PsiCallExpression expression) {
+    @Override public void visitCallExpression(@NotNull PsiCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
       if (myIgnoredMethods.matches(psiMethod)) return;
       final PsiExpressionList argList = expression.getArgumentList();
@@ -254,7 +254,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public void visitReturnStatement(final PsiReturnStatement statement) {
+    public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
       final PsiExpression returnValue = statement.getReturnValue();
       PsiMethod containingMethod = PsiTreeUtil.getParentOfType(returnValue, PsiMethod.class, true, PsiLambdaExpression.class);
       if (returnValue instanceof PsiReferenceExpression && containingMethod != null) {

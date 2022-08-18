@@ -25,10 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static java.util.Map.entry;
@@ -68,11 +67,15 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   private static final CallMatcher FOR_NAME_MATCHER =
     CallMatcher.staticCall("java.nio.charset.Charset", "forName").parameterTypes(JAVA_LANG_STRING);
 
+  private static final CallMatcher CHARSET_NAME =
+    CallMatcher.instanceCall("java.nio.charset.Charset", "name", "toString").parameterCount(0);
+
   private static final Map<String, String> SUPPORTED_CHARSETS = Map.ofEntries(
       entry("US-ASCII", "US_ASCII"),
       entry("ASCII", "US_ASCII"),
       entry("ISO646-US", "US_ASCII"),
       entry("ISO-8859-1", "ISO_8859_1"),
+      entry("8859_1", "ISO_8859_1"),
       entry("UTF-8", "UTF_8"),
       entry("UTF8", "UTF_8"),
       entry("UTF-16BE", "UTF_16BE"),
@@ -89,7 +92,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitCallExpression(PsiCallExpression call) {
+      public void visitCallExpression(@NotNull PsiCallExpression call) {
         CharsetMatch match = StreamEx.of(MATCHERS)
           .map(matcher -> matcher.extractCharsetMatch(languageLevel, call))
           .nonNull()
@@ -99,7 +102,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         if (!FOR_NAME_MATCHER.matches(call)) return;
         PsiExpressionList arguments = call.getArgumentList();
@@ -110,19 +113,28 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       private void addCharsetReplacement(@NotNull PsiElement place, @NotNull PsiExpression charset) {
         String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
-        String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
-        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", constantName),
-                               new CharsetObjectCanBeUsedFix(constantName));
+        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", sanitizeExpression(charsetString)),
+                               new CharsetObjectCanBeUsedFix(charsetString));
       }
 
       @Nullable
       private String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
+        if (charsetString == null && charsetExpression instanceof PsiMethodCallExpression) {
+          if (CHARSET_NAME.matches(charsetExpression)) {
+            PsiExpression qualifier = ((PsiMethodCallExpression)charsetExpression).getMethodExpression().getQualifierExpression();
+            if (qualifier != null) {
+              return qualifier.getText();
+            }
+          }
+        }
         if (charsetString == null) return null;
         charsetString = StringUtil.toUpperCase(charsetString);
-        if (!SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
-        if (charsetExpression instanceof PsiLiteralExpression) return charsetString;
+        String constantName = SUPPORTED_CHARSETS.get(charsetString);
+        if (constantName == null) return null;
+        String finalExpression = "java.nio.charset.StandardCharsets." + constantName;
+        if (charsetExpression instanceof PsiLiteralExpression) return finalExpression;
         if (charsetExpression instanceof PsiReferenceExpression) {
           String name = ((PsiReferenceExpression)charsetExpression).getReferenceName();
           if (name == null) return null;
@@ -131,11 +143,19 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
           // Do not report constants which name is not based on charset name (like "ENCODING", "DEFAULT_ENCODING", etc.)
           // because replacement might not be well-suitable
           if (!baseName.contains(baseCharset)) return null;
-          return charsetString;
+          return finalExpression;
         }
         return null;
       }
     };
+  }
+
+  @NotNull
+  private static String sanitizeExpression(String expression) {
+    if (expression.startsWith("java.nio.charset.StandardCharsets.")) {
+      return expression.substring("java.nio.charset.".length());
+    }
+    return expression;
   }
 
   abstract static class CharsetCallMatcher {
@@ -248,17 +268,17 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   }
 
   static class CharsetObjectCanBeUsedFix implements LocalQuickFix {
-    private final String myConstantName;
+    private final String myCharsetExpression;
 
-    CharsetObjectCanBeUsedFix(String constantName) {
-      myConstantName = constantName;
+    CharsetObjectCanBeUsedFix(String charsetExpression) {
+      myCharsetExpression = charsetExpression;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myConstantName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", sanitizeExpression(myCharsetExpression));
     }
 
     @Nls
@@ -274,8 +294,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       if (expression == null) return;
       PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
       CommentTracker ct = new CommentTracker();
-      String replacement = "java.nio.charset." + myConstantName;
-      PsiReferenceExpression ref = (PsiReferenceExpression)ct.replaceAndRestoreComments(expression, replacement);
+      PsiExpression ref = (PsiExpression)ct.replaceAndRestoreComments(expression, myCharsetExpression);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
       if (anchor == null) return;
       while (true) {
@@ -283,19 +302,19 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
           PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
         if (tryStatement == null) break;
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        if (PsiTreeUtil.isAncestor(tryBlock, anchor, true)) {
+        boolean inTry = PsiTreeUtil.isAncestor(tryBlock, anchor, true);
+        PsiResourceList resourceList = tryStatement.getResourceList();
+        boolean inResource = PsiTreeUtil.isAncestor(resourceList, anchor, true);
+        if (inTry || inResource) {
           for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
             List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
             for (PsiTypeElement element : typeElements) {
               PsiType type = element.getType();
               if (type.equalsToText("java.io.UnsupportedEncodingException") ||
                   type.equalsToText("java.io.IOException")) {
-                Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-                PsiResourceList resourceList = tryStatement.getResourceList();
-                if (resourceList != null) {
-                  Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
-                  unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
-                }
+                Set<PsiClassType> unhandledExceptions = StreamEx.of(tryBlock, resourceList).nonNull()
+                  .flatCollection(block -> ExceptionUtil.collectUnhandledExceptions(block, block))
+                  .toSet();
                 if (!ContainerUtil.exists(unhandledExceptions, ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
                   if (parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);

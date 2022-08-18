@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve
 
@@ -9,11 +9,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
@@ -27,6 +24,9 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
+    override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+
     protected open fun doTest(path: String) {
         assert(path.endsWith(".kt")) { path }
         myFixture.configureWithExtraFile(path, ".Data")
@@ -35,10 +35,12 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         } else {
             IgnoreTests.DIRECTIVES.IGNORE_FE10
         }
-        IgnoreTests.runTestIfNotDisabledByFileDirective(testDataFile().toPath(), controlDirective) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
             performChecks()
         }
     }
+
+    protected open fun performAdditionalResolveChecks(results: List<PsiElement>) {}
 
     protected fun performChecks() {
         if (InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, MULTIRESOLVE)) {
@@ -52,8 +54,15 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         forEachCaret { index, offset ->
             val expectedResolveData = readResolveData(myFixture.file.text, index, refMarkerText)
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
-            checkReferenceResolve(expectedResolveData, offset, psiReference) { checkResolvedTo(it) }
+            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }) { resolveTo ->
+                checkResolvedTo(resolveTo)
+                performAdditionalResolveChecks(listOf(resolveTo))
+            }
         }
+    }
+
+    protected open fun render(element: PsiElement) : String {
+        return element.renderAsGotoImplementation()
     }
 
     open fun checkResolvedTo(element: PsiElement) {
@@ -72,12 +81,17 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             psiReference as PsiPolyVariantReference
 
             val results = executeOnPooledThreadInReadAction {
-                wrapReference(psiReference).multiResolve(true)
+                wrapReference(psiReference).multiResolve(true).map { result ->
+                    result.element
+                        ?:  UsefulTestCase.fail("Reference ${psiReference} was resolved to ${result} without psi element") as Nothing
+                }
             }
+
+            performAdditionalResolveChecks(results)
 
             val actualResolvedTo = mutableListOf<String>()
             for (result in results) {
-                actualResolvedTo.add(result.element!!.renderAsGotoImplementation())
+                actualResolvedTo.add(render(result))
             }
 
             UsefulTestCase.assertOrderedEquals("Not matching for reference #$index", actualResolvedTo.sorted(), expectedReferences.sorted())
@@ -131,6 +145,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             expectedResolveData: ExpectedResolveData,
             offset: Int,
             psiReference: PsiReference?,
+            render: (PsiElement) -> String = { it.renderAsGotoImplementation() },
             checkResolvedTo: (PsiElement) -> Unit = {}
         ) {
             val expectedString = expectedResolveData.referenceString
@@ -138,7 +153,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
                 val resolvedTo = executeOnPooledThreadInReadAction { psiReference.resolve() }
                 if (resolvedTo != null) {
                     checkResolvedTo(resolvedTo)
-                    val resolvedToElementStr = replacePlaceholders(resolvedTo.renderAsGotoImplementation())
+                    val resolvedToElementStr = replacePlaceholders(render(resolvedTo))
                     assertEquals(
                         "Found reference to '$resolvedToElementStr', but '$expectedString' was expected",
                         expectedString,

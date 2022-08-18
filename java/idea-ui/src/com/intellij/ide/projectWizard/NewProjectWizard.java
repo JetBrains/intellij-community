@@ -35,6 +35,8 @@ import java.awt.*;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.NPW_PREFIX;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -69,9 +71,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
       chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
       mySequence.addCommonStep(chooseTemplateStep);
     }
-    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
+    // hacky: module builder ID and module type id should start with [NPW_PREFIX], to be removed later, on migrating on new API.
     Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
-                                                  !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
+                                                  !ContainerUtil.exists(strings, type -> type.startsWith(NPW_PREFIX));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);

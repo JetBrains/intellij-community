@@ -95,13 +95,13 @@ UFile (package = ) [public final class ResolveKt {...]
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
                         USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] : PsiType:String
                         ULiteralExpression (value = "123") ["123"] : PsiType:String
-                UDeclarationsExpression [var intRange: kotlin.ranges.LongRange = 0 .. 3]
-                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.LongRange = 0 .. 3]
+                UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
+                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                         UBinaryExpression (operator = ..) [0 .. 3] : PsiType:LongRange
                             ULiteralExpression (value = 0) [0] : PsiType:long
                             ULiteralExpression (value = 3) [3] : PsiType:long
                 UQualifiedReferenceExpression [intRange.contains(2 as int)] : PsiType:boolean
-                    USimpleNameReferenceExpression (identifier = intRange) [intRange] : PsiType:LongRange
+                    USimpleNameReferenceExpression (identifier = intRange) [intRange] : PsiType:ClosedRange<Long>
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [contains(2 as int)] : PsiType:boolean
                         UIdentifier (Identifier (contains)) [UIdentifier (Identifier (contains))]
                         USimpleNameReferenceExpression (identifier = contains, resolvesTo = null) [contains] : PsiType:boolean
@@ -116,7 +116,7 @@ UFile (package = ) [public final class ResolveKt {...]
         UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UQualifiedReferenceExpression [t.foo()] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:T
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:Unit
@@ -125,7 +125,7 @@ UFile (package = ) [public final class ResolveKt {...]
         UMethod (name = barTL) [public static final fun barTL(@org.jetbrains.annotations.NotNull listT: T) : void {...}]
             UParameter (name = listT) [@org.jetbrains.annotations.NotNull var listT: T]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UQualifiedReferenceExpression [listT.isEmpty()] : PsiType:boolean
                     USimpleNameReferenceExpression (identifier = listT) [listT] : PsiType:T
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isEmpty()] : PsiType:boolean
@@ -141,7 +141,7 @@ UFile (package = ) [public final class ResolveKt {...]
                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Unit
     UClass (name = A) [public class A {...}]
         UMethod (name = foo) [public final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = inlineFoo) [public final fun inlineFoo() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = A) [public fun A() = UastEmptyExpression]

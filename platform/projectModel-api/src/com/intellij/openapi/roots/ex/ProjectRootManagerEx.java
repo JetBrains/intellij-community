@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ex;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,8 +17,23 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void removeProjectJdkListener(@NotNull ProjectJdkListener listener);
 
-  // invokes runnable surrounded by beforeRootsChange()/rootsChanged() callbacks
+  /**
+   * Invokes runnable surrounded by beforeRootsChange()/rootsChanged() callbacks
+   * <p>
+   * With {@code !fileTypes && fireEvents} indexes always make a full rescan.
+   * <p>
+   * @deprecated Use {@link ProjectRootManagerEx#makeRootsChange(Runnable, RootsChangeRescanningInfo)} when {@code fireEvents == true},
+   * else just {@code runnable.run()}
+   * <p>
+   * {@link RootsChangeRescanningInfo} allows to limit the scope of rescanning. It may be configured
+   * with {@link com.intellij.util.indexing.BuildableRootsChangeRescanningInfo}
+   */
+  @Deprecated
   public abstract void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents);
+
+  public abstract void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes);
+
+  public abstract @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes);
 
   public abstract void markRootsForRefresh();
 

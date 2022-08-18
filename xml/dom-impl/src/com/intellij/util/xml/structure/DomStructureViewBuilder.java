@@ -6,22 +6,16 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   @NotNull
@@ -43,27 +37,6 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   @Override
   @NotNull
   public StructureView createStructureView(final FileEditor fileEditor, @NotNull final Project project) {
-    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true) {
-      @Override
-      public Promise<AbstractTreeNode<?>> expandPathToElement(final Object element) {
-        if (element instanceof XmlElement && ((XmlElement)element).isValid()) {
-          final XmlElement xmlElement = (XmlElement)element;
-          XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
-          while (tag != null) {
-            final DomElement domElement = DomManager.getDomManager(xmlElement.getProject()).getDomElement(tag);
-            if (domElement != null) {
-              for (DomElement curElement = domElement; curElement != null; curElement = curElement.getParent()) {
-                if (myDescriptor.fun(curElement) == DomService.StructureViewMode.SHOW) {
-                  return super.expandPathToElement(curElement.getXmlElement());
-                }
-              }
-            }
-            tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
-          }
-
-        }
-        return super.expandPathToElement(element);
-      }
-    };
+    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true);
   }
 }

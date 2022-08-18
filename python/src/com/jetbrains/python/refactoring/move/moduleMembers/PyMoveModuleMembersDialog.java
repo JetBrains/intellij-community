@@ -45,7 +45,6 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   /**
    * @param project dialog project
    * @param elements elements to move
-   * @param source
    * @param destination destination where elements have to be moved
    */
   public PyMoveModuleMembersDialog(@NotNull Project project,

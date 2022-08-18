@@ -3,9 +3,9 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -18,7 +18,7 @@ class RunToolbarComponentService(val project: Project): Disposable {
   private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   init {
-    if (RunToolbarProcess.isAvailable) {
+    if (ToolbarSettings.getInstance().isAvailable) {
       project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           ApplicationManager.getApplication().invokeLater {
@@ -50,24 +50,6 @@ class RunToolbarComponentService(val project: Project): Disposable {
               terminated(env)
             }
           }
-        }
-      })
-
-      extraSlots.addListener(object : ActiveListener {
-        override fun enabled() {
-          val environments = ExecutionManagerImpl.getAllDescriptors(project)
-            .mapNotNull { it.environment() }
-            .filter { it.contentToReuse?.processHandler?.isProcessTerminated == false }
-
-          if (RunToolbarProcess.logNeeded) LOG.info("ENABLED. put data ${environments.map { "$it (${it.executionId}); " }} RunToolbar")
-          environments.forEach {
-            extraSlots.processStarted(it)
-          }
-        }
-
-        override fun disabled() {
-          if (RunToolbarProcess.logNeeded) LOG.info("DISABLED RunToolbar")
-          super.disabled()
         }
       })
     }

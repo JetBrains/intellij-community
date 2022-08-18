@@ -46,7 +46,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
-  private List<Function<Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
+  private final List<Function<? super Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
   private final @NotNull SettingsEditorFragmentType myType;
   private final int myPriority;
   private final Predicate<? super Settings> myInitialSelection;
@@ -228,14 +228,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myRemovable = removable;
   }
 
-  public void setValidation(@Nullable Function<Settings, List<ValidationInfo>> validation) {
+  public void setValidation(@Nullable Function<? super Settings, List<ValidationInfo>> validation) {
     myValidation.clear();
     if (validation != null) {
       myValidation.add(validation);
     }
   }
 
-  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
+  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<? super Settings, ValidationInfo> validation) {
     myValidation.add(it -> Collections.singletonList(validation.apply(it)));
     return this;
   }
@@ -374,7 +374,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
     myApply.accept(s, myComponent);
-    validate(s);
   }
 
   @Override

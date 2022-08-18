@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run
 
@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
@@ -90,7 +90,7 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
         assert(kotlinFunctionConfiguration.configuration is JUnitConfiguration)
         manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
 
-        val obj = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get("MyKotlinTest", project, project.allScope()).single()
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "MyBarKotlinTest")
         rename.run()
 
@@ -114,7 +114,7 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
         assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.TEST_OBJECT == JUnitConfiguration.TEST_METHOD)
         manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
 
-        val obj: KtClassOrObject = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val obj: KtClassOrObject = KotlinFullClassNameIndex.get("MyKotlinTest", project, project.allScope()).single()
         val method = (obj as KtClass).findFunctionByName("testA")
         assert(method != null)
         val rename = RefactoringFactory.getInstance(project).createRename(method!!, "testA1")

@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyParameterListFixer extends PyFixer<PyParameterList> {

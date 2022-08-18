@@ -54,7 +54,7 @@ javafx {
 
 dependencies {
 #if ($context.hasLanguage("groovy"))
-  implementation('org.codehaus.groovy:groovy:${context.getVersion("org.codehaus.groovy", "groovy")}')
+  implementation('org.apache.groovy:groovy:${context.getVersion("org.apache.groovy", "groovy")}')
 #end
 #if ($context.hasLibrary("controlsfx"))
   implementation('org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}')

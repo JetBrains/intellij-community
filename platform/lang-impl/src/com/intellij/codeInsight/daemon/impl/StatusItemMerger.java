@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/** An extension allowing to merge adjacent severity-based icons in the editor's code analysis indicator */
 public abstract class StatusItemMerger {
   static final ExtensionPointName<StatusItemMerger> EP_NAME = ExtensionPointName.create("com.intellij.daemon.statusItemMerger");
 
@@ -21,6 +22,6 @@ public abstract class StatusItemMerger {
   public abstract SeverityStatusItem mergeItems(@NotNull SeverityStatusItem higher, @NotNull SeverityStatusItem lower);
 
   static @Nullable SeverityStatusItem runMerge(@NotNull SeverityStatusItem higher, @NotNull SeverityStatusItem lower) {
-    return EP_NAME.extensions().map(e -> e.mergeItems(higher, lower)).filter(Objects::nonNull).findFirst().orElse(null);
+    return EP_NAME.getExtensionList().stream().map(e -> e.mergeItems(higher, lower)).filter(Objects::nonNull).findFirst().orElse(null);
   }
 }

@@ -3,7 +3,7 @@ public class Test {
     return getString(s[i]);
   }
 
-    private String getString(String s) {
+    private static String getString(String s) {
         return s;
     }
 }

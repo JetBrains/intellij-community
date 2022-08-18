@@ -26,12 +26,12 @@
                 language="XML"
                 level="WEAK WARNING"/>
 
-        <packagesearch.projectModuleOperationProvider
+        <packagesearch.coroutineProjectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider"/>
         <packagesearch.coroutineModuleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenModuleTransformer"/>
 
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenSyncSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider
@@ -46,4 +46,13 @@
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration"/>
     </extensions>
+
+    <actions>
+        <action id="PackageSearch.Maven.DependencyAnalyzer.GoTo"
+                class="com.jetbrains.packagesearch.intellij.plugin.maven.dependency.analyzer.MavenDependencyAnalyzerGoToPackageSearchAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+        </action>
+    </actions>
 </idea-plugin>

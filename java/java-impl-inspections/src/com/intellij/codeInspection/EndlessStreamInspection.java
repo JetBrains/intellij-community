@@ -73,7 +73,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!INFINITE_SOURCE.test(call)) return;
         PsiMethodCallExpression allConsumingCall = findSubsequentCall(call,
                                                                       name -> ALL_CONSUMING_OPERATIONS.contains(name),

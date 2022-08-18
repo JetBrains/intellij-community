@@ -14,21 +14,38 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceAllInBulk
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 
 internal object ListRenumberUtils {
-  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean) {
-    val replacementList = renumber(document, recursive, restart)
-    runWriteAction {
+  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean, inWriteAction: Boolean = true) {
+    val replacementList = collectReplacements(document, recursive, restart).toList()
+    if (inWriteAction) {
+      runWriteAction {
+        replacementList.replaceAllInBulk(document)
+      }
+    } else {
       replacementList.replaceAllInBulk(document)
     }
   }
 
-  fun MarkdownList.renumber(document: Document, recursive: Boolean, restart: Boolean): List<Replacement> {
+
+  private fun MarkdownList.collectReplacements(document: Document, recursive: Boolean, restart: Boolean): Sequence<Replacement> {
     val line = document.getLineNumber(this.startOffset)
     val firstIndent = document.getLineIndentInnerSpacesLength(line, containingFile)!!
-    return renumberingReplacements(this, ListItemIndentInfo(firstIndent, 0), document, containingFile, recursive, restart).toList()
+    return renumberingReplacements(
+      this,
+      ListItemIndentInfo(firstIndent, 0),
+      document,
+      containingFile,
+      recursive,
+      restart
+    )
   }
 
+  fun MarkdownListItem.obtainMarkerNumber(): Int? {
+    return (markerElement as? MarkdownListNumber)?.number
+  }
 
   private fun renumberingReplacements(list: MarkdownList,
                                       listIndentInfo: ListItemIndentInfo,
@@ -36,15 +53,15 @@ internal object ListRenumberUtils {
                                       file: PsiFile,
                                       recursive: Boolean,
                                       restart: Boolean): Sequence<Replacement> {
-    val firstMarker = list.items.first().normalizedMarker
+    val firstItem = list.items.first()
 
     val start = when {
       list.elementType != MarkdownElementTypes.ORDERED_LIST -> null
       restart -> 1
-      else -> firstMarker.trim().dropLast(1).toInt()
+      else -> firstItem.obtainMarkerNumber() ?: error("Failed to obtain first item number")
     }
 
-    val markerFlavor = firstMarker.trim().last() // . and ) for ordered, + - * for unordered
+    val markerFlavor = firstItem.normalizedMarker.trim().last() // . and ) for ordered, + - * for unordered
 
     var sequence = sequenceOf<Replacement>()
     for ((i, item) in list.items.withIndex()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.icons.AllIcons
@@ -12,11 +12,15 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
@@ -70,26 +74,29 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
         ),
         context,
         stretchY = true,
-        useBigYGap = true
+        useBigYGap = true,
+        xPadding = 0,
+        yPadding = 0
     ).asSubComponent()
 
     override val component: JComponent by lazy(LazyThreadSafetyMode.NONE) {
         panel {
             row {
-                nameAndLocationComponent.component(growX)
+                cell(nameAndLocationComponent.component)
+                    .horizontalAlign(HorizontalAlign.FILL)
+                    .resizableColumn()
+
+                bottomGap(BottomGap.SMALL)
             }
+
             row {
-                buildSystemAdditionalSettingsComponent.component(growX)
-            }.largeGapAfter()
-            row {
-                comment(
-                    KotlinNewProjectWizardUIBundle.message(
-                        "feedback.link.tooltip.text",
-                        "https://youtrack.jetbrains.com/newIssue?project=KTIJ&Type=Feature&Subsystems=IDE.Wizards"
-                    ), 100
-                ).constraints(pushY).withLargeLeftGap()
+                cell(buildSystemAdditionalSettingsComponent.component)
+                    .horizontalAlign(HorizontalAlign.FILL)
+                    .resizableColumn()
+
+                bottomGap(BottomGap.SMALL)
             }
-        }.addBorder(JBUI.Borders.emptyRight(UIConstants.PADDING))
+        }.addBorder(IdeBorderFactory.createEmptyBorder(JBInsets(20, 20, 20, 20)))
     }
 
     override fun onValueUpdated(reference: SettingReference<*, *>?) {
@@ -209,11 +216,9 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
     }
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk")
-    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.tooltip")
     override val component: JComponent = jdkComboBox
 }
 
-@Suppress("SpellCheckingInspection")
 private class HideableSection(@NlsContexts.Separator text: String, component: JComponent) : BorderLayoutPanel() {
     private val titledSeparator = TitledSeparator(text)
     private val contentPanel = borderPanel {

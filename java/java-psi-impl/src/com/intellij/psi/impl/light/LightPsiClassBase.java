@@ -47,6 +47,15 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     myName = name;
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @NotNull
   @Override
   public String getName() {

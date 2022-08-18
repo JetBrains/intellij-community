@@ -5,10 +5,12 @@ package org.jetbrains.plugins.groovy.config.wizard
 import com.intellij.CommonBundle
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.*
@@ -17,7 +19,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.AFTER_PROPERTY_CHANGE
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
@@ -66,6 +67,7 @@ fun Row.groovySdkComboBox(context: WizardContext, property: ObservableMutablePro
     .validationOnInput { validateGroovySdk(property.get()) }
     .validationOnApply { validateGroovySdkWithDialog(property.get()) }
     .columns(COLUMNS_MEDIUM)
+    .whenItemSelectedFromUi { logGroovySdkChanged(context, property.get()) }
 }
 
 private fun ValidationInfoBuilder.validateGroovySdk(distribution: DistributionInfo?): ValidationInfo? {
@@ -110,21 +112,13 @@ private fun isInvalidSdk(distribution: DistributionInfo?): Boolean {
                                   GroovyConfigUtils.getInstance().getSDKVersionOrNull(distribution.path) == null)
 }
 
-fun Panel.addSampleCodeCheckbox(property: GraphProperty<Boolean>) {
-  row {
-    checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-      .bindSelected(property)
-  }.topGap(TopGap.SMALL)
-}
-
-
 fun ModuleBuilder.createSampleGroovyCodeFile(project: Project, sourceDirectory: VirtualFile) {
   WriteCommandAction.runWriteCommandAction(project, GroovyBundle.message("new.project.wizard.groovy.creating.main.file"), null,
-     Runnable {
-       val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
-       val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
-       VfsUtil.saveText(helloWorldFile, fileTemplate.text)
-     })
+                                           Runnable {
+                                             val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
+                                             val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
+                                             VfsUtil.saveText(helloWorldFile, fileTemplate.text)
+                                           })
 }
 
 fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
@@ -136,6 +130,42 @@ fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkL
     leftUnstable == rightUnstable -> -GroovyConfigUtils.compareSdkVersions(leftVersion, rightVersion)
     leftUnstable -> 1
     else -> -1
+  }
+}
+
+fun logGroovySdkChanged(context: WizardContext, sdk: DistributionInfo?) {
+  val type = getGroovySdkType(sdk)
+  val version = getGroovySdkVersion(sdk)
+  logGroovyLibraryChanged(context, type, version)
+}
+
+fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
+  val type = getGroovySdkType(sdk)
+  val version = getGroovySdkVersion(sdk)
+  logGroovyLibraryFinished(context, type, version)
+}
+
+private fun getGroovySdkType(sdk: DistributionInfo?): String? {
+  return when (sdk) {
+    is FrameworkLibraryDistributionInfo -> "maven"
+    is LocalDistributionInfo -> "local"
+    null -> null
+    else -> error("Unexpected distribution type: $sdk")
+  }
+}
+
+private fun getGroovySdkVersion(sdk: DistributionInfo?): String? {
+  return when (sdk) {
+    is FrameworkLibraryDistributionInfo ->
+      sdk.version.versionString
+
+    is LocalDistributionInfo ->
+      GroovyConfigUtils.getInstance().getSDKVersion(sdk.path)
+        .takeIf { it != GroovyConfigUtils.UNDEFINED_VERSION }
+
+    null -> null
+
+    else -> error("Unexpected distribution type: $sdk")
   }
 }
 

@@ -75,10 +75,10 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final Project myProject;
   private final TaintNode myRoot;
   private final PropagateTreeListener myTreeSelectionListener;
-  private final Consumer<@NotNull Collection<TaintNode>> myCallback;
+  private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
   private Content myContent;
 
-  PropagateAnnotationPanel(Project project, @NotNull TaintNode root, @NotNull Consumer<Collection<@NotNull TaintNode>> callback) {
+  PropagateAnnotationPanel(Project project, @NotNull TaintNode root, @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback) {
     super(new BorderLayout());
     myTree = PropagateTree.create(this, root);
     myRoot = root;

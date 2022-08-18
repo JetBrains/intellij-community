@@ -28,5 +28,5 @@ public abstract class PomDeclarationSearcher {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer);
+  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer);
 }

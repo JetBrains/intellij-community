@@ -12,34 +12,29 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
   private static final Logger LOG1 = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @Override
   public IntentionAction @NotNull [] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
+    if (!typeMigrationMightBeUseful(variable, toReturn)) return IntentionAction.EMPTY_ARRAY;
     return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
   }
 
   @NotNull
-  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable,
-                                                       @NotNull final PsiType toReturn) {
-    return createTypeMigrationFix(variable, toReturn, false);
-  }
-
-  @NotNull
-  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable,
-                                                       @NotNull final PsiType toReturn,
-                                                       final boolean optimizeImports) {
+  private static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
     return new VariableTypeFix(variable, toReturn) {
       @NotNull
       @Override
@@ -60,9 +55,26 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @Nullable Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
-        runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, optimizeImports, true);
+        runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, false, true);
       }
     };
+  }
+
+  private static boolean typeMigrationMightBeUseful(@NotNull PsiVariable variable, @NotNull PsiType targetType) {
+    if (!PsiUtil.isJvmLocalVariable(variable)) return true;
+    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, block);
+    if (refs.isEmpty()) return false;
+    Project project = variable.getProject();
+    TypeMigrationRules rules = new TypeMigrationRules(project);
+    TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, targetType, project);
+    for (PsiReferenceExpression ref : refs) {
+      labeler.getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), targetType);
+      if (rules.findConversion(variable.getType(), targetType, null, ref, labeler) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void runTypeMigrationOnVariable(@NotNull PsiVariable variable,

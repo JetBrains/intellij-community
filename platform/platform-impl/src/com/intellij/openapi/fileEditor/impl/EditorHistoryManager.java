@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -27,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -239,7 +239,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * @return a set of valid files that are in the history, oldest first.
+   * @return a list of valid files that are in the history, oldest first.
    */
   @NotNull
   public synchronized List<VirtualFile> getFileList() {

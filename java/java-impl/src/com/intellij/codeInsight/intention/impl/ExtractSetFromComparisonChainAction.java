@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -78,11 +66,24 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    extract(project, editor, element);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    extract(project, editor, element);
+  }
+
+  private void extract(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    boolean preview = !element.isPhysical();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
     if (comparisons.size() < 2) return;
     PsiClass containingClass = ClassUtils.getContainingStaticClass(element);
@@ -121,11 +122,16 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       }
     }
     Extractor extractor = new Extractor();
-    WriteAction.run(extractor);
+    if (preview) {
+      extractor.run();
+    }
+    else {
+      WriteAction.run(extractor);
+    }
     PsiElement result = extractor.resultPtr == null ? null : extractor.resultPtr.getElement();
     if (result == null || !result.isValid()) return;
 
-    if (!copies.isEmpty()) {
+    if (!copies.isEmpty() && !preview) {
       int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
                    Messages.showYesNoDialog(project,
                                             JavaBundle.message("intention.extract.set.from.comparison.chain.duplicates",
@@ -164,7 +170,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     Set<PsiExpression> processedOperands = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         super.visitPolyadicExpression(expression);
         if (!expression.getOperationTokenType().equals(JavaTokenType.OROR)) return;
         for (PsiExpression operand : expression.getOperands()) {
@@ -301,7 +307,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       int startOffset = firstComparison.getStartOffsetInParent();
       int endOffset = lastComparison.getStartOffsetInParent() + lastComparison.getTextLength();
       String origText = disjunction.getText();
-      String fieldReference = PsiResolveHelper.SERVICE.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
+      String fieldReference = PsiResolveHelper.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
                               name : containingClass.getQualifiedName() + "." + name;
       String replacementText = origText.substring(0, startOffset) +
                                fieldReference + ".contains(" + expression.getText() + ")" +

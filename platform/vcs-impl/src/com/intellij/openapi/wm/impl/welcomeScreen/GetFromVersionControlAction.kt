@@ -4,12 +4,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
 open class GetFromVersionControlAction : DumbAwareAction() {
@@ -32,9 +35,14 @@ open class GetFromVersionControlAction : DumbAwareAction() {
       }
     }
     else {
-      presentation.icon = null
-      presentation.text = ActionsBundle.message("action.Vcs.VcsClone.text")
+      presentation.icon =
+        if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) IconManager.getInstance().getIcon("expui/vcs/vcs.svg", AllIcons::class.java)
+        else null
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -46,11 +54,6 @@ open class GetFromVersionControlAction : DumbAwareAction() {
   }
 }
 
-class ProjectFromVersionControlAction : GetFromVersionControlAction() {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.text = ActionsBundle.message("Vcs.VcsClone.Project.text")
-  }
-}
+class ProjectFromVersionControlAction : GetFromVersionControlAction() {}
 
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -14,13 +14,13 @@ import java.util.Objects;
  * @param <O> type of options object
  */
 @Experimental
-public interface OptionEditorProvider<@NotNull O> {
+public interface OptionEditorProvider<O extends @NotNull Object> {
 
   ClassExtension<OptionEditorProvider<?>> EXTENSION = new ClassExtension<>("com.intellij.ui.optionEditorProvider");
 
   @Contract("_ -> new")
   @SuppressWarnings("unchecked")
-  static <@NotNull O> @NotNull OptionEditor<O> forOptions(O options) {
+  static <O extends @NotNull Object> @NotNull OptionEditor<O> forOptions(O options) {
     OptionEditorProvider<?> provider = Objects.requireNonNull(
       EXTENSION.forClass(options.getClass()),
       "Option editor for class " + options.getClass().getName() + " must be registered"

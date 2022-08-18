@@ -1,5 +1,7 @@
 from typing import IO, Any, Callable, Iterator, MutableMapping
 
+__all__ = ["dis", "genops", "optimize"]
+
 _Reader = Callable[[IO[bytes]], Any]
 bytes_types: tuple[type[Any], ...]
 

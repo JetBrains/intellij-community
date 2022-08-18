@@ -1,8 +1,8 @@
-// "Surround with 'if (i != null)'" "true"
+// "Surround with 'if (i != null)'" "true-preview"
 class A {
     void foo(int x){
         String i = x > 0 ? "" : null;
-        if (i != null<caret>) {
+        <caret>if (i != null) {
             i.hashCode();
         }
     }

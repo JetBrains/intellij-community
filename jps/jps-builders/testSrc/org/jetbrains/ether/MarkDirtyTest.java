@@ -18,7 +18,7 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * @author: db
+ * @author db
  */
 public class MarkDirtyTest extends IncrementalTestCase {
   public MarkDirtyTest() {

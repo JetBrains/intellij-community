@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -267,7 +264,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
-    Activity activity = StartUpMeasurer.startActivity("project data obtaining", ActivityCategory.GRADLE_IMPORT);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
     ProjectImportAction.AllModels allModels;
     int errorsCount = 0;
@@ -301,7 +297,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
-      activity.end();
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
@@ -342,7 +337,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             @NotNull PerformanceTrace performanceTrace,
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
-    Activity activity = StartUpMeasurer.startActivity("project data converting", ActivityCategory.GRADLE_IMPORT);
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
@@ -489,7 +483,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
 
-    activity.end();
     return projectDataNode;
   }
 
@@ -551,8 +544,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           String rootProjectName = build.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
           String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getPath());
+          String parentPath = build.getParentBuildIdentifier() != null ?
+                              toCanonicalPath(build.getParentBuildIdentifier().getRootDir().getPath()) : null;
           buildParticipant.setRootProjectName(rootProjectName);
           buildParticipant.setRootPath(projectPath);
+          buildParticipant.setParentRootPath(parentPath);
           if (ideaProject != null) {
             for (IdeaModule module : ideaProject.getModules()) {
               String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getPath());

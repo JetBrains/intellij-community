@@ -6,15 +6,25 @@ UFile (package = ) [public final class SuperCallsKt {...]
                 ULiteralExpression (value = "textForAnon") ["textForAnon"] : PsiType:String
                 UClass (name = null) [final class null : A {...}]
                     UMethod (name = bar) [public final fun bar() : void {...}]
-                        UBlockExpression [{...}] : PsiType:Unit
+                        UBlockExpression [{...}] : PsiType:void
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [cons(anonymous object : A("inner literal") { })] : PsiType:Unit
                                 UIdentifier (Identifier (cons)) [UIdentifier (Identifier (cons))]
                                 USimpleNameReferenceExpression (identifier = cons, resolvesTo = null) [cons] : PsiType:Unit
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] : PsiType:A
                                     ULiteralExpression (value = "inner literal") ["inner literal"] : PsiType:String
                                     UClass (name = null) [final class null : A {...}]
-                                        UMethod (name = ) [private fun () = UastEmptyExpression]
-                    UMethod (name = ) [private fun () = UastEmptyExpression]
+                                        UMethod (name = ) [private fun () {...}]
+                                            UBlockExpression [{...}]
+                                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner literal")]
+                                                    UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                                    ULiteralExpression (value = "inner literal") ["inner literal"] : PsiType:String
+                    UMethod (name = ) [private fun () {...}]
+                        UBlockExpression [{...}]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("textForAnon")]
+                                UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                ULiteralExpression (value = "textForAnon") ["textForAnon"] : PsiType:String
                     UClass (name = InnerClass) [public final class InnerClass : A {...}]
                         UMethod (name = InnerClass) [public fun InnerClass() {...}]
                             UBlockExpression [{...}]
@@ -26,14 +36,14 @@ UFile (package = ) [public final class SuperCallsKt {...]
         UMethod (name = cons) [public static final fun cons(@org.jetbrains.annotations.NotNull a: A) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: A]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
     UClass (name = A) [public class A {...}]
         UField (name = str) [@org.jetbrains.annotations.NotNull private final var str: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = foo) [public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
         UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression]
             UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String]
@@ -63,7 +73,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
         UMethod (name = foo) [public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UQualifiedReferenceExpression [super.foo(a)] : PsiType:Unit
                     USuperExpression (label = null) [super] : PsiType:A
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo(a)] : PsiType:Unit

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -10,14 +10,15 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
-import com.intellij.util.xml.dom.NoOpXmlInterner
-import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.xml.dom.NoOpXmlInterner
+import com.intellij.util.xml.dom.XmlInterner
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
@@ -29,6 +30,10 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
+
+@ApiStatus.Internal const val PACKAGE_ATTRIBUTE = "package"
+@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
+@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
@@ -132,11 +137,12 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
 private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "package" -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
+      PACKAGE_ATTRIBUTE -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
       "url" -> descriptor.url = getNullifiedAttributeValue(reader, i)
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
-      "implementation-detail" -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
+      IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
+      ON_DEMAND_ATTRIBUTE -> descriptor.onDemand = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?
@@ -736,7 +742,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
         }
         plugins!!.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
       }
-      else -> throw RuntimeException("Unknown content item type: ${elementName}")
+      else -> throw RuntimeException("Unknown content item type: $elementName")
     }
     reader.skipElement()
   }
@@ -760,6 +766,7 @@ private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reade
 interface ReadModuleContext {
   val interner: XmlInterner
   val isMissingIncludeIgnored: Boolean
+    get() = false
 }
 
 private fun readInclude(reader: XMLStreamReader2,
@@ -775,6 +782,22 @@ private fun readInclude(reader: XMLStreamReader2,
     when (reader.getAttributeLocalName(i)) {
       "href" -> path = getNullifiedAttributeValue(reader, i)
       "xpointer" -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
+      "includeIf" -> {
+        checkConditionalIncludeIsSupported("includeIf", readInto)
+        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
+        if (value != "true") {
+          reader.skipElement()
+          return
+        }
+      }
+      "includeUnless" -> {
+        checkConditionalIncludeIsSupported("includeUnless", readInto)
+        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
+        if (value == "true") {
+          reader.skipElement()
+          return
+        }
+      }
       else -> throw RuntimeException("Unknown attribute ${reader.getAttributeLocalName(i)} (${reader.location})")
     }
   }
@@ -816,6 +839,12 @@ private fun readInclude(reader: XMLStreamReader2,
   }
   else {
     throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)", readError)
+  }
+}
+
+private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescriptor: RawPluginDescriptor) {
+  if (pluginDescriptor.id !in KNOWN_KOTLIN_PLUGIN_IDS) {
+    throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
 }
 
@@ -896,7 +925,6 @@ private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (n
 
   var depth = 1
   while (true) {
-    @Suppress("DuplicatedCode")
     when (next()) {
       XMLStreamConstants.START_ELEMENT -> {
         depth++

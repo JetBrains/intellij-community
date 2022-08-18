@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDependencyAnalyzerExtension : DependencyAnalyzerExtension {
-  override fun createContributor(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): DependencyAnalyzerContributor? {
-    if (systemId != GradleConstants.SYSTEM_ID) {
-      return null
-    }
+
+  override fun isApplicable(systemId: ProjectSystemId): Boolean {
+    return systemId == GradleConstants.SYSTEM_ID
+  }
+
+  override fun createContributor(project: Project, parentDisposable: Disposable): DependencyAnalyzerContributor {
     return GradleDependencyAnalyzerContributor(project)
   }
 }

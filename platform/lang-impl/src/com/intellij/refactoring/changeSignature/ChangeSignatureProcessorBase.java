@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -71,7 +72,10 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
       for (UsageInfo info : processor.findUsages(changeInfo)) {
-        LOG.assertTrue(info != null, processor);
+        if (info == null) {
+          PluginException.logPluginError(LOG, "findUsages() returns null items in " + processor.getClass().getName(), null, processor.getClass());
+          continue;
+        }
         infos.add(info);
       }
     }

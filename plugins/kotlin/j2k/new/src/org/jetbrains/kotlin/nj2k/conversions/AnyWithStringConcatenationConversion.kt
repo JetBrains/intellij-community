@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.callOn
-import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
+import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isStringType
 
@@ -17,7 +17,7 @@ class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : Re
         ) {
             return recurse(
                 JKBinaryExpression(
-                    element::left.detached().parenthesizeIfBinaryExpression()
+                    element::left.detached().parenthesizeIfCompoundExpression()
                         .callOn(symbolProvider.provideMethodSymbol("kotlin.Any.toString")),
                     element::right.detached(),
                     element.operator

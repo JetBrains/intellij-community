@@ -1,9 +1,27 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 @file:Suppress("unused")
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
+import kotlinx.coroutines.CancellationException
 
 private val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
 
@@ -20,6 +38,7 @@ fun logError(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logError(message: String, throwable: Throwable? = null) {
+    if (isNotLoggable(throwable)) return
     logger.error(message, throwable)
 }
 
@@ -36,6 +55,7 @@ fun logWarn(traceInfo: TraceInfo? = null, contextName: String? = null, throwable
 }
 
 fun logWarn(message: String, throwable: Throwable? = null) {
+    if (isNotLoggable(throwable)) return
     logger.warn(message, throwable)
 }
 
@@ -52,6 +72,7 @@ fun logInfo(traceInfo: TraceInfo? = null, contextName: String? = null, throwable
 }
 
 fun logInfo(message: String, throwable: Throwable? = null) {
+    if (isNotLoggable(throwable)) return
     logger.info(message, throwable)
 }
 
@@ -68,7 +89,7 @@ fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logDebug(message: String, throwable: Throwable? = null) {
-    if (!FeatureFlags.useDebugLogging) return
+    if (!FeatureFlags.useDebugLogging || isNotLoggable(throwable)) return
     if (!logger.isDebugEnabled) warnNotLoggable()
     logger.debug(message, throwable)
 }
@@ -134,3 +155,10 @@ private fun buildMessageFrom(
 
     append(messageProvider())
 }
+
+private fun isLoggable(ex: Throwable?) = when (ex) {
+    is CancellationException, is ProcessCanceledException -> false
+    else -> true
+}
+
+private fun isNotLoggable(ex: Throwable?) = !isLoggable(ex)

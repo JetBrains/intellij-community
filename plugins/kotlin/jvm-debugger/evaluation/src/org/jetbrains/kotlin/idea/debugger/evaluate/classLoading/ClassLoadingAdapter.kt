@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ArrayType
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -56,7 +56,7 @@ interface ClassLoadingAdapter {
                 }
             }
 
-            val methodToRun = classNode.methods.single { it.name == GENERATED_FUNCTION_NAME }
+            val methodToRun = classNode.methods.single { it.isEvaluationEntryPoint }
 
             val visitedLabels = hashSetOf<Label>()
 
@@ -74,6 +74,11 @@ interface ClassLoadingAdapter {
                     is InsnNode -> {
                         if (insn.opcode == Opcodes.MONITORENTER || insn.opcode == Opcodes.MONITOREXIT) {
                             return info.copy(containsCodeUnsupportedInEval4J = true)
+                        }
+                    }
+                    is MethodInsnNode -> {
+                        if (insn.opcode == Opcodes.INVOKESTATIC && insn.owner == classToLoad.className) {
+                                return info.copy(containsCodeUnsupportedInEval4J = true)
                         }
                     }
                 }

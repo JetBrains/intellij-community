@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ex.ClipboardUtil
@@ -21,11 +22,9 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.EmptyIcon
@@ -47,8 +46,7 @@ import javax.swing.border.CompoundBorder
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
-@Suppress("HardCodedStringLiteral")
-class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
+internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
   private class DemoPanel(val disposable: Disposable, val bezier: () -> Easing) : BorderLayoutPanel() {
 
@@ -680,6 +678,8 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     }
 
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project) {

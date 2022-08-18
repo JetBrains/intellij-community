@@ -12,7 +12,7 @@ internal class EditorHandlerPanel private constructor(
   private var editor: Editor? = null
 
   override fun addNotify() {
-    super.addNotify();
+    super.addNotify()
     createAndSetNewEditor()
   }
 

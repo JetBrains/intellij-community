@@ -44,7 +44,7 @@ public class ImageFileHeader extends Bin.Structure {
     return myMachine.getValue();
   }
 
-  class Machine extends Bin.Word{
+  static class Machine extends Bin.Word{
 
     public Machine() {
       super("Machine");

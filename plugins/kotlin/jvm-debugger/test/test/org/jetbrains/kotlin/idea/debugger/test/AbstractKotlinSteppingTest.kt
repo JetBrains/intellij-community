@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
-import org.jetbrains.kotlin.test.TargetBackend
 
 abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping() {
     private enum class Category(val instruction: SteppingInstructionKind?) {
@@ -29,12 +28,16 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
         super.tearDown()
     }
 
-    override fun targetBackend(): TargetBackend =
-        TargetBackend.JVM_OLD
-
     private fun doTest(path: String, category: Category) {
         this.category = category
         super.doTest(path)
+    }
+
+    override fun getK2IgnoreDirective(): String {
+        return when {
+            this::class.java.simpleName.endsWith("SmartStepInto") -> "// IGNORE_K2_SMART_STEP_INTO"
+            else -> super.getK2IgnoreDirective()
+        }
     }
 
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {

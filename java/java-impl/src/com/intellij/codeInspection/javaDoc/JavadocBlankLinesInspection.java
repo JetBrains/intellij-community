@@ -26,7 +26,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitDocToken(PsiDocToken token) {
+      public void visitDocToken(@NotNull PsiDocToken token) {
         super.visitDocToken(token);
         PsiElement nextWhitespace = token.getNextSibling();
         PsiElement prevWhitespace = token.getPrevSibling();
@@ -86,7 +86,9 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
   private static boolean startsWithHtmlBlockTag(String text) {
     text = text.stripLeading();
     if (text.isEmpty() || text.charAt(0) != '<') return false;
-    String maybeBlockTag = text.substring(1, text.indexOf('>'));
+    int index = text.indexOf('>');
+    if (index < 1) return false;
+    String maybeBlockTag = text.substring(1, index);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
     return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
   }
@@ -114,7 +116,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       if (document == null) return;
       TextRange range = startElement.getTextRange();
       document.replaceString(range.getStartOffset(), range.getEndOffset(), "* <p>");

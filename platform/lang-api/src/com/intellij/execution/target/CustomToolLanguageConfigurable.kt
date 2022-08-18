@@ -1,6 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.openapi.ui.ValidationInfo
+
 interface CustomToolLanguageConfigurable<T> {
+  /**
+   * Call [validate] first to make sure there are no errors
+   */
   fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): T?
+
+  fun validate():Collection<ValidationInfo>
 }

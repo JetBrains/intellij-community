@@ -2,7 +2,7 @@
 // OPTIONS: usages
 // FIND_BY_REF
 
-class A(val n: Int) {
+class A(val n: Any) {
     infix override fun equals(other: Any?): Boolean = other is A && other.n <caret>== n
 }
 

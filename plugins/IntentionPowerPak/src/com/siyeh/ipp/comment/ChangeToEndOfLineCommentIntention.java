@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeToEndOfLineCommentIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("change.to.end.of.line.comment.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("change.to.end.of.line.comment.intention.name");
+  }
 
   @Override
   @NotNull
@@ -49,7 +60,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
 
     final Project project = oldComment.getProject();
     // newline followed by space convinces formatter to indent line
-    final PsiElement ws = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n ");
+    final PsiElement ws = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n ");
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final int last = lines[lines.length - 1].trim().isEmpty() ? lines.length - 2 : lines.length - 1;
     final int first = lines[0].trim().isEmpty() ? 1 : 0;

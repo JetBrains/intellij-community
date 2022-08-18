@@ -1,17 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
-
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import org.jetbrains.intellij.build.ApplicationInfoProperties
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.JetBrainsProductProperties
+import org.jetbrains.intellij.build.*
+
+import java.nio.file.Path
 
 @CompileStatic
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
-
   PyCharmPropertiesBase() {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
@@ -19,28 +15,30 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     productLayout.mainJarName = "pycharm.jar"
     productLayout.withAdditionalPlatformJar("testFramework.jar",
                                             "intellij.platform.testFramework.core",
+                                            "intellij.platform.testFramework.common",
+                                            "intellij.platform.testFramework.junit5",
                                             "intellij.platform.testFramework",
                                             "intellij.tools.testsBootstrap",
-                                            "intellij.java.rt")
+                                            "intellij.java.rt",
+                                            "intellij.junit.rt")
 
     buildCrossPlatformDistribution = true
-    mavenArtifacts.additionalModules = [
+    mavenArtifacts.additionalModules = List.of(
       "intellij.java.compiler.antTasks",
+      "intellij.platform.testFramework.common",
+      "intellij.platform.testFramework.junit5",
       "intellij.platform.testFramework"
-    ]
+    )
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     def tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
+    tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
 
-    context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
-      fileset(dir: getKeymapReferenceDirectory(context)) {
-        include(name: "*.pdf")
-      }
-    }
+    new FileSet(Path.of(getKeymapReferenceDirectory(context)))
+      .include("*.pdf")
+      .copyToDir(Path.of(targetDirectory, "help"))
   }
 
   @Override
@@ -49,6 +47,6 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   }
   
   String getKeymapReferenceDirectory(BuildContext context) {
-    return "$context.paths.projectHome/python/help"
+    return "${context.paths.projectHome}/python/help"
   }
 }

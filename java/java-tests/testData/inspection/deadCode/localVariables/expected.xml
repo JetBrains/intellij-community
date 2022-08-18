@@ -76,6 +76,21 @@
     <line>29</line>
     <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
   </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>38</line>
+    <description>Variable &lt;code&gt;r&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>41</line>
+    <description>Variable &lt;code&gt;s&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>42</line>
+    <description>Variable &lt;code&gt;t&lt;/code&gt; is never used</description>
+  </problem>
 
   <problem>
     <file>AnonymousClass.java</file>
@@ -84,8 +99,23 @@
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
+    <line>9</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
     <line>10</line>
     <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>14</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>19</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
@@ -101,6 +131,27 @@
     <file>AnonymousClass.java</file>
     <line>50</line>
     <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
+  </problem>
+
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>4</line>
+    <description>Variable &lt;code&gt;arg&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>7</line>
+    <description>Variable &lt;code&gt;in&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>15</line>
+    <description>Variable &lt;code&gt;s&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>18</line>
+    <description>Variable &lt;code&gt;strings&lt;/code&gt; is never used</description>
   </problem>
 </problems>
 

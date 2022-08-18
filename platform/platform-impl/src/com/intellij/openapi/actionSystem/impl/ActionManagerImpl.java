@@ -43,6 +43,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -52,16 +53,15 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import kotlin.Unit;
-import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,6 +104,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final String PROJECT_TYPE = "project-type";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
   private static final String SYNONYM_ELEMENT_NAME = "synonym";
+  private static final String OVERRIDES_ATTR_NAME = "overrides";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -126,7 +127,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
-  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final Map<String, AnAction> myBaseActions = new HashMap<>();
   private int myAnonymousGroupIdCounter;
 
   protected ActionManagerImpl() {
@@ -162,10 +163,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void registerActions(@NotNull Sequence<IdeaPluginDescriptorImpl> modules) {
+  public void registerActions(@NotNull Iterable<IdeaPluginDescriptorImpl> modules) {
     KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-    for (Iterator<IdeaPluginDescriptorImpl> iter = modules.iterator(); iter.hasNext(); ) {
-      IdeaPluginDescriptorImpl module = iter.next();
+
+    for (IdeaPluginDescriptorImpl module : modules) {
       registerPluginActions(module, keymapManager);
       PrecomputedExtensionModelKt.executeRegisterTaskForOldContent(module, it -> {
         registerPluginActions(it, keymapManager);
@@ -221,7 +222,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
-      setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
+      Icon icon = loadIcon(stub.getPlugin(), iconPath, anAction.getClass().getName());
+      anAction.getTemplatePresentation().setIcon(icon);
+    }
+    CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
+    if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
+      customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
     }
   }
 
@@ -249,18 +255,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return "true".equalsIgnoreCase(element.attributes.get("secondary"));
   }
 
-  private static void setIconFromClass(@Nullable Class<?> actionClass,
-                                       @NotNull PluginDescriptor module,
-                                       @NotNull String iconPath,
-                                       @NotNull Presentation presentation) {
+  private static @NotNull Icon loadIcon(@NotNull PluginDescriptor module,
+                                        @NotNull String iconPath,
+                                        @Nullable String requestor) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
     Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
     if (icon == null) {
-      reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+      reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + requestor + "'");
       icon = AllIcons.Nodes.Unknown;
     }
     IconLoadMeasurer.actionIcon.end(start);
-    presentation.setIcon(icon);
+    return icon;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -270,7 +275,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                          String descriptionValue,
                                                                          @NotNull ClassLoader classLoader) {
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
   }
@@ -283,7 +288,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                  @NotNull ClassLoader classLoader) {
     String defaultValue = Strings.notNullize(textValue);
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
   }
@@ -352,7 +357,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private static void reportKeymapNotFoundWarning(@NotNull PluginDescriptor module, @NotNull String keymapName) {
-    if (!DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)) {
+    Application app = ApplicationManager.getApplication();
+    if (
+      !app.isHeadlessEnvironment() &&
+      !app.isCommandLine() &&
+      !DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)
+    ) {
       LOG.warn("keymap \"" + keymapName + "\" not found" + " " + module);
     }
   }
@@ -465,7 +475,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getClassLoader());
+          bundle = DynamicBundle.getResourceBundle(module.getClassLoader(), bundleName);
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
@@ -697,7 +707,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       if (myProhibitedActionIds.contains(id)) {
         return;
       }
-      if (Boolean.parseBoolean(element.attributes.get("overrides"))) {
+      if (Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
           LOG.error(element + " '" + id + "' doesn't override anything");
           return;
@@ -812,7 +822,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         ((ActionGroupStub)group).setIconPath(iconPath);
       }
       else if (iconPath != null) {
-        setIconFromClass(null, module, iconPath, presentation);
+        presentation.setIcon(loadIcon(module, iconPath, className));
       }
 
       // popup
@@ -1237,7 +1247,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   private void unloadActionElement(@NotNull XmlElement element) {
     String className = element.attributes.get(CLASS_ATTR_NAME);
+    boolean overrides = Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME));
     String id = obtainActionId(element, className);
+    if (overrides) {
+      AnAction baseAction = myBaseActions.get(id);
+      if (baseAction != null) {
+        replaceAction(id, baseAction);
+        myBaseActions.remove(id);
+        return;
+      }
+    }
+
     unregisterAction(id);
   }
 
@@ -1344,6 +1364,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         }
         return;
       }
+
+      // diagnostics for IDEA-283781
+      if (actionId.equals("CommentByLineComment")) {
+        LOG.info("Unregistering line comment action", new Throwable());
+      }
+
       AnAction actionToRemove = idToAction.remove(actionId);
       actionToId.remove(actionToRemove);
       idToIndex.removeInt(actionId);
@@ -1469,9 +1495,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
     if (oldAction != null) {
-      if (newAction instanceof OverridingAction) {
-        myBaseActions.put((OverridingAction)newAction, oldAction);
-      }
+      myBaseActions.put(actionId, oldAction);
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
@@ -1496,7 +1520,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
    * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
    */
   public AnAction getBaseAction(OverridingAction overridingAction) {
-    return myBaseActions.get(overridingAction);
+    String id = getId((AnAction) overridingAction);
+    return id == null ? null : myBaseActions.get(id);
   }
 
   public Collection<String> getParentGroupIds(String actionId) {

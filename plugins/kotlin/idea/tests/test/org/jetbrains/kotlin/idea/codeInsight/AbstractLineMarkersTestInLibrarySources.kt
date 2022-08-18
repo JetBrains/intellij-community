@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -8,10 +8,11 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.createFile
 import com.intellij.util.io.write
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import java.io.File
 import java.nio.file.Files
 
@@ -47,7 +48,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
             val project = myFixture.project
             for (file in libraryOriginal.walkTopDown().filter { !it.isDirectory }) {
                 myFixture.openFileInEditor(fileSystem.findFileByPath(file.absolutePath)!!)
-                val data = ExpectedHighlightingData(myFixture.editor.document, false, false, false)
+                val data = KotlinExpectedHighlightingData(myFixture.editor.document)
                 data.init()
 
                 val librarySourceFile = libraryClean!!.resolve(file.relativeTo(libraryOriginal).path)
@@ -55,7 +56,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
                 val document = myFixture.editor.document
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-                if (!ProjectRootsUtil.isLibrarySourceFile(project, myFixture.file.virtualFile)) {
+                if (!RootKindFilter.librarySources.matches(myFixture.file)) {
                     throw AssertionError("File ${myFixture.file.virtualFile.path} should be in library sources!")
                 }
 

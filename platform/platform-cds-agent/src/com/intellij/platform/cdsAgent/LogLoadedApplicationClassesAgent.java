@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.cdsAgent;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * other dependencies)
  * <p>
  * Java Agent to log all loaded class in CDS supported format
- * <a href="https://openjdk.java.net/jeps/310">JEP 310</a>
+ * <a href="https://openjdk.org/jeps/310">JEP 310</a>
  */
 public final class LogLoadedApplicationClassesAgent {
   public static final String TARGET_FILE = "JB_CDS_TARGET_FILE";
@@ -467,7 +467,7 @@ public final class LogLoadedApplicationClassesAgent {
 
     @NotNull
     public List<String> generateReportWarnings() {
-      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).collect(Collectors.toList());
+      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).toList();
 
       List<String> lines = new ArrayList<>();
       lines.add("Pre 1.6 classes:");

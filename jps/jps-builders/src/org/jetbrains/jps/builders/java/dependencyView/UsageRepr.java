@@ -16,7 +16,7 @@ import java.io.PrintStream;
 import java.util.*;
 
 /**
- * @author: db
+ * @author db
  */
 final class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;
@@ -204,7 +204,7 @@ final class UsageRepr {
         myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
       }
       catch (IllegalArgumentException e) {
-        throw (BuildDataCorruptedException)new BuildDataCorruptedException("Unexpected method descriptor '" + descriptor + "'").initCause(e);
+        throw new BuildDataCorruptedException(new IOException("Unexpected method descriptor '" + descriptor + "'", e));
       }
     }
 

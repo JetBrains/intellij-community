@@ -56,7 +56,7 @@ suspend fun <T> withModalProgressIndicator(
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return withModalProgressIndicator(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
 }
 
 /**
@@ -64,7 +64,7 @@ suspend fun <T> withModalProgressIndicator(
  * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
  * The indicator is not shown immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
- * Switches to [org.jetbrains.kotlin.idea.core.util.EDT] are allowed inside the action,
+ * Switches to [com.intellij.openapi.application.EDT] are allowed inside the action,
  * as they are automatically scheduled with the correct modality, which is the newly entered one.
  *
  * @param owner in which frame the progress should be shown
@@ -75,7 +75,7 @@ suspend fun <T> withModalProgressIndicator(
 suspend fun <T> withModalProgressIndicator(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
   val service = ApplicationManager.getApplication().getService(TaskSupport::class.java)

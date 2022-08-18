@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -173,7 +173,7 @@ public final class CodeInsightUtil {
   }
 
   @Nullable
-  public static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
+  private static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
     for (final Language language : languages) {
       if (language == JavaLanguage.INSTANCE) return language;
@@ -184,7 +184,7 @@ public final class CodeInsightUtil {
     return null;
   }
 
-  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(T[] members, @NotNull PsiReference context) {
+  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(@NotNull T @NotNull [] members, @NotNull PsiReference context) {
     if (members.length <= 1) return;
 
     PsiElement leaf = context.getElement().getFirstChild(); // the same proximity weighers are used in completion, where the leafness is critical
@@ -375,7 +375,7 @@ public final class CodeInsightUtil {
                                              @NotNull PsiClass inheritor) {
     Project project = baseClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    if (!PsiResolveHelper.SERVICE.getInstance(project).isAccessible(inheritor, context, null)) {
+    if (!PsiResolveHelper.getInstance(project).isAccessible(inheritor, context, null)) {
       return null;
     }
 

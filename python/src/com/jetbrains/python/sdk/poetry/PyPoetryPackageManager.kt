@@ -21,7 +21,7 @@ import com.jetbrains.python.sdk.associatedModuleDir
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
+class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   private val installedLines = listOf("Already installed", "Skipping", "Updating")
 
   @Volatile
@@ -30,12 +30,6 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   private var requirements: List<PyRequirement>? = null
 
   private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
-
-  init {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
-      PythonSdkType.getInstance().setupSdkPaths(sdk)
-    })
-  }
 
   override fun installManagement() {}
 
@@ -46,7 +40,7 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
-    val args = if (requirements == null || requirements.isEmpty()) {
+    val args = if (requirements.isNullOrEmpty()) {
       listOfNotNull(listOf("install"),
         extraArgs)
         .flatten()

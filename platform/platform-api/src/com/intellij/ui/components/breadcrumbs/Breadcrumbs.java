@@ -4,6 +4,7 @@ package com.intellij.ui.components.breadcrumbs;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -19,7 +20,12 @@ import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -27,6 +33,8 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -126,6 +134,12 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   @Override
   public @NlsContexts.Tooltip String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
+  }
+
+  @Nullable
+  protected Rectangle getCrumbBounds(@NotNull Crumb crumb) {
+    Optional<CrumbView> viewOpt = views.stream().filter(v -> v.crumb == crumb).findFirst();
+    return viewOpt.map(view -> view.bounds).orElse(null);
   }
 
   @Override
@@ -577,6 +591,99 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         path.closePath();
       }
       return path;
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleBreadcrumbs();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleBreadcrumbs extends JPanel.AccessibleJPanel {
+    @Override
+    public int getAccessibleChildrenCount() {
+      return views.size();
+    }
+
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      if (i < views.size()) {
+        return new AccessibleCrumb(i, views.get(i).text);
+      }
+      return null;
+    }
+
+    @Override
+    public Accessible getAccessibleAt(Point p) {
+      Crumb crumb = getCrumbAt(p.x, p.y);
+      if (crumb != null) {
+        int index = -1;
+        for (int i = 0; i < views.size(); i++) {
+          CrumbView view = views.get(i);
+          if (view.crumb == crumb) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          return new AccessibleCrumb(index, crumb.getText());
+        }
+      }
+      return null;
+    }
+
+    protected class AccessibleCrumb extends AccessibleContext implements Accessible {
+      protected int myIndex;
+      protected String myText;
+
+      public AccessibleCrumb(int index, String text) {
+        myIndex = index;
+        myText = text;
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return this;
+      }
+
+      @NlsSafe
+      @Override
+      public String getAccessibleName() {
+        return myText;
+      }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.PUSH_BUTTON;
+      }
+
+      @Override
+      public AccessibleStateSet getAccessibleStateSet() {
+        return AccessibleBreadcrumbs.this.getAccessibleStateSet();
+      }
+
+      @Override
+      public int getAccessibleIndexInParent() {
+        return myIndex;
+      }
+
+      @Override
+      public int getAccessibleChildrenCount() {
+        return 0;
+      }
+
+      @Override
+      public Accessible getAccessibleChild(int i) {
+        return null;
+      }
+
+      @Override
+      public Locale getLocale() throws IllegalComponentStateException {
+        return AccessibleBreadcrumbs.this.getLocale();
+      }
     }
   }
 }

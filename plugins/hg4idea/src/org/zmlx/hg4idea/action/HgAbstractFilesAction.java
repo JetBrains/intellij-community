@@ -12,10 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -34,6 +31,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 abstract class HgAbstractFilesAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
@@ -76,8 +78,6 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 

@@ -43,7 +43,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final List<SuspiciousMethodCallUtil.PatternMethod> patternMethods = new ArrayList<>();
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length < 1) return;
         for (int idx = 0; idx < Math.min(2, args.length); idx ++) {
@@ -55,7 +55,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
         final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);

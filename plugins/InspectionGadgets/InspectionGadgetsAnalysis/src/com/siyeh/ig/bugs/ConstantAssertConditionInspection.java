@@ -42,7 +42,7 @@ public class ConstantAssertConditionInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       super.visitAssertStatement(statement);
       final PsiExpression assertCondition =
         statement.getAssertCondition();

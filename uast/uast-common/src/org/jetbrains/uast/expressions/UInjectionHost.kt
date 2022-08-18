@@ -21,4 +21,8 @@ interface UInjectionHost : UExpression {
 
   val psiLanguageInjectionHost: PsiLanguageInjectionHost
 
+  @ApiStatus.Experimental
+  @JvmDefault
+  fun getStringRoomExpression(): UExpression = this
+
 }

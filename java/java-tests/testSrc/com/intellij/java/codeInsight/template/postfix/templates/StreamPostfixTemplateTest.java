@@ -44,6 +44,10 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testAssignment() {
+    doTest();
+  }
+
   public void testNotAvailable() {
     doTest();
   }

@@ -443,6 +443,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testArgumentListWrapAsNeeded() throws Exception {
                     runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.kt");
                 }
+
+                @TestMetadata("NamedArguments.after.kt")
+                public void testNamedArguments() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -455,6 +460,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("LambdaValueParameters.after.kt")
                 public void testLambdaValueParameters() throws Exception {
                     runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.kt");
+                }
+
+                @TestMetadata("NamedParameters.after.kt")
+                public void testNamedParameters() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.kt")
@@ -687,6 +697,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("DanglingComments.after.kt")
             public void testDanglingComments() throws Exception {
                 runTest("testData/formatter/DanglingComments.after.kt");
+            }
+
+            @TestMetadata("DefinitelyNonNullTypes.after.kt")
+            public void testDefinitelyNonNullTypes() throws Exception {
+                runTest("testData/formatter/DefinitelyNonNullTypes.after.kt");
             }
 
             @TestMetadata("DelegationList.after.kt")
@@ -1675,6 +1690,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testArgumentListWrapAsNeeded() throws Exception {
                     runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.inv.kt");
                 }
+
+                @TestMetadata("NamedArguments.after.inv.kt")
+                public void testNamedArguments() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.inv.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1687,6 +1707,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("LambdaValueParameters.after.inv.kt")
                 public void testLambdaValueParameters() throws Exception {
                     runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.inv.kt");
+                }
+
+                @TestMetadata("NamedParameters.after.inv.kt")
+                public void testNamedParameters() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.inv.kt")

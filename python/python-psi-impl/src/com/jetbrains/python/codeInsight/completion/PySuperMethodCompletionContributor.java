@@ -29,6 +29,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -48,6 +49,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                                            @NotNull CompletionResultSet result) {
                PsiElement position = parameters.getOriginalPosition();
                PyClass containingClass = PsiTreeUtil.getParentOfType(position, PyClass.class);
+               PsiElement nextElement = position != null ? position.getNextSibling() : null;
                if (containingClass == null && position instanceof PsiWhiteSpace) {
                  position = PsiTreeUtil.prevLeaf(position);
                  containingClass = PsiTreeUtil.getParentOfType(position, PyClass.class);
@@ -65,19 +67,21 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      StringBuilder builder = new StringBuilder();
-                     builder.append(superMethod.getName())
-                       .append(superMethod.getParameterList().getText());
-                     if (superMethod.getAnnotation() != null) {
-                       builder.append(" ")
-                         .append(superMethod.getAnnotation().getText())
-                         .append(":");
-                     }
-                     else if (superMethod.getTypeComment() != null) {
-                       builder.append(":  ")
-                         .append(superMethod.getTypeComment().getText());
-                     }
-                     else {
-                       builder.append(":");
+                     builder.append(superMethod.getName());
+                     if (!(nextElement instanceof PyParameterList)) {
+                       builder.append(superMethod.getParameterList().getText());
+                       if (superMethod.getAnnotation() != null) {
+                         builder.append(" ")
+                           .append(superMethod.getAnnotation().getText())
+                           .append(":");
+                       }
+                       else if (superMethod.getTypeComment() != null) {
+                         builder.append(":  ")
+                           .append(superMethod.getTypeComment().getText());
+                       }
+                       else {
+                         builder.append(":");
+                       }
                      }
                      LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
                      result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));

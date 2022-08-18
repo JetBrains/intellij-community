@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.ide.IdeBundle
@@ -9,14 +9,18 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.ReflectionUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Container
-import java.awt.EventQueue
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
@@ -24,30 +28,30 @@ import javax.swing.SwingUtilities
 
 private const val PERSISTENT_SETTING_MUTED_KEY = "input.method.disabler.muted"
 private const val PERSISTENT_SETTING_AUTO_DISABLE_KEY = "input.method.disabler.auto"
-private const val NOTIFICATION_GROUP = "Input method disabler";
+private const val NOTIFICATION_GROUP = "Input method disabler"
 
-private var IS_NOTIFICATION_REGISTERED = false;
+private var IS_NOTIFICATION_REGISTERED = false
 
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
-internal fun disableInputMethodsIfPossible() {
+internal suspend fun disableInputMethodsIfPossible() {
   if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
     return
   }
 
-  val properties = PropertiesComponent.getInstance();
+  val properties = PropertiesComponent.getInstance()
   val muted = properties.isTrueValue(PERSISTENT_SETTING_MUTED_KEY)
   if (muted) {
     val auto = properties.isTrueValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY)
     if (auto) {
-      EventQueue.invokeLater {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         disableInputMethdosImpl()
       }
     }
     return
   }
 
-  properties.setValue(PERSISTENT_SETTING_MUTED_KEY, true);
+  properties.setValue(PERSISTENT_SETTING_MUTED_KEY, true)
 
   // TODO: improve heuristic to return probability and if
   //  prob == 0: don't notify user, don't disable
@@ -71,8 +75,8 @@ internal fun disableInputMethodsIfPossible() {
   val message = IdeBundle.message("notification.content.input.method.disabler")
   val notification = Notification(NOTIFICATION_GROUP, title, message, NotificationType.WARNING)
   notification.addAction(DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")) { e: AnActionEvent? ->
-    PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true);
-    disableInputMethdosImpl();
+    PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true)
+    disableInputMethdosImpl()
     notification.expire()
   })
   notification.notify(null)
@@ -87,8 +91,8 @@ private fun disableInputMethdosImpl() {
     getLogger().info("Input method disabler: disabled for any java.awt.Component.")
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
-      .map { fh -> SwingUtilities.getRoot(fh.frame) }
-      .filter { с -> с != null }
+      .map { fh -> SwingUtilities.getRoot(fh.frameOrNull) }
+      .filter { c -> c != null }
 
     ApplicationManager.getApplication().executeOnPooledThread {
       val startMs = System.currentTimeMillis()
@@ -109,7 +113,7 @@ private fun getLogger() = Logger.getInstance("#com.intellij.idea.ApplicationLoad
 private fun freeIMRecursively(c: Component) {
   val ic = c.getInputContext() // thread-safe
   if (ic != null)
-    ic.removeNotify(c); // thread-safe
+    ic.removeNotify(c) // thread-safe
 
   if (c !is Container) {
     return

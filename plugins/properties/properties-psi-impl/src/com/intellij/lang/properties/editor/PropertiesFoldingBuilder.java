@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class PropertiesFoldingBuilder extends CustomFoldingBuilder {
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,

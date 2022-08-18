@@ -226,11 +226,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiElement> myResult = new HashSet<>();
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement element = reference.resolve();
       if (element != null) {
@@ -331,7 +331,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
     private boolean myResult;
-    @Override public void visitSuperExpression(PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       myResult = true;
     }
 
@@ -339,7 +339,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       return myResult;
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitElement(expression);
     }
   }
@@ -351,7 +351,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       return conflict;
     }
 
-    @Override public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (variable == myLocalVariable) return;
       if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == myMethodToReplaceIn) {
         if (getParameterListToRemove().contains(myMethodToReplaceIn.getParameterList().getParameterIndex((PsiParameter)variable))){
@@ -366,7 +366,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     }
 
     @Override public void visitElement(@NotNull PsiElement element) {

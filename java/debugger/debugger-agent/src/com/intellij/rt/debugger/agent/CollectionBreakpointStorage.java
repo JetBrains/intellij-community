@@ -19,7 +19,8 @@ public class CollectionBreakpointStorage {
   private static final ConcurrentMap<CapturedField, FieldHistory> FIELD_MODIFICATIONS_STORAGE;
   private static final ConcurrentMap<CollectionWrapper, CollectionHistory> COLLECTION_MODIFICATIONS_STORAGE;
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-  private static boolean ENABLED = true;
+
+  private static boolean ENABLED; // set from debugger
 
   static {
     FIELD_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CapturedField, FieldHistory>();
@@ -53,24 +54,28 @@ public class CollectionBreakpointStorage {
     history.add(new CollectionModificationInfo(exception, elem, isAddition));
   }
 
+  @SuppressWarnings("unused")
   public static Object[] getCollectionModifications(Object collectionInstance) {
     CollectionWrapper wrapper = new CollectionWrapper(collectionInstance);
     CollectionHistory history = COLLECTION_MODIFICATIONS_STORAGE.get(wrapper);
     return history == null ? EMPTY_OBJECT_ARRAY : history.get();
   }
 
+  @SuppressWarnings("unused")
   public static Object[] getFieldModifications(String clsName, String fieldName, Object clsInstance) {
     CapturedField field = new CapturedField(clsName, fieldName, clsInstance);
     FieldHistory history = FIELD_MODIFICATIONS_STORAGE.get(field);
     return history == null ? EMPTY_OBJECT_ARRAY : history.getCollectionInstances();
   }
 
+  @SuppressWarnings("unused")
   public static String getStack(Object collectionInstance, int modificationIndex) throws IOException {
     CollectionWrapper wrapper = new CollectionWrapper(collectionInstance);
     CollectionHistory history = COLLECTION_MODIFICATIONS_STORAGE.get(wrapper);
     return history == null ? "" : wrapInString(history.get(modificationIndex));
   }
 
+  @SuppressWarnings("unused")
   public static String getStack(String clsName, String fieldName, Object clsInstance, int modificationIndex) throws IOException {
     CapturedField field = new CapturedField(clsName, fieldName, clsInstance);
     FieldHistory history = FIELD_MODIFICATIONS_STORAGE.get(field);
@@ -86,9 +91,11 @@ public class CollectionBreakpointStorage {
     try {
       dos = new DataOutputStream(bas);
       for (StackTraceElement stackTraceElement : info.getStackTrace()) {
-        dos.writeUTF(stackTraceElement.getClassName());
-        dos.writeUTF(stackTraceElement.getMethodName());
-        dos.writeInt(stackTraceElement.getLineNumber());
+        if (stackTraceElement != null) {
+          dos.writeUTF(stackTraceElement.getClassName());
+          dos.writeUTF(stackTraceElement.getMethodName());
+          dos.writeInt(stackTraceElement.getLineNumber());
+        }
       }
       return bas.toString("ISO-8859-1");
     }
@@ -200,10 +207,12 @@ public class CollectionBreakpointStorage {
       myIsAddition = isAddition;
     }
 
+    @SuppressWarnings("unused")
     private Object getElement() {
       return myElement;
     }
 
+    @SuppressWarnings("unused")
     private boolean isAddition() {
       return myIsAddition;
     }

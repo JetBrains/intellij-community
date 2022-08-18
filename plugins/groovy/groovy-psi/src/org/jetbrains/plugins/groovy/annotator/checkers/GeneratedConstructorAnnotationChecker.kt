@@ -51,7 +51,7 @@ class GeneratedConstructorAnnotationChecker : CustomAnnotationChecker() {
     }
     val excludes = getIdentifierList(annotation, EXCLUDES)
     val includes = AnnotationUtil.findDeclaredAttribute(annotation, INCLUDES)
-    if (includes != null && excludes != null && excludes.isNotEmpty()) {
+    if (includes != null && !excludes.isNullOrEmpty()) {
       registerIdentifierListError(holder, AnnotationUtil.findDeclaredAttribute(annotation, EXCLUDES)!!)
       registerIdentifierListError(holder, includes)
     }

@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,21 +119,23 @@ public final class ProgressRunner<R> {
   private ProgressRunner(@NotNull Function<? super @NotNull ProgressIndicator, ? extends R> computation,
                          boolean sync,
                          boolean modal,
-                         @NotNull ThreadToUse use,
+                         @NotNull ThreadToUse threadToUse,
                          @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
-    myThreadToUse = use;
+    myThreadToUse = threadToUse;
     myProgressIndicatorFuture = progressIndicatorFuture;
   }
 
   @NotNull
+  @Contract(pure = true) // to avoid abandoning the result
   public ProgressRunner<R> sync() {
     return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
   }
 
   @NotNull
+  @Contract(pure = true) // to avoid abandoning the result
   public ProgressRunner<R> modal() {
     return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
   }
@@ -143,6 +146,7 @@ public final class ProgressRunner<R> {
    * @param thread thread to execute computation
    */
   @NotNull
+  @Contract(pure = true) // to avoid abandoning the result
   public ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
     return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
   }
@@ -153,6 +157,7 @@ public final class ProgressRunner<R> {
    * @param progressIndicator progress indicator instance
    */
   @NotNull
+  @Contract(pure = true) // to avoid abandoning the result
   public ProgressRunner<R> withProgress(@NotNull ProgressIndicator progressIndicator) {
     ProgressIndicator myIndicator;
     try {
@@ -161,7 +166,9 @@ public final class ProgressRunner<R> {
     catch (InterruptedException | ExecutionException e) {
       myIndicator = null;
     }
-    return progressIndicator.equals(myIndicator) ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
+    return progressIndicator.equals(myIndicator)
+           ? this
+           : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
   }
 
   /**
@@ -171,6 +178,7 @@ public final class ProgressRunner<R> {
    * @param progressIndicatorFuture future with progress indicator
    */
   @NotNull
+  @Contract(pure = true) // to avoid abandoning the result
   public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }

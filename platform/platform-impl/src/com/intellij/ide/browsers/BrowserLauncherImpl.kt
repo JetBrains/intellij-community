@@ -74,7 +74,6 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun signUrl(url: String): String {
     @Suppress("NAME_SHADOWING")
     var url = url
-    @Suppress("NAME_SHADOWING")
     val serverManager = BuiltInServerManager.getInstance()
     val parsedUrl = Urls.parse(url, false)
     if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {

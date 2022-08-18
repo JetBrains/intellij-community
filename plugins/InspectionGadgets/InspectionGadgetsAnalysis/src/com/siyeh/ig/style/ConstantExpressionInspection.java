@@ -28,12 +28,12 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitUnaryExpression(PsiUnaryExpression expression) {
+      public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
         handle(expression);
       }
 
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         handle(expression);
       }
 

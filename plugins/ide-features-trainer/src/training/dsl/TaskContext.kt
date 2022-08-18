@@ -8,6 +8,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
+import training.statistic.LearningInternalProblems
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import java.awt.Component
@@ -76,6 +77,7 @@ abstract class TaskContext : LearningDslBase {
 
   open fun showWarning(@Language("HTML") @Nls text: String,
                        restoreTaskWhenResolved: Boolean = false,
+                       problem: LearningInternalProblems? = null,
                        warningRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /**

@@ -44,7 +44,7 @@
         </IssueNavigationLink>
         <IssueNavigationLink>
           <option name="issueRegexp" value="JDK\-\d+" />
-          <option name="linkRegexp" value="https://bugs.openjdk.java.net/browse/$0" />
+          <option name="linkRegexp" value="https://bugs.openjdk.org/browse/$0" />
         </IssueNavigationLink>
       </list>
     </option>

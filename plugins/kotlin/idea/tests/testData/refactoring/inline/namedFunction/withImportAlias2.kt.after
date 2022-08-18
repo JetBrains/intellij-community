@@ -1,0 +1,7 @@
+package simple
+
+import some.SomeClass as CustomName
+
+fun usage() {
+    CustomName()
+}

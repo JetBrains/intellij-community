@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +19,6 @@ import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -37,29 +35,16 @@ public class ScriptSupport {
   @NlsSafe
   public static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
-  private final Script script;
+  private final Script myScript;
   private final ScriptLog myScriptLog;
   private final String myName;
   private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames, MatchOptions matchOptions) {
+  public ScriptSupport(Project project, Script script, String name, Collection<String> variableNames) {
     myScriptLog = new ScriptLog(project);
     myName = name;
     myVariableNames = variableNames;
-    final GroovyShell shell = createShell(matchOptions);
-    try {
-      final File scriptFile = new File(text);
-      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
-    }
-    catch (Exception ex) {
-      Logger.getInstance(getClass().getName()).error(ex);
-      throw new RuntimeException(ex);
-    }
-  }
-
-  @NotNull
-  private static GroovyShell createShell(@NotNull MatchOptions options) {
-    return new GroovyShell(options.getDialect().getClass().getClassLoader());
+    myScript = script;
   }
 
   private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
@@ -106,9 +91,9 @@ public class ScriptSupport {
       variableMap.put(myName, context);
       variableMap.put(Configuration.CONTEXT_VAR_NAME, context);
 
-      script.setBinding(new Binding(variableMap));
+      myScript.setBinding(new Binding(variableMap));
 
-      return script.run();
+      return myScript.run();
     }
     catch (ThreadDeath | ProcessCanceledException t) {
       throw t;
@@ -118,39 +103,38 @@ public class ScriptSupport {
       throw new StructuralSearchScriptException(t);
     }
     finally {
-      script.setBinding(null);
+      myScript.setBinding(null);
     }
   }
 
-  public static String checkValidScript(@NotNull String scriptText, @NotNull MatchOptions matchOptions) {
+  public static Script buildScript(
+    @NotNull String scriptName,
+    @NotNull String scriptText,
+    @NotNull MatchOptions matchOptions
+  ) throws MalformedPatternException {
     try {
-      final File scriptFile = new File(scriptText);
-      final GroovyShell shell = createShell(matchOptions);
-      final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
-      return null;
-    }
-    catch (IOException e) {
-      return e.getMessage();
+      final GroovyShell shell = new GroovyShell(Objects.requireNonNull(matchOptions.getDialect()).getClass().getClassLoader());
+      return shell.parse(scriptText, scriptName + UUID + ".groovy");
     }
     catch (MultipleCompilationErrorsException e) {
       final ErrorCollector errorCollector = e.getErrorCollector();
       final List<? extends Message> errors = errorCollector.getErrors();
       for (Message error : errors) {
         if (error instanceof SyntaxErrorMessage) {
-          final SyntaxErrorMessage errorMessage = (SyntaxErrorMessage)error;
-          final SyntaxException cause = errorMessage.getCause();
-          return cause.getMessage();
+          final SyntaxErrorMessage syntaxError = (SyntaxErrorMessage)error;
+          final SyntaxException cause = syntaxError.getCause();
+          throw new MalformedPatternException(cause.getLocalizedMessage());
         }
       }
-      return e.getMessage();
+      throw new MalformedPatternException(e.getLocalizedMessage());
     }
     catch (CompilationFailedException ex) {
-      return ex.getLocalizedMessage();
+      throw new MalformedPatternException(ex.getLocalizedMessage());
     }
     catch (Throwable e) {
       // to catch errors in groovy parsing
       LOG.warn(e);
-      return SSRBundle.message("error.in.groovy.parser");
+      throw new MalformedPatternException(SSRBundle.message("error.in.groovy.parser"));
     }
   }
 }

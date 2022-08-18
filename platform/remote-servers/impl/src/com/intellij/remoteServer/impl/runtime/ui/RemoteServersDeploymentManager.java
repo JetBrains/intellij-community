@@ -18,8 +18,10 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
 import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
+import com.intellij.remoteServer.util.CloudApplicationRuntime;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,7 +177,8 @@ public final class RemoteServersDeploymentManager {
   }
 
   @Nullable
-  private RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
+  @ApiStatus.Internal
+  public RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
     for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
@@ -260,7 +263,7 @@ public final class RemoteServersDeploymentManager {
       }
     }
 
-    private AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
+    public AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
                                                ServerConnection<?> connection,
                                                String deploymentName) {
       RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
@@ -269,7 +272,11 @@ public final class RemoteServersDeploymentManager {
         ServiceEventListener.EventType.SERVICE_STRUCTURE_CHANGED, serverContributor, contributor.getClass()));
 
       for (Deployment deployment : connection.getDeployments()) {
-        if (deployment.getName().equals(deploymentName)) {
+        var runtime = deployment.getRuntime();
+
+        if (deployment.getName().equals(deploymentName) ||
+            (runtime instanceof CloudApplicationRuntime &&
+             ((CloudApplicationRuntime)runtime).getApplicationName().equals(deploymentName))) {
           return contributor.createDeploymentNode(connection, serverNode, deployment);
         }
       }

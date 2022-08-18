@@ -1,25 +1,36 @@
 <idea-plugin package="com.intellij.feedback">
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService serviceImplementation="com.intellij.feedback.state.DontShowAgainFeedbackService"/>
+    <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
 
-     <notificationGroup displayType="BALLOON" id="Project Creation Feedback" bundle="messages.FeedbackMessages"/>
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
+                       key="notification.group.feedback"/>
+    <notificationGroup displayType="BALLOON" id="Kotlin Rejecters Feedback In IDE" bundle="messages.KotlinRejectersFeedbackMessages"
+                       key="notification.group.kotlin.rejecters.feedback"/>
 
-    <typedHandler implementation="com.intellij.feedback.track.active.EditorTypingEventTracker"/>
-    <editorFactoryMouseListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
-    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the project creation feedback notification is displayed."/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.feedback.common.OpenApplicationFeedbackShower"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
-      <action id="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
-              class="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
+      <action id="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
+              class="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               text="Show New Project Feedback Dialog" internal="true"/>
+      <action id="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
+              class="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
+              text="Show Feedback Dialog for Kotlin Rejecters" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
   </actions>

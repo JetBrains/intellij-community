@@ -2,15 +2,14 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
@@ -18,8 +17,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
@@ -38,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
-import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
@@ -151,18 +147,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     MavenUtil.setupProjectSdk(project);
 
+    MavenProjectsNavigator projectsNavigator = MavenProjectsNavigator.getInstance(project);
+    if (projectsNavigator != null) projectsNavigator.setGroupModules(true);
 
-    if (MavenUtil.isLinearImportEnabled()) {
-      Module dummyModule = createDummyModule(project);
-      VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
-      MavenImportingManager.getInstance(project).openProjectAndImport(
-        new RootPath(rootPath),
-        getImportingSettings(),
-        getGeneralSettings(),
-        MavenImportSpec.EXPLICIT_IMPORT
-      );
-      return Collections.singletonList(dummyModule);
-    }
 
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
@@ -179,8 +166,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       settings.getGeneralSettings().setUserSettingsFile(settingsFile.trim());
     }
 
-    MavenProjectsNavigator projectsNavigator = MavenProjectsNavigator.getInstance(project);
-    if (projectsNavigator != null) projectsNavigator.setGroupModules(true);
 
     String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(ProjectUtil.guessProjectDir(project));
     if (distributionUrl != null) {
@@ -206,6 +191,23 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     manager.setIgnoredState(getParameters().mySelectedProjects, false);
 
+
+    if (MavenUtil.isLinearImportEnabled()) {
+      VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
+      Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
+        new RootPath(rootPath),
+        getImportingSettings(),
+        getGeneralSettings(),
+        MavenImportSpec.EXPLICIT_IMPORT
+      ).getDummyModulesCreated();
+
+      if (dummy != null) {
+        return Collections.singletonList(dummy);
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
 
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
       Module dummyModule = createDummyModule(project);
@@ -246,32 +248,11 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       if (root == null) return null;
       VirtualFile contentRoot = root.getDirectoryFile();
 
-      return WriteAction.compute(() -> {
-        Module module = ModuleManager.getInstance(project)
-          .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());
-        ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        modifiableModel.addContentEntry(contentRoot);
-        modifiableModel.commit();
-        renameModuleToProjectName(project, module, root);
-        if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || MavenProjectImporter.isImportToTreeStructureEnabled(project)) {
-          //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
-          ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
-        }
-        return module;
-      });
+      return MavenImportUtil.createDummyModule(project, contentRoot);
     }
     return null;
   }
 
-  private static void renameModuleToProjectName(Project project, Module module, MavenProject root) {
-    try {
-      ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-      moduleModel.renameModule(module, MavenModuleNameMapper.resolveModuleName(root));
-      moduleModel.commit();
-    }
-    catch (ModuleWithNameAlreadyExists ignore) {
-    }
-  }
 
   private static void showGeneralSettingsConfigurationDialog(@NotNull Project project, @NotNull MavenGeneralSettings generalSettings) {
     MavenEnvironmentSettingsDialog dialog = new MavenEnvironmentSettingsDialog(project, generalSettings);
@@ -384,7 +365,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
         getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
         List<VirtualFile> rootFiles = getParameters().myFiles;
-        if(rootFiles == null) {
+        if (rootFiles == null) {
           rootFiles = Collections.singletonList(LocalFileSystem.getInstance().findFileByNioFile(getRootPath()));
         }
         getParameters().myGeneralSettingsCache.updateFromMavenConfig(rootFiles);

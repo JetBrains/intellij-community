@@ -22,8 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -87,10 +87,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   private void setMavenModuleFilePath(@NotNull Project project, @NotNull String moduleName) {
     if (myParentProject == null) return;
-    if (!MavenProjectImporter.isImportToTreeStructureEnabled(project)) return;
-    String parentModuleName = MavenProjectImportContextProvider.getModuleName(myParentProject, project);
+    if (!MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) return;
+
+    String parentModuleName = MavenImportUtil.getModuleName(myParentProject, project);
     if (StringUtil.isNotEmpty(parentModuleName)) {
-      String moduleFilePath = project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+      String moduleFilePath =
+        project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       setModuleFilePath(moduleFilePath);
     }
   }

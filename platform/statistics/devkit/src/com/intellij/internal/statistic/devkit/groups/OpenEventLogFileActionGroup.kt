@@ -3,10 +3,18 @@ package com.intellij.internal.statistic.devkit.groups
 
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 internal class OpenEventLogFileActionGroup : ActionGroup() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isPopupGroup = getLogProvidersInTestMode().size > 1
+  }
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return getLogProvidersInTestMode()
       .map { logger ->
@@ -14,9 +22,5 @@ internal class OpenEventLogFileActionGroup : ActionGroup() {
         com.intellij.internal.statistic.devkit.actions.OpenEventLogFileAction(recorder)
       }
       .toTypedArray()
-  }
-
-  override fun isPopup(): Boolean {
-    return getLogProvidersInTestMode().size > 1
   }
 }

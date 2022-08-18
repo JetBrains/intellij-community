@@ -16,7 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CommonProblemDescriptorImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -86,9 +85,9 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
                                                  @NotNull @InspectionMessage String message,
                                                  @NotNull LocalQuickFix localQuickFix) {
     final LocalQuickFix[] quickFixes = {localQuickFix};
-    final CommonProblemDescriptorImpl descr =
+    ProblemDescriptor descr =
       new ProblemDescriptorImpl(node, node, message, quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, range, true);
 
-    return QuickFixWrapper.wrap((ProblemDescriptor)descr, 0);
+    return QuickFixWrapper.wrap(descr, 0);
   }
 }

@@ -354,10 +354,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
+      if (e instanceof KeyEvent) {
+        dispatchKeyEvent((KeyEvent)e);
+      }
+      return false;
     }
 
-    private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+    private void dispatchKeyEvent(@NotNull KeyEvent e) {
       if (!skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {
           if (LOG.isDebugEnabled()) {
@@ -365,15 +368,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
                       getDebugTerminalPanelName() + ", unregistering");
           }
           unregister();
-          return false;
+          return;
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         JBTerminalPanel.this.dispatchEvent(e);
-        return true;
       }
-      return false;
     }
 
     void register() {

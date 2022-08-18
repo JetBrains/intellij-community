@@ -114,6 +114,15 @@ object VcsLogNavigationUtil {
       }
     }
 
+    val otherUis = manager.getLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>() - selectedUis.toSet()
+    otherUis.find { ui ->
+      ui.refresher.setValid(true, false)
+      predicate(ui) && ui.showCommit(hash, root, requestFocus)
+    }?.let { ui ->
+      VcsLogContentUtil.selectLogUi(project, ui, requestFocus)
+      return ui
+    }
+
     val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
                                                               VcsLogTabLocation.TOOL_WINDOW) ?: return null
     if (newUi.showCommit(hash, root, requestFocus)) return newUi

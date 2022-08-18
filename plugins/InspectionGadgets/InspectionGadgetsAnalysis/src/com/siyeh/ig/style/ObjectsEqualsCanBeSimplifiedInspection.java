@@ -34,7 +34,7 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!OBJECTS_EQUALS.test(call)) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
         PsiExpression arg1 = args[0];

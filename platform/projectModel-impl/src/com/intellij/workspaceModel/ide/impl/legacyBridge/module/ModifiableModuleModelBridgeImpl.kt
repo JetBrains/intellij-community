@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -14,15 +15,19 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
 import java.nio.file.Path
@@ -30,7 +35,7 @@ import java.nio.file.Path
 internal class ModifiableModuleModelBridgeImpl(
   private val project: Project,
   private val moduleManager: ModuleManagerBridgeImpl,
-  diff: WorkspaceEntityStorageBuilder,
+  diff: MutableEntityStorage,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
   override fun getProject(): Project = project
@@ -55,7 +60,7 @@ internal class ModifiableModuleModelBridgeImpl(
       source = NonPersistentEntitySource
     )
 
-    val module = moduleManager.createModule(moduleEntity.persistentId(), moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(moduleEntity.persistentId, moduleName, null, entityStorageOnDiff, diff)
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     myModulesToAdd[moduleName] = module
     currentModulesSet.add(module)
@@ -104,7 +109,14 @@ internal class ModifiableModuleModelBridgeImpl(
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = isNew, null)
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity = moduleEntity,
+                                                            versionedStorage = entityStorageOnDiff,
+                                                            diff = diff,
+                                                            isNew = isNew,
+                                                            precomputedExtensionModel = null,
+                                                            plugins = plugins,
+                                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     myModulesToAdd[moduleEntity.name] = moduleInstance
     currentModulesSet.add(moduleInstance)
@@ -240,7 +252,7 @@ internal class ModifiableModuleModelBridgeImpl(
     myUncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
-  override fun collectChanges(): WorkspaceEntityStorageBuilder {
+  override fun collectChanges(): MutableEntityStorage {
     prepareForCommit()
     return diff
   }
@@ -266,7 +278,7 @@ internal class ModifiableModuleModelBridgeImpl(
         myNewNameToModule[newName] = module
       }
       val entity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Unable to find module entity for $module")
-      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+      diff.modifyEntity(entity) {
         name = newName
       }
     }
@@ -289,7 +301,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val storage = entityStorageOnDiff.current
     val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
-    val groupPathList = groupPath?.toList()
+    val groupPathList = groupPath?.toMutableList()
 
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {
@@ -304,8 +316,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
 
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModifiableModuleGroupPathEntity::class.java,
-                                                                                moduleGroupEntity) {
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(moduleGroupEntity) {
           path = groupPathList
         }
 

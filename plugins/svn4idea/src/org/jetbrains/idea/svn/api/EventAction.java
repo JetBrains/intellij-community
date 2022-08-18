@@ -1,11 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
-
 public enum EventAction {
 
   // currently used to represent some not used event action from SVNKit
@@ -43,14 +38,6 @@ public enum EventAction {
 
   TREE_CONFLICT("tree_conflict");
 
-  @NotNull private static final Map<String, EventAction> ourAllActions = new HashMap<>();
-
-  static {
-    for (EventAction action : EventAction.values()) {
-      register(action);
-    }
-  }
-
   private final String myKey;
 
   EventAction(String key) {
@@ -59,9 +46,5 @@ public enum EventAction {
 
   public String toString() {
     return myKey;
-  }
-
-  private static void register(@NotNull EventAction action) {
-    ourAllActions.put(action.myKey, action);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runWriteAction
@@ -173,7 +174,7 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
 
     val renamingScheme = getRenamingScheme()
     if (renamingScheme.isNotEmpty()) {
-      val model = ModuleManager.getInstance(project).modifiableModel
+      val model = ModuleManager.getInstance(project).getModifiableModel()
       val byName = modules.associateBy { it.name }
       for (entry in renamingScheme) {
         model.renameModule(byName[entry.key]!!, entry.value)
@@ -211,6 +212,10 @@ internal class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(Proje
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && ModuleManager.getInstance(e.project!!).hasModuleGroups()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -99,7 +100,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   private static class StringConcatenationInLoopsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final PsiExpression[] operands = expression.getOperands();
       if (operands.length <= 1) {
@@ -181,7 +182,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return VariableAccessUtils.getVariableReferences(variable, loop).stream().anyMatch(expression -> {
+      return ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable, loop), expression -> {
         PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&

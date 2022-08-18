@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
@@ -13,6 +14,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -22,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final CallMatcher MAP_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterTypes(
+    CommonClassNames.JAVA_LANG_OBJECT);
+
   public boolean WARN_ON_COMPARISON = true;
 
   @Nullable
@@ -36,13 +42,13 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         checkNulls(expression.getType(), expression.getRExpression(),
                    JavaBundle.message("inspection.null.value.for.optional.context.assignment"));
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (args.length == 0) return;
         PsiMethod method = call.resolveMethod();
@@ -62,7 +68,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         PsiElement body = lambda.getBody();
         if (body instanceof PsiExpression) {
           checkNulls(LambdaUtil.getFunctionalInterfaceReturnType(lambda), (PsiExpression)body,
@@ -71,30 +77,45 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         checkNulls(PsiTypesUtil.getMethodReturnType(statement), statement.getReturnValue(),
                    JavaBundle.message("inspection.null.value.for.optional.context.return"));
       }
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         checkNulls(variable.getType(), variable.getInitializer(),
                    JavaBundle.message("inspection.null.value.for.optional.context.declaration"));
       }
 
       @Override
-      public void visitBinaryExpression(PsiBinaryExpression binOp) {
+      public void visitBinaryExpression(@NotNull PsiBinaryExpression binOp) {
         if (!WARN_ON_COMPARISON) return;
         PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
         if (value != null &&
             TypeUtils.isOptional(value.getType()) &&
-            !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
+            !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType())) &&
+            !comesFromMapGet(value)) {
+          boolean useIsEmpty =
+            binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
+            PsiUtil.isLanguageLevel11OrHigher(binOp);
           holder.registerProblem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"),
-                                 new ReplaceWithIsPresentFix(),
+                                 new ReplaceWithIsPresentFix(useIsEmpty),
                                  new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
                                                             JavaBundle
                                                               .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
         }
+      }
+
+      private boolean comesFromMapGet(PsiExpression value) {
+        PsiLocalVariable local = ExpressionUtils.resolveLocalVariable(value);
+        if (local != null) {
+          PsiExpression initializer = ContainerUtil.getOnlyItem(DfaUtil.getVariableValues(local, value));
+          if (initializer != null) {
+            value = initializer;
+          }
+        }
+        return MAP_GET.matches(ExpressionUtils.resolveExpression(value));
       }
 
       private boolean hasSubsequentIsPresentCall(@NotNull PsiExpression optionalExpression,
@@ -177,6 +198,15 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class ReplaceWithIsPresentFix implements LocalQuickFix {
+    private final boolean myUseIsEmpty;
+
+    private ReplaceWithIsPresentFix(boolean useIsEmpty) { myUseIsEmpty = useIsEmpty; }
+
+    @Override
+    public @NotNull String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", myUseIsEmpty ? "isEmpty" : "isPresent()");
+    }
+
     @Nls
     @NotNull
     @Override
@@ -191,8 +221,9 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
       if (value == null || !TypeUtils.isOptional(value.getType())) return;
       CommentTracker ct = new CommentTracker();
-      String negation = binOp.getOperationTokenType().equals(JavaTokenType.NE) ? "" : "!";
-      ct.replaceAndRestoreComments(binOp, negation + ct.text(value, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".isPresent()");
+      String negation = myUseIsEmpty || binOp.getOperationTokenType().equals(JavaTokenType.NE) ? "" : "!";
+      String methodName = myUseIsEmpty ? "isEmpty" : "isPresent";
+      ct.replaceAndRestoreComments(binOp, negation + ct.text(value, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + methodName + "()");
     }
   }
 }

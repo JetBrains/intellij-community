@@ -2,6 +2,7 @@
 package git4idea.actions.branch
 
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.branch.GitBrancher
@@ -17,6 +18,10 @@ class GitCheckoutFromInputAction
     e.presentation.isEnabledAndVisible = project != null && !repositories.isNullOrEmpty()
 
     disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), GitBundle.message("action.not.possible.in.fresh.repo.checkout"))
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -46,7 +46,7 @@
                     serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
 
     <!--Dependency Analyzer-->
-    <registryKey key="external.system.dependency.analyzer" defaultValue="false"
+    <registryKey key="external.system.dependency.analyzer" defaultValue="true"
                  description="Gradle/Maven dependency analyzer"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerManager"/>
 

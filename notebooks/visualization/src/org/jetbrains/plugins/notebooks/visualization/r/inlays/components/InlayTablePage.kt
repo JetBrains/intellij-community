@@ -7,10 +7,7 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.FileSaverDialog
@@ -65,9 +62,10 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     }
 
   class TableCopyProvider(private val table: JBTable) : CopyProvider {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun performCopy(dataContext: DataContext) {
-      val copySelectedToString: String? = ClipboardUtils.copySelectedToString(table)
+      val copySelectedToString: CharSequence = ClipboardUtils.copySelectedToString(table)
       CopyPasteManager.getInstance().setContents(TextTransferable(copySelectedToString))
     }
 

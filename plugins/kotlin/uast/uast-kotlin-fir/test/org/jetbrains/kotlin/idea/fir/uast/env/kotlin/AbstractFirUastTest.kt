@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.uast.env.kotlin
 
@@ -101,12 +101,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
         try {
             checkCallback(normalizedFile.toString(), uFile as UFile)
-        } catch (e: AssertionError) {
-            if (isExpectedToFail(filePath, fileContent))
-                return
-            else
-                throw e
-        } catch (e: AssertionFailedError) {
+        } catch (e: Throwable) {
             if (isExpectedToFail(filePath, fileContent))
                 return
             else

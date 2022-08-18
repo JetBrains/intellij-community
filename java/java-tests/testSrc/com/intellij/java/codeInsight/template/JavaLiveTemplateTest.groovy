@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.JavaCodeContextType
+import com.intellij.codeInsight.template.JavaStringContextType
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateActionContext
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
@@ -25,7 +28,7 @@ class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16
+    return JAVA_LATEST_WITH_LATEST_JDK
   }
 
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
@@ -293,7 +296,7 @@ class Outer {
 
   void testJavaStringContext() {
     TemplateImpl template = (TemplateImpl)templateManager.createTemplate("a", "b")
-    template.templateContext.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaStringContextType), true)
+    template.templateContext.setEnabled(TemplateContextTypes.getByClass(JavaStringContextType.class), true)
     assert !isApplicable('class Foo {{ <caret> }}', template)
     assert !isApplicable('class Foo {{ <caret>1 }}', template)
     assert isApplicable('class Foo {{ "<caret>" }}', template)
@@ -581,10 +584,10 @@ class A {
   void "test save as live template for annotation values"() {
     myFixture.addClass("package foo; public @interface Anno { String value(); }")
     myFixture.configureByText "a.java", 'import foo.*; <selection>@Anno("")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno("")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno("")'
 
     myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno(value="")'
   }
 
   void "test reformat with virtual space"() {

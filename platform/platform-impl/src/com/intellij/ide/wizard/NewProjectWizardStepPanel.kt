@@ -19,10 +19,10 @@ class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
   val component by lazy {
     panel {
       step.setupUI(this)
-    }.apply {
-      registerValidators(step.context.disposable)
-      withBorder(JBUI.Borders.empty(14, 20))
-      setMinimumWidthForAllRowLabels(JBUI.scale(90))
-    }
+    }.withVisualPadding(topField = true)
+      .apply {
+        registerValidators(step.context.disposable)
+        setMinimumWidthForAllRowLabels(JBUI.scale(90))
+      }
   }
 }

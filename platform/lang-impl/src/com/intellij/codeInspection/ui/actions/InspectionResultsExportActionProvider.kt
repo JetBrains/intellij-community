@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ui.InspectionResultsView
+import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
@@ -15,6 +18,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -31,7 +35,7 @@ import javax.swing.JPanel
 val LOG = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
- * Extension point to add actions in the inspections results export popup.
+ * Extension point to add actions in the inspection results export popup.
  */
 abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
                                                      description: Supplier<String?>,
@@ -57,7 +61,12 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
       override fun run(indicator: ProgressIndicator) {
         try {
           runReadAction {
-            writeResults(view, path)
+            if (view.currentProfile == null) throw NullPointerException("Failed to export inspection results.")
+            writeResults(view.tree,
+                         view.currentProfile!!,
+                         view.globalInspectionContext,
+                         view.project,
+                         path)
           }
         }
         catch (p: ProcessCanceledException) {
@@ -82,7 +91,11 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
    * Performs the actual inspection results export.
    */
   @RequiresBackgroundThread
-  abstract fun writeResults(view: InspectionResultsView, outputPath: Path)
+  abstract fun writeResults(tree: InspectionTree,
+                            profile: InspectionProfileImpl,
+                            globalInspectionContext: GlobalInspectionContextImpl,
+                            project: Project,
+                            outputPath: Path)
 
   @RequiresEdt
   open fun onExportSuccessful() {}

@@ -2,8 +2,8 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 public class HeadlessDataManager extends DataManagerImpl {
 
-  private static final class HeadlessContext implements DataContext, UserDataHolder {
+  private static final class HeadlessContext extends CustomizedDataContext implements UserDataHolder {
     private final DataProvider myProvider;
     private final DataContext myParent;
     private Map<Key<?>, Object> myUserData;
@@ -33,23 +33,13 @@ public class HeadlessDataManager extends DataManagerImpl {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull String dataId) {
-      Object result = getDataFromSelfOrParent(dataId);
-      if (result == null) {
-        GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
-        if (rule != null) {
-          return rule.getData(this::getDataFromSelfOrParent);
-        }
-      }
-      return result;
+    public @NotNull DataContext getParent() {
+      return myParent == null ? EMPTY_CONTEXT : myParent;
     }
 
-    @Nullable
-    private Object getDataFromSelfOrParent(@NotNull String dataId) {
-      Object result = myProvider == null ? null : myProvider.getData(dataId);
-      return result != null ? result :
-             myParent != null ? myParent.getData(dataId) : null;
+    @Override
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
+      return myProvider == null ? null : myProvider.getData(dataId);
     }
 
     @Override

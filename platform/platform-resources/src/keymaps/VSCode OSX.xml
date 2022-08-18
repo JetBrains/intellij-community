@@ -3,10 +3,11 @@
         <keyboard-shortcut first-keystroke="delete" />
         <keyboard-shortcut first-keystroke="back_space" />
     </action>
-    <action id="ActivateDebugToolWindow">
-        <keyboard-shortcut first-keystroke="shift meta d" />
-    </action>
-    <action id="ActivateMessagesToolWindow" />
+  <action id="ActivateDebugToolWindow">
+    <keyboard-shortcut first-keystroke="shift meta d" />
+    <keyboard-shortcut first-keystroke="meta shift y"  />
+  </action>
+  <action id="ActivateMessagesToolWindow" />
     <action id="ActivateProjectToolWindow">
         <keyboard-shortcut first-keystroke="shift meta e" />
     </action>
@@ -19,7 +20,6 @@
     <action id="ActivateVersionControlToolWindow">
         <keyboard-shortcut first-keystroke="shift ctrl g" />
     </action>
-    <action id="AddToFavoritesPopup" />
     <action id="Arrangement.Alias.Rule.Edit" />
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up" />
     <action id="Arrangement.Alias.Rule.Remove">
@@ -55,8 +55,10 @@
     <action id="CloseAllEditors">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta w" />
     </action>
+    <action id="EditorUnSelectWord" />
     <action id="CloseProject">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="f" />
+        <keyboard-shortcut first-keystroke="meta shift w" />
     </action>
     <action id="CodeInspection.OnEditor" />
     <action id="CollapseAll">
@@ -116,6 +118,7 @@
     </action>
     <action id="DSM.ZoomIn">
         <keyboard-shortcut first-keystroke="meta add" />
+        <keyboard-shortcut first-keystroke="meta shift EQUALS" />
     </action>
     <action id="DatabaseView.CopyAction" />
     <action id="DatabaseView.CopyTable" />
@@ -230,6 +233,7 @@
     </action>
     <action id="EditorSelectWord">
         <keyboard-shortcut first-keystroke="shift ctrl meta right" />
+        <keyboard-shortcut first-keystroke="ctrl shift right" />
     </action>
     <action id="EditorSplitLine">
         <keyboard-shortcut first-keystroke="ctrl o" />
@@ -299,10 +303,12 @@
     <action id="FindNext">
         <keyboard-shortcut first-keystroke="meta g" />
         <keyboard-shortcut first-keystroke="f3" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta d"/>
     </action>
     <action id="FindPrevious">
         <keyboard-shortcut first-keystroke="shift meta g" />
         <keyboard-shortcut first-keystroke="shift f3" />
+        <keyboard-shortcut first-keystroke="shift meta f5"/>
     </action>
     <action id="Forward">
         <keyboard-shortcut first-keystroke="shift ctrl minus" />
@@ -335,16 +341,20 @@
     <action id="GotoLine">
         <keyboard-shortcut first-keystroke="ctrl g" />
     </action>
+    <action id="EvaluateExpression" />
     <action id="GotoNextError">
-        <keyboard-shortcut first-keystroke="f8" />
+        <keyboard-shortcut first-keystroke="alt f8"/>
     </action>
     <action id="GotoNextIncompletePropertyAction" />
+    <action id="ForceStepOver" />
     <action id="GotoPreviousError">
         <keyboard-shortcut first-keystroke="shift f8" />
+        <keyboard-shortcut first-keystroke="alt shift f8"/>
     </action>
     <action id="GotoSuperMethod" />
     <action id="GotoSymbol">
         <keyboard-shortcut first-keystroke="meta t" />
+        <keyboard-shortcut first-keystroke="meta shift o"/>
     </action>
     <action id="GotoTest" />
     <action id="GotoTypeDeclaration">
@@ -468,11 +478,9 @@
     </action>
     <action id="QuickJavaDoc">
         <mouse-shortcut keystroke="control button2" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta i" />
     </action>
     <action id="RecentChangedFiles" />
-    <action id="RecentFiles">
-        <keyboard-shortcut first-keystroke="ctrl r" />
-    </action>
     <action id="Refactorings.QuickListPopupAction">
         <keyboard-shortcut first-keystroke="shift ctrl r" />
     </action>
@@ -502,8 +510,10 @@
     <action id="Resume">
       <keyboard-shortcut first-keystroke="f5"/>
     </action>
+    <action id="RerunTests" />
     <action id="RevealIn">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="r" />
+        <keyboard-shortcut first-keystroke="meta alt r"/>
     </action>
     <action id="Run">
         <keyboard-shortcut first-keystroke="ctrl f5" />
@@ -555,6 +565,7 @@
     </action>
     <action id="SelectNextOccurrence">
         <keyboard-shortcut first-keystroke="meta d" />
+        <keyboard-shortcut first-keystroke="meta f3"/>
     </action>
     <action id="SendEOF" />
     <action id="SetShortcutAction" />
@@ -574,7 +585,6 @@
     <action id="ShowUsages">
         <keyboard-shortcut first-keystroke="shift f12" />
     </action>
-    <action id="SmartSelect" />
     <action id="SplitVertically">
         <keyboard-shortcut first-keystroke="meta back_slash" />
     </action>
@@ -594,7 +604,6 @@
     <action id="TableResult.GrowSelection" />
     <action id="TableResult.ShrinkSelection" />
     <action id="TableResult.UnselectPreviousOccurrence" />
-    <action id="TagDocumentationNavigation" />
     <action id="TodoViewGroupByShowPackages" />
     <action id="ToggleBookmark" />
     <action id="ToggleBookmarkWithMnemonic" />
@@ -625,9 +634,11 @@
     <action id="Vcs.UpdateProject" />
     <action id="VcsShowNextChangeMarker">
         <keyboard-shortcut first-keystroke="alt f3" />
+        <keyboard-shortcut first-keystroke="alt f5" />
     </action>
     <action id="VcsShowPrevChangeMarker">
         <keyboard-shortcut first-keystroke="shift alt f3" />
+        <keyboard-shortcut first-keystroke="shift alt f5" />
     </action>
     <action id="ViewSource" />
     <action id="WelcomeScreen.Plugins">
@@ -670,5 +681,101 @@
     <action id="BuildSolutionAction">
         <keyboard-shortcut first-keystroke="meta shift B"/>
     </action>
+  <action id="EditorAddCaretPerSelectedLine">
+    <keyboard-shortcut first-keystroke="shift alt i"/>
+  </action>
+  <action id="CallHierarchy">
+    <keyboard-shortcut first-keystroke="shift alt h"/>
+  </action>
+  <action id="OverrideFileTypeAction">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="m"/>
+  </action>
+  <action id="Move" />
+  <action id="Pause">
+    <keyboard-shortcut first-keystroke="f6" />
+  </action>
+  <action id="SelectInProjectView">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="e"/>
+  </action>
+  <action id="RecentProjectListGroup">
+    <keyboard-shortcut first-keystroke="ctrl r"/>
+  </action>
+  <action id="ShowBookmarks"/>
+  <action id="Markdown.Layout.PreviewOnly">
+    <keyboard-shortcut first-keystroke="meta shift v"/>
+  </action>
+  <action id="Markdown.Layout.EditorAndPreview">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="v"/>
+  </action>
+  <action id="FindUsages">
+    <keyboard-shortcut first-keystroke="shift alt f12"/>
+  </action>
+  <action id="ShowPopupMenu">
+    <keyboard-shortcut first-keystroke="shift f10"/>
+  </action>
+  <action id="SmartUnSelect">
+    <keyboard-shortcut first-keystroke="ctrl shift left"/>
+  </action>
+  <action id="NextProjectWindow">
+    <keyboard-shortcut first-keystroke="ctrl w"/>
+  </action>
+  <!-- IJ java -->
+  <action id="CompileDirty">
+    <keyboard-shortcut first-keystroke="meta shift b"/>
+  </action>
+  <!-- Rider -->
+  <action id="BuildSolutionAction">
+    <keyboard-shortcut first-keystroke="meta shift b"/>
+  </action>
+  <action id="TerminalNewSession">
+    <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE"/>
+  </action>
+  <action id="Terminal.SelectAll">
+    <keyboard-shortcut first-keystroke="meta a"/>
+  </action>
+  <action id="ToggleBookmark5" />
+  <action id="Terminal.SplitVertically">
+    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
+    <keyboard-shortcut first-keystroke="ctrl shift 5"/>
+  </action>
+  <action id="Rerun">
+    <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="l" />
+    <keyboard-shortcut first-keystroke="meta shift f5" />
+  </action>
+  <action id="ChooseRunConfiguration">
+    <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="a" />
+  </action>
+  <action id="RerunFailedTests">
+    <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="e" />
+  </action>
+  <action id="CodeCompletion">
+    <keyboard-shortcut first-keystroke="meta i" />
+    <keyboard-shortcut first-keystroke="alt ESCAPE" />
+    <keyboard-shortcut first-keystroke="ctrl space" />
+  </action>
+  <action id="CloseAllEditorsButActive">
+    <keyboard-shortcut first-keystroke="meta alt t"  />
 
+    <!-- for "Close saved editors in group", no better alternative -->
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="u"  />
+  </action>
+  <action id="MoveEditorToOppositeTabGroup">
+    <keyboard-shortcut first-keystroke="meta ctrl right" />
+  </action>
+  <action id="PinActiveTabAction">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="shift enter" />
+  </action>
+  <action id="HideActiveWindow">
+    <keyboard-shortcut first-keystroke="meta j"  />
+  </action>
+  <action id="ActivateProblemsViewToolWindow">
+    <keyboard-shortcut first-keystroke="meta shift m"  />
+  </action>
+  <action id="CollapseBlock">
+    <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET" />
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta l" />
+  </action>
+  <action id="CollapseDocComments">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta SLASH"/>
+  </action>
 </keymap>

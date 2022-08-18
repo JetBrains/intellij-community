@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
@@ -17,8 +17,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -30,9 +28,12 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -41,7 +42,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(
-  diff: WorkspaceEntityStorageBuilder,
+  diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
   cacheStorageResult: Boolean = true
@@ -64,7 +65,7 @@ internal class ModifiableRootModelBridgeImpl(
                         ?: error("Cannot find module entity for ${module.moduleEntityId}. Bridge: '$moduleBridge'. Store: $diff")
   }
 
-  private fun getModuleEntity(current: WorkspaceEntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
+  private fun getModuleEntity(current: EntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
     // Try to get entity by module id
     // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
     //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
@@ -93,7 +94,8 @@ internal class ModifiableRootModelBridgeImpl(
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
-
+  // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
+  private val changedLibraryDependency = mutableSetOf<LibraryId>()
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
   /**
@@ -151,14 +153,18 @@ internal class ModifiableRootModelBridgeImpl(
     val newItem = transformer(oldItem)
     if (oldItem == newItem) return
 
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       val copy = dependencies.toMutableList()
       copy[index] = newItem
       dependencies = copy
     }
+
+    if (newItem is ModuleDependencyItem.Exportable.LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
+      changedLibraryDependency.add(newItem.library)
+    }
   }
 
-  override val storage: WorkspaceEntityStorage
+  override val storage: EntityStorage
     get() = entityStorageOnDiff.current
 
   override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
@@ -253,7 +259,7 @@ internal class ModifiableRootModelBridgeImpl(
       else {
         val libraryName = name
         if (libraryName.isNullOrEmpty()) {
-          error("Library name is null or empty: ${this}")
+          error("Library name is null or empty: $this")
         }
 
         LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(table.tableLevel))
@@ -316,8 +322,8 @@ internal class ModifiableRootModelBridgeImpl(
   internal fun appendDependency(dependency: ModuleDependencyItem) {
     mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-      dependencies = dependencies + dependency
+    diff.modifyEntity(moduleEntity) {
+      dependencies.add(dependency)
     }
   }
 
@@ -326,8 +332,8 @@ internal class ModifiableRootModelBridgeImpl(
       mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-      this.dependencies = this.dependencies + dependencies
+    diff.modifyEntity(moduleEntity) {
+      this.dependencies.addAll(dependencies)
     }
   }
 
@@ -344,9 +350,17 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-      dependencies = if (last) dependencies + dependency
-      else dependencies.subList(0, position) + dependency + dependencies.subList(position, dependencies.size)
+    diff.modifyEntity(moduleEntity) {
+      if (last) {
+        dependencies.add(dependency)
+      }
+      else {
+        val result = mutableListOf<ModuleDependencyItem>()
+        result.addAll(dependencies.subList(0, position))
+        result.add(dependency)
+        result.addAll(dependencies.subList(position, dependencies.size))
+        dependencies = result
+      }
     }
     return newEntry
   }
@@ -366,7 +380,7 @@ internal class ModifiableRootModelBridgeImpl(
     mutableOrderEntries.clear()
     mutableOrderEntries.addAll(newOrderEntries)
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       dependencies = newDependencies
     }
   }
@@ -420,8 +434,8 @@ internal class ModifiableRootModelBridgeImpl(
       mutableOrderEntries[i].updateIndex(i)
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-      dependencies = newEntities
+    diff.modifyEntity(moduleEntity) {
+      dependencies = newEntities.toMutableList()
     }
   }
 
@@ -445,7 +459,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
   }
 
-  fun collectChangesAndDispose(): WorkspaceEntityStorageBuilder? {
+  fun collectChangesAndDispose(): MutableEntityStorage? {
     assertModelIsLive()
     Disposer.dispose(moduleLibraryTable)
     if (!isChanged) {
@@ -476,25 +490,24 @@ internal class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !element.isEmpty() -> diff.addModuleCustomImlDataEntity(
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff.addModuleCustomImlDataEntity(
             module = moduleEntity,
             rootManagerTagCustomData = elementAsString,
             customModuleOptions = emptyMap(),
             source = moduleEntity.entitySource
           )
 
-          customImlDataEntity == null && element.isEmpty() -> Unit
+          customImlDataEntity == null && JDOMUtil.isEmpty(element) -> Unit
 
-          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && element.isEmpty() ->
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && JDOMUtil.isEmpty(element) ->
             diff.removeEntity(customImlDataEntity)
 
-          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && element.isEmpty() ->
-            diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlDataEntity) {
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && JDOMUtil.isEmpty(element) ->
+            diff.modifyEntity(customImlDataEntity) {
               rootManagerTagCustomData = null
             }
 
-          customImlDataEntity != null && !element.isEmpty() -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
-            customImlDataEntity) {
+          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyEntity(customImlDataEntity) {
             rootManagerTagCustomData = elementAsString
           }
 
@@ -510,6 +523,7 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
 
+    moduleLibraryTable.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
     disposeWithoutLibraries()
     return diff
   }
@@ -683,7 +697,7 @@ internal class ModifiableRootModelBridgeImpl(
           val module = entry.module
           if (module != null) {
             if (result == null) {
-              result = SmartList()
+              result = ArrayList()
             }
             result.add(module)
           }

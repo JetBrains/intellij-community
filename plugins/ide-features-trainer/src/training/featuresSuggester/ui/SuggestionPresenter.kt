@@ -1,7 +1,9 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.ui
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.TipAndTrickBean
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
@@ -24,7 +26,7 @@ interface SuggestionPresenter {
   fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable)
 }
 
-@Suppress("UnstableApiUsage", "DialogTitleCapitalization")
+@Suppress("DialogTitleCapitalization")
 class NotificationSuggestionPresenter :
   SuggestionPresenter {
   private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
@@ -92,7 +94,7 @@ class NotificationSuggestionPresenter :
     val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
     return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
       override fun actionPerformed(e: AnActionEvent) {
-        SingleTipDialog.showForProject(project, tip)
+        TipAndTrickManager.getInstance().showTipDialog(project, tip)
         notification.hideBalloon()
         FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }

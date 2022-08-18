@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
   private static final HashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new HashingStrategy<>() {
@@ -56,13 +56,13 @@ public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector =
-      new CommonProcessors.CollectUniquesProcessor<>();
+    Condition<PsiFileSystemItem> filter = reference.getFileReferenceSet().getReferenceCompletionFilter();
+    final CommonProcessors.CollectProcessor<PsiFileSystemItem> collector =
+      new CommonProcessors.CollectProcessor<>(CollectionFactory.createCustomHashingStrategySet(VARIANTS_HASHING_STRATEGY));
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
-        return new FilteringProcessor<>(reference.getFileReferenceSet().getReferenceCompletionFilter(), collector).process(
-          FileReference.getOriginalFile(fileSystemItem));
+        return new FilteringProcessor<>(filter, collector).process(FileReference.getOriginalFile(fileSystemItem));
       }
     };
 
@@ -79,9 +79,7 @@ public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
     }
 
     final FileType[] types = reference.getFileReferenceSet().getSuitableFileTypes();
-    final Set<PsiElement> set = CollectionFactory.createCustomHashingStrategySet(VARIANTS_HASHING_STRATEGY);
-    set.addAll(collector.getResults());
-    final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
+    final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(collector.getResults());
 
     final Object[] variants = new Object[candidates.length + additionalItems.size()];
     for (int i = 0; i < candidates.length; i++) {

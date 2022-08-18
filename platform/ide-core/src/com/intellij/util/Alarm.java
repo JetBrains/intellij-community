@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
@@ -42,7 +41,7 @@ public class Alarm implements Disposable {
 
   // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
-  // requests not yet scheduled to myExecutorService (because e.g. the corresponding component isn't active yet)
+  // requests not yet scheduled to myExecutorService (because e.g., the corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -304,7 +303,7 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * wait for all requests to start execution (i.e., their delay elapses and their run() method, well, runs)
    * and then wait for the execution to finish.
    */
   @TestOnly
@@ -415,20 +414,7 @@ public class Alarm implements Disposable {
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
       if (future != null) {
-        if (!future.cancel(false) && !future.isCancelled()) {
-          // the future already completed. manifest its errors if any
-          try {
-            future.get();
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause != null && !(cause instanceof ControlFlowException)) {
-              LOG.error(cause);
-            }
-          }
-        }
+        future.cancel(false);
         myFuture = null;
       }
       Runnable task = myTask;

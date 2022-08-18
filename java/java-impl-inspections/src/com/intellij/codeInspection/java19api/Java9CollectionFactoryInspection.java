@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInspection.java19api;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -83,7 +85,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
         if (model != null && model.isValid(SUGGEST_MAP_OF_ENTRIES)) {
           ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT
@@ -113,7 +115,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     final boolean myCopy;
     final boolean myConstantContent;
     final boolean myRepeatingKeys;
-    final boolean myHasNulls;
+    final boolean myMayHaveNulls;
 
     PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiElement> delete, String type) {
       this(content, delete, type, false);
@@ -128,11 +130,12 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         .cross(ExpressionUtils::nonStructuralChildren).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
       myConstantContent = !copy && StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
       myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
-      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren).map(PsiExpression::getType).has(PsiType.NULL);
+      myMayHaveNulls = !copy && StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren)
+        .anyMatch(ex -> NullabilityUtil.getExpressionNullability(ex, true) != Nullability.NOT_NULL);
     }
 
     boolean isValid(boolean suggestMapOfEntries) {
-      return !myHasNulls && !myRepeatingKeys && (suggestMapOfEntries || !hasTooManyMapEntries());
+      return !myMayHaveNulls && !myRepeatingKeys && (suggestMapOfEntries || !hasTooManyMapEntries());
     }
 
     private boolean hasTooManyMapEntries() {

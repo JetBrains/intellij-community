@@ -152,8 +152,9 @@ public final class ClassUtils {
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
            Arrays.stream(aClass.getAllFields())
              .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .map(field -> field.getType())
-             .allMatch(type -> TypeConversionUtil.isPrimitiveAndNotNull(type) || immutableTypes.contains(type.getCanonicalText()));
+             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
+                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
+                                 immutableTypes.contains(field.getType().getCanonicalText())));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
@@ -365,7 +366,7 @@ public final class ClassUtils {
                                       .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
                                       .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
 
-    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).toList();
     return fields.size() == 1 ? fields.get(0) : null;
   }
 

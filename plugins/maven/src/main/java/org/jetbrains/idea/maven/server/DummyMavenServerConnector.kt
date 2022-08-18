@@ -44,6 +44,9 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
   }
 
+  override fun stop(wait: Boolean) {
+  }
+
   override fun getSupportType() = MavenConfigurableBundle.message("connector.ui.dummy")
 
   override fun getState() = State.RUNNING

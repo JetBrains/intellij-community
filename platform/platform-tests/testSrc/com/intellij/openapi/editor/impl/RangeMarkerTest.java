@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -31,6 +32,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +44,10 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
@@ -52,8 +57,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
-  @SuppressWarnings("unused") // to avoid GC
-  private FileASTNode fileNode;
+
+  private FileASTNode fileNode; // to avoid GC
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -83,6 +88,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     documentManager = null;
     synchronizer = null;
     psiFile = null;
+    Reference.reachabilityFence(fileNode);
     fileNode = null;
     document = null;
     super.tearDown();
@@ -1193,7 +1199,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
-  public void testMoveTextDoesntCrashStress() {
+  public void testMoveTextDoesntCrash_Stress() {
     AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
     AtomicInteger failPrinted = new AtomicInteger();
     String text = StringUtil.repeat("blah", 1000);
@@ -1562,12 +1568,30 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarkerImpl m = (RangeMarkerImpl)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1);
     assertNull(m.getCachedDocument());
 
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC, (document, psiFile, project) -> {
-      if (vf.equals(FileDocumentManager.getInstance().getFile(document))) {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC, (doc, __, ___) -> {
+      if (vf.equals(FileDocumentManager.getInstance().getFile(doc))) {
         fail("document created");
       }
     });
 
     m.dispose();
+  }
+
+  public void testGetTextRangeMustBeAtomic_Stress() throws ExecutionException, InterruptedException {
+    int len = 1000;
+    RangeMarkerImpl marker = (RangeMarkerImpl)createMarker(" ".repeat(len), 10, 11);
+    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Random random = new Random();
+      while (!t.isTimedOut()) {
+        int s = random.nextInt(len - 1);
+        marker.setRange(TextRange.toScalarRange(s, s + 1));
+      }
+    });
+    while (!t.isTimedOut()) {
+      TextRange range = marker.getTextRange();
+      assertEquals(range.toString(), 1, range.getLength());
+    }
+    future.get();
   }
 }

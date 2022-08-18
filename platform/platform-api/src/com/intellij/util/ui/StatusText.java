@@ -391,14 +391,16 @@ public abstract class StatusText {
 
   protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
+    int width = Math.min(size.width, bounds.width);
+    int height = Math.min(size.height, bounds.height);
 
     if (mySecondaryColumn.fragments.isEmpty()) {
-      return new Rectangle(bounds.x + (bounds.width - size.width) / 2, bounds.y, size.width, size.height);
+      return new Rectangle(bounds.x + (bounds.width - width) / 2, bounds.y, width, height);
     }
     else {
       return component == getComponent()
-             ? new Rectangle(bounds.x, bounds.y, size.width, size.height)
-             : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, size.height);
+             ? new Rectangle(bounds.x, bounds.y, width, height)
+             : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, height);
     }
   }
 

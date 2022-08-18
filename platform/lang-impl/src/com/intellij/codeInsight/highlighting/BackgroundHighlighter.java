@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
@@ -18,10 +19,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -36,7 +40,8 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() || // sorry upsource
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() ||
+        // sorry upsource
         !IdentifierHighlighterPassFactory.isEnabled()) {
       return;
     }
@@ -113,7 +118,7 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
           }
         }
       });
-    
+
     project.getMessageBus().connect(parentDisposable)
       .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> {
         if (state.isFinished()) return;
@@ -143,17 +148,34 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
       return;
     }
 
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor)->{
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
       IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
         createHighlightingPass(foundFile, newEditor, TextRange.from(0, foundFile.getTextLength()));
       if (pass != null) {
         pass.doCollectInformation();
       }
-      return pass;
-    }, (foundFile, newEditor, pass) -> {
+      Pair<TextRange, TextRange> heavyBraceMatch = HeavyBraceHighlighter.match(foundFile, newEditor.getCaretModel().getOffset());
+      return Pair.create(pass, heavyBraceMatch);
+    }, (foundFile, newEditor, bgResults) -> {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
-      handler.updateBraces();
+      Pair<TextRange, TextRange> maybeMatch = bgResults.second;
 
+      if (maybeMatch == null) {
+        handler.updateBraces();
+      }
+      else {
+        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+
+        if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
+          FileType fileType = PsiUtilBase.getPsiFileAtOffset(foundFile, maybeMatch.first.getStartOffset()).getFileType();
+
+          handler.clearBraceHighlighters();
+
+          handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType);
+        }
+      }
+
+      IdentifierHighlighterPass pass = bgResults.first;
       if (pass != null) {
         pass.doApplyInformationToEditor();
       }
@@ -161,7 +183,7 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
   }
 
   private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (__,___)->null, (foundFile, newEditor,__) -> {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (__, ___) -> null, (foundFile, newEditor, __) -> {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.clearBraceHighlighters();
     });

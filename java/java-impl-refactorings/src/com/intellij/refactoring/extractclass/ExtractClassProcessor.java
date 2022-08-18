@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -41,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
@@ -60,6 +47,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -83,7 +71,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final boolean requiresBackpointer;
   private boolean delegationRequired;
   private final ExtractEnumProcessor myExtractEnumProcessor;
-  private final PsiClass myClass;
+  private PsiClass myClass;
   private final boolean extractInnerClass;
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -215,7 +203,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final boolean [] dependsOnMoved = new boolean[]{false};
     initializer.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiMember) {
@@ -269,22 +257,46 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    RefactoringEventData eventData = new RefactoringEventData();
+    eventData.addElement(sourceClass);
+    List<PsiMember> members = new ArrayList<>();
+    members.addAll(methods);
+    members.addAll(fields);
+    members.addAll(innerClasses);
+    eventData.addMembers(members.toArray(PsiElement.EMPTY_ARRAY), e -> e);
+    return eventData;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    RefactoringEventData eventData = new RefactoringEventData();
+    eventData.addElement(myClass);
+    return eventData;
+  }
+
+  @Override
+  protected @Nullable String getRefactoringId() {
+    return "refactoring.extract.delegate";
+  }
+
+  @Override
   protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
-    final PsiClass psiClass = buildClass(true);
-    if (psiClass == null) return;
+    myClass = buildClass(true);
+    if (myClass == null) return;
     if (delegationRequired) {
       buildDelegate();
     }
     myExtractEnumProcessor.performEnumConstantTypeMigration(usageInfos);
     final Set<PsiMember> members = new HashSet<>();
     for (PsiMethod method : methods) {
-      final PsiMethod member = psiClass.findMethodBySignature(method, false);
+      final PsiMethod member = myClass.findMethodBySignature(method, false);
       if (member != null) {
         members.add(member);
       }
     }
     for (PsiField field : fields) {
-      final PsiField member = psiClass.findFieldByName(field.getName(), false);
+      final PsiField member = myClass.findFieldByName(field.getName(), false);
       if (member != null) {
         members.add(member);
         final PsiExpression initializer = member.getInitializer();
@@ -292,7 +304,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
           final boolean[] moveInitializerToConstructor = new boolean[1];
           initializer.accept(new JavaRecursiveElementWalkingVisitor(){
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               super.visitReferenceExpression(expression);
               final PsiElement resolved = expression.resolve();
               if (resolved instanceof PsiField && !members.contains(resolved)) {
@@ -303,10 +315,10 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
           if (moveInitializerToConstructor[0]) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-            PsiMethod[] constructors = psiClass.getConstructors();
+            PsiMethod[] constructors = myClass.getConstructors();
             if (constructors.length == 0) {
-              final PsiMethod constructor = (PsiMethod)elementFactory.createConstructor().setName(psiClass.getName());
-              constructors = new PsiMethod[] {(PsiMethod)psiClass.add(constructor)};
+              final PsiMethod constructor = (PsiMethod)elementFactory.createConstructor().setName(myClass.getName());
+              constructors = new PsiMethod[] {(PsiMethod)myClass.add(constructor)};
             }
             for (PsiMethod constructor : constructors) {
               MoveInstanceMembersUtil.moveInitializerToConstructor(elementFactory, constructor, member);
@@ -388,19 +400,19 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         if (methods.contains(method)) return;
         super.visitMethod(method);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         if (fields.contains(field)) return;
         super.visitField(field);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (innerClasses.contains(aClass)) return;
         super.visitClass(aClass);
       }
@@ -829,7 +841,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private final Set<PsiField> fieldsNeedingSetter = new HashSet<>();
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (isProhibitedReference(expression)) {
         final PsiField field = getReferencedField(expression);
@@ -846,7 +858,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
 
       final PsiExpression lhs = expression.getLExpression();
@@ -859,7 +871,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
     }

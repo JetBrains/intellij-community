@@ -1,14 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
-import com.intellij.diff.actions.impl.NextChangeAction
-import com.intellij.diff.actions.impl.OpenInEditorAction
-import com.intellij.diff.actions.impl.PrevChangeAction
-import com.intellij.diff.actions.impl.SetEditorSettingsAction
+import com.intellij.diff.DiffContext
+import com.intellij.diff.actions.impl.*
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
+import com.intellij.diff.tools.combined.CombinedDiffViewer.IterationState
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
@@ -29,8 +32,150 @@ import java.awt.Component
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
-internal class CombinedToggleExpandByDefaultAction(val textSettings: TextDiffSettingsHolder.TextDiffSettings,
-                                                   val foldingModels: () -> List<FoldingModelSupport>) :
+internal open class CombinedNextChangeAction(private val context: DiffContext) : NextChangeAction() {
+  override fun update(e: AnActionEvent) {
+    if (DiffUtil.isFromShortcut(e)) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
+
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+
+    if (viewer == null || !viewer.isNavigationEnabled()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isVisible = true
+    e.presentation.isEnabled = viewer.hasNextChange(true)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+
+    if (!viewer.isNavigationEnabled() || !viewer.hasNextChange(false)) return
+    viewer.goToNextChange(false)
+  }
+}
+
+internal open class CombinedPrevChangeAction(private val context: DiffContext) : PrevChangeAction() {
+  override fun update(e: AnActionEvent) {
+    if (DiffUtil.isFromShortcut(e)) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
+
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+
+    if (viewer == null || !viewer.isNavigationEnabled()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isVisible = true
+    e.presentation.isEnabled = viewer.hasPrevChange(true)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+
+    if (!viewer.isNavigationEnabled() || !viewer.hasPrevChange(false)) return
+    viewer.goToPrevChange(false)
+  }
+}
+
+internal open class CombinedNextDifferenceAction(private val settings: DiffSettings,
+                                                 private val context: DiffContext) : NextDifferenceAction() {
+
+  protected open fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+    return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
+  }
+
+  override fun update(e: AnActionEvent) {
+    if (DiffUtil.isFromShortcut(e)) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
+    val iterable = getDifferenceIterable(e)
+    if (iterable != null && iterable.canGoNext()) {
+      e.presentation.isEnabled = true
+      return
+    }
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    if (viewer != null &&
+        settings.isGoToNextFileOnNextDifference && viewer.isNavigationEnabled() && viewer.hasNextChange(true)) {
+      e.presentation.isEnabled = true
+      return
+    }
+    e.presentation.isEnabled = false
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val iterable = getDifferenceIterable(e)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+    context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.FIRST_CHANGE)
+    if (iterable != null && iterable.canGoNext()) {
+      iterable.goNext()
+      viewer.iterationState = IterationState.NONE
+      return
+    }
+    if (!viewer.isNavigationEnabled() || !viewer.hasNextChange(false) || !settings.isGoToNextFileOnNextDifference) return
+    if (viewer.iterationState != IterationState.NEXT) {
+      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
+      viewer.iterationState = IterationState.NEXT
+      return
+    }
+    viewer.goToNextChange(true)
+    viewer.iterationState = IterationState.NONE
+  }
+}
+
+internal open class CombinedPrevDifferenceAction(private val settings: DiffSettings,
+                                                 private val context: DiffContext) : PrevDifferenceAction() {
+
+  protected open fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+    return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
+  }
+
+  override fun update(e: AnActionEvent) {
+    if (DiffUtil.isFromShortcut(e)) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
+    val iterable = getDifferenceIterable(e)
+    if (iterable != null && iterable.canGoPrev()) {
+      e.presentation.isEnabled = true
+      return
+    }
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    if (viewer != null
+        && settings.isGoToNextFileOnNextDifference && viewer.isNavigationEnabled() && viewer.hasPrevChange(true)) {
+      e.presentation.isEnabled = true
+      return
+    }
+    e.presentation.isEnabled = false
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val iterable = getDifferenceIterable(e)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+    context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.LAST_CHANGE)
+    if (iterable != null && iterable.canGoPrev()) {
+      iterable.goPrev()
+      viewer.iterationState = IterationState.NONE
+      return
+    }
+    if (!viewer.isNavigationEnabled() || !viewer.hasPrevChange(false) || !settings.isGoToNextFileOnNextDifference) return
+    if (viewer.iterationState != IterationState.PREV) {
+      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
+      viewer.iterationState = IterationState.PREV
+      return
+    }
+    viewer.goToPrevChange(true)
+    viewer.iterationState = IterationState.NONE
+  }
+}
+
+internal class CombinedToggleExpandByDefaultAction(private val textSettings: TextDiffSettingsHolder.TextDiffSettings,
+                                                   private val foldingModels: () -> List<FoldingModelSupport>) :
   ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
 
   override fun isVisible(): Boolean = textSettings.contextRange != -1

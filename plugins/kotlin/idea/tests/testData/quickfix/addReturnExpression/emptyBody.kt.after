@@ -1,0 +1,5 @@
+// "Add 'return' expression" "true"
+// WITH_STDLIB
+fun test(): Boolean {
+    return <selection>TODO("Provide the return value")</selection><caret>
+}

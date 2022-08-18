@@ -23,7 +23,7 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   private static final Logger LOG = Logger.getInstance(MoveToPackageFix.class);
   private final String myTargetPackage;
 
-  public MoveToPackageFix(PsiFile psiFile, String targetPackage) {
+  public MoveToPackageFix(@NotNull PsiFile psiFile, @NotNull String targetPackage) {
     super(psiFile);
     myTargetPackage = targetPackage;
   }
@@ -39,13 +39,16 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     return QuickFixBundle.message("move.class.to.package.family");
   }
 
-  public boolean isAvailable(PsiFile myFile) {
-    return myFile != null
-        && myFile.isValid()
-        && myFile.getManager().isInProject(myFile)
-        && myFile instanceof PsiJavaFile
-        && ((PsiJavaFile) myFile).getClasses().length != 0
-        && myTargetPackage != null;
+  public static MoveToPackageFix createIfAvailable(@Nullable PsiFile myFile, @Nullable String targetPackage) {
+    if (myFile == null
+        || !myFile.isValid()
+        || !myFile.getManager().isInProject(myFile)
+        || !(myFile instanceof PsiJavaFile)
+        || ((PsiJavaFile)myFile).getClasses().length == 0
+        || targetPackage == null) {
+      return null;
+    }
+    return new MoveToPackageFix(myFile, targetPackage);
   }
 
   @Override
@@ -54,7 +57,7 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiFile myFile = startElement.getContainingFile();
+    PsiFile myFile = startElement.getContainingFile();
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 

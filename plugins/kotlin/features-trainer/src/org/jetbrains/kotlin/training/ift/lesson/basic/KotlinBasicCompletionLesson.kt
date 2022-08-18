@@ -4,12 +4,11 @@ package org.jetbrains.kotlin.training.ift.lesson.basic
 import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.java.ift.lesson.completion.JavaBasicCompletionLesson
-import org.assertj.swing.fixture.JListFixture
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import training.dsl.LessonContext
 import training.dsl.parseLessonSample
+import training.dsl.usePreviouslyFoundListItem
 import training.learn.LessonsBundle
-import javax.swing.JList
 
 class KotlinBasicCompletionLesson : JavaBasicCompletionLesson() {
     private val sample = parseLessonSample(
@@ -43,11 +42,7 @@ class KotlinBasicCompletionLesson : JavaBasicCompletionLesson() {
             restoreByUi()
             restoreIfTypedIncorrectly(sample, "listOf")
             test(waitEditorToBeReady = false) {
-                val list = previous.ui as? JList<*> ?: error("The list with completion items not found")
-                val model = list.model
-                val index = (0 until model.size).map { model.getElementAt(it) }.indexOfFirst { isListOfCompletionItem(it) }
-                if (index == -1) error("The listOf(element: T) completion item not found")
-                JListFixture(robot, list).item(index).doubleClick()
+                usePreviouslyFoundListItem { it.doubleClick() }
             }
         }
 

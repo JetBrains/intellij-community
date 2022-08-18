@@ -312,7 +312,7 @@ private val TYPES_WITH_TRAILING_COMMA_ON_CALL_SITE = TokenSet.create(
     KtNodeTypes.TYPE_ARGUMENT_LIST,
     KtNodeTypes.INDICES,
     KtNodeTypes.VALUE_ARGUMENT_LIST,
-<caret>)
+    <caret>)
 
 fun UserDataHolder.addTrailingCommaIsAllowedForThis(): Boolean {
     val type = when (this) {
@@ -2322,4 +2322,5 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
 }
 
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// SET_FALSE: ALIGN_MULTILINE_PARAMETERS_IN_CALLS
+// IGNORE_FORMATTER

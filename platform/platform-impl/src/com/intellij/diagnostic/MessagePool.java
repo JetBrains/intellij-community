@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,12 +48,11 @@ public final class MessagePool {
       }
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      TooManyErrorsException e = new TooManyErrorsException();
-      myGrouper.addToGroup(new LogMessage(e, null, Collections.emptyList()));
+      myGrouper.addToGroup(new LogMessage(new TooManyErrorsException(), null, Collections.emptyList()));
     }
   }
 
-  public State getState() {
+  public @NotNull State getState() {
     if (myErrors.isEmpty()) return State.NoErrors;
     for (AbstractMessage message: myErrors) {
       if (!message.isRead()) return State.UnreadErrors;

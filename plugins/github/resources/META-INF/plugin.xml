@@ -76,13 +76,6 @@
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
   </extensions>
 
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="git4idea.repo.GitRepositoryChangeListener"/>
-  </projectListeners>
-
   <extensions defaultExtensionNs="Git4Idea">
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider"/>
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHComHttpAuthDataProvider"/>
@@ -204,6 +197,10 @@
 
     <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="CopyFileReference"/>
+    </action>
+
+    <action id="Github.Copy.Link.To.GitHub" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
+      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </action>
   </actions>
 </idea-plugin>

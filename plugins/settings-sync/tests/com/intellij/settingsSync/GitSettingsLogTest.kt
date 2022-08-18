@@ -1,8 +1,9 @@
 package com.intellij.settingsSync
 
+import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.TimeoutUtil.sleep
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
@@ -17,6 +18,8 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
+import java.time.Instant
+import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -25,10 +28,9 @@ import kotlin.io.path.writeText
 internal class GitSettingsLogTest {
 
   private val tempDirManager = TemporaryDirectory()
+  private val appRule = ApplicationRule()
   private val disposableRule = DisposableRule()
-  @Rule
-  @JvmField
-  val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(disposableRule)
+  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
@@ -53,6 +55,7 @@ internal class GitSettingsLogTest {
       listOf(keymapsFolder, editorXml)
     }
     settingsLog.initialize()
+    settingsLog.logExistingSettings()
 
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("keymaps/mykeymap.xml", keymapContent)
@@ -69,13 +72,16 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("options/editor.xml", "ideEditorContent")
-    })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "cloudEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
 
     settingsLog.advanceMaster()
 
@@ -92,13 +98,16 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState(FileState.Deleted("options/editor.xml"))
-    })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "cloudEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState(FileState.Deleted("options/editor.xml"))
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
     settingsLog.advanceMaster()
 
     assertEquals("Incorrect content", "cloudEditorContent", (settingsSyncStorage / "options" / "editor.xml").readText())
@@ -115,17 +124,41 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("options/editor.xml", "moreCloudEditorContent")
-    })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState(FileState.Deleted("options/editor.xml"))
-    })
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState(FileState.Deleted("options/editor.xml"))
+      }, "Local changes"
+    )
     settingsLog.advanceMaster()
 
     assertEquals("Incorrect deleted file content", DELETED_FILE_MARKER, (settingsSyncStorage / "options" / "editor.xml").readText())
     assertMasterIsMergeOfIdeAndCloud()
+  }
+
+  @Test
+  fun `date of the snapshot`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+      listOf(editorXml)
+    }
+    settingsLog.initialize()
+
+    val instant = Instant.ofEpochSecond(100500)
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), "", "", ""))) {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.advanceMaster()
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    assertEquals("The date of the snapshot incorrect", instant, snapshot.metaInfo.dateCreated)
   }
 
   //@Test
@@ -141,18 +174,26 @@ internal class GitSettingsLogTest {
     }
     settingsLog.initialize()
 
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("editor.xml", "ideEditorContent")
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("laf.xml", "cloudLafContent")
-    })
-    settingsLog.applyCloudState(settingsSnapshot {
-      fileState("editor.xml", "cloudEditorContent")
-    })
-    settingsLog.applyIdeState(settingsSnapshot {
-      fileState("laf.xml", "ideEditorContent")
-    })
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("laf.xml", "cloudLafContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("editor.xml", "cloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("laf.xml", "ideEditorContent")
+      }, "Local changes"
+    )
 
     settingsLog.advanceMaster()
 

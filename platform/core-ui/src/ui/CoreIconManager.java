@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 public final class CoreIconManager implements IconManager, CoreAwareIconManager {
   private static final List<IconLayer> iconLayers = new CopyOnWriteArrayList<>();
   private static final int FLAGS_LOCKED = 0x800;
-  private static final Logger LOG = Logger.getInstance(CoreIconManager.class);
 
   @Override
   public @NotNull Icon getStubIcon() {
@@ -78,7 +77,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     }
     else {
       // not safe for now to decide should patchPath return path with leading slash or not
-      resolver = RasterizedImageDataLoader.createPatched(path, classLoaderWeakRef, patchedPath, cacheKey, imageFlags);
+      resolver = RasterizedImageDataLoaderKt.createPatched(path, classLoaderWeakRef, patchedPath, cacheKey, imageFlags);
     }
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
@@ -90,7 +89,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     private String result;
     private boolean isTooltipCalculated;
 
-    IconWithToolTipImpl(@NotNull String originalPath, @NotNull ImageDataLoader resolver) {
+    private IconWithToolTipImpl(@NotNull String originalPath, @NotNull ImageDataLoader resolver) {
       super(originalPath, resolver, null, null);
     }
 
@@ -235,14 +234,14 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       if (classLoader == null) {
         classLoader = CoreIconManager.class.getClassLoader();
       }
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, ep.resourceBundle);
       String description = AbstractBundle.messageOrNull(bundle, key);
       if (description != null) {
         result.set(description);
       }
     });
     if (result.get() == null && Registry.is("ide.icon.tooltips.trace.missing", false)) {
-      LOG.info("Icon tooltip requested but not found for " + path);
+      Logger.getInstance(CoreIconManager.class).info("Icon tooltip requested but not found for " + path);
     }
     return result.get();
   }

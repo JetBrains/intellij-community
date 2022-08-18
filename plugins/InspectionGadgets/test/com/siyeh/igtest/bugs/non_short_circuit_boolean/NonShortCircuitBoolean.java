@@ -10,8 +10,8 @@ public class NonShortCircuitBoolean
     {
         final boolean nonShortAnd = <warning descr="Non-short-circuit boolean expression 'm_bar & m_baz & m_foo'">m_bar & m_baz & m_foo</warning>;
         final boolean nonShortOr = <warning descr="Non-short-circuit boolean expression 'm_bar | m_baz'">m_bar | m_baz</warning>;
-        m_bar |= m_baz;
-        m_bar &= m_baz;
+        <warning descr="Non-short-circuit boolean expression 'm_bar |= m_baz'">m_bar |= m_baz</warning>;
+        <warning descr="Non-short-circuit boolean expression 'm_bar &= m_baz'">m_bar &= m_baz</warning>;
     }
 
 }

@@ -56,7 +56,7 @@ object Text {
         }
       } else {
         inToken = false
-        if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
+        if ("(){}[]<>=+-*/%|&!;,.:\\@$#^".contains(c)) {
           codeChars++
         }
       }

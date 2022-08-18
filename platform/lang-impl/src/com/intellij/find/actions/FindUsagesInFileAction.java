@@ -69,6 +69,13 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return Registry.is("ide.find.in.file.highlight.usages") ?
+           ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).getActionUpdateThread() :
+           ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent event) {
     if (Registry.is("ide.find.in.file.highlight.usages")) {
       ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).update(event);

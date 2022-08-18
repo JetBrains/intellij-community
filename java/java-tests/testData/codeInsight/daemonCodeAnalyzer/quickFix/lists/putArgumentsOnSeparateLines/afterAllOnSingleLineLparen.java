@@ -1,4 +1,4 @@
-// "Put arguments on separate lines" "true"
+// "Put arguments on separate lines" "true-preview"
 // break after lparen
 
 class A {

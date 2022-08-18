@@ -35,7 +35,7 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementWalkingVisitor
   }
 
   @Override
-  public void visitJavaToken(PsiJavaToken token) {
+  public void visitJavaToken(@NotNull PsiJavaToken token) {
     super.visitJavaToken(token);
     final PsiElement parent = token.getParent();
     if (parent instanceof PsiClass) {
@@ -51,7 +51,7 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementWalkingVisitor
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     super.visitLambdaExpression(expression);
     inInnerClassCount++;
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -18,7 +17,8 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollecto
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.lang.JavaVersion
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup {
@@ -54,14 +54,9 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
 
 
   companion object {
-    private val GROUP = EventLogGroup("build.tools", 2)
+    private val GROUP = EventLogGroup("build.tools", 3)
     private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId", EventFields.StringValidatedByEnum("value", "build_tools"))
     val JRE_TYPE_FIELD = EventFields.Enum("value", JreType::class.java) { it.description }
-
-    fun getJRETypeUsage(key: String, jreName: String?): MetricEvent {
-      val anonymizedName = getJreType(jreName)
-      return newMetric(key, anonymizedName)
-    }
 
     fun getJreType(jreName: String?): JreType {
       val jreType = JreType.values().find { it.description == jreName }
@@ -73,18 +68,11 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
       return anonymizedName
     }
 
-    fun getJREVersionUsage(project: Project, key: String, jreName: String?): MetricEvent {
-      val versionString = getJreVersion(project, jreName)
-
-      return newMetric(key, versionString)
-    }
-
     fun getJreVersion(project: Project, jreName: String?): String {
       val jdk = ExternalSystemJdkUtil.getJdk(project, jreName)
-      val versionString =
-        jdk?.versionString?.let { Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" } }
-        ?: "unknown"
-      return versionString
+      return jdk?.versionString?.let<@NlsSafe String, String?> {
+        JavaVersion.tryParse(it)?.let { parsed -> "${parsed.feature}.${parsed.minor}" }
+      } ?: "unknown"
     }
 
     @JvmStatic

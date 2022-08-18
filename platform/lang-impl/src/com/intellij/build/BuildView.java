@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -106,14 +105,16 @@ public class BuildView extends CompositeView<ExecutionConsole>
     else {
       BuildTreeConsoleView eventView = getEventView();
       if (eventView != null) {
-        EdtExecutorService.getInstance().execute(() -> eventView.onEvent(buildId, event));
+        eventView.onEvent(buildId, event);
       }
     }
   }
 
   private void onStartBuild(@NotNull Object buildId, @NotNull StartBuildEvent startBuildEvent) {
     Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() && !application.isUnitTestMode()) return;
+    if (application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+      return;
+    }
 
     if (startBuildEvent instanceof StartBuildEventImpl) {
       myViewSettingsProvider = ((StartBuildEventImpl)startBuildEvent).getBuildViewSettingsProvider();
@@ -129,7 +130,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
                            runContentDescriptor.getExecutionConsole() != this ?
                            runContentDescriptor.getExecutionConsole() : new BuildTextConsoleView(myProject, false,
                                                                                                  myBuildDescriptor.getExecutionFilters());
-      if (runContentDescriptor != null && Disposer.findRegisteredObject(runContentDescriptor, this) == null) {
+      if (runContentDescriptor != null && runContentDescriptor.getExecutionConsole() != this) {
         Disposer.register(this, runContentDescriptor);
       }
     }
@@ -146,7 +147,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       eventView = getEventView();
       if (eventView == null) {
         String eventViewName = BuildTreeConsoleView.class.getName();
-        eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole, myViewSettingsProvider);
+        eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole);
         addView(eventView, eventViewName);
         showView(eventViewName);
       }
@@ -177,9 +178,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
     }
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public ExecutionConsole getConsoleView() {
+  public @Nullable ExecutionConsole getConsoleView() {
     return myExecutionConsole;
   }
 
@@ -209,8 +209,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     }
   }
 
-  @Nullable
-  private <R> R getConsoleViewValue(Function<? super ConsoleView, ? extends R> viewConsumer) {
+  private @Nullable <R> R getConsoleViewValue(Function<? super ConsoleView, ? extends R> viewConsumer) {
     ExecutionConsole console = getConsoleView();
     if (console instanceof ConsoleView) {
       return viewConsumer.apply((ConsoleView)console);
@@ -333,9 +332,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
     delegateToConsoleView(ConsoleView::allowHeavyFilters);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
       return getConsoleView();
     }
@@ -359,9 +357,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return getEventView() != null;
   }
 
-  @NotNull
   @Override
-  public Predicate<ExecutionNode> getFilter() {
+  public @NotNull Predicate<ExecutionNode> getFilter() {
     BuildTreeConsoleView eventView = getEventView();
     return eventView == null ? executionNode -> true : eventView.getFilter();
   }
@@ -388,8 +385,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return eventView != null && eventView.contains(filter);
   }
 
-  @NotNull
-  private OccurenceNavigator getOccurenceNavigator() {
+  private @NotNull OccurenceNavigator getOccurenceNavigator() {
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) return eventView;
     ExecutionConsole executionConsole = getConsoleView();
@@ -419,15 +415,13 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return getOccurenceNavigator().goPreviousOccurence();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return getOccurenceNavigator().getNextOccurenceActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 }

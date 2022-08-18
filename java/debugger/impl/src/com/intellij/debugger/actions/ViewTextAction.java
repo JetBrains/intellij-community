@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -63,6 +64,11 @@ public class ViewTextAction extends XFetchValueActionBase {
     if (getStringNode(e) != null) {
       e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ViewEditText.text"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static XValueNodeImpl getStringNode(@NotNull AnActionEvent e) {

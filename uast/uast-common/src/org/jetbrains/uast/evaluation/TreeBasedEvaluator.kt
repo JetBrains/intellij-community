@@ -479,9 +479,8 @@ class TreeBasedEvaluator(
       val elseInfo = node.elseExpression?.accept(chain, conditionInfo.state)
       val conditionValue = conditionInfo.value
       val defaultInfo = UUndeterminedValue to conditionInfo.state
-      val constantConditionValue = conditionValue.toConstant()
 
-      return when (constantConditionValue) {
+      return when (val constantConditionValue = conditionValue.toConstant()) {
         is UBooleanConstant -> {
           if (constantConditionValue.value) thenInfo ?: defaultInfo
           else elseInfo ?: defaultInfo
@@ -555,8 +554,7 @@ class TreeBasedEvaluator(
     }
 
     private fun getBreakResult(clauseInfo: UEvaluationInfo): UEvaluationInfo {
-      val clauseValue = clauseInfo.value
-      return when (clauseValue) {
+      return when (val clauseValue = clauseInfo.value) {
         is UYieldResult -> clauseValue.value to clauseInfo.state
         is UPhiValue -> UPhiValue.create(clauseValue.values.map {
           when (it) {

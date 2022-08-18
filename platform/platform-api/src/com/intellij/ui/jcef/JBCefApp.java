@@ -13,10 +13,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
@@ -31,6 +31,7 @@ import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,11 +64,13 @@ public final class JBCefApp {
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = Runtime.version().feature() >= 17 ? 89 : 97;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 98;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 5;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 7;
 
   @NotNull private final CefApp myCefApp;
+
+  @NotNull private final CefSettings myCefSettings;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
     @Override
@@ -148,6 +151,8 @@ public final class JBCefApp {
       settings.remote_debugging_port = port;
     }
 
+    settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
+
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
@@ -195,6 +200,7 @@ public final class JBCefApp {
     }
 
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
+    myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -226,7 +232,7 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns {@code JBCefApp} instance. If the app has not yet been initialized
+   * Returns {@code JBCefApp} instance. If the app has not yet been initialized,
    * then starts up CEF and initializes the app.
    *
    * @throws IllegalStateException when JCEF initialization is not possible in current env
@@ -282,10 +288,10 @@ public final class JBCefApp {
   /**
    * Returns whether JCEF is supported. For that:
    * <ul>
-   * <li> It should be available in the running JBR.
-   * <li> It should have a compatible version.
+   * <li>It should be available in the running JBR.</li>
+   * <li>It should have a compatible version.</li>
    * </ul>
-   * In order to assuredly meet the above requirements the IDE should run with a bundled JBR.
+   * In order to assuredly meet the above requirements, the IDE should run with a bundled JBR.
    */
   public static boolean isSupported() {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
@@ -357,6 +363,11 @@ public final class JBCefApp {
     return getInstance() != null;
   }
 
+  @Contract(pure = true)
+  @NotNull String getCachePath() {
+    return myCefSettings.cache_path;
+  }
+
   @NotNull
   public JBCefClient createClient() {
     return createClient(false);
@@ -368,8 +379,8 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns true if the off-screen rendering mode is enabled.
-   * <p></p>
+   * Returns {@code true} if the off-screen rendering mode is enabled.
+   * <p>
    * This mode allows for browser creation in either windowed or off-screen rendering mode.
    *
    * @see JBCefOsrHandlerBrowser
@@ -427,7 +438,7 @@ public final class JBCefApp {
     private int myGPUCrashCounter = 0;
     private boolean myNotificationShown = false;
 
-    MyCefAppHandler(String @Nullable[] args, boolean trackGPUCrashes) {
+    MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
       myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
@@ -502,10 +513,10 @@ public final class JBCefApp {
 
   /**
    * Returns normal (unscaled) size of the provided scaled size if IDE-managed HiDPI mode is enabled.
-   * In JRE-managed HiDPI mode the method has no effect.
-   * <p></p>
+   * In JRE-managed HiDPI mode, the method has no effect.
+   * <p>
    * This method should be applied to size values (for instance, font size) previously scaled (explicitly or implicitly)
-   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in html (in CSS, for instance).
+   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in HTML (in CSS, for instance).
    *
    * @see com.intellij.ui.scale.ScaleType
    */

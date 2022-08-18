@@ -29,7 +29,7 @@ public abstract class HgProcessStateAction extends HgAbstractGlobalSingleRepoAct
 
   @RequiresEdt
   protected boolean isRebasing(AnActionEvent e) {
-    HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
+    HgRepository repository = getSelectedRepositoryFromEvent(e.getDataContext());
     return repository != null && repository.getState() == myState;
   }
 

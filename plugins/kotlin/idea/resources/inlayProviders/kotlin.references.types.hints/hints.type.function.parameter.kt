@@ -3,3 +3,12 @@ fun hintsDemo() {
         elem >= 3
     }
 }
+
+class List<T> {
+    fun filter<R>(op: (T) -> Boolean) : List<R> = TODO()
+}
+
+fun <T> listOf(vararg elements: T): List<T> = TODO()
+
+class Int
+class Boolean

@@ -12,9 +12,12 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
+import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
+import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -69,7 +72,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
-  private fun checkSampleProjectConfiguration(storage: WorkspaceEntityStorage, projectDir: File) {
+  private fun checkSampleProjectConfiguration(storage: EntityStorage, projectDir: File) {
     val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
@@ -200,14 +203,14 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
     assertEquals("erlang-include", sourceRoot.rootType)
-    assertNull(sourceRoot.asCustomSourceRoot())
+    assertNull(sourceRoot.customSourceRootProperties)
   }
 
   fun `test load facets`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/facets/facets.ipr")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
-    val single = modules.getValue("single").facets.single()
+    val single = modules.getValue("single").facets?.single() ?: error("")
     assertEquals("foo", single.facetType)
     assertEquals("Foo", single.name)
     assertEquals("""
@@ -215,13 +218,13 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                       <data />
                     </configuration>""".trimIndent(), single.configurationXmlTag)
 
-    val two = modules.getValue("two").facets.toList()
+    val two = modules.getValue("two").facets?.toList() ?: emptyList()
     assertEquals(setOf("a", "b"), two.mapTo(HashSet()) { it.name })
 
-    val twoReversed = modules.getValue("two.reversed").facets.toList()
+    val twoReversed = modules.getValue("two.reversed").facets?.toList() ?: emptyList()
     assertEquals(setOf("a", "b"), twoReversed.mapTo(HashSet()) { it.name })
 
-    val subFacets = modules.getValue("subFacets").facets.sortedBy { it.name }.toList()
+    val subFacets = modules.getValue("subFacets").facets?.sortedBy { it.name }?.toList() ?: emptyList()
     assertEquals(listOf("Bar", "Foo"), subFacets.map { it.name })
     val (bar, foo) = subFacets
     assertEquals("Foo", bar.underlyingFacet!!.name)
@@ -235,10 +238,10 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                     </configuration>""".trimIndent(), bar.configurationXmlTag)
   }
 
-  private fun loadProject(projectFile: File): WorkspaceEntityStorage {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+  private fun loadProject(projectFile: File): EntityStorage {
+    val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
-    return storageBuilder.toStorage()
+    return storageBuilder.toSnapshot()
   }
 }

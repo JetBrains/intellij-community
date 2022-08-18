@@ -2,15 +2,21 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
+  /**
+   * Called after configuration import is finished, even when there was nothing to import from.
+   * In the latter case, {@link ConfigImportHelper#isConfigImported()} returns {@code false}.
+   */
   void importFinished(@NotNull Path newConfigPath, @Nullable String pathSelectorOfOtherIde);
 
   /**
@@ -39,7 +45,8 @@ public interface ConfigImportSettings {
   default void processPluginsToMigrate(@NotNull Path newConfigDir,
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
+                                       @NotNull Map<? super PluginId, ? extends IdeaPluginDescriptor> pluginIdMap) { }
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}

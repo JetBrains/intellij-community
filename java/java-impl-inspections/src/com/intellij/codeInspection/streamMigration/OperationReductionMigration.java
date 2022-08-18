@@ -78,15 +78,15 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
   static class ReductionOperation {
     private final IElementType myCompoundAssignmentOp;
-    private final Predicate<PsiExpression> myInitializerReplaceCondition;
-    private final Predicate<PsiVariable> myAccumulatorRestriction;
+    private final Predicate<? super PsiExpression> myInitializerReplaceCondition;
+    private final Predicate<? super PsiVariable> myAccumulatorRestriction;
     private final String myIdentity;
     private final String myOperation;
 
 
     ReductionOperation(IElementType compoundAssignmentOp,
-                              Predicate<PsiExpression> initializerReplaceCondition,
-                              Predicate<PsiVariable> accumulatorRestriction,
+                              Predicate<? super PsiExpression> initializerReplaceCondition,
+                              Predicate<? super PsiVariable> accumulatorRestriction,
                               String identity,
                               String operation) {
       myCompoundAssignmentOp = compoundAssignmentOp;
@@ -100,7 +100,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
       return myCompoundAssignmentOp;
     }
 
-    public Predicate<PsiExpression> getInitializerExpressionRestriction() {
+    Predicate<? super PsiExpression> getInitializerExpressionRestriction() {
       return myInitializerReplaceCondition;
     }
 
@@ -112,7 +112,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
       return myOperation;
     }
 
-    public Predicate<PsiVariable> getAccumulatorRestriction() {
+    Predicate<? super PsiVariable> getAccumulatorRestriction() {
       return myAccumulatorRestriction;
     }
   }

@@ -42,7 +42,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
-import static com.intellij.codeInspection.ProblemHighlightType.*;
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -83,7 +84,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
       }
       else if (element instanceof PsiDefaultCaseLabelElement) {
-        DeleteSwitchLabelFix.deleteLabelElement(((PsiDefaultCaseLabelElement)element));
+        DeleteSwitchLabelFix.deleteLabelElement((PsiDefaultCaseLabelElement)element);
       }
     }
   }
@@ -101,7 +102,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   private class UnnecessaryDefaultVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       checkSwitchBlock(expression);
     }
@@ -119,7 +120,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       }
       PsiSwitchLabeledRuleStatement ruleStatement = null;
       if (defaultStatement instanceof PsiSwitchLabeledRuleStatement) {
-        ruleStatement = ((PsiSwitchLabeledRuleStatement)defaultStatement);
+        ruleStatement = (PsiSwitchLabeledRuleStatement)defaultStatement;
       }
       else if (defaultStatement instanceof PsiDefaultCaseLabelElement) {
         PsiSwitchLabelStatementBase pDefaultStatement = PsiTreeUtil.getParentOfType(defaultStatement, PsiSwitchLabelStatementBase.class);
@@ -167,7 +168,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         highlightType = INFORMATION;
       }
       else {
-        highlightType = LIKE_UNUSED_SYMBOL;
+        highlightType = GENERIC_ERROR_OR_WARNING;
       }
       registerError(defaultStatement.getFirstChild(), highlightType);
     }

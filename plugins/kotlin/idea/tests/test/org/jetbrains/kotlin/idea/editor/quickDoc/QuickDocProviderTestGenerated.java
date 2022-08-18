@@ -68,6 +68,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DefinitelyNonNullType.kt")
+    public void testDefinitelyNonNullType() throws Exception {
+        runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
+    }
+
     @TestMetadata("DeprecationWithReplaceInfo.kt")
     public void testDeprecationWithReplaceInfo() throws Exception {
         runTest("testData/editor/quickDoc/DeprecationWithReplaceInfo.kt");
@@ -151,6 +156,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
+    }
+
+    @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
+    public void testOnClassDeclarationWithComplexKDoc() throws Exception {
+        runTest("testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithNoPackage.kt")
@@ -276,6 +286,16 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("OnMethodUsageWithTypeParameter.kt")
     public void testOnMethodUsageWithTypeParameter() throws Exception {
         runTest("testData/editor/quickDoc/OnMethodUsageWithTypeParameter.kt");
+    }
+
+    @TestMetadata("OnPrimaryConstructorAnnotatedWithConstructorTag.kt")
+    public void testOnPrimaryConstructorAnnotatedWithConstructorTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPrimaryConstructorAnnotatedWithConstructorTag.kt");
+    }
+
+    @TestMetadata("OnPropertyUsageDocumentedWithPropertyTag.kt")
+    public void testOnPropertyUsageDocumentedWithPropertyTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")

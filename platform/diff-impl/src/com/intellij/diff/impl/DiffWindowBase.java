@@ -5,7 +5,7 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.FrameStateListener;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
@@ -60,9 +61,9 @@ public abstract class DiffWindowBase {
     if (wrapperHandler != null) wrapperHandler.consume(myWrapper);
 
     MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect(myProcessor);
-    appConnection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+    appConnection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
-      public void onFrameActivated() {
+      public void applicationActivated(@NotNull IdeFrame ideFrame) {
         DiffRequest request = myProcessor.getActiveRequest();
         if (request != null) {
           VirtualFile[] files = VfsUtilCore.toVirtualFileArray(request.getFilesToRefresh());

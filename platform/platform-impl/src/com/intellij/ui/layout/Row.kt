@@ -128,14 +128,20 @@ inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, 
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(prop.toBinding(), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(binding: PropertyBinding<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
     RowBuilderWithButtonGroupProperty(this, binding).init()
@@ -155,6 +161,7 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
   protected abstract val builder: LayoutBuilderImpl
@@ -181,6 +188,7 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
     InnerCell(this).init()
@@ -209,6 +217,7 @@ enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }

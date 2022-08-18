@@ -39,7 +39,7 @@ public class TitledSeparator extends JPanel {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
   }
 
-  protected final JBLabel myLabel = new JBLabel();
+  protected final JBLabel myLabel = createLabel();
   protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
   private @NlsContexts.Separator String originalText;
 
@@ -100,6 +100,10 @@ public class TitledSeparator extends JPanel {
       }
       myLabel.setBorder(null);
     }
+  }
+
+  protected JBLabel createLabel() {
+    return new JBLabel();
   }
 
   private void setLabelBorder(boolean focused) {

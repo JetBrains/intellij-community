@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -10,38 +10,22 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
-abstract class ClientAwareComponentManager @JvmOverloads constructor(
+abstract class ClientAwareComponentManager constructor(
   internal val parent: ComponentManagerImpl?,
-  setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent, setExtensionsRootArea) {
-
-  override fun <T : Any> getService(serviceClass: Class<T>): T? {
-    return getFromSelfOrCurrentSession(serviceClass, true)
-  }
-
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
-    return getFromSelfOrCurrentSession(serviceClass, false)
-  }
-
+  setExtensionsRootArea: Boolean = parent == null
+) : ComponentManagerImpl(parent, setExtensionsRootArea) {
   override fun <T : Any> getServices(serviceClass: Class<T>, includeLocal: Boolean): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    return sessionsManager.getSessions(includeLocal)
-      .mapNotNull { (it as? ClientSessionImpl)?.doGetService(serviceClass, true,  false) }
+    return sessionsManager.getSessions(includeLocal).mapNotNull {
+      (it as? ClientSessionImpl)?.doGetService(serviceClass = serviceClass, createIfNeeded = true, fallbackToShared = false)
+    }
   }
 
-  private fun <T : Any> getFromSelfOrCurrentSession(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val fromSelf = if (createIfNeeded) {
-      super.getService(serviceClass)
-    }
-    else {
-      super.getServiceIfCreated(serviceClass)
-    }
-
-    if (fromSelf != null) return fromSelf
-
+  override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
         throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
@@ -56,7 +40,7 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
     return session?.doGetService(serviceClass, createIfNeeded, false)
   }
 
-  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
@@ -77,25 +61,15 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
     }
   }
 
-  override fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
-                               activityPrefix: String,
-                               onlyIfAwait: Boolean): PreloadServicesResult {
-    val result = super.preloadServices(modules, activityPrefix, onlyIfAwait)
+  override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
+                                   activityPrefix: String,
+                                   syncScope: CoroutineScope,
+                                   onlyIfAwait: Boolean) {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-
-    val syncPreloadFutures = mutableListOf<CompletableFuture<*>>()
-    val asyncPreloadFutures = mutableListOf<CompletableFuture<*>>()
     for (session in sessionsManager.getSessions(true)) {
       session as? ClientSessionImpl ?: continue
-      val sessionResult = session.preloadServices(modules, activityPrefix, onlyIfAwait)
-      syncPreloadFutures.add(sessionResult.sync)
-      asyncPreloadFutures.add(sessionResult.async)
+      session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
     }
-
-    return PreloadServicesResult(
-      sync = CompletableFuture.allOf(result.sync, *syncPreloadFutures.toTypedArray()),
-      async = CompletableFuture.allOf(result.async, *asyncPreloadFutures.toTypedArray())
-    )
   }
 
   override fun isPreInitialized(component: Any): Boolean {

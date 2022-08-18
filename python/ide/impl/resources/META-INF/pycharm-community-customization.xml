@@ -46,6 +46,8 @@
                         serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
                         overrides="true"/>
 
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator"/>
+
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"
                                     order="before py-function"/>
@@ -64,9 +66,8 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.newProject.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.welcome.PyWelcomeCollector"/>
-    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Python interpreter configuring" displayType="BALLOON"/>
-    <notificationGroup id="Packaging" displayType="BALLOON"/>
+    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+      bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 

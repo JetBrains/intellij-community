@@ -72,8 +72,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
       WriteCommandAction.writeCommandAction(project, file).run(() -> {
         final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                     chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.getOptions());
       });
     }
     else {

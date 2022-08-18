@@ -9,9 +9,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
@@ -81,5 +83,38 @@ class WorkspaceModelTest {
     }
 
     assertFalse(updated)
+  }
+
+  @Test
+  fun `exception at event handling not affect storage applying `() {
+    val firstModuleName = "MyModule"
+    val secondModuleName = "AnotherModule"
+
+
+    WorkspaceModelTopics.getInstance(projectModel.project)
+      .subscribeImmediately(projectModel.project.messageBus.connect(), object : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+          throw IllegalAccessError()
+        }
+      })
+
+    val model = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
+    model.userWarningLoggingLevel = true
+
+    runWriteActionAndWait {
+      model.updateProjectModel {
+        it.addModuleEntity(firstModuleName, emptyList(), object : EntitySource {})
+      }
+    }
+
+    runWriteActionAndWait {
+      model.updateProjectModel {
+        it.addModuleEntity(secondModuleName, emptyList(), object : EntitySource {})
+      }
+    }
+
+    val entities = model.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    assertEquals(2, entities.size)
+    assertEquals(setOf(firstModuleName, secondModuleName), entities.map { it.name }.toSet())
   }
 }

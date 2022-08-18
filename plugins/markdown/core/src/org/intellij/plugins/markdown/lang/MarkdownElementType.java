@@ -64,10 +64,11 @@ public class MarkdownElementType extends IElementType {
         || markdownType == GFMTokenTypes.CELL) {
       result = new MarkdownLazyElementType(markdownType.toString());
     }
+    else if (isHeaderElementType(markdownType)) {
+      result = new MarkdownHeaderStubElementType(markdownType.toString());
+    }
     else {
-      result = isHeaderElementType(markdownType)
-               ? new MarkdownHeaderStubElementType(markdownType.toString())
-               : new MarkdownElementType(markdownType.toString());
+      result = new MarkdownElementType(markdownType.toString());
     }
     markdownToPlatformTypeMap.put(markdownType, result);
     platformToMarkdownTypeMap.put(result, markdownType);

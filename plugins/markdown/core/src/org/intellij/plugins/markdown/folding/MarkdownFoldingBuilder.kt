@@ -15,11 +15,11 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil.processContainer
 
 internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
@@ -29,6 +29,9 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     root.accept(object: MarkdownElementVisitor() {
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
+        if (element.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER)) {
+          addDescriptors(element)
+        }
         element.acceptChildren(this)
       }
 
@@ -62,7 +65,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitCodeFence(codeFence)
       }
 
-      private fun addDescriptors(element: MarkdownPsiElement) {
+      private fun addDescriptors(element: PsiElement) {
         addDescriptors(element, element.textRange, descriptors, document)
       }
     })
@@ -82,11 +85,11 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     return false
   }
 
-  private class HeaderRegionsBuildingVisitor(private val regionConsumer: (MarkdownPsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
+  private class HeaderRegionsBuildingVisitor(private val regionConsumer: (PsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
     private var lastProcessedHeader: MarkdownHeader? = null
 
     override fun visitHeader(header: MarkdownHeader) {
-      processContainer(header, {}) { nextHeader ->
+      MarkdownPsiStructureUtil.processContainer(header, {}) { nextHeader ->
         val regionEnd = skipNewLinesBackward(nextHeader)
         createRegionIfNeeded(header, regionEnd)
       }
@@ -146,10 +149,11 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
       MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
       MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
-      MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name")
+      MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
+      MarkdownElementTypes.FRONT_MATTER_HEADER to "front matter"
     )
 
-    private fun addDescriptors(element: MarkdownPsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
+    private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
       if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
         descriptors.add(FoldingDescriptor(element, range))
       }

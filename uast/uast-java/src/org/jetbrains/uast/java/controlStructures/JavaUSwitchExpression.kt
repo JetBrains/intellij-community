@@ -168,7 +168,7 @@ internal class DummyYieldExpression(
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  override val expression: UExpression? by lz { JavaConverter.convertExpression(expressionPsi, this) }
+  override val expression: UExpression? by lz { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -1,1 +1,0 @@
-public abstract class ImplementedAtRuntimeJamElementImpl implements com.intellij.jam.JamElement {}

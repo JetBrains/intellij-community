@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathParserDefinition implements ParserDefinition {
+    public static final IFileElementType FILE = new IFileElementType("XPATH_FILE", XPathFileType.XPATH.getLanguage());
 
     @Override
     @NotNull
@@ -40,7 +41,7 @@ public class XPathParserDefinition implements ParserDefinition {
 
     @Override
     public @NotNull IFileElementType getFileNodeType() {
-      return XPathElementTypes.FILE;
+      return FILE;
     }
 
     @Override

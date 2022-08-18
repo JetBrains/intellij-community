@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
@@ -137,7 +136,8 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       try {
         UIUtil.dispatchAllInvocationEvents();
       }
-      catch (MyException e) {
+      catch (Throwable e) {
+        assertTrue(e.toString(), ExceptionUtil.causedBy(e, MyException.class));
         break;
       }
       assertFalse(t.timedOut());
@@ -161,7 +161,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getInstance().execute(()->throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
     checkMyExceptionThrownImmediately();
   }
 
@@ -185,21 +185,21 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       run.set(true);
       ExceptionUtil.rethrow(toThrow);
     });
-    AtomicReference<Throwable> error = new AtomicReference<>();
-    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
-      @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        assertNull(error.get());
-        error.set(t);
-        return false;
-      }
-    }, () -> {
+    Runnable runnable = () -> {
       IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
       ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
-    });
-
+    };
+    
+    Throwable error;
+    if (expectedToBeLogged != null) {
+      error = LoggedErrorProcessor.executeAndReturnLoggedError(runnable);
+    }
+    else {
+      runnable.run();
+      error = null;
+    }
     assertTrue(run.get());
-    assertSame(expectedToBeLogged, error.get());
+    assertSame(expectedToBeLogged, error);
   }
 
   public void testPumpEventsForHierarchyMustExitOnIsCancelEventCondition() {

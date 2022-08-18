@@ -57,10 +57,6 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   public LineAnnotationAspect[] getAspects() {
     return new LineAnnotationAspect[]{
       revisionAnnotationAspect,

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -26,7 +27,6 @@ public class CleanUnshelvedAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
     final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
     if (project == null) {
@@ -35,6 +35,11 @@ public class CleanUnshelvedAction extends DumbAwareAction {
     }
     presentation.setVisible(true);
     presentation.setEnabled(!ShelveChangesManager.getInstance(project).getRecycledShelvedChangeLists().isEmpty());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.refactoring.move.moveMethod
 
 import com.intellij.ide.util.EditorHelper
@@ -18,7 +18,8 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
@@ -26,8 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinMoveTar
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.search.projectScope
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
@@ -144,7 +144,7 @@ class MoveKotlinMethodProcessor(
                     val callExpression = expression.parent as? KtCallExpression ?: return
                     escalateTargetVariableVisibilityIfNeeded(
                         callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny(),
-                        callExpression.getResolutionFacade().getLanguageVersionSettings()
+                        callExpression.getResolutionFacade().languageVersionSettings
                     )
 
                     val oldReceiver = callExpression.getQualifiedExpressionForSelector()?.receiverExpression

@@ -1,17 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
 import com.sun.jdi.*
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder.Result
-import org.jetbrains.kotlin.idea.debugger.isSubtype
+import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
-import org.jetbrains.org.objectweb.asm.Type as AsmType
-import com.sun.jdi.Type as JdiType
 import kotlin.jvm.internal.Ref
+import com.sun.jdi.Type as JdiType
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 @Suppress("SpellCheckingInspection")
 class EvaluatorValueConverter(val context: ExecutionContext) {
@@ -26,6 +26,20 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             "java/lang/Long" to "longValue",
             "java/lang/Double" to "doubleValue"
         )
+
+        fun unref(value: Value?): Value? {
+            if (value !is ObjectReference) {
+                return value
+            }
+
+            val type = value.type()
+            if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
+                return value
+            }
+
+            val field = type.fieldByName("element") ?: return value
+            return value.getValue(field)
+        }
     }
 
     // Nearly accurate: doesn't do deep checks for Ref wrappers. Use `coerce()` for more precise check.
@@ -58,11 +72,11 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
     }
 
     fun coerce(value: Value?, type: AsmType): Result? {
-        val unrefResult = coerceRef(value, type) ?: return null
+        val unrefResult = coerceRef(value, type)
         return coerceBoxing(unrefResult.value, type)
     }
 
-    private fun coerceRef(value: Value?, type: AsmType): Result? {
+    private fun coerceRef(value: Value?, type: AsmType): Result {
         when {
             type.isRefType -> {
                 if (value != null && value.asmType().isRefType) {
@@ -156,12 +170,12 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
         return context.invokeMethod(value, valueMethod, emptyList())
     }
 
-    private fun ref(value: Value?): Value? {
+    private fun ref(value: Value?): Value {
         if (value is VoidValue) {
             return value
         }
 
-        fun wrapRef(value: Value?, refTypeClass: ClassType): Value? {
+        fun wrapRef(value: Value?, refTypeClass: ClassType): Value {
             val constructor = refTypeClass.methods().single { it.isConstructor }
             val ref = context.newInstance(refTypeClass, constructor, emptyList())
             context.keepReference(ref)
@@ -186,20 +200,6 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
 
             return wrapRef(value, refTypeClass)
         }
-    }
-
-    fun unref(value: Value?): Value? {
-        if (value !is ObjectReference) {
-            return value
-        }
-
-        val type = value.type()
-        if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
-            return value
-        }
-
-        val field = type.fieldByName("element") ?: return value
-        return value.getValue(field)
     }
 }
 

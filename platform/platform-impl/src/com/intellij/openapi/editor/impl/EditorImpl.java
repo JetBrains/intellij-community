@@ -1006,46 +1006,60 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.throwDisposalError(msg);
   }
 
+  private final Object NON_RELEASABLE_BLOCK_GUARD = ObjectUtils.sentinel("NON_RELEASABLE_BLOCK_GUARD");
+  /**
+   * During execution of this method, the {@link #release()} call from the other thread is not allowed to run.
+   * Can be useful when you need to guarantee the editor is still alive at some point.
+   */
+  @ApiStatus.Internal
+  public void executeNonCancelableBlock(@NotNull Runnable runnable) {
+    synchronized (NON_RELEASABLE_BLOCK_GUARD) {
+      runnable.run();
+    }
+  }
+  
   // EditorFactory.releaseEditor should be used to release editor
   void release() {
     assertIsDispatchThread();
-    if (isReleased) {
-      throwDisposalError("Double release of editor:");
-    }
-    myTraceableDisposable.kill(null);
+    executeNonCancelableBlock(()->{
+      if (isReleased) {
+        throwDisposalError("Double release of editor:");
+      }
+      myTraceableDisposable.kill(null);
 
-    isReleased = true;
-    mySizeAdjustmentStrategy.cancelAllRequests();
-    cancelAutoResetForMouseSelectionState();
+      isReleased = true;
+      mySizeAdjustmentStrategy.cancelAllRequests();
+      cancelAutoResetForMouseSelectionState();
 
-    myFoldingModel.dispose();
-    mySoftWrapModel.release();
-    myMarkupModel.dispose();
+      myFoldingModel.dispose();
+      mySoftWrapModel.release();
+      myMarkupModel.dispose();
 
-    myScrollingModel.dispose();
-    myGutterComponent.dispose();
-    myMousePressedEvent = null;
-    myMouseMovedEvent = null;
-    Disposer.dispose(myCaretModel);
-    Disposer.dispose(mySoftWrapModel);
-    Disposer.dispose(myView);
-    clearCaretThread();
+      myScrollingModel.dispose();
+      myGutterComponent.dispose();
+      myMousePressedEvent = null;
+      myMouseMovedEvent = null;
+      Disposer.dispose(myCaretModel);
+      Disposer.dispose(mySoftWrapModel);
+      Disposer.dispose(myView);
+      clearCaretThread();
 
-    myFocusListeners.clear();
-    myMouseListeners.clear();
-    myMouseMotionListeners.clear();
+      myFocusListeners.clear();
+      myMouseListeners.clear();
+      myMouseMotionListeners.clear();
 
-    myEditorComponent.removeFocusListener(this);
+      myEditorComponent.removeFocusListener(this);
 
-    myEditorComponent.removeMouseListener(myMouseListener);
-    myGutterComponent.removeMouseListener(myMouseListener);
-    myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
-    myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
+      myEditorComponent.removeMouseListener(myMouseListener);
+      myGutterComponent.removeMouseListener(myMouseListener);
+      myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
+      myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    CodeStyleSettingsManager.removeListener(myProject, this);
+      CodeStyleSettingsManager.removeListener(myProject, this);
 
-    Disposer.dispose(myDisposable);
-    myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+      Disposer.dispose(myDisposable);
+      myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+    });
   }
 
   private void clearCaretThread() {
@@ -1250,7 +1264,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int getFontSize() {
     return myScheme.getEditorFontSize();
   }
-
+  
   public float getFontSize2D() {
     return myScheme.getEditorFontSize2D();
   }
@@ -1972,7 +1986,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
-    header = header == null ? getPermanentHeaderComponent() : header;
+    JComponent permanentHeader = getPermanentHeaderComponent();
+    if (header == null) {
+      header = permanentHeader;
+    }
+    else if (permanentHeader != null && header != permanentHeader) {
+      JPanel headerPanel = new JPanel(new BorderLayout());
+      headerPanel.add(permanentHeader, BorderLayout.NORTH);
+      headerPanel.add(header, BorderLayout.SOUTH);
+      header = headerPanel;
+    }
     if (header != null) {
       myHeaderPanel.add(header);
     }
@@ -2086,13 +2109,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable
   public TextRange getComposedTextRange() {
-    return myInputMethodRequestsHandler == null || myInputMethodRequestsHandler.composedText == null ?
-           null : myInputMethodRequestsHandler.composedTextRange;
+    return myInputMethodRequestsHandler == null ? null : myInputMethodRequestsHandler.getRange();
   }
 
   private boolean composedTextExists() {
     return myInputMethodRequestsHandler != null &&
-           myInputMethodRequestsHandler.composedText != null;
+           myInputMethodRequestsHandler.composedRangeMarker != null;
   }
 
   @Override
@@ -3252,6 +3274,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void performCopy(@NotNull DataContext dataContext) {
       executeAction(IdeActions.ACTION_EDITOR_COPY, dataContext);
     }
@@ -3264,7 +3291,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return PlatformUtils.isDataGrip() && caret != null
+      return caret != null
              ? isCaretInsideSelection(caret)
              : getSelectionModel().hasSelection(true);
     }
@@ -3283,7 +3310,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isCutVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
       return isCutEnabled(dataContext) &&
-             (PlatformUtils.isDataGrip() && caret != null
+             (caret != null
               ? isCaretInsideSelection(caret)
               : getSelectionModel().hasSelection(true));
     }
@@ -3573,8 +3600,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyInputMethodHandler implements InputMethodRequests {
-    private String composedText;
-    private ProperTextRange composedTextRange;
+    private RangeMarker composedRangeMarker;
+
+    @Nullable
+    private ProperTextRange getRange() {
+      if (composedRangeMarker == null) return null;
+      return new ProperTextRange(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
+    }
 
     @NotNull
     @Override
@@ -3590,13 +3622,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     @Nullable
     public TextHitInfo getLocationOffset(int x, int y) {
-      if (composedText != null) {
+      if (composedRangeMarker != null) {
         Point p = getLocationOnScreen(getContentComponent());
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
-        if (composedTextRange.containsOffset(pos)) {
-          return TextHitInfo.leading(pos - composedTextRange.getStartOffset());
+        if (composedRangeMarker.getStartOffset() <= pos && pos <= composedRangeMarker.getEndOffset()) {
+          return TextHitInfo.leading(pos - composedRangeMarker.getStartOffset());
         }
       }
       return null;
@@ -3623,9 +3655,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public int getInsertPositionOffset() {
       int composedStartIndex = 0;
       int composedEndIndex = 0;
-      if (composedText != null) {
-        composedStartIndex = composedTextRange.getStartOffset();
-        composedEndIndex = composedTextRange.getEndOffset();
+      if (composedRangeMarker != null) {
+        composedStartIndex = composedRangeMarker.getStartOffset();
+        composedEndIndex = composedRangeMarker.getEndOffset();
       }
 
       int caretIndex = getCaretModel().getOffset();
@@ -3654,9 +3686,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
       int composedStartIndex = 0;
       int composedEndIndex = 0;
-      if (composedText != null) {
-        composedStartIndex = composedTextRange.getStartOffset();
-        composedEndIndex = composedTextRange.getEndOffset();
+      if (composedRangeMarker != null) {
+        composedStartIndex = composedRangeMarker.getStartOffset();
+        composedEndIndex = composedRangeMarker.getEndOffset();
       }
 
       String committed;
@@ -3679,8 +3711,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getCommittedTextLength() {
       int length = getDocument().getTextLength();
-      if (composedText != null) {
-        length -= composedText.length();
+      if (composedRangeMarker != null) {
+        length -= composedRangeMarker.getEndOffset() - composedRangeMarker.getStartOffset();
       }
       return length;
     }
@@ -3713,8 +3745,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
-      if (composedText != null) {
-        int dot = composedTextRange.getStartOffset();
+      if (composedRangeMarker != null) {
+        int dot = composedRangeMarker.getStartOffset();
 
         TextHitInfo caretPos = e.getCaret();
         if (caretPos != null) {
@@ -3745,7 +3777,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component we need this workaround.
-        // After https://bugs.openjdk.java.net/browse/JDK-8074882 is fixed, this workaround should be replaced with a proper solution.
+        // After https://bugs.openjdk.org/browse/JDK-8074882 is fixed, this workaround should be replaced with a proper solution.
         myNeedToSelectPreviousChar = false;
         getCaretModel().runForEachCaret(caret -> {
           int caretOffset = caret.getOffset();
@@ -3764,26 +3796,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // old composed text deletion
       final Document doc = getDocument();
 
-      if (composedText != null) {
+      if (composedRangeMarker != null) {
         if (!isViewer() && doc.isWritable()) {
+          int composedStartIndex = composedRangeMarker.getStartOffset();
           runUndoTransparent(() -> {
-            int docLength = doc.getTextLength();
-            ProperTextRange range = composedTextRange.intersection(new TextRange(0, docLength));
-            if (range != null) {
-              doc.deleteString(range.getStartOffset(), range.getEndOffset());
+            if (composedRangeMarker.isValid()) {
+              doc.deleteString(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
             }
           });
-          isCaretMoved = getCaretModel().getOffset() != composedTextRange.getStartOffset();
+          isCaretMoved = getCaretModel().getOffset() != composedStartIndex;
           if (isCaretMoved) {
             caretPositionToRestore = getCaretModel().getCurrentCaret().getOffset();
-            // if caret set furter in the doc, we should add commitCount
-            if (caretPositionToRestore > composedTextRange.getStartOffset()) {
+            // if caret set further in the doc, we should add commitCount
+            if (caretPositionToRestore > composedStartIndex) {
               caretPositionToRestore += commitCount;
             }
-            getCaretModel().moveToOffset(composedTextRange.getStartOffset());
+            getCaretModel().moveToOffset(composedStartIndex);
           }
         }
-        composedText = null;
+        composedRangeMarker.dispose();
+        composedRangeMarker = null;
       }
 
       if (text != null) {
@@ -3806,8 +3838,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
             runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
 
-            composedText = composedString;
-            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedString.length());
+            composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
           }
         }
       }
@@ -4464,6 +4495,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private String myFaceName;
     private Float myLineSpacing;
     private boolean myFontPreferencesAreSetExplicitly;
+    private Boolean myUseLigatures;
 
     private MyColorSchemeDelegate(@Nullable EditorColorsScheme globalScheme) {
       super(globalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : globalScheme);
@@ -4476,12 +4508,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String editorFontName = getEditorFontName();
       float editorFontSize = getEditorFontSize2D();
       if (!myFontPreferencesAreSetExplicitly) {
-        updatePreferences(myFontPreferences, editorFontName, editorFontSize,
+        updatePreferences(myFontPreferences, editorFontName, editorFontSize, myUseLigatures,
                           delegate == null ? null : delegate.getFontPreferences());
       }
       String consoleFontName = getConsoleFontName();
       float consoleFontSize = getConsoleFontSize2D();
-      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize,
+      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize, myUseLigatures,
                         delegate == null ? null : delegate.getConsoleFontPreferences());
 
       myFontsMap = new EnumMap<>(EditorFontType.class);
@@ -4502,12 +4534,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          @NotNull FontPreferences fontPreferences) {
       Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                                 style, fontSize);
-      myFontsMap.put(fontType, EditorFontCacheImpl.deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
+      myFontsMap.put(fontType, EditorFontCacheImpl.deriveFontWithLigatures(baseFont, myUseLigatures != null ? myUseLigatures : fontPreferences.useLigatures()));
     }
 
     private void updatePreferences(@NotNull FontPreferencesImpl preferences,
                                    @NotNull String fontName,
                                    float fontSize,
+                                   Boolean useLigatures,
                                    @Nullable FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
@@ -4520,7 +4553,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           first = false;
         }
       }
-      preferences.setUseLigatures(delegatePreferences != null && delegatePreferences.useLigatures());
+      preferences.setUseLigatures(useLigatures != null ? useLigatures : (delegatePreferences != null && delegatePreferences.useLigatures()));
       preferences.setRegularSubFamily(delegatePreferences == null ? null : delegatePreferences.getRegularSubFamily());
       preferences.setBoldSubFamily(delegatePreferences == null ? null : delegatePreferences.getBoldSubFamily());
     }
@@ -4731,6 +4764,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (oldLineSpacing != newLineSpacing) {
         reinitSettings();
       }
+    }
+
+    @Override
+    public boolean isUseLigatures() {
+      return myUseLigatures == null ? super.isUseLigatures() : myUseLigatures;
+    }
+
+    @Override
+    public void setUseLigatures(boolean useLigatures) {
+      myUseLigatures = useLigatures;
+      reinitFontsAndSettings();
     }
   }
 
@@ -5073,11 +5117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (size >= MIN_FONT_SIZE) {
             setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-              EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-              if (myScheme instanceof MyColorSchemeDelegate) {
-                ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
-              }
-              ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+              adjustGlobalFontSize(size);
             }
           }
           return;
@@ -5104,6 +5144,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.setupCorners();
       setBorder(new TablessBorder());
     }
+  }
+
+  public void adjustGlobalFontSize(float size) {
+    EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
+    if (myScheme instanceof MyColorSchemeDelegate) {
+      ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
+    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

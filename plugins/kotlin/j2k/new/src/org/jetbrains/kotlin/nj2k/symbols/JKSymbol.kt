@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.nj2k.symbols
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
 import org.jetbrains.kotlin.nj2k.tree.JKFile
@@ -51,12 +50,12 @@ interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
                 ?.let { symbolProvider.provideUniverseSymbol(it) }
 }
 
-interface JKMultiverseSymbol<T> : JKSymbol where T : PsiNamedElement, T : PsiElement {
+interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
     override val target: T
     override val declaredIn: JKSymbol?
         get() = target.getStrictParentOfType<PsiMember>()?.let { symbolProvider.provideDirectSymbol(it) }
     override val fqName: String
-        get() = target.getKotlinFqName()?.asString() ?: name
+        get() = target.kotlinFqName?.asString() ?: name
     override val name: String
         get() = target.name!!
 }

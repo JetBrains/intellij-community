@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
@@ -32,8 +33,13 @@ import java.util.function.Consumer;
 public abstract class JavaParsingTestCase extends ParsingTestCase {
   private LanguageLevel myLanguageLevel;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public JavaParsingTestCase(String dataPath) {
-    super("psi/" + dataPath, "java", new JavaParserDefinition());
+    this(dataPath, "java", new JavaParserDefinition());
+  }
+
+  public JavaParsingTestCase(String dataPath, String fileExt, ParserDefinition... parserDefinitions) {
+    super("psi/" + dataPath, fileExt, parserDefinitions);
   }
 
   @Override

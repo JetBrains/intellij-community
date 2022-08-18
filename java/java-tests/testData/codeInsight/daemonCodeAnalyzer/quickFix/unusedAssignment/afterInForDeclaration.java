@@ -1,4 +1,4 @@
-// "Remove redundant initializer" "true"
+// "Remove redundant initializer" "true-preview"
 class A {
 void testFor() {
         if (true) {

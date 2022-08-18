@@ -1,6 +1,6 @@
 fun a() {
     val somelong = 3 + 4 - (
-                           <caret>
+            <caret>
                            )
 }
 

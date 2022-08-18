@@ -126,7 +126,6 @@ private class MasterModel(private val modTracker: SimpleModificationTracker = Si
   @Volatile
   private var entries: MutableList<String> = mutableListOf()
 
-  @Suppress("UNCHECKED_CAST")
   override fun getEntries(): MutableList<String> = entries.toMutableList()
 
   override fun resetEntries(ent: List<String>) {

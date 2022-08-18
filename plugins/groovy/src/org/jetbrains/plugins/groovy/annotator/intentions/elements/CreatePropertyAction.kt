@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.lang.jvm.JvmModifier
@@ -30,6 +31,10 @@ internal class CreatePropertyAction(
   override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 
   override fun getFamilyName(): String = message("create.property.from.usage.family")
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    return CreateFieldAction(target, PropertyRequest(), false).generatePreview(project, editor, file)
+  }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     if (!super.isAvailable(project, editor, file)) return false

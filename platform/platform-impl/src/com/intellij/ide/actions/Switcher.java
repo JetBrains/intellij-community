@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -173,13 +173,14 @@ public final class Switcher extends BaseSwitcherAction {
       }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
-      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       if (pinned) {
+        registerAction(this::hideSpeedSearchOrPopup, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE));
         registerAction(this::closeTabOrToolWindow, ActionUtil.getShortcutSet("DeleteRecentFiles"));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
       }
       else {
+        registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
         registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
         registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
@@ -771,11 +772,11 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
+    private void registerAction(@NotNull Consumer<? super InputEvent> action, @NonNls String @NotNull ... keys) {
       registerAction(action, onKeyRelease.getShortcuts(keys));
     }
 
-    private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
+    private void registerAction(@NotNull Consumer<? super InputEvent> action, @NotNull ShortcutSet shortcuts) {
       if (shortcuts.getShortcuts().length == 0) return; // ignore empty shortcut set
       LightEditActionFactory.create(event -> {
         if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());

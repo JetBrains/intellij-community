@@ -1,18 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.detection
 
+import ai.grazie.detector.ChainLanguageDetector
+import ai.grazie.detector.DefaultLanguageDetectors
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.tokenizer.word.WhitespaceWordTokenizer.words
+import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
-import com.intellij.grazie.detector.ChainLanguageDetector
-import com.intellij.grazie.detector.DefaultLanguageDetectors
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.utils.resources.JVMResourceLoader
-import com.intellij.grazie.detector.utils.words
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 
 object LangDetector {
-  private val detector by lazy { DefaultLanguageDetectors.standard(JVMResourceLoader) }
+  private val detector by lazy {
+    runBlocking {
+      DefaultLanguageDetectors.standardForLanguages(
+        Language.all.toLinkedSet(),
+        FromResourcesDataLoader
+      )
+    }
+  }
   private val cache = ContainerUtil.createConcurrentSoftValueMap<Pair<String, Boolean>, ChainLanguageDetector.ChainDetectionResult>()
   private const val textLimit = 1_000
 
@@ -28,7 +37,6 @@ object LangDetector {
    *
    * @return Language that is detected.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   fun getLanguage(text: String): Language? {
     val detected = detectWithDetails(text.take(textLimit), isReliable = false).result.preferred
     return if (detected == Language.UNKNOWN) null else detected

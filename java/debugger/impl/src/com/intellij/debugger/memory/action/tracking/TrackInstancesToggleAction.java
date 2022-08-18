@@ -16,6 +16,7 @@
 package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.memory.action.ActionUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,6 +36,11 @@ public class TrackInstancesToggleAction extends ToggleAction {
     else {
       super.update(e);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

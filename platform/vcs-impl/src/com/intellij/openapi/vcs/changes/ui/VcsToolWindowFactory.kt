@@ -62,6 +62,14 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       // must be executed later, because we set toolWindow.isAvailable (cannot be called in the init directly)
       ApplicationManager.getApplication().invokeLater({ updateState(window) }, window.project.disposed)
     }
+
+    val contentManager = window.contentManager
+    contentManager.addDataProvider { dataId ->
+      when {
+        ChangesViewContentManager.CONTENT_TAB_NAME_KEY.`is`(dataId) -> contentManager.selectedContent?.tabName
+        else -> null
+      }
+    }
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -152,7 +160,7 @@ private fun getExtensions(toolWindow: ToolWindow): Sequence<ChangesViewContentEP
 private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
   val displayName = extension.getDisplayName(project) ?: extension.tabName
 
-  return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), displayName, false).apply {
+  return ContentFactory.getInstance().createContent(JPanel(null), displayName, false).apply {
     isCloseable = false
     tabName = extension.tabName //NON-NLS overridden by displayName above
     putUserData(CHANGES_VIEW_EXTENSION, extension)

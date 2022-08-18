@@ -22,7 +22,17 @@ enum class DslComponentProperty {
    *
    * Value: [Gaps]
    */
-  VISUAL_PADDINGS
+  VISUAL_PADDINGS,
+
+  /**
+   * By default, almost every control have [SpacingConfiguration.verticalComponentGap] above and below it.
+   * This flag disables such gap below the control. Should be used in very rare situations (e.g. row with label **and** some additional
+   * label-kind controls above related to the label control), because most standard cases are covered by Kotlin UI DSL API
+   *
+   * Value: [Boolean]
+   */
+  NO_BOTTOM_GAP
+
 }
 
 /**

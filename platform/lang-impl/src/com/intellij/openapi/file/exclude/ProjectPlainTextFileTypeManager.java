@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * @author Rustam Vishnyakov
  * @deprecated use {@link OverrideFileTypeManager} instead
  */
 @Deprecated(forRemoval = true)

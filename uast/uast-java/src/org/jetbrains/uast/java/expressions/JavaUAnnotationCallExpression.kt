@@ -46,7 +46,7 @@ class JavaUAnnotationCallExpression(
 
   override val classReference: UReferenceExpression? by lz {
     sourcePsi.nameReferenceElement?.let { ref ->
-      JavaConverter.convertReference(ref, this) as? UReferenceExpression
+      JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
     }
   }
 

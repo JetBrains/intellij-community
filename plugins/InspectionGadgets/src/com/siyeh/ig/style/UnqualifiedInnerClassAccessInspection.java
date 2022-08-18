@@ -129,7 +129,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
       final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
       ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = documentManager.getDocument(containingFile);
+      final Document document = containingFile.getViewProvider().getDocument();
       if (document == null) {
         return;
       }
@@ -212,10 +212,10 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     }
 
     @Override
-    public void visitImportList(PsiImportList list) { }
+    public void visitImportList(@NotNull PsiImportList list) { }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (reference.isQualified()) {
         return;
@@ -243,7 +243,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
@@ -255,7 +255,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
   private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (reference.isQualified()) {
         return;
@@ -285,7 +285,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }

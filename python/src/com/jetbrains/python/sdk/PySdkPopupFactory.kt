@@ -20,8 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.PyAddSdkDialog
-import java.util.function.Consumer
 
 class PySdkPopupFactory(val project: Project, val module: Module) {
 
@@ -76,13 +74,13 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
     if (Registry.get("python.use.targets.api").asBoolean()) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(it, currentSdk) })
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(module, it, currentSdk) })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
     group.add(InterpreterSettingsAction())
     if (!Registry.get("python.use.targets.api").asBoolean()) {
-      group.add(AddInterpreterAction(currentSdk))
+      group.add(AddInterpreterAction(project, module, currentSdk))
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
@@ -98,18 +96,6 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
-  private fun switchToSdk(sdk: Sdk, currentSdk: Sdk?) {
-    (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-
-    removeTransferredRootsFromModulesWithInheritedSdk(project, currentSdk)
-    project.pythonSdk = sdk
-    transferRootsToModulesWithInheritedSdk(project, sdk)
-
-    removeTransferredRoots(module, currentSdk)
-    module.pythonSdk = sdk
-    transferRoots(module, sdk)
-  }
-
   private inner class SwitchToSdkAction(val sdk: Sdk, val currentSdk: Sdk?) : DumbAwareAction() {
 
     init {
@@ -119,33 +105,12 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
       presentation.icon = icon(sdk)
     }
 
-    override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk, currentSdk)
+    override fun actionPerformed(e: AnActionEvent) = switchToSdk(module, sdk, currentSdk)
   }
 
   private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
       PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
-    }
-  }
-
-  private inner class AddInterpreterAction(val currentSdk: Sdk?)
-    : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val model = PyConfigurableInterpreterList.getInstance(project).model
-
-      PyAddSdkDialog.show(
-        project,
-        module,
-        model.sdks.asList(),
-        Consumer {
-          if (it != null && model.findSdk(it.name) == null) {
-            model.addSdk(it)
-            model.apply()
-            switchToSdk(it, currentSdk)
-          }
-        }
-      )
     }
   }
 }

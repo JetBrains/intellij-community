@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -194,7 +195,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     if (process != null && key != null) {
       Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
-        return data.get(key);
+        return data.get(getKey(key));
       }
     }
     return null;
@@ -207,7 +208,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
+    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
     MyEvaluator(String expression) {
       myExpression = expression;

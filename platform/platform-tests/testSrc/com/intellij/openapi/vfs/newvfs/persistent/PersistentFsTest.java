@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,10 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -158,21 +156,19 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testDeleteSubstRoots() {
     IoTestUtil.assumeWindows();
+    Ref<VirtualFile> subst = new Ref<>();
+    Ref<String> substPath = new Ref<>();
 
-    File substRoot = IoTestUtil.createSubst(tempDirectory.getRoot().getPath());
-    VirtualFile subst;
-    try {
-      subst = refreshAndFind(substRoot);
+    IoTestUtil.performTestOnWindowsSubst(tempDirectory.getRoot().getPath(), substRoot -> {
+      substPath.set(substRoot.getPath());
+      subst.set(refreshAndFind(substRoot));
       assertNotNull(substRoot.listFiles());
-    }
-    finally {
-      IoTestUtil.deleteSubst(substRoot.getPath());
-    }
-    subst.refresh(false, true);
+    });
+    subst.get().refresh(false, true);
 
     VirtualFile[] roots = PersistentFS.getInstance().getRoots(LocalFileSystem.getInstance());
     for (VirtualFile root : roots) {
-      String prefix = StringUtil.commonPrefix(root.getPath(), substRoot.getPath());
+      String prefix = StringUtil.commonPrefix(root.getPath(), substPath.get());
       assertTrue(prefix, prefix.isEmpty());
     }
   }
@@ -207,7 +203,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int[] logCount = {0};
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processWarn(@NotNull String category, String message, Throwable t) {
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
         return super.processWarn(category, message, t);
       }
@@ -389,7 +385,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         }
       });
 
-      WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(Arrays.asList(eventsToApply)));
+      WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, List.of(eventsToApply)));
     }
     finally {
       connection.disconnect();

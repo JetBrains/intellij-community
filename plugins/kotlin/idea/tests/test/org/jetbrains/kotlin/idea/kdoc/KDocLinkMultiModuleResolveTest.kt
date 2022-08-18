@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -73,7 +73,7 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         val bindingContext = targetElement.analyze()
         val descriptor = bindingContext[DECLARATION_TO_DESCRIPTOR, targetElement]!!
-        val kdoc = descriptor.findKDoc()!! as KDocSection
+        val kdoc = descriptor.findKDoc()!!.contentTag as KDocSection
         val resolutionFacade = targetElement.getResolutionFacade()
         assertNotEmpty(resolveKDocLink(bindingContext, resolutionFacade, descriptor, kdoc.findTagByName("sample")!!, link.split(".")))
     }

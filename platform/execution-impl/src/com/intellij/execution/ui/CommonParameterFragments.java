@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                    100,
                                    (settings, component) -> component.setText(settings.getProgramParameters()),
                                    (settings, component) -> settings.setProgramParameters(component.getText()),
-                                   settings -> true);
+                                   Predicates.alwaysTrue());
     parameters.setRemovable(false);
     parameters.setEditorGetter(editor -> editor.getEditorField());
     parameters.setHint(ExecutionBundle.message("run.configuration.program.parameters.hint"));
@@ -112,13 +113,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
 
   public static <S extends CommonProgramRunConfigurationParameters>
   SettingsEditorFragment<S, LabeledComponent<TextFieldWithBrowseButton>> createWorkingDirectory(
-    @NotNull Project project
-  ) {
-    return createWorkingDirectory(project, () -> null);
-  }
-
-  public static <S extends CommonProgramRunConfigurationParameters>
-  SettingsEditorFragment<S, LabeledComponent<TextFieldWithBrowseButton>> createWorkingDirectory(
     @NotNull Project project,
     @NotNull Computable<? extends Module> moduleProvider
   ) {
@@ -145,7 +139,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
         field,
         (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
         (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
-        settings -> true
+        Predicates.alwaysTrue()
       );
     workingDirectorySettings.setRemovable(false);
     workingDirectorySettings.setValidation(
@@ -174,7 +168,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                      else
                                        env.apply(settings);
                                    },
-                                   s -> true);
+                                   Predicates.alwaysTrue());
     fragment.setCanBeHidden(true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
@@ -197,7 +191,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
       SettingsEditorFragmentType.HEADER,
       (__, ___) -> {},
       (__, ___) -> {},
-      (__) -> true
+      Predicates.alwaysTrue()
     );
     fragment.setCanBeHidden(false);
     fragment.setRemovable(false);

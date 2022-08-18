@@ -5,6 +5,8 @@ from _typeshed import ReadableBuffer, Self, StrOrBytesPath, WriteableBuffer
 from typing import IO, Any, Iterable, Protocol, TextIO, overload
 from typing_extensions import Literal, SupportsIndex, final
 
+__all__ = ["BZ2File", "BZ2Compressor", "BZ2Decompressor", "open", "compress", "decompress"]
+
 # The following attributes and methods are optional:
 # def fileno(self) -> int: ...
 # def close(self) -> object: ...

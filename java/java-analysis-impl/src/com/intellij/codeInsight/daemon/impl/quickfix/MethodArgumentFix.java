@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -10,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -39,6 +41,12 @@ public abstract class MethodArgumentFix implements IntentionAction {
     }
     return false;
   }
+
+  /**
+   * Must be redefined in subclasses, as there's non-safe field {@link #myArgList} which must be remapped to a target file.
+   */
+  @Override
+  public abstract @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target);
 
   @Override
   public boolean startInWriteAction() {

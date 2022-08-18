@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -32,9 +31,7 @@ internal abstract class MarkdownInsertTableColumnIntention(private val insertAft
     if (cell == null || table == null || editor == null) {
       return
     }
-    executeCommand(project) {
-      table.insertColumn(editor.document, cell.columnIndex, insertAfter, alignment = MarkdownTableSeparatorRow.CellAlignment.LEFT)
-    }
+    table.insertColumn(editor.document, cell.columnIndex, insertAfter, alignment = MarkdownTableSeparatorRow.CellAlignment.LEFT)
   }
 
   class InsertBefore: MarkdownInsertTableColumnIntention(insertAfter = false) {

@@ -101,7 +101,6 @@ public class CommandExecutor {
   /**
    * Indicates if process was destroyed "manually" by command execution logic.
    *
-   * @return
    */
   public boolean isManuallyDestroyed() {
     return myIsDestroyed;
@@ -286,7 +285,6 @@ public class CommandExecutor {
 
   /**
    * Wait for process termination
-   * @param timeout
    */
   public boolean waitFor(int timeout) {
     checkStarted();

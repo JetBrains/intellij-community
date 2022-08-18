@@ -39,13 +39,20 @@ interface StatisticsEventLogger {
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long,
-                                             private val maxFileSizeInBytes: Int) {
+                                             private val maxFileSizeInBytes: Int,
+                                             val sendLogsOnIdeClose: Boolean = false) {
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
               version: Int,
               sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
               maxFileSize: String = "200KB") : this(recorderId, version, sendFrequencyMs, parseFileSize(maxFileSize))
+
+  @Deprecated(message = "Use primary constructor instead")
+  constructor(recorderId: String,
+              version: Int,
+              sendFrequencyMs: Long,
+              maxFileSizeInBytes: Int) : this(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, false)
 
   companion object {
     @JvmStatic

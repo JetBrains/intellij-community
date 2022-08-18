@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PsiCaseLabelElementList extends PsiElement {
   /**
-   * @return list of the elements contained in the list
+   * @return array of the elements contained in the list
    */
   PsiCaseLabelElement @NotNull [] getElements();
 

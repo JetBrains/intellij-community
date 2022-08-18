@@ -38,13 +38,20 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
+  private static final Logger LOG = Logger.getInstance(ActionButton.class);
+
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
   @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /**
-   * By default, a popup action group button displays 'dropdown' icon.
-   * Use this key to avoid suppress that icon for a presentation or a template presentation like this:
+   * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
+   * Set this key to disable the painting of that mark as follows:
+   * <p>
    * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)}.
+   * <p>
+   * Both ordinary and template presentations are supported.
+   *
+   * @see Presentation#setPerformGroup(boolean)
    */
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
@@ -65,18 +72,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean myNoIconsInPopup;
   private Insets myInsets;
-  private boolean myManualUpdate;
 
   public ActionButton(@NotNull AnAction action,
-                      Presentation presentation,
-                      String place,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
                       @NotNull Dimension minimumSize) {
+    boolean isTemplatePresentation = presentation == action.getTemplatePresentation();
+    if (isTemplatePresentation) {
+      LOG.warn(new Throwable("Template presentations must not be used directly"));
+    }
     setMinimumButtonSize(minimumSize);
     setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
     myAction = action;
-    myPresentation = presentation;
+    myPresentation = presentation != null && !isTemplatePresentation ?
+                     presentation : action.getTemplatePresentation().clone();
     myPlace = place;
     // Button should be focusable if screen reader is active
     setFocusable(ScreenReader.isActive());
@@ -124,6 +135,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected final boolean isRollover() {
     return myRollover;
+  }
+
+  protected final boolean isMouseDown() {
+    return myMouseDown;
   }
 
   public final boolean isSelected() {
@@ -227,9 +242,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (!(myAction instanceof ActionGroup)) return false;
     if (myAction instanceof CustomComponentAction) return false;
     if (!event.getPresentation().isPopupGroup()) return false;
-    // do not call potentially slow `canBePerformed` for a button managed by a toolbar
-    if (event.getPresentation().isPerformGroup() ||
-        myManualUpdate && ((ActionGroup)myAction).canBePerformed(event.getDataContext())) return false;
+    if (event.getPresentation().isPerformGroup()) return false;
     return true;
   }
 
@@ -241,6 +254,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener != null) {
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
+    }
+    if (myMouseDown) {
+      ourGlobalMouseDown = false;
     }
     myRollover = false;
     myMouseDown = false;
@@ -264,13 +280,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void update() {
-    myManualUpdate = true;
-    // the following code mirrors the ActionUpdater#updateActionReal code
-    boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup();
-    myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
-    ActionUpdater.assertActionGroupPopupStateIsNotChanged(myAction, myPlace, wasPopup, myPresentation);
     updateToolTipText();
     updateIcon();
   }
@@ -494,7 +505,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
 
-  private static boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+  protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
     return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }
 

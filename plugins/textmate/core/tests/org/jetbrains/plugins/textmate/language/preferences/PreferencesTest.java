@@ -12,8 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class PreferencesTest {
   @Test
@@ -82,6 +81,14 @@ public class PreferencesTest {
     assertEquals(0, smartTypingPairs.size());
   }
 
+  @Test
+  public void loadIndentationRules() throws Exception {
+    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PHP_VSC);
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php")));
+    assertFalse(preferences.getIndentationRules().isEmpty());
+    assertNotNull(preferences.getIndentationRules().getIncreaseIndentPattern());
+  }
+
   @NotNull
   private static PreferencesRegistry loadPreferences(@NotNull String bundleName) throws IOException {
     final Bundle bundle = TestUtil.getBundle(bundleName);
@@ -101,10 +108,12 @@ public class PreferencesTest {
   private static Preferences mergeAll(@NotNull List<Preferences> preferences) {
     Set<TextMateBracePair> highlightingPairs = new HashSet<>();
     Set<TextMateBracePair> smartTypingParis = new HashSet<>();
+    IndentationRules indentationRules = IndentationRules.empty();
 
     for (Preferences preference : preferences) {
       final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
       final Set<TextMateBracePair> localSmartTypingPairs = preference.getSmartTypingPairs();
+      indentationRules = indentationRules.updateWith(preference.getIndentationRules());
       if (localHighlightingPairs != null) {
         highlightingPairs.addAll(localHighlightingPairs);
       }
@@ -112,7 +121,7 @@ public class PreferencesTest {
         smartTypingParis.addAll(localSmartTypingPairs);
       }
     }
-    return new Preferences("", highlightingPairs, smartTypingParis);
+    return new Preferences("", highlightingPairs, smartTypingParis, indentationRules);
   }
 
   private static Set<TextMateBracePair> newHashSet(TextMateBracePair... pairs) {

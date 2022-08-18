@@ -51,7 +51,6 @@ public abstract class XExecutionStack {
   /**
    * Override this method to provide an icon with optional tooltip and popup actions. This icon will be shown on the editor gutter to the
    * left of the execution line when this thread is selected in 'Frames' tab.
-   * @return
    */
   @Nullable
   public GutterIconRenderer getExecutionLineIconRenderer() {

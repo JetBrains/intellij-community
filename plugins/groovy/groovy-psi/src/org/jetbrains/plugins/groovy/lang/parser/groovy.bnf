@@ -63,6 +63,7 @@
     T_RANGE_BOTH_OPEN = '<..<'
     T_DOT = '.'
     T_SAFE_DOT = '?.'
+    T_SAFE_CHAIN_DOT = '??.'
     T_SPREAD_DOT = '*.'
     T_METHOD_CLOSURE = '.&'
     T_METHOD_REFERENCE = '::'
@@ -415,12 +416,12 @@ private parse_class_declaration ::= <<parseTailLeftFlat class_declaration_start 
                                   | <<parseTailLeftFlat naked_method_declaration_start methods_tail>>
 private class_declaration_start ::= declaration_start_modifiers | class_declaration_start_no_modifiers
 
-private class_declaration_start_no_modifiers ::= empty_modifier_list class_declaration_start_after_no_modifiers
+private class_declaration_start_no_modifiers ::= empty_modifier_list mb_type_parameter_list class_declaration_start_after_no_modifiers
 private class_declaration_start_after_no_modifiers ::= class_declaration_start_after_no_modifiers1
                                                      | class_declaration_start_after_no_modifiers2
 private class_declaration_start_after_no_modifiers1 ::= capital_type_element !('(' | '{')
 private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
-private naked_method_declaration_start ::= empty_modifier_list (method_lookahead | compact_constructor_lookahead)
+private naked_method_declaration_start ::= empty_modifier_list mb_type_parameter_list (method_lookahead | compact_constructor_lookahead)
 
 private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
 private methods_tail ::= constructor
@@ -679,8 +680,8 @@ fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy
 
 private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
 private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
-private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
-private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) declaration_lookahead
+private block_declaration_start_no_modifiers ::= empty_modifier_list mb_type_parameter_list block_declaration_type_element
+private block_declaration_type_element ::= (capital_type_element | lowercase_type_element | clear_variants_and_fail) declaration_lookahead
 private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
 private local_variable_declaration ::= <<parseTailLeftFlat block_declaration_start variable_declaration_tail>>
 
@@ -969,7 +970,7 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression>> mb_nl ')' { pin = 1 }
+private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
@@ -1090,7 +1091,7 @@ attribute_expression ::= expression (mb_nl attribute_dot) after_dot
 property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
 
 private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
-private reference_dot ::= '.' | '?.' | '*.' { consumeTokenMethod = 'fast' }
+private reference_dot ::= '.' | '?.' | '??.' | '*.' { consumeTokenMethod = 'fast' }
 private attribute_dot ::= reference_dot mb_nl ('@') { consumeTokenMethod = 'fast' }
 private property_dot ::= attribute_dot | method_reference_dot | reference_dot
 
@@ -1215,7 +1216,7 @@ tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualifie
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
-private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> application*
+private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> (application mb_nl_inside_parentheses)*
 private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
@@ -1267,7 +1268,10 @@ application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
 
 private parse_argument ::= <<parseArgument argument>>
-private argument ::= spread_list_argument | named_argument | expression (map_argument_label map_argument)?
+private argument ::= spread_list_argument
+                   | named_argument
+                   | !<<isApplicationArguments>> expression_or_application (map_argument_label map_argument)?
+                   | expression (map_argument_label map_argument)?
 
 left map_argument_label ::= &':'
 {
@@ -1306,6 +1310,7 @@ external primitive_type ::= parsePrimitiveType
 // Example 3: com.foo.bar.baz       will not match
 // Example 4: com.foo.bar.baz<Baz>  will not match
 capital_type_element ::= (primitive_type_element | capital_class_type_element) array_type_elements { elementType = type_element }
+lowercase_type_element ::= code_reference &((weak_keyword | IDENTIFIER) '=') { elementType = type_element }
 
 class_type_element ::= code_reference
 qualified_class_type_element ::= qualified_code_reference

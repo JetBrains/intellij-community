@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import com.intellij.openapi.util.Predicates;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -20,7 +21,7 @@ public final class TreeTestUtil {
   private final JTree tree;
   private boolean selection;
   private TreeVisitor visitor = path -> TreeVisitor.Action.CONTINUE;
-  private Predicate<? super TreePath> filter = path -> true;
+  private Predicate<? super TreePath> filter = Predicates.alwaysTrue();
   private Function<Object, String> converter = node -> PlatformTestUtil.toString(node, null);
 
   public TreeTestUtil(@NotNull JTree tree) {

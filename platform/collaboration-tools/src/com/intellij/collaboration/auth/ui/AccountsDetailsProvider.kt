@@ -9,16 +9,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.Image
 import javax.swing.Icon
 
-interface AccountsDetailsProvider<in A : Account, out D : AccountDetails> {
-
-  @get:RequiresEdt
-  val loadingStateModel: SingleValueModel<Boolean>
-
+internal interface AccountsDetailsProvider<in A : Account, out D : AccountDetails> {
   @RequiresEdt
   fun getDetails(account: A): D?
-
-  @RequiresEdt
-  fun getAvatarImage(account: A): Image?
 
   @RequiresEdt
   @Nls
@@ -26,10 +19,4 @@ interface AccountsDetailsProvider<in A : Account, out D : AccountDetails> {
 
   @RequiresEdt
   fun checkErrorRequiresReLogin(account: A): Boolean
-
-  @RequiresEdt
-  fun reset(account: A)
-
-  @RequiresEdt
-  fun resetAll()
 }

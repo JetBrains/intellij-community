@@ -286,8 +286,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   @Override
   public final @NotNull List<? extends ListPluginComponent> getSelection() {
     return myComponents.stream()
-      .filter(component -> component.getSelection() == SelectionType.SELECTION)
-      .collect(Collectors.toUnmodifiableList());
+      .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
 
   @Override

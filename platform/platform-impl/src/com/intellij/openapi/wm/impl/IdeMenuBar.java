@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.DynamicBundle;
@@ -27,7 +27,6 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.mac.screenmenu.MenuBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -70,19 +69,18 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private final TimerListener myTimerListener = new MyTimerListener();
   protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
 
-  @Nullable private final ClockPanel myClockPanel;
-  @Nullable private final MyExitFullScreenButton myButton;
-  @Nullable private final Animator myAnimator;
-  @Nullable private final Timer myActivationWatcher;
+  private final @Nullable ClockPanel myClockPanel;
+  private final @Nullable MyExitFullScreenButton myButton;
+  private final @Nullable Animator myAnimator;
+  private final @Nullable Timer myActivationWatcher;
   private final Alarm myUpdateAlarm = new Alarm();
-  @NotNull private State myState = State.EXPANDED;
+  private @NotNull State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
 
   private final MenuBar myScreenMenuPeer = Menu.isJbScreenMenuEnabled() ? new MenuBar("MainMenu") : null;
 
-  @NotNull
-  public static IdeMenuBar createMenuBar() {
+  public static @NotNull IdeMenuBar createMenuBar() {
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
   }
 
@@ -119,8 +117,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
     //noinspection ConstantConditions
     return myState == null ? State.EXPANDING : myState;
@@ -341,8 +338,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  @Nullable
-  private Component findActualComponent(MouseEvent mouseEvent) {
+  private @Nullable Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
     if (component == null) {
       return null;
@@ -375,21 +371,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   // NOTE: for OSX only
-  private void updateAppMenu() {
-    if (!Menu.isJbScreenMenuEnabled()) return;
-
-    final Menu appMenu = Menu.getAppMenu();
+  private static void updateAppMenu() {
+    if (!Menu.isJbScreenMenuEnabled()) {
+      return;
+    }
 
     // 1. rename with localized
-    final DynamicBundle bundle = new DynamicBundle("messages.MacAppMenuBundle");
-    for (String title: bundle.getResourceBundle().keySet()) {
-      String localizedTitle = bundle.getMessage(title);
-      MenuItem item = appMenu.findItemByTitle(title);
-      if (item != null) {
-        item.setLabel(localizedTitle);
-        item.dispose(); // must always dispose java-wrapper for native NSMenuItem after usage
-      }
-    }
+    Menu.renameAppMenuItems(new DynamicBundle("messages.MacAppMenuBundle"));
 
     //
     // 2. add custom new items in AppMenu
@@ -434,7 +422,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     boolean isDarkMenu = isDarkMenu();
     for (AnAction action : myVisibleActions) {
       ActionMenu actionMenu =
-        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu);
+        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, true);
 
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         actionMenu.setOpaque(false);
@@ -618,7 +606,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  private class MyActionListener implements ActionListener {
+  private final class MyActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (getState() == State.EXPANDED || getState() == State.EXPANDING) {

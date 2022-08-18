@@ -2,9 +2,13 @@
 
 package com.intellij.ui.tabs;
 
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +26,12 @@ public class EditorTabColorProviderImpl implements EditorTabColorProvider, DumbA
   public Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileColorManager colorManager = FileColorManager.getInstance(project);
     return colorManager.isEnabledForTabs() ? colorManager.getFileColor(file) : null;
+  }
+
+  @Override
+  public @Nullable ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    return fileStatusManager.getStatus(file).getColorKey();
   }
 
   @Nullable

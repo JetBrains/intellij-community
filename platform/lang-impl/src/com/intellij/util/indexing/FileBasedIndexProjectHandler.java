@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +15,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,9 +93,8 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull Project project,
                                           long refreshedFilesCalcDuration) {
       ProjectIndexingHistoryImpl projectIndexingHistory =
-        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", false);
+        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", ScanningType.REFRESH);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 
       try {
         int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
@@ -133,7 +132,6 @@ public final class FileBasedIndexProjectHandler {
       finally {
         IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
         projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
     }
 
@@ -144,29 +142,6 @@ public final class FileBasedIndexProjectHandler {
         return this;
       }
       return null;
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
-
-      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).processChangedFiles(myProject, new Processor<>() {
-        int filesInProjectToBeIndexed;
-        final String projectBasePath = myProject.getBasePath();
-
-        @Override
-        public boolean process(VirtualFile file) {
-          if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
-
-          String filePath = file.getPath();
-          String loggedPath = projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : null;
-          loggedPath = loggedPath == null ? filePath : "%project_path%/" + loggedPath;
-          sampleOfChangedFilePathsToBeIndexed.append(loggedPath);
-
-          return ++filesInProjectToBeIndexed < ourMinFilesToStartDumbMode;
-        }
-      });
-      return super.toString() + " [" + myProject + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
     }
   }
 }

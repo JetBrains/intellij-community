@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 class JKResolver(val project: Project, module: Module?, private val contextElement: PsiElement) {
     private val scope = module?.let {
@@ -47,8 +46,8 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
 
     private fun resolveFqNameOfKtClassByIndex(fqName: FqName): KtDeclaration? {
         val fqNameString = fqName.asString()
-        val classesPsi = KotlinFullClassNameIndex.getInstance()[fqNameString, project, scope]
-        val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.getInstance()[fqNameString, project, scope]
+        val classesPsi = KotlinFullClassNameIndex.get(fqNameString, project, scope)
+        val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, project, scope)
 
         return selectNearest(classesPsi, typeAliasesPsi)
     }
@@ -62,10 +61,10 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
     }
 
     private fun resolveFqNameOfKtFunctionByIndex(fqName: FqName, filter: (KtNamedFunction) -> Boolean = { true }): KtNamedFunction? =
-        KotlinTopLevelFunctionFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull { filter(it) }
+        KotlinTopLevelFunctionFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull { filter(it) }
 
     private fun resolveFqNameOfKtPropertyByIndex(fqName: FqName): KtProperty? =
-        KotlinTopLevelPropertyFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull()
+        KotlinTopLevelPropertyFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
 
     private fun resolveFqName(fqName: FqName): PsiElement? {
@@ -74,7 +73,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
             .getChildOfType<KtDotQualifiedExpression>()
             ?.selectorExpression
             ?.references
-            ?.firstNotNullResult(PsiReference::resolve)
+            ?.firstNotNullOfOrNull(PsiReference::resolve)
     }
 
     private fun constructImportDirectiveWithContext(fqName: FqName): KtImportDirective {

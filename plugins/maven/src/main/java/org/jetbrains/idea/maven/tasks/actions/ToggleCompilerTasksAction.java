@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,11 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
 
   protected ToggleCompilerTasksAction(MavenTasksManager.Phase phase) {
     myPhase = phase;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

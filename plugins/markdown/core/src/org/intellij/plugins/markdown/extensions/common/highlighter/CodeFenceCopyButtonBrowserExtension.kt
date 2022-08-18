@@ -2,7 +2,11 @@
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
 import com.intellij.icons.AllIcons
+import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.WindowManager
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
@@ -11,10 +15,16 @@ import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.awt.datatransfer.StringSelection
 import javax.swing.Icon
 
-internal class CodeFenceCopyButtonBrowserExtension(browserPipe: BrowserPipe): MarkdownBrowserPreviewExtension, ResourceProvider {
+internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, browserPipe: BrowserPipe): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
     browserPipe.subscribe("copy-button/copy") {
       CopyPasteManager.getInstance().setContents(StringSelection(it))
+      val project = panel.project ?: return@subscribe
+      invokeLater {
+        val statusBar = WindowManager.getInstance().getStatusBar(project)
+        val text = StringUtil.shortenTextWithEllipsis(it, 32, 0)
+        statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
+      }
     }
   }
 
@@ -42,7 +52,7 @@ internal class CodeFenceCopyButtonBrowserExtension(browserPipe: BrowserPipe): Ma
 
   class Provider: MarkdownBrowserPreviewExtension.Provider {
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
-      return panel.browserPipe?.let { CodeFenceCopyButtonBrowserExtension(it) }
+      return panel.browserPipe?.let { CodeFenceCopyButtonBrowserExtension(panel, it) }
     }
   }
 

@@ -328,6 +328,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final PsiField parameterField = fieldIterator.next();
 
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterField.getType(), constructorBuilder);
+        parameter.setNavigationElement(parameterField);
         constructorBuilder.withParameter(parameter);
         copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
       }
@@ -384,6 +385,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final String parameterName = StringUtil.notNullize(param.getName());
         final PsiType parameterType = substitutor.substitute(param.getType());
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterType, methodBuilder);
+        parameter.setNavigationElement(param);
         methodBuilder.withParameter(parameter);
         copyCopyableAnnotations(param, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
       }

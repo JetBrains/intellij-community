@@ -36,4 +36,15 @@ public class AnnotationMethodReturnTypeFix extends MethodReturnTypeFix {
       });
     }
   }
+
+  @Override
+  protected void updateMethodType(@NotNull PsiMethod method, @NotNull PsiType type) {
+    super.updateMethodType(method, type);
+    if (!myFromDefaultValue && method instanceof PsiAnnotationMethod) {
+      PsiAnnotationMemberValue value = ((PsiAnnotationMethod)method).getDefaultValue();
+      if (value != null) {
+        new CommentTracker().deleteAndRestoreComments(value);
+      }
+    }
+  }
 }

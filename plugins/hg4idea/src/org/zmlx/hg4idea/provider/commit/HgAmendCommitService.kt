@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider.commit
 
 import com.intellij.dvcs.commit.AmendCommitService
@@ -14,7 +14,7 @@ internal class HgAmendCommitService(project: Project) : AmendCommitService(proje
 
   override fun isAmendCommitSupported(): Boolean = vcs.version.isAmendSupported
 
-  override fun getLastCommitMessage(root: VirtualFile): String? {
+  override fun getLastCommitMessage(root: VirtualFile): String {
     val commandExecutor = HgCommandExecutor(project)
     val args = listOf("-r", ".", "--template", "{desc}")
     val result = commandExecutor.executeInCurrentThread(root, "log", args)

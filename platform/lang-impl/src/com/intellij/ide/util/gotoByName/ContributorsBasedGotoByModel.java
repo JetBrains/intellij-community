@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -168,20 +167,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public Object @NotNull [] getElementsByName(@NotNull String name,
                                               @NotNull FindSymbolParameters parameters,
                                               @NotNull ProgressIndicator canceled) {
-    return getElementsByNames(Set.of(name), parameters, canceled);
-  }
-
-  public Object @NotNull [] getElementsByNames(@NotNull Set<String> names,
-                                               @NotNull FindSymbolParameters parameters,
-                                               @NotNull ProgressIndicator canceled) {
-    if (names.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    MultiMap<ChooseByNameContributor, String> applicable = MultiMap.createSet();
+    Map<ChooseByNameContributor, String> applicable = new HashMap<>();
     for (ChooseByNameContributor contributor : filterDumb(getContributorList())) {
       IntSet filter = myContributorToItsSymbolsMap.get(contributor);
-      for (String name : names) {
-        if (filter == null || filter.contains(name.hashCode())) {
-          applicable.putValue(contributor, name);
-        }
+      if (filter == null || filter.contains(name.hashCode())) {
+        applicable.put(contributor, name);
       }
     }
     if (applicable.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -189,32 +179,32 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
 
     Processor<ChooseByNameContributor> processor = contributor ->
-      processContributorForNames(contributor, (Set<String>)applicable.get(contributor), parameters, canceled, items);
+      processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(applicable.keySet()), canceled, processor)) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Retrieving " + names + ":" + items.size() + " for " + TimeoutUtil.getDurationMillis(start));
+      LOG.debug("Retrieving " + name + ":" + items.size() + " for " + TimeoutUtil.getDurationMillis(start));
     }
     return ArrayUtil.toObjectArray(items);
   }
 
-  private boolean processContributorForNames(@NotNull ChooseByNameContributor contributor,
-                                             @NotNull Set<String> names,
-                                             @NotNull FindSymbolParameters parameters,
-                                             @NotNull ProgressIndicator canceled,
-                                             @NotNull List<NavigationItem> items) {
+  private boolean processContributorForName(@NotNull ChooseByNameContributor contributor,
+                                            @NotNull String name,
+                                            @NotNull FindSymbolParameters parameters,
+                                            @NotNull ProgressIndicator canceled,
+                                            @NotNull List<NavigationItem> items) {
     if (myProject.isDisposed()) {
       return true;
     }
     try {
       boolean searchInLibraries = parameters.isSearchInLibraries();
       long start = System.nanoTime();
-      int[] count = { 0 };
+      int[] count = {0};
 
       if (contributor instanceof ChooseByNameContributorEx) {
-        ((ChooseByNameContributorEx)contributor).processElementsWithNames(names, item -> {
+        ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
           canceled.checkCanceled();
           count[0]++;
           if (acceptItem(item)) items.add(item);
@@ -226,22 +216,20 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         }
       }
       else {
-        for (String name : names) {
-          NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
-          count[0] += itemsByName.length;
-          for (NavigationItem item : itemsByName) {
-            canceled.checkCanceled();
-            if (item == null) {
-              PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
-              continue;
-            }
-            VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
-                               ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
-            if (file != null && !parameters.getSearchScope().contains(file)) continue;
+        NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+        count[0] += itemsByName.length;
+        for (NavigationItem item : itemsByName) {
+          canceled.checkCanceled();
+          if (item == null) {
+            PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
+            continue;
+          }
+          VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
+                             ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
+          if (file != null && !parameters.getSearchScope().contains(file)) continue;
 
-            if (acceptItem(item)) {
-              items.add(item);
-            }
+          if (acceptItem(item)) {
+            items.add(item);
           }
         }
       }
@@ -264,7 +252,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    * @param name a name
    * @param checkBoxState if {@code true}, non-project files are considered as well
    * @param pattern a pattern to use
-   * @return a list of navigation items from contributors for
+   * @return a array of navigation items from contributors for
    *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override

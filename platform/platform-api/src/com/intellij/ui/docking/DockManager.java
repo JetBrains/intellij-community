@@ -36,5 +36,5 @@ public abstract class DockManager {
   @Deprecated(forRemoval = true)
   public abstract @Nullable DockContainer getContainerFor(Component c);
 
-  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter);
+  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter);
 }

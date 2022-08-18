@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -578,7 +578,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     void requestUpdate(Language currentLanguage) {
       ReadAction.nonBlocking(() -> getSupportedLanguages())
         .inSmartMode(myProject)
-        .finishOnUiThread(ModalityState.defaultModalityState(), languages -> {
+        .finishOnUiThread(ModalityState.any(), languages -> {
           boolean many = languages.size() > 1;
           myLanguages = languages;
 

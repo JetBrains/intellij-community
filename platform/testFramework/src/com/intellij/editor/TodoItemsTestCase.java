@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.Pass;
@@ -13,11 +13,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.TodoCacheManager;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
@@ -25,10 +28,15 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase {
@@ -74,8 +82,8 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
   }
 
   private void assertSameTodoCountInIndexAndHighlighting() {
-    int todosInIndex = TodoCacheManager.SERVICE.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
-    int todosInHighlighting = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(getFile()).length;
+    int todosInIndex = TodoCacheManager.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
+    int todosInHighlighting = PsiTodoSearchHelper.getInstance(getProject()).findTodoItems(getFile()).length;
     assertEquals("Mismatch between todos in index and highlighting", todosInIndex, todosInHighlighting);
   }
 
@@ -143,6 +151,40 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     type("     ");
     checkTodos("// [TODO first line]\n" +
                "//      [second line]");
+  }
+
+  public void testNewTodoAfterUnsavedEditing() {
+    if (!supportsCStyleSingleLineComments()) return;
+    testTodos("// [TODO first]\nwords\n<caret>");
+    Document document = getEditor().getDocument();
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    PsiTodoSearchHelper todoSearchHelper = PsiTodoSearchHelper.getInstance(getProject());
+    assertTodoCountInIndexStorage(0);
+    documentManager.saveDocument(document);
+    assertFalse("saved doc expected", documentManager.isDocumentUnsaved(document));
+    assertEquals(1, todoSearchHelper.getTodoItemsCount(getFile()));
+    assertSameTodoCountInIndexAndHighlighting();
+    assertTodoCountInIndexStorage(1);
+    type("// TODO second");
+    assertTrue("unsaved doc expected", documentManager.isDocumentUnsaved(document));
+    assertEquals(2, todoSearchHelper.getTodoItemsCount(getFile()));
+    checkTodos("// [TODO first]\nwords\n" +
+               "// [TODO second]");
+    assertSameTodoCountInIndexAndHighlighting();
+    assertTodoCountInIndexStorage(1);
+  }
+
+  private void assertTodoCountInIndexStorage(int count) {
+    try {
+      Map<TodoIndexEntry, Integer> map =
+        ContainerUtil.getFirstItem(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(TodoIndex.NAME)
+                                     .getIndexedFileData(FileBasedIndex.getFileId(getVFile())).values());
+      int result = map == null ? 0 : map.values().stream().mapToInt(o -> o).sum();
+      assertEquals(count, result);
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void testAllLinesLoseHighlightingWithFirstLine() {

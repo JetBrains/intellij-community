@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -12,9 +11,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +23,13 @@ import java.awt.event.InputEvent;
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    String tabID = Registry.is("search.everywhere.group.contributors.by.type")
-                   ? SearchEverywhereTabDescriptor.IDE.getId()
-                   : ActionSearchEverywhereContributor.class.getSimpleName();
+    String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
     showInSearchEverywherePopup(tabID, e, false, true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
@@ -96,22 +95,16 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       inputEvent == null ? modifiers : inputEvent.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      if (action instanceof ActionGroup &&
-          !(event.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(context))) {
-        ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context,
-          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);
-        Window window = SwingUtilities.getWindowAncestor(component);
-        if (window != null) {
-          popup.showInCenterOf(window);
-        }
-        else {
-          popup.showInFocusCenter();
-        }
-      }
-      else {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-      }
+      Window window = SwingUtilities.getWindowAncestor(component);
+      ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
+        ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
+          if (window != null) {
+            popup.showInCenterOf(window);
+          }
+          else {
+            popup.showInFocusCenter();
+          }
+        }));
     }
   }
 

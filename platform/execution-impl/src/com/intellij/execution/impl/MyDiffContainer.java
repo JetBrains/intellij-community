@@ -29,8 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author amakeev
  * @author Irina.Chernushina
  */

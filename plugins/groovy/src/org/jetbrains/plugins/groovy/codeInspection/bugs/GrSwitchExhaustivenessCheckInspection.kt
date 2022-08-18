@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -51,9 +51,6 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       }
       val conditionalType = switchElement.condition?.type ?: PsiType.NULL
       val patterns = cases.flatMap { it.expressions?.asList() ?: emptyList() }.filterNotNull()
-      if (patterns.isEmpty()) {
-        return
-      }
       when (conditionalType) {
         is PsiPrimitiveType -> handlePrimitiveType(switchElement, conditionalType, patterns)
         is PsiClassType -> {

@@ -1,23 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.mac.MacWinTabsHandler;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +22,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
 
 public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -45,13 +44,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */
-  @NotNull
-  public abstract Promise<Boolean> toggleFullScreen(boolean state);
+  public abstract @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state);
 
   private static final Logger LOG = Logger.getInstance(IdeFrameDecorator.class);
 
-  @Nullable
-  public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+  public static @Nullable IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     try {
       if (SystemInfo.isMac) {
         return new MacMainFrameDecorator(frame, parentDisposable);
@@ -72,8 +69,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     return null;
   }
 
-  @NotNull
-  public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
     if (SystemInfo.isMac) {
       return MacWinTabsHandler.wrapRootPaneNorthSide(rootPane, northComponent);
     }
@@ -99,9 +95,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       return ClientProperty.isTrue(myFrame, FULL_SCREEN);
     }
 
-    @NotNull
     @Override
-    public Promise<Boolean> toggleFullScreen(boolean state) {
+    public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
       if (state && extendedState == Frame.NORMAL) {
@@ -109,7 +104,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) {
-        return Promises.rejectedPromise();
+        return CompletableFuture.completedFuture(null);
       }
 
       Component toFocus = myFrame.getMostRecentFocusOwner();
@@ -148,7 +143,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       EventQueue.invokeLater(() -> {
         myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
       });
-      return Promises.resolvedPromise(state);
+      return CompletableFuture.completedFuture(state);
     }
   }
 
@@ -169,7 +164,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
       });
 
-      if (SystemInfo.isKDE && ComponentUtil.isDisableAutoRequestFocus()) {
+      if (SystemInfo.isKDE && isDisableAutoRequestFocus()) {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active
@@ -194,9 +189,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       return myFrame != null && X11UiUtil.isInFullScreenMode(myFrame);
     }
 
-    @NotNull
     @Override
-    public Promise<Boolean> toggleFullScreen(boolean state) {
+    public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
@@ -206,7 +200,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
           frameMenuBar.onToggleFullScreen(state);
         }
       }
-      return Promises.resolvedPromise(state);
+      return CompletableFuture.completedFuture(state);
     }
   }
 
@@ -218,9 +212,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {
-      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden
-      return isCustomDecorationAvailable()
-             && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
+      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden (only for Windows)
+      return isCustomDecorationAvailable() && getDefaultCustomDecorationState();
     }
 
     // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
@@ -233,5 +226,9 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         if (override != null) return override;
         return settings.getMergeMainMenuWithWindowTitle();
       });
+  }
+
+  private static boolean getDefaultCustomDecorationState() {
+    return SystemInfo.isWindows && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
   }
 }

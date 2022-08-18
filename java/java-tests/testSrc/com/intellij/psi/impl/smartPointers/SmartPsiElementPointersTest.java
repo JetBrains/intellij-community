@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -1151,7 +1151,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiWhiteSpace whiteSpace = assertInstanceOf(file.findElementAt(text.indexOf('{') + 1), PsiWhiteSpace.class);
     SmartPointerEx<PsiWhiteSpace> pointer = createPointer(whiteSpace);
 
-    whiteSpace.replace(PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText("   "));
+    whiteSpace.replace(PsiParserFacade.getInstance(myProject).createWhiteSpaceFromText("   "));
     assertFalse(whiteSpace.isValid());
     assertSame(file.findElementAt(text.indexOf('{') + 1), pointer.getElement());
 

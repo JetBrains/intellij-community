@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -275,7 +276,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
           removeTemplate(template);
         }
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
@@ -539,6 +540,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                boolean registerTemplate,
                                @NotNull ClassLoader loader,
                                PluginInfo info) throws JDOMException {
+    String pluginId = info.getId();
     Element element;
     try {
       byte[] data;
@@ -549,14 +551,17 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
       }
       if (data == null) {
-        LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,
+                                      pluginId == null ? null : PluginId.getId(pluginId)));
         return;
       }
 
       element = JDOMUtil.load(data);
     }
     catch (IOException e) {
-      LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
+      LOG.error(
+        new PluginException("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e,
+                            pluginId == null ? null : PluginId.getId(pluginId)));
       return;
     }
 
@@ -678,7 +683,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, resourceBundle);
       description = bundle.getString(key);
     }
     else {

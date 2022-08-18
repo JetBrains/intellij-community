@@ -40,9 +40,9 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     }
   }
 
-  override fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
+  override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
     return readActionWaitingForSize {
-      invoker.emulateCodeGolfSession(expectedLine, offset, nodeProperties)
+      invoker.emulateCompletionGolfSession(expectedLine, offset, nodeProperties)
     }
   }
 

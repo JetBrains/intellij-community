@@ -30,6 +30,11 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<AnAction> actions = getActions(e.getDataContext());
     if (actions == null) return;
@@ -62,9 +67,8 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
   }
 
   public static class Group extends ActionGroup implements DumbAware {
-    @Override
-    public boolean hideIfNoVisibleChildren() {
-      return true;
+    {
+      getTemplatePresentation().setHideGroupIfEmpty(true);
     }
 
     @Override

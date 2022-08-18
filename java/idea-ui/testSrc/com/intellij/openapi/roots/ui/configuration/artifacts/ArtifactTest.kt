@@ -30,6 +30,7 @@ class ArtifactTest : HeavyPlatformTestCase() {
                                                               project,
                                                               ArtifactEditorSettings(),
                                                               object : ArtifactListener {})
+      disposeOnTearDown(Disposable { context.disposeUIResources() })
       val configurable = ArtifactConfigurable(artifact,
                                               context, Runnable { })
       configurable.displayName = "X"
@@ -52,7 +53,7 @@ private class MockArtifactTypeForRename : ArtifactType("mock", Supplier { "Mock"
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()

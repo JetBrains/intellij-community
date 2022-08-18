@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
 import java.awt.image.ImageFilter
-import java.net.MalformedURLException
 import java.net.URL
 import javax.swing.Icon
 
@@ -72,12 +71,7 @@ class ImageDataByPathLoader private constructor(val path: String,
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
       return if (patched.first.startsWith("file:/")) {
-        try {
-          ImageDataByUrlLoader(URL(patched.first), patched.first, classLoader, false)
-        }
-        catch (e: MalformedURLException) {
-          throw RuntimeException(e)
-        }
+        ImageDataByUrlLoader(URL(patched.first), patched.first, classLoader, false)
       }
       else {
         ImageDataByPathLoader(normalizePath(patched.first), classLoader, originalLoader)

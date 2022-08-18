@@ -1,0 +1,1 @@
+<p><icon src="source"/>&nbsp;doSmth &rarr; <icon src="target"/>&nbsp;beforeAbstractMethodNoClass</p>

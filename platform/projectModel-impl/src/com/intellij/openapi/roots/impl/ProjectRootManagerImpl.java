@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.Application;
@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeIndexingInfo;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -49,7 +49,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final OrderRootsCache myRootsCache;
 
-  protected boolean myStartupActivityPerformed;
   private boolean myStateLoaded;
 
   @ApiStatus.Internal
@@ -120,39 +119,37 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     protected abstract @NotNull ChangeList initiateChangelist(@NotNull Change change);
 
-    @NotNull
-    protected abstract ChangeList accumulate(@NotNull ChangeList current, @NotNull Change change);
+    protected abstract @NotNull ChangeList accumulate(@NotNull ChangeList current, @NotNull Change change);
 
-    @NotNull
-    protected abstract Change getGenericChange();
+    protected abstract @NotNull Change getGenericChange();
   }
 
   @ApiStatus.Internal
-  public BatchSession<RootsChangeIndexingInfo, List<RootsChangeIndexingInfo>> getRootsChanged() {
+  public BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>> getRootsChanged() {
     return myRootsChanged;
   }
 
-  protected final BatchSession<RootsChangeIndexingInfo, List<RootsChangeIndexingInfo>>
+  protected final BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>>
     myRootsChanged = new BatchSession<>(false) {
     @Override
-    protected boolean fireRootsChanged(@NotNull List<RootsChangeIndexingInfo> changes) {
+    protected boolean fireRootsChanged(@NotNull List<RootsChangeRescanningInfo> changes) {
       return ProjectRootManagerImpl.this.fireRootsChanged(false, changes);
     }
 
     @Override
-    protected @NotNull List<RootsChangeIndexingInfo> accumulate(@NotNull List<RootsChangeIndexingInfo> currentPair,
-                                                                @NotNull RootsChangeIndexingInfo cause) {
+    protected @NotNull List<RootsChangeRescanningInfo> accumulate(@NotNull List<RootsChangeRescanningInfo> currentPair,
+                                                                  @NotNull RootsChangeRescanningInfo cause) {
       currentPair.add(cause);
       return currentPair;
     }
 
     @Override
-    protected @NotNull RootsChangeIndexingInfo getGenericChange() {
-      return RootsChangeIndexingInfo.TOTAL_REINDEX;
+    protected @NotNull RootsChangeRescanningInfo getGenericChange() {
+      return RootsChangeRescanningInfo.TOTAL_RESCAN;
     }
 
     @Override
-    protected @NotNull List<RootsChangeIndexingInfo> initiateChangelist(@NotNull RootsChangeIndexingInfo info) {
+    protected @NotNull List<RootsChangeRescanningInfo> initiateChangelist(@NotNull RootsChangeRescanningInfo info) {
       return new SmartList<>(info);
     }
   };
@@ -187,7 +184,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
     myRootsCache = getOrderRootsCache(project);
-    project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+    project.getMessageBus().simpleConnect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override
       public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
         String currentName = getProjectSdkName();
@@ -201,14 +198,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  @NotNull
-  public ProjectFileIndex getFileIndex() {
+  public @NotNull ProjectFileIndex getFileIndex() {
     return ProjectFileIndex.getInstance(myProject);
   }
 
   @Override
-  @NotNull
-  public List<String> getContentRootUrls() {
+  public @NotNull List<String> getContentRootUrls() {
     Module[] modules = getModuleManager().getModules();
     List<String> result = new ArrayList<>(modules.length);
     for (Module module : modules) {
@@ -242,9 +237,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public @NotNull List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     Module[] modules = getModuleManager().getModules();
     List<VirtualFile> roots = new ArrayList<>(modules.length);
     for (Module module : modules) {
@@ -253,15 +247,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return roots;
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries() {
+  public @NotNull OrderEnumerator orderEntries() {
     return new ProjectOrderEnumerator(myProject, myRootsCache);
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
+  public @NotNull OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
     return new ModulesOrderEnumerator(modules);
   }
 
@@ -291,15 +283,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  @Nullable
   @Override
-  public String getProjectSdkName() {
+  public @Nullable String getProjectSdkName() {
     return myProjectSdkName;
   }
 
-  @Nullable
   @Override
-  public String getProjectSdkTypeName() {
+  public @Nullable String getProjectSdkTypeName() {
     return myProjectSdkType;
   }
 
@@ -317,7 +307,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     projectJdkChanged();
   }
 
-  protected void projectJdkChanged() {
+  public void projectJdkChanged() {
     incModificationCount();
     mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
     fireJdkChanged();
@@ -330,8 +320,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  @NotNull
-  protected Runnable getActionToRunWhenProjectJdkChanges() {
+  protected @NotNull Runnable getActionToRunWhenProjectJdkChanges() {
     return () -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
   }
 
@@ -425,17 +414,46 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Deprecated
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed()) {
+      return;
+    }
+
     BatchSession<?, ?> session = fileTypes ? myFileTypesChanged : myRootsChanged;
     try {
-      if (fireEvents) session.beforeRootsChanged();
+      if (fireEvents) {
+        session.beforeRootsChanged();
+      }
       runnable.run();
     }
     finally {
-      if (fireEvents) session.rootsChanged();
+      if (fireEvents) {
+        session.rootsChanged();
+      }
     }
+  }
+
+  @Override
+  public void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes) {
+    if (myProject.isDisposed()) {
+      return;
+    }
+
+    try {
+      myRootsChanged.beforeRootsChanged();
+      runnable.run();
+    }
+    finally {
+      myRootsChanged.rootsChanged(changes);
+    }
+  }
+
+  @Override
+  public @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes) {
+    myRootsChanged.beforeRootsChanged();
+    return () -> myRootsChanged.rootsChanged(changes);
   }
 
   protected boolean isFiringEvent;
@@ -451,7 +469,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @ApiStatus.Internal
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
-  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -468,27 +486,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @ApiStatus.Internal
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) { }
+  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) { }
 
   @ApiStatus.Internal
   protected OrderRootsCache getOrderRootsCache(@NotNull Project project) {
     return new OrderRootsCache(project);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public static String extractLocalPath(@NotNull String url) {
+  public static @NotNull String extractLocalPath(@NotNull String url) {
     String path = VfsUtilCore.urlToPath(url);
     int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
 
-  @NotNull
-  private ModuleManager getModuleManager() {
+  private @NotNull ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }
 
@@ -497,8 +512,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   }
 
-  @NotNull
-  public VirtualFilePointerListener getRootsValidityChangedListener() {
+  public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
     return myEmptyRootsValidityChangedListener;
   }
 }

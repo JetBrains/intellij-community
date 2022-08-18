@@ -18,3 +18,5 @@ public inline fun simpleFun() {
 public inline fun nextFun() {
     val a = 1
 }
+
+// IGNORE_K2

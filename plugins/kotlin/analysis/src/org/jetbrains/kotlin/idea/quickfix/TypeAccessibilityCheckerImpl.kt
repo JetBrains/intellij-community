@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.caches.project.isTestModule
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -79,7 +79,7 @@ class TypeAccessibilityCheckerImpl(
     private fun FqName?.canFindClassInModule(): Boolean {
         val name = this?.asString() ?: return false
         return name in existingTypeNames
-                || KotlinFullClassNameIndex.getInstance()[name, project, scope].isNotEmpty()
+                || KotlinFullClassNameIndex.get(name, project, scope).isNotEmpty()
                 || builtInsModule?.resolveClassByFqName(this, NoLookupLocation.FROM_BUILTINS) != null
     }
 }

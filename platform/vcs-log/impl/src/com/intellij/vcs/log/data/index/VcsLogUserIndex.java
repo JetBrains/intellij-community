@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -11,12 +11,16 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.VoidDataExternalizer;
+import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -44,12 +48,12 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
   public VcsLogUserIndex(@NotNull StorageId storageId,
                          @Nullable StorageLockContext storageLockContext,
                          @NotNull VcsUserRegistry userRegistry,
-                         @NotNull FatalErrorHandler consumer,
+                         @NotNull VcsLogErrorHandler errorHandler,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)), VoidDataExternalizer.INSTANCE,
-          storageLockContext, consumer, disposableParent);
+    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
+          VoidDataExternalizer.INSTANCE, storageLockContext, errorHandler, disposableParent);
     myUserIndexer = (UserIndexer)myIndexer;
-    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
+    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
   @Override
@@ -63,7 +67,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
                                                                      @Nullable StorageLockContext storageLockContext,
                                                                      @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
-    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, storageLockContext,
+    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), AbstractStorage.PAGE_SIZE, storageLockContext,
                                       storageId.getVersion());
   }
 

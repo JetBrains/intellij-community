@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -14,12 +13,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -37,7 +34,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 /**
  * @author Konstantin Bulenkov
  */
-public final class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
+public final class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final @Nls String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -68,7 +65,7 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
       myText = presentation.getPresentableText(object, inPopup);
       myAttributes = presentation.getTextAttributes(object, false);
       myIsModule = presentation.isModule(object);
-      myIcon = ExperimentalUI.isNewUI() && myIsModule ? MODULE_ICON : presentation.getIcon(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule && !inPopup ? MODULE_ICON : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");
@@ -170,7 +167,7 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
 
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
-    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1 && !myPanel.isUpdating();
+    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
   }
 
   public boolean isPopupElement() {
@@ -227,7 +224,7 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
       return true;
     }
     Object object = getObject();
-    return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
+    return object instanceof PsiElement && ((PsiElement) object).isValid() && ((PsiElement)object).getContainingFile() != null;
   }
 
   public int getVerticalIconOffset() {
@@ -267,12 +264,6 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
 
   public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;
-  }
-
-  @Nullable
-  @Override
-  public Object getData(@NotNull String dataId) {
-    return myPanel.getDataImpl(dataId, this, () -> JBIterable.of(getObject()));
   }
 
   public int getIndex() {

@@ -12,15 +12,16 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableDirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.DirectoryPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * classpath is used for exploded WAR and EJB directories under exploded EAR
@@ -51,12 +52,12 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
 
   @NonNls @Override
   public String toString() {
-    return "dir:" + myDirectoryName;
+    return "dir:" + getMyDirectoryName();
   }
 
   @Attribute(NAME_ATTRIBUTE)
   public @NlsSafe String getDirectoryName() {
-    return myDirectoryName;
+    return getMyDirectoryName();
   }
 
   public void setDirectoryName(String directoryName) {
@@ -72,7 +73,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     this.update(
       () -> myDirectoryName = newName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableDirectoryPackagingElementEntity.class, entity, ent ->{
+        builder.modifyEntity(DirectoryPackagingElementEntity.Builder.class, entity, ent ->{
           ent.setDirectoryName(newName);
           return Unit.INSTANCE;
         });
@@ -82,16 +83,16 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
 
   @Override
   public String getName() {
-    return myDirectoryName;
+    return getMyDirectoryName();
   }
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);
+    return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(getMyDirectoryName());
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -101,7 +102,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    var entity = BridgeModelModifiableEntitiesKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
+    var entity = ExtensionsKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }
@@ -109,5 +110,18 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
   @Override
   public void loadState(@NotNull DirectoryPackagingElement state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  private String getMyDirectoryName() {
+    if (myStorage == null) {
+      return myDirectoryName;
+    } else {
+      DirectoryPackagingElementEntity entity = (DirectoryPackagingElementEntity)getThisEntity();
+      String directoryName = entity.getDirectoryName();
+      if (!Objects.equals(directoryName, myDirectoryName)) {
+        myDirectoryName = directoryName;
+      }
+      return directoryName;
+    }
   }
 }

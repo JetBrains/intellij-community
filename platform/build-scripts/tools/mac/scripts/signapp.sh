@@ -6,18 +6,24 @@ set -euo pipefail
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 
-INPUT_FILE=$1
+SIT_FILE=$1
 EXPLODED=$2.exploded
+
+set +x
 USERNAME=$3
 PASSWORD=$4
-
 set -x
 
 CODESIGN_STRING=$5
-JDK_ARCHIVE="$6"
-NOTARIZE=$7
-BUNDLE_ID=$8
-COMPRESS_INPUT=${9:-false}
+NOTARIZE=$6
+BUNDLE_ID=$7
+COMPRESS_INPUT=${8:-false}
+JETSIGN_CLIENT=${9:-null}
+
+if [ "$JETSIGN_CLIENT" != "null" ] && [ "$CODESIGN_STRING" == "" ]; then
+  echo "CertificateID is not specified"
+  exit 1
+fi
 
 cd "$(dirname "$0")"
 
@@ -58,21 +64,13 @@ fi
 rm -rf "$EXPLODED"
 mkdir "$EXPLODED"
 
-log "Unzipping $INPUT_FILE to $EXPLODED ..."
-unzip -q -o "$INPUT_FILE" -d "$EXPLODED"
-rm "$INPUT_FILE"
+log "Unzipping $SIT_FILE to $EXPLODED ..."
+unzip -q -o "$SIT_FILE" -d "$EXPLODED"
+rm "$SIT_FILE"
 BUILD_NAME="$(ls "$EXPLODED")"
-log "$INPUT_FILE unzipped and removed"
+log "$SIT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
-
-if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
-  log "Copying JDK: $JDK_ARCHIVE to $APPLICATION_PATH/Contents"
-  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents"
-  find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
-  log "JDK has been copied"
-  rm -f "$JDK_ARCHIVE"
-fi
 
 find "$APPLICATION_PATH/Contents/bin" \
   -maxdepth 1 -type f -name '*.jnilib' -print0 |
@@ -100,52 +98,62 @@ if [[ $non_plist -gt 0 ]]; then
   exit 1
 fi
 
-if [ "$CODESIGN_STRING" != "" ]; then
+set +x
+if [ "$USERNAME" != "" ] && [ "$PASSWORD" != "" ]; then
   log "Unlocking keychain..."
   # Make sure *.p12 is imported into local KeyChain
-  set +x
-  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
-  set -x
-
-  log "Signing ..."
-  retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
-
-  log "Checking code signature ..."
-  codesign -v "$APPLICATION_PATH" -vvvvv
-  log "Check sign done"
-else
-  log "Signing is disabled"
+  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain" || true
 fi
+set -ex
 
-set -e
-
-if [ "$NOTARIZE" = "yes" ]; then
-  log "Notarizing..."
-  # shellcheck disable=SC1090
-  source "$HOME/.notarize_token"
-  APP_NAME="${INPUT_FILE%.*}"
+function notarize() {
+  set +x
+  if [[ -f "$HOME/.notarize_token" ]]; then
+    source "$HOME/.notarize_token"
+  fi
+  if [[ -z "$APPLE_USERNAME" ]] || [[ -z "$APPLE_PASSWORD" ]]; then
+    log "Apple credentials are required for Notarization"
+    exit 1
+  fi
+  set -x
   # Since notarization tool uses same file for upload token we have to trick it into using different folders, hence fake root
   # Also it leaves copy of zip file in TMPDIR, so notarize.sh overrides it and uses FAKE_ROOT as location for temp TMPDIR
   FAKE_ROOT="$(pwd)/fake-root"
   mkdir -p "$FAKE_ROOT"
   echo "Notarization will use fake root: $FAKE_ROOT"
+  APP_NAME="${SIT_FILE%.*}"
   set +x
   retry "Notarization" 3 ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
   set -x
   rm -rf "$FAKE_ROOT"
 
   log "Stapling..."
+  # only unzipped application can be stapled
   retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
+}
+
+if [ "$JETSIGN_CLIENT" != "null" ]; then
+  log "Signing ..."
+  retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING" "$JETSIGN_CLIENT" "$SIT_FILE"
+  if [ "$NOTARIZE" = "yes" ]; then
+    log "Notarizing..."
+    notarize
+  else
+    log "Notarization disabled"
+    log "Stapling disabled"
+  fi
 else
-  log "Notarization disabled"
-  log "Stapling disabled"
+  log "Signing disabled"
 fi
 
 if [ "$COMPRESS_INPUT" != "false" ]; then
-  log "Zipping $BUILD_NAME to $INPUT_FILE ..."
+  log "Zipping $BUILD_NAME to $SIT_FILE ..."
   (
     cd "$EXPLODED"
-    ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+    if ! ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"; then
+      # for running this script on Linux
+      zip -q -r -o -1 "../$SIT_FILE" "$BUILD_NAME"
+    fi
     log "Finished zipping"
   )
 fi

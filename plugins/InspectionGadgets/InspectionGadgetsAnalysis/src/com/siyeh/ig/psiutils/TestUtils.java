@@ -18,11 +18,11 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.properties.provider.PropertiesProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.properties.provider.PropertiesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -30,12 +30,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
-import java.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
@@ -62,17 +67,12 @@ public final class TestUtils {
     return method != null && isJUnitTestMethod(method);
   }
 
-  public static boolean isJUnit4BeforeOrAfterMethod(@NotNull PsiMethod method) {
-    return AnnotationUtil.isAnnotated(method, "org.junit.Before", CHECK_HIERARCHY) ||
-           AnnotationUtil.isAnnotated(method, "org.junit.After", CHECK_HIERARCHY);
-  }
-
   public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(containingClass);
-    return frameworks.stream().anyMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
+    return ContainerUtil.exists(frameworks, framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
   }
 
   public static boolean isRunnable(PsiMethod method) {
@@ -110,27 +110,34 @@ public final class TestUtils {
     return method != null && AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, CHECK_HIERARCHY);
   }
 
-  public static boolean isAnnotatedTestMethod(@Nullable PsiMethod method) {
+  /**
+   * @param frameworks to check matching with {@link TestFramework#getName}
+   */
+  public static boolean isExecutableTestMethod(@Nullable PsiMethod method, List<String> frameworks) {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
     if (testFramework == null) return false;
     if (testFramework.isTestMethod(method, false)) {
-      @NonNls final String testFrameworkName = testFramework.getName();
-      return testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5");
+      return ContainerUtil.exists(frameworks, testFramework.getName()::equals);
     }
     return false;
   }
 
-
+  /**
+   * @return whether a class is a JUnit 3 test class.
+   */
   public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
-    return targetClass != null && InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE);
+    return targetClass != null
+           && InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)
+           && !AnnotationUtil.isAnnotated(targetClass, RUN_WITH, CHECK_HIERARCHY);
   }
 
   public static boolean isJUnit4TestClass(@Nullable PsiClass aClass, boolean runWithIsTestClass) {
     if (aClass == null) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, CHECK_HIERARCHY)) return runWithIsTestClass;
+    if (InheritanceUtil.isInheritor(aClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) return false; // test will run with JUnit 3
     for (final PsiMethod method : aClass.getAllMethods()) {
       if (isExplicitlyJUnit4TestAnnotated(method)) return true;
     }
@@ -186,7 +193,7 @@ public final class TestUtils {
   /**
    * Tries to determine whether exception is expected at given element (e.g. element is a part of method annotated with
    * {@code @Test(expected = ...)} or part of lambda passed to {@code Assertions.assertThrows()}.
-   *
+   * <p>
    * Note that the test is not exhaustive: false positives and false negatives are possible.
    *
    * @param element to check

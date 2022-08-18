@@ -120,7 +120,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       else {
         final TextRange range = element.getTextRange();
         final PsiFile file = element.getContainingFile();
-        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+        final Document document = file.getViewProvider().getDocument();
         assert document != null;
         final int start = range.getStartOffset();
         final int end = range.getEndOffset();
@@ -310,7 +310,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       if (PsiLiteralUtil.isUnsafeLiteral(expression)) {
         invalidCode = true;
         stopWalking();
@@ -322,7 +322,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getParent() instanceof PsiExpressionStatement) {
         invalidCode = true;
@@ -331,7 +331,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLabeledStatement(PsiLabeledStatement statement) {
+    public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
       if (isProbablyUrl(statement)) {
         invalidCode = true;
@@ -353,7 +353,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (myStrict && expression.getParent() instanceof PsiExpressionStatement) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();

@@ -28,7 +28,7 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         if (InheritanceUtil.isInheritor(aClass, true, BASE_WALKING_VISITOR_NAME) ||
             InheritanceUtil.isInheritor(aClass, true, BASE_VISITOR_NAME)) {

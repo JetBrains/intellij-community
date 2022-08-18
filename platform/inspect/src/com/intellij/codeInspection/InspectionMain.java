@@ -36,10 +36,10 @@ public class InspectionMain implements ApplicationStarter {
     myApplication = new InspectionApplication();
     if (args.size() < 4) {
       System.err.println("invalid args:" + args);
-      printHelp();
+      printHelpAndExit();
     }
 
-    myApplication.myHelpProvider = () -> printHelp();
+    myApplication.myHelpProvider = InspectionMain::printHelpAndExit;
     myApplication.myProjectPath = args.get(1);
     myApplication.myStubProfile = args.get(2);
     myApplication.myOutPath = args.get(3);
@@ -48,7 +48,7 @@ public class InspectionMain implements ApplicationStarter {
         || myApplication.myOutPath == null
         || myApplication.myStubProfile == null) {
       System.err.println(myApplication.myProjectPath + myApplication.myOutPath + myApplication.myStubProfile);
-      printHelp();
+      printHelpAndExit();
     }
 
     try {
@@ -95,27 +95,27 @@ public class InspectionMain implements ApplicationStarter {
         }
         else //noinspection StatementWithEmptyBody
           if ("-qodana".equals(arg)) {
-        }
-        else {
-          System.err.println("unexpected argument: " + arg);
-          printHelp();
-        }
+          }
+          else {
+            System.err.println("unexpected argument: " + arg);
+            printHelpAndExit();
+          }
       }
     }
-    catch (ArrayIndexOutOfBoundsException e) {
+    catch (IndexOutOfBoundsException e) {
       e.printStackTrace();
-      printHelp();
+      printHelpAndExit();
     }
 
     myApplication.myRunGlobalToolsOnly = System.getProperty("idea.no.local.inspections") != null;
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     myApplication.startup();
   }
 
-  private static void printHelp() {
+  private static void printHelpAndExit() {
     System.out.println(InspectionsBundle.message("inspection.command.line.explanation"));
     System.exit(1);
   }

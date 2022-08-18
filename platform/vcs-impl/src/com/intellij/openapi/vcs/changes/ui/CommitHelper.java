@@ -41,7 +41,7 @@ public class CommitHelper {
     // for compatibility with external plugins
     CommitContext commitContext =
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
-    myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName, isDefaultChangeListFullyIncluded);
+    myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName);
 
     myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
     myCommitter.addResultHandler(notNull(resultHandler, new ShowNotificationCommitResultHandler(myCommitter)));

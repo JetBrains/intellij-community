@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -17,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 class GradleProjectExtensionContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_PROJECT
+  override fun getParentClassName(): String = GRADLE_API_PROJECT
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
@@ -44,16 +47,21 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val manager = containingFile.manager
 
     for (extension in extensions) {
-      val type = GradleExtensionType(factory.createTypeByFQClassName(extension.rootTypeFqn, place.resolveScope))
+      val delegateType = createType(factory, extension.rootTypeFqn, place.resolveScope)
+      if (delegateType !is PsiClassType) {
+        continue
+      }
+      val type = GradleExtensionType(delegateType)
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
         if (!processor.execute(extensionProperty, state)) {
           return
         }
       }
-      if (processMethods) {
+      if (processMethods && shouldAddConfiguration(extension, place)) {
         val extensionMethod = GrLightMethodBuilder(manager, extension.name).apply {
           returnType = type
+          containingClass = aClass
           addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
             .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
         }
@@ -62,5 +70,40 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
         }
       }
     }
+  }
+
+  private fun shouldAddConfiguration(extension: GradleExtensionsSettings.GradleExtension, context: PsiElement): Boolean {
+    val clazz = JavaPsiFacade.getInstance(context.project).findClass(extension.rootTypeFqn, context.resolveScope) ?: return true
+    return !InheritanceUtil.isInheritor(clazz, "org.gradle.api.internal.catalog.AbstractExternalDependencyFactory")
+  }
+
+  private fun createType(factory: PsiElementFactory, generifiedFqnClassName: String, resolveScope: GlobalSearchScope) : PsiType {
+    val className = generifiedFqnClassName.substringBefore('<')
+    val hostClassType = factory.createTypeByFQClassName(className, resolveScope)
+    val hostClass = hostClassType.resolve() ?: return hostClassType
+    val parameters = mutableListOf<String>()
+    val builder = StringBuilder()
+    var parameterStack = 1
+    for (char in generifiedFqnClassName.substringAfter('<')) {
+      if (char == '<') {
+        parameterStack += 1
+      } else if (char == '>') {
+        parameterStack -= 1
+        if (parameterStack == 0) {
+          parameters.add(builder.toString().trim())
+        }
+      } else if (char == ',') {
+        if (parameterStack == 0) {
+          parameters.add(builder.toString())
+          builder.clear()
+        } else {
+          builder.append(char)
+        }
+      } else {
+        builder.append(char)
+      }
+    }
+    val parsedParameters = parameters.map { createType(factory, it, resolveScope) }
+    return factory.createType(hostClass, *parsedParameters.toTypedArray())
   }
 }

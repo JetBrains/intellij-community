@@ -50,15 +50,15 @@ public final class BringVariableIntoScopeFix implements IntentionAction, HighPri
       PsiLocalVariable myOutOfScopeVariable;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {}
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         //Don't look inside expressions
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         if (referenceName.equals(variable.getName())) {
           myOutOfScopeVariable = variable;
           variableCount++;

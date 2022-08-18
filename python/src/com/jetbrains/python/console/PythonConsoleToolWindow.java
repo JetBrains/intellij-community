@@ -92,11 +92,11 @@ public final class PythonConsoleToolWindow {
     toolWindow.getContentManager().setSelectedContent(content);
   }
 
-  public ToolWindow getToolWindow() {
+  public @NotNull ToolWindow getToolWindow() {
     return getToolWindow(myProject);
   }
 
-  public static ToolWindow getToolWindow(Project project) {
+  public static @NotNull ToolWindow getToolWindow(@NotNull Project project) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow consoleToolWindow = toolWindowManager.getToolWindow(PythonConsoleToolWindowFactory.ID);
     if (consoleToolWindow == null) {
@@ -117,7 +117,7 @@ public final class PythonConsoleToolWindow {
   private static Content createContent(final @NotNull RunContentDescriptor contentDescriptor) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
     content.setCloseable(true);
 
     resetContent(contentDescriptor, panel, content);

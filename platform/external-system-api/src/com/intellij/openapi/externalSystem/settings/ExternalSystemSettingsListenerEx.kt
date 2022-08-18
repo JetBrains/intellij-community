@@ -12,31 +12,23 @@ interface ExternalSystemSettingsListenerEx {
   /**
    * @see ExternalSystemSettingsListener.onProjectsLoaded
    */
+  @JvmDefault
   fun onProjectsLoaded(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {}
 
   /**
    * @see ExternalSystemSettingsListener.onProjectsLinked
    */
+  @JvmDefault
   fun onProjectsLinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {}
 
   /**
    * @see ExternalSystemSettingsListener.onProjectsUnlinked
    */
+  @JvmDefault
   fun onProjectsUnlinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, linkedProjectPaths: Set<String>) {}
 
   companion object {
-    private val EP_NAME = ExtensionPointName<ExternalSystemSettingsListenerEx>("com.intellij.externalSystemSettingsListener")
-
-    fun onProjectsLoaded(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {
-      EP_NAME.forEachExtensionSafe { it.onProjectsLoaded(project, manager, settings) }
-    }
-
-    fun onProjectsLinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {
-      EP_NAME.forEachExtensionSafe { it.onProjectsLinked(project, manager, settings) }
-    }
-
-    fun onProjectsUnlinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, linkedProjectPaths: Set<String>) {
-      EP_NAME.forEachExtensionSafe { it.onProjectsUnlinked(project, manager, linkedProjectPaths) }
-    }
+    @JvmField
+    val EP_NAME = ExtensionPointName<ExternalSystemSettingsListenerEx>("com.intellij.externalSystemSettingsListener")
   }
 }

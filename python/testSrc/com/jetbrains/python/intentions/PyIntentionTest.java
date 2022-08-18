@@ -71,7 +71,6 @@ public class PyIntentionTest extends PyTestCase {
   /**
    * Ensures that intention with given hint <i>is not</i> active.
    *
-   * @param hint
    */
   private void doNegativeTest(@NotNull String hint) {
     final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");

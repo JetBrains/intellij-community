@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -94,10 +94,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      final MessageView messageView = MessageView.getInstance(myProject);
       messageView.runWhenInitialized(() -> {
         final Content content =
-          ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
+          ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
@@ -159,9 +159,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     SelectFilesDialog dlg = SelectFilesDialog.init(myProject, files, prompt, confirmationOption, true, false,
                                                    okActionName, cancelActionName);
     dlg.setTitle(title);
-    if (!confirmationOption.isPersistent()) {
-      dlg.setDoNotAskOption(null);
-    }
     if (dlg.showAndGet()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
       // return items in the same order as they were passed to us
@@ -198,9 +195,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final SelectFilePathsDialog dlg =
       new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName, true);
     dlg.setTitle(title);
-    if (!confirmationOption.isPersistent()) {
-      dlg.setDoNotAskOption(null);
-    }
     return dlg.showAndGet() ? dlg.getSelectedFiles() : null;
   }
 
@@ -478,13 +472,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       @Nullable String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
     //noinspection unchecked
-    RepositoryLocationCommittedChangesPanel panel =
-      new RepositoryLocationCommittedChangesPanel(myProject, provider, location, extraActions);
+    RepositoryLocationCommittedChangesPanel<ChangeBrowserSettings> panel =
+      new RepositoryLocationCommittedChangesPanel<>(myProject, provider, location, extraActions);
     panel.setMaxCount(maxCount);
-    //noinspection unchecked
     panel.setSettings(settings);
     panel.refreshChanges();
-    final ContentFactory factory = ContentFactory.SERVICE.getInstance();
+    final ContentFactory factory = ContentFactory.getInstance();
     if (title == null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
@@ -515,7 +508,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                  final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    final var provider = vcs.getCommittedChangesProvider();
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 

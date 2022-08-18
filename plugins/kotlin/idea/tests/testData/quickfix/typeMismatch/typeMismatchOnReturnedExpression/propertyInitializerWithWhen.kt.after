@@ -6,3 +6,5 @@ val foo: Any = when {
     true -> O()
     else -> P()
 }
+
+/* IGNORE_FIR */

@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
@@ -16,9 +14,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,32 +22,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public class AddToFavoritesAction extends AnAction implements DumbAware {
+/**
+ * @deprecated Stub left for plugin API compatibility
+ */
+@Deprecated(forRemoval = true)
+public class AddToFavoritesAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AddToFavoritesAction.class);
 
-  private final String myFavoritesListName;
-
   public AddToFavoritesAction(String choosenList) {
-    //noinspection HardCodedStringLiteral
-    getTemplatePresentation().setText(choosenList, false);
-    myFavoritesListName = choosenList;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-
-    Collection<AbstractTreeNode<?>> nodesToAdd = getNodesToAdd(dataContext, true);
-    if (!nodesToAdd.isEmpty()) {
-      Project project = e.getProject();
-      FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
-    }
   }
 
   @NotNull
@@ -80,38 +67,6 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
     return nodesToAdd == null ? Collections.emptyList() : nodesToAdd;
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    if (!Registry.is("ide.favorites.tool.window.applicable", false)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    e.getPresentation().setEnabled(canCreateNodes(e, myFavoritesListName));
-  }
-
-  public static boolean canCreateNodes(@NotNull AnActionEvent e) {
-    return canCreateNodes(e, null);
-  }
-
-  public static boolean canCreateNodes(@NotNull AnActionEvent e, @Nullable String listName) {
-    DataContext dataContext = e.getDataContext();
-    if (e.getProject() == null) {
-      return false;
-    }
-    if (e.getPlace().equals(ActionPlaces.FAVORITES_VIEW_POPUP)
-        && FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext) == null) {
-      return false;
-    }
-    final boolean inProjectView = e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
-                                  e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
-                                  e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP);
-    //com.intellij.openapi.actionSystem.ActionPlaces.USAGE_VIEW_TOOLBAR
-    Collection<AbstractTreeNode<?>> nodes = getNodesToAdd(dataContext, inProjectView);
-    if (listName != null && !nodes.isEmpty()) {
-      return FavoritesManager.getInstance(e.getProject()).canAddRoots(listName, nodes);
-    }
-    return !nodes.isEmpty();
-  }
 
   static Object retrieveData(Object object, Object data) {
     return object == null ? data : object;

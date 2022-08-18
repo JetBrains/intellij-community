@@ -2,12 +2,12 @@
 <body>
 Reports redundant <code>else</code> keywords in <code>if</code>&mdash;<code>else</code> statements and statement chains.
 <p>
-The <code>else</code> keyword is redundant when it cannot be reached because the code in previous branches ends with the
+The <code>else</code> keyword is redundant when all previous branches end with a
 <code>return</code>, <code>throw</code>, <code>break</code>, or <code>continue</code> statement. In this case,
 the statements from the <code>else</code> branch can be placed after the <code>if</code> statement, and the
 <code>else</code> keyword can be removed.
 </p>
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   if (name == null) {
       throw new IllegalArgumentException();
@@ -23,7 +23,7 @@ the statements from the <code>else</code> branch can be placed after the <code>i
   System.out.println(name);
 </code></pre>
 <!-- tooltip end -->
-<p>Disable the <b>Report when there are no more statements after the 'if' statement</b> option to ignore the cases in which the <code>if</code>&mdash;<code>else</code> statement is the last statement in a code block.</p>
+<p>Disable the <b>Report when there are no more statements after the 'if' statement</b> option to ignore cases where the <code>if</code>&mdash;<code>else</code> statement is the last statement in a code block.</p>
 
 </body>
 </html>

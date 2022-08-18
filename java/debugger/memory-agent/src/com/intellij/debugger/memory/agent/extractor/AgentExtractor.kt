@@ -33,7 +33,8 @@ object AgentExtractor {
   enum class AgentLibraryType(val prefix: String, val suffix: String) {
     WINDOWS32("", "32.dll"),
     WINDOWS64("", ".dll"),
-    LINUX("lib", ".so"),
+    LINUX_X64("lib", ".so"),
+    LINUX_AARCH64("lib", "_aarch64.so"),
     MACOS("lib", ".dylib")
   }
 }

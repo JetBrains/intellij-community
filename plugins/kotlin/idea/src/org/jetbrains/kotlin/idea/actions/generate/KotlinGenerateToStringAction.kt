@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
@@ -12,16 +12,13 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
@@ -36,7 +33,9 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 private fun ClassDescriptor.findDeclaredToString(checkSupers: Boolean): FunctionDescriptor? {
-    return findDeclaredFunction("toString", checkSupers) { it.valueParameters.isEmpty() && it.typeParameters.isEmpty() }
+    return findDeclaredFunction("toString", checkSupers) {
+        it.modality != Modality.ABSTRACT && it.valueParameters.isEmpty() && it.typeParameters.isEmpty()
+    }
 }
 
 class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenerateToStringAction.Info>() {
@@ -141,6 +140,9 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
             }
         }
 
+        val superToString = classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
+        val allowSuperCall = !superToString.builtIns.isMemberOfAny(superToString)
+
         val properties = getPropertiesToUseInGeneratedMember(klass)
         if (isUnitTestMode()) {
             val info = Info(
@@ -150,14 +152,12 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                 Generator.SINGLE_TEMPLATE,
                 project
             )
-            return klass.adjuster?.let { it(info) } ?: info
+            return klass.adjuster?.invoke(info)?.let { it.copy(generateSuperCall = it.generateSuperCall && allowSuperCall) } ?: info
         }
-
-        val superToString = classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
 
         val memberChooserObjects = properties.map { DescriptorMemberChooserObject(it, it.unsafeResolveToDescriptor()) }.toTypedArray()
         val selectedElements = memberChooserObjects.filter { (it.descriptor as? PropertyDescriptor)?.getter?.isDefault ?: true }.toTypedArray()
-        val headerPanel = ToStringMemberChooserHeaderPanel(!superToString.builtIns.isMemberOfAny(superToString))
+        val headerPanel = ToStringMemberChooserHeaderPanel(allowSuperCall)
         val chooser = MemberChooser<DescriptorMemberChooserObject>(memberChooserObjects, true, true, project, false, headerPanel).apply {
             title = KotlinBundle.message("action.generate.tostring.name")
             setCopyJavadocVisible(false)

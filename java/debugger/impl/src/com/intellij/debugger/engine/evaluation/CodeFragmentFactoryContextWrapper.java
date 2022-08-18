@@ -99,7 +99,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
             JavaPsiFacade.getElementFactory(project).createCodeBlockFromText("{" + text + "}", context);
           codeFragment.accept(new JavaRecursiveElementVisitor() {
             @Override
-            public void visitLocalVariable(PsiLocalVariable variable) {
+            public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
               final String name = variable.getName();
               variable.putUserData(LABEL_VARIABLE_VALUE_KEY, markupVariables.getSecond().get(name));
             }

@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
@@ -48,8 +49,6 @@ public final class GitUntrackedFilesHelper {
   /**
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
-   * @param root
-   * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the default content is to be used.
    */
@@ -135,7 +134,7 @@ public final class GitUntrackedFilesHelper {
 
     Notification notification = IMPORTANT_ERROR_NOTIFICATION
       .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
-      .setDisplayId("untracked.files.overwritten");
+      .setDisplayId(GitNotificationIdsHolder.UNTRACKED_FIES_OVERWITTEN);
 
     if (listener != null) notification.setListener(listener);
 

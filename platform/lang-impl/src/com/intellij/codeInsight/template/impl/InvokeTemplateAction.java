@@ -79,32 +79,36 @@ public class InvokeTemplateAction extends AnAction {
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      myEditor.getCaretModel().runForEachCaret(__ -> {
-        // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
-        // at a meaningful position rather than at indent 0)
-        if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
-          int offset = myEditor.getSelectionModel().getSelectionStart();
-          int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-          int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
-          while (offset < lineEnd && offset < selectionEnd &&
-                 (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
-            offset++;
-          }
-          // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
-          if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
-            selectionEnd--;
-          }
-          if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
-            myEditor.getSelectionModel().setSelection(offset, selectionEnd);
-          }
+    CommandProcessor.getInstance().executeCommand(myProject, this::performInCommand,
+                                                  CodeInsightBundle.message("command.wrap.with.template"), "Wrap with template " + myTemplate.getKey());
+  }
+
+  public void performInCommand() {
+    final Document document = myEditor.getDocument();
+    myEditor.getCaretModel().runForEachCaret(__ -> {
+      // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
+      // at a meaningful position rather than at indent 0)
+      if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
+        int offset = myEditor.getSelectionModel().getSelectionStart();
+        int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+        int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+        while (offset < lineEnd && offset < selectionEnd &&
+               (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
+          offset++;
         }
-        String selectionString = myEditor.getSelectionModel().getSelectedText();
-        TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
-      });
-      if (myCallback != null) {
-        myCallback.run();
+        // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
+        if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
+          selectionEnd--;
+        }
+        if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
+          myEditor.getSelectionModel().setSelection(offset, selectionEnd);
+        }
       }
-    }, CodeInsightBundle.message("command.wrap.with.template"), "Wrap with template " + myTemplate.getKey());
+      String selectionString = myEditor.getSelectionModel().getSelectedText();
+      TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
+    });
+    if (myCallback != null) {
+      myCallback.run();
+    }
   }
 }

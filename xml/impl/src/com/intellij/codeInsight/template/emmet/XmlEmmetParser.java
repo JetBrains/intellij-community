@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
@@ -17,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,22 +40,22 @@ public class XmlEmmetParser extends EmmetParser {
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<>();
 
-  private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
-    Pair.pair("p", "span"),
-    Pair.pair("ul", "li"),
-    Pair.pair("ol", "li"),
-    Pair.pair("table", "tr"),
-    Pair.pair("tr", "td"),
-    Pair.pair("tbody", "tr"),
-    Pair.pair("thead", "tr"),
-    Pair.pair("tfoot", "tr"),
-    Pair.pair("colgroup", "col"),
-    Pair.pair("select", "option"),
-    Pair.pair("optgroup", "option"),
-    Pair.pair("audio", "source"),
-    Pair.pair("video", "source"),
-    Pair.pair("object", "param"),
-    Pair.pair("map", "area"));
+  private static final Map<String, String> parentChildTagMapping = Map.ofEntries(
+    Map.entry("p", "span"),
+    Map.entry("ul", "li"),
+    Map.entry("ol", "li"),
+    Map.entry("table", "tr"),
+    Map.entry("tr", "td"),
+    Map.entry("tbody", "tr"),
+    Map.entry("thead", "tr"),
+    Map.entry("tfoot", "tr"),
+    Map.entry("colgroup", "col"),
+    Map.entry("select", "option"),
+    Map.entry("optgroup", "option"),
+    Map.entry("audio", "source"),
+    Map.entry("video", "source"),
+    Map.entry("object", "param"),
+    Map.entry("map", "area"));
 
   private final boolean isHtml;
 

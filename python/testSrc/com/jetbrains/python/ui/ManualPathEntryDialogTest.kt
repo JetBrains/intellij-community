@@ -2,6 +2,7 @@
 package com.jetbrains.python.ui
 
 import com.intellij.execution.Platform
+import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

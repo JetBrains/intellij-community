@@ -1,74 +1,9 @@
-com.sun.source.tree.MethodTree#getReceiverParameter()
-com.sun.source.tree.AnnotatedTypeTree
-com.sun.source.tree.TypeParameterTree#getAnnotations()
-com.sun.source.tree.MemberReferenceTree
-com.sun.source.tree.IntersectionTypeTree
-com.sun.source.util.Plugin
-com.sun.source.util.DocTrees
-com.sun.source.util.JavacTask#instance(javax.annotation.processing.ProcessingEnvironment;)
-com.sun.source.util.JavacTask#addTaskListener(TaskListener;)
-com.sun.source.util.JavacTask#removeTaskListener(TaskListener;)
-com.sun.source.util.DocTreePath
-com.sun.source.util.DocTreeScanner
-com.sun.source.util.DocSourcePositions
-com.sun.source.util.DocTreePathScanner
-com.sun.source.util.SimpleDocTreeVisitor
-com.sun.source.doctree.DocTree
-com.sun.source.doctree.SeeTree
-com.sun.source.doctree.LinkTree
-com.sun.source.doctree.TextTree
-com.sun.source.doctree.ParamTree
-com.sun.source.doctree.SinceTree
-com.sun.source.doctree.ValueTree
-com.sun.source.doctree.AuthorTree
-com.sun.source.doctree.EntityTree
-com.sun.source.doctree.ReturnTree
-com.sun.source.doctree.SerialTree
-com.sun.source.doctree.ThrowsTree
-com.sun.source.doctree.CommentTree
-com.sun.source.doctree.DocRootTree
-com.sun.source.doctree.LiteralTree
-com.sun.source.doctree.VersionTree
-com.sun.source.doctree.BlockTagTree
-com.sun.source.doctree.AttributeTree
-com.sun.source.doctree.ErroneousTree
-com.sun.source.doctree.InlineTagTree
-com.sun.source.doctree.ReferenceTree
-com.sun.source.doctree.DeprecatedTree
-com.sun.source.doctree.DocCommentTree
-com.sun.source.doctree.DocTreeVisitor
-com.sun.source.doctree.EndElementTree
-com.sun.source.doctree.IdentifierTree
-com.sun.source.doctree.InheritDocTree
-com.sun.source.doctree.SerialDataTree
-com.sun.source.doctree.SerialFieldTree
-com.sun.source.doctree.StartElementTree
-com.sun.source.doctree.UnknownBlockTagTree
-com.sun.source.doctree.UnknownInlineTagTree
-com.sun.javadoc.Type#asAnnotatedType()
-com.sun.javadoc.Type#getElementType()
-com.sun.javadoc.AnnotatedType
-com.sun.javadoc.ExecutableMemberDoc#receiverType()
-com.sun.security.jgss.ExtendedGSSCredential
-java.io.BufferedReader#lines()
-java.io.DefaultFileSystem
-java.io.UncheckedIOException
-java.awt.event.InvocationEvent#listener
-java.awt.KeyboardFocusManager#clearFocusOwner()
-java.net.URLPermission
-java.net.HttpConnectSocketImpl
-java.nio.file.attribute.FileTime#from(java.time.Instant;)
-java.nio.file.attribute.FileTime#toInstant()
-java.nio.file.Files#newBufferedReader(java.nio.file.Path;)
-java.nio.file.Files#newBufferedWriter(java.nio.file.Path;java.nio.file.OpenOption[];)
-java.nio.file.Files#readAllLines(java.nio.file.Path;)
-java.nio.file.Files#write(java.nio.file.Path;java.lang.Iterable<? extends java.lang.CharSequence>;java.nio.file.OpenOption[];)
-java.nio.file.Files#list(java.nio.file.Path;)
-java.nio.file.Files#walk(java.nio.file.Path;int;java.nio.file.FileVisitOption[];)
-java.nio.file.Files#walk(java.nio.file.Path;java.nio.file.FileVisitOption[];)
-java.nio.file.Files#find(java.nio.file.Path;int;java.util.function.BiPredicate<java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes>;java.nio.file.FileVisitOption[];)
-java.nio.file.Files#lines(java.nio.file.Path;java.nio.charset.Charset;)
-java.nio.file.Files#lines(java.nio.file.Path;)
+com.sun.jdi.Method#isDefault()
+com.sun.jdi.InterfaceType#invokeMethod(com.sun.jdi.ThreadReference;com.sun.jdi.Method;java.util.List<? extends com.sun.jdi.Value>;int;)
+com.sun.tools.jdi.MethodImpl#isDefault()
+com.sun.tools.jdi.EventSetImpl#spliterator()
+jdk.net.NetworkPermission
+jdk.net.ExtendedSocketOptions
 java.sql.Date#valueOf(java.time.LocalDate;)
 java.sql.Date#toLocalDate()
 java.sql.Time#valueOf(java.time.LocalTime;)
@@ -116,27 +51,94 @@ java.sql.PreparedStatement#executeLargeUpdate()
 java.sql.BatchUpdateException#BatchUpdateException(java.lang.String;java.lang.String;int;long[];java.lang.Throwable;)
 java.sql.BatchUpdateException#getLargeUpdateCounts()
 java.sql.BatchUpdateException#longUpdateCounts
-java.lang.invoke.LambdaConversionException
-java.lang.invoke.LambdaMetafactory
+javax.xml.validation.SchemaFactoryConfigurationError
+com.sun.crypto.provider.GCTR
+com.sun.crypto.provider.GHASH
+com.sun.crypto.provider.GCMParameters
+com.sun.crypto.provider.GaloisCounterMode
+jdk.internal.vm.annotation.Contended
+jdk.internal.misc.Unsafe#getAndAddInt(java.lang.Object;long;int;)
+jdk.internal.misc.Unsafe#getAndAddLong(java.lang.Object;long;long;)
+jdk.internal.misc.Unsafe#getAndSetInt(java.lang.Object;long;int;)
+jdk.internal.misc.Unsafe#getAndSetLong(java.lang.Object;long;long;)
+jdk.internal.misc.Unsafe#getAndSetReference(java.lang.Object;long;java.lang.Object;)
+jdk.internal.misc.Unsafe#loadFence()
+jdk.internal.misc.Unsafe#storeFence()
+jdk.internal.misc.Unsafe#fullFence()
+jdk.internal.misc.Unsafe#throwIllegalAccessError()
+jdk.internal.util.xml.PropertiesDefaultHandler
+sun.util.spi.CalendarProvider
+sun.util.cldr.CLDRCalendarNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CalendarProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CollatorProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DateFormatProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.LocaleNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.CalendarNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.NumberFormatProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.BreakIteratorProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CollatorProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.DecimalFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.NumberFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CalendarDataProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CalendarNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.CurrencyNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.LocaleNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
+sun.util.locale.provider.TimeZoneNameProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.TimeZoneNameProviderImpl#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
+sun.util.locale.provider.BreakIteratorProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.JavaTimeDateTimePatternImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DateFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.locale.provider.DecimalFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
+sun.util.calendar.ZoneInfoFile
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotation(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotatedBounds()
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotationsByType(java.lang.Class<T>;)
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotation(java.lang.Class<T>;)
+sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
+sun.security.ssl.SSLSocketFactoryImpl#createSocket(java.net.Socket;java.io.InputStream;boolean;)
+sun.security.provider.certpath.SunCertPathBuilder#engineGetRevocationChecker()
+sun.security.provider.certpath.PKIXCertPathValidator#engineGetRevocationChecker()
+sun.security.provider.DomainKeyStore
+java.io.BufferedReader#lines()
+java.io.DefaultFileSystem
+java.io.UncheckedIOException
+java.net.URLPermission
+java.net.HttpConnectSocketImpl
+java.nio.file.attribute.FileTime#from(java.time.Instant;)
+java.nio.file.attribute.FileTime#toInstant()
+java.nio.file.Files#newBufferedReader(java.nio.file.Path;)
+java.nio.file.Files#newBufferedWriter(java.nio.file.Path;java.nio.file.OpenOption[];)
+java.nio.file.Files#readAllLines(java.nio.file.Path;)
+java.nio.file.Files#write(java.nio.file.Path;java.lang.Iterable<? extends java.lang.CharSequence>;java.nio.file.OpenOption[];)
+java.nio.file.Files#list(java.nio.file.Path;)
+java.nio.file.Files#walk(java.nio.file.Path;int;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#walk(java.nio.file.Path;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#find(java.nio.file.Path;int;java.util.function.BiPredicate<java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes>;java.nio.file.FileVisitOption[];)
+java.nio.file.Files#lines(java.nio.file.Path;java.nio.charset.Charset;)
+java.nio.file.Files#lines(java.nio.file.Path;)
+java.nio.CharBuffer#chars()
 java.lang.invoke.MethodHandles#reflectAs(java.lang.Class<T>;java.lang.invoke.MethodHandle;)
 java.lang.invoke.MethodHandles.Lookup#revealDirect(java.lang.invoke.MethodHandle;)
 java.lang.invoke.MethodHandleInfo
 java.lang.invoke.SerializedLambda
+java.lang.invoke.LambdaMetafactory
+java.lang.invoke.LambdaConversionException
 java.lang.reflect.Type#getTypeName()
 java.lang.reflect.Field#getAnnotationsByType(java.lang.Class<T>;)
 java.lang.reflect.Field#getAnnotatedType()
+java.lang.reflect.Method#getParameterCount()
 java.lang.reflect.Method#isDefault()
 java.lang.reflect.Method#getAnnotatedReturnType()
 java.lang.reflect.Modifier#parameterModifiers()
 java.lang.reflect.Parameter
-java.lang.reflect.Executable#getParameterCount()
-java.lang.reflect.Executable#getParameters()
-java.lang.reflect.Executable#getAnnotationsByType(java.lang.Class<T>;)
-java.lang.reflect.Executable#getAnnotatedReturnType()
-java.lang.reflect.Executable#getAnnotatedReceiverType()
-java.lang.reflect.Executable#getAnnotatedParameterTypes()
-java.lang.reflect.Executable#getAnnotatedExceptionTypes()
 java.lang.reflect.Executable
+java.lang.reflect.Constructor#getParameterCount()
 java.lang.reflect.Constructor#getAnnotatedReturnType()
 java.lang.reflect.Constructor#getAnnotatedReceiverType()
 java.lang.reflect.TypeVariable#getAnnotatedBounds()
@@ -208,7 +210,6 @@ java.lang.annotation.Native
 java.lang.annotation.Repeatable
 java.lang.annotation.ElementType#TYPE_PARAMETER
 java.lang.annotation.ElementType#TYPE_USE
-java.lang.management.LockInfo#from(javax.management.openmbean.CompositeData;)
 java.lang.Double#BYTES
 java.lang.Double#isFinite(double;)
 java.lang.Double#hashCode(double;)
@@ -253,6 +254,13 @@ java.lang.Character.UnicodeBlock#SHARADA
 java.lang.Character.UnicodeBlock#TAKRI
 java.lang.Character.UnicodeBlock#MIAO
 java.lang.Character.UnicodeBlock#ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS
+java.lang.Character.UnicodeScript#MEROITIC_HIEROGLYPHS
+java.lang.Character.UnicodeScript#MEROITIC_CURSIVE
+java.lang.Character.UnicodeScript#SORA_SOMPENG
+java.lang.Character.UnicodeScript#CHAKMA
+java.lang.Character.UnicodeScript#SHARADA
+java.lang.Character.UnicodeScript#TAKRI
+java.lang.Character.UnicodeScript#MIAO
 java.lang.Character#hashCode(char;)
 java.lang.Character#BYTES
 java.lang.StrictMath#addExact(int;int;)
@@ -268,6 +276,9 @@ java.lang.StrictMath#floorMod(int;int;)
 java.lang.StrictMath#floorMod(long;long;)
 java.lang.StrictMath#nextDown(double;)
 java.lang.StrictMath#nextDown(float;)
+java.lang.ProcessImpl#waitFor(long;java.util.concurrent.TimeUnit;)
+java.lang.ProcessImpl#destroyForcibly()
+java.lang.ProcessImpl#isAlive()
 java.lang.ThreadLocal#withInitial(java.util.function.Supplier<? extends S>;)
 java.lang.CharSequence#chars()
 java.lang.CharSequence#codePoints()
@@ -317,6 +328,7 @@ java.time.chrono.ChronoLocalDateTimeImpl
 java.time.chrono.ChronoZonedDateTimeImpl
 java.time.format.Parsed
 java.time.format.SignStyle
+java.time.format.TextStyle
 java.time.format.FormatStyle
 java.time.format.DecimalStyle
 java.time.format.ResolverStyle
@@ -362,6 +374,7 @@ java.time.LocalDateTime
 java.time.ZonedDateTime
 java.time.OffsetDateTime
 java.time.DateTimeException
+java.util.jar.JarFile#stream()
 java.util.spi.CalendarDataProvider
 java.util.spi.CalendarNameProvider
 java.util.spi.TimeZoneNameProvider#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
@@ -382,6 +395,11 @@ java.util.regex.Pattern#asPredicate()
 java.util.regex.Pattern#splitAsStream(java.lang.CharSequence;)
 java.util.stream.Node
 java.util.stream.Sink
+java.util.stream.Nodes.SpinedNodeBuilder#spliterator()
+java.util.stream.Nodes.SpinedNodeBuilder#forEach(java.util.function.Consumer<? super T>;)
+java.util.stream.Nodes.IntSpinedNodeBuilder#spliterator()
+java.util.stream.Nodes.LongSpinedNodeBuilder#spliterator()
+java.util.stream.Nodes.DoubleSpinedNodeBuilder#spliterator()
 java.util.stream.Nodes
 java.util.stream.Stream.Builder
 java.util.stream.Stream
@@ -414,6 +432,14 @@ java.util.stream.LongPipeline.Head
 java.util.stream.LongPipeline.StatelessOp
 java.util.stream.LongPipeline.StatefulOp
 java.util.stream.LongPipeline
+java.util.stream.SpinedBuffer#forEach(java.util.function.Consumer<? super E>;)
+java.util.stream.SpinedBuffer.OfPrimitive#forEach(java.util.function.Consumer<? super E>;)
+java.util.stream.SpinedBuffer.OfInt#forEach(java.util.function.Consumer<? super java.lang.Integer>;)
+java.util.stream.SpinedBuffer.OfInt#spliterator()
+java.util.stream.SpinedBuffer.OfLong#forEach(java.util.function.Consumer<? super java.lang.Long>;)
+java.util.stream.SpinedBuffer.OfLong#spliterator()
+java.util.stream.SpinedBuffer.OfDouble#forEach(java.util.function.Consumer<? super java.lang.Double>;)
+java.util.stream.SpinedBuffer.OfDouble#spliterator()
 java.util.stream.SpinedBuffer
 java.util.stream.StreamOpFlag
 java.util.stream.TerminalSink
@@ -430,19 +456,6 @@ java.util.stream.ReferencePipeline
 java.util.stream.StreamSpliterators
 java.util.stream.AbstractSpinedBuffer
 java.util.stream.AbstractShortCircuitTask
-java.util.logging.Logger#log(java.util.logging.Level;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Object[];)
-java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Throwable;)
-java.util.logging.Logger#severe(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#warning(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#info(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#config(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#fine(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#finer(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#finest(java.util.function.Supplier<java.lang.String>;)
-java.util.logging.Logger#setResourceBundle(java.util.ResourceBundle;)
 java.util.Map.Entry#comparingByKey()
 java.util.Map.Entry#comparingByValue()
 java.util.Map.Entry#comparingByKey(java.util.Comparator<? super K>;)
@@ -568,6 +581,8 @@ java.util.concurrent.CountedCompleter
 java.util.concurrent.SynchronousQueue#spliterator()
 java.util.concurrent.CompletableFuture.AsynchronousCompletionTask
 java.util.concurrent.CompletableFuture
+java.util.concurrent.ConcurrentHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.concurrent.ConcurrentHashMap#mappingCount()
 java.util.concurrent.ConcurrentHashMap#newKeySet()
 java.util.concurrent.ConcurrentHashMap#newKeySet(int;)
@@ -602,7 +617,15 @@ java.util.concurrent.ConcurrentHashMap#reduceEntries(long;java.util.function.Fun
 java.util.concurrent.ConcurrentHashMap#reduceEntriesToDouble(long;java.util.function.ToDoubleFunction<java.util.Map.Entry<K,V>>;double;java.util.function.DoubleBinaryOperator;)
 java.util.concurrent.ConcurrentHashMap#reduceEntriesToLong(long;java.util.function.ToLongFunction<java.util.Map.Entry<K,V>>;long;java.util.function.LongBinaryOperator;)
 java.util.concurrent.ConcurrentHashMap#reduceEntriesToInt(long;java.util.function.ToIntFunction<java.util.Map.Entry<K,V>>;int;java.util.function.IntBinaryOperator;)
+java.util.concurrent.ConcurrentHashMap.KeySetView#spliterator()
+java.util.concurrent.ConcurrentHashMap.KeySetView#forEach(java.util.function.Consumer<? super K>;)
 java.util.concurrent.ConcurrentHashMap.KeySetView
+java.util.concurrent.ConcurrentHashMap.ValuesView#removeIf(java.util.function.Predicate<? super V>;)
+java.util.concurrent.ConcurrentHashMap.ValuesView#spliterator()
+java.util.concurrent.ConcurrentHashMap.ValuesView#forEach(java.util.function.Consumer<? super V>;)
+java.util.concurrent.ConcurrentHashMap.EntrySetView#removeIf(java.util.function.Predicate<? super java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentHashMap.EntrySetView#spliterator()
+java.util.concurrent.ConcurrentHashMap.EntrySetView#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
 java.util.concurrent.ThreadLocalRandom#ints(long;)
 java.util.concurrent.ThreadLocalRandom#ints()
 java.util.concurrent.ThreadLocalRandom#ints(long;int;int;)
@@ -615,13 +638,26 @@ java.util.concurrent.ThreadLocalRandom#doubles(long;)
 java.util.concurrent.ThreadLocalRandom#doubles()
 java.util.concurrent.ThreadLocalRandom#doubles(long;double;double;)
 java.util.concurrent.ThreadLocalRandom#doubles(double;double;)
+java.util.concurrent.ArrayBlockingQueue.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.ArrayBlockingQueue#spliterator()
 java.util.concurrent.CompletionException
 java.util.concurrent.CopyOnWriteArraySet#spliterator()
+java.util.concurrent.LinkedBlockingDeque.AbstractItr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.LinkedBlockingDeque#spliterator()
+java.util.concurrent.LinkedBlockingQueue.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.LinkedBlockingQueue#spliterator()
+java.util.concurrent.LinkedTransferQueue.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.LinkedTransferQueue#spliterator()
+java.util.concurrent.CopyOnWriteArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.concurrent.CopyOnWriteArrayList#sort(java.util.Comparator<? super E>;)
 java.util.concurrent.CopyOnWriteArrayList#spliterator()
+java.util.concurrent.CopyOnWriteArrayList.COWIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#forEach(java.util.function.Consumer<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#sort(java.util.Comparator<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.concurrent.CopyOnWriteArrayList.COWSubList#spliterator()
+java.util.concurrent.CopyOnWriteArrayList.COWSubListIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.ConcurrentLinkedDeque#spliterator()
 java.util.concurrent.ConcurrentLinkedQueue#spliterator()
 java.util.concurrent.ConcurrentSkipListMap#getOrDefault(java.lang.Object;V;)
@@ -629,7 +665,20 @@ java.util.concurrent.ConcurrentSkipListMap#computeIfAbsent(K;java.util.function.
 java.util.concurrent.ConcurrentSkipListMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.concurrent.ConcurrentSkipListMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.concurrent.ConcurrentSkipListMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.concurrent.ConcurrentSkipListMap.KeySet#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.Values#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.Values#removeIf(java.util.function.Predicate<? super V>;)
+java.util.concurrent.ConcurrentSkipListMap.EntrySet#spliterator()
+java.util.concurrent.ConcurrentSkipListMap.EntrySet#removeIf(java.util.function.Predicate<? super java.util.Map.Entry<K,V>>;)
+java.util.concurrent.ConcurrentSkipListMap.SubMap#putIfAbsent(K;V;)
+java.util.concurrent.ConcurrentSkipListMap.SubMap#remove(java.lang.Object;java.lang.Object;)
+java.util.concurrent.ConcurrentSkipListMap.SubMap#replace(K;V;V;)
+java.util.concurrent.ConcurrentSkipListMap.SubMap#replace(K;V;)
+java.util.concurrent.ConcurrentSkipListMap.SubMap.SubMapIter#forEachRemaining(java.util.function.Consumer<? super T>;)
+java.util.concurrent.ConcurrentSkipListMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.concurrent.ConcurrentSkipListMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.concurrent.ConcurrentSkipListSet#spliterator()
+java.util.concurrent.PriorityBlockingQueue.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.concurrent.PriorityBlockingQueue#spliterator()
 java.util.Arrays#parallelSort(byte[];)
 java.util.Arrays#parallelSort(byte[];int;int;)
@@ -657,6 +706,10 @@ java.util.Arrays#parallelPrefix(double[];java.util.function.DoubleBinaryOperator
 java.util.Arrays#parallelPrefix(double[];int;int;java.util.function.DoubleBinaryOperator;)
 java.util.Arrays#parallelPrefix(int[];java.util.function.IntBinaryOperator;)
 java.util.Arrays#parallelPrefix(int[];int;int;java.util.function.IntBinaryOperator;)
+java.util.Arrays.ArrayList#spliterator()
+java.util.Arrays.ArrayList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Arrays.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Arrays.ArrayList#sort(java.util.Comparator<? super E>;)
 java.util.Arrays#setAll(T[];java.util.function.IntFunction<? extends T>;)
 java.util.Arrays#parallelSetAll(T[];java.util.function.IntFunction<? extends T>;)
 java.util.Arrays#setAll(int[];java.util.function.IntUnaryOperator;)
@@ -707,12 +760,42 @@ java.util.Random#doubles(long;)
 java.util.Random#doubles()
 java.util.Random#doubles(long;double;double;)
 java.util.Random#doubles(double;double;)
+java.util.Vector.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Vector#sort(java.util.Comparator<? super E>;)
 java.util.Vector#spliterator()
+java.util.HashMap.KeySet#spliterator()
+java.util.HashMap.KeySet#forEach(java.util.function.Consumer<? super K>;)
+java.util.HashMap.Values#spliterator()
+java.util.HashMap.Values#forEach(java.util.function.Consumer<? super V>;)
+java.util.HashMap.EntrySet#spliterator()
+java.util.HashMap.EntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.HashMap#getOrDefault(java.lang.Object;V;)
+java.util.HashMap#putIfAbsent(K;V;)
+java.util.HashMap#remove(java.lang.Object;java.lang.Object;)
+java.util.HashMap#replace(K;V;V;)
+java.util.HashMap#replace(K;V;)
+java.util.HashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.HashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.HashSet#spliterator()
 java.util.Objects#isNull(java.lang.Object;)
 java.util.Objects#nonNull(java.lang.Object;)
 java.util.Objects#requireNonNull(T;java.util.function.Supplier<java.lang.String>;)
 java.util.TimSort#sort(T[];int;int;java.util.Comparator<? super T>;T[];int;int;)
+java.util.TreeMap#putIfAbsent(K;V;)
+java.util.TreeMap#replace(K;V;V;)
+java.util.TreeMap#replace(K;V;)
+java.util.TreeMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.TreeMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.TreeMap.Values#spliterator()
+java.util.TreeMap.EntrySet#spliterator()
+java.util.TreeMap.KeySet#spliterator()
+java.util.TreeMap.NavigableSubMap#putIfAbsent(K;V;)
+java.util.TreeMap.NavigableSubMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.TreeMap.NavigableSubMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.TreeMap.NavigableSubMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.TreeMap.NavigableSubMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.TreeMap.NavigableSubMap.SubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
+java.util.TreeMap.NavigableSubMap.DescendingSubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
 java.util.TreeSet#spliterator()
 java.util.Calendar#NARROW_FORMAT
 java.util.Calendar#NARROW_STANDALONE
@@ -729,8 +812,23 @@ java.util.Optional
 java.util.TimeZone#getTimeZone(java.time.ZoneId;)
 java.util.TimeZone#toZoneId()
 java.util.Tripwire
+java.util.ArrayList.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.ArrayList.SubList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.ArrayList.SubList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.ArrayList.SubList#spliterator()
 java.util.ArrayList#spliterator()
+java.util.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.ArrayList#sort(java.util.Comparator<? super E>;)
+java.util.Hashtable#getOrDefault(java.lang.Object;V;)
+java.util.Hashtable#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Hashtable#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Hashtable#putIfAbsent(K;V;)
+java.util.Hashtable#remove(java.lang.Object;java.lang.Object;)
+java.util.Hashtable#replace(K;V;V;)
+java.util.Hashtable#replace(K;V;)
 java.util.SortedSet#spliterator()
+java.util.ArrayDeque.DeqIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.ArrayDeque.DescendingIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.ArrayDeque#spliterator()
 java.util.Collection#removeIf(java.util.function.Predicate<? super E>;)
 java.util.Collection#spliterator()
@@ -752,24 +850,155 @@ java.util.Comparator#comparing(java.util.function.Function<? super T,? extends U
 java.util.Comparator#comparingInt(java.util.function.ToIntFunction<? super T>;)
 java.util.Comparator#comparingLong(java.util.function.ToLongFunction<? super T>;)
 java.util.Comparator#comparingDouble(java.util.function.ToDoubleFunction<? super T>;)
+java.util.LinkedList.ListItr#forEachRemaining(java.util.function.Consumer<? super E>;)
 java.util.LinkedList#spliterator()
+java.util.Properties#getOrDefault(java.lang.Object;java.lang.Object;)
+java.util.Properties#forEach(java.util.function.BiConsumer<? super java.lang.Object,? super java.lang.Object>;)
+java.util.Properties#replaceAll(java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,?>;)
+java.util.Properties#putIfAbsent(java.lang.Object;java.lang.Object;)
+java.util.Properties#remove(java.lang.Object;java.lang.Object;)
+java.util.Properties#replace(java.lang.Object;java.lang.Object;java.lang.Object;)
+java.util.Properties#replace(java.lang.Object;java.lang.Object;)
+java.util.Properties#computeIfAbsent(java.lang.Object;java.util.function.Function<? super java.lang.Object,?>;)
+java.util.Properties#computeIfPresent(java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,?>;)
+java.util.Properties#compute(java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,?>;)
+java.util.Properties#merge(java.lang.Object;java.lang.Object;java.util.function.BiFunction<? super java.lang.Object,? super java.lang.Object,?>;)
+java.util.Collections.UnmodifiableCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.UnmodifiableCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.UnmodifiableCollection#spliterator()
+java.util.Collections.UnmodifiableCollection#stream()
+java.util.Collections.UnmodifiableCollection#parallelStream()
 java.util.Collections#unmodifiableNavigableSet(java.util.NavigableSet<T>;)
+java.util.Collections.UnmodifiableList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.UnmodifiableList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.UnmodifiableMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.UnmodifiableMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.UnmodifiableMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#putIfAbsent(K;V;)
+java.util.Collections.UnmodifiableMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.UnmodifiableMap#replace(K;V;V;)
+java.util.Collections.UnmodifiableMap#replace(K;V;)
+java.util.Collections.UnmodifiableMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.UnmodifiableMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#spliterator()
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#stream()
+java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#parallelStream()
 java.util.Collections#unmodifiableNavigableMap(java.util.NavigableMap<K,? extends V>;)
+java.util.Collections.SynchronizedCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SynchronizedCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SynchronizedCollection#spliterator()
+java.util.Collections.SynchronizedCollection#stream()
+java.util.Collections.SynchronizedCollection#parallelStream()
 java.util.Collections#synchronizedNavigableSet(java.util.NavigableSet<T>;)
+java.util.Collections.SynchronizedList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.SynchronizedList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.SynchronizedMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.SynchronizedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.SynchronizedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#putIfAbsent(K;V;)
+java.util.Collections.SynchronizedMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.SynchronizedMap#replace(K;V;V;)
+java.util.Collections.SynchronizedMap#replace(K;V;)
+java.util.Collections.SynchronizedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.SynchronizedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SynchronizedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
 java.util.Collections#synchronizedNavigableMap(java.util.NavigableMap<K,V>;)
+java.util.Collections.CheckedCollection#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.CheckedCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.CheckedCollection#spliterator()
+java.util.Collections.CheckedCollection#stream()
+java.util.Collections.CheckedCollection#parallelStream()
 java.util.Collections#checkedQueue(java.util.Queue<E>;java.lang.Class<E>;)
 java.util.Collections#checkedNavigableSet(java.util.NavigableSet<E>;java.lang.Class<E>;)
+java.util.Collections.CheckedList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.CheckedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.CheckedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#putIfAbsent(K;V;)
+java.util.Collections.CheckedMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.CheckedMap#replace(K;V;V;)
+java.util.Collections.CheckedMap#replace(K;V;)
+java.util.Collections.CheckedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.CheckedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.CheckedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
 java.util.Collections#checkedNavigableMap(java.util.NavigableMap<K,V>;java.lang.Class<K>;java.lang.Class<V>;)
+java.util.Collections.EmptyIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
+java.util.Collections.EmptySet#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.EmptySet#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.EmptySet#spliterator()
 java.util.Collections#emptySortedSet()
 java.util.Collections#emptyNavigableSet()
+java.util.Collections.EmptyList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.EmptyList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.EmptyList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.EmptyList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.EmptyList#spliterator()
 java.util.Collections#emptySortedMap()
 java.util.Collections#emptyNavigableMap()
+java.util.Collections.EmptyMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.EmptyMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.EmptyMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#putIfAbsent(K;V;)
+java.util.Collections.EmptyMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.EmptyMap#replace(K;V;V;)
+java.util.Collections.EmptyMap#replace(K;V;)
+java.util.Collections.EmptyMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.EmptyMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.EmptyMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.SingletonSet#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SingletonSet#spliterator()
+java.util.Collections.SingletonSet#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SingletonList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SingletonList#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SingletonList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.Collections.SingletonList#sort(java.util.Comparator<? super E>;)
+java.util.Collections.SingletonList#spliterator()
+java.util.Collections.SingletonMap#getOrDefault(java.lang.Object;V;)
+java.util.Collections.SingletonMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.Collections.SingletonMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#putIfAbsent(K;V;)
+java.util.Collections.SingletonMap#remove(java.lang.Object;java.lang.Object;)
+java.util.Collections.SingletonMap#replace(K;V;V;)
+java.util.Collections.SingletonMap#replace(K;V;)
+java.util.Collections.SingletonMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.Collections.SingletonMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.Collections.SingletonMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.Collections.CopiesList#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.CopiesList#stream()
+java.util.Collections.CopiesList#parallelStream()
+java.util.Collections.CopiesList#spliterator()
+java.util.Collections.ReverseComparator#reversed()
+java.util.Collections.ReverseComparator2#reversed()
+java.util.Collections.SetFromMap#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.SetFromMap#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.SetFromMap#spliterator()
+java.util.Collections.SetFromMap#stream()
+java.util.Collections.SetFromMap#parallelStream()
+java.util.Collections.AsLIFOQueue#forEach(java.util.function.Consumer<? super E>;)
+java.util.Collections.AsLIFOQueue#removeIf(java.util.function.Predicate<? super E>;)
+java.util.Collections.AsLIFOQueue#spliterator()
+java.util.Collections.AsLIFOQueue#stream()
+java.util.Collections.AsLIFOQueue#parallelStream()
+java.util.Comparators.NaturalOrderComparator#reversed()
+java.util.Comparators.NullComparator#thenComparing(java.util.Comparator<? super T>;)
+java.util.Comparators.NullComparator#reversed()
 java.util.OptionalInt
 java.util.Spliterator.OfPrimitive
 java.util.Spliterator.OfInt
 java.util.Spliterator.OfLong
 java.util.Spliterator.OfDouble
 java.util.Spliterator
+java.util.WeakHashMap.KeySet#spliterator()
+java.util.WeakHashMap.Values#spliterator()
+java.util.WeakHashMap.EntrySet#spliterator()
+java.util.WeakHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.WeakHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.OptionalLong
 java.util.Spliterators.AbstractSpliterator
 java.util.Spliterators.AbstractIntSpliterator
@@ -777,11 +1006,24 @@ java.util.Spliterators.AbstractLongSpliterator
 java.util.Spliterators.AbstractDoubleSpliterator
 java.util.Spliterators
 java.util.StringJoiner
+java.util.LinkedHashMap.LinkedKeySet#spliterator()
+java.util.LinkedHashMap.LinkedKeySet#forEach(java.util.function.Consumer<? super K>;)
+java.util.LinkedHashMap.LinkedValues#spliterator()
+java.util.LinkedHashMap.LinkedValues#forEach(java.util.function.Consumer<? super V>;)
+java.util.LinkedHashMap.LinkedEntrySet#spliterator()
+java.util.LinkedHashMap.LinkedEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
+java.util.LinkedHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.LinkedHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.LinkedHashSet#spliterator()
 java.util.PriorityQueue#PriorityQueue(java.util.Comparator<? super E>;)
 java.util.PriorityQueue#spliterator()
 java.util.OptionalDouble
 java.util.ResourceBundle#getBaseBundleName()
+java.util.IdentityHashMap.KeySet#spliterator()
+java.util.IdentityHashMap.Values#spliterator()
+java.util.IdentityHashMap.EntrySet#spliterator()
+java.util.IdentityHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
+java.util.IdentityHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.SplittableRandom
 java.util.ComparableTimSort#sort(java.lang.Object[];int;int;java.lang.Object[];int;int;)
 java.util.GregorianCalendar#getCalendarType()
@@ -792,6 +1034,18 @@ java.util.PrimitiveIterator.OfLong
 java.util.PrimitiveIterator.OfDouble
 java.util.PrimitiveIterator
 java.util.ArrayPrefixHelpers
+java.util.ImmutableCollections.AbstractImmutableCollection#removeIf(java.util.function.Predicate<? super E>;)
+java.util.ImmutableCollections.AbstractImmutableList#replaceAll(java.util.function.UnaryOperator<E>;)
+java.util.ImmutableCollections.AbstractImmutableList#sort(java.util.Comparator<? super E>;)
+java.util.ImmutableCollections.AbstractImmutableMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.ImmutableCollections.AbstractImmutableMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
+java.util.ImmutableCollections.AbstractImmutableMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
+java.util.ImmutableCollections.AbstractImmutableMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
+java.util.ImmutableCollections.AbstractImmutableMap#putIfAbsent(K;V;)
+java.util.ImmutableCollections.AbstractImmutableMap#remove(java.lang.Object;java.lang.Object;)
+java.util.ImmutableCollections.AbstractImmutableMap#replace(K;V;)
+java.util.ImmutableCollections.AbstractImmutableMap#replace(K;V;V;)
+java.util.ImmutableCollections.AbstractImmutableMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
 java.util.IntSummaryStatistics
 java.util.LongSummaryStatistics
 java.util.DoubleSummaryStatistics
@@ -804,6 +1058,7 @@ java.security.cert.CertPathValidator#getRevocationChecker()
 java.security.cert.CertPathBuilderSpi#engineGetRevocationChecker()
 java.security.cert.CertPathValidatorSpi#engineGetRevocationChecker()
 java.security.cert.PKIXRevocationChecker
+java.security.spec.DSAGenParameterSpec
 java.security.KeyStore.PasswordProtection#PasswordProtection(char[];java.lang.String;java.security.spec.AlgorithmParameterSpec;)
 java.security.KeyStore.PasswordProtection#getProtectionAlgorithm()
 java.security.KeyStore.PasswordProtection#getProtectionParameters()
@@ -834,8 +1089,103 @@ java.security.AccessController#doPrivilegedWithCombiner(java.security.Privileged
 java.security.AccessController#doPrivileged(java.security.PrivilegedExceptionAction<T>;java.security.AccessControlContext;java.security.Permission[];)
 java.security.AccessController#doPrivilegedWithCombiner(java.security.PrivilegedExceptionAction<T>;java.security.AccessControlContext;java.security.Permission[];)
 java.security.DomainLoadStoreParameter
-javax.xml.validation.SchemaFactoryConfigurationError
+javax.net.ssl.SNIMatcher
+javax.net.ssl.SNIHostName
+javax.net.ssl.SNIServerName
+javax.net.ssl.SSLParameters#setServerNames(java.util.List<javax.net.ssl.SNIServerName>;)
+javax.net.ssl.SSLParameters#getServerNames()
+javax.net.ssl.SSLParameters#setSNIMatchers(java.util.Collection<javax.net.ssl.SNIMatcher>;)
+javax.net.ssl.SSLParameters#getSNIMatchers()
+javax.net.ssl.SSLParameters#setUseCipherSuitesOrder(boolean;)
+javax.net.ssl.SSLParameters#getUseCipherSuitesOrder()
+javax.net.ssl.SSLSocketFactory#createSocket(java.net.Socket;java.io.InputStream;boolean;)
+javax.net.ssl.StandardConstants
+javax.net.ssl.ExtendedSSLSession#getRequestedServerNames()
+javax.crypto.spec.PBEParameterSpec#PBEParameterSpec(byte[];int;java.security.spec.AlgorithmParameterSpec;)
+javax.crypto.spec.PBEParameterSpec#getParameterSpec()
+com.sun.tools.attach.VirtualMachine#startManagementAgent(java.util.Properties;)
+com.sun.tools.attach.VirtualMachine#startLocalManagementAgent()
+sun.tools.attach.HotSpotVirtualMachine#startManagementAgent(java.util.Properties;)
+sun.tools.attach.HotSpotVirtualMachine#startLocalManagementAgent()
+com.sun.beans.util.Cache
+sun.awt.AppContext#isMainContext(sun.awt.AppContext;)
+sun.awt.FwDispatcher
+java.awt.event.KeyEvent#originalSource
+java.awt.event.InvocationEvent#listener
+java.awt.KeyboardFocusManager#clearFocusOwner()
+java.util.logging.Logger#log(java.util.logging.Level;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#log(java.util.logging.Level;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logp(java.util.logging.Level;java.lang.String;java.lang.String;java.lang.Throwable;java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Object[];)
+java.util.logging.Logger#logrb(java.util.logging.Level;java.lang.String;java.lang.String;java.util.ResourceBundle;java.lang.String;java.lang.Throwable;)
+java.util.logging.Logger#severe(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#warning(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#info(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#config(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#fine(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#finer(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#finest(java.util.function.Supplier<java.lang.String>;)
+java.util.logging.Logger#setResourceBundle(java.util.ResourceBundle;)
+com.sun.tools.javac.api.BasicJavacTask#addTaskListener(com.sun.source.util.TaskListener;)
+com.sun.tools.javac.api.BasicJavacTask#removeTaskListener(com.sun.source.util.TaskListener;)
+com.sun.tools.javac.code.Type.MethodType#getReceiverType()
+com.sun.tools.javac.code.Symbol.MethodSymbol#isDefault()
+com.sun.tools.javac.code.Symbol.MethodSymbol#getReceiverType()
+com.sun.tools.javac.tree.JCTree.JCMethodDecl#getReceiverParameter()
+com.sun.tools.javac.tree.JCTree.JCTypeParameter#getAnnotations()
+com.sun.tools.javac.model.JavacElements#isFunctionalInterface(javax.lang.model.element.TypeElement;)
+com.sun.source.tree.MethodTree#getReceiverParameter()
+com.sun.source.tree.AnnotatedTypeTree
+com.sun.source.tree.TypeParameterTree#getAnnotations()
+com.sun.source.tree.MemberReferenceTree
+com.sun.source.tree.IntersectionTypeTree
+com.sun.source.util.Plugin
+com.sun.source.util.DocTrees
+com.sun.source.util.JavacTask#instance(javax.annotation.processing.ProcessingEnvironment;)
+com.sun.source.util.JavacTask#addTaskListener(com.sun.source.util.TaskListener;)
+com.sun.source.util.JavacTask#removeTaskListener(com.sun.source.util.TaskListener;)
+com.sun.source.util.DocTreePath
+com.sun.source.util.DocTreeScanner
+com.sun.source.util.DocSourcePositions
+com.sun.source.util.DocTreePathScanner
+com.sun.source.util.SimpleDocTreeVisitor
+com.sun.source.doctree.DocTree
+com.sun.source.doctree.SeeTree
+com.sun.source.doctree.LinkTree
+com.sun.source.doctree.TextTree
+com.sun.source.doctree.ParamTree
+com.sun.source.doctree.SinceTree
+com.sun.source.doctree.ValueTree
+com.sun.source.doctree.AuthorTree
+com.sun.source.doctree.EntityTree
+com.sun.source.doctree.ReturnTree
+com.sun.source.doctree.SerialTree
+com.sun.source.doctree.ThrowsTree
+com.sun.source.doctree.CommentTree
+com.sun.source.doctree.DocRootTree
+com.sun.source.doctree.LiteralTree
+com.sun.source.doctree.VersionTree
+com.sun.source.doctree.BlockTagTree
+com.sun.source.doctree.AttributeTree
+com.sun.source.doctree.ErroneousTree
+com.sun.source.doctree.InlineTagTree
+com.sun.source.doctree.ReferenceTree
+com.sun.source.doctree.DeprecatedTree
+com.sun.source.doctree.DocCommentTree
+com.sun.source.doctree.DocTreeVisitor
+com.sun.source.doctree.EndElementTree
+com.sun.source.doctree.IdentifierTree
+com.sun.source.doctree.InheritDocTree
+com.sun.source.doctree.SerialDataTree
+com.sun.source.doctree.SerialFieldTree
+com.sun.source.doctree.StartElementTree
+com.sun.source.doctree.UnknownBlockTagTree
+com.sun.source.doctree.UnknownInlineTagTree
 javax.lang.model.type.TypeKind#INTERSECTION
+javax.lang.model.type.TypeMirror#getAnnotationMirrors()
+javax.lang.model.type.TypeMirror#getAnnotation(java.lang.Class<A>;)
+javax.lang.model.type.TypeMirror#getAnnotationsByType(java.lang.Class<A>;)
 javax.lang.model.type.TypeVisitor#visitIntersection(javax.lang.model.type.IntersectionType;P;)
 javax.lang.model.type.ExecutableType#getReceiverType()
 javax.lang.model.type.IntersectionType
@@ -850,305 +1200,54 @@ javax.lang.model.util.SimpleElementVisitor8
 javax.lang.model.util.AbstractElementVisitor8
 javax.lang.model.util.SimpleAnnotationValueVisitor8
 javax.lang.model.util.AbstractAnnotationValueVisitor8
+javax.lang.model.element.Element#getAnnotationsByType(java.lang.Class<A>;)
 javax.lang.model.element.Modifier#DEFAULT
 javax.lang.model.element.ExecutableElement#getReceiverType()
 javax.lang.model.element.ExecutableElement#isDefault()
 javax.lang.model.SourceVersion#RELEASE_8
 javax.lang.model.AnnotatedConstruct
 javax.tools.StandardLocation#NATIVE_HEADER_OUTPUT
+javax.tools.DocumentationTool
+jdk.internal.net.http.common.ImmutableExtendedSSLSession#getRequestedServerNames()
+com.sun.net.httpserver.Headers#replaceAll(java.util.function.BiFunction<? super java.lang.String,? super java.util.List<java.lang.String>,? extends java.util.List<java.lang.String>>;)
+sun.net.httpserver.UnmodifiableHeaders#replace(java.lang.String;java.util.List<java.lang.String>;)
+sun.net.httpserver.UnmodifiableHeaders#replace(java.lang.String;java.util.List<java.lang.String>;java.util.List<java.lang.String>;)
+sun.net.httpserver.UnmodifiableHeaders#replaceAll(java.util.function.BiFunction<? super java.lang.String,? super java.util.List<java.lang.String>,? extends java.util.List<java.lang.String>>;)
+com.sun.management.internal.DiagnosticCommandImpl
+com.sun.management.internal.DiagnosticCommandInfo
+com.sun.management.internal.DiagnosticCommandArgumentInfo
+com.sun.management.DiagnosticCommandMBean
+java.lang.management.LockInfo#from(javax.management.openmbean.CompositeData;)
+jdk.internal.org.jline.reader.impl.history.DefaultHistory#spliterator()
+sun.misc.Unsafe#getAndAddInt(java.lang.Object;long;int;)
+sun.misc.Unsafe#getAndAddLong(java.lang.Object;long;long;)
+sun.misc.Unsafe#getAndSetInt(java.lang.Object;long;int;)
+sun.misc.Unsafe#getAndSetLong(java.lang.Object;long;long;)
+sun.misc.Unsafe#getAndSetObject(java.lang.Object;long;java.lang.Object;)
+sun.misc.Unsafe#loadFence()
+sun.misc.Unsafe#storeFence()
+sun.misc.Unsafe#fullFence()
+java.awt.datatransfer.DataFlavor#selectionHtmlFlavor
+java.awt.datatransfer.DataFlavor#fragmentHtmlFlavor
+java.awt.datatransfer.DataFlavor#allHtmlFlavor
+com.sun.security.jgss.ExtendedGSSCredential
+sun.security.jgss.krb5.ServiceCreds
+sun.security.jgss.krb5.Krb5ProxyCredential
+sun.security.krb5.internal.ReplayCache
 javax.security.auth.kerberos.KeyTab#getUnboundInstance(java.io.File;)
 javax.security.auth.kerberos.KeyTab#getInstance(javax.security.auth.kerberos.KerberosPrincipal;java.io.File;)
 javax.security.auth.kerberos.KeyTab#getUnboundInstance()
 javax.security.auth.kerberos.KeyTab#getInstance(javax.security.auth.kerberos.KerberosPrincipal;)
 javax.security.auth.kerberos.KeyTab#getPrincipal()
 javax.security.auth.kerberos.KeyTab#isBound()
-java.lang.reflect.Method#getParameterCount()
-java.lang.reflect.Constructor#getParameterCount()
-sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotatedBounds()
-java.lang.reflect.Parameter#getAnnotationsByType(java.lang.Class<T>;)
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotationsByType(java.lang.Class<T>;)
-sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getAnnotationsByType(java.lang.Class<T>;)
-java.lang.reflect.Parameter#getDeclaredAnnotation(java.lang.Class<T>;)
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotation(java.lang.Class<T>;)
-sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotation(java.lang.Class<T>;)
-java.lang.reflect.Parameter#getDeclaredAnnotationsByType(java.lang.Class<T>;)
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
-sun.reflect.generics.reflectiveObjects.TypeVariableImpl#getDeclaredAnnotationsByType(java.lang.Class<T>;)
-java.lang.ProcessImpl#waitFor(long;java.util.concurrent.TimeUnit;)
-java.lang.ProcessImpl#destroyForcibly()
-java.lang.ProcessImpl#isAlive()
-java.util.stream.SpinedBuffer.OfPrimitive#forEach(java.util.function.Consumer<? super E>;)
-java.util.stream.SpinedBuffer#forEach(java.util.function.Consumer<? super E>;)
-java.util.stream.Nodes.SpinedNodeBuilder#forEach(java.util.function.Consumer<? super T>;)
-java.util.concurrent.ConcurrentHashMap.ValuesView#forEach(java.util.function.Consumer<? super V>;)
-java.util.Collections.CheckedCollection#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.SynchronizedCollection#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.UnmodifiableCollection#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.AsLIFOQueue#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
-java.util.concurrent.ConcurrentHashMap.EntrySetView#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
-java.util.concurrent.ConcurrentHashMap.KeySetView#forEach(java.util.function.Consumer<? super K>;)
-java.util.ArrayList#forEach(java.util.function.Consumer<? super E>;)
-java.util.Vector#forEach(java.util.function.Consumer<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList#forEach(java.util.function.Consumer<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList.COWSubList#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.SingletonList#forEach(java.util.function.Consumer<? super E>;)
-java.util.Arrays.ArrayList#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.EmptyList#forEach(java.util.function.Consumer<? super E>;)
-java.util.LinkedHashMap.LinkedValues#forEach(java.util.function.Consumer<? super V>;)
-java.util.HashMap.Values#forEach(java.util.function.Consumer<? super V>;)
-java.util.HashMap.KeySet#forEach(java.util.function.Consumer<? super K>;)
-java.util.LinkedHashMap.LinkedKeySet#forEach(java.util.function.Consumer<? super K>;)
-java.util.LinkedHashMap.LinkedEntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
-java.util.Collections.EmptySet#forEach(java.util.function.Consumer<? super E>;)
-java.util.Collections.SingletonSet#forEach(java.util.function.Consumer<? super E>;)
-java.util.concurrent.CopyOnWriteArraySet#forEach(java.util.function.Consumer<? super E>;)
-java.util.HashMap.EntrySet#forEach(java.util.function.Consumer<? super java.util.Map.Entry<K,V>>;)
-java.util.Collections.SetFromMap#forEach(java.util.function.Consumer<? super E>;)
-java.util.stream.SpinedBuffer.OfDouble#forEach(java.util.function.Consumer<? super java.lang.Double>;)
-java.util.stream.SpinedBuffer.OfLong#forEach(java.util.function.Consumer<? super java.lang.Long>;)
-java.util.stream.SpinedBuffer.OfInt#forEach(java.util.function.Consumer<? super java.lang.Integer>;)
-java.util.stream.SpinedBuffer#spliterator()
-java.util.stream.Nodes.SpinedNodeBuilder#spliterator()
-java.util.concurrent.ConcurrentHashMap.ValuesView#spliterator()
-java.util.Collections.CheckedCollection#spliterator()
-java.util.Collections.SynchronizedCollection#spliterator()
-java.util.Collections.UnmodifiableCollection#spliterator()
-java.util.Collections.AsLIFOQueue#spliterator()
-java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#spliterator()
-java.util.concurrent.ConcurrentHashMap.EntrySetView#spliterator()
-java.util.concurrent.ConcurrentHashMap.KeySetView#spliterator()
-java.util.concurrent.CopyOnWriteArrayList.COWSubList#spliterator()
-java.util.Collections.SingletonList#spliterator()
-java.util.Arrays.ArrayList#spliterator()
-java.util.Collections.EmptyList#spliterator()
-java.util.ArrayList.SubList#spliterator()
-java.util.Collections.CopiesList#spliterator()
-java.util.LinkedHashMap.LinkedValues#spliterator()
-java.util.HashMap.Values#spliterator()
-java.util.TreeMap.Values#spliterator()
-java.util.WeakHashMap.Values#spliterator()
-java.util.IdentityHashMap.Values#spliterator()
-java.util.concurrent.ConcurrentSkipListMap.Values#spliterator()
-java.util.HashMap.KeySet#spliterator()
-java.util.WeakHashMap.EntrySet#spliterator()
-java.util.WeakHashMap.KeySet#spliterator()
-java.util.TreeMap.EntrySet#spliterator()
-java.util.TreeMap.KeySet#spliterator()
-java.util.concurrent.ConcurrentSkipListMap.EntrySet#spliterator()
-java.util.LinkedHashMap.LinkedKeySet#spliterator()
-java.util.LinkedHashMap.LinkedEntrySet#spliterator()
-java.util.Collections.EmptySet#spliterator()
-java.util.Collections.SingletonSet#spliterator()
-java.util.HashMap.EntrySet#spliterator()
-java.util.IdentityHashMap.KeySet#spliterator()
-java.util.IdentityHashMap.EntrySet#spliterator()
-java.util.Collections.SetFromMap#spliterator()
-java.util.concurrent.ConcurrentSkipListMap.KeySet#spliterator()
-java.util.stream.SpinedBuffer.OfDouble#spliterator()
-java.util.stream.SpinedBuffer.OfLong#spliterator()
-java.util.stream.SpinedBuffer.OfInt#spliterator()
-java.util.stream.Nodes.IntSpinedNodeBuilder#spliterator()
-java.util.stream.Nodes.LongSpinedNodeBuilder#spliterator()
-java.util.stream.Nodes.DoubleSpinedNodeBuilder#spliterator()
-java.nio.CharBuffer#chars()
-sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
-sun.util.locale.provider.TimeZoneNameProviderImpl#getGenericDisplayName(java.lang.String;int;java.util.Locale;)
-sun.util.locale.provider.BreakIteratorProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.BreakIteratorProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.LocaleNameProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.LocaleNameProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.CurrencyNameProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.TimeZoneNameProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.TimeZoneNameProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.CollatorProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.CollatorProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.DateFormatProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.NumberFormatProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.NumberFormatProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.DateFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.DateFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.CalendarNameProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.CalendarNameProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.DecimalFormatSymbolsProviderDelegate#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.DecimalFormatSymbolsProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.CalendarProviderImpl#isSupportedLocale(java.util.Locale;)
-sun.util.locale.provider.SPILocaleProviderAdapter.CalendarDataProviderDelegate#isSupportedLocale(java.util.Locale;)
-java.util.jar.JarFile#stream()
-java.util.Collections.SynchronizedMap#getOrDefault(java.lang.Object;V;)
-java.util.HashMap#getOrDefault(java.lang.Object;V;)
-java.util.LinkedHashMap#getOrDefault(java.lang.Object;V;)
-java.util.Collections.UnmodifiableMap#getOrDefault(java.lang.Object;V;)
-java.util.Hashtable#getOrDefault(java.lang.Object;V;)
-java.util.concurrent.ConcurrentHashMap#getOrDefault(java.lang.Object;V;)
-java.util.Collections.EmptyMap#getOrDefault(java.lang.Object;V;)
-java.util.Collections.SingletonMap#getOrDefault(java.lang.Object;V;)
-java.util.IdentityHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Collections.SynchronizedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Collections.CheckedMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.HashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.LinkedHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Collections.UnmodifiableMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.WeakHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Hashtable#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.TreeMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.concurrent.ConcurrentSkipListMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.concurrent.ConcurrentHashMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Collections.EmptyMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.Collections.SingletonMap#forEach(java.util.function.BiConsumer<? super K,? super V>;)
-java.util.IdentityHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SynchronizedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.CheckedMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.HashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.LinkedHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.UnmodifiableMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.WeakHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Hashtable#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.TreeMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.concurrent.ConcurrentSkipListMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.concurrent.ConcurrentHashMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.EmptyMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SingletonMap#replaceAll(java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SynchronizedMap#putIfAbsent(K;V;)
-java.util.Collections.CheckedMap#putIfAbsent(K;V;)
-java.util.HashMap#putIfAbsent(K;V;)
-java.util.Collections.UnmodifiableMap#putIfAbsent(K;V;)
-java.util.Hashtable#putIfAbsent(K;V;)
-java.util.Collections.EmptyMap#putIfAbsent(K;V;)
-java.util.Collections.SingletonMap#putIfAbsent(K;V;)
-java.util.Collections.SynchronizedMap#remove(java.lang.Object;java.lang.Object;)
-java.util.Collections.CheckedMap#remove(java.lang.Object;java.lang.Object;)
-java.util.HashMap#remove(java.lang.Object;java.lang.Object;)
-java.util.Collections.UnmodifiableMap#remove(java.lang.Object;java.lang.Object;)
-java.util.Hashtable#remove(java.lang.Object;java.lang.Object;)
-java.util.Collections.EmptyMap#remove(java.lang.Object;java.lang.Object;)
-java.util.Collections.SingletonMap#remove(java.lang.Object;java.lang.Object;)
-java.util.Collections.SynchronizedMap#replace(K;V;V;)
-java.util.Collections.CheckedMap#replace(K;V;V;)
-java.util.HashMap#replace(K;V;V;)
-java.util.Collections.UnmodifiableMap#replace(K;V;V;)
-java.util.Hashtable#replace(K;V;V;)
-java.util.TreeMap#replace(K;V;V;)
-java.util.Collections.EmptyMap#replace(K;V;V;)
-java.util.Collections.SingletonMap#replace(K;V;V;)
-java.util.Collections.SynchronizedMap#replace(K;V;)
-java.util.Collections.CheckedMap#replace(K;V;)
-java.util.HashMap#replace(K;V;)
-java.util.Collections.UnmodifiableMap#replace(K;V;)
-java.util.Hashtable#replace(K;V;)
-java.util.TreeMap#replace(K;V;)
-java.util.Collections.EmptyMap#replace(K;V;)
-java.util.Collections.SingletonMap#replace(K;V;)
-java.util.Collections.SynchronizedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Collections.CheckedMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.HashMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Collections.UnmodifiableMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Hashtable#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.concurrent.ConcurrentHashMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Collections.EmptyMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Collections.SingletonMap#computeIfAbsent(K;java.util.function.Function<? super K,? extends V>;)
-java.util.Collections.SynchronizedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.CheckedMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.HashMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.UnmodifiableMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Hashtable#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.concurrent.ConcurrentHashMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.EmptyMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SingletonMap#computeIfPresent(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SynchronizedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.CheckedMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.HashMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.UnmodifiableMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Hashtable#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.concurrent.ConcurrentHashMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.EmptyMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SingletonMap#compute(K;java.util.function.BiFunction<? super K,? super V,? extends V>;)
-java.util.Collections.SynchronizedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.Collections.CheckedMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.HashMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.Collections.UnmodifiableMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.Hashtable#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.concurrent.ConcurrentHashMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.Collections.EmptyMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.util.Collections.SingletonMap#merge(K;V;java.util.function.BiFunction<? super V,? super V,? extends V>;)
-java.sql.Time#toInstant()
-java.sql.Date#toInstant()
-java.util.Collections.CheckedList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Vector#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Collections.SynchronizedList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Collections.UnmodifiableList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.concurrent.CopyOnWriteArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.concurrent.CopyOnWriteArrayList.COWSubList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Collections.SingletonList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Arrays.ArrayList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Collections.EmptyList#replaceAll(java.util.function.UnaryOperator<E>;)
-java.util.Collections.CheckedList#sort(java.util.Comparator<? super E>;)
-java.util.ArrayList#sort(java.util.Comparator<? super E>;)
-java.util.Vector#sort(java.util.Comparator<? super E>;)
-java.util.Collections.SynchronizedList#sort(java.util.Comparator<? super E>;)
+com.sun.javadoc.Type#asAnnotatedType()
+com.sun.javadoc.Type#getElementType()
+com.sun.javadoc.AnnotatedType
+com.sun.javadoc.ExecutableMemberDoc#receiverType()
 com.sun.javafx.collections.SortableList#sort(java.util.Comparator<? super E>;)
-java.util.Collections.UnmodifiableList#sort(java.util.Comparator<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList#sort(java.util.Comparator<? super E>;)
 com.sun.javafx.collections.ObservableListWrapper#sort(java.util.Comparator<? super E>;)
 com.sun.javafx.collections.ObservableSequentialListWrapper#sort(java.util.Comparator<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList.COWSubList#sort(java.util.Comparator<? super E>;)
-java.util.Collections.SingletonList#sort(java.util.Comparator<? super E>;)
-java.util.Arrays.ArrayList#sort(java.util.Comparator<? super E>;)
-java.util.Collections.EmptyList#sort(java.util.Comparator<? super E>;)
 java.util.JapaneseImperialCalendar#getCalendarType()
 sun.util.BuddhistCalendar#getCalendarType()
-java.util.concurrent.ConcurrentSkipListMap.SubMap.SubMapIter#forEachRemaining(java.util.function.Consumer<? super T>;)
-java.util.ArrayList.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.ArrayDeque.DeqIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.Collections.EmptyIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.Vector.Itr#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.PrimitiveIterator.OfDouble#forEachRemaining(java.util.function.Consumer<? super java.lang.Double>;)
-java.util.PrimitiveIterator.OfInt#forEachRemaining(java.util.function.Consumer<? super java.lang.Integer>;)
-java.util.PrimitiveIterator.OfLong#forEachRemaining(java.util.function.Consumer<? super java.lang.Long>;)
-java.util.TreeMap.NavigableSubMap.SubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
-java.util.TreeMap.NavigableSubMap.DescendingSubMapKeyIterator#forEachRemaining(java.util.function.Consumer<? super K>;)
-java.util.concurrent.CopyOnWriteArrayList.COWSubListIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.LinkedList.ListItr#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList.COWIterator#forEachRemaining(java.util.function.Consumer<? super E>;)
-java.util.Collections.CheckedCollection#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.SynchronizedCollection#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.UnmodifiableCollection#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.AsLIFOQueue#removeIf(java.util.function.Predicate<? super E>;)
-java.util.ArrayList#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Vector#removeIf(java.util.function.Predicate<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList#removeIf(java.util.function.Predicate<? super E>;)
-java.util.concurrent.CopyOnWriteArrayList.COWSubList#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.SingletonList#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.EmptyList#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.EmptySet#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.SingletonSet#removeIf(java.util.function.Predicate<? super E>;)
-java.util.concurrent.CopyOnWriteArraySet#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.SetFromMap#removeIf(java.util.function.Predicate<? super E>;)
-java.util.Collections.CheckedCollection#stream()
-java.util.Collections.SynchronizedCollection#stream()
-java.util.Collections.UnmodifiableCollection#stream()
-java.util.Collections.AsLIFOQueue#stream()
-java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#stream()
-java.util.Collections.CopiesList#stream()
-java.util.Collections.SetFromMap#stream()
-java.util.Collections.CheckedCollection#parallelStream()
-java.util.Collections.SynchronizedCollection#parallelStream()
-java.util.Collections.UnmodifiableCollection#parallelStream()
-java.util.Collections.AsLIFOQueue#parallelStream()
-java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet#parallelStream()
-java.util.Collections.CopiesList#parallelStream()
-java.util.Collections.SetFromMap#parallelStream()
-java.util.Collections.ReverseComparator2#reversed()
-java.util.Collections.ReverseComparator#reversed()
-java.util.Comparators.NullComparator#reversed()
-java.util.Comparators.NaturalOrderComparator#reversed()
-java.util.Comparators.NullComparator#thenComparing(java.util.Comparator<? super T>;)
 sun.security.x509.X509CRLImpl#verify(java.security.PublicKey;java.security.Provider;)
 sun.security.x509.X509CertImpl#verify(java.security.PublicKey;java.security.Provider;)
-sun.security.provider.certpath.SunCertPathBuilder#engineGetRevocationChecker()
-sun.security.provider.certpath.PKIXCertPathValidator#engineGetRevocationChecker()
-javax.lang.model.util.AbstractTypeVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)
-javax.lang.model.util.TypeKindVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)
-javax.lang.model.util.SimpleTypeVisitor8#visitIntersection(javax.lang.model.type.IntersectionType;P;)

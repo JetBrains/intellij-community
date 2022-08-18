@@ -77,8 +77,12 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
     if (isEmptyOrSpaces(getUserName())) {
       return new ValidationInfo(message, myNameTextField);
     }
-    if (isEmptyOrSpaces(getUserEmail())) {
+    String email = getUserEmail();
+    if (isEmptyOrSpaces(email)) {
       return new ValidationInfo(message, myEmailTextField);
+    }
+    if(!email.contains("@")) {
+      return new ValidationInfo(GitBundle.message("validation.error.email.no.at"), myEmailTextField);
     }
     return null;
   }

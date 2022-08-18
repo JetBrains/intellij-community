@@ -36,7 +36,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -53,7 +52,6 @@ import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
-import java.awt.Color
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.border.Border
@@ -223,7 +221,11 @@ internal class GitVcsPanel(private val project: Project) :
       val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
         override fun shouldDrawLabel(): Boolean = false
         override fun shouldIndicateHovering(): Boolean = false
-        override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+
+        override fun getEmptyFilterValue(): String {
+          return ALL_ACTION_TEXT.get()
+        }
+
         override fun createUnfocusedBorder(): Border {
           return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, BORDER_SIZE, true)
         }

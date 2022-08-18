@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
 import com.intellij.navigation.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JBProtocolCommand.SCHEME
+import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -19,7 +19,7 @@ import com.intellij.util.io.encodeUrlQueryParameter
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
-object CopyTBXReferenceAction {
+internal object CopyTBXReferenceAction {
   private val LOG = Logger.getInstance(CopyTBXReferenceAction::class.java)
 
   @NlsSafe
@@ -55,9 +55,8 @@ object CopyTBXReferenceAction {
     if (copy != null) return copy
 
     if (editor == null) return null
-    val file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+    val file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) ?: return null
 
-    if (file == null) return null
     val logicalPosition = editor.caretModel.logicalPosition
     val path = "${getFileFqn(file)}:${logicalPosition.line + 1}:${logicalPosition.column + 1}"
 
@@ -85,7 +84,7 @@ object CopyTBXReferenceAction {
     val selectionParameters = getSelectionParameters(editor) ?: ""
     val projectParameter = "${PROJECT_NAME_KEY}=${project.name}"
 
-    return "${SCHEME}://${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
+    return "${JBProtocolCommand.SCHEME}://${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {
@@ -106,7 +105,6 @@ object CopyTBXReferenceAction {
 
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
     getSelectionRange(editor, caret)?.let {
-      @Suppress("HardCodedStringLiteral")
       "&$SELECTION$index=$it"
     }
 

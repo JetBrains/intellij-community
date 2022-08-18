@@ -2,20 +2,118 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.AbstractObjectIterator;
+import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
+  public static abstract class TrigramProcessor implements IntPredicate {
+    public boolean consumeTrigramsCount(@SuppressWarnings("unused") int count) {
+      return true;
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public static boolean processTrigrams(@NotNull CharSequence text, @NotNull TrigramProcessor consumer) {
+    IntSet trigrams = getTrigrams(text);
+    if (!consumer.consumeTrigramsCount(trigrams.size())) {
+      return false;
+    }
+    IntIterator iterator = trigrams.intIterator();
+    while (iterator.hasNext()) {
+      int trigram = iterator.nextInt();
+      if (!consumer.test(trigram)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
+    return new AbstractInt2ObjectMap<Void>() {
+      final IntSet trigrams = getTrigrams(text);
+
+      @Override
+      public int size() {
+        return trigrams.size();
+      }
+
+      @Override
+      public boolean containsKey(int k) {
+        return trigrams.contains(k);
+      }
+
+      @Override
+      public boolean containsValue(Object v) {
+        return v == null && !isEmpty();
+      }
+
+      @Override
+      public ObjectSet<Entry<Void>> int2ObjectEntrySet() {
+        return new AbstractObjectSet<Entry<Void>>() {
+          @Override
+          public ObjectIterator<Entry<Void>> iterator() {
+            IntIterator iterator = trigrams.intIterator();
+            return new AbstractObjectIterator<Entry<Void>>() {
+              @Override
+              public boolean hasNext() {
+                return iterator.hasNext();
+              }
+
+              @Override
+              public Entry<Void> next() {
+                int key = iterator.nextInt();
+
+                return new Entry<Void>() {
+                  @Override
+                  public int getIntKey() {
+                    return key;
+                  }
+
+                  @Override
+                  public Void getValue() {
+                    return null;
+                  }
+
+                  @Override
+                  public Void setValue(Void value) {
+                    throw new UnsupportedOperationException();
+                  }
+                };
+              }
+            };
+          }
+
+          @Override
+          public int size() {
+            return trigrams.size();
+          }
+        };
+      }
+
+      @Override
+      public Void get(int key) {
+        return null;
+      }
+    };
+  }
+
   /**
    * Produces <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
-   *
+   * <p>
    * Every single trigram is represented by single integer where char bytes are stored with 8 bit offset.
    */
-  public static boolean processTrigrams(@NotNull CharSequence text, @NotNull TrigramProcessor consumer) {
+  public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
     final AddonlyIntSet set = new AddonlyIntSet();
     int index = 0;
     final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -55,20 +153,12 @@ public final class TrigramBuilder {
       }
     }
 
-    return consumer.consumeTrigramsCount(set.size()) && set.forEach(consumer);
+    return set;
   }
 
-  public static abstract class TrigramProcessor implements IntPredicate {
-    public boolean consumeTrigramsCount(int count) {
-      return true;
-    }
-  }
-
-  private static class AddonlyIntSet {
-    //private static final int MAGIC = 0x9E3779B9;
+  private static class AddonlyIntSet extends AbstractIntSet {
     private int size;
     private int[] data;
-    private int shift;
     private int mask;
     private boolean hasZeroKey;
 
@@ -76,39 +166,82 @@ public final class TrigramBuilder {
       this(21);
     }
 
+    @Override
+    public IntIterator iterator() {
+      return new AbstractIntIterator() {
+        private int pos = -1;
+
+        @Override
+        public int nextInt() {
+          if (pos == -1 && hasZeroKey) {
+            pos = 0;
+            return 0;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i + 1;
+              return data[i];
+            }
+          }
+
+          throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean hasNext() {
+          if (pos == -1 && hasZeroKey) {
+            return true;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i;
+              return true;
+            }
+          }
+
+          return false;
+        }
+      };
+    }
+
     AddonlyIntSet(int expectedSize) {
       int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
-      shift = Integer.numberOfLeadingZeros(powerOfTwo) + 1;
       mask = powerOfTwo - 1;
       data = new int[powerOfTwo];
     }
 
+    @Override
     public int size() {
       return size;
     }
 
-    private int hash(int h, int[] a) {
+    private int hash(int h) {
       h ^= (h >>> 20) ^ (h >>> 12);
       return (h ^ (h >>> 7) ^ (h >>> 4)) & mask;
-      //int idx = (id * MAGIC) >>> shift;
-      //if (idx >= a.length) {
-      //  idx %= a.length;
-      //}
-      //return idx;
     }
 
-    public void add(int key) {
+    @Override
+    public boolean add(int key) {
       if (key == 0) {
-        if (!hasZeroKey) ++size;
-        hasZeroKey = true;
-        return;
+        if (!hasZeroKey) {
+          hasZeroKey = true;
+          ++size;
+          return true;
+        }
+        return false;
       }
       if (size >= (2 * data.length) / 3) rehash();
-      if (doPut(data, key)) size++;
+      boolean updated = doPut(data, key);
+      if (updated) {
+        size++;
+      }
+      return updated;
     }
 
     private boolean doPut(int[] a, int o) {
-      int index = hash(o, a);
+      int index = hash(o);
       int obj;
       while ((obj = a[index]) != 0) {
         if (obj == o) break;
@@ -120,7 +253,6 @@ public final class TrigramBuilder {
     }
 
     private void rehash() {
-      --shift;
       int[] b = new int[data.length << 1];
       mask = b.length - 1;
       for (int i = data.length; --i >= 0;) {
@@ -130,9 +262,10 @@ public final class TrigramBuilder {
       data = b;
     }
 
+    @Override
     public boolean contains(int key) {
       if (key == 0) return hasZeroKey;
-      int index = hash(key, data);
+      int index = hash(key);
       int v;
       while ((v = data[index]) != 0) {
         if (v == key) return true;

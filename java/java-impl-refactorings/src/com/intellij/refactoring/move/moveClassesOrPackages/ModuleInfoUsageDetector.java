@@ -83,7 +83,7 @@ public abstract class ModuleInfoUsageDetector {
   }
 
   @NotNull
-  protected static MultiMap<PsiPackage, PsiPackageAccessibilityStatement> collectModuleStatements(@NotNull Iterable<PsiPackageAccessibilityStatement> statements) {
+  protected static MultiMap<PsiPackage, PsiPackageAccessibilityStatement> collectModuleStatements(@NotNull Iterable<? extends PsiPackageAccessibilityStatement> statements) {
     MultiMap<PsiPackage, PsiPackageAccessibilityStatement> result = new MultiMap<>();
     for (PsiPackageAccessibilityStatement pkgStatement : statements) {
       PsiJavaCodeReferenceElement packageReference = pkgStatement.getPackageReference();

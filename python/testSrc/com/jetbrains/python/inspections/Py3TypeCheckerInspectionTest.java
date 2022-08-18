@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -763,8 +764,162 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  "    print(path_or_buf)\n");
   }
 
+  // PY-50403
+  public void testFunctionNamedParameterUnification() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:\n" +
+                 "    return f(*args, **kwargs) + f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def a_int_b_str(a: int, b: str) -> int:\n" +
+                 "    return a + len(b)\n" +
+                 "\n" +
+                 "\n" +
+                 "res1 = twice(a_int_b_str, 1, \"A\")\n" +
+                 "\n" +
+                 "res2 = twice(a_int_b_str, b=\"A\", a=1)\n" +
+                 "\n" +
+                 "res3 = twice(a_int_b_str, <warning descr=\"Expected type 'int', got 'str' instead\">\"A\"</warning>, <warning descr=\"Expected type 'str', got 'int' instead\">1</warning>)\n" +
+                 "\n" +
+                 "res4 = twice(a_int_b_str, <warning descr=\"Expected type 'str', got 'int' instead\">b=1</warning>, <warning descr=\"Expected type 'int', got 'str' instead\">a=\"A\"</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42<warning descr=\"Parameter 's' unfilled (from ParamSpec 'P')\">)</warning>\n");
+  }
+
+  // PY-50403
+  public void testFunctionTooManyArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, 'foo', <warning descr=\"Unexpected argument (from ParamSpec 'P')\">None</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNamedArgumentNotMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(foo: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">bar=42</warning><warning descr=\"Parameter 'foo' unfilled (from ParamSpec 'P')\">)</warning>");
+  }
+
+  // PY-50403
+  public void testSameArgumentPassedTwiceInParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">n=42</warning>)");
+  }
+
   // PY-46661
   public void testTypedDictInReturnType() {
     doTest();
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredKeys() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import TypedDict\n" +
+                                            "from typing_extensions import Required, NotRequired\n" +
+                                            "class WithTotalFalse(TypedDict, total=False):\n" +
+                                            "    x: Required[int]\n" +
+                                            "class WithTotalTrue(TypedDict, total=True):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotal(TypedDict):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotalWithExplicitRequired(TypedDict):\n" +
+                                            "    x: Required[int]\n" +
+                                            "    y: NotRequired[int]\n" +
+                                            "AlternativeSyntax = TypedDict(\"AlternativeSyntax\", {'x': NotRequired[int]})\n" +
+                                            "with_total_false: WithTotalFalse = <warning descr=\"TypedDict 'WithTotalFalse' has missing key: 'x'\">{}</warning>\n" +
+                                            "with_total_true: WithTotalTrue = {}\n" +
+                                            "without_total: WithoutTotal = {}\n" +
+                                            "without_total_with_explicit_required: WithoutTotalWithExplicitRequired = <warning descr=\"TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'\">{}</warning>\n" +
+                                            "alternative_syntax: AlternativeSyntax = {}\n"));
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredEquivalence() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredMixedWithAnnotated() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing_extensions import TypedDict, Required, NotRequired, Annotated\n" +
+                                            "class A(TypedDict):\n" +
+                                            "    x: Annotated[NotRequired[int], 'Some constraint']\n" +
+                                            "def f(a: A):\n" +
+                                            "    pass\n" +
+                                            "f({})\n" +
+                                            "class B(TypedDict, total=False):\n" +
+                                            "    x: Annotated[Required[int], 'Some constraint']\n" +
+                                            "def g(b: B):\n" +
+                                            "    pass\n" +
+                                            "g(<warning descr=\"TypedDict 'B' has missing key: 'x'\">{}</warning>)\n"));
+  }
+
+  // PY-53611
+  public void testTypingRequiredTypeSpecificationsMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-52648 Requires PY-53896 or patching Typeshed
+  public void testListLiteralPassedToIter() {
+    doTestByText("iter([1, 2, 3])");
   }
 }

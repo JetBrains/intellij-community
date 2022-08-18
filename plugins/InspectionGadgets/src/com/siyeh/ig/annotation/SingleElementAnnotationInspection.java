@@ -66,7 +66,7 @@ public class SingleElementAnnotationInspection extends BaseInspection {
 
   private static class ExpandAnnotationVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitNameValuePair(PsiNameValuePair pair) {
+    public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
       super.visitNameValuePair(pair);
 
       if (pair.getName() == null && pair.getValue() != null) {

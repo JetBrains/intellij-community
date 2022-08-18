@@ -18,6 +18,7 @@ package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ClassMemberReferencesVisitor extends JavaRecursiveElementWalkingVisitor {
   private final PsiClass myClass;
@@ -26,7 +27,7 @@ public abstract class ClassMemberReferencesVisitor extends JavaRecursiveElementW
     myClass = aClass;
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
       qualifier.accept(this);
@@ -62,7 +63,7 @@ public abstract class ClassMemberReferencesVisitor extends JavaRecursiveElementW
 
   protected abstract void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference);
 
-  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     PsiElement referencedElement = reference.resolve();
     if (referencedElement instanceof PsiClass) {
       final PsiClass referencedClass = (PsiClass) referencedElement;

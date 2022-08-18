@@ -305,7 +305,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
 
-  private List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
+  protected List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
                                                         @NotNull TextRange range,
                                                         CodeStyleSettings settings,
                                                         XmlFormattingPolicy xmlFormattingPolicy,

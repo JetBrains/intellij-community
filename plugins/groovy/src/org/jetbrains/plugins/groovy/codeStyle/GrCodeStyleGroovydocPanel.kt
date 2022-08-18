@@ -20,7 +20,7 @@ class GrCodeStyleGroovydocPanel(settings : CodeStyleSettings) : CodeStyleAbstrac
 
   override fun getRightMargin(): Int = 0
 
-  override fun createHighlighter(scheme: EditorColorsScheme?): EditorHighlighter? = null
+  override fun createHighlighter(scheme: EditorColorsScheme): EditorHighlighter? = null
 
   override fun getFileType(): FileType = GroovyFileType.GROOVY_FILE_TYPE
 

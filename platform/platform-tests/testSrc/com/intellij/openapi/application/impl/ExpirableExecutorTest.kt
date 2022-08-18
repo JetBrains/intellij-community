@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 class ExpirableExecutorTest : LightPlatformTestCase() {
   fun `test coroutine on background thread`() = runBlocking {
     checkBackgroundCoroutine(AppExecutorUtil.getAppExecutorService())
-    checkBackgroundCoroutine(AppExecutorUtil.createBoundedApplicationPoolExecutor("bounded", 1))
+    checkBackgroundCoroutine(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
   private suspend fun checkBackgroundCoroutine(executor: Executor) {

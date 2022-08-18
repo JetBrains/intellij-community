@@ -27,6 +27,8 @@ fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
 @ApiStatus.Internal
 interface GTDActionData {
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun ctrlMouseData(): CtrlMouseData?
@@ -53,6 +55,8 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
 
 private class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)

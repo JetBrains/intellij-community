@@ -102,7 +102,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     final List<UsageInfo> result = new ArrayList<>();
     myInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
@@ -174,7 +174,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     final Map<PsiElement, PsiElement> replacements = new HashMap<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         final PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof PsiVariable) {
@@ -337,7 +337,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     @Override
-    public void visitReferenceExpression(final PsiReferenceExpression expression) {
+    public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement element = expression.resolve();
       if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
@@ -368,7 +368,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression thisExpression) {
+    public void visitThisExpression(@NotNull PsiThisExpression thisExpression) {
       super.visitThisExpression(thisExpression);
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       PsiElement containingClass;
@@ -388,7 +388,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiElement resolved = reference.resolve();
@@ -399,7 +399,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
       if (reference != null) {

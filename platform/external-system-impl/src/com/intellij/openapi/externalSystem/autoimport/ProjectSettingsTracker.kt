@@ -4,6 +4,11 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalInvalidate
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -30,7 +35,7 @@ class ProjectSettingsTracker(
   private val parentDisposable: Disposable
 ) {
 
-  private val status = ProjectStatus(debugName = "Settings ${projectAware.projectId.debugName}")
+  private val projectStatus = ProjectStatus(debugName = "Settings ${projectAware.projectId.debugName}")
 
   private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 
@@ -52,53 +57,99 @@ class ProjectSettingsTracker(
     return file.calculateCrc(project, projectAware.projectId.systemId)
   }
 
-  fun isUpToDate() = status.isUpToDate()
+  fun isUpToDate() = projectStatus.isUpToDate()
 
-  fun getModificationType() = status.getModificationType()
+  fun getModificationType() = projectStatus.getModificationType()
 
   fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext {
-    val modificationType = getModificationType()
     val status = settingsFilesStatus.get()
-    return SettingsFilesReloadContext(modificationType, status.updated, status.created, status.deleted)
+    return SettingsFilesReloadContext(status.updated, status.created, status.deleted)
   }
 
-  private fun createSettingsFilesStatus(
-    oldSettingsFilesCRC: Map<String, Long>,
-    newSettingsFilesCRC: Map<String, Long>
+  /**
+   * Updates settings files status using new CRCs.
+   * @param isReloadJustFinished see [adjustCrc] for details
+   */
+  private fun updateSettingsFilesStatus(
+    operationName: String,
+    newCRC: Map<String, Long>,
+    isReloadJustFinished: Boolean = false,
   ): SettingsFilesStatus {
-    val updatedFiles = oldSettingsFilesCRC.keys.intersect(newSettingsFilesCRC.keys)
-      .filterTo(HashSet()) { oldSettingsFilesCRC[it] != newSettingsFilesCRC[it] }
-    val createdFiles = newSettingsFilesCRC.keys.minus(oldSettingsFilesCRC.keys)
-    val deletedFiles = oldSettingsFilesCRC.keys.minus(newSettingsFilesCRC.keys)
-    return SettingsFilesStatus(oldSettingsFilesCRC, newSettingsFilesCRC, updatedFiles, createdFiles, deletedFiles)
-  }
-
-  fun refreshChanges() {
-    val operationStamp = currentTime()
-    submitSettingsFilesRefresh { settingsPaths ->
-      submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-        val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-          createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-        }
-        LOG.info("[refreshChanges] Settings file status: ${settingsFilesStatus}")
-        when (settingsFilesStatus.hasChanges()) {
-          true -> status.markDirty(operationStamp, EXTERNAL)
-          else -> status.markReverted(operationStamp)
-        }
-        projectTracker.scheduleChangeProcessing()
-      }
+    return settingsFilesStatus.updateAndGet {
+      SettingsFilesStatus(it.oldCRC, newCRC)
+        .adjustCrc(operationName, isReloadJustFinished)
     }
   }
 
-  fun getState() = State(status.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
-
-  fun loadState(state: State) {
-    if (state.isDirty) status.markDirty(currentTime(), EXTERNAL)
-    settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
+  /**
+   * Adjusts settings files status. It allows ignoring files modifications by rules from
+   * external system. For example some build systems needed to ignore files updates during reload.
+   *
+   * @see ExternalSystemProjectAware.isIgnoredSettingsFileEvent
+   */
+  private fun SettingsFilesStatus.adjustCrc(operationName: String, isReloadJustFinished: Boolean): SettingsFilesStatus {
+    val modificationType = getModificationType()
+    val isReloadInProgress = !applyChangesOperation.isOperationCompleted()
+    val reloadStatus = when {
+      isReloadJustFinished -> ReloadStatus.JUST_FINISHED
+      isReloadInProgress -> ReloadStatus.IN_PROGRESS
+      else -> ReloadStatus.IDLE
+    }
+    val oldCRC = oldCRC.toMutableMap()
+    for (path in updated) {
+      val context = SettingsFilesModificationContext(UPDATE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC[path] = newCRC[path]!!
+      }
+    }
+    for (path in created) {
+      val context = SettingsFilesModificationContext(CREATE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC[path] = newCRC[path]!!
+      }
+    }
+    for (path in deleted) {
+      val context = SettingsFilesModificationContext(DELETE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC.remove(path)
+      }
+    }
+    val status = SettingsFilesStatus(oldCRC, newCRC)
+    LOG.debug(
+      "[$operationName] " +
+      "ReloadStatus=$reloadStatus, " +
+      "ModificationType=$modificationType, " +
+      "Updated=${status.updated}, " +
+      "Created=${status.created}, " +
+      "Deleted=${status.deleted}"
+    )
+    return status
   }
 
-  private fun submitSettingsFilesCollection(invalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
-    if (invalidateCache) {
+  fun getState() = State(projectStatus.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
+
+  fun loadState(state: State) {
+    val operationStamp = currentTime()
+    settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
+    when (state.isDirty) {
+      true -> projectStatus.markDirty(operationStamp, EXTERNAL)
+      else -> projectStatus.markSynchronized(operationStamp)
+    }
+  }
+
+  fun refreshChanges() {
+    submitSettingsFilesStatusUpdate(
+      operationName = "refreshChanges",
+      isRefreshVfs = true,
+      syncEvent = ::Revert,
+      changeEvent = ::externalInvalidate
+    ) {
+      projectTracker.scheduleChangeProcessing()
+    }
+  }
+
+  private fun submitSettingsFilesCollection(isInvalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
+    if (isInvalidateCache) {
       settingsAsyncSupplier.invalidate()
     }
     settingsAsyncSupplier.supply(callback, parentDisposable)
@@ -108,7 +159,7 @@ class ProjectSettingsTracker(
     EdtAsyncSupplier.invokeOnEdt(projectTracker::isAsyncChangesProcessing, {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
-      submitSettingsFilesCollection(invalidateCache = true) { settingsPaths ->
+      submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { Path.of(it) }
         localFileSystem.refreshNioFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
@@ -118,12 +169,55 @@ class ProjectSettingsTracker(
     }, parentDisposable)
   }
 
-  private fun submitSettingsFilesCRCCalculation(settingsPaths: Set<String>, vararg equality: Any, callback: (Map<String, Long>) -> Unit) {
-    ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
+  private fun submitSettingsFilesCRCCalculation(
+    operationName: String,
+    settingsPaths: Set<String>,
+    isMergeSameCalls: Boolean = false,
+    callback: (Map<String, Long>) -> Unit
+  ) {
+    val builder = ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
       .shouldKeepTasksAsynchronous { projectTracker.isAsyncChangesProcessing }
-      .coalesceBy(*equality)
-      .build(backgroundExecutor)
+    if (isMergeSameCalls) {
+      builder.coalesceBy(this, operationName)
+    }
+    builder.build(backgroundExecutor)
       .supply(callback, parentDisposable)
+  }
+
+  private fun submitSettingsFilesCollection(
+    isRefreshVfs: Boolean = false,
+    isInvalidateCache: Boolean = false,
+    callback: (Set<String>) -> Unit
+  ) {
+    if (isRefreshVfs) {
+      submitSettingsFilesRefresh(callback)
+    }
+    else {
+      submitSettingsFilesCollection(isInvalidateCache, callback)
+    }
+  }
+
+  private fun submitSettingsFilesStatusUpdate(
+    operationName: String,
+    isMergeSameCalls: Boolean = false,
+    isReloadJustFinished: Boolean = false,
+    isInvalidateCache: Boolean = false,
+    isRefreshVfs: Boolean = false,
+    syncEvent: (Long) -> ProjectStatus.ProjectEvent,
+    changeEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
+    callback: () -> Unit
+  ) {
+    submitSettingsFilesCollection(isRefreshVfs, isInvalidateCache) { settingsPaths ->
+      val operationStamp = currentTime()
+      submitSettingsFilesCRCCalculation(operationName, settingsPaths, isMergeSameCalls) { newSettingsFilesCRC ->
+        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, isReloadJustFinished)
+        val event = if (settingsFilesStatus.hasChanges()) changeEvent else syncEvent
+        if (event != null) {
+          projectStatus.update(event(operationStamp))
+        }
+        callback()
+      }
+    }
   }
 
   fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.beforeOperation(listener)
@@ -137,66 +231,70 @@ class ProjectSettingsTracker(
 
   data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
 
-  private data class SettingsFilesStatus(
-    val oldCRC: Map<String, Long> = emptyMap(),
-    val newCRC: Map<String, Long> = emptyMap(),
-    val updated: Set<String> = emptySet(),
-    val created: Set<String> = emptySet(),
-    val deleted: Set<String> = emptySet()
+  private class SettingsFilesStatus(
+    val oldCRC: Map<String, Long>,
+    val newCRC: Map<String, Long>,
   ) {
-    constructor(CRC: Map<String, Long>) : this(oldCRC = CRC)
+
+    constructor(CRC: Map<String, Long> = emptyMap()) : this(CRC, CRC)
+
+    val updated: Set<String> by lazy {
+      oldCRC.keys.intersect(newCRC.keys)
+        .filterTo(HashSet()) { oldCRC[it] != newCRC[it] }
+    }
+
+    val created: Set<String> by lazy {
+      newCRC.keys.minus(oldCRC.keys)
+    }
+
+    val deleted: Set<String> by lazy {
+      oldCRC.keys.minus(newCRC.keys)
+    }
 
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
 
-  private data class SettingsFilesReloadContext(
-    override val modificationType: ExternalSystemModificationType,
+  private class SettingsFilesReloadContext(
     override val updated: Set<String>,
     override val created: Set<String>,
     override val deleted: Set<String>
   ) : ExternalSystemSettingsFilesReloadContext
 
-  private inner class ProjectListener : ExternalSystemProjectListener {
-    private var settingsFilesCRC: Map<String, Long> = emptyMap()
+  private class SettingsFilesModificationContext(
+    override val event: ExternalSystemSettingsFilesModificationContext.Event,
+    override val modificationType: ExternalSystemModificationType,
+    override val reloadStatus: ReloadStatus,
+  ) : ExternalSystemSettingsFilesModificationContext
 
+  private inner class ProjectListener : ExternalSystemProjectListener {
     override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
-      settingsFilesCRC = settingsFilesStatus.get().newCRC
+      settingsFilesStatus.updateAndGet {
+        SettingsFilesStatus(it.newCRC, it.newCRC)
+      }
+      projectStatus.markSynchronized(currentTime())
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
-      val operationStamp = currentTime()
-      submitSettingsFilesRefresh { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesCRC = settingsFilesCRC
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(newSettingsFilesCRC + settingsFilesCRC, newSettingsFilesCRC)
-          }
-          if (settingsFilesStatus.hasChanges()) {
-            this@ProjectSettingsTracker.status.markDirty(operationStamp, EXTERNAL)
-          }
-          else {
-            this@ProjectSettingsTracker.status.markSynchronized(operationStamp)
-          }
-          applyChangesOperation.finishTask()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "onProjectReloadFinish",
+        isRefreshVfs = true,
+        isReloadJustFinished = true,
+        syncEvent = ::Synchronize,
+        changeEvent = ::externalInvalidate
+      ) {
+        applyChangesOperation.finishTask()
       }
     }
 
     override fun onSettingsFilesListChange() {
-      val operationStamp = currentTime()
-      submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-          }
-          LOG.info("[onSettingsFilesListChange] Settings file status: ${settingsFilesStatus}")
-          when (settingsFilesStatus.hasChanges()) {
-            true -> status.markModified(operationStamp, EXTERNAL)
-            else -> status.markReverted(operationStamp)
-          }
-          projectTracker.scheduleChangeProcessing()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "onSettingsFilesListChange",
+        isInvalidateCache = true,
+        syncEvent = ::Revert,
+        changeEvent = ::externalModify,
+      ) {
+        projectTracker.scheduleChangeProcessing()
       }
     }
   }
@@ -205,21 +303,17 @@ class ProjectSettingsTracker(
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
       logModificationAsDebug(path, modificationStamp, modificationType)
-      status.markModified(operationStamp, modificationType)
+      projectStatus.markModified(operationStamp, modificationType)
     }
 
     override fun apply() {
-      val operationStamp = currentTime()
-      submitSettingsFilesCollection { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths, this, "apply") { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-          }
-          if (!settingsFilesStatus.hasChanges()) {
-            status.markReverted(operationStamp)
-          }
-          projectTracker.scheduleChangeProcessing()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "ProjectSettingsListener.apply",
+        isMergeSameCalls = true,
+        syncEvent = ::Revert,
+        changeEvent = null
+      ) {
+        projectTracker.scheduleChangeProcessing()
       }
     }
 

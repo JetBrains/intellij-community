@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -8,32 +8,18 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 // java highlighting: color names like "reassigned variables"/fields/statics etc.
-// NO ERRORS, only INFORMATION (maybe with custom text attributes)
+// NO COMPILATION ERRORS
 // for highlighting error see HighlightVisitorImpl
 class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
-
-  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
-
-  private enum ReassignedState {
-    DUNNO, INSIDE_FILE, REASSIGNED
-  }
-  private final Map<PsiParameter, ReassignedState> myReassignedParameters = new HashMap<>();
 
   @NotNull
   @Override
@@ -60,8 +46,6 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
       highlight.run();
     }
     finally {
-      myFinalVarProblems.clear();
-      myReassignedParameters.clear();
       myFile = null;
       myHolder = null;
     }
@@ -75,7 +59,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitDocTagValue(PsiDocTagValue value) {
+  public void visitDocTagValue(@NotNull PsiDocTagValue value) {
     PsiReference reference = value.getReference();
     if (reference != null) {
       PsiElement element = reference.resolve();
@@ -94,7 +78,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
 
   @Override
-  public void visitIdentifier(PsiIdentifier identifier) {
+  public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
 
     PsiElement parent = identifier.getParent();
@@ -105,20 +89,8 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         PsiElement child = variable.getLastChild();
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
-
-      boolean isMethodParameter = variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiMethod;
-      if (isMethodParameter) {
-        myReassignedParameters.put((PsiParameter)variable, ReassignedState.INSIDE_FILE); // mark param as present in current file
-      }
-      else {
-        // method params are highlighted in visitMethod since we should make sure the method body was visited before
-        if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems)) {
-          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, identifier));
-        }
-        else {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
-        }
-      }
+ 
+      myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -171,52 +143,12 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
-    super.visitMethod(method);
-
-    // method params are highlighted in visitMethod since we should make sure the method body was visited before
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-
-    for (PsiParameter parameter : parameters) {
-      ReassignedState info = myReassignedParameters.getOrDefault(parameter, ReassignedState.DUNNO);
-      if (info == ReassignedState.DUNNO) continue; // out of this file
-
-      PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-      if (nameIdentifier != null) {
-        if (info == ReassignedState.REASSIGNED) { // reassigned
-          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(parameter, nameIdentifier));
-        }
-        else {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(parameter, nameIdentifier, myHolder.getColorsScheme()));
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     doVisitReferenceElement(ref);
   }
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     doVisitReferenceElement(expression);
-  }
-
-  private boolean isReassigned(@NotNull PsiVariable variable) {
-    try {
-      boolean reassigned;
-      if (variable instanceof PsiParameter) {
-        reassigned = myReassignedParameters.get(variable) == ReassignedState.REASSIGNED;
-      }
-      else  {
-        reassigned = HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems);
-      }
-
-      return reassigned;
-    }
-    catch (IndexNotReadyException e) {
-      return false;
-    }
   }
 
   private void doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
@@ -241,19 +173,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         }
       }
 
-      if (variable instanceof PsiParameter && ref instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
-        myReassignedParameters.put((PsiParameter)variable, ReassignedState.REASSIGNED);
-      }
-
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (!variable.hasModifierProperty(PsiModifier.FINAL) && isReassigned(variable)) {
-        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
-      }
-      else {
-        PsiElement nameElement = ref.getReferenceNameElement();
-        if (nameElement != null) {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, nameElement, colorsScheme));
-        }
+      PsiElement nameElement = ref.getReferenceNameElement();
+      if (nameElement != null) {
+        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, nameElement, colorsScheme));
       }
     }
     else {
@@ -295,7 +218,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitNameValuePair(PsiNameValuePair pair) {
+  public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     PsiIdentifier nameId = pair.getNameIdentifier();
     if (nameId != null) {
       myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create());
@@ -303,7 +226,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     JavaResolveResult result;
     JavaResolveResult[] results;
     try {

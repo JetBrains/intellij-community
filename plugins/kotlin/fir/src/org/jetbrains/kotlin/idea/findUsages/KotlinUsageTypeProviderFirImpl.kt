@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
-import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
-import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
-import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -21,7 +19,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
+        fun KtAnalysisSession.getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
                     return when ((functionSymbol as KtFunctionSymbol).name) {
@@ -30,6 +28,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
                         else -> error("Expected get or set operator but resolved to unexpected symbol {functionSymbol.render()}")
                     }
                 is KtInvokeFunctionReference -> return IMPLICIT_INVOKE
+                is KtConstructorDelegationReference -> return null
             }
 
             return when {
@@ -47,19 +46,21 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
             }
         }
 
-        return analyseWithReadAction(refExpr) {
+        return analyzeWithReadAction(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
-                is KtClassOrObjectSymbol ->
-                    when {
-                        // Treat object accesses as variables to simulate the old behaviour (when variables were created for objects)
-                        targetElement is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
-                        targetElement.classKind == KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
-                        targetElement.classKind == KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                is KtClassifierSymbol ->
+                    when (targetElement) {
+                        is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
+                        is KtClassOrObjectSymbol -> when {
+                            targetElement.classKind == KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
+                            targetElement.classKind == KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                            else -> getClassUsageType(refExpr)
+                        }
                         else -> getClassUsageType(refExpr)
                     }
                 is KtPackageSymbol -> //TODO FIR Implement package symbol type
                     if (targetElement is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
-                is KtVariableSymbol -> getVariableUsageType(refExpr)
+                is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
                 is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
                 else -> null
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.statistic
 
 import com.intellij.ide.RecentProjectsManagerBase
@@ -57,7 +57,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
   }
 
   private fun removeFromRecentProjects(project: Project) {
-    val manager = RecentProjectsManagerBase.instanceEx
+    val manager = RecentProjectsManagerBase.getInstanceEx()
     manager.getProjectPath(project)?.let { manager.removePath(it) }
   }
 }
@@ -114,7 +114,7 @@ private fun notifyAboutNewLessons(project: Project, newLessons: List<Lesson>) {
   val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
   StatisticBase.logNewLessonsNotification(newLessonsCount, previousOpenedVersion)
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("notification.about.new.lessons"), NotificationType.INFORMATION)
-  notification.icon = FeaturesTrainerIcons.Img.FeatureTrainer
+  notification.icon = FeaturesTrainerIcons.FeatureTrainer
 
   notification.addAction(object : NotificationAction(LearnBundle.message("notification.show.new.lessons")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -35,12 +35,16 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = new ExtensionPointName<>("com.intellij.globalInspection");
 
   /**
-   * Usually generated automatically from FQN.
+   * Usually generated automatically from the fully qualified class name.
    * Must be unique among all inspections.
    * <p>
-   * Short name is used in two cases: {@code \inspectionDescriptions\<short_name>.html} resource may contain short inspection
-   * description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
-   * inspection or export to HTML function.
+   * The short name is used in two places:
+   * <ul>
+   *   <li>The resource {@code /inspectionDescriptions/<short_name>.html} usually contains
+   *       a short inspection description to be shown in the "Inspect Code..." dialog.
+   *   <li>When running the inspections in offline mode or when exporting the inspections
+   *       to an HTML report, the short name is used in the filename.
+   * </ul>
    */
   @Attribute("shortName")
   public String shortName;
@@ -74,7 +78,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
-   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   * If unspecified, the plugin's {@code <resource-bundle>} is used.
    *
    * @see #key
    */
@@ -82,7 +86,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String bundle;
 
   /**
-   * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
+   * Non-localized display name used in the UI (Settings|Editor|Inspections and "Inspection Results" tool window).
+   * Use {@link #key} for i18n.
    */
   @Attribute("displayName") public @Nls(capitalization = Nls.Capitalization.Sentence) String displayName;
 
@@ -109,7 +114,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("groupName") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupDisplayName;
 
   /**
-   * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
+   * Comma-delimited list of parent group names (excluding {@code groupName}) used in the UI (Settings|Editor|Inspections),
+   * e.g. {@code "Java,Java language level migration aids"}.
    */
   @Attribute("groupPath") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupPath;
 
@@ -199,7 +205,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
       }
       return null;
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, descriptor.getClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.getResourceBundle(descriptor.getClassLoader(), baseName);
     return AbstractBundle.message(resourceBundle, key);
   }
 
@@ -232,10 +238,17 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String presentation;
 
   /**
-   * Do not show internal inspections if IDE internal mode is off.
+   * Internal inspections are only shown if the IDE is
+   * {@linkplain com.intellij.openapi.application.Application#isInternal() running in internal mode}.
    */
   @Attribute("isInternal")
   public boolean isInternal;
+
+  /**
+   * TextAttributesKey's external name
+   */
+  @Attribute("editorAttributes")
+  public String editorAttributes;
 
   @Override
   public String toString() {

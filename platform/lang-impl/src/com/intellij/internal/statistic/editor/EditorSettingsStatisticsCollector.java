@@ -174,7 +174,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     return set;
   }
 
-  private static <T> void addBoolIfDiffers(@NotNull Set<MetricEvent> set,
+  private static <T> void addBoolIfDiffers(@NotNull Set<? super MetricEvent> set,
                                            @NotNull T settingsBean,
                                            @NotNull T defaultSettingsBean,
                                            @NotNull Function<T, Boolean> valueFunction,
@@ -190,10 +190,10 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     }
   }
 
-  private static <T, V> void addIfDiffers(@NotNull Set<MetricEvent> set,
+  private static <T, V> void addIfDiffers(@NotNull Set<? super MetricEvent> set,
                                           @NotNull T settingsBean,
                                           @NotNull T defaultSettingsBean,
-                                          @NotNull Function<T, V> valueFunction,
+                                          @NotNull Function<? super T, ? extends V> valueFunction,
                                           @NotNull Settings setting,
                                           @NotNull EventField<V> field) {
     V value = valueFunction.apply(settingsBean);
@@ -223,7 +223,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     return CaretStopBoundaries.OTHER;
   }
 
-  private static void addTooltipActionsMetricIfDiffers(@NotNull Set<MetricEvent> set) {
+  private static void addTooltipActionsMetricIfDiffers(@NotNull Set<? super MetricEvent> set) {
     boolean value = TooltipActionProvider.isShowActions();
     if (value != TooltipActionProvider.SHOW_FIXES_DEFAULT_VALUE) {
       set.add(SETTING.metric(SETTING_ID.with(Settings.SHOW_ACTIONS_IN_TOOLTIP), EventFields.Enabled.with(value)));

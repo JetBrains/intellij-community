@@ -9,13 +9,14 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
 @State(name = "ToolWindowLayout", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
-internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
+class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
     @JvmStatic
@@ -30,7 +31,7 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   private var layout = DesktopLayout()
 
   @Suppress("unused")
-  private constructor() : this(ExperimentalUI.isNewUI())
+  constructor() : this(ExperimentalUI.isNewUI())
 
   fun getLayoutCopy() = layout.copy()
 
@@ -45,7 +46,6 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   override fun getStateModificationCount() = tracker.modificationCount
 
-  @Suppress("DuplicatedCode")
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {
@@ -67,8 +67,11 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     this.state = state
 
-    if (if (isNewUi) state.v2.isEmpty() else state.v1.isEmpty()) {
+    val list = if (isNewUi) state.v2 else state.v1
+    if (list.isEmpty()) {
       loadDefaultLayout(isNewUi)
+    } else {
+      setLayout(convertDescriptorListToLayout(list))
     }
   }
 
@@ -84,6 +87,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
     id = it.id!!,
     order = it.order,
 
+    paneId = it.safeToolWindowPaneId,
     anchor = when(it.anchor) {
       ToolWindowAnchor.TOP -> ToolWindowDescriptor.ToolWindowAnchor.TOP
       ToolWindowAnchor.LEFT -> ToolWindowDescriptor.ToolWindowAnchor.LEFT
@@ -121,6 +125,7 @@ private fun convertDescriptorListToLayout(list: List<ToolWindowDescriptor>): Des
       id = it.id
       order = it.order
 
+      toolWindowPaneId = it.paneId
       anchor = when (it.anchor) {
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> ToolWindowAnchor.TOP
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> ToolWindowAnchor.LEFT

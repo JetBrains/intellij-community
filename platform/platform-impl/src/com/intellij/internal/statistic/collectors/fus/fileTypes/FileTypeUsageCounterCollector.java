@@ -47,14 +47,15 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 65);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 66);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
-  private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
+  private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
   private static final String FILE_EXTENSION = "file_extension";
-  private static final EventField<String> FILE_EXTENSION_FIELD = EventFields.StringValidatedByCustomRule(FILE_EXTENSION, FILE_EXTENSION);
+  private static final EventField<String> FILE_EXTENSION_FIELD =
+    EventFields.StringValidatedByCustomRule(FILE_EXTENSION, ExtensionLocalFileCustomValidationRule.class);
 
   @Override
   public EventLogGroup getGroup() {
@@ -199,10 +200,11 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  static final class FileTypeSchemaValidator extends CustomValidationRule {
+  public static final class FileTypeSchemaValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "file_type_schema".equals(ruleId);
+    public String getRuleId() {
+      return "file_type_schema";
     }
 
     @NotNull

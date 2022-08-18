@@ -2,7 +2,9 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper
+import org.jetbrains.plugins.notebooks.visualization.outputs.getEditorBackground
 import org.jetbrains.plugins.notebooks.visualization.ui.registerEditorSizeWatcher
 import org.jetbrains.plugins.notebooks.visualization.ui.textEditingAreaWidth
 import java.awt.BorderLayout
@@ -19,9 +21,14 @@ internal class SurroundingComponent private constructor(private val innerCompone
     add(innerComponent, BorderLayout.CENTER)
   }
 
+  fun fireResize() {
+    this.firePropertyChange("preferredSize", null, preferredSize)
+  }
+
   override fun updateUI() {
     super.updateUI()
-    isOpaque = false
+    isOpaque = true
+    background = getEditorBackground()
   }
 
   override fun getPreferredSize(): Dimension = super.getPreferredSize().also {
@@ -39,11 +46,11 @@ internal class SurroundingComponent private constructor(private val innerCompone
       innerComponent: InnerComponent,
     ) = SurroundingComponent(innerComponent).also {
       registerEditorSizeWatcher(it) {
-        val oldWidth = it.presetWidth
         it.presetWidth = editor.textEditingAreaWidth
-        if (oldWidth != it.presetWidth) {
-          innerComponent.revalidate()
+        if (it.presetWidth == 0 && GraphicsUtil.isProjectorEnvironment()) {
+          it.presetWidth = editor.contentSize.width
         }
+        innerComponent.revalidate()
       }
 
       for (wrapper in NotebookOutputComponentWrapper.EP_NAME.extensionList) {

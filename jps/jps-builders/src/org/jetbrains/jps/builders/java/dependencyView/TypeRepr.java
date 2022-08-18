@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * @author: db
+ * @author db
  */
 public final class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;

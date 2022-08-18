@@ -290,6 +290,11 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       @Nullable XValueNodeImpl node = getValueNode();
 
@@ -322,6 +327,11 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       @Nullable XValueNodeImpl node = getValueNode();
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(node != null && canSetTextValue(node));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

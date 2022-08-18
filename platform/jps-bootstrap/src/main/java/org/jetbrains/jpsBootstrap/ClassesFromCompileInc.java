@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
 import com.google.common.base.StandardSystemProperty;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
 
-public class ClassesFromCompileInc {
+public final class ClassesFromCompileInc {
   public final static String MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL";
 
   public static void downloadProjectClasses(JpsProject project, BuildDependenciesCommunityRoot communityRoot, Collection<JpsModule> modules) throws IOException, InterruptedException {

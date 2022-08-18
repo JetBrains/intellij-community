@@ -123,8 +123,7 @@ private class CompleteReferenceProcessor(
 
 private fun GrCodeReferenceElement.findTypeParameterListCandidate(): GrTypeParameterList? {
   val typeElement = getRootTypeElement() ?: return null
-  val parent = typeElement.parent
-  return when (parent) {
+  return when (typeElement.parent) {
     is GrTypeDefinitionBody -> skipWhitespacesAndComments(typeElement.prevSibling, false) as? GrTypeParameterList
     is GrVariableDeclaration -> {
       val errorElement = skipWhitespacesAndComments(typeElement.prevSibling, false) as? PsiErrorElement

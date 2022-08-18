@@ -5,10 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
-import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -23,20 +22,16 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
   }
 
   fun createCommentWithSuggestedChangeComponent(
-    commentBody: String,
-    threadId: String,
-    isOutdated: Boolean,
-    suggestedChangeInfo: GHSuggestedChangeInfo,
-    reviewDataProvider: GHPRReviewDataProvider,
-    detailsDataProvider: GHPRDetailsDataProvider
+    thread: GHPRReviewThreadModel,
+    suggestedChange: GHSuggestedChange,
+    suggestedChangeHelper: GHPRSuggestedChangeHelper
   ): JComponent {
-    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(commentBody, suggestedChangeInfo)
+    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(suggestedChange)
     val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
     val commentBlocks = collectCommentBlocks(content)
 
-    val suggestedChangeApplier = GHSuggestedChangeApplier(project, commentBody, suggestedChangeInfo)
-    val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, threadId, suggestedChangeApplier,
-                                                                             reviewDataProvider, detailsDataProvider)
+    val suggestedChangeApplier = GHSuggestedChangeApplier(project, suggestedChangeHelper.repository, suggestedChange)
+    val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, thread, suggestedChangeApplier, suggestedChangeHelper)
 
     return JPanel(VerticalLayout(0)).apply {
       isOpaque = false
@@ -44,7 +39,7 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
       commentBlocks.forEach {
         when (it.commentType) {
           CommentType.COMMENT -> add(HtmlEditorPane(it.content))
-          CommentType.SUGGESTED_CHANGE -> add(suggestedChangeComponent.create(it.content, isOutdated))
+          CommentType.SUGGESTED_CHANGE -> add(suggestedChangeComponent.create(it.content))
         }
       }
     }

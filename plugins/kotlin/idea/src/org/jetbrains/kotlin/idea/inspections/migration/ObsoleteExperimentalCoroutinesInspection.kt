@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -27,29 +27,30 @@ internal class ObsoleteExperimentalCoroutinesInspection : ObsoleteCodeMigrationI
     override val fromVersion: LanguageVersion = LanguageVersion.KOTLIN_1_2
     override val toVersion: LanguageVersion = LanguageVersion.KOTLIN_1_3
 
-    override val problemReporters = listOf(
-        ObsoleteTopLevelFunctionUsageReporter(
-            "buildSequence",
-            "kotlin.coroutines.experimental.buildSequence",
-            "kotlin.sequences.sequence"
-        ),
-        ObsoleteTopLevelFunctionUsageReporter(
-            "buildIterator",
-            "kotlin.coroutines.experimental.buildIterator",
-            "kotlin.sequences.iterator"
-        ),
-        ObsoleteExtensionFunctionUsageReporter(
-            "resume",
-            "kotlin.coroutines.experimental.Continuation.resume",
-            "kotlin.coroutines.resume"
-        ),
-        ObsoleteExtensionFunctionUsageReporter(
-            "resumeWithException",
-            "kotlin.coroutines.experimental.Continuation.resumeWithException",
-            "kotlin.coroutines.resumeWithException"
-        ),
-        ObsoleteCoroutinesImportsUsageReporter
-    )
+    override val problemReporters: List<ObsoleteCodeProblemReporter>
+        get() = listOf(
+            ObsoleteTopLevelFunctionUsageReporter(
+                "buildSequence",
+                "kotlin.coroutines.experimental.buildSequence",
+                "kotlin.sequences.sequence"
+            ),
+            ObsoleteTopLevelFunctionUsageReporter(
+                "buildIterator",
+                "kotlin.coroutines.experimental.buildIterator",
+                "kotlin.sequences.iterator"
+            ),
+            ObsoleteExtensionFunctionUsageReporter(
+                "resume",
+                "kotlin.coroutines.experimental.Continuation.resume",
+                "kotlin.coroutines.resume"
+            ),
+            ObsoleteExtensionFunctionUsageReporter(
+                "resumeWithException",
+                "kotlin.coroutines.experimental.Continuation.resumeWithException",
+                "kotlin.coroutines.resumeWithException"
+            ),
+            ObsoleteCoroutinesImportsUsageReporter
+        )
 }
 
 private object ObsoleteCoroutinesUsageInWholeProjectFix : ObsoleteCodeInWholeProjectFix() {
@@ -72,7 +73,7 @@ private fun isTopLevelCallForReplace(simpleNameExpression: KtSimpleNameExpressio
 
     val project = simpleNameExpression.project
 
-    val isInIndex = KotlinTopLevelFunctionFqnNameIndex.getInstance()
+    val isInIndex = KotlinTopLevelFunctionFqnNameIndex
         .get(newFqName, project, GlobalSearchScope.allScope(project))
         .isEmpty()
 
@@ -150,7 +151,7 @@ private class ObsoleteExtensionFunctionUsageReporter(
                 if (element !is KtSimpleNameExpression) return
 
                 val importFun =
-                    KotlinTopLevelFunctionFqnNameIndex.getInstance()
+                    KotlinTopLevelFunctionFqnNameIndex
                         .get(fqName, element.project, GlobalSearchScope.allScope(element.project))
                         .asSequence()
                         .map { it.resolveToDescriptorIfAny() }

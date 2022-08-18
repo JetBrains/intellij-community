@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -38,7 +39,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   private volatile @IntentionName String myName;
   private final boolean myStartInWriteAction;
 
-  public ModifierFix(PsiModifierList modifierList,
+  public ModifierFix(@NotNull PsiModifierList modifierList,
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
@@ -63,7 +64,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
     myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
-  private @IntentionName String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
+  private @IntentionName @NotNull String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
     String name = null;
     PsiElement parent = variable != null ? variable : modifierList != null ? modifierList.getParent() : null;
     if (parent instanceof PsiClass) {
@@ -124,6 +125,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                              @NotNull PsiElement endElement) {
     final PsiModifierList modifierList = ((PsiModifierListOwner)startElement).getModifierList();
     if (modifierList == null) return false;
+    if (modifierList.getContainingFile().getVirtualFile() == null) return false;
     PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
     boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
                           modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
@@ -165,7 +167,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (myStartInWriteAction) {
+    if (myStartInWriteAction || IntentionPreviewUtils.isPreviewElement(startElement)) {
       PsiModifierList modifierList;
       PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
       if (variable != null && variable.isValid()) {

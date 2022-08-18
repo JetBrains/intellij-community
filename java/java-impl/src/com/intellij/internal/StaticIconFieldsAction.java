@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,23 +19,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class StaticIconFieldsAction extends AnAction {
+final class StaticIconFieldsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-
+    final Project project = Objects.requireNonNull(e.getProject());
 
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabName("Statics");
-    presentation.setTabText("Statitcs");
-    final UsageView view = UsageViewManager.getInstance(Objects.requireNonNull(project)).showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
+    presentation.setTabText("Statics");
 
+    final UsageView view = UsageViewManager.getInstance(project)
+      .showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
       @Override

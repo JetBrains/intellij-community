@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -16,13 +16,14 @@ import java.util.concurrent.TimeUnit
 
 @NonNls
 internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
-  companion object  {
+  companion object {
     private val GROUP = EventLogGroup("vcs.log.index.application", 3)
     private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
     private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
     private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
 
   }
+
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
     if (!Registry.`is`("vcs.log.index.git")) {

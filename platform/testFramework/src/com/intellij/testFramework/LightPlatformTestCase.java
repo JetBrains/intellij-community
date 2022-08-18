@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -23,9 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,8 +33,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectExImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -53,11 +50,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.project.TestProjectManagerKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -68,13 +64,14 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,11 +83,8 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
-
 
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
@@ -106,6 +100,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   static {
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
+
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker myLibraryTableTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
@@ -188,7 +183,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
-    ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, new OpenProjectTaskBuilder().build()));
+    ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, descriptor.getOpenProjectOptions()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     ourPsiManager = null;
 
@@ -280,9 +275,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
 
     Project project = ourProject;
-    ((ProjectExImpl)project).setLightProjectName(name);
+    ((ProjectImpl)project).setLightProjectName(name);
     try {
-      PlatformTestUtil.openProject(project);
+      if (!((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)) {
+        throw new IllegalStateException("openProject returned false");
+      }
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
     }
     catch (Throwable e) {
       setProject(null);
@@ -293,7 +294,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     app.invokeAndWait(() -> {
       if (reusedProject.get()) {
         // clear all caches, reindex
-        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(),
+                                                                                          RootsChangeRescanningInfo.TOTAL_RESCAN));
       }
 
       MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
@@ -309,17 +311,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
 
       assertFalse(PsiManager.getInstance(project).isDisposed());
-      Boolean passed = null;
-      try {
-        passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-      }
-      catch (Exception ignored) {
-      }
 
-      assertTrue("open: " + project.isOpen() +
-                 "; disposed:" + project.isDisposed() +
-                 "; startup passed:" + passed +
-                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
+      if (!project.isInitialized()) {
+        Boolean passed = null;
+        try {
+          passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+        }
+        catch (Exception ignored) {
+        }
+
+        throw new AssertionError("open: " + project.isOpen() +
+                                 "; disposed:" + project.isDisposed() +
+                                 "; startup passed:" + passed +
+                                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
+      }
 
       CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
 
@@ -378,7 +383,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (project != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(project);
+          TestApplicationManager.tearDownProjectAndApp(project);
         }
       },
       () -> {
@@ -432,13 +437,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   static void tearDownSourceRoot(@NotNull Project project) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      if (ourSourceRoot != null) {
+      VirtualFile sourceRoot = ourSourceRoot;
+      if (sourceRoot == null) {
+        return;
+      }
+
+      for (VirtualFile child : sourceRoot.getChildren()) {
         try {
-          for (VirtualFile child : ourSourceRoot.getChildren()) {
-            child.delete(LightPlatformTestCase.class);
-          }
+          child.delete(LightPlatformTestCase.class);
         }
-        catch (IOException e) {
+        catch (IOException | IllegalStateException e) {
+          // TempFileSystem.deleteFile can throw not IOException but IllegalStateException
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
@@ -446,11 +455,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
   }
 
+  /**
+   * @deprecated moved to {@link TestApplicationKt#clearEncodingManagerDocumentQueue(Application)}
+   */
+  @Deprecated
   public static void clearEncodingManagerDocumentQueue() {
-    EncodingManager encodingManager = ApplicationManager.getApplication().getServiceIfCreated(EncodingManager.class);
-    if (encodingManager instanceof EncodingManagerImpl) {
-      ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
-    }
+    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
   }
 
   public static void clearUncommittedDocuments(@NotNull Project project) {
@@ -468,20 +478,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     RunAll.runAll(
-      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> EDT.dispatchAllInvocationEvents(),
       () -> {
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         Application app = ApplicationManager.getApplication();
         if (app != null) {
-          EditorFactory editorFactory = app.getServiceIfCreated(EditorFactory.class);
-          if (editorFactory != null) {
-            List<ThrowableRunnable<?>> actions = new ArrayList<>();
-            for (Editor editor : editorFactory.getAllEditors()) {
-              actions.add(() -> EditorFactoryImpl.throwNotReleasedError(editor));
-              actions.add(() -> editorFactory.releaseEditor(editor));
-            }
-            new RunAll(actions).run();
-          }
+          TestApplicationKt.checkEditorsReleased(app);
         }
       });
   }
@@ -626,7 +628,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (ourPsiManager != null) {
         assertTrue(ourPsiManager.isDisposed());
       }
-    } finally {
+    }
+    finally {
       setProject(null);
       ourModule = null;
       ourPsiManager = null;

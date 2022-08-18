@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.project.Project
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil.intersects
 import com.intellij.vcsUtil.VcsUtil.getVcsFor
 import kotlin.streams.asSequence
@@ -62,7 +61,6 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
   protected open fun isApplicableRoot(path: FilePath, dataContext: VcsContext): Boolean {
     val status = ChangeListManager.getInstance(dataContext.project!!).getStatus(path)
 
-    @Suppress("DEPRECATION")
     return (path.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED
   }
 

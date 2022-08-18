@@ -233,7 +233,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
           checkBox(UIBundle.message("color.blindness.checkbox.text"))
             .bindSelected(adjustColorsProperty)
             .comment(UIBundle.message("color.blindness.checkbox.comment"))
-            .applyToComponent { isOpaque = false }
         }
         else {
           val checkBox = checkBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))

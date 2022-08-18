@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.joinLines
 
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -75,8 +75,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
 private fun KtBinaryExpression.joinable(): Boolean {
     if (operationToken != KtTokens.PLUS) return false
     if (right !is KtStringTemplateExpression) return false
-    val left = left
-    return when (left) {
+    return when (val left = left) {
         is KtStringTemplateExpression -> true
         is KtBinaryExpression -> left.right is KtStringTemplateExpression
         else -> false

@@ -1,17 +1,8 @@
 {
   "name": "typescript",
-  "description": "%description%",
-  "displayName": "%displayName%",
   "version": "1.0.0",
-  "author": "vscode",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "*"
-  },
-  "scripts": {
-    "update-grammar": "node ./build/update-grammars.js"
-  },
   "contributes": {
     "languages": [
       {
@@ -51,6 +42,12 @@
           "tsconfig-*.json",
           "jsconfig-*.json"
         ]
+      },
+      {
+        "id": "json",
+        "filenames": [
+          "tsconfig.tsbuildinfo"
+        ]
       }
     ],
     "grammars": [
@@ -58,6 +55,13 @@
         "language": "typescript",
         "scopeName": "source.ts",
         "path": "./syntaxes/TypeScript.tmLanguage.json",
+        "unbalancedBracketScopes": [
+          "keyword.operator.relational",
+          "storage.type.function.arrow",
+          "keyword.operator.bitwise.shift",
+          "meta.brace.angle",
+          "punctuation.definition.tag"
+        ],
         "tokenTypes": {
           "meta.template.expression": "other",
           "meta.template.expression string": "string",
@@ -72,6 +76,12 @@
         "language": "typescriptreact",
         "scopeName": "source.tsx",
         "path": "./syntaxes/TypeScriptReact.tmLanguage.json",
+        "unbalancedBracketScopes": [
+          "keyword.operator.relational",
+          "storage.type.function.arrow",
+          "keyword.operator.bitwise.shift",
+          "punctuation.definition.tag"
+        ],
         "embeddedLanguages": {
           "meta.tag.tsx": "jsx-tags",
           "meta.tag.without-attributes.tsx": "jsx-tags",
@@ -175,9 +185,5 @@
         "path": "./snippets/typescript.code-snippets"
       }
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }

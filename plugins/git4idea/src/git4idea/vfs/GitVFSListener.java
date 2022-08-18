@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -40,8 +42,9 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @NotNull
-  public static GitVFSListener createInstance(@NotNull GitVcs vcs) {
+  public static GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
     GitVFSListener listener = new GitVFSListener(vcs);
+    Disposer.register(disposable, listener);
     listener.installListeners();
     return listener;
   }

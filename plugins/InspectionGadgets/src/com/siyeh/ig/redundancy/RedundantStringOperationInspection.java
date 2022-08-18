@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -123,14 +123,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
       myProcessors.mapAll(call).forEach(myHolder::registerProblem);
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       PsiJavaCodeReferenceElement classRef = expression.getClassReference();
       ProblemDescriptor descriptor = null;
       if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER)) {
@@ -198,7 +198,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
         }
       }
       return null;
@@ -270,7 +270,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y",
                                                                                nameMethod, EQUALS_IGNORE_CASE),
-                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new RemoveRedundantChangeCaseFix(nameMethod, type));
     }
 
@@ -313,10 +313,11 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                 return createSubstringToCharAtProblemDescriptor(call);
               }
             }
+            RemoveRedundantSubstringFix fix = new RemoveRedundantSubstringFix(isLengthOf(args[1], receiver) ? "endsWith" : "startsWith");
             return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                      InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
-                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
-                                                     new RemoveRedundantSubstringFix("startsWith"));
+                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
+                                                     fix);
           }
         }
       }
@@ -330,7 +331,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           if (anchor != null) {
             return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                      InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
-                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                      new RemoveRedundantSubstringFix("endsWith"));
           }
         }
@@ -416,7 +417,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
       if (anchor == null) return null;
       String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "strip", "isBlank");
-      return myManager.createProblemDescriptor(anchor, (TextRange)null, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+      return myManager.createProblemDescriptor(anchor, (TextRange)null, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new StripIsEmptyToIsBlankFix());
     }
 
@@ -479,7 +480,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                InspectionGadgetsBundle.message(key),
                                                myIsOnTheFly,
                                                new LocalQuickFix[]{fix},
-                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
     @Nullable
@@ -518,7 +519,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         final String message = InspectionGadgetsBundle.message("inspection.redundant.string.length.argument.message");
         return myManager.createProblemDescriptor(args[1],
                                                  message,
-                                                 fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
+                                                 fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
       }
 
       boolean betterWithCharAt = isBetterWithCharAt(call);
@@ -547,7 +548,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
                                                    new RemoveRedundantStringCallFix(
                                                      nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
         }
       }
       return null;
@@ -600,7 +601,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
       String name = call.getMethodExpression().getReferenceName();
       return myManager.createProblemDescriptor(anchor, (TextRange)null, InspectionGadgetsBundle.message(key),
-                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new RemoveRedundantStringCallFix(name, FixType.REPLACE_WITH_QUALIFIER));
     }
 
@@ -611,7 +612,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       return myManager.createProblemDescriptor(charArrayCreationArgument.newExpression,
                                                new TextRange(0, charArrayCreationArgument.arrayInitializer.getStartOffsetInParent()),
                                                InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
-                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                myIsOnTheFly,
                                                new UnwrapArrayInitializerFix(charArrayCreationArgument.initializer.getText()));
     }

@@ -11,9 +11,10 @@ import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.children
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.parents
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 
 /**
  * Formatting block used by markdown plugin
@@ -60,19 +61,22 @@ internal open class MarkdownFormattingBlock(
 
   override fun getSubBlocks(): List<Block?> {
     //Non top-level codefences cannot be formatted correctly even with correct inject, so -- just ignore it
-    if (MarkdownCodeFenceUtils.isCodeFence(node) && !MarkdownPsiUtil.isTopLevel(node)) return EMPTY
+    if (MarkdownCodeFenceUtils.isCodeFence(node) && !node.isTopLevel()) return EMPTY
 
     return super.getSubBlocks()
   }
 
   override fun buildChildren(): List<Block> {
+    if (!node.canBeFormatted()) {
+      return emptyList()
+    }
     val newAlignment = Alignment.createAlignment()
-
     return when (node.elementType) {
       //Code fence alignment is not supported for now because of manipulator problems
       // and the fact that when end of code fence is in blockquote -- parser
       // would treat blockquote as a part of code fence end token
       MarkdownElementTypes.CODE_FENCE -> emptyList()
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
         MarkdownBlocks.create(node.children(), settings, spacing) {
           if (it.elementType in NON_ALIGNABLE_LIST_ELEMENTS) alignment else newAlignment
@@ -85,5 +89,9 @@ internal open class MarkdownFormattingBlock(
         MarkdownBlocks.create(node.children(), settings, spacing) { alignment }.toList()
       }
     }
+  }
+
+  private fun ASTNode.canBeFormatted(): Boolean {
+    return parents(withSelf = true).none { it.hasType(MarkdownElementTypes.TABLE_CELL) }
   }
 }

@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -357,6 +358,7 @@ public final class FindUsagesManager {
     });
 
     FindUsagesOptions optionsClone = options.clone();
+    ClusteringSearchSession clusteringSearchSession = ClusteringSearchSession.createClusteringSessionIfEnabled();
     return processor -> {
       Project project = ReadAction.compute(() -> scopeFile != null ? scopeFile.getProject() : primaryTargets[0].getProject());
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -375,7 +377,11 @@ public final class FindUsagesManager {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
       }
       Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
-        Usage usage = ReadAction.compute(() -> UsageInfoToUsageConverter.convert(primaryElements, usageInfo));
+        Usage usage = ReadAction.compute(
+          () -> clusteringSearchSession != null
+                ? UsageInfoToUsageConverter.convertToSimilarUsage(primaryElements, usageInfo, clusteringSearchSession)
+                : UsageInfoToUsageConverter.convert(primaryElements, usageInfo)
+        );
         return processor.process(usage);
       });
       PsiElement[] elements = ArrayUtil.mergeArrays(primaryElements, secondaryElements, PsiElement.ARRAY_FACTORY);
@@ -669,7 +675,7 @@ public final class FindUsagesManager {
     PsiElement element = handler.getPsiElement();
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
-    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+    if (file != null && ProjectFileIndex.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
       return GlobalSearchScope.projectScope(project);
     }
     return GlobalSearchScope.allScope(project);

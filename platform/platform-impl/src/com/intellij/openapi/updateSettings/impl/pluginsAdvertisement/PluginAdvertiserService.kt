@@ -15,18 +15,17 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.coroutineContext
 
 open class PluginAdvertiserService {
-
   private val notificationManager: SingletonNotificationManager =
     SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
 
@@ -35,21 +34,20 @@ open class PluginAdvertiserService {
     fun getInstance(): PluginAdvertiserService = service()
   }
 
-  open fun run(
+  open suspend fun run(
     project: Project,
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean = false
   ) {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
-    val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
-    val ids = mutableMapOf<PluginId, PluginData>()
+    val plugins = mutableSetOf<PluginData>()
     val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
     for (feature in unknownFeatures) {
-      ProgressManager.checkCanceled()
+      coroutineContext.ensureActive()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
       val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
@@ -57,14 +55,14 @@ open class PluginAdvertiserService {
       val installedPluginData = featurePluginData?.pluginData
 
       fun putFeature(data: PluginData) {
-        if (ignoredPluginSuggestionState.isIgnored(data.pluginId) && !includeIgnored) { // globally ignored
-          LOG.info("Plugin is ignored by user, suggestion will not be shown: " + data.pluginId.idString)
+        val pluginId = data.pluginId
+        if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
+          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
           return
         }
 
-        val id = data.pluginId
-        ids[id] = data
-        featuresMap.putValue(id, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
+        plugins += data
+        featuresMap.putValue(pluginId, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
       }
 
       if (installedPluginData != null) {
@@ -76,46 +74,54 @@ open class PluginAdvertiserService {
       else {
         MarketplaceRequests.getInstance()
           .getFeatures(featureType, implementationName)
+          .asSequence()
           .mapNotNull { it.toPluginData() }
           .forEach { putFeature(it) }
       }
     }
 
-    val org = PluginManagerFilters.getInstance()
+    val descriptorsById = PluginManagerCore.buildPluginIdMap()
+    val pluginManagerFilter = PluginManagerFilters.getInstance()
+    val disabledDescriptors = plugins.asSequence()
+      .map { it.pluginId }
+      .mapNotNull { descriptorsById[it] }
+      .filterNot { it.isEnabled }
+      .filter { pluginManagerFilter.allowInstallingPlugin(it) }
+      .toList()
 
-    //include disabled plugins
-    ids.filter { (pluginId, _) ->
-      PluginManagerCore.isDisabled(pluginId)
-    }.mapNotNull { (pluginId, plugin) ->
-      PluginManagerCore.getPlugin(pluginId)?.let {
-        plugin to it
-      }
-    }.filter {
-      org.allowInstallingPlugin(it.second)
-    }.forEach { (plugin, pluginDescriptor) ->
-      disabledPlugins[plugin] = pluginDescriptor
-    }
-
-    val bundledPlugins = getBundledPluginToInstall(ids.values)
-    val suggestToInstall = if (ids.isEmpty())
+    val suggestToInstall = if (plugins.isEmpty())
       emptyList()
     else
-      fetchPluginSuggestions(ids, customPlugins, org)
+      fetchPluginSuggestions(
+        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
+        customPlugins = customPlugins,
+        org = pluginManagerFilter,
+      )
 
-    invokeLater(ModalityState.NON_MODAL) {
-      if (project.isDisposed)
-        return@invokeLater
-
-      notifyUser(project, bundledPlugins, suggestToInstall, disabledPlugins, customPlugins,
-                 featuresMap, unknownFeatures, dependencies, includeIgnored)
-    }
+    ApplicationManager.getApplication().invokeLater(
+      notifyUser(
+        project = project,
+        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+        suggestionPlugins = suggestToInstall,
+        disabledDescriptors = disabledDescriptors,
+        customPlugins = customPlugins,
+        featuresMap = featuresMap,
+        allUnknownFeatures = unknownFeatures,
+        dependencies = dependencies,
+        includeIgnored = includeIgnored,
+      ),
+      ModalityState.NON_MODAL,
+      project.disposed,
+    )
   }
 
-  private fun fetchPluginSuggestions(ids: MutableMap<PluginId, PluginData>,
-                                     customPlugins: List<PluginNode>,
-                                     org: PluginManagerFilters): List<PluginDownloader> {
+  private fun fetchPluginSuggestions(
+    pluginIds: Set<PluginId>,
+    customPlugins: List<PluginNode>,
+    org: PluginManagerFilters,
+  ): List<PluginDownloader> {
     return RepositoryHelper.mergePluginsFromRepositories(
-      MarketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys),
+      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
       customPlugins,
       true,
     ).filterNot { loadedPlugin ->
@@ -125,28 +131,33 @@ open class PluginAdvertiserService {
       } ?: false
 
       compareVersions
-      || !ids.containsKey(pluginId)
+      || !pluginIds.contains(pluginId)
       || PluginManagerCore.isDisabled(pluginId)
       || PluginManagerCore.isBrokenPlugin(loadedPlugin)
-    }.filter {
-      org.allowInstallingPlugin(it)
-    }.map { PluginDownloader.createDownloader(it) }
+    }.filter { org.allowInstallingPlugin(it) }
+      .map { PluginDownloader.createDownloader(it) }
   }
 
-  private fun notifyUser(project: Project,
-                         bundledPlugins: List<String>,
-                         suggestionPlugins: List<PluginDownloader>,
-                         disabledPlugins: Map<PluginData, IdeaPluginDescriptor>,
-                         customPlugins: List<PluginNode>,
-                         featuresMap: MultiMap<PluginId, UnknownFeature>,
-                         allUnknownFeatures: Collection<UnknownFeature>,
-                         dependencies: PluginFeatureMap?,
-                         includeIgnored: Boolean) {
-    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() ||
-                                                         disabledPlugins.isNotEmpty()) {
-      val action = if (disabledPlugins.isNotEmpty()) {
-        val disabledDescriptors = disabledPlugins.values
-        val title = if (disabledPlugins.size == 1)
+  private fun notifyUser(
+    project: Project,
+    bundledPlugins: List<String>,
+    suggestionPlugins: List<PluginDownloader>,
+    disabledDescriptors: List<IdeaPluginDescriptorImpl>,
+    customPlugins: List<PluginNode>,
+    featuresMap: MultiMap<PluginId, UnknownFeature>,
+    allUnknownFeatures: Collection<UnknownFeature>,
+    dependencies: PluginFeatureMap?,
+    includeIgnored: Boolean,
+  ) = Runnable {
+    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
+      val action = if (disabledDescriptors.isEmpty()) {
+        NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
+          FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
+          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
+        }
+      }
+      else {
+        val title = if (disabledDescriptors.size == 1)
           IdeBundle.message("plugins.advertiser.action.enable.plugin")
         else
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
@@ -162,23 +173,16 @@ open class PluginAdvertiserService {
           }
         }
       }
-      else {
-        NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
-          FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
-        }
-      }
 
       val notificationActions = listOf(
         action,
-        createIgnoreUnknownFeaturesAction(project, suggestionPlugins, disabledPlugins.values, allUnknownFeatures, dependencies)
+        createIgnoreUnknownFeaturesAction(project, suggestionPlugins, disabledDescriptors, allUnknownFeatures, dependencies),
       )
-      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, disabledPlugins.values, featuresMap)
+      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, disabledDescriptors, featuresMap)
 
       Pair(messagePresentation, notificationActions)
     }
-    else if (bundledPlugins.isNotEmpty()
-             && !isIgnoreIdeSuggestion) {
+    else if (bundledPlugins.isNotEmpty() && !isIgnoreIdeSuggestion) {
       IdeBundle.message(
         "plugins.advertiser.ultimate.features.detected",
         bundledPlugins.joinToString()
@@ -198,14 +202,11 @@ open class PluginAdvertiserService {
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }
-      return
+      return@Runnable
     }
 
-    ProgressManager.checkCanceled()
-
     notificationManager.notify("", notificationMessage, project) {
-      it.setSuggestionType(true)
-        .addActions(notificationActions as Collection<AnAction>)
+      it.setSuggestionType(true).addActions(notificationActions as Collection<AnAction>)
     }
   }
 
@@ -329,13 +330,13 @@ open class PluginAdvertiserService {
     return result
   }
 
-  fun rescanDependencies(project: Project) {
+  suspend fun rescanDependencies(project: Project) {
     val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project).toList()
     if (dependencyUnknownFeatures.isNotEmpty()) {
       getInstance().run(
-        project,
-        loadPluginsFromCustomRepositories(),
-        dependencyUnknownFeatures,
+        project = project,
+        customPlugins = loadPluginsFromCustomRepositories(),
+        unknownFeatures = dependencyUnknownFeatures,
       )
     }
   }

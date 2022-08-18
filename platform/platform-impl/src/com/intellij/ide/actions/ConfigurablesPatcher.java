@@ -10,12 +10,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * This interface is used to modify a list of settings
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface ConfigurablesPatcher {
 
-  ExtensionPointName<ConfigurablesPatcher> EP_NAME = ExtensionPointName.create("com.intellij.configurablesModificator");
+  ExtensionPointName<ConfigurablesPatcher> EP_NAME = ExtensionPointName.create("com.intellij.configurablesPatcher");
 
+  /**
+   * Modifies a list of settings
+   *
+   * @param originalConfigurables - the list of settings
+   * @param project - a project used to load project settings for or {@code null}
+   */
   void modifyOriginalConfigurablesList(@NotNull List<Configurable> originalConfigurables,
                                        @Nullable Project project);
 }

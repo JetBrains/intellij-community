@@ -174,6 +174,8 @@ public final class ZipUtil {
     Path child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     Path dir = zipEntry.isDirectory() ? child : child.getParent();
     Files.createDirectories(dir);
+    LOG.assertTrue(dir.toFile().exists());
+    LOG.assertTrue(dir.toFile().listFiles() != null);
     if (zipEntry.isDirectory()) {
       return;
     }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -25,9 +26,11 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename),
     message("vcs.add.to.ignore.file.action.group.description", ignoreFileType.ignoreLanguage.filename),
     ignoreFileType.icon
-  ), DumbAware, UpdateInBackground {
+  ), DumbAware {
 
   private var actions: Collection<AnAction> = emptyList()
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val selectedFiles = getSelectedFiles(e)
@@ -67,6 +70,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
     presentation.isPopupGroup = actions.size > 1
     presentation.isPerformGroup = actions.size == 1
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
     presentation.isVisible = actions.isNotEmpty()
   }
 

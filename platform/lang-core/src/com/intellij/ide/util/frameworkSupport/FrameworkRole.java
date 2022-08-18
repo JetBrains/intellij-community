@@ -7,14 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class FrameworkRole {
-
-  public static FrameworkRole[] UNKNOWN = new FrameworkRole[0];
-
-  /* Groovy etc. */
-//  public static FrameworkRole JVM_LANGUAGES = new FrameworkRole();
-
-  /** servlet-based frameworks like Struts, Tapestry etc. */
-  public static FrameworkRole JEE_FRAMEWORKS = new FrameworkRole("javaee");
+  public static final FrameworkRole[] UNKNOWN = new FrameworkRole[0];
 
   private final String myId;
 

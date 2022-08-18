@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,13 +97,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       }
     };
     final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    fileManager.addVirtualFileManagerListener(fileManagerListener);
-    registerDisposable(new Disposable() {
-      @Override
-      public void dispose() {
-        fileManager.removeVirtualFileManagerListener(fileManagerListener);
-      }
-    });
+    Disposable disposable = Disposer.newDisposable();
+    fileManager.addVirtualFileManagerListener(fileManagerListener, disposable);
+    registerDisposable(disposable);
   }
 
   public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {

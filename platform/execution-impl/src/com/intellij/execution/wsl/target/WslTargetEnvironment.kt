@@ -6,12 +6,16 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.target.*
+import com.intellij.execution.target.local.toLocalPtyOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslProxy
+import com.intellij.execution.wsl.runCommand
+import com.intellij.execution.wsl.sync.WslSync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.util.io.sizeOrNull
 import java.io.IOException
@@ -26,6 +30,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
   private val proxies = mutableMapOf<Int, WslProxy>() //port to proxy
+  private val remoteDirsToDelete = mutableListOf<String>()
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -40,10 +45,12 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     get() = TargetPlatform(Platform.UNIX)
 
   init {
+    val useWslSync = (request as? VolumeCopyingRequest)?.shouldCopyVolumes == true && Registry.`is`("ide.wsl.use_wsl_sync")
     for (uploadRoot in request.uploadVolumes) {
-      val targetRoot: String? = toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
+      val targetRoot: String? = if (useWslSync) uploadRoot.targetRootPath.remoteRoot
+      else toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
-        myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
+        myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot, useWslSync)
       }
       else {
         LOG.error("Cannot register upload volume: WSL path not found for local path: " + uploadRoot.localRootPath)
@@ -51,9 +58,10 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
     for (downloadRoot in request.downloadVolumes) {
       val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()
-      val targetRoot: String? = toLinuxPath(localRootPath.toAbsolutePath().toString())
+      val targetRoot: String? = if (useWslSync) downloadRoot.targetRootPath.remoteRoot
+      else toLinuxPath(localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
-        myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot)
+        myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot, useWslSync)
       }
     }
     for (targetPortBinding in request.targetPortBindings) {
@@ -106,9 +114,15 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     return null
   }
 
+  private val TargetPath.remoteRoot: String
+    get() = when (this) {
+      is TargetPath.Temporary -> distribution.runCommand("mktemp", "-d").also { remoteDirsToDelete += it }
+      is TargetPath.Persistent -> absolutePath
+    }
+
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
-    val ptyOptions = request.ptyOptions
+    val ptyOptions = commandLine.ptyOptions?.toLocalPtyOptions()
     val generalCommandLine = if (ptyOptions != null) {
       PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)
     }
@@ -127,9 +141,21 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
   }
 
-  override fun shutdown() {}
+  override fun shutdown() {
+    for (dir in remoteDirsToDelete) {
+      try {
+        distribution.runCommand("rm", "-rf", dir)
+      }
+      catch (ex: Exception) {
+        LOG.warn(ex)
+      }
+    }
+    remoteDirsToDelete.clear()
+  }
 
-  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume, DownloadableVolume {
+  private inner class Volume(override val localRoot: Path,
+                             override val targetRoot: String,
+                             private val useWslSync: Boolean) : UploadableVolume, DownloadableVolume {
 
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
@@ -139,10 +165,16 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
 
     @Throws(IOException::class)
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
+      if (!useWslSync) return
+      WslSync.syncWslFolders("$targetRoot/$relativePath", localRoot.resolve(relativePath), distribution, linToWinCopy = false)
     }
 
     @Throws(IOException::class)
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
+      if (useWslSync) {
+        WslSync.syncWslFolders("$targetRoot/$relativePath", localRoot.resolve(relativePath), distribution, linToWinCopy = true)
+        return
+      }
       // Synchronization may be slow -- let us wait until file size does not change
       // in a reasonable amount of time
       // (see https://github.com/microsoft/WSL/issues/4197)

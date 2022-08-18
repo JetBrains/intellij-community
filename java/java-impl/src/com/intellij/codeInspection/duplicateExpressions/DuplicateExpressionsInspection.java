@@ -41,7 +41,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
 
         if (expression instanceof PsiParenthesizedExpression) {
@@ -51,7 +51,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
 
         if (expression.getParent() instanceof PsiCallExpression) {
@@ -77,7 +77,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
 
         PsiCodeBlock body = method.getBody();
@@ -87,14 +87,14 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         registerProblemsForExpressions(initializer.getBody(), session);
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
 
         PsiElement body = expression.getBody();
@@ -177,7 +177,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     Ref<Boolean> refFailed = new Ref<>(Boolean.FALSE);
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         PsiElement resolved = reference.resolve();
@@ -383,7 +383,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
           final ExpressionHashingStrategy hashingStrategy = new ExpressionHashingStrategy();
 
           @Override
-          public void visitExpression(PsiExpression occurrence) {
+          public void visitExpression(@NotNull PsiExpression occurrence) {
             super.visitExpression(occurrence);
 
             if (occurrence != originalExpr &&

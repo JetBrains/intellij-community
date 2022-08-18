@@ -40,7 +40,7 @@ import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
- * @author: lesya
+ * @author lesya
  */
 public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public static final ExtensionPointName<Provider> EP_NAME =
@@ -168,17 +168,14 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       }
     };
 
-    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
-      VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
-
-      changesListener.registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          changesListener.unregisterAnnotation(fileAnnotation.getFile(), fileAnnotation);
-        }
-      });
-    }
+    VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
+    changesListener.registerAnnotation(fileAnnotation);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        changesListener.unregisterAnnotation(fileAnnotation);
+      }
+    });
 
     closeVcsAnnotations(editor);
 

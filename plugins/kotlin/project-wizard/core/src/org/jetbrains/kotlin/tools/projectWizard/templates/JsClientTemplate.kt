@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
@@ -69,15 +69,6 @@ abstract class JsClientTemplate : Template() {
                         resources()
                     }
                     """.trimIndent()
-                }
-            }
-
-            interceptAtPoint(template.imports) { value ->
-                if (value.isNotEmpty()) return@interceptAtPoint value
-                buildList {
-                    +value
-                    +"io.ktor.http.content.resources"
-                    +"io.ktor.http.content.static"
                 }
             }
 

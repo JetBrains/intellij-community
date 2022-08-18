@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -36,7 +35,7 @@ public class UnnecessaryBreakInspection extends BaseInspection {
   private static class UnnecessaryBreakVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       super.visitBreakStatement(statement);
       final PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null) {
@@ -54,11 +53,11 @@ public class UnnecessaryBreakInspection extends BaseInspection {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)exitedStatement;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
-          registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(statement.getFirstChild());
         }
       }
       else if (ControlFlowUtils.statementCompletesWithStatement(exitedStatement, statement)) {
-        registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(statement.getFirstChild());
       }
     }
   }

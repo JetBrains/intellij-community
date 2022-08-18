@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -24,7 +24,10 @@ data class JsonProjectIndexingHistory(
     val partOfTotalContentLoadingTime: JsonPercentages = JsonPercentages(),
     val totalNumberOfFiles: Int = 0,
     val totalFilesSize: JsonFileSize = JsonFileSize(),
-    val indexingSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
+    /**
+     * bytes to total (not visible) processing (not just indexing) time
+     */
+    val totalProcessingSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
     val biggestContributors: List<JsonBiggestFileTypeContributor> = emptyList()
   ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -43,7 +46,7 @@ data class JsonProjectIndexingHistory(
     val totalNumberOfFiles: Int = 0,
     val totalNumberOfFilesIndexedByExtensions: Int = 0,
     val totalFilesSize: JsonFileSize = JsonFileSize(),
-    val indexingSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
+    val indexValueChangerEvaluationSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
     val snapshotInputMappingStats: JsonSnapshotInputMappingStats = JsonSnapshotInputMappingStats()
   ) {
     @JsonIgnoreProperties(ignoreUnknown = true)

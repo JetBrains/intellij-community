@@ -21,10 +21,8 @@ public final class GlobalInspectionContextUtil {
     return refElement;
   }
 
-  public static boolean canRunInspections(@NotNull Project project,
-                                          final boolean online,
-                                          @NotNull Runnable rerunAction) {
-    if( InspectionExtensionsFactory.EP_NAME.getExtensionList().size() == 0){
+  public static boolean canRunInspections(@NotNull Project project, boolean online, @NotNull Runnable rerunAction) {
+    if (InspectionExtensionsFactory.EP_NAME.getExtensionList().isEmpty()) {
       return true;
     }
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {

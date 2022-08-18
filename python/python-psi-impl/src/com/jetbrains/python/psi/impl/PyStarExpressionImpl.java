@@ -42,9 +42,12 @@ public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpress
       return false;
     }
     PsiElement parent = getParent();
+    boolean isUnpackingInSubscription = parent instanceof PySubscriptionExpression ||
+                                        (parent instanceof PySliceItem && parent.getChildren().length == 1); // a[1:2, *x], but not a[1:*x]
     while (parent instanceof PyParenthesizedExpression) {
       parent = parent.getParent();
     }
-    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression || parent instanceof PySetLiteralExpression;
+    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression || parent instanceof PySetLiteralExpression ||
+           isUnpackingInSubscription;
   }
 }

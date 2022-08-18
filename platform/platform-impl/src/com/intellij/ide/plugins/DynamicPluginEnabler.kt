@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.application.options.RegistryManager
@@ -6,8 +6,10 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.feedback.kotlinRejecters.recordKotlinPluginDisabling
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
@@ -15,16 +17,18 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.project.stateStore
 import com.intellij.util.xmlb.annotations.XCollection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @State(
   name = "DynamicPluginEnabler",
-  storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
+  storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)],
   reloadable = false,
 )
 @ApiStatus.Internal
@@ -44,11 +48,11 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
       return (pluginEnabler as? DynamicPluginEnabler)?.getPluginTracker(project)
     }
 
-    internal class EnableDisablePluginsActivity : StartupActivity {
+    internal class EnableDisablePluginsActivity : InitProjectActivity {
       private val dynamicPluginEnabler = PluginEnabler.getInstance() as? DynamicPluginEnabler
                                          ?: throw ExtensionNotApplicableException.create()
 
-      override fun runActivity(project: Project) {
+      override suspend fun run(project: Project) {
         val tracker = dynamicPluginEnabler.getPluginTracker(project)
         val projects = openProjectsExcludingCurrent(project)
 
@@ -56,24 +60,25 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
           .union(dynamicPluginEnabler.locallyDisabledAndGloballyEnabledPlugins(projects))
 
         val pluginIdsToUnload = tracker.disabledPluginsIds
+        if (pluginIdsToLoad.isEmpty() && pluginIdsToUnload.isEmpty()) {
+          return
+        }
 
-        if (pluginIdsToLoad.isNotEmpty() || pluginIdsToUnload.isNotEmpty()) {
-          val indicator = ProgressManager.getInstance().progressIndicator
-          ApplicationManager.getApplication().invokeAndWait {
-            indicator?.let {
-              it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
-            }
-            DynamicPlugins.loadPlugins(pluginIdsToLoad.toPluginDescriptors())
-
-            indicator?.let {
-              it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
-            }
-            dynamicPluginEnabler.unloadPlugins(
-              pluginIdsToUnload.toPluginDescriptors(),
-              project,
-              projects,
-            )
+        val indicator = ProgressManager.getInstance().progressIndicator
+        withContext(Dispatchers.EDT) {
+          indicator?.let {
+            it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
           }
+          DynamicPlugins.loadPlugins(pluginIdsToLoad.toPluginDescriptors())
+
+          indicator?.let {
+            it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
+          }
+          dynamicPluginEnabler.unloadPlugins(
+            pluginIdsToUnload.toPluginDescriptors(),
+            project,
+            projects,
+          )
         }
       }
     }
@@ -144,7 +149,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
   ): Boolean {
     assert(!action.isPerProject || project != null)
 
-    val pluginIds = descriptors.toPluginSet()
+    val pluginIds = descriptors.toPluginIdSet()
 
     fun unloadExcessPlugins() = unloadPlugins(
       descriptors,
@@ -154,6 +159,8 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     )
 
     PluginManagerUsageCollector.pluginsStateChanged(descriptors, action, project)
+    recordKotlinPluginDisabling(descriptors, action)
+
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
         state.stopTracking(pluginIds)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -7,10 +7,9 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
-@Suppress("UnstableApiUsage")
 class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinReferencesTypeHintsProvider.Settings>() {
 
     data class Settings(
@@ -18,7 +17,25 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         var localVariableType: Boolean = false,
         var functionReturnType: Boolean = false,
         var parameterType: Boolean = false
-    )
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType) =
+            when(hintType) {
+                HintType.PROPERTY_HINT -> propertyType
+                HintType.LOCAL_VARIABLE_HINT -> localVariableType
+                HintType.FUNCTION_HINT -> functionReturnType
+                HintType.PARAMETER_TYPE_HINT -> parameterType
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when(hintType) {
+                HintType.PROPERTY_HINT -> propertyType = enable
+                HintType.LOCAL_VARIABLE_HINT -> localVariableType = enable
+                HintType.FUNCTION_HINT -> functionReturnType = enable
+                HintType.PARAMETER_TYPE_HINT -> parameterType = enable
+                else -> Unit
+            }
+    }
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.references.types.hints")
     override val name: String = KotlinBundle.message("hints.settings.types")
@@ -76,25 +93,9 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         }
     }
 
-    override val previewText: String = """
-        val property = listOf(1, 2, 3).filter { num -> num % 2 == 0 }
-        
-        fun someFun(arg: Int) = print(arg)
-        
-        fun anotherFun(a: Int = 10, b: Int = 5): Int {
-            val variable = a + b
-            return variable * 2
-        }
+    override fun isHintSupported(hintType: HintType): Boolean =
+        hintType == HintType.PROPERTY_HINT || hintType == HintType.LOCAL_VARIABLE_HINT ||
+                hintType == HintType.FUNCTION_HINT || hintType == HintType.PARAMETER_TYPE_HINT
 
-        fun yetAnotherFun() {
-            Stream.of(1, 2, 3)
-                .map { i -> i + 12 }
-                .filter { i -> i % 2 == 0 }
-                .collect(Collectors.toList())
-        }
-    """.trimIndent()
-
-    override fun getProperty(key: String): String {
-        return KotlinBundle.getMessage(key)
-    }
+    override val previewText: String? = null
 }

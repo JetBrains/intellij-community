@@ -92,7 +92,6 @@ private fun createSeparatorHighlighter(editor: EditorImpl, textRange: TextRange)
 
     customRenderer = NotebookInlayComponent.separatorRenderer
     lineMarkerRenderer = LineMarkerRenderer { _, g, r ->
-      @Suppress("INACCESSIBLE_TYPE")
       val gutterWidth = ((editor as EditorEx).gutterComponentEx as JComponent).width
 
       val y = r.y + r.height - editor.lineHeight

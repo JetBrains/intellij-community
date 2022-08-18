@@ -1,20 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -33,8 +36,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
 
     override val previewText: String
         get() = """
-            fun main() {
-                (1..100).filter { it % 2 == 0 }
+            fun doSomething(list: List<Int>) {
+                list.filter { it % 2 == 0 }
                     .map { it * 2 }
                     .takeIf { list ->
                         list.all { it % 2 == 0 }
@@ -42,10 +45,24 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
                     ?.map { "item: ${'$'}it" }
                     ?.forEach { println(it) }
             }
+            
+            class List<T> {
+                fun filter(pred: (T) -> Boolean) : List<T> = TODO()
+                fun <R> map(op: (T) -> R) : List<R> = TODO()
+                fun all(op: (T) -> Boolean) : Boolean = TODO()
+                fun forEach(op: (T) -> Unit) : Unit = TODO()
+            }
+            fun <T> T.takeIf(predicate: (T) -> Boolean): T? = TODO()
         """.trimIndent()
 
     override val description: String
         get() = KotlinBundle.message("inlay.kotlin.call.chains.hints")
+
+    override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
+
+    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+
+    override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         KotlinAbstractHintsProvider.createKtFile(project, document, fileType)
@@ -60,6 +77,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
             .getInlayHintsTypeRenderer(context, expression as? KtElement ?: error("Only Kotlin psi are possible"))
             .renderTypeIntoInlayInfo(this)
         return KotlinAbstractHintsProvider.getInlayPresentationForInlayInfoDetails(
+            expression,
+            null,
             InlayInfoDetails(InlayInfo("", expression.textRange.endOffset), inlayInfoDetails),
             factory,
             project,

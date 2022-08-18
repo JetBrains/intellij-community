@@ -1,36 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sillyAssignment;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  protected LocalQuickFix createRemoveAssignmentFix(PsiReferenceExpression expression) {
+  protected LocalQuickFix createRemoveAssignmentFix(PsiExpression expression) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
@@ -58,15 +48,15 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         checkSillyAssignment(expression, holder);
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
-      @Override public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final @NotNull PsiVariable variable) {
         final PsiExpression initializer = PsiUtil.deparenthesizeExpression(variable.getInitializer());
         if (initializer instanceof PsiAssignmentExpression) {
           final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)initializer).getLExpression());
@@ -88,7 +78,6 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
           if (refExpr.isReferenceTo(variable)) {
             holder.registerProblem(refExpr,
                                    JavaBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    createRemoveAssignmentFix(refExpr));
           }
         }
@@ -98,33 +87,38 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
 
   private void checkSillyAssignment(@NotNull PsiAssignmentExpression assignment, @NotNull ProblemsHolder holder) {
     if (assignment.getOperationTokenType() != JavaTokenType.EQ) return;
-    PsiExpression lExpression = assignment.getLExpression();
-    PsiExpression rExpression = assignment.getRExpression();
-    if (rExpression == null) return;
+    PsiExpression leftExpression = assignment.getLExpression();
+    PsiExpression rightExpression = assignment.getRExpression();
+    if (rightExpression == null) return;
 
-    lExpression = PsiUtil.deparenthesizeExpression(lExpression);
-    if (!(lExpression instanceof PsiReferenceExpression)) return;
-    PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
+    leftExpression = PsiUtil.deparenthesizeExpression(leftExpression);
+    PsiExpression leftArrayExpressionOrItself = getArrayExpressionOrItself(leftExpression);
+    if (!(leftArrayExpressionOrItself instanceof PsiReferenceExpression)) return;
+    PsiReferenceExpression lRef = (PsiReferenceExpression)leftArrayExpressionOrItself;
     final PsiElement resolved = lRef.resolve();
     if (!(resolved instanceof PsiVariable)) return;
     final PsiVariable variable = (PsiVariable)resolved;
 
-    rExpression = deparenthesizeRExpr(rExpression, variable);
+    rightExpression = deparenthesizeRExpr(rightExpression, variable);
+    PsiExpression rightArrayExpressionOrItself = getArrayExpressionOrItself(rightExpression);
 
-    PsiReferenceExpression rRef;
-    if (!(rExpression instanceof PsiReferenceExpression)) {
-      if (!(rExpression instanceof PsiAssignmentExpression)) return;
-      final PsiAssignmentExpression rAssignmentExpression = (PsiAssignmentExpression)rExpression;
-      final PsiExpression assignee = deparenthesizeRExpr(rAssignmentExpression.getLExpression(), variable);
-      if (!(assignee instanceof PsiReferenceExpression)) return;
-      rRef = (PsiReferenceExpression)assignee;
-    } else {
-      rRef = (PsiReferenceExpression)rExpression;
+    if (!(rightArrayExpressionOrItself instanceof PsiReferenceExpression)) {
+      if (!(rightArrayExpressionOrItself instanceof PsiAssignmentExpression)) return;
+      final PsiAssignmentExpression rAssignmentExpression = (PsiAssignmentExpression)rightArrayExpressionOrItself;
+      rightExpression = deparenthesizeRExpr(rAssignmentExpression.getLExpression(), variable);
     }
-    PsiManager manager = assignment.getManager();
-    if (!sameInstanceReferences(lRef, rRef, manager)) return;
-    holder.registerProblem(rRef, JavaBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix(rRef));
+    if (rightExpression == null) return;
+
+    EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (!checker.expressionsAreEquivalent(leftExpression, rightExpression) || SideEffectChecker.mayHaveSideEffects(leftExpression)) return;
+    String message = leftExpression instanceof PsiArrayAccessExpression
+                     ? JavaBundle.message("assignment.array.element.to.itself.problem.descriptor")
+                     : JavaBundle.message("assignment.to.itself.problem.descriptor", variable.getName());
+    holder.registerProblem(rightExpression, message, createRemoveAssignmentFix(rightExpression));
+  }
+
+  private static PsiExpression getArrayExpressionOrItself(PsiExpression expression) {
+    return expression instanceof PsiArrayAccessExpression ? ((PsiArrayAccessExpression)expression).getArrayExpression() : expression;
   }
 
   private static PsiExpression deparenthesizeRExpr(PsiExpression rExpression, PsiVariable variable) {
@@ -148,53 +142,6 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     return rExpression;
   }
 
-  /**
-   * @return true if both expressions resolve to the same variable/class or field in the same instance of the class
-   */
-  private static boolean sameInstanceReferences(@Nullable PsiJavaCodeReferenceElement lRef, @Nullable PsiJavaCodeReferenceElement rRef, PsiManager manager) {
-    if (lRef == null && rRef == null) return true;
-    if (lRef == null || rRef == null) return false;
-    PsiElement lResolved = lRef.resolve();
-    PsiElement rResolved = rRef.resolve();
-    if (!manager.areElementsEquivalent(lResolved, rResolved)) return false;
-    if (!(lResolved instanceof PsiVariable)) return false;
-    final PsiVariable variable = (PsiVariable)lResolved;
-    if (variable.hasModifierProperty(PsiModifier.STATIC)) return true;
-
-    final PsiElement lQualifier = lRef.getQualifier();
-    final PsiElement rQualifier = rRef.getQualifier();
-    if (lQualifier instanceof PsiJavaCodeReferenceElement && rQualifier instanceof PsiJavaCodeReferenceElement) {
-      return sameInstanceReferences((PsiJavaCodeReferenceElement)lQualifier, (PsiJavaCodeReferenceElement)rQualifier, manager);
-    }
-
-    if (Comparing.equal(lQualifier, rQualifier)) return true;
-    boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression || lQualifier instanceof PsiSuperExpression;
-    boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression || rQualifier instanceof PsiSuperExpression;
-    if (lThis && rThis) {
-      final PsiJavaCodeReferenceElement llQualifier = getQualifier(lQualifier);
-      final PsiJavaCodeReferenceElement rrQualifier = getQualifier(rQualifier);
-      return sameInstanceReferences(llQualifier, rrQualifier, manager);
-    }
-    return false;
-  }
-
-  private static PsiJavaCodeReferenceElement getQualifier(PsiElement qualifier) {
-    if (qualifier instanceof PsiThisExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)qualifier).getQualifier();
-      if (thisQualifier != null) {
-        final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(thisQualifier, PsiClass.class);
-        if (innerMostClass == thisQualifier.resolve()) {
-          return null;
-        }
-      }
-      return thisQualifier;
-    }
-    if (qualifier != null) {
-      return  ((PsiSuperExpression)qualifier).getQualifier();
-    }
-    return null;
-  }
-
   private static class RemoveSillyAssignmentFix implements LocalQuickFix {
 
     @Nls
@@ -206,13 +153,13 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
+      final PsiExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiExpression.class);
+      if (!(getArrayExpressionOrItself(expression) instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiVariable) {
-        element.delete();
+        expression.delete();
       }
       if (!(parent instanceof PsiAssignmentExpression)) {
         return;
@@ -220,7 +167,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final PsiExpression lhs = assignmentExpression.getLExpression();
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      if (PsiTreeUtil.isAncestor(lhs, element, false)) {
+      if (PsiTreeUtil.isAncestor(lhs, expression, false)) {
         if (rhs != null) {
           assignmentExpression.replace(rhs);
         }
@@ -234,7 +181,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
           grandParent.delete();
         }
         else {
-          assignmentExpression.replace(element);
+          assignmentExpression.replace(expression);
         }
       }
     }

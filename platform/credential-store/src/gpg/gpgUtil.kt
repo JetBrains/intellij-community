@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.gpg
 
 import com.intellij.credentialStore.LOG
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SmartList
@@ -18,8 +19,7 @@ class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
         continue
       }
 
-      val tag = fields.next()
-      when (tag) {
+      when (fields.next()) {
         "sec" -> {
           for (i in 2 until 5) {
             fields.next()
@@ -70,21 +70,27 @@ interface GpgToolWrapper {
 }
 
 fun createGpg(): GpgToolWrapper {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return DummyGpgToolWrapper()
+  }
+
   val result = GpgToolWrapperImpl()
   try {
     result.version()
   }
   catch (e: Exception) {
     LOG.debug(e)
-    return object : GpgToolWrapper {
-      override fun encrypt(data: ByteArray, recipient: String) = throw UnsupportedOperationException()
-
-      override fun decrypt(data: ByteArray) = throw UnsupportedOperationException()
-
-      override fun listSecretKeys() = ""
-    }
+    return DummyGpgToolWrapper()
   }
   return result
+}
+
+private class DummyGpgToolWrapper : GpgToolWrapper {
+  override fun encrypt(data: ByteArray, recipient: String) = throw UnsupportedOperationException()
+
+  override fun decrypt(data: ByteArray) = throw UnsupportedOperationException()
+
+  override fun listSecretKeys() = ""
 }
 
 data class PgpKey(@NlsSafe val keyId: String, @NlsSafe val userId: String)

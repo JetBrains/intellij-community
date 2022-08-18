@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
           if (psiModule != null) {
             VirtualFile vFile = file.getVirtualFile();
             if (vFile != null) {
-              Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
+              Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
               if (module != null) {
                 Set<String> exportedPackageNames =
                   new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
@@ -95,6 +95,26 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     return !checkers.isEmpty() ? new VisibilityVisitor(checkers.toArray(VisibilityChecker.EMPTY_ARRAY)) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
+  public static PsiMember getExportingMember(PsiJavaCodeReferenceElement reference) {
+    PsiElement parent = reference.getParent();
+    if (!(parent instanceof PsiTypeElement) && !(parent instanceof PsiReferenceList)) {
+      return null;
+    }
+    PsiElement grandParent = PsiTreeUtil.skipParentsOfType(reference,
+                                                           PsiTypeElement.class,
+                                                           PsiReferenceList.class,
+                                                           PsiParameter.class,
+                                                           PsiParameterList.class,
+                                                           PsiReferenceParameterList.class,
+                                                           PsiJavaCodeReferenceElement.class,
+                                                           PsiTypeParameter.class,
+                                                           PsiTypeParameterList.class);
+    if (grandParent instanceof PsiField || grandParent instanceof PsiMethod) {
+      return (PsiMember)grandParent;
+    }
+    return null;
+  }
+
   private static class VisibilityVisitor extends JavaElementVisitor {
     private final VisibilityChecker[] myCheckers;
 
@@ -103,27 +123,20 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
-      PsiElement parent = reference.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiReferenceList) {
-        PsiElement grandParent = PsiTreeUtil.skipParentsOfType(reference, PsiTypeElement.class, PsiReferenceList.class,
-                                                               PsiParameter.class, PsiParameterList.class,
-                                                               PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class,
-                                                               PsiTypeParameter.class, PsiTypeParameterList.class);
-        if (grandParent instanceof PsiField || grandParent instanceof PsiMethod) {
-          PsiMember member = (PsiMember)grandParent;
-          if (!isPrivate(member)) {
-            PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiClass && !(resolved instanceof PsiTypeParameter)) {
-              PsiClass psiClass = (PsiClass)resolved;
-              for (VisibilityChecker checker : myCheckers) {
-                if (checker.checkVisibilityIssue(member, psiClass, reference)) {
-                  return;
-                }
-              }
-            }
-          }
+      PsiMember member = getExportingMember(reference);
+      if (member == null || isPrivate(member)) {
+        return;
+      }
+      PsiElement resolved = reference.resolve();
+      if (!(resolved instanceof PsiClass) || resolved instanceof PsiTypeParameter) {
+        return;
+      }
+      PsiClass psiClass = (PsiClass)resolved;
+      for (VisibilityChecker checker : myCheckers) {
+        if (checker.checkVisibilityIssue(member, psiClass, reference)) {
+          return;
         }
       }
     }

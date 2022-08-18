@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -19,11 +18,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.impl.headertoolbar.TitleActionToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.FontUtil;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +48,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ActionButton button = new ActionButton(this, presentation, place, getMinimumSize(place)) {
+    return new ActionButton(this, presentation, place, getMinimumSize(place)) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
@@ -71,22 +67,10 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
         }
       }
     };
-
-    button.setBorder(calcBorder(place));
-    if (isExperimentalToolbar(place)) {
-      TitleActionToolbarKt.scalePresentationIcons(presentation);
-      button.setLook(TitleActionToolbarKt.getExpToolbarButtonLook());
-    }
-    return button;
   }
 
   private static boolean isExperimentalToolbar(@NotNull String place) {
-    return ExperimentalUI.isNewToolbar() && ActionPlaces.MAIN_TOOLBAR.equals(place);
-  }
-
-  @NotNull
-  private static JBEmptyBorder calcBorder(@NotNull String place) {
-    return isExperimentalToolbar(place) ? JBUI.Borders.empty() : JBUI.Borders.empty(1, 2);
+    return ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
   @NotNull
@@ -119,10 +103,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     }
 
-    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
-                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
-                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-    showInSearchEverywherePopup(searchProviderID, e, true, true);
+    showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, e, true, true);
   }
 }
 

@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
-
 import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -69,11 +69,11 @@ class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplica
 
     private fun convertCatchSection(javaCatchSection: JKJavaTryCatchSection): List<JKKtTryCatchSection> {
         javaCatchSection.block.detach(javaCatchSection)
-        return javaCatchSection.parameter.type.type.let {
-            (it as? JKJavaDisjunctionType)?.disjunctions ?: listOf(it)
-        }.map {
+        val typeElement = javaCatchSection.parameter.type
+        val parameterTypes = typeElement.type.safeAs<JKJavaDisjunctionType>()?.disjunctions ?: listOf(typeElement.type)
+        return parameterTypes.map { type ->
             val parameter = JKParameter(
-                JKTypeElement(it.updateNullability(Nullability.NotNull)),
+                JKTypeElement(type.updateNullability(NotNull), typeElement.annotationList.copyTreeAndDetach()),
                 javaCatchSection.parameter.name.copyTreeAndDetach()
             )
             JKKtTryCatchSection(

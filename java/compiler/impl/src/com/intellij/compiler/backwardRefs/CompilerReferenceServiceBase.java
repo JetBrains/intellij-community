@@ -88,8 +88,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     this.project = project;
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myFileTypes = LanguageCompilerRefAdapter.EP_NAME.extensions().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    Set<FileType> affectedFileTypes = LanguageCompilerRefAdapter.EP_NAME.extensions().flatMap(a -> a.getAffectedFileTypes().stream()).collect(Collectors.toSet());
+    myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
+    Set<FileType> affectedFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getAffectedFileTypes().stream()).collect(Collectors.toSet());
     myDirtyScopeHolder = new DirtyScopeHolder(project,
                                               affectedFileTypes,
                                               myProjectFileIndex,

@@ -114,7 +114,7 @@ internal class Testable {
         completenessLock.unlock()
       }
     }
-    return this;
+    return this
   }
 
   fun waitCompletion(condition: Condition, lock: ReentrantLock, timout: Long = 0) {

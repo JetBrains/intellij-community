@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.cases
 
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandler
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandlerActions
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesModel
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinNestedClassesModel
@@ -34,14 +34,14 @@ internal class MoveKotlinDeclarationsHandlerTestActions(private val caseDataKeep
     private fun MoveKotlinNestedClassesModel.testDataString(): String {
         return "MoveKotlinNestedClassesModel:" +
                 "\nopenInEditorCheckBox = $openInEditorCheckBox\n" +
-                "selectedElementsToMove + ${selectedElementsToMove.joinToString { it.getKotlinFqName().toString() }}\n" +
-                "targetClass = ${targetClass?.getKotlinFqName() ?: "null"}"
+                "selectedElementsToMove + ${selectedElementsToMove.joinToString { it.kotlinFqName.toString() }}\n" +
+                "targetClass = ${targetClass?.kotlinFqName ?: "null"}"
     }
 
     private fun MoveKotlinNestedClassesToUpperLevelModel.testDataString(): String {
         return "MoveKotlinNestedClassesToUpperLevelModel:\n" +
                 "innerClass = ${innerClass.name}\n" +
-                "target = ${target.getKotlinFqName()}\n" +
+                "target = ${target.kotlinFqName}\n" +
                 "parameter = ${parameter ?: "null"}\n" +
                 "className = $className\n" +
                 "passOuterClass = $passOuterClass\n" +
@@ -52,7 +52,7 @@ internal class MoveKotlinDeclarationsHandlerTestActions(private val caseDataKeep
 
     private fun MoveKotlinTopLevelDeclarationsModel.testDataString(): String {
         return "MoveKotlinTopLevelDeclarationsModel:\n" +
-                "elementsToMove = ${elementsToMove.joinToString { it.getKotlinFqName().toString() }}\n" +
+                "elementsToMove = ${elementsToMove.joinToString { it.kotlinFqName.toString() }}\n" +
                 "targetPackage = $targetPackage\n" +
                 "selectedPsiDirectory = ${selectedPsiDirectory ?: "null"}\n" +
                 "fileNameInPackage = $fileNameInPackage\n" +

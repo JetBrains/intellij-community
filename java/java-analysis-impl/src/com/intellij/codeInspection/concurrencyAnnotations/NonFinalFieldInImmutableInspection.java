@@ -28,7 +28,7 @@ public class NonFinalFieldInImmutableInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         super.visitField(field);
         if (field.hasModifierProperty(PsiModifier.FINAL)) {
           return;

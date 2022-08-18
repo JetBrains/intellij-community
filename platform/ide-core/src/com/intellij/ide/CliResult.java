@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -26,7 +26,7 @@ public final class CliResult {
     return message != null ? exitCode + ": " + message : String.valueOf(exitCode);
   }
 
-  public static @NotNull Future<CliResult> error(int exitCode, @Nullable @NlsContexts.DialogMessage String message) {
+  public static @NotNull CompletableFuture<CliResult> error(int exitCode, @Nullable @NlsContexts.DialogMessage String message) {
     return CompletableFuture.completedFuture(new CliResult(exitCode, message));
   }
 

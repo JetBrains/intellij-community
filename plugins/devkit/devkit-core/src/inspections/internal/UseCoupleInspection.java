@@ -21,7 +21,7 @@ public class UseCoupleInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
 
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         final PsiType type = typeElement.getType();
         if (PsiTypesUtil.classNameEquals(type, PAIR_FQN)) {
@@ -35,7 +35,7 @@ public class UseCoupleInspection extends DevKitInspectionBase {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         if ("create".equals(methodExpression.getReferenceName())) {

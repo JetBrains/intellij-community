@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local;
 
 import com.intellij.openapi.components.Service;
@@ -21,21 +21,29 @@ public final class ActionsGlobalSummaryManager {
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
-  private final int myUpdatedStatisticsVersion;
+  private static final int DEFAULT_STATISTICS_VERSION = 1;
+  private static final int UPDATED_STATISTICS_VERSION = 2;
+
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
   private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
+
   private final ActionsGlobalTotalSummary mySummary;
   private final ActionsGlobalTotalSummary myUpdatedSummary;
 
+
   public ActionsGlobalSummaryManager() {
-    myUpdatedStatisticsVersion = 1;
-    myStatisticsMap = loadStatistics("/statistics/actionsUsages.csv");
-    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
+    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
+    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV2.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
     myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
 
-  public int getUpdatedStatisticsVersion() { return myUpdatedStatisticsVersion; }
+  public static int getDefaultStatisticsVersion() { return DEFAULT_STATISTICS_VERSION; }
+
+  /**
+   * @return Version of the global statistics used for an experimental ML model. Returns -1 if no experimental model is used.
+   */
+  public static int getUpdatedStatisticsVersion() { return UPDATED_STATISTICS_VERSION; }
 
   @Nullable
   public ActionGlobalUsageInfo getActionStatistics(String actionID) {

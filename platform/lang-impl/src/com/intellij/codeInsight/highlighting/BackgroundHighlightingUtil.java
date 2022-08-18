@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -78,6 +81,17 @@ public class BackgroundHighlightingUtil {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
            UIUtil.isShowing(editor.getContentComponent());
+  }
+
+  static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
+    if (!codeInsightSettings.HIGHLIGHT_BRACES) return false;
+
+    if (newEditor.getSelectionModel().hasSelection()) return false;
+
+    if (newEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(newEditor.getCaretModel().getVisualPosition())) return false;
+
+    TemplateState state = TemplateManagerImpl.getTemplateState(newEditor);
+    return state == null || state.isFinished();
   }
 
   @NotNull

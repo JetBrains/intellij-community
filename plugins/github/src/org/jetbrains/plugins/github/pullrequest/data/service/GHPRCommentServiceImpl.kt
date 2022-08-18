@@ -23,6 +23,7 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
                           body: String): CompletableFuture<GithubIssueCommentWithHtml> {
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
+        it,
         GithubApiRequests.Repos.Issues.Comments.create(repository, pullRequestId.number, body))
       comment
     }.logError(LOG, "Error occurred while adding PR comment")
@@ -30,12 +31,12 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
 
   override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String) =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
+      requestExecutor.execute(it, GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
     }.logError(LOG, "Error occurred while updating comment")
 
   override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
+      requestExecutor.execute(it, GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
     }.logError(LOG, "Error occurred while deleting comment")
 
   companion object {

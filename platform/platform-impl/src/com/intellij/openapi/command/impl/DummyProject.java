@@ -11,6 +11,8 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +26,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     private static final DummyProject ourInstance = new DummyProject();
   }
 
-  @NotNull
-  public static Project getInstance() {
+  public static @NotNull Project getInstance() {
     return DummyProjectHolder.ourInstance;
   }
 
@@ -37,21 +38,17 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getLocationHash() {
+  public @NotNull String getLocationHash() {
     return "dummy";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -61,15 +58,12 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return null;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -81,10 +75,14 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
-  @Nullable
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return null;
+  }
+
+  @Override
+  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return false;
   }
 
   @Override
@@ -93,8 +91,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public PicoContainer getPicoContainer() {
+  public @NotNull PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }
 
@@ -103,9 +100,8 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
-  @NotNull
   @Override
-  public ExtensionsArea getExtensionArea() {
+  public @NotNull ExtensionsArea getExtensionArea() {
     throw new UnsupportedOperationException("getExtensionArea is not implement in : " + getClass());
   }
 
@@ -122,8 +118,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return o -> isDisposed();
   }
 
@@ -137,9 +132,13 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
-  @NotNull
   @Override
-  public MessageBus getMessageBus() {
+  public CoroutineScope getCoroutineScope() {
+    return GlobalScope.INSTANCE;
+  }
+
+  @Override
+  public @NotNull MessageBus getMessageBus() {
     throw new UnsupportedOperationException();
   }
 

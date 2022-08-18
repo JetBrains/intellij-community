@@ -185,10 +185,10 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         else:
             return True
 
-    def getFrame(self):
+    def getFrame(self, group_type):
         try:
             hidden_ns = self.get_ipython_hidden_vars_dict()
-            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns, self.user_type_renderers)
+            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), group_type, hidden_ns, self.user_type_renderers)
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
@@ -375,7 +375,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
 
                 from _pydevd_bundle.pydevd_constants import set_thread_id
                 from _pydev_bundle import pydev_localhost
-                set_thread_id(threading.currentThread(), "console_main")
+                set_thread_id(threading.current_thread(), "console_main")
 
                 self.orig_find_frame = pydevd_vars.find_frame
                 pydevd_vars.find_frame = self._findFrame

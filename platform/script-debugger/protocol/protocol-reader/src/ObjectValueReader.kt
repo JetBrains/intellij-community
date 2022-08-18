@@ -1,7 +1,7 @@
 package org.jetbrains.protocolReader
 
 internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?, private val nullable: Boolean = false) : ValueReader() {
-  val primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
+  val primitiveValueName = if (primitiveValueName.isNullOrEmpty()) null else primitiveValueName
 
   override fun asJsonTypeParser() = this
 

@@ -1,0 +1,28 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.intentions.shared">
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveBracesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveBracesFromAllBranchesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+  </extensions>
+</idea-plugin>

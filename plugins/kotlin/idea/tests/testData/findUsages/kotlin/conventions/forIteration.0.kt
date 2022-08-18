@@ -19,3 +19,6 @@ fun test() {
     for (b in B<Int>()) {
     }
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

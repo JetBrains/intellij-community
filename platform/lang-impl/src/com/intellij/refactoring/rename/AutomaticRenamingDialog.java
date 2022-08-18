@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -114,7 +114,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(createRenameSelectedAction()).setAsSecondary(true);
-    panel.add(ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true).getComponent(), BorderLayout.EAST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
+    toolbar.setTargetComponent(myTable);
+    panel.add(toolbar.getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
@@ -227,6 +229,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       @Override
       protected boolean isValidName(String inputString, int selectedRow) {
         return RenameUtil.isValidName(myProject, myRenames[selectedRow], inputString);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
   }

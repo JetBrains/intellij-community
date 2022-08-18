@@ -51,7 +51,7 @@ class NewInlayProviderSettingsModel<T : Any>(
     try {
       cases.forEach { it.value = false }
       case?.let { it.value = true }
-      hintsBuffer = collectorWrapper.collectTraversing(editor, file, enabled)
+      hintsBuffer = collectorWrapper.collectTraversing(editor, file, true)
       if (!enabled) {
         val builder = strikeOutBuilder(editor)
         addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
@@ -83,7 +83,7 @@ class NewInlayProviderSettingsModel<T : Any>(
 
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     val key = "inlay." + providerWithSettings.provider.key.id + "." + case.id
-    return providerWithSettings.provider.getProperty(key)
+    return providerWithSettings.provider.getCaseDescription(case)
   }
 
   override fun apply() {
@@ -114,7 +114,14 @@ class NewInlayProviderSettingsModel<T : Any>(
 fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case?): String? {
   val key = (provider as? InlayHintsProvider<*>)?.key?.id ?: "Parameters"
   val fileType = language.associatedFileType ?: PlainTextFileType.INSTANCE
-  val path = "inlayProviders/" + key + "/" + (case?.id ?: "preview") + "." + fileType.defaultExtension
+  return getStream(key, case, provider, fileType.defaultExtension) ?: getStream(key, case, provider, "dockerfile")
+}
+
+private fun getStream(key: String,
+                      case: ImmediateConfigurable.Case?,
+                      provider: Any,
+                      extension: String): String? {
+  val path = "inlayProviders/" + key + "/" + (case?.id ?: "preview") + "." + extension
   val stream = provider.javaClass.classLoader.getResourceAsStream(path)
   return if (stream != null) ResourceUtil.loadText(stream) else null
 }

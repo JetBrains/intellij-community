@@ -262,6 +262,14 @@ public final class AddImportHelper {
     if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
       newImport.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
     }
+
+    if (feeler != null) {
+      var anchorComment = getTopmostBoundComment(feeler);
+      if (anchorComment != null) {
+        seeker = anchorComment;
+      }
+    }
+
     if (priorityBelow != null) {
       // actually not necessary because existing import with higher priority (i.e. lower import group)
       // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
@@ -273,6 +281,26 @@ public final class AddImportHelper {
       }
     }
     return seeker;
+  }
+
+  @Nullable
+  private static PsiComment getTopmostBoundComment(@NotNull PsiElement element) {
+    List<List<PsiComment>> commentBlocks = PyPsiUtils.getPrecedingCommentBlocks(element);
+    if (commentBlocks.isEmpty()) return null;
+
+    List<PsiComment> firstBlock = commentBlocks.get(0);
+    PsiComment firstComment = firstBlock.get(0);
+    if (firstComment.getPrevSibling() != null) {
+      return firstComment;
+    }
+
+    PsiComment lastCommentFirstBlock = firstBlock.get(firstBlock.size() - 1);
+    if (PyUtil.isNoinspectionComment(lastCommentFirstBlock)) {
+      return lastCommentFirstBlock;
+    }
+
+    if (commentBlocks.size() == 1) return null;
+    return ContainerUtil.getFirstItem(commentBlocks.get(1));
   }
 
   private static boolean shouldInsertBefore(@Nullable PyImportStatementBase newImport,
@@ -577,7 +605,7 @@ public final class AddImportHelper {
         final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
-          whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+          whitespace = PsiParserFacade.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
         }
         insertParent.addBefore(whitespace, element);
       }

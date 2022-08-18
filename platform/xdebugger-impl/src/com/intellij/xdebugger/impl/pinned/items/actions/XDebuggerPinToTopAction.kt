@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.pinned.items.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.pinned.items.*
@@ -10,6 +11,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
+import java.util.*
 
 class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
@@ -21,18 +23,11 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
                     event,
                     XDebuggerPinToTopAction::class.java.name,
                     Presentation(),
-                    object : DataContext {
-                        override fun getData(dataId: String): Any? {
-                            if (XDebuggerTree.XDEBUGGER_TREE_KEY.`is`(dataId)) {
-                                return node.tree
-                            }
-                            if (CommonDataKeys.PROJECT.`is`(dataId)) {
-                                return node.tree.project
-                            }
-                            return null
-                        }
-
-                    }
+                    SimpleDataContext.builder()
+                      .add(XDebuggerTree.XDEBUGGER_TREE_KEY, node.tree)
+                      .add(CommonDataKeys.PROJECT, node.tree.project)
+                      .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
+                      .build()
                 )
             )
         }
@@ -60,7 +55,11 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
     }
 
-    override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
         node ?: return
         val project = e.project ?: return
 

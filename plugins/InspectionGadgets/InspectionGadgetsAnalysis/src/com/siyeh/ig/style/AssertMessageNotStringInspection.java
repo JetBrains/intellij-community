@@ -55,7 +55,7 @@ public class AssertMessageNotStringInspection extends BaseInspection {
   private class AssertMessageNotStringVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       super.visitAssertStatement(statement);
       final PsiExpression assertDescription = statement.getAssertDescription();
       if (assertDescription == null) {

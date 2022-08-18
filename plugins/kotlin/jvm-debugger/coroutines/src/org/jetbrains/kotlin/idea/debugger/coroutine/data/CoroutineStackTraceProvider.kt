@@ -1,18 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.JavaValue
 import com.sun.jdi.ObjectReference
+import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.LocationCache
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.toJavaValue
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isCreationSeparatorFrame
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineStackTraceProvider(private val executionContext: DefaultExecutionContext) {
+    companion object {
+        val METHOD_PREFIXES_TO_SKIP = arrayOf("getStackTrace", "enhanceStackTraceWithThreadDump")
+    }
+
     private val locationCache = LocationCache(executionContext)
     private val debugMetadata: DebugMetadata? = DebugMetadata.instance(executionContext)
 
@@ -25,6 +29,9 @@ class CoroutineStackTraceProvider(private val executionContext: DefaultExecution
         return executionContext.debugProcess.invokeInManagerThread {
             val frames = mirror.enhancedStackTraceProvider
                 .getStackTrace()
+                ?.dropWhile { frame ->
+                    METHOD_PREFIXES_TO_SKIP.any { frame.methodName.contains(it) }
+                }
                 ?.map { it.stackTraceElement() }
                 ?: return@invokeInManagerThread null
 

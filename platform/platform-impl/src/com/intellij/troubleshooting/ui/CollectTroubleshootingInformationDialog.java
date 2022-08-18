@@ -44,6 +44,7 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     });
     summary.setText(generalInfoCollector.collectInfo(project));
     summary.setLineWrap(true);
+    summary.setEditable(false);
 
     init();
     pack();

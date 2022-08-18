@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
@@ -25,7 +25,6 @@ import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
@@ -58,8 +57,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
       if (InheritanceUtil.isInheritorOrSelf(psi, aClass, true)) {
         continue;
       }
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(aClass,
-                                                             psi,
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(psi,
                                                              superClass,
                                                              searchResult.number,
                                                              searchResult.psi.isInterface() && !aClass.isInterface());
@@ -177,16 +175,16 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
         return null;
       })
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
 
-    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+    PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
     return directInheritorStats
       .stream()
       .filter(c -> resolveHelper.isAccessible(c.psi, place, null))
       .flatMap(c -> StreamEx.of(getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService)).prepend(c))
       .sorted()
       .limit(MAX_RESULT)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private static List<ClassAndInheritorCount> getClassesIfInterface(@NotNull ClassAndInheritorCount classAndInheritorCount,

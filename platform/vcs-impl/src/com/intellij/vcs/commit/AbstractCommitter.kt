@@ -16,10 +16,8 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
+import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.Nls
-
-private val LOG = logger<AbstractCommitter>()
 
 abstract class AbstractCommitter(
   val project: Project,
@@ -27,7 +25,7 @@ abstract class AbstractCommitter(
   val commitMessage: @NlsSafe String,
   val commitContext: CommitContext
 ) {
-  private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
+  private val resultHandlers = mutableListOf<CommitResultHandler>()
 
   private val _feedback = mutableSetOf<String>()
   private val _failedToCommitChanges = mutableListOf<Change>()
@@ -148,26 +146,23 @@ abstract class AbstractCommitter(
   private fun finishCommit(canceled: Boolean) {
     val errors = collectErrors(_exceptions)
     val noErrors = errors.isEmpty()
-    val noWarnings = _exceptions.isEmpty()
 
     if (canceled) {
-      resultHandlers.forEach { it.onCancel() }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onCancel() }
     }
     else if (noErrors) {
-      resultHandlers.forEach { it.onSuccess(commitMessage) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
       onSuccess()
-
-      if (noWarnings) {
-        progress(message("commit.dialog.completed.successfully"))
-      }
     }
     else {
-      resultHandlers.forEach { it.onFailure(errors) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
       onFailure()
     }
   }
 
   companion object {
+    private val LOG = logger<AbstractCommitter>()
+
     @JvmStatic
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 

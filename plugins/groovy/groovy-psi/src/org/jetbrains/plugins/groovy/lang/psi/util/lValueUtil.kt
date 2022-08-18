@@ -22,8 +22,7 @@ fun GrExpression.isRValue(): Boolean {
  * The expression is a lValue when it's on the left of whatever assignment.
  */
 fun GrExpression.isLValue(): Boolean {
-  val parent = parent
-  return when (parent) {
+  return when (val parent = parent) {
     is GrTuple -> true
     is GrAssignmentExpression -> this == parent.lValue
     is GrUnaryExpression -> parent.operationTokenType in POSTFIX_UNARY_OP_SET

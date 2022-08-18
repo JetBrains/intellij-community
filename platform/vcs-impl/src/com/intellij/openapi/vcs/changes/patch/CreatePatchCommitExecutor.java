@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -12,9 +13,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -293,11 +292,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   }
 
   private static Boolean showDialog(@NotNull Project project, @NotNull Path file) {
-    String message = VcsBundle.message("create.patch.success.confirmation", file.toString());
-    String title = VcsBundle.message("create.patch.commit.action.title");
-
     Boolean[] ref = new Boolean[1];
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+    DoNotAskOption option = new DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
         return true;
@@ -327,7 +323,18 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       }
     };
 
-    RevealFileAction.showDialog(project, message, title, file.toFile(), option);
+    boolean confirmed = MessageDialogBuilder.okCancel(
+        VcsBundle.message("create.patch.commit.action.title"),
+        VcsBundle.message("create.patch.success.confirmation", file.toString())
+      )
+      .yesText(RevealFileAction.getActionName(null))
+      .noText(IdeBundle.message("action.close"))
+      .icon(Messages.getInformationIcon())
+      .doNotAsk(option)
+      .ask(project);
+    if (confirmed) {
+      RevealFileAction.openFile(file.toFile());
+    }
     return ref[0];
   }
 

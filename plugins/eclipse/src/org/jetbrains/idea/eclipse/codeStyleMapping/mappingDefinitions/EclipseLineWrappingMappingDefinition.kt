@@ -16,28 +16,24 @@ internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addLineWrappingMapping
   "lineSplit" mapTo
     field(this::safeRightMargin)
       .convertInt()
-  // Note: TAB_SIZE must be imported first
+  fun exportContinuationIndentation(): Int {
+    return if (indent.INDENT_SIZE == 0)
+      0
+    else
+      indent.CONTINUATION_INDENT_SIZE / indent.INDENT_SIZE
+  }
+  // Note: Indentation mappings must be imported first
   "continuation_indentation" mapTo
     compute(
       import = { value ->
         indent.CONTINUATION_INDENT_SIZE = indent.INDENT_SIZE * value
       },
-      export = {
-        if (indent.INDENT_SIZE == 0)
-          0
-        else
-          indent.CONTINUATION_INDENT_SIZE / indent.INDENT_SIZE
-      }
+      export = ::exportContinuationIndentation
     ).convertInt()
   "continuation_indentation_for_array_initializer" mapTo
     compute(
       import = { /* do not import */ },
-      export = {
-        if (indent.INDENT_SIZE == 0)
-          0
-        else
-          indent.CONTINUATION_INDENT_SIZE / indent.INDENT_SIZE
-      }
+      export = ::exportContinuationIndentation
     ).convertInt()
   "join_wrapped_lines" mapTo
     field(common::KEEP_LINE_BREAKS)

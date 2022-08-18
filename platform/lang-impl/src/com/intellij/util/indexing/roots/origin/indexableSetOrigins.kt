@@ -15,10 +15,13 @@ internal data class ModuleRootOriginImpl(override val module: Module,
 internal data class LibraryOriginImpl(override val classRootUrls: List<VirtualFilePointer>,
                                       override val sourceRootUrls: List<VirtualFilePointer>) : LibraryOrigin
 
-internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryOrigin
+internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary,
+                                               override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
 
-internal data class SdkOriginImpl(override val sdk: Sdk) : SdkOrigin
+internal data class SdkOriginImpl(override val sdk: Sdk,
+                                  override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin
 
-internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor) : IndexableSetContributorOrigin
+internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor,
+                                                      override val rootsToIndex: Set<VirtualFile>) : IndexableSetContributorOrigin
 
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin

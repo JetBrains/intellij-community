@@ -85,6 +85,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     background = UIUtil.TRANSPARENT_COLOR
     isOpaque = false
     patchFont()
+    updateEditorPaneText()
   }
 
   override fun getBaseline(width: Int, height: Int): Int {

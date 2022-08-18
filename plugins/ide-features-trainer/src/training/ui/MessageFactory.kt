@@ -1,129 +1,124 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
+import com.intellij.ide.ui.text.paragraph.TextParagraph
+import com.intellij.ide.ui.text.parts.*
+import com.intellij.ide.ui.text.showActionKeyPopup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.ui.components.ActionLink
 import org.intellij.lang.annotations.Language
-import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Text
-import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
 import training.dsl.LessonUtil
-import training.util.KeymapUtil
+import training.learn.LearnBundle
+import training.statistic.StatisticBase
+import training.util.invokeActionForFocusContext
 import training.util.openLinkInBrowser
+import java.awt.Point
 import java.util.regex.Pattern
-import javax.swing.KeyStroke
+import javax.swing.JTextPane
 
 internal object MessageFactory {
   private val LOG = Logger.getInstance(MessageFactory::class.java)
 
-  fun setLinksHandlers(messageParts: List<MessagePart>) {
-    for (message in messageParts) {
-      if (message.type == MessagePart.MessageType.LINK && message.runnable == null) {
-        val link = message.link
-        if (link == null || link.isEmpty()) {
-          LOG.error("No link specified for ${message.text}")
-        }
-        else {
-          message.runnable = Runnable {
-            try {
-              openLinkInBrowser(link)
-            }
-            catch (e: Exception) {
-              LOG.warn(e)
-            }
-          }
-        }
+  fun convert(@Language("HTML") text: String): List<TextParagraph> {
+    return text.splitToSequence("\n")
+      .map { paragraph ->
+        val wrappedText = "<root><text>$paragraph</text></root>"
+        val textAsElement = JDOMUtil.load(wrappedText.byteInputStream()).getChild("text")
+                            ?: throw IllegalStateException("Can't parse as XML:\n$paragraph")
+        val parts = convert(textAsElement)
+        TextParagraph(parts)
       }
-    }
+      .toList()
   }
 
-
-  fun convert(@Language("HTML") text: String): List<MessagePart> {
-    return text.split("\n").map { paragraph ->
-      val wrappedText = "<root><text>$paragraph</text></root>"
-      val textAsElement = SAXBuilder().build(wrappedText.byteInputStream()).rootElement.getChild("text")
-                          ?: throw IllegalStateException("Can't parse as XML:\n$paragraph")
-      convert(textAsElement)
-    }.reduce { acc, item -> acc + MessagePart("\n", MessagePart.MessageType.LINE_BREAK) + item }
-  }
-
-  private fun convert(element: Element?): List<MessagePart> {
-    if (element == null) {
-      return emptyList()
-    }
-    val list: MutableList<MessagePart> = mutableListOf()
-    for (content: Content in element.content) {
+  private fun convert(element: Element): List<TextPart> {
+    val list = mutableListOf<TextPart>()
+    for (content in element.content) {
       if (content is Text) {
         var text = content.getValue()
         if (Pattern.matches(" *\\p{IsPunctuation}.*", text)) {
           val indexOfFirst = text.indexOfFirst { it != ' ' }
           text = "\u00A0".repeat(indexOfFirst) + text.substring(indexOfFirst)
         }
-        list.add(MessagePart(text, MessagePart.MessageType.TEXT_REGULAR))
+        list.add(RegularTextPart(text))
       }
       else if (content is Element) {
         val outputter = XMLOutputter()
-        var type = MessagePart.MessageType.TEXT_REGULAR
-        val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
-        var textAndSplitFn: (() -> Pair<String, List<IntRange>?>)? = null
-        var link: String? = null
-        var runnable: Runnable? = null
-        when (content.name) {
+        val text: String = Strings.unescapeXmlEntities(outputter.outputString(content.content))
+
+        val newPart: TextPart = when (content.name) {
           "icon" -> error("Need to return reflection-based icon processing")
-          "illustration" -> type = MessagePart.MessageType.ILLUSTRATION
-          "icon_idx" -> type = MessagePart.MessageType.ICON_IDX
-          "code" -> type = MessagePart.MessageType.CODE
-          "shortcut" -> type = MessagePart.MessageType.SHORTCUT
-          "strong" -> type = MessagePart.MessageType.TEXT_BOLD
+          "icon_idx" -> {
+            val icon = LearningUiManager.iconMap[text] ?: error("Not found icon with id: $text")
+            IconTextPart(icon)
+          }
+          "illustration" -> {
+            val icon = LearningUiManager.iconMap[text] ?: error("Not found icon with id: $text")
+            IllustrationTextPart(icon)
+          }
+          "strong" -> RegularTextPart(text, isBold = true)
+          "code" -> CodeTextPart(text)
           "callback" -> {
-            type = MessagePart.MessageType.LINK
             val id = content.getAttributeValue("id")
             if (id != null) {
               val callback = LearningUiManager.getAndClearCallback(id.toInt())
               if (callback != null) {
-                runnable = Runnable { callback() }
+                LinkTextPart(text, callback)
               }
-              else {
-                LOG.error("Unknown callback with id $id and text $text")
-              }
+              else error("Unknown callback with id '$id' and text '$text'")
             }
+            else error("'callback' tag with text '$text' should contain 'id' attribute")
           }
           "a" -> {
-            type = MessagePart.MessageType.LINK
-            link = content.getAttributeValue("href")
-          }
-          "action" -> {
-            type = MessagePart.MessageType.SHORTCUT
-            link = text
-            textAndSplitFn = {
-              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
-              if (shortcutByActionId != null) {
-                KeymapUtil.getKeyStrokeData(shortcutByActionId)
+            val link = content.getAttributeValue("href")
+                       ?: error("'a' tag with text '$text' should contain 'href' attribute")
+            LinkTextPart(text) {
+              try {
+                openLinkInBrowser(link)
               }
-              else {
-                KeymapUtil.getGotoActionData(text)
+              catch (ex: Exception) {
+                LOG.warn(ex)
               }
             }
           }
-          "raw_shortcut" -> {
-            type = MessagePart.MessageType.SHORTCUT
-            textAndSplitFn = {
-              KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
-            }
-          }
-          "ide" -> {
-            type = MessagePart.MessageType.TEXT_REGULAR
-            textAndSplitFn = { LessonUtil.productName to null }
-          }
+          "action" -> IftShortcutTextPart(text, isRaw = false)
+          "shortcut" -> IftShortcutTextPart(text, isRaw = true)
+          "raw_shortcut" -> IftShortcutTextPart(text, isRaw = true)
+          "ide" -> RegularTextPart(LessonUtil.productName)
+          else -> error("Unknown tag: ${content.name}")
         }
-        val message = MessagePart(type, textAndSplitFn ?: { text to null })
-        message.link = link
-        message.runnable = runnable
-        list.add(message)
+        list.add(newPart)
       }
     }
     return list
+  }
+
+  private class IftShortcutTextPart(text: String, isRaw: Boolean) : ShortcutTextPart(text, isRaw) {
+    override val onClickAction: ((JTextPane, Point, height: Int) -> Unit)?
+      get() {
+        return if (!isRaw) {
+          { textPane: JTextPane, point: Point, height: Int ->
+            val actionId = text
+            showActionKeyPopupExtended(textPane, point, height, actionId)
+            StatisticBase.logShortcutClicked(actionId)
+          }
+        }
+        else null
+      }
+
+    private fun showActionKeyPopupExtended(textPane: JTextPane, point: Point, height: Int, actionId: String) {
+      showActionKeyPopup(textPane, point, height, actionId) { panel ->
+        panel.add(ActionLink(LearnBundle.message("shortcut.balloon.apply.this.action")) {
+          val action = ActionManager.getInstance().getAction(actionId)
+          invokeActionForFocusContext(action)
+        })
+      }
+    }
   }
 }

@@ -25,7 +25,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
-import git4idea.GitStatisticsCollector;
+import git4idea.GitRefreshUsageCollector;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
 import git4idea.status.GitRefreshListener;
@@ -243,7 +243,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
     try {
       boolean everythingDirty = dirtyFiles == null || dirtyFiles.contains(VcsUtil.getFilePath(myRoot));
-      StructuredIdeActivity activity = GitStatisticsCollector.logUntrackedRefresh(myProject, everythingDirty);
+      StructuredIdeActivity activity = GitRefreshUsageCollector.logUntrackedRefresh(myProject, everythingDirty);
       RefreshResult result = refreshFiles(dirtyFiles);
       activity.finished();
 
@@ -331,13 +331,13 @@ public class GitUntrackedFilesHolder implements Disposable {
       it.remove();
       removedFiles++;
       if (removedFiles < maxFilesToReport) {
-        LOG.warn(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
-                               type, filePath.getPresentableUrl(), myRoot.getPresentableUrl(),
-                               root != null ? root.getPresentableUrl() : "null"));
+        LOG.debug(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
+                                type, filePath.getPresentableUrl(), myRoot.getPresentableUrl(),
+                                root != null ? root.getPresentableUrl() : "null"));
       }
     }
     if (removedFiles >= maxFilesToReport) {
-      LOG.warn(String.format("Ignoring %s files under another root: %s files total", type, removedFiles));
+      LOG.debug(String.format("Ignoring %s files under another root: %s files total", type, removedFiles));
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -20,9 +20,7 @@ import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionPro
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.GridBagConstraintHolder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,11 +46,11 @@ public final class ExistingTemplatesComponent {
   private Supplier<? extends EditorTextField> mySearchEditorProducer;
   private Runnable myExportRunnable;
   private Runnable myImportRunnable;
-  private final DefaultMutableTreeNode myNewTemplateNode;
+  private final DefaultMutableTreeNode myDraftTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
   private boolean myTemplateChanged = false;
-  private boolean myNewTemplateAutoselect = false;
+  private boolean myDraftTemplateAutoselect = false;
 
   ExistingTemplatesComponent(Project project) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
@@ -62,7 +60,7 @@ public final class ExistingTemplatesComponent {
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
 
     // 'New Template' node
-    root.add(myNewTemplateNode = new NewTemplateNode());
+    root.add(myDraftTemplateNode = new DraftTemplateNode());
 
     // 'Recent' node
     root.add(myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
@@ -162,11 +160,12 @@ public final class ExistingTemplatesComponent {
     myToolbar = optionsToolbar.getComponent();
 
     panel = new JPanel(new GridBagLayout());
-    final var constraints = new GridBagConstraintHolder();
-    panel.add(myToolbar, constraints.growX().fillX().get());
+    final var constraints = new GridBag()
+      .setDefaultWeightX(1.0);
+    panel.add(myToolbar, constraints.nextLine().fillCellHorizontally());
     final var scrollPane = new JBScrollPane(patternTree);
     scrollPane.setBorder(JBUI.Borders.empty());
-    panel.add(scrollPane, constraints.newLine().growXY().fillXY().get());
+    panel.add(scrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
   }
 
@@ -242,10 +241,10 @@ public final class ExistingTemplatesComponent {
   public void templateChanged() {
     if (!myTemplateChanged) {
       myTemplateChanged = true;
-      if (!myNewTemplateNode.equals(getSelectedNode())) {
-        myNewTemplateAutoselect = true;
-        TreeUtil.selectInTree(myNewTemplateNode, false, patternTree, true);
-        myNewTemplateAutoselect = false;
+      if (!myDraftTemplateNode.equals(getSelectedNode())) {
+        myDraftTemplateAutoselect = true;
+        TreeUtil.selectInTree(myDraftTemplateNode, false, patternTree, true);
+        myDraftTemplateAutoselect = false;
       }
     }
   }
@@ -318,8 +317,10 @@ public final class ExistingTemplatesComponent {
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
-      object -> {
-        final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
+      treePath -> {
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        if (treeNode instanceof DraftTemplateNode) return SSRBundle.message("draft.template.node");
+        final Object userObject = treeNode.getUserObject();
         return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
       }
     );
@@ -332,7 +333,7 @@ public final class ExistingTemplatesComponent {
     return panel;
   }
 
-  private static class NewTemplateNode extends DefaultMutableTreeNode {}
+  private static class DraftTemplateNode extends DefaultMutableTreeNode {}
 
   private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
 
@@ -352,15 +353,15 @@ public final class ExistingTemplatesComponent {
                                       boolean hasFocus) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       final Object userObject = treeNode.getUserObject();
-      if (userObject == null && !(treeNode instanceof NewTemplateNode)) return;
+      if (userObject == null && !(treeNode instanceof DraftTemplateNode)) return;
 
       final Color background = UIUtil.getTreeBackground(selected, hasFocus);
       final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
-      if (treeNode instanceof NewTemplateNode) {
-        text = SSRBundle.message("new.template.node");
+      if (treeNode instanceof DraftTemplateNode) {
+        text = SSRBundle.message("draft.template.node");
         style = SimpleTextAttributes.STYLE_BOLD;
       }
       else if (userObject instanceof Configuration) {
@@ -375,15 +376,15 @@ public final class ExistingTemplatesComponent {
     }
   }
 
-  public void onConfigurationSelected(Consumer<Configuration> consumer) {
+  public void onConfigurationSelected(Consumer<? super Configuration> consumer) {
     patternTree.addTreeSelectionListener(event -> {
       final var selection = patternTree.getLastSelectedPathComponent();
-      if (!(selection instanceof DefaultMutableTreeNode) || myNewTemplateAutoselect) {
+      if (!(selection instanceof DefaultMutableTreeNode) || myDraftTemplateAutoselect) {
         return;
       }
 
       if (myTemplateChanged) {
-        myNewTemplateNode.setUserObject(myConfigurationProducer.get());
+        myDraftTemplateNode.setUserObject(myConfigurationProducer.get());
         myTemplateChanged = false;
       }
 

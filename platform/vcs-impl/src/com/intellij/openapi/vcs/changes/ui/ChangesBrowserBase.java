@@ -304,7 +304,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
     DiffPreview diffPreview = getShowDiffActionPreview();
     if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
-      previewManager.showDiffPreview(diffPreview);
+      diffPreview.performDiffAction();
     }
     else {
       showStandaloneDiff(myProject, this);
@@ -321,7 +321,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
                                             @NotNull ListSelection<T> selection,
                                             @NotNull NullableFunction<? super T, ? extends ChangeDiffRequestChain.Producer> getDiffRequestProducer) {
     ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(getDiffRequestProducer);
-    DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(producers);
     changesBrowser.updateDiffContext(chain);
     DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
   }
@@ -342,6 +342,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
 
     @Override
     public boolean isActive(@NotNull AnActionEvent e) {
@@ -367,9 +372,14 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, createDiffActions());
   }
 
-  private class MyShowDiffAction extends DumbAwareAction implements UpdateInBackground {
+  private class MyShowDiffAction extends DumbAwareAction {
     MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -400,6 +410,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     public final void rebuildTree() {
       DefaultTreeModel newModel = myViewer.buildTreeModel();
       updateTreeModel(newModel);
+    }
+
+    @Override
+    public void updateTreeModel(@NotNull DefaultTreeModel model) {
+      super.updateTreeModel(model);
     }
   }
 }

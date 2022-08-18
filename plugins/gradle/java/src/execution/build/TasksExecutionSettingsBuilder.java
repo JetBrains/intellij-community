@@ -167,6 +167,11 @@ public class TasksExecutionSettingsBuilder {
       if (!moduleBuildTask.isIncrementalBuild() && !(moduleBuildTask instanceof ModuleFilesBuildTask)) {
         projectInitScripts.add(String.format(FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE, gradlePath));
       }
+      if (moduleBuildTask.isIncludeRuntimeDependencies()) {
+         // if runtime deps are required, force Gradle to process all resources
+        projectInitScripts.add("System.setProperty('org.gradle.java.compile-classpath-packaging', 'true')\n");
+      }
+
       String assembleTask = "assemble";
       boolean buildOnlyResources = projectTask instanceof ModuleResourcesBuildTask;
       String buildTaskPrefix = buildOnlyResources ? "process" : "";

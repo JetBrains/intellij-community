@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -11,13 +11,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.ArrayUtil;
 
 public class ExternalAnnotationsTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
@@ -115,5 +119,19 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
                                 "content/anno/fromSrc/annotations_after.xml",
                                 true);
 
+  }
+
+  public void testExternalAnnotationsRootRemoved() {
+    myFixture.configureByFiles("src/rootRemoved/Foo.java", "content/anno/rootRemoved/annotations.xml");
+    Project project = myFixture.getProject();
+    PsiClass aClass = JavaPsiFacade.getInstance(project)
+      .findClass("rootRemoved.Foo", GlobalSearchScope.projectScope(project));
+    assertNotNull(aClass);
+    assertTrue(aClass.isDeprecated());
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
+      final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
+      extension.setExternalAnnotationUrls(ArrayUtil.EMPTY_STRING_ARRAY);
+    });
+    assertFalse(aClass.isDeprecated());
   }
 }

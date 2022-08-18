@@ -134,7 +134,6 @@ public final class ElementFactory {
    * Sets the basic element information from the given type.
    *
    * @param element   the element to set information from the type
-   * @param factory
    * @param type      the type
    * @param modifiers modifier list
    * @since 2.15

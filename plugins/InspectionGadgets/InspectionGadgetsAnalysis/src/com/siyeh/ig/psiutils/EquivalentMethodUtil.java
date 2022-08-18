@@ -7,7 +7,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Nullable;
 
-public class EquivalentMethodUtil {
+class EquivalentMethodUtil {
 
   private static final CallMatcher PATH_CONSTRUCTOR = CallMatcher.anyOf(
     CallMatcher.staticCall("java.nio.file.Path", "of"),

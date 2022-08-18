@@ -1,9 +1,11 @@
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from ..orm.query import Query
 from ..orm.session import Session
 
-class ShardedQuery(Query):
+_T = TypeVar("_T")
+
+class ShardedQuery(Query[_T], Generic[_T]):
     id_chooser: Any
     query_chooser: Any
     execute_chooser: Any

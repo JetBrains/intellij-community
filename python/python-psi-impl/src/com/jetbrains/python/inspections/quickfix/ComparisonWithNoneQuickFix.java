@@ -14,7 +14,6 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class ComparisonWithNoneQuickFix implements LocalQuickFix {

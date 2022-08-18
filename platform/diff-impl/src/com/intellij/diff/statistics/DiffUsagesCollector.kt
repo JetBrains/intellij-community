@@ -63,7 +63,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     val set = HashSet<MetricEvent>()
 
     for (place in places) {
-      val data: MutableList<EventPair<*>> = mutableListOf(DIFF_PLACE.with(place))
+      val data: List<EventPair<*>> = mutableListOf(DIFF_PLACE.with(place))
 
       val diffSettings = DiffSettings.getSettings(place)
       val defaultDiffSettings = DiffSettings.getDefaultSettings(place)

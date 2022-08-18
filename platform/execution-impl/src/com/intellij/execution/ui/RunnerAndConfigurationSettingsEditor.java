@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -53,6 +53,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     myConfigurationEditor.targetChanged(targetName);
   }
 
+  public boolean isSpecificallyModified() {
+    if (myRCStorageUi != null) {
+      return myRCStorageUi.isModified();
+    }
+
+    return false;
+  }
+
   @Override
   protected void resetEditorFrom(@NotNull RunnerAndConfigurationSettings s) {
     myConfigurationEditor.resetEditorFrom((RunnerAndConfigurationSettingsImpl)s);
@@ -95,9 +103,9 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     c.gridy = 1;
     c.anchor = GridBagConstraints.NORTH;
     c.insets = JBInsets.emptyInsets();
-    c.fill = GridBagConstraints.BOTH;
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.weightx = 1;
-    c.weighty = 1;
+    c.weighty = 0;
     JPanel comp = new JPanel(new GridBagLayout());
     myRunOnTargetPanel.buildUi(comp, null);
     panel.add(comp, c);

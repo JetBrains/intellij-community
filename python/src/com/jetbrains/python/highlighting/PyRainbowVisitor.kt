@@ -62,8 +62,7 @@ class PyRainbowVisitor : RainbowVisitor() {
                                   visitedReferenceExpressions: MutableSet<PyReferenceExpression>): PsiElement? {
     if (referenceExpression.isQualified || referenceExpression.name in Holder.IGNORED_NAMES) return null
 
-    val resolved = referenceExpression.reference.resolve()
-    return when (resolved) {
+    return when (val resolved = referenceExpression.reference.resolve()) {
       is PyTargetExpression -> getTargetContext(resolved)
       is PyNamedParameter -> getNamedParameterContext(resolved)
       is PyReferenceExpression -> {

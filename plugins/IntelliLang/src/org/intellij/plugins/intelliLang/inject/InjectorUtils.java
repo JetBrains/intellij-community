@@ -263,17 +263,25 @@ public final class InjectorUtils {
   }
 
   @Nullable
-  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
-    PsiElement target = CompletionUtil.getOriginalOrSelf(context);
-    PsiFile file = target.getContainingFile();
+  public static Pair.NonNull<PsiComment, CommentInjectionData> findClosestCommentInjectionData(@NotNull PsiElement context) {
+    PsiFile file = context.getContainingFile();
     if (file == null) return null;
     TreeMap<TextRange, CommentInjectionData> map = getInjectionMap(file);
     if (map == null) return null;
-    Map.Entry<TextRange, CommentInjectionData> entry = map.lowerEntry(target.getTextRange());
+    Map.Entry<TextRange, CommentInjectionData> entry = map.lowerEntry(context.getTextRange());
     if (entry == null) return null;
-
     PsiComment psiComment = PsiTreeUtil.findElementOfClassAtOffset(file, entry.getKey().getStartOffset(), PsiComment.class, false);
     if (psiComment == null) return null;
+    return Pair.createNonNull(psiComment, entry.getValue());
+  }
+
+  @Nullable
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
+    PsiElement target = CompletionUtil.getOriginalOrSelf(context);
+    Pair.NonNull<PsiComment, CommentInjectionData> pair = findClosestCommentInjectionData(target);
+    if (pair == null) return null;
+    PsiComment psiComment = pair.first;
+    CommentInjectionData injectionData = pair.second;
     TextRange r0 = psiComment.getTextRange();
 
     // calculate topmost siblings & heights
@@ -307,7 +315,7 @@ public final class InjectorUtils {
     if (causeRef != null) {
       causeRef.set(psiComment);
     }
-    return entry.getValue();
+    return injectionData;
   }
 
   @Nullable

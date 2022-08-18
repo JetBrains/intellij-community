@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -14,12 +13,17 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override
@@ -53,7 +57,7 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     execute(state, () -> {
       try {
-        boolean useTargetsAPI = Registry.get("python.use.targets.api").asBoolean();
+        boolean useTargetsAPI = Registry.is("python.use.targets.api");
 
         ExecutionResult executionResult;
         RunProfile profile = env.getRunProfile();
@@ -61,6 +65,12 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           // TODO [cloud-api.python] profile functionality must be applied here:
           //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
+        }
+        else if (!useTargetsAPI && PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
+          Project project = env.getProject();
+          Module module = PyRunnerUtil.getModule(state);
+          throw new ExecutionExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
+                                                    () -> showPythonInterpreterSettings(project, module));
         }
         else if (!useTargetsAPI && state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor(), (CommandLinePatcher)profile);
@@ -72,8 +82,8 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
           ModalityState.any());
       }
-      catch (ExecutionException | RuntimeException err) {
-        promise.setError(err);
+      catch (Exception e) {
+        promise.setError(e);
       }
     });
     return promise;

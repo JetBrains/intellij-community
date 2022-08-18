@@ -1,4 +1,4 @@
-// "Merge 'asLongStream()' call and 'map()' call" "true"
+// "Merge 'asLongStream()' call and 'map()' call" "true-preview"
 import java.util.List;
 import java.util.stream.IntStream;
 

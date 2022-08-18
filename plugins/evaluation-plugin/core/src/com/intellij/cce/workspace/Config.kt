@@ -41,7 +41,7 @@ data class Config internal constructor(
     val completeTokenProbability: Double,
     val completeTokenSeed: Long?,
     val emulationSettings: UserEmulator.Settings?,
-    val codeGolfSettings: CodeGolfEmulation.Settings?,
+    val completionGolfSettings: CompletionGolfEmulation.Settings?,
     val saveLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
@@ -74,9 +74,9 @@ data class Config internal constructor(
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
     var emulateUser: Boolean = false
-    var codeGolf: Boolean = false
+    var completionGolf: Boolean = false
     var emulationSettings: UserEmulator.Settings? = null
-    var codeGolfSettings: CodeGolfEmulation.Settings? = null
+    var completionGolfSettings: CompletionGolfEmulation.Settings? = null
     var completeTokenProbability: Double = 1.0
     var completeTokenSeed: Long? = null
     var useReordering: Boolean = false
@@ -130,7 +130,7 @@ data class Config internal constructor(
       outputDir,
       ActionsGeneration(
         evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, codeGolf, filters)
+        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, completionGolf, filters)
       ),
       ActionsInterpretation(
         completionType,
@@ -139,7 +139,7 @@ data class Config internal constructor(
         completeTokenProbability,
         completeTokenSeed,
         emulationSettings,
-        codeGolfSettings,
+        completionGolfSettings,
         saveLogs,
         saveFeatures,
         saveContent,

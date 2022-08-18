@@ -109,7 +109,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @JvmStatic
-    internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
+    fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
       val contentRoot = module.rootManager.contentRoots.firstOrNull()
       if (contentRoot != null) {
         val fileEditorManager = FileEditorManager.getInstance(module.project)
@@ -173,7 +173,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected abstract fun getProjectTypes(): List<StarterProjectType>
   protected abstract fun getLanguages(): List<StarterLanguage>
   protected abstract fun getStarterPack(): StarterPack
-  protected abstract fun getTestFrameworks(): List<StarterTestRunner>
+  protected open fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
   protected abstract fun getAssets(starter: Starter): List<GeneratorAsset>
   protected open fun isExampleCodeProvided(): Boolean = false
   protected open fun getMinJavaVersion(): JavaVersion? = LanguageLevel.JDK_1_8.toJavaVersion()
@@ -360,7 +360,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
           if (starterContext.gitIntegration) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }
           }
 

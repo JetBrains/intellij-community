@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.keymap.KeymapUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
-import javax.swing.*;
 import javax.swing.FocusManager;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 /**
  * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
@@ -31,7 +21,7 @@ import java.beans.PropertyChangeListener;
  * {@link FocusManager} for the reasons described in {@link DelegatingDefaultFocusManager}'s javadoc - just in case some legacy code expects
  * it.
  */
-class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above */ {
+final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above */ {
   private static final Logger LOG = Logger.getInstance(IdeKeyboardFocusManager.class);
 
   // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.
@@ -57,6 +47,23 @@ class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above *
       }
       super.setDefaultFocusTraversalPolicy(defaultPolicy);
     }
+  }
+
+  @Override
+  public boolean postProcessKeyEvent(KeyEvent e) {
+    if (!e.isConsumed() &&
+        KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR) &&
+        EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
+      e.consume();
+    }
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner == null || focusOwner instanceof Window) {
+      // Swing doesn't process key bindings when there's no focus component,
+      // or when focus component is a window (as window classes don't inherit from JComponent),
+      // but WHEN_IN_FOCUSED_WINDOW bindings (e.g. main menu accelerators) make sense even in this case.
+      SwingUtilities.processKeyBindings(e);
+    }
+    return super.postProcessKeyEvent(e);
   }
 
   @NotNull

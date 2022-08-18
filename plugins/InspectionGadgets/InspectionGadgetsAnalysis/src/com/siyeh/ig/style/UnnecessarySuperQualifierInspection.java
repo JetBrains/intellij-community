@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -85,7 +84,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null) {
@@ -129,7 +128,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
             final PsiElement classParent = containingClass.getParent();
             final String referenceText = referenceExpression.getReferenceName();
             if (referenceText != null) {
-              PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(expression.getProject())
+              PsiVariable variable = PsiResolveHelper.getInstance(expression.getProject())
                 .resolveAccessibleReferencedVariable(referenceText, classParent);
               if (variable != null && variable != referenceExpression.resolve()) {
                 return;
@@ -138,7 +137,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
           }
         }
       }
-      registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(expression);
     }
 
     private static boolean hasUnnecessarySuperQualifier(PsiReferenceExpression referenceExpression) {

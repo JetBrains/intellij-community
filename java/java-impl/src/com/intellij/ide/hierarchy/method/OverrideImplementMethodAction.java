@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -90,7 +90,9 @@ abstract class OverrideImplementMethodAction extends AnAction {
       return;
     }
 
-    HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+    Object[] data = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+    HierarchyNodeDescriptor[] selectedDescriptors = data instanceof HierarchyNodeDescriptor[] ? ((HierarchyNodeDescriptor[])data) 
+                                                                                              : HierarchyNodeDescriptor.EMPTY_ARRAY;
     int toImplement = 0;
     int toOverride = 0;
 
@@ -121,6 +123,11 @@ abstract class OverrideImplementMethodAction extends AnAction {
     presentation.setVisible(true);
 
     update(presentation, toImplement, toOverride);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Nullable

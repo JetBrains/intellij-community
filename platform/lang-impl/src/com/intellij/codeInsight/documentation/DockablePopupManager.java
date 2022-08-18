@@ -165,7 +165,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     ContentManager contentManager = toolWindow.getContentManager();
     String displayName = element != null ? getTitle(element) : "";
-    contentManager.addContent(ContentFactory.SERVICE.getInstance().createContent(component, displayName, false));
+    contentManager.addContent(ContentFactory.getInstance().createContent(component, displayName, false));
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
@@ -217,6 +217,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
                                                             getAutoUpdateDefault());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());

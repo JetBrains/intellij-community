@@ -1,17 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.util.indexing.IndexingFlag
+import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -57,6 +64,20 @@ fun JavaCodeInsightTestFixture.dumpErrorLines(): List<String> {
     }
 }
 
+fun Project.waitIndexingComplete(indexingReason: String? = null) {
+    val project = this
+    UIUtil.dispatchAllInvocationEvents()
+    invokeAndWaitIfNeeded {
+        // TODO: [VD] a dirty hack to reindex created android project
+        IndexingFlag.cleanupProcessedFlag()
+        with(DumbService.getInstance(project)) {
+            queueTask(UnindexedFilesUpdater(project, indexingReason))
+            completeJustSubmittedTasks()
+        }
+        UIUtil.dispatchAllInvocationEvents()
+    }
+}
+
 fun closeAndDeleteProject() = LightPlatformTestCase.closeAndDeleteProject()
 
 fun invalidateLibraryCache(project: Project) {
@@ -89,4 +110,12 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
+}
+
+fun checkPluginIsCorrect(isFirPlugin: Boolean){
+    if (isFirPlugin) {
+        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
+    } else {
+        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
+    }
 }

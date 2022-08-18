@@ -23,14 +23,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
-import com.intellij.util.containers.ContainerUtil
 import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
@@ -83,7 +84,7 @@ class CommitSessionCollector(val project: Project) {
     }
     else if (activity == null) {
       val changesViewManager = ChangesViewManager.getInstance(project) as ChangesViewManager
-      val commitUi = changesViewManager.commitWorkflowHandler?.ui ?: return
+      val commitUi = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.ui ?: return
       activity = CommitSessionCounterUsagesCollector.SESSION.started(project) {
         listOf(
           CommitSessionCounterUsagesCollector.FILES_TOTAL.with(commitUi.getDisplayedChanges().size),
@@ -190,7 +191,7 @@ class CommitSessionCollector(val project: Project) {
    * See [com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl]
    */
   internal class MyAnActionListener : AnActionListener {
-    private val ourStats: MutableMap<AnActionEvent, Project> = ContainerUtil.createWeakMap()
+    private val ourStats: MutableMap<AnActionEvent, Project> = WeakHashMap()
 
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val project = event.project ?: return

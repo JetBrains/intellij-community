@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -21,53 +21,53 @@ import java.util.Objects;
 
 public final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
-    @NonNls
-    private static final String FILE_ELEMENT = "file";
-    @NonNls
-    private static final String CLASS_ELEMENT = "class";
-    @NonNls
-    private static final String FIELD_ELEMENT = "field";
-    @NonNls
-    private static final String METHOD_ELEMENT = "method";
-    @NonNls
-    private static final String CONSTRUCTOR_ELEMENT = "constructor";
-    @NonNls
-    private static final String INTERFACE_ELEMENT = "interface";
-    @NonNls
-    private static final String PROBLEM_CLASS_ELEMENT = "problem_class";
-    @NonNls
-    private static final String DESCRIPTION_ELEMENT = "description";
+  @NonNls
+  private static final String FILE_ELEMENT = "file";
+  @NonNls
+  private static final String CLASS_ELEMENT = "class";
+  @NonNls
+  private static final String FIELD_ELEMENT = "field";
+  @NonNls
+  private static final String METHOD_ELEMENT = "method";
+  @NonNls
+  private static final String CONSTRUCTOR_ELEMENT = "constructor";
+  @NonNls
+  private static final String INTERFACE_ELEMENT = "interface";
+  @NonNls
+  private static final String PROBLEM_CLASS_ELEMENT = "problem_class";
+  @NonNls
+  private static final String DESCRIPTION_ELEMENT = "description";
 
-    public static void main(String[] args) {
-      if (args.length != 3 && args.length != 2) {
-        System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
-      }
+  public static void main(String[] args) {
+    if (args.length != 3 && args.length != 2) {
+      System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
+    }
 
-      String oldPath = args[0];
-      String newPath = args[1];
-      String outPath = args.length == 3 ? args[2] : null;
+    String oldPath = args[0];
+    String newPath = args[1];
+    String outPath = args.length == 3 ? args[2] : null;
 
-      final File oldResults = new File(oldPath);
-      final File newResults = new File(newPath);
-      if (oldResults.isDirectory() && newResults.isDirectory()) {
-        final File[] old = oldResults.listFiles();
-        final File[] results = newResults.listFiles();
-        for (File result : results) {
-          final String inspectionName = result.getName();
-          boolean found = false;
-          for (File oldFile : old) {
-            if (oldFile.getName().equals(inspectionName)) {
-              writeInspectionDiff(oldFile.getPath(), result.getPath(), outPath);
-              found = true;
-              break;
-            }
+    final File oldResults = new File(oldPath);
+    final File newResults = new File(newPath);
+    if (oldResults.isDirectory() && newResults.isDirectory()) {
+      final File[] old = oldResults.listFiles();
+      final File[] results = newResults.listFiles();
+      for (File result : results) {
+        final String inspectionName = result.getName();
+        boolean found = false;
+        for (File oldFile : old) {
+          if (oldFile.getName().equals(inspectionName)) {
+            writeInspectionDiff(oldFile.getPath(), result.getPath(), outPath);
+            found = true;
+            break;
           }
-          if (!found) {
-            writeInspectionDiff(null, result.getPath(), outPath);
-          }
+        }
+        if (!found) {
+          writeInspectionDiff(null, result.getPath(), outPath);
         }
       }
     }
+  }
 
   private static void writeInspectionDiff(String oldPath, String newPath, final String outPath) {
     try {

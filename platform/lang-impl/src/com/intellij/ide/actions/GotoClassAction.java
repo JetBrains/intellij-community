@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.*;
@@ -11,7 +10,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +21,9 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
 
   public GotoClassAction() {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
-    Presentation presentation = getTemplatePresentation();
-    presentation.setText(() -> IdeBundle.message("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
-    presentation.setDescription(() -> IdeBundle.message("go.to.class.action.description",
-                                                        StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
+    Presentation p = getTemplatePresentation();
+    p.setText(IdeBundle.messagePointer("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
+    p.setDescription(IdeBundle.messagePointer("go.to.class.action.description", StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
     addTextOverride(ActionPlaces.MAIN_MENU, () -> GotoClassPresentationUpdater.getActionTitle() + "...");
   }
 
@@ -37,9 +34,7 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
 
     boolean dumb = DumbService.isDumb(project);
     if (!dumb || isModelDumbAware(e)) {
-      String tabID = Registry.is("search.everywhere.group.contributors.by.type")
-                     ? SearchEverywhereTabDescriptor.PROJECT.getId()
-                     : ClassSearchEverywhereContributor.class.getSimpleName();
+      String tabID = ClassSearchEverywhereContributor.class.getSimpleName();
       showInSearchEverywherePopup(tabID, e, true, true);
     }
     else {

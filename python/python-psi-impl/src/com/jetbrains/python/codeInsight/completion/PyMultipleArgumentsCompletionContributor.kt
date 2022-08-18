@@ -63,6 +63,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAwa
 
     private fun getArgumentIndex(position: PsiElement): Int? {
       val argumentList = PsiTreeUtil.getParentOfType(position, PyArgumentList::class.java) ?: return null
+      if (argumentList.arguments.isEmpty()) return null
       if (argumentList.arguments.any { it is PyKeywordArgument || it is PyStarArgument }) return null
       if (!PsiTreeUtil.isAncestor(argumentList.arguments.last(), position, false)) return null
       return argumentList.arguments.size - 1

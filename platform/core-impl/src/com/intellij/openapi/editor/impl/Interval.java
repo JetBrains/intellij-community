@@ -18,4 +18,5 @@ package com.intellij.openapi.editor.impl;
 public interface Interval {
   int intervalStart();
   int intervalEnd();
+  long toScalarRange();
 }

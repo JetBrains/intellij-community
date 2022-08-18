@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -86,17 +87,11 @@ public class PyDocumentationBuilder {
     }
 
     final ASTNode node = elementDefinition.getNode();
-    if (node != null && PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(node.getElementType())) {
-      String documentationName = elementDefinition.getText();
-      if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
-        final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);
-        if (statement != null) documentationName = "try";
+    if (node != null) {
+      final var elementType = node.getElementType();
+      if (PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(elementType)) {
+        buildForKeyword(getDocFileNameForKeywordElement(elementDefinition, elementType));
       }
-      else if (node.getElementType() == PyTokenTypes.IN_KEYWORD) {
-        final PyForStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyForStatement.class);
-        if (statement != null) documentationName = "for";
-      }
-      buildForKeyword(documentationName);
     }
 
     if (!mySectionsMap.isEmpty()) {
@@ -145,6 +140,48 @@ public class PyDocumentationBuilder {
       result.add(mySections); // pre-assemble; then add stuff to individual cats as needed
       return wrapInTag("html", wrapInTag("body", result)).toString();
     }
+  }
+
+  private static String getDocFileNameForKeywordElement(PsiElement element, IElementType elementType) {
+    final var parentStatement = PsiTreeUtil.getParentOfType(element, PyStatement.class);
+
+    if (parentStatement == null) {
+      return element.getText();
+    }
+
+    if (elementType == PyTokenTypes.FROM_KEYWORD) {
+      // We want to show yield doc in 'yield from ...' expressions when hover to 'from',
+      // but there is no particular PyStatement for 'yield' keyword, therefore we make such a check.
+      if (parentStatement.getFirstChild() instanceof PyYieldExpression) {
+        return PyNames.YIELD;
+      }
+      else if (parentStatement instanceof PyRaiseStatement) {
+        return PyNames.RAISE;
+      }
+    }
+    else if (elementType == PyTokenTypes.AS_KEYWORD) {
+      if (parentStatement instanceof PyWithStatement) {
+        return PyNames.WITH;
+      }
+      else if (parentStatement instanceof PyTryExceptStatement) {
+        return PyNames.EXCEPT;
+      }
+    }
+    else if (elementType == PyTokenTypes.ELSE_KEYWORD) {
+      if (parentStatement instanceof PyWhileStatement) {
+        return PyNames.WHILE;
+      }
+      else if (parentStatement instanceof PyForStatement) {
+        return PyNames.FOR;
+      }
+      else if (parentStatement instanceof PyTryExceptStatement) {
+        return PyNames.TRY;
+      }
+    }
+    else if (elementType == PyTokenTypes.IN_KEYWORD && parentStatement instanceof PyForStatement) {
+      return PyNames.FOR;
+    }
+    return element.getText();
   }
 
   private void buildForKeyword(@NotNull String name) {

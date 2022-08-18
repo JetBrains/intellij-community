@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,10 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
      * Serialization constructor.
      */
     protected PersistentFontPreferences() {
+      if (FontFamilyService.isServiceSupported()) {
+        FONT_REGULAR_SUB_FAMILY = FontFamilyService.getRecommendedSubFamily(FONT_FAMILY);
+        FONT_BOLD_SUB_FAMILY = FontFamilyService.getRecommendedBoldSubFamily(FONT_FAMILY, FONT_REGULAR_SUB_FAMILY);
+      }
     }
 
     public PersistentFontPreferences(FontPreferences fontPreferences) {

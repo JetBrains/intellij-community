@@ -16,7 +16,7 @@ InlineStackFrame foo (frameInlineFunCallInsideInlineFun.kt:19)
     JavaValue[local] element: int = 2 (frameInlineFunCallInsideInlineFun.kt:5)
     JavaValue[local] a: frameInlineFunCallInsideInlineFun.A = frameInlineFunCallInsideInlineFun.A@hashCode
         JavaValue[field] prop: int = 1 (frameInlineFunCallInsideInlineFun.kt:9)
-KotlinStackFrameWithProvidedVariables (frameInlineFunCallInsideInlineFun.kt:29)
+KotlinStackFrame (frameInlineFunCallInsideInlineFun.kt:29)
     JavaValue[local] element: float = 1.0 (frameInlineFunCallInsideInlineFun.kt:5)
 Disconnected from the target VM
 

@@ -1,0 +1,3 @@
+<foo>
+<bar>A &lt; <selection>B<caret></selection></bar>
+</foo>

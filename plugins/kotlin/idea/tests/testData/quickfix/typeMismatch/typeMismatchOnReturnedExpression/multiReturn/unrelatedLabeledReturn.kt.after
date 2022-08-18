@@ -7,3 +7,5 @@ fun bar(n: Int): String? {
     }
     return null
 }
+
+/* IGNORE_FIR */

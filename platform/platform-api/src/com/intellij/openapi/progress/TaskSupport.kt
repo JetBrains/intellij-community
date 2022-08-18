@@ -10,7 +10,7 @@ import java.awt.Component
 @Internal
 interface TaskSupport {
 
-  fun taskCancellationNonCancellableInternal(): TaskCancellation
+  fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable
 
   fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable
 

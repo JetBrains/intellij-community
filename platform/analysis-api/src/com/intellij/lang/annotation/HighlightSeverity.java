@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.BundleBase;
@@ -45,6 +45,15 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
       InspectionsBundle.messagePointer("information.severity"),
       InspectionsBundle.messagePointer("information.severity.capitalized"),
       InspectionsBundle.messagePointer("information.severity.count.message"));
+  
+  @SuppressWarnings("UnresolvedPropertyKey") 
+  public static final HighlightSeverity TEXT_ATTRIBUTES =
+    new HighlightSeverity(
+      "TEXT ATTRIBUTES",
+      11,
+      InspectionsBundle.messagePointer("text.attributes.severity"),
+      InspectionsBundle.messagePointer("text.attributes.severity.capitalized"),
+      InspectionsBundle.messagePointer("text.attributes.severity.count.message"));
 
   /**
    * The severity level for errors or warnings obtained from server.

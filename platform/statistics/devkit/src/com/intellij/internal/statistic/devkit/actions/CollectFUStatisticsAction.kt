@@ -25,13 +25,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.concurrency.resolvedPromise
 
-internal class CollectFUStatisticsAction : GotoActionBase() {
+internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
     if (e.presentation.isEnabled) {
@@ -82,7 +83,7 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
     }
     val collector = item.usagesCollector
     val metricsPromise = when (collector) {
-      is ApplicationUsagesCollector -> resolvedPromise(collector.metrics)
+      is ApplicationUsagesCollector -> resolvedPromise(collector.getMetrics())
       is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }
@@ -132,7 +133,7 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
   }
 
   private class MyChooseByNameModel(project: Project, items: List<Item>)
-    : ListChooseByNameModel<Item>(project, "Enter usage collector group id", "No collectors found", items) {
+    : ListChooseByNameModel<Item>(project, "Enter usage collector group id", "No collectors found", items), DumbAware {
 
     var useExtendedPresentation: Boolean = false
 

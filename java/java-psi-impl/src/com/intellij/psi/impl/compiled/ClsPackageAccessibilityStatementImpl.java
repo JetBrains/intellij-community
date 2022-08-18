@@ -4,9 +4,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
-import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -30,6 +28,16 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
         return packageName != null ? new ClsJavaCodeReferenceElementImpl(this, packageName) : null;
     });
     myModuleReferences = atomicLazy(() -> ContainerUtil.map(getStub().getTargets(), target -> new ClsJavaModuleReferenceElementImpl(this, target)));
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPackageAccessibilityStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull

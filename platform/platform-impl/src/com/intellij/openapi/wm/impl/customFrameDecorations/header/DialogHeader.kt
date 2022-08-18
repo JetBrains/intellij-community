@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
-import com.jetbrains.CustomWindowDecoration.*
+import com.jetbrains.CustomWindowDecoration.CLOSE_BUTTON
+import com.jetbrains.CustomWindowDecoration.OTHER_HIT_SPOT
 import net.miginfocom.swing.MigLayout
 import java.awt.Dialog
 import java.awt.Window
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.JLabel
 import javax.swing.UIManager
 
@@ -68,8 +68,8 @@ internal class DialogHeader(val window: Window) : CustomHeader(window) {
         }
     }
 
-    override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
-        return listOf(
+    override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+        return sequenceOf(
           Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT),
           Pair(RelativeRectangle(buttonPanes.closeButton), CLOSE_BUTTON)
         )

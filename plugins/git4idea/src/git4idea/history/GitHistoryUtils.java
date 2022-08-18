@@ -166,7 +166,7 @@ public final class GitHistoryUtils {
    *
    * @param project a {@link Project} instance for which the command is going to be invoked. Used to get Git version.
    * @param hashes  a list of hashes to call `git log` for
-   * @return a list of parameters that could be fed to a `git log` command
+   * @return a array of parameters that could be fed to a `git log` command
    */
   public static String @NotNull [] formHashParameters(@NotNull Project project, @NotNull Collection<String> hashes) {
     List<String> parameters = new ArrayList<>();

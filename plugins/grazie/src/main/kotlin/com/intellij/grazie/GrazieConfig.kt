@@ -13,18 +13,19 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),
   Storage(value = "grazi_global.xml", deprecated = true)
 ], category = SettingsCategory.CODE)
-class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
-  @Suppress("unused")
+class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
   enum class Version : VersionedState.Version<State> {
     INITIAL,
 
@@ -138,10 +139,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   }
 
   private var myState = State()
+  private var myModCount = AtomicLong()
+
+  override fun getModificationCount(): Long = myModCount.get()
 
   override fun getState() = myState
 
   override fun loadState(state: State) {
+    myModCount.incrementAndGet()
     val prevState = myState
     myState = migrateLTRuleIds(VersionedState.migrate(state))
 

@@ -9,13 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.*;
@@ -23,6 +22,7 @@ import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
+import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
 
 import java.util.Iterator;
@@ -34,7 +34,82 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
-    return null;
+    if (startOffsets.length != 1 || endOffsets.length != 1) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) {
+      return null;
+    }
+
+    int caretOffset = startOffsets[0];
+    PsiElement element = file.findElementAt(caretOffset);
+    if (element == null) {
+      return null;
+    }
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
+    if (prevLeaf instanceof PsiWhiteSpace) {
+      prevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true);
+    }
+
+    if (element instanceof PsiWhiteSpace) {
+      element = PsiTreeUtil.nextLeaf(element, true);
+      if (element == null) {
+        return null;
+      }
+    }
+
+    boolean inTheStartOfSubElement =
+      isYamlElementType(element) && PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT
+      ||
+      element.getTextRange().getStartOffset() == caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.INDENT
+      ||
+      element.getTextRange().getStartOffset() >= caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.SEQUENCE_MARKER;
+
+    if (!inTheStartOfSubElement) {
+      return null;
+    }
+
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
+
+    if (lineStartOffset == caretOffset) {
+      return null;
+    }
+
+    PsiElement borderParent = PsiTreeUtil.findFirstParent(
+      PsiTreeUtil.nextLeaf(element, false), true,
+      (psi) -> psi instanceof YAMLBlockSequenceImpl || psi instanceof YAMLBlockMappingImpl
+    );
+
+    if (borderParent == null) {
+      return null;
+    }
+
+    int endOffset = endOffsets[0];
+    if (borderParent.getTextRange().getEndOffset() < endOffset) {
+      PsiElement nextElement = borderParent;
+      while (true) {
+        nextElement = PsiTreeUtil.nextLeaf(nextElement, true);
+        if (nextElement == null || nextElement.getTextRange().getStartOffset() >= endOffset) {
+          break;
+        }
+
+        IElementType elementType = PsiUtilCore.getElementType(nextElement);
+        if (!(elementType instanceof YAMLElementType)) {
+          return null;
+        }
+
+        if (!YAMLElementTypes.BLANK_ELEMENTS.contains(elementType)) {
+          return null;
+        }
+      }
+    }
+
+    return StringUtil.repeatSymbol(' ', caretOffset - lineStartOffset) + text;
+  }
+
+  private static boolean isYamlElementType(PsiElement element) {
+    return PsiUtilCore.getElementType(element) instanceof YAMLElementType;
   }
 
   @NotNull

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
@@ -57,10 +59,9 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
       val dataPack = logData.dataPack
-      val commits = commitEditingData.selectedCommitList
       val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
       val commitsInfo = permanentGraph.permanentCommitsInfo
-      val commitIndices = commits.map { logData.getCommitIndex(it.id, root) }
+      val commitIndices = commitEditingData.selection.ids
 
       var description: String? = null
 
@@ -119,10 +120,11 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   protected abstract fun createCommitEditingData(
     repository: GitRepository,
-    log: VcsLog,
-    logData: VcsLogData,
-    logUi: VcsLogUi
+    selection: VcsLogCommitSelection,
+    logData: VcsLogData
   ): CommitEditingDataCreationResult<T>
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
   }
@@ -158,7 +160,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
     // editing merge commit or root commit is not allowed
     commitList.forEach { commit ->
-      if (commit.isRootOrMerge()) {
+      if (commit !is LoadingDetails && commit.isRootOrMerge()) {
         e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
         return
       }
@@ -166,7 +168,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
     // check that first and last selected commits are in HEAD and not pushed to protected branch
     listOf(commitList.first(), commitList.last()).forEach { commit ->
-      val branches = commitEditingData.log.getContainingBranches(commit.id, commit.root)
+      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.id)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
           e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
@@ -239,15 +241,14 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {
     val project = e.project
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI)
 
-    if (project == null || log == null || logDataProvider == null || logUi == null) {
+    if (project == null || selection == null || logDataProvider == null) {
       return Prohibited()
     }
 
-    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
@@ -260,7 +261,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, log, logDataProvider, logUi)
+    return createCommitEditingData(repository, selection, logDataProvider)
   }
 
   protected open fun getProhibitedStateMessage(
@@ -277,12 +278,11 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   open class MultipleCommitEditingData(
     val repository: GitRepository,
-    val log: VcsLog,
-    val logData: VcsLogData,
-    val logUi: VcsLogUi
+    val selection: VcsLogCommitSelection,
+    val logData: VcsLogData
   ) {
     val project = repository.project
-    val selectedCommitList: List<VcsShortCommitDetails> = log.selectedShortDetails
+    val selectedCommitList: List<VcsCommitMetadata> = selection.cachedMetadata
   }
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {

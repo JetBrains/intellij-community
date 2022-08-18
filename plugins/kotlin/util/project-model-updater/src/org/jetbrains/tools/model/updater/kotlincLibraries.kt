@@ -1,84 +1,160 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
+import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 
-const val ktGroup = "org.jetbrains.kotlin"
+private const val ktGroup = "org.jetbrains.kotlin"
 
-fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version: String, isCommunity: Boolean): List<JpsLibrary> {
-    return listOf(
-        kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", version),
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", version),
-        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", version),
-        kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-testdata", version, includeSources = false),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-dist", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-stdlib-minimal-for-test", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", version),
-        singleJarMvnLib("kotlinc.kotlin-scripting-common", "$ktGroup:kotlin-scripting-common:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-scripting-compiler-impl", "$ktGroup:kotlin-scripting-compiler-impl:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-scripting-compiler", "$ktGroup:kotlin-scripting-compiler:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-scripting-jvm", "$ktGroup:kotlin-scripting-jvm:$version", transitive = false),
-        singleJarMvnLib("kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
-        singleJarMvnLib("kotlin-script-runtime", "$ktGroup:kotlin-script-runtime:$version"),
+private class ArtifactCoordinates(val version: String, val mode: ArtifactMode)
+
+private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
+    get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
+
+private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
+    get() = ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
+
+internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
+    val kotlincCoordinates = preferences.kotlincArtifactCoordinates
+    val jpsPluginCoordinates = preferences.jpsArtifactCoordinates.takeIf { it.version != "dev" } ?: kotlincCoordinates
+
+    return buildLibraryList(isCommunity) {
+        kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fe10", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-stdlib-minimal-for-test", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
+
+        if (!isCommunity) {
+            kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincCoordinates)
+        }
+
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
+
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
+
         run {
             val mavenIds = listOf(
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk8:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-common:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk7:$version")
+                MavenId.parse("$ktGroup:kotlin-stdlib-jdk8:${kotlincCoordinates.version}"),
+                MavenId.parse("$ktGroup:kotlin-stdlib:${kotlincCoordinates.version}"),
+                MavenId.parse("$ktGroup:kotlin-stdlib-common:${kotlincCoordinates.version}"),
+                MavenId.parse("$ktGroup:kotlin-stdlib-jdk7:${kotlincCoordinates.version}")
             )
-            JpsLibrary(
-                "kotlin-stdlib-jdk8",
-                JpsLibrary.Kind.Maven(mavenIds.first(), excludes = listOf(MavenId("org.jetbrains", "annotations"))),
+
+            val annotationLibrary = JpsLibrary(
+                "kotlinc.kotlin-stdlib",
+                JpsLibrary.LibraryType.Repository(mavenIds.first(), excludes = listOf(MavenId("org.jetbrains", "annotations"))),
                 annotations = listOf(JpsUrl.File(JpsPath.ProjectDir("lib/annotations/kotlin", isCommunity))),
                 classes = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it)) },
-                sources = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it, isSources = true)) }
+                sources = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it, "sources")) }
             )
-        },
-    ).map { jpsLibrary ->
-        when (kotlincArtifactsMode) {
-            KotlincArtifactsMode.MAVEN -> jpsLibrary
-            KotlincArtifactsMode.BOOTSTRAP -> jpsLibrary.copy(
-                kind = JpsLibrary.Kind.Jars,
-                classes = jpsLibrary.classes.map { it.convertKotlincMvnToBootstrap(isCommunity) },
-                sources = jpsLibrary.sources.map { it.convertKotlincMvnToBootstrap(isCommunity) },
-            )
+
+            addLibrary(annotationLibrary.convertMavenUrlToCooperativeIfNeeded(kotlincCoordinates.mode, isCommunity))
         }
     }
 }
 
-private fun JpsUrl.convertKotlincMvnToBootstrap(isCommunity: Boolean): JpsUrl {
-    val jpsPath = this.jpsPath
-    require(jpsPath is JpsPath.MavenRepository)
-    return JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${jpsPath.path}", isCommunity))
+private class LibraryListBuilder(val isCommunity: Boolean) {
+    private val libraries = mutableListOf<JpsLibrary>()
+
+    fun addLibrary(library: JpsLibrary) {
+        libraries += library
+    }
+
+    fun build(): List<JpsLibrary> = libraries.toList()
 }
 
-private fun kotlincForIdeWithStandardNaming(name: String, version: String, includeSources: Boolean = true): JpsLibrary {
+private fun buildLibraryList(isCommunity: Boolean, builder: LibraryListBuilder.() -> Unit): List<JpsLibrary> =
+    LibraryListBuilder(isCommunity).apply(builder).build()
+
+private fun LibraryListBuilder.kotlincForIdeWithStandardNaming(
+    name: String,
+    coordinates: ArtifactCoordinates,
+    includeSources: Boolean = true
+) {
+    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide")
+}
+
+private fun LibraryListBuilder.kotlincWithStandardNaming(
+    name: String,
+    coordinates: ArtifactCoordinates,
+    includeSources: Boolean = true,
+    postfix: String = "",
+    transitive: Boolean = false,
+    excludes: List<MavenId> = emptyList(),
+) {
     require(name.startsWith("kotlinc."))
-    return singleJarMvnLib(
-        name,
-        "$ktGroup:${name.removePrefix("kotlinc.")}-for-ide:$version",
-        transitive = false,
-        includeSources = includeSources
+    val jpsLibrary = singleJarMavenLibrary(
+        name = name,
+        mavenCoordinates = "$ktGroup:${name.removePrefix("kotlinc.")}$postfix:${coordinates.version}",
+        transitive = transitive,
+        includeSources = includeSources,
+        excludes = excludes,
     )
+    addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity))
+}
+
+private fun singleJarMavenLibrary(
+    name: String,
+    mavenCoordinates: String,
+    excludes: List<MavenId> = emptyList(),
+    transitive: Boolean = true,
+    includeSources: Boolean = true,
+): JpsLibrary {
+    val mavenId = MavenId.parse(mavenCoordinates)
+    return JpsLibrary(
+        name,
+        JpsLibrary.LibraryType.Repository(mavenId, includeTransitive = transitive, excludes = excludes),
+        classes = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId))),
+        sources = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId, classifier = "sources"))).takeIf { includeSources } ?: emptyList()
+    )
+}
+
+private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean): JpsLibrary {
+    fun convertUrl(url: JpsUrl): JpsUrl {
+        return when (url.path) {
+            is JpsPath.ProjectDir -> url
+            is JpsPath.MavenRepository -> JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${url.path.relativePath}", isCommunity))
+        }
+    }
+
+    return when (artifactsMode) {
+        ArtifactMode.MAVEN -> this
+        ArtifactMode.BOOTSTRAP -> JpsLibrary(
+            name = name,
+            type = JpsLibrary.LibraryType.Plain,
+            annotations = annotations.map(::convertUrl),
+            classes = classes.map(::convertUrl),
+            javadoc = javadoc.map(::convertUrl),
+            sources = sources.map(::convertUrl)
+        )
+    }
 }

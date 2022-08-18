@@ -65,14 +65,13 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
       }
 
-      if (!(o instanceof PsiMember)) {
-        return null;
-      }
-
       if (o instanceof PsiClass) {
         return getClassInfo((PsiClass)o, position, firstInfo);
       }
-      return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      if (o instanceof PsiField || o instanceof PsiMethod) {
+        return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      }
+      return null;
     };
   }
 

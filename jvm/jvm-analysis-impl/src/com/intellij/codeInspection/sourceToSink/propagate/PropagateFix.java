@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
 import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
@@ -76,12 +77,19 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (toolWindow == null) return;
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, title, true);
+    Content content = ContentFactory.getInstance().createContent(panel, title, true);
     panel.setContent(content);
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
     toolWindow.activate(null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(
+      JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.preview")
+    );
   }
 
   @Override

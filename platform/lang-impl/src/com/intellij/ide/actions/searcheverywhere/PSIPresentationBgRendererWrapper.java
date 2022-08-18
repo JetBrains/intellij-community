@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -32,7 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting, AutoCompletionContributor{
+public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                         AutoCompletionContributor, PossibleSlowContributor{
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -42,6 +44,11 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return myDelegate instanceof AutoCompletionContributor
            ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
            : Collections.emptyList();
+  }
+
+  @Override
+  public boolean isSlow() {
+    return PossibleSlowContributor.checkSlow(myDelegate);
   }
 
   public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
@@ -74,7 +81,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
-                                                                  Function<PsiElement, TargetPresentation> presentationCalculator) {
+                                                                  Function<? super PsiElement, ? extends TargetPresentation> presentationCalculator) {
     if (elementDescriptor.getItem() instanceof PsiElement) {
       PsiElement psi = (PsiElement)elementDescriptor.getItem();
       TargetPresentation presentation = presentationCalculator.apply(psi);
@@ -90,8 +97,6 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
   public static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
     /**
-     * @param first
-     * @param second
      * @see #create(Object, Object)
      */
     PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
@@ -130,19 +135,25 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
       Color bgColor = isSelected ? UIUtil.getListSelectionBackground(true) : presentation.getBackgroundColor();
       setBackground(bgColor);
 
-      JLabel locationLabel = StringUtil.isNotEmpty(presentation.getLocationText())
-                             ? new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT)
-                             : null;
-      if (locationLabel != null) {
+      JLabel locationLabel;
+      if (StringUtil.isNotEmpty(presentation.getLocationText())) {
+        locationLabel = new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT);
         locationLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+        locationLabel.setIconTextGap(RendererPanelsUtils.getIconTextGap());
         locationLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
         add(locationLabel, BorderLayout.EAST);
+      }
+      else {
+        locationLabel = null;
       }
 
       ColoredListCellRenderer<Object> leftRenderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          //noinspection UseDPIAwareInsets
+          setIpad(new Insets(0, 0, 0, getIpad().right)); // Border of top panel is used for around insets of renderer
           setIcon(presentation.getIcon());
+          setIconTextGap(RendererPanelsUtils.getIconTextGap());
           SimpleTextAttributes nameAttributes = presentation.getPresentableTextAttributes() != null
                                                 ? SimpleTextAttributes.fromTextAttributes(presentation.getPresentableTextAttributes())
                                                 : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);

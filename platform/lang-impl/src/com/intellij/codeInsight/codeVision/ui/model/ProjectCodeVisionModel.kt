@@ -17,20 +17,20 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   companion object {
     fun getInstance(project: Project): ProjectCodeVisionModel = project.service()
 
-    const val MORE_PROVIDER_ID = "!More"
-    const val HIDE_PROVIDER_ID = "!Hide"
+    const val MORE_PROVIDER_ID: String = "!More"
+    const val HIDE_PROVIDER_ID: String = "!Hide"
+    const val HIDE_ALL: String = "!HideAll"
   }
 
-  val maxVisibleLensCount = ViewableMap<CodeVisionAnchorKind, Int>()
-  val hoveredInlay = Property<Inlay<*>?>(null)
-  val hoveredEntry = Property<CodeVisionEntry?>(null)
-  val lensPopupActive = Property(false)
+  val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap<CodeVisionAnchorKind, Int>()
+  val hoveredInlay: Property<Inlay<*>?> = Property<Inlay<*>?>(null)
+  val hoveredEntry: Property<CodeVisionEntry?> = Property<CodeVisionEntry?>(null)
+  val lensPopupActive: Property<Boolean> = Property(false)
 
-  val moreEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
+  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
 
-  val hideLens = CodeVisionEntryExtraActionModel(CodeVisionBundle.message("action.hide.this.metric.text"), HIDE_PROVIDER_ID)
 
-  private fun getCodeVisionHost() = CodeVisionHost.getInstance(project)
+  private fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
 
   fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     if (entry.providerId == MORE_PROVIDER_ID) {
@@ -47,8 +47,15 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
-      CodeVisionSettings.instance().setProviderEnabled(entry.providerId, false)
-      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null, listOf(entry.providerId)))
+      val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
+      CodeVisionSettings.instance().setProviderEnabled(id, false)
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
+      return
+    }
+
+    if (actionId == HIDE_ALL) {
+      CodeVisionSettings.instance().codeVisionEnabled = false
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
       return
     }
 

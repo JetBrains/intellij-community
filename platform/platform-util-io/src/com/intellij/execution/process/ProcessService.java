@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -23,12 +24,13 @@ public interface ProcessService {
   boolean sendWinProcessCtrlC(@NotNull Process process);
 
   /**
-   * pid is not enough to emulate CTRL+C on Windows, {@link Process#getOutputStream} is also needed
-   *
-   * @deprecated use {@link #sendWinProcessCtrlC(Process)}
+   * For better CTRL+C emulation a process output stream is needed,
+   * just sending CTRL+C event might not be enough. Consider using
+   * {@link #sendWinProcessCtrlC(Process)} or {@link #sendWinProcessCtrlC(int, OutputStream)}
    */
-  @Deprecated(forRemoval = true)
   boolean sendWinProcessCtrlC(int pid);
+
+  boolean sendWinProcessCtrlC(int pid, @Nullable OutputStream processOutputStream);
 
   void killWinProcessRecursively(@NotNull Process process);
 

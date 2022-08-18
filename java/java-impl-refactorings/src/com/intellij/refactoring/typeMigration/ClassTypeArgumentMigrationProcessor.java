@@ -9,6 +9,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -79,7 +80,7 @@ public class ClassTypeArgumentMigrationProcessor {
       final Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(PsiUtil.typeParametersIterable(superSuperClass));
       superSuperClass.accept(new JavaRecursiveElementVisitor(){
         @Override
-        public void visitMethod(final PsiMethod method) {
+        public void visitMethod(final @NotNull PsiMethod method) {
           super.visitMethod(method);
           processMemberType(method, typeParameters, psiClass, fullHierarchySubstitutor[0], roots);
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
@@ -88,7 +89,7 @@ public class ClassTypeArgumentMigrationProcessor {
         }
 
         @Override
-        public void visitField(final PsiField field) {
+        public void visitField(final @NotNull PsiField field) {
           super.visitField(field);
           processMemberType(field, typeParameters, psiClass, fullHierarchySubstitutor[0], roots);
         }

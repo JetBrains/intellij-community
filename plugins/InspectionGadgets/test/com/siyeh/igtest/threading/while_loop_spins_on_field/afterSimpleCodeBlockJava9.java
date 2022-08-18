@@ -1,4 +1,4 @@
-// "Make 'b' volatile and add Thread.onSpinWait()" "true"
+// "Make 'b' volatile and add Thread.onSpinWait()" "true-preview"
 import java.util.*;
 
 public class Test {

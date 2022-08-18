@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
@@ -29,7 +30,7 @@ public final class GreclipseIdeaCompilerSettings implements PersistentStateCompo
   }
 
   public static void setGrEclipsePath(@NotNull Project project, @NotNull String path){
-    project.getService(GreclipseIdeaCompilerSettings.class).mySettings.greclipsePath = path;
+    project.getService(GreclipseIdeaCompilerSettings.class).mySettings.greclipsePath = FileUtil.toSystemIndependentName(path);
   }
 
   public static void setGrCmdParams(@NotNull Project project, @NotNull String cmdLineParams){

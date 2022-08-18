@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,7 @@ import java.util.Collection;
  * Interface for detecting VCS roots in the project.
  *
  * @author Nadya Zabrodina
+ * @see VcsRootChecker
  */
 public interface VcsRootDetector {
   static VcsRootDetector getInstance(@NotNull Project project) {

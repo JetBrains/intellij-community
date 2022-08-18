@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginUtil;
@@ -42,6 +42,10 @@ public class ID<K, V> extends IndexId<K,V> {
     reloadEnumFile(getEnumFile());
   }
 
+  //≤ RC: method should probably be synchronized, since it uses current value .ourNameToIdRegistry
+  //          while building new state, and this is unsafe if whole method could be called concurrently,
+  //          and that old value could be changed along the way. Right now this 'safe' since method is
+  //          called only while shared index initialization, but...
   private static void reloadEnumFile(@NotNull Path enumFile) {
     if (enumFile.equals(ourNameToIdRegistry.getFile())) {
       return;
@@ -152,11 +156,17 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
+  public static Collection<ID<?, ?>> getRegisteredIds() {
+    return Collections.unmodifiableSet(new HashSet<>(ourIdToPluginId.keySet()));
+  }
+
+  @ApiStatus.Internal
   @NotNull
   public Throwable getRegistrationTrace() {
     return ourIdToRegistrationStackTrace.get(this);
   }
 
+  @ApiStatus.Internal
   public int getUniqueId() {
     return myUniqueId;
   }
@@ -167,8 +177,10 @@ public class ID<K, V> extends IndexId<K,V> {
     return ourIdToPluginId.get(this);
   }
 
+  @ApiStatus.Internal
   public static ID<?, ?> findById(int id) {
-    return ourIdObjects.get(ourNameToIdRegistry.valueOf(id));
+    String key = ourNameToIdRegistry.valueOf(id);
+    return key == null ? null : ourIdObjects.get(key);
   }
 
   @ApiStatus.Internal
@@ -179,8 +191,9 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   public synchronized static void unloadId(@NotNull ID<?, ?> id) {
-    ID<?, ?> oldID = ourIdObjects.remove(id.getName());
-    LOG.assertTrue(id.equals(oldID));
+    String name = id.getName();
+    ID<?, ?> oldID = ourIdObjects.remove(name);
+    LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);
     ourIdToPluginId.remove(id);
     ourIdToRegistrationStackTrace.remove(id);
   }

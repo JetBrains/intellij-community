@@ -8,21 +8,18 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE;
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
@@ -260,7 +257,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = CachingDataContext.cacheIfNeeded(dataContext);
+    myDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext);
   }
 
   @Nullable
@@ -276,30 +273,6 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   @Nullable
   public String getModulePath() {
     return myModulePath;
-  }
-
-  private static final class CachingDataContext implements DataContext {
-    private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
-    private final Map<String, Object> values = new HashMap<>();
-
-    @NotNull
-    static CachingDataContext cacheIfNeeded(@NotNull DataContext context) {
-      if (context instanceof CachingDataContext) {
-        return (CachingDataContext)context;
-      }
-      return new CachingDataContext(context);
-    }
-
-    private CachingDataContext(DataContext context) {
-      for (DataKey key : keys) {
-        values.put(key.getName(), key.getData(context));
-      }
-    }
-
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      return values.get(dataId);
-    }
   }
 
   /**

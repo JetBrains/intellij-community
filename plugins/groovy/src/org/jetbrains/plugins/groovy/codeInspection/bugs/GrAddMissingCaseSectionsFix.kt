@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -13,14 +16,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 
 class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitchElement) : GroovyFix() {
-  val elementsToInsert = expressions.map(SmartPointerManager::createPointer)
-  val switchElement = SmartPointerManager.createPointer(switch)
+  private val elementsToInsert = expressions.map(SmartPointerManager::createPointer)
+  private val switchElement = SmartPointerManager.createPointer(switch)
 
   private fun getName(element: PsiElement?): String = when (element) {
     null -> "null"
     is PsiClass -> element.name ?: "null"
     is GrEnumConstant -> element.name
     else -> element.text
+  }
+
+  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+    val copiedElements = elementsToInsert.mapNotNull { it.element?.let { PsiTreeUtil.findSameElementInCopy(it, target) } }
+    if (copiedElements.size != elementsToInsert.size) {
+      return null
+    }
+    val switchCopy = switchElement.element?.let { PsiTreeUtil.findSameElementInCopy(it, target) } ?: return null
+    return GrAddMissingCaseSectionsFix(copiedElements, switchCopy)
   }
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.missing.case.branches")

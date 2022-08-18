@@ -61,7 +61,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
     override fun getName() = message("intellij.configuration.name")
 
-    override fun getSchemaFile(): VirtualFile? {
+    override fun getSchemaFile(): VirtualFile {
       if (!SystemProperties.getBooleanProperty("configuration.schema.cache", true) && schemeFile.isInitialized()) {
         // simplify development - ability to apply changes on hotswap
         val newData = generateConfigurationSchema()

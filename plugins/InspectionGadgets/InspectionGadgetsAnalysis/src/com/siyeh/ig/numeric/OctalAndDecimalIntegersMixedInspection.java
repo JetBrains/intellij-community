@@ -57,7 +57,7 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
   private static class OctalAndDecimalIntegersMixedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiExpression[] initializers = expression.getInitializers();
       boolean hasDecimalLiteral = false;

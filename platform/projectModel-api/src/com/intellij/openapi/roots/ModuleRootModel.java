@@ -46,7 +46,7 @@ public interface ModuleRootModel {
    * Use this method to obtain all content entries of a module. Entries are given in
    * lexicographical order of their paths.
    *
-   * @return list of content entries for this module
+   * @return array of content entries for this module
    * @see ContentEntry
    */
   ContentEntry @NotNull [] getContentEntries();
@@ -54,7 +54,7 @@ public interface ModuleRootModel {
   /**
    * Use this method to obtain order of roots of a module. Order of entries is important.
    *
-   * @return list of order entries for this module
+   * @return array of order entries for this module
    */
   OrderEntry @NotNull [] getOrderEntries();
 
@@ -184,7 +184,7 @@ public interface ModuleRootModel {
   /**
    * Returns list of module names <i>this module</i> depends on.
    *
-   * @return the list of module names this module depends on.
+   * @return the array of module names this module depends on.
    */
   String @NotNull [] getDependencyModuleNames();
 

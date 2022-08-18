@@ -23,7 +23,7 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = elem) [@org.jetbrains.annotations.NotNull var elem: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UBinaryExpression (operator = =) [this[index1 + index2] = elem] : PsiType:Unit
                     UArrayAccessExpression [this[index1 + index2]] : PsiType:String
                         UThisExpression (label = null) [this] : PsiType:String[]

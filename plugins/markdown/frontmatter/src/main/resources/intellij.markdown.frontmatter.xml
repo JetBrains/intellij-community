@@ -1,0 +1,17 @@
+<idea-plugin package="org.intellij.plugins.markdown.frontmatter">
+  <dependencies>
+    <plugin id="org.intellij.intelliLang"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <multiHostInjector implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderLanguageInjector"/>
+  </extensions>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderJsonSchemaProviderFactory"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonSchemaEnabler implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderJsonSchemaEnabler"/>
+  </extensions>
+</idea-plugin>

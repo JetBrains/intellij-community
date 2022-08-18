@@ -46,7 +46,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
                   }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
-  public static final String JAVAX_SERVLET_SERVLET = "javax.servlet.Servlet";
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
@@ -192,7 +191,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public String getServletQName() {
-    return JAVAX_SERVLET_SERVLET;
+    return "javax.servlet.Servlet";
   }
 
   @Override
@@ -203,7 +202,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
     RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
-      ref.waitForInitialized();
+      ref.initializeIfNeeded();
       return (RefElement)ref;
     });
     return result instanceof RefParameter ? (RefParameter)result : null;
@@ -454,7 +453,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     @Override
     public boolean visitDeclaration(@NotNull UDeclaration node) {
       processComments(node);
-      RefElement refElement = myRefManager.getReference(KotlinPropertiesDetector.getPropertyElement(node));
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement != null) {
         myRefManager.buildReferences(refElement);
       }
@@ -467,6 +466,15 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         if (uAnnotation != null) {
           retrieveSuppressions(uAnnotation, node);
         }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visitExpression(@NotNull UExpression node) {
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
       }
       return true;
     }
@@ -487,24 +495,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         }
       }
       return false;
-    }
-
-    @Override
-    public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
-      return visitFunctionalExpression(node);
-    }
-
-    @Override
-    public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
-      return visitFunctionalExpression(node);
-    }
-
-    private boolean visitFunctionalExpression(@NotNull UExpression expression) {
-      RefElement refElement = myRefManager.getReference(expression.getSourcePsi());
-      if (refElement instanceof RefFunctionalExpressionImpl) {
-        myRefManager.buildReferences(refElement);
-      }
-      return true;
     }
 
     @Override

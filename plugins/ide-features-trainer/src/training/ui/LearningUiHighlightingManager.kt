@@ -30,6 +30,8 @@ object LearningUiHighlightingManager {
 
   val highlightingComponents: List<Component> get() = highlights.map { it.original }
 
+  val highlightingComponentsWithInfo: List<Pair<Component, () -> Any?>> get() = highlights.map { it.original to it.partInfo }
+
   fun highlightComponent(original: Component, options: HighlightingOptions = HighlightingOptions()) {
     highlightPartOfComponent(original, options) { Rectangle(Point(0, 0), it.size) }
   }
@@ -37,7 +39,7 @@ object LearningUiHighlightingManager {
   fun highlightJListItem(list: JList<*>,
                          options: HighlightingOptions = HighlightingOptions(),
                          index: () -> Int?) {
-    highlightPartOfComponent(list, options) l@{
+    highlightPartOfComponent(list, options, { index() }) l@{
       index()?.let {
         if (it in 0 until list.model.size) list.getCellBounds(it, it) else null
       }
@@ -54,9 +56,10 @@ object LearningUiHighlightingManager {
 
   fun <T : Component> highlightPartOfComponent(component: T,
                                                options: HighlightingOptions = HighlightingOptions(),
+                                               partInfo: () -> Any? = { null },
                                                rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) {
-      RepaintHighlighting(component, options) l@{
+      RepaintHighlighting(component, options, partInfo) l@{
         val rect = rectangle(component) ?: return@l null
         if (component !is JComponent) return@l rect
         component.visibleRect.intersection(rect).takeIf { !it.isEmpty }
@@ -97,6 +100,7 @@ object LearningUiHighlightingManager {
 
 internal class RepaintHighlighting<T : Component>(val original: T,
                                                   val options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  val partInfo: () -> Any?,
                                                   val rectangle: () -> Rectangle?
 ) {
   var removed = false

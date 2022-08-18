@@ -528,4 +528,6 @@
   <action id="UiInspector">
     <mouse-shortcut keystroke="control alt button1"/>
   </action>
+
+  <action id="MainMenuButton.ShowMenu" />
 </keymap>

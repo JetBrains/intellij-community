@@ -44,6 +44,7 @@ public class WizardContext extends UserDataHolderBase {
   private ModulesProvider myModulesProvider;
   private boolean myProjectFileDirectorySetExplicitly;
   private String myDefaultModuleName = "untitled";
+  private int myScreen = 1;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -85,7 +86,7 @@ public class WizardContext extends UserDataHolderBase {
 
     default void switchToRequested(@NotNull String placeId) { }
 
-    default void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+    default void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
       switchToRequested(placeId);
     }
   }
@@ -185,7 +186,7 @@ public class WizardContext extends UserDataHolderBase {
     requestSwitchTo(placeId, __ -> {});
   }
 
-  public void requestSwitchTo(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+  public void requestSwitchTo(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
     for (Listener listener : myListeners) {
       listener.switchToRequested(placeId, configure);
     }
@@ -232,5 +233,13 @@ public class WizardContext extends UserDataHolderBase {
 
   public Session getSessionId() {
     return mySessionId;
+  }
+
+  public int getScreen() {
+    return myScreen;
+  }
+
+  public void setScreen(int screen) {
+    myScreen = screen;
   }
 }

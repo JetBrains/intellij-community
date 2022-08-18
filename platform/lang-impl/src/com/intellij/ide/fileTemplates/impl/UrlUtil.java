@@ -1,38 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.HashMapZipFile;
+import com.intellij.util.lang.ImmutableZipEntry;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class UrlUtil {
-  private static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
   private static final String URL_PATH_SEPARATOR = "/";
-  private static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
-  private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
+  private static final String FILE_PROTOCOL_PREFIX = URLUtil.FILE_PROTOCOL + ":";
 
-  @NotNull
-  public static String loadText(@NotNull URL url) throws IOException {
-    try (InputStream stream = new BufferedInputStream(URLUtil.openStream(url))) {
-      return new String(FileUtil.loadBytes(stream), FileTemplate.ourEncoding);
-    }
+  public static @NotNull String loadText(@NotNull URL url) throws IOException {
+    return ResourceUtil.loadText(url.openStream());
   }
 
   public static @NotNull List<String> getChildrenRelativePaths(@NotNull URL root) throws IOException {
@@ -40,7 +28,7 @@ public final class UrlUtil {
     if ("jar".equalsIgnoreCase(protocol)) {
       return getChildPathsFromJar(root);
     }
-    else if (FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
+    else if (URLUtil.FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
       return getChildPathsFromFile(root);
     }
     else {
@@ -52,7 +40,7 @@ public final class UrlUtil {
     final List<String> paths = new ArrayList<>();
     final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
-      void collectFiles(File fromFile, String prefix) {
+      private void collectFiles(File fromFile, String prefix) {
         File[] list = fromFile.listFiles();
         if (list == null) {
           return;
@@ -72,30 +60,45 @@ public final class UrlUtil {
     return paths;
   }
 
-  private static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
-    String file = root.getFile();
-    file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
-    int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex > 0;
+  static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
+    // Parse e.g. the following url: jar:file:/C:/build/idea-sandbox/plugins/lib/jar-2022.1.9999%20-%20Copy.jar!/file Templates/
+    if (!URLUtil.JAR_PROTOCOL.equalsIgnoreCase(root.getProtocol())) {
+      throw new RuntimeException("This function accepts only jar urls: " + root);
+    }
 
-    String rootDirName = file.substring(jarSeparatorIndex + 2);
+    String rootPath = root.getPath();
+    int jarSeparatorIndex = rootPath.indexOf(URLUtil.JAR_SEPARATOR);
+    if (jarSeparatorIndex <= 0) {
+      throw new RuntimeException("This function accepts only urls with '" + URLUtil.JAR_SEPARATOR + "': " + root);
+    }
+
+    String rootDirName = rootPath.substring(jarSeparatorIndex + 2);
     if (!rootDirName.endsWith(URL_PATH_SEPARATOR)) {
       rootDirName += URL_PATH_SEPARATOR;
     }
 
-    try (ZipFile zipFile = new ZipFile(FileUtil.unquote(file.substring(0, jarSeparatorIndex)))) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      List<String> paths = new ArrayList<>();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        if (!entry.isDirectory()) {
-          String relPath = entry.getName();
-          if (relPath.startsWith(rootDirName)) {
-            paths.add(relPath.substring(rootDirName.length()));
-          }
+    String fileUrl = rootPath.substring(0, jarSeparatorIndex);
+    if (!fileUrl.startsWith("file:")) {
+      throw new RuntimeException("This function accepts 'jar:file:' urls: " + root);
+    }
+
+    File file = URLUtil.urlToFile(new URL(fileUrl));
+
+    List<String> paths = new ArrayList<>();
+    try (HashMapZipFile zipFile = HashMapZipFile.load(file.toPath())) {
+      for (ImmutableZipEntry entry : zipFile.getEntries()) {
+        String path = entry.getName();
+        if (path.startsWith(rootDirName)) {
+          paths.add(path.substring(rootDirName.length()));
         }
       }
       return paths;
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }

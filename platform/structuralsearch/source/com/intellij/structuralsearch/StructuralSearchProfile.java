@@ -345,6 +345,9 @@ public abstract class StructuralSearchProfile {
     else if (info.isHasCommaAfter()) {
       result.delete(info.getAfterDelimiterPos(), info.getAfterDelimiterPos() + 1);
     }
+    else if (info.getStartIndex() < result.length() && StringUtil.isLineBreak(result.charAt(info.getStartIndex()))) {
+      result.deleteCharAt(info.getStartIndex()); // delete line break when count filter matches nothing
+    }
   }
 
   @Contract("null -> false")

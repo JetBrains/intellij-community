@@ -192,19 +192,19 @@ internal sealed class ChangeEntry {
   }
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.getOriginalEntityData(id: EntityId): WorkspaceEntityData<*> {
+internal fun MutableEntityStorageImpl.getOriginalEntityData(id: EntityId): WorkspaceEntityData<*> {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
       is ChangeEntry.ReplaceEntity -> it.oldData
       is ChangeEntry.AddEntity -> it.entityData
-      is ChangeEntry.ChangeEntitySource -> it.newData.clone()
+      is ChangeEntry.ChangeEntitySource -> it.newData
       is ChangeEntry.RemoveEntity -> it.oldData
       is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.oldData
     }
-  } ?: this.entityDataByIdOrDie(id).clone()
+  }?.clone() ?: this.entityDataByIdOrDie(id).clone()
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
+internal fun MutableEntityStorageImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
   return this.changeLog.changeLog[id.id]?.let {
     when (it) {
       is ChangeEntry.ReplaceEntity -> it.oldParents
@@ -216,12 +216,12 @@ internal fun WorkspaceEntityStorageBuilderImpl.getOriginalParents(id: ChildEntit
   } ?: this.refs.getParentRefsOfChild(id)
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.getOriginalSource(id: EntityId): EntitySource {
+internal fun MutableEntityStorageImpl.getOriginalSourceFromChangelog(id: EntityId): EntitySource? {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
       is ChangeEntry.ChangeEntitySource -> it.originalSource
       is ChangeEntry.ReplaceAndChangeSource -> it.sourceChange.originalSource
-      else -> this.entityDataByIdOrDie(id).entitySource
+      else -> null
     }
-  } ?: this.entityDataByIdOrDie(id).entitySource
+  }
 }

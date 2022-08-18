@@ -22,8 +22,12 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  */
 public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> {
+  public JavaMethodBreakpointType(@NotNull String id, @Nls @NotNull String message) {
+    super(id, message);
+  }
+
   public JavaMethodBreakpointType() {
-    super("java-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
+    this("java-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
   @NotNull

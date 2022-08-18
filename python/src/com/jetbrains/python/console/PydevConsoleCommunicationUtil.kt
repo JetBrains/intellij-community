@@ -60,8 +60,8 @@ fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor)
     }
   }
 
-  result.setColHeaders(colHeaders);
-  result.setRowLabels(rowHeaders);
+  result.setColHeaders(colHeaders)
+  result.setRowLabels(rowHeaders)
 
   // `parseArrayValues()`
 

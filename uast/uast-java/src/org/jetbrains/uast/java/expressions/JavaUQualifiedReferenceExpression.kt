@@ -28,7 +28,7 @@ class JavaUQualifiedReferenceExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
   override val receiver: UExpression by lz {
-    sourcePsi.qualifier?.let { JavaConverter.convertPsiElement(it, this) as? UExpression } ?: UastEmptyExpression(this)
+    sourcePsi.qualifier?.let { JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression } ?: UastEmptyExpression(this)
   }
 
   override val selector: USimpleNameReferenceExpression by lz {

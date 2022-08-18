@@ -1,39 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.facet.JvmOnlyProjectChecker
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.caching.get
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtElement
 
 val PsiElement.isJvmElement: Boolean
     get() {
-        if (allModulesSupportJvm(project)) return true
-
-        val containingFile = containingFile
-        if (containingFile is KtFile) {
-            return TargetPlatformDetector.getPlatform(containingFile).isJvm()
+        if (JvmOnlyProjectChecker.getInstance(project).get()) {
+            return true
+        } else if (this is KtElement) {
+            return platform.isJvm()
+        } else {
+            val module = module ?: return true
+            return module.platform.isJvm()
         }
-
-        return module == null || TargetPlatformDetector.getPlatform(module!!).isJvm()
     }
-
-private fun allModulesSupportJvm(project: Project): Boolean =
-    CachedValuesManager.getManager(project)
-        .getCachedValue(project) {
-            CachedValueProvider.Result.create(
-                ModuleManager.getInstance(project).modules.all { module ->
-                    ProgressManager.checkCanceled()
-                    TargetPlatformDetector.getPlatform(module).isJvm()
-                },
-                ProjectRootModificationTracker.getInstance(project)
-            )
-        }

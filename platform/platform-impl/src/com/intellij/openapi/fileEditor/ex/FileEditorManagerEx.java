@@ -100,7 +100,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract boolean hasOpenedFile();
 
   public boolean canOpenFile(@NotNull VirtualFile file) {
-    return FileEditorProviderManager.getInstance().getProviders(getProject(), file).length > 0;
+    return FileEditorProviderManager.getInstance().getProviderList(getProject(), file).size() > 0;
   }
 
   public abstract @Nullable VirtualFile getCurrentFile();

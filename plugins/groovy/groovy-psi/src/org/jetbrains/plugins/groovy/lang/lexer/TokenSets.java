@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -110,7 +110,7 @@ public interface TokenSets {
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
     kLONG,
-    kNATIVE, kNEW, kNON_SEALED, kNULL,
+    kNATIVE, kNEW, kNON_SEALED, kNOT_IN, kNOT_INSTANCEOF, kNULL,
     kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
     kRECORD, kRETURN,
     kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
@@ -231,4 +231,6 @@ public interface TokenSets {
   );
 
   TokenSet METHOD_IDENTIFIERS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mIDENT));
+
+  TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(mSEMI, mLCURLY, mRCURLY);
 }

@@ -48,6 +48,9 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
                     overrides="true"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedChangeDiffComponentFactoryProvider"/>
   </extensions>
 
   <projectListeners>

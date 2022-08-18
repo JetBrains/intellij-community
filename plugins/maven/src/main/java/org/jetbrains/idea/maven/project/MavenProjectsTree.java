@@ -22,6 +22,8 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -75,6 +77,7 @@ public final class MavenProjectsTree {
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
+
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     @Override
@@ -546,7 +549,7 @@ public final class MavenProjectsTree {
         writeUnlock();
       }
       MavenId oldParentId = mavenProject.getParentId();
-      changes = changes.mergedWith(mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
+      changes = MavenProjectChangesBuilder.merged(changes, mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
 
       writeLock();
       try {
@@ -1063,11 +1066,10 @@ public final class MavenProjectsTree {
   public MavenProject findSingleProjectInReactor(MavenId id) {
     readLock();
     try {
-      List<MavenProject> list = myMavenIdToProjectMapping.values().stream().filter(
-        it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
-              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())
-      ).collect(Collectors.toList());
-      return list.size() == 1 ? list.get(0) : null;
+      return StreamEx.ofValues(myMavenIdToProjectMapping)
+        .collect(MoreCollectors.onlyOne(it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
+                                              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())))
+        .orElse(null);
     }
     finally {
       readUnlock();
@@ -1277,6 +1279,11 @@ public final class MavenProjectsTree {
     myListeners.add(l, disposable);
   }
 
+  @ApiStatus.Internal
+  void addListenersFrom(MavenProjectsTree other){
+    myListeners.addAll(other.myListeners);
+  }
+
   void fireProfilesChanged() {
     for (Listener each : myListeners) {
       each.profilesChanged();
@@ -1324,9 +1331,11 @@ public final class MavenProjectsTree {
     public final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new LinkedHashMap<>();
     public final Set<MavenProject> deletedProjects = new LinkedHashSet<>();
 
-    public void update(MavenProject project, MavenProjectChanges changes) {
+    public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
+      updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
+        previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
+      );
     }
 
     public void deleted(MavenProject project) {
@@ -1533,5 +1542,23 @@ public final class MavenProjectsTree {
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
+  }
+
+  public MavenProjectsTree getCopyForReimport(){
+    MavenProjectsTree result = new MavenProjectsTree(myProject);
+
+    result.myExplicitProfiles = myExplicitProfiles;
+    result.myRootProjects.addAll(myRootProjects);
+    result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
+    result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
+    result.myAggregatorToModuleMapping.putAll(myAggregatorToModuleMapping);
+    result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
+    result.myManagedFilesPaths.addAll(myManagedFilesPaths);
+    result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
+    result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
+    result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
+    result.myTimestamps.putAll(myTimestamps);
+    myWorkspaceMap.copyInto(result.myWorkspaceMap);
+    return result;
   }
 }

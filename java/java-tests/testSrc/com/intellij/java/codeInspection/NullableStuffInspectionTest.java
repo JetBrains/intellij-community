@@ -124,6 +124,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testOverriddenViaMethodReference() { doTest(); }
+  public void testMethodReferenceListOf() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
@@ -299,10 +300,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testAnnotateQuickFixOnMethodReference() {
-    doTestWithFix("Annotate");
-  }
-
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTestWithFix("Annotate overridden method parameters");
@@ -367,7 +364,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     String oldDefault = manager.getDefaultNotNull();
     try {
       manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as @NotNull");
+      doTestWithFix("Annotate as '@NotNull'");
     }
     finally {
       manager.setDefaultNotNull(oldDefault);
@@ -384,7 +381,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     String oldDefault = manager.getDefaultNotNull();
     try {
       manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as @NotNull");
+      doTestWithFix("Annotate as '@NotNull'");
     }
     finally {
       manager.setDefaultNotNull(oldDefault);
@@ -403,6 +400,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
                        "  Class<? extends Annotation> value();" +
                        "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
                        "}");
+    doTest();
+  }
+
+  public void testMapComputeLambdaAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 }

@@ -121,7 +121,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         thread.waitForCompletion(20_000);
       }
-      catch (ExecutionException | InterruptedException e) {
+      catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
       if (!thread.isDone()) {
@@ -697,7 +697,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertTrue(application.isWriteActionInProgress());
           assertTrue(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionPending());
-          assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+          // jury is still out on whether we should allow starting write action from here
+          //assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
         }
 
         @Override

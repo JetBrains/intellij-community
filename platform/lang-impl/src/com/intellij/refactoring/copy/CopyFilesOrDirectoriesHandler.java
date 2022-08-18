@@ -215,10 +215,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   /**
-   * @param files
    * @param newName can be not null only if elements.length == 1
-   * @param targetDirectory
-   * @param openInEditor
    */
   private static void copyImpl(final VirtualFile @NotNull [] files,
                                @Nullable final String newName,

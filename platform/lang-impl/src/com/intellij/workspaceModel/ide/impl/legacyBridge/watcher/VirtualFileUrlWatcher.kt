@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlin.reflect.KClass
@@ -22,43 +23,43 @@ open class VirtualFileUrlWatcher(val project: Project) {
     LibraryRootFileWatcher(),
     // Library excluded roots
     EntityVirtualFileUrlWatcher(
-      LibraryEntity::class, ModifiableLibraryEntity::class,
+      LibraryEntity::class, LibraryEntity.Builder::class,
       propertyName = LibraryEntity::excludedRoots.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
-        excludedRoots = excludedRoots - oldVirtualFileUrl
-        excludedRoots = excludedRoots + newVirtualFileUrl
+        excludedRoots.remove(oldVirtualFileUrl)
+        excludedRoots.add(newVirtualFileUrl)
       }
     ),
     // Content root urls
     EntityVirtualFileUrlWatcher(
-      ContentRootEntity::class, ModifiableContentRootEntity::class,
+      ContentRootEntity::class, ContentRootEntity.Builder::class,
       propertyName = ContentRootEntity::url.name,
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Content root excluded urls
     EntityVirtualFileUrlWatcher(
-      ContentRootEntity::class, ModifiableContentRootEntity::class,
+      ContentRootEntity::class, ContentRootEntity.Builder::class,
       propertyName = ContentRootEntity::excludedUrls.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
-        excludedUrls = excludedUrls - oldVirtualFileUrl
-        excludedUrls = excludedUrls + newVirtualFileUrl
+        excludedUrls.remove(oldVirtualFileUrl)
+        excludedUrls.add(newVirtualFileUrl)
       }
     ),
     // Source roots
     EntityVirtualFileUrlWatcher(
-      SourceRootEntity::class, ModifiableSourceRootEntity::class,
+      SourceRootEntity::class, SourceRootEntity.Builder::class,
       propertyName = SourceRootEntity::url.name,
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output
     EntityVirtualFileUrlWatcher(
-      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class,
+      JavaModuleSettingsEntity::class, JavaModuleSettingsEntity.Builder::class,
       propertyName = JavaModuleSettingsEntity::compilerOutput.name,
       modificator = { _, newVirtualFileUrl -> compilerOutput = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output for tests
     EntityVirtualFileUrlWatcher(
-      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class,
+      JavaModuleSettingsEntity::class, JavaModuleSettingsEntity.Builder::class,
       propertyName = JavaModuleSettingsEntity::compilerOutputForTests.name,
       modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
     ),
@@ -90,10 +91,9 @@ open class VirtualFileUrlWatcher(val project: Project) {
   }
 
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): VirtualFileUrlWatcher = project.getComponent(VirtualFileUrlWatcher::class.java)
+    fun getInstance(project: Project): VirtualFileUrlWatcher = project.service()
 
-    internal fun calculateAffectedEntities(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl,
+    internal fun calculateAffectedEntities(storage: EntityStorage, virtualFileUrl: VirtualFileUrl,
                                            aggregator: MutableList<EntityWithVirtualFileUrl>) {
       storage.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).forEach {
         aggregator.add(EntityWithVirtualFileUrl(it.first, virtualFileUrl, it.second))
@@ -110,7 +110,7 @@ private interface LegacyFileWatcher {
                   newUrl: String,
                   entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                   virtualFileManager: VirtualFileUrlManager,
-                  diff: WorkspaceEntityStorageBuilder)
+                  diff: MutableEntityStorage)
 }
 
 private class EntitySourceFileWatcher<T : EntitySource>(
@@ -122,17 +122,19 @@ private class EntitySourceFileWatcher<T : EntitySource>(
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     val entities = diff.entitiesBySource { it::class == entitySource }
     for ((entitySource, mapOfEntities) in entities) {
       @Suppress("UNCHECKED_CAST")
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
 
-      val newVfurl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
-      val newEntitySource = createNewSource(entitySource, newVfurl)
+      val newVfsUrl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
-      mapOfEntities.values.flatten().forEach { diff.changeSource(it, newEntitySource) }
+      mapOfEntities.values.flatten().forEach {
+        diff.modifyEntity(ModifiableWorkspaceEntity::class.java, it) { this.entitySource = newEntitySource }
+      }
     }
   }
 }
@@ -155,7 +157,7 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : ModifiableWor
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     entitiesWithVFU.filter { entityClass.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val existingVirtualFileUrl = entityWithVFU.virtualFileUrl
       val savedUrl = existingVirtualFileUrl.url
@@ -182,19 +184,19 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     entitiesWithVFU.filter { LibraryEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
       val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
 
       entityWithVFU.entity as LibraryEntity
-      val oldLibraryRoots = diff.resolve(entityWithVFU.entity.persistentId())?.roots?.filter { it.url == oldVFU }
+      val oldLibraryRoots = diff.resolve(entityWithVFU.entity.persistentId)?.roots?.filter { it.url == oldVFU }
                             ?: error("Incorrect state of the VFU index")
       oldLibraryRoots.forEach { oldLibraryRoot ->
         val newLibraryRoot = LibraryRoot(newVFU, oldLibraryRoot.type, oldLibraryRoot.inclusionOptions)
-        diff.modifyEntity(ModifiableLibraryEntity::class.java, entityWithVFU.entity) {
-          roots = roots - oldLibraryRoot
-          roots = roots + newLibraryRoot
+        diff.modifyEntity(entityWithVFU.entity) {
+          roots.remove(oldLibraryRoot)
+          roots.add(newLibraryRoot)
         }
       }
     }

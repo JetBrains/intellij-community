@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -25,7 +25,7 @@ class ScriptTemplatesFromCompilerSettingsProvider(
     init {
         project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
             .subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
-                override fun <T> settingsChanged(newSettings: T) {
+                override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
                     if (newSettings !is CompilerSettings) return
 
                     executeOnPooledThread {
@@ -37,19 +37,22 @@ class ScriptTemplatesFromCompilerSettingsProvider(
     }
 
     override val definitions: Sequence<ScriptDefinition>
-        get() = KotlinCompilerSettings.getInstance(project).settings.let { kotlinSettings ->
-            if (kotlinSettings.scriptTemplates.isBlank()) emptySequence()
-            else loadDefinitionsFromTemplatesByPaths(
-                templateClassNames = kotlinSettings.scriptTemplates.split(',', ' '),
-                templateClasspath = kotlinSettings.scriptTemplatesClasspath.split(File.pathSeparator).map(::Path),
-                baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-                    getEnvironment {
-                        mapOf(
-                            "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File)
-                        )
+        get() {
+            if (project.isDisposed) return emptySequence()
+            return KotlinCompilerSettings.getInstance(project).settings.let { kotlinSettings ->
+                if (kotlinSettings.scriptTemplates.isBlank()) emptySequence()
+                else loadDefinitionsFromTemplatesByPaths(
+                    templateClassNames = kotlinSettings.scriptTemplates.split(',', ' '),
+                    templateClasspath = kotlinSettings.scriptTemplatesClasspath.split(File.pathSeparator).map(::Path),
+                    baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+                        getEnvironment {
+                            mapOf(
+                                "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File)
+                            )
+                        }
                     }
-                }
-            ).asSequence()
+                ).asSequence()
+            }
         }
 
     override val id: String = "KotlinCompilerScriptTemplatesSettings"

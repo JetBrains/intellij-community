@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
@@ -37,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UnnecessaryTemporaryOnConversionFromStringInspection
-  extends BaseInspection {
+public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -48,17 +48,14 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
-    return InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
-      replacementString);
+    return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.display.name");
   }
 
   @Nullable
   @NonNls
   static String calculateReplacementExpression(PsiMethodCallExpression expression,
                                                CommentTracker commentTracker,
-                                               boolean isFullyQualified) {
+                                               boolean fullyQualified) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
     if (qualifier == null) return null;
@@ -67,10 +64,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     final PsiExpression arg = argumentList.getExpressions()[0];
     final PsiType type = qualifier.getType();
     if (type == null) return null;
-    final String qualifierType = type.getPresentableText();
-    final String canonicalType = type.getCanonicalText();
-    final String name = isFullyQualified ? canonicalType : qualifierType;
-    final String conversionName = JavaPsiBoxingUtils.getParseMethod(canonicalType);
+    final String name = fullyQualified ? type.getCanonicalText() : type.getPresentableText();
+    final String conversionName = JavaPsiBoxingUtils.getParseMethod(type);
     if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type) && !PsiUtil.isLanguageLevel5OrHigher(expression)) {
       return name + '.' + "valueOf" + '(' + commentTracker.text(arg) + ").booleanValue()";
     }
@@ -109,7 +104,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement grandParent = element.getParent().getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)grandParent;
       final CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker, true);
       if (newExpression == null) return;
@@ -124,8 +124,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
   private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
-    /**
-     */
     @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
 
     static {
@@ -147,14 +145,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
       if (!basicTypeMap.containsValue(methodName)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiNewExpression)) {
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;
       }
@@ -178,7 +174,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
       if (!mappingMethod.equals(methodName)) {
         return;
       }
-      registerError(expression, expression);
+      registerMethodCallError(expression, expression);
     }
   }
 }

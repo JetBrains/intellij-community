@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Defines the implementation of a custom structure view or file structure popup component.
@@ -19,13 +18,6 @@ import java.awt.*;
  */
 
 public interface StructureView extends Disposable {
-  /**
-   * Returns the editor whose structure is displayed in the structure view.
-   *
-   * @return the editor linked to the structure view.
-   */
-  FileEditor getFileEditor();
-
   /**
    * Selects the element which corresponds to the current cursor position in the editor
    * linked to the structure view.
@@ -67,9 +59,4 @@ public interface StructureView extends Disposable {
 
   @NotNull
   StructureViewModel getTreeModel();
-
-  interface Scrollable extends StructureView {
-    Dimension getCurrentSize();
-    void setReferenceSizeWhileInitializing(Dimension size);
-  }
 }

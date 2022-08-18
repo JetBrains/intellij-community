@@ -13,3 +13,5 @@ class Foo {
         const val CONST = 42
     }
 }
+
+// FIR_COMPARISON

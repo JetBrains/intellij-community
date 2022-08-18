@@ -16,4 +16,6 @@ fun f(b: B, c: C) {
     val (a1, n1) = c
     val (x1, y1, z1) = a1
 }
+// FIR_COMPARISON
 // FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+// IGNORE_FIR_LOG

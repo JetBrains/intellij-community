@@ -13,7 +13,7 @@ class PyDevDisplayHook(DisplayHook):
                                                             **kwargs)
             return
         add_new_line_to_text(format_dict)
-        format_dict["execution_count"] = str(self.shell.execution_count)
+        format_dict["execution_count"] = str(get_current_exec_count(self.shell))
         send_rich_output(format_dict)
 
 
@@ -24,7 +24,15 @@ class PyDevDisplayPub(DisplayPublisher):
             super(PyDevDisplayPub, self).publish(data, *args, **kwargs)
             return
         add_new_line_to_text(data)
+        data["execution_count"] = str(get_current_exec_count(self.shell))
         send_rich_output(data)
+
+
+def get_current_exec_count(shell):
+    if hasattr(shell, "pydev_curr_exec_line") and shell.pydev_curr_exec_line != 0:
+        return shell.pydev_curr_exec_line
+    else:
+        return shell.execution_count
 
 
 def add_new_line_to_text(format_dict):
@@ -65,17 +73,19 @@ def send_rich_output(data):
         sys.stderr.flush()
 
 
-def patch_stdout():
-    sys.stdout = PydevStdOut(sys.stdout)
+def patch_stdout(pydev_shell):
+    sys.stdout = PydevStdOut(sys.stdout, pydev_shell)
 
 
 class PydevStdOut:
-    def __init__(self, original_stdout=sys.stdout, *args, **kwargs):
+    def __init__(self, original_stdout=sys.stdout, pydev_shell=None, *args, **kwargs):
         self.encoding = sys.stdout.encoding
         self.original_stdout = original_stdout
+        self.pydev_shell = pydev_shell
 
     def write(self, s):
         data = {'text/plain': s}
+        data['execution_count'] = str(self.pydev_shell.execution_count)
         send_rich_output(data)
 
     def __getattr__(self, item):

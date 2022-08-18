@@ -24,18 +24,16 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
-        <packagesearch.projectModuleOperationProvider
+        <packagesearch.coroutineProjectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
-        <packagesearch.moduleTransformer
+
+        <packagesearch.coroutineModuleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
 
-        <packagesearch.moduleChangesSignalProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.ExternalProjectSignalProvider"/>
-
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.SmartModeSignalProvider"/>
 
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider
@@ -53,4 +51,13 @@
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
     </extensions>
+
+    <actions>
+        <action id="PackageSearch.Gradle.DependencyAnalyzer.GoTo"
+                class="com.jetbrains.packagesearch.intellij.plugin.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToPackageSearchAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+        </action>
+    </actions>
 </idea-plugin>

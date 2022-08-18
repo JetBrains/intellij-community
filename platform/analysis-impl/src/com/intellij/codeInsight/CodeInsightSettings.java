@@ -128,6 +128,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;
   public boolean INSERT_SCRIPTLET_END_ON_ENTER = true;
+  public boolean CLOSE_COMMENT_ON_ENTER = true;
   public boolean JAVADOC_STUB_ON_ENTER = true;
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;

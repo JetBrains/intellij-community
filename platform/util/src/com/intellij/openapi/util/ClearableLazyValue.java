@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 /**
- * Lazy value with ability to reset (and recompute) the value.
+ * Lazy value with ability to reset (and recompute) the (not-null) value.
  * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
 public abstract class ClearableLazyValue<T> {
-  public static @NotNull <T> ClearableLazyValue<T> create(@NotNull Supplier<? extends T> computable) {
+  public static @NotNull <T> ClearableLazyValue<T> create(@NotNull Supplier<? extends @NotNull T> computable) {
     return new ClearableLazyValue<T>() {
       @Override
       protected @NotNull T compute() {
@@ -19,7 +19,7 @@ public abstract class ClearableLazyValue<T> {
     };
   }
 
-  public static @NotNull <T> ClearableLazyValue<T> createAtomic(@NotNull Supplier<? extends T> computable) {
+  public static @NotNull <T> ClearableLazyValue<T> createAtomic(@NotNull Supplier<? extends @NotNull T> computable) {
     return new AtomicClearableLazyValue<T>() {
       @Override
       protected @NotNull T compute() {

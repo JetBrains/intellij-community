@@ -9,10 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -40,7 +37,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -53,7 +49,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
 
 public final class EditorUtil {
@@ -705,7 +703,7 @@ public final class EditorUtil {
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
       if (foldRegion instanceof CustomFoldRegion) {
         int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
-        OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+        Interval interval = new TextRangeInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
         return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
                                      foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
       }
@@ -720,7 +718,7 @@ public final class EditorUtil {
     int endY = (endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine)) + lineHeight;
     int startYEx = topOverlapped ? startY + lineHeight : startY;
     int endYEx = bottomOverlapped ? endY - lineHeight : endY;
-    return Pair.create(new OurInterval(startY, endY), startYEx < endYEx ? new OurInterval(startYEx, endYEx) : null);
+    return Pair.create(new TextRangeInterval(startY, endY), startYEx < endYEx ? new TextRangeInterval(startYEx, endYEx) : null);
   }
 
   /**
@@ -738,12 +736,12 @@ public final class EditorUtil {
     if (editor instanceof EditorImpl) {
       VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
       if (!iterator.atEnd()) {
-        return new OurInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
+        return new TextRangeInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
       }
     }
     int startLogicalLine = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0, false)).line;
     int endLogicalLine= editor.visualToLogicalPosition(new VisualPosition(visualLine, Integer.MAX_VALUE, true)).line;
-    return new OurInterval(startLogicalLine, endLogicalLine);
+    return new TextRangeInterval(startLogicalLine, endLogicalLine);
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
@@ -1115,7 +1113,6 @@ public final class EditorUtil {
 
   /**
    * Tells whether maximum allowed number of carets is reached in editor. If it's the case, notification is shown
-   * ({@link #checkMaxCarets(Editor)}).
    */
   public static boolean checkMaxCarets(@NotNull Editor editor) {
     CaretModel caretModel = editor.getCaretModel();
@@ -1134,7 +1131,7 @@ public final class EditorUtil {
   }
 
   public static boolean contextMenuInvokedOutsideOfSelection(@NotNull AnActionEvent e) {
-    if (!PlatformUtils.isDataGrip() || e.getPlace() != ActionPlaces.EDITOR_POPUP) return false;
+    if (!ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor != null && editor.getSelectionModel().hasSelection() &&
            !isCaretInsideSelection(e.getData(CommonDataKeys.CARET));
@@ -1143,39 +1140,27 @@ public final class EditorUtil {
   @NotNull
   public static DataContext getEditorDataContext(@NotNull Editor editor) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    if (CommonDataKeys.PROJECT.getData(context) == editor.getProject()) {
+    if (PROJECT.getData(context) == editor.getProject()) {
       return context;
     }
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return editor.getProject();
+    return new CustomizedDataContext() {
+      @Override
+      public @NotNull DataContext getParent() {
+        return context;
       }
-      return context.getData(dataId);
+
+      @Override
+      public @Nullable Object getRawCustomData(@NotNull String dataId) {
+        if (PROJECT.is(dataId)) {
+          return Objects.requireNonNullElse(editor.getProject(), EXPLICIT_NULL);
+        }
+        return null;
+      }
     };
   }
 
   private static class EditorNotification {
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
-  }
-
-  private static class OurInterval implements Interval {
-    private final int intervalStart;
-    private final int intervalEnd;
-
-    private OurInterval(int intervalStart, int intervalEnd) {
-      this.intervalStart = intervalStart;
-      this.intervalEnd = intervalEnd;
-    }
-
-    @Override
-    public int intervalStart() {
-      return intervalStart;
-    }
-
-    @Override
-    public int intervalEnd() {
-      return intervalEnd;
-    }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class ConfigurableVisitor implements Predicate<Configurable> {
-  public static final Predicate<Configurable> ALL = configurable -> true;
+  public static final Predicate<Configurable> ALL = Predicates.alwaysTrue();
 
   @Override
   public boolean test(Configurable configurable) {

@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -33,25 +35,31 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.Collections;
 
-/**
- * @author peter
- */
-public class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
-
-  @NotNull
+public final class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.edit.method.contract");
   }
 
-  @Nullable
-  private static PsiMethod getTargetMethod(Editor editor, PsiFile file) {
+  private static @Nullable PsiMethod getTargetMethod(Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
     if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }
     return null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiMethod method = getTargetMethod(editor, file);
+    PsiAnnotation annotation = method == null ? null : JavaMethodContractUtil.findContractAnnotation(method);
+    String text = "(\"...\")";
+    if (annotation != null) {
+      text = annotation.getParameterList().getText();
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "@Contract()\nclass X{}",
+                                               "@Contract" + text + "\nclass X{}");
   }
 
   @Override
@@ -132,7 +140,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     constraints.gridwidth = 1;
     constraints.weightx = 1;
     JLabel contractLabel = new JLabel(JavaBundle.message("label.contract"));
-    contractLabel.setDisplayedMnemonic('c');
     contractLabel.setLabelFor(contractText);
     panel.add(contractLabel, constraints);
     constraints.gridx = 1;
@@ -150,7 +157,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       constraints.weightx = 1;
       constraints.gridwidth = 1;
       JLabel mutatesLabel = new JLabel(JavaBundle.message("label.mutates"));
-      mutatesLabel.setDisplayedMnemonic('m');
       mutatesLabel.setLabelFor(mutatesText);
       panel.add(mutatesLabel, constraints);
       constraints.gridx = 1;
@@ -167,7 +173,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   private static JCheckBox createPureCheckBox(boolean selected) {
     JCheckBox pureCB = new NonFocusableCheckBox(JavaBundle.message("edit.contract.dialog.checkbox.pure.method"));
-    pureCB.setMnemonic('p');
     pureCB.setSelected(selected);
     return pureCB;
   }
@@ -187,13 +192,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
     return StringUtil.isEmpty(mutates) ? null : MutationSignature.checkSignature(mutates, method);
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
     if (StringUtil.isEmpty(contract)) {
       return null;
     }

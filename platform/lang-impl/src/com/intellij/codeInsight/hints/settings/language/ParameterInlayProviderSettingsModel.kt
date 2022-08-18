@@ -8,8 +8,8 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -67,25 +67,28 @@ class ParameterInlayProviderSettingsModel(
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
+                                               val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
                                                backup.reset()
                                                try {
                                                  apply()
                                                  val case = CASE_KEY.get(editor)
-                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, case != null && !case.value)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, !isEnabled || case != null && !case.value)
                                                  provider.supportedOptions.forEach { it.set(true) }
+                                                 setShowParameterHintsForLanguage(true, language)
                                                  pass.collectInformation(ProgressIndicatorBase())
                                                }
                                                finally {
                                                  backup.apply()
+                                                 setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
     return Runnable {
+      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
       pass.doApplyInformationToEditor()
     }
   }
 
-  override val description: String?
-    get() = null
+  override val description: String? = provider.description
 
   override fun toString(): String = name
 

@@ -11,13 +11,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +24,7 @@ import java.util.Arrays;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction>, UpdateInBackground {
+public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
   private static final Logger LOG = Logger.getInstance(LineMarkerActionWrapper.class);
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
@@ -38,11 +35,15 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myElement = SmartPointerManager.createPointer(element);
     myOrigin = origin;
     copyFrom(origin);
+    if (!(myOrigin instanceof ActionGroup)) {
+      getTemplatePresentation().setPerformGroup(true);
+      getTemplatePresentation().setPopupGroup(true);
+    }
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(myOrigin);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOrigin.getActionUpdateThread();
   }
 
   @Override
@@ -83,7 +84,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public boolean disableIfNoVisibleChildren() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
+    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
   }
 
   @Override
@@ -129,39 +130,19 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     return myOrigin;
   }
 
-  private class MyDataContext extends UserDataHolderBase implements DataContext {
-    private final DataContext myDelegate;
+  private class MyDataContext extends DataContextWrapper {
 
     MyDataContext(DataContext delegate) {
-      myDelegate = delegate;
+      super(delegate);
     }
 
     @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      if (myDelegate instanceof UserDataHolder) {
-        return ((UserDataHolder)myDelegate).getUserData(key);
-      }
-      return super.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      if (myDelegate instanceof UserDataHolder) {
-        ((UserDataHolder)myDelegate).putUserData(key, value);
-      }
-      else {
-        super.putUserData(key, value);
-      }
-    }
-
-    @Nullable
-    @Override
-    public synchronized Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
       if (Location.DATA_KEY.is(dataId)) {
         PsiElement element = myElement.getElement();
         return element != null && element.isValid() ? new PsiLocation<>(element) : null;
       }
-      return myDelegate.getData(dataId);
+      return null;
     }
   }
 }

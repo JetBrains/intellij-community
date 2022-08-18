@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -41,8 +41,8 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       // In JDK 9 the behaviour of negated character classes was changed, so we can never warn about them
       // JDK 8: [^a&&b] is the intersection of [^a] with [b], which equals [b]
       // JDK 9: [^a&&b] is the intersection of [a] and [b] (which is nothing), inverted, which equals everything.
-      // see https://bugs.openjdk.java.net/browse/JDK-8189343
-      // and http://mail.openjdk.java.net/pipermail/core-libs-dev/2011-June/006957.html
+      // see https://bugs.openjdk.org/browse/JDK-8189343
+      // and http://mail.openjdk.org/pipermail/core-libs-dev/2011-June/006957.html
       if (parent instanceof RegExpClass) {
         final RegExpClass parentClass = (RegExpClass)parent;
         if (!parentClass.isNegated() && !regExpClass.isNegated()) {

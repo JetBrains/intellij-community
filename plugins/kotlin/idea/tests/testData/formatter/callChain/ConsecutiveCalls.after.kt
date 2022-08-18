@@ -1,5 +1,5 @@
 fun test() {
     MyFunc1()
-            .MyFunc2()
-            .MyFunc3()
+        .MyFunc2()
+        .MyFunc3()
 }

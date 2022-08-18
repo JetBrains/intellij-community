@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <!--<problem>-->
-  <!--  <file>Test.kt</file>-->
-  <!--  <line>2</line>-->
-  <!--  <entry_point TYPE="method" FQNAME="Test void setMyField(int value)" />-->
-  <!--  <description>Method is never used.</description>-->
-  <!--</problem>-->
+<problems>  
 </problems>
+

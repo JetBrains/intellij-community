@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromMethodReferenceFix;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -43,6 +31,52 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testPolyExpressionOnRSideOfAssignment() {
+    configure();
+    PsiMethodCallExpression
+      call = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertFalse(call.resolveMethodGenerics().isValidResult());
+  }
+
+  public void testCreateMethodFromMethodReferenceAvailability() {
+    configure();
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodReferenceExpression methodReference = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
+    assertTrue(new CreateMethodFromMethodReferenceFix(methodReference).isAvailable(getProject(), editor, file));
+  }
+
+
+  public void testMethodApplicability() {
+    configure();
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    assertNotNull(expression.getType());
+  }
+  
+  public void testMethodApplicability1() {
+    configureByFile(BASE_PATH + "/MethodApplicability.java");
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    for (JavaResolveResult result : expression.getMethodExpression().multiResolve(true)) {
+      assertFalse(result.isValidResult());
+    }
+  }
+
+  public void testDiamondInsideOverloadResolution() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    assertTrue(expression.resolveMethodGenerics().isValidResult());
+  }
+  
   public void testNestedLambdaReturnTypeCheck() {
     configure();
     PsiMethodCallExpression
@@ -58,6 +92,16 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     PsiType type = call.getType();
     assertNotNull(type);
     assertFalse(type.getPresentableText(), type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+  }
+
+  public void testPermutedExpressionsInList() {
+    @NonNls String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiExpressionList list =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpressionList.class);
+    PsiExpression arg = list.getExpressions()[7];
+    assertEquals(1, highlightErrors().size());
+    assertEquals(arg, list.getExpressions()[7]);
   }
 
   public void testForbidCachingForAllQualifiersWhenDependOnThreadLocalTypes() {

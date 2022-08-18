@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
@@ -28,6 +28,7 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
         @Suppress("DEPRECATION")
         return element.project.analysisCompletedHandler?.getTypeMapper()

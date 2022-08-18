@@ -1,4 +1,4 @@
-/** {<warning descr="'@snippet' tag is not available at this language level">@snippet</warning> :
+/** {@snippet :
  *   Optional<Integer> v = null;
  *   if (v.isPresent()) {
  *      System.out.println("v: " + v.get());

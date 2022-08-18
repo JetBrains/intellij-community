@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -24,7 +24,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     return new JavaElementVisitor() {
 
       @Override
-      public void visitNewExpression(PsiNewExpression newExpression) {
+      public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
         super.visitNewExpression(newExpression);
 
         final List<String> targetTypes = Arrays.asList(
@@ -69,7 +69,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
 
         holder.registerProblem(arg,
                                JavaBundle.message("inspection.redundant.file.creation.description"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new TextRange(0, fileArgList.getStartOffsetInParent()),
                                new DeleteRedundantFileCreationFix());
 

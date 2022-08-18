@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
@@ -76,6 +77,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myRegisteredIndexes.registerIndexExtension(extension);
 
       tasks.add(() -> {
+        if (IOUtil.isSharedCachesEnabled()) {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
+        }
         try {
           FileBasedIndexImpl.registerIndexer(extension,
                                              myState,
@@ -87,6 +91,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
         }
         catch (Throwable t) {
           handleComponentError(t, extension.getClass().getName(), null);
+        }
+        finally {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
         }
       });
     }
@@ -104,7 +111,13 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     // 2) we dispose FileBasedIndex before PersistentFS disposing
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    Disposable disposable = () -> new FileBasedIndexImpl.MyShutDownTask().run();
+    // anonymous class is required to make sure the new instance is created
+    Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+        new FileBasedIndexImpl.MyShutDownTask().run();
+      }
+    };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
     myFileBasedIndex.setUpShutDownTask();
@@ -160,6 +173,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     finally {
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
+      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.setUpFlusher();
       myFileBasedIndex.setUpHealthCheck();
@@ -219,8 +233,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       }
     }
 
+    boolean dropFilenameIndex = FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX &&
+                                indicesToDrop.contains(FilenameIndex.NAME.getName());
     if (!exceptionThrown) {
-      boolean dropFilenameIndex = Registry.is("indexing.filename.over.vfs") && indicesToDrop.contains(FilenameIndex.NAME.getName());
       for (ID<?, ?> key : ids) {
         if (dropFilenameIndex && key == FilenameIndex.NAME) continue;
         indicesToDrop.remove(key.getName());
@@ -228,7 +243,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
 
     if (!indicesToDrop.isEmpty()) {
-      LOG.info("Dropping indices:" + String.join(",", indicesToDrop));
+      Collection<String> filtered = !dropFilenameIndex ? indicesToDrop :
+                                    ContainerUtil.filter(indicesToDrop, o -> !FilenameIndex.NAME.getName().equals(o));
+      if (!filtered.isEmpty()) LOG.info("Dropping indices:" + String.join(",", filtered));
       for (String s : indicesToDrop) {
         try {
           FileUtil.deleteWithRenaming(IndexInfrastructure.getFileBasedIndexRootDir(s).toFile());

@@ -181,6 +181,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     })
 
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
+    contentManager.addContentManagerListener(object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        this@ToolWindowImpl.decorator?.headerToolbar?.updateActionsImmediately()
+      }
+    })
 
     // after init, as it was before contentManager creation was changed to be lazy
     pendingContentManagerListeners?.let { list ->
@@ -411,7 +416,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
     else {
       if (pendingContentManagerListeners == null) {
-        pendingContentManagerListeners = arrayListOf()
+        pendingContentManagerListeners = mutableListOf()
       }
       pendingContentManagerListeners!!.add(listener)
     }
@@ -427,8 +432,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
-    doSetIcon(newIcon)
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+    if (newIcon !== icon?.retrieveIcon()) {
+      doSetIcon(newIcon)
+      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+    }
   }
 
   internal fun doSetIcon(newIcon: Icon) {
@@ -634,6 +641,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       presentation.isEnabled = isVisible
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
+
     init {
       ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.text = UIBundle.message("tool.window.hide.action.name")
@@ -668,6 +679,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowManager.hideToolWindow(id, removeFromStripe = true, source = ToolWindowEventSource.RemoveStripeButtonAction)
     }
@@ -688,6 +703,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       hadSeveralContents = hadSeveralContents || (contentManager.isInitialized() && contentManager.value.contentCount > 1)
       super.update(e)
       e.presentation.isVisible = hadSeveralContents
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
     override fun isSelected(e: AnActionEvent): Boolean {
@@ -800,7 +819,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 }
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
-  UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
+  UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
     if (c !is ActionButton && c !is Divider) {
       c.background = bg
     }

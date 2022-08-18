@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -79,6 +79,12 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       if (sdk instanceof Disposable) {
         Disposer.register((Disposable)sdk, () -> clearCache(sdk));
       }
+      var parentDisposable = (sdk instanceof Disposable ? (Disposable)sdk : this);
+      Disposer.register(parentDisposable, manager);
+
+      if (manager.shouldSubscribeToLocalChanges()) {
+        PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, manager, () -> PythonSdkType.getInstance().setupSdkPaths(sdk));
+      }
     }
     return manager;
   }
@@ -89,7 +95,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    Optional<PyPackageManagementService> provided = PySdkProvider.EP_NAME.extensions()
+    Optional<PyPackageManagementService> provided = PySdkProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.tryCreatePackageManagementServiceForSdk(project, sdk))
       .filter(service -> service != null)
       .findFirst();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.AutoPopupController
@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -66,7 +67,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                     iterator.retreat()
                 }
 
-                if (iterator.atEnd() || iterator.tokenType !in SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER) {
+                if (iterator.atEnd() || iterator.tokenType !in KotlinTypedHandlerTokenSets.SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER) {
                     AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
                     return Result.CONTINUE
                 }
@@ -77,7 +78,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 val leaf = file.findElementAt(offset)
                 if (leaf != null) {
                     val parent = leaf.parent
-                    if (parent != null && parent.node.elementType in CONTROL_FLOW_EXPRESSIONS) {
+                    if (parent != null && parent.node.elementType in KotlinTypedHandlerTokenSets.CONTROL_FLOW_EXPRESSIONS) {
                         val nonWhitespaceSibling = FormatterUtil.getPreviousNonWhitespaceSibling(leaf.node)
                         if (nonWhitespaceSibling != null && nonWhitespaceSibling.startOffset == tokenBeforeBraceOffset) {
                             EditorModificationUtilEx.insertStringAtCaret(editor, "{", false, true)
@@ -178,13 +179,17 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                     isGlobalPreviousDollarInString = true
                 }
             }
+
+            c == '(' -> {
+                if (autoIndentCase(editor, project, file, KtPropertyAccessor::class.java, forFirstElement = false)) return Result.STOP
+            }
         }
 
         return Result.CONTINUE
     }
 
-    companion object {
-        private val CONTROL_FLOW_EXPRESSIONS = TokenSet.create(
+    private object KotlinTypedHandlerTokenSets {
+        val CONTROL_FLOW_EXPRESSIONS: TokenSet = TokenSet.create(
             KtNodeTypes.IF,
             KtNodeTypes.ELSE,
             KtNodeTypes.FOR,
@@ -192,12 +197,14 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             KtNodeTypes.TRY,
         )
 
-        private val SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER = TokenSet.create(
+        val SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER: TokenSet = TokenSet.create(
             KtTokens.RPAR,
             KtTokens.ELSE_KEYWORD,
             KtTokens.TRY_KEYWORD,
         )
+    }
 
+    companion object {
         private val PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY = Key.create<Int>("PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY")
         private fun autoPopupParameterInfo(project: Project, editor: Editor) {
             val offset = editor.caretModel.offset
@@ -241,8 +248,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 val chars = editor.document.charsSequence
                 val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
 
-                return@autoPopupMemberLookup lastNodeType == KDocTokens.TEXT
-                        || (isLabelCompletion(chars, offset) && lastNodeType === KtTokens.AT)
+                lastNodeType === KDocTokens.TEXT || (lastNodeType === KtTokens.AT && isLabelCompletion(chars, offset))
             }
         }
 
@@ -290,22 +296,33 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             document.insertString(leftElement.textOffset, "val ")
         }
 
-        private fun autoIndentCase(editor: Editor, project: Project, file: PsiFile, kclass: Class<*>): Boolean {
+        private fun autoIndentCase(
+            editor: Editor,
+            project: Project,
+            file: PsiFile,
+            klass: Class<*>,
+            forFirstElement: Boolean = true,
+        ): Boolean {
             val offset = editor.caretModel.offset
             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
             val currElement = file.findElementAt(offset - 1)
             if (currElement != null) {
                 // Should be applied only if there's nothing but the whitespace in line before the element
                 val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
-                if (!(prevLeaf is PsiWhiteSpace && prevLeaf.getText().contains("\n"))) {
+                if (forFirstElement && !(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
                     return false
                 }
 
                 val parent = currElement.parent
-                if (kclass.isInstance(parent)) {
+                if (klass.isInstance(parent)) {
                     val curElementLength = currElement.text.length
                     if (offset < curElementLength) return false
-                    CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                    if (forFirstElement) {
+                        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                    } else {
+                        PsiDocumentManager.getInstance(project).getDocument(file)?.adjustLineIndent(project, offset)
+                    }
+
                     return true
                 }
             }

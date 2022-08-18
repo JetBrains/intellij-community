@@ -8,14 +8,19 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 
 class ProjectImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("project.import", 4)
+    val GROUP = EventLogGroup("project.import", 7)
 
     @JvmField
     val TASK_CLASS = EventFields.Class("task_class")
 
     @JvmField
-    val IMPORT_ACTIVITY = GROUP.registerIdeActivity(null, startEventAdditionalFields = arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS,
-                                                                                               EventFields.PluginInfo))
+    val IMPORT_ACTIVITY = GROUP.registerIdeActivity("import_project", startEventAdditionalFields = arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS,
+                                                                                                           EventFields.PluginInfo))
+
+    @JvmField
+    val IMPORT_STAGE = GROUP.registerIdeActivity("stage", startEventAdditionalFields = arrayOf(TASK_CLASS),
+                                                 parentActivity = IMPORT_ACTIVITY)
+
   }
 
   override fun getGroup(): EventLogGroup {

@@ -133,6 +133,11 @@ class ProjectStatus(private val debugName: String? = null) {
     data class Modify(override val stamp: Long, val type: ExternalSystemModificationType) : ProjectEvent()
     data class Revert(override val stamp: Long) : ProjectEvent()
     data class Break(override val stamp: Long) : ProjectEvent()
+
+    companion object {
+      fun externalModify(stamp: Long) = Modify(stamp, EXTERNAL)
+      fun externalInvalidate(stamp: Long) = Invalidate(stamp, EXTERNAL)
+    }
   }
 
   sealed class ProjectState {

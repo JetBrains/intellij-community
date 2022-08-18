@@ -61,10 +61,10 @@ final class TreeAction extends AbstractAction implements UIResource {
     new TreeAction(TreeAction::selectPreviousSibling, TreeActions.PreviousSibling.ID)
   );
   private final String name;
-  private final Consumer<JTree> action;
+  private final @NotNull Consumer<? super JTree> action;
   private final List<KeyStroke> keys;
 
-  private TreeAction(@NotNull Consumer<JTree> action, @NotNull @NonNls String name, KeyStroke @NotNull ... keys) {
+  private TreeAction(@NotNull Consumer<? super JTree> action, @NotNull @NonNls String name, KeyStroke @NotNull ... keys) {
     this.name = name;
     this.action = action;
     this.keys = asList(keys);

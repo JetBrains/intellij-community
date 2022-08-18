@@ -229,7 +229,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     }
   }
 
-  private static void triggerFeatureUsed(Function<ProductivityFeaturesRegistry, FeatureDescriptor> featureGetter) {
+  private static void triggerFeatureUsed(Function<? super ProductivityFeaturesRegistry, ? extends FeatureDescriptor> featureGetter) {
     ProductivityFeaturesRegistry featuresRegistry = ProductivityFeaturesRegistry.getInstance();
     if (featuresRegistry != null) {
       FeatureDescriptor feature = featureGetter.fun(featuresRegistry);
@@ -240,10 +240,15 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   public static class ProductivityUtilValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "productivity";
+    }
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "productivity".equals(ruleId) || "productivity_group".equals(ruleId);
+      return getRuleId().equals(ruleId) || "productivity_group".equals(ruleId);
     }
 
     @NotNull
@@ -275,11 +280,11 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   private static final class ProductivityUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("productivity", 58);
+    private static final EventLogGroup GROUP = new EventLogGroup("productivity", 59);
     private static final EventId3<String, String, PluginInfo> FEATURE_USED =
       GROUP.registerEvent("feature.used",
-                          EventFields.StringValidatedByCustomRule("id", "productivity"),
-                          EventFields.StringValidatedByCustomRule("group", "productivity_group"),
+                          EventFields.StringValidatedByCustomRule("id", ProductivityUtilValidator.class),
+                          EventFields.StringValidatedByCustomRule("group", ProductivityUtilValidator.class),
                           EventFields.PluginInfo);
 
     @Override

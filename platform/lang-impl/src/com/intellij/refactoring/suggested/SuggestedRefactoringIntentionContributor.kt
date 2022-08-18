@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -97,7 +97,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // we don't add into it if it's empty to keep the color of the bulb
     val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
                           ?: intentions.inspectionFixesToShow
-    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
+    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
   }
 
   private class MyIntention(

@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.TitledHandler;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -40,6 +41,11 @@ import java.util.stream.Collectors;
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   public static ModuleDeleteProvider getInstance() {
     return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

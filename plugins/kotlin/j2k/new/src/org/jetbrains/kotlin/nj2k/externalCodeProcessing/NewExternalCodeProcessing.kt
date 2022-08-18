@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.SmartPointerManager
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
 import org.jetbrains.kotlin.j2k.ProgressPortionReporter
@@ -33,7 +33,7 @@ class NewExternalCodeProcessing(
     }
 
     fun getMember(element: JKDeclaration) =
-        element.psi<PsiMember>()?.getKotlinFqName()?.let(members::get)
+        element.psi<PsiMember>()?.kotlinFqName?.let(members::get)
 
     fun getMember(fqName: FqName) =
         members[fqName]

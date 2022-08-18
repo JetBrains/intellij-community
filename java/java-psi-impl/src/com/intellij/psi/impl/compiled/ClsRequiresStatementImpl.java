@@ -3,10 +3,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiJavaModuleReference;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -20,9 +17,17 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
 
   public ClsRequiresStatementImpl(PsiRequiresStatementStub stub) {
     super(stub);
-    myModuleReference = NotNullLazyValue.atomicLazy(() -> {
-      return new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName());
-    });
+    myModuleReference = NotNullLazyValue.atomicLazy(() -> new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName()));
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitRequiresStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

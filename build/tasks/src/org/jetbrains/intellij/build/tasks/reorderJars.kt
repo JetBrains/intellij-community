@@ -1,13 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "BlockingMethodInNonBlockingContext")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.tracer
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,20 +50,18 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     .setParent(traceContext)
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
-    .startSpan()
     .use {
       reorderJar(jarFile = file, orderedNames = orderedNames, resultJarFile = file)
     }
 }
 
-fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): List<String> {
+fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): PersistentList<String> {
   val libDir = homeDir.resolve("lib")
   val appFile = libDir.resolve("app.jar")
 
   tracer.spanBuilder("generate app.jar")
     .setAttribute("dir", homeDir.toString())
     .setAttribute("mainJarName", mainJarName)
-    .startSpan()
     .use {
       transformFile(appFile) { target ->
         writeNewZip(target) { zipCreator ->
@@ -94,7 +96,6 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
 
   tracer.spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
-    .startSpan()
     .use { span ->
       val osName = System.getProperty("os.name")
       val classifier = when {
@@ -114,7 +115,7 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
       }
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
-      return result
+      return result.toPersistentList()
     }
 }
 

@@ -6,9 +6,9 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -27,18 +27,57 @@ final class KotlinPluginBuilder {
    */
   public static String MAIN_KOTLIN_PLUGIN_MODULE = "kotlin.plugin"
 
-  private final String communityHome
-  private final String home
+  /**
+   * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches
+   */
+  private static String KOTLIN_COOP_DEV_VERSION = "1.7.255"
+
+  private final BuildDependenciesCommunityRoot communityHome
+  private final Path home
   private final ProductProperties properties
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
+    "kotlin.plugin.common",
+    "kotlin.plugin.k1",
+    "kotlin.plugin.k2",
+    "kotlin.base.util",
+    "kotlin.base.indices",
+    "kotlin.base.compiler-configuration",
+    "kotlin.base.plugin",
+    "kotlin.base.psi",
+    "kotlin.base.kdoc",
+    "kotlin.base.project-model",
+    "kotlin.base.platforms",
+    "kotlin.base.facet",
+    "kotlin.base.klib",
+    "kotlin.base.project-structure",
+    "kotlin.base.external-build-system",
+    "kotlin.base.scripting",
+    "kotlin.base.analysis-api-providers",
+    "kotlin.base.analysis",
+    "kotlin.base.highlighting",
+    "kotlin.base.line-markers",
+    "kotlin.base.code-insight",
+    "kotlin.base.jps",
+    "kotlin.base.analysis-api.utils",
+    "kotlin.base.compiler-configuration-ui",
+    "kotlin.base.obsolete-compat",
+    "kotlin.base.resources",
+    "kotlin.base.statistics",
+    "kotlin.base.fe10.plugin",
+    "kotlin.base.fe10.analysis",
+    "kotlin.base.fe10.analysis-api-providers",
+    "kotlin.base.fe10.kdoc",
+    "kotlin.base.fe10.highlighting",
+    "kotlin.base.fe10.code-insight",
+    "kotlin.base.fe10.obsolete-compat",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
     "kotlin.line-indent-provider",
     "kotlin.jvm",
-    "kotlin.refIndex",
+    "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",
@@ -61,16 +100,22 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
     "kotlin.compiler-plugins.android-extensions-stubs",
-    "kotlin.jvm-run-configurations",
+    "kotlin.completion.api",
+    "kotlin.completion.impl-shared",
+    "kotlin.completion.impl-k1",
+    "kotlin.completion.impl-k2",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
-    "kotlin.gradle.gradle-idea",
+    "kotlin.gradle.gradle",
+    "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
-    "kotlin.gradle.gradle-native",
+    "kotlin.gradle.code-insight-groovy",
     "kotlin.native",
     "kotlin.grazie",
-    "kotlin.junit",
-    "kotlin.testng",
+    "kotlin.run-configurations.jvm",
+    "kotlin.run-configurations.junit",
+    "kotlin.run-configurations.junit-fe10",
+    "kotlin.run-configurations.testng",
     "kotlin.formatter",
     "kotlin.repl",
     "kotlin.git",
@@ -78,23 +123,27 @@ final class KotlinPluginBuilder {
     "kotlin.scripting",
     "kotlin.coverage",
     "kotlin.ml-completion",
-    "kotlin.groovy",
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
     "kotlin.properties",
-    "kotlin.j2k.services",
+    "kotlin.j2k.post-processing",
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
     "kotlin.j2k.new",
+    "kotlin.plugin-updater",
+    "kotlin.preferences",
+    "kotlin.project-configuration",
     "kotlin.project-wizard.cli",
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
-    "kotlin.project-wizard-compose",
+    "kotlin.project-wizard.compose",
+    "kotlin.jvm-debugger.base.util",
     "kotlin.jvm-debugger.util",
     "kotlin.jvm-debugger.core",
+    "kotlin.jvm-debugger.core-fe10",
     "kotlin.jvm-debugger.evaluation",
     "kotlin.jvm-debugger.coroutines",
     "kotlin.jvm-debugger.sequence",
@@ -104,17 +153,55 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
-    "kotlin.project-model",
+    "kotlin.migration",
+    "kotlin.inspections",
+    "kotlin.inspections-fe10",
     "kotlin.features-trainer",
-    )
+    "kotlin.base.fir.analysis-api-providers",
+    "kotlin.base.fir.code-insight",
+    "kotlin.code-insight.api",
+    "kotlin.code-insight.utils",
+    "kotlin.code-insight.intentions-shared",
+    "kotlin.code-insight.inspections-shared",
+    "kotlin.code-insight.impl-base",
+    "kotlin.code-insight.descriptions",
+    "kotlin.code-insight.intentions-k1",
+    "kotlin.code-insight.intentions-k2",
+    "kotlin.code-insight.inspections-k2",
+    "kotlin.code-insight.k2",
+    "kotlin.code-insight.override-implement-shared",
+    "kotlin.code-insight.override-implement-k1",
+    "kotlin.code-insight.override-implement-k2",
+    "kotlin.code-insight.live-templates-shared",
+    "kotlin.code-insight.live-templates-k1",
+    "kotlin.code-insight.live-templates-k2",
+    "kotlin.fir",
+    "kotlin.highlighting",
+    "kotlin.uast.uast-kotlin-fir",
+    "kotlin.uast.uast-kotlin-idea-fir",
+    "kotlin.fir.fir-low-level-api-ide-impl",
+    "kotlin.navigation",
+  )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
-    "kotlin-script-runtime",
+    "kotlinc.analysis-api-providers",
+    "kotlinc.analysis-project-structure",
+    "kotlinc.high-level-api",
+    "kotlinc.high-level-api-fe10",
+    "kotlinc.high-level-api-impl-base",
+    "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
-    "kotlinc.kotlin-gradle-statistics"
+    "kotlinc.kotlin-gradle-statistics",
+    "kotlin-gradle-plugin-idea",
+    "kotlin-gradle-plugin-idea-proto",
+    "kotlin-tooling-core",
+    "kotlinc.high-level-api-fir",
+    "kotlinc.kotlin-compiler-fir",
+    "kotlinc.low-level-api-fir",
+    "kotlinc.symbol-light-classes",
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -124,34 +211,28 @@ final class KotlinPluginBuilder {
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlinc.lombok-compiler-plugin"
+    "kotlinc.lombok-compiler-plugin",
   )
 
-  KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
+  KotlinPluginBuilder(BuildDependenciesCommunityRoot communityHome, Path home, ProductProperties properties) {
     this.communityHome = communityHome
     this.home = home
     this.properties = properties
   }
 
-  static PluginLayout kotlinPlugin() {
-    return kotlinPlugin(KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")))
+  static PluginLayout kotlinPlugin(KotlinUltimateSources ultimateSources) {
+    return kotlinPlugin(
+      KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
+      ultimateSources,
+    )
   }
 
-  static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
-    return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinUltimateSources ultimateSources) {
+    return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
           directoryName = "Kotlin"
           mainJarName = "kotlin-plugin.jar"
-      }
-
-      boolean isUltimate
-      try {
-        Class.forName("org.jetbrains.intellij.build.IdeaUltimateProperties")
-        isUltimate = true
-      }
-      catch (ClassNotFoundException ignored) {
-        isUltimate = false
       }
 
       for (String moduleName : MODULES) {
@@ -161,10 +242,10 @@ final class KotlinPluginBuilder {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
-        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+        withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
-      if (isUltimate && kind == KotlinPluginKind.IJ) {
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
         withModule("kotlin-ultimate.common-for-kotlin")
         //noinspection SpellCheckingInspection
@@ -175,7 +256,7 @@ final class KotlinPluginBuilder {
       }
 
       String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
@@ -188,28 +269,24 @@ final class KotlinPluginBuilder {
 
           ArchiveKt.consumeDataByPrefix(
             jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
-              @Override
-              void accept(String name, byte[] data) {
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
-              }
-            })
+            @Override
+            void accept(String name, byte[] data) {
+              patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
+            }
+          })
         }
       })
 
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
-      withModule("kotlin.common", "kotlin-common.jar")
-
       withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("completion-ranking-kotlin")
+      withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinx-collections-immutable-jvm", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {
         @Override
@@ -232,12 +309,10 @@ final class KotlinPluginBuilder {
             String major = ijBuildNumber.group(1)
             String minor = ijBuildNumber.group(2)
             String kotlinVersion = context.project.libraryCollection.libraries
-              .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+              .find { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type instanceof JpsRepositoryLibraryType }
               ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
-              ?.properties?.data?.version
-            if (kotlinVersion == null) {
-              throw new IllegalStateException("Can't determine Kotlin compiler version")
-            }
+              ?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
+
             String version = "${major}-${kotlinVersion}-${kind}${minor}"
             context.messages.info("version: $version")
             return version
@@ -294,7 +369,7 @@ final class KotlinPluginBuilder {
         }
       })
 
-      if (kind == KotlinPluginKind.IJ && isUltimate) {
+      if (kind == KotlinPluginKind.IJ && ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
         // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
         //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
         boolean skipIfDoesntExist = true
@@ -311,15 +386,25 @@ final class KotlinPluginBuilder {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText && /* Update IDE from Sources */ !oldText.contains(newText)) {
+    if (result == oldText) {
+      if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
+        // Locally e.g. in 'Update IDE from Sources' allow data to be already present
+        return result
+      }
+
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
   }
 
   def build() {
-    BuildContext buildContext = BuildContext.createContext(communityHome, home, properties)
+    BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
+  }
+
+  enum KotlinUltimateSources {
+    WITH_COMMUNITY_MODULES,
+    WITH_ULTIMATE_MODULES,
   }
 
   enum KotlinPluginKind {

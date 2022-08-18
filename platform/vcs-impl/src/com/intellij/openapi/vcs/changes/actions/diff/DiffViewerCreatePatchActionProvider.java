@@ -11,6 +11,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.diff.DiffBundle;
@@ -55,6 +56,11 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+  
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(DiffDataKeys.DIFF_VIEWER) != null;

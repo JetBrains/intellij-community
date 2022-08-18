@@ -210,4 +210,9 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       presentation.setEnabled(true);
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

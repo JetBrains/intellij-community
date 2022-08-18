@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -38,12 +41,10 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
 
     override fun isDefaultButton(): Boolean = isCommitButtonDefault()
   }
+
+  private val primaryActionGroup = DefaultActionGroup()
   private val primaryCommitActionsToolbar =
-    ActionManager.getInstance().createActionToolbar(
-      "ChangesView.CommitButtonsToolbar",
-      ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions") as ActionGroup,
-      true
-    ).apply {
+    ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
       setReservePlaceAutoPopupIcon(false)
       layoutPolicy = NOWRAP_LAYOUT_POLICY
 
@@ -54,6 +55,19 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   init {
     addToLeft(commitButton)
     addToCenter(primaryCommitActionsToolbar.component)
+
+    addToRight(createShowOptionButton())
+  }
+
+  private fun createShowOptionButton(): ActionButton {
+    val presentation = Presentation().apply {
+      icon = AllIcons.General.GearPlain
+    }
+    val action = ActionManager.getInstance().getAction("ChangesView.ShowCommitOptions")
+    val actionButton = ActionButton(action, presentation, COMMIT_BUTTONS_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+      border = JBUI.Borders.empty(1, 2)
+    }
+    return actionButton
   }
 
   var isActive: Boolean = true
@@ -62,10 +76,7 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   fun getBottomInset(): Int = commitButton.getBottomInset()
   fun setTargetComponent(component: JComponent) = primaryCommitActionsToolbar.setTargetComponent(component)
 
-  fun setupShortcuts(component: JComponent, parentDisposable: Disposable) {
-    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, parentDisposable)
-    ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, parentDisposable)
-  }
+  fun createActions() = listOf(DefaultCommitAction(), ShowCustomCommitActions())
 
   // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
   //  See CheckinProjectPanel.getCommitActionName() usages.
@@ -83,22 +94,38 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
       primaryCommitActionsToolbar.updateActionsImmediately()
     }
 
+  override fun setPrimaryCommitActions(actions: List<AnAction>) {
+    primaryActionGroup.removeAll()
+    primaryActionGroup.addAll(actions)
+    primaryCommitActionsToolbar.updateActionsImmediately()
+  }
+
   override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
 
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
+  private fun isDefaultExecutorEnabled() = isActive && defaultCommitAction.isEnabled
+
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
   inner class DefaultCommitAction : DumbAwareAction() {
+    init {
+      shortcutSet = DEFAULT_COMMIT_ACTION_SHORTCUT
+    }
+
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled && commitButton.isDefaultButton
+      e.presentation.isEnabledAndVisible = isDefaultExecutorEnabled() && commitButton.isDefaultButton
     }
 
     override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
   }
 
   private inner class ShowCustomCommitActions : DumbAwareAction() {
+    init {
+      shortcutSet = getDefaultShowPopupShortcut()
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isActive && commitButton.isEnabled
     }
@@ -109,6 +136,9 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   companion object {
     private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, CTRL_DOWN_MASK), null)
     private val META_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, META_DOWN_MASK), null)
+
+    const val COMMIT_BUTTONS_TOOLBAR = "ChangesView.CommitButtonsToolbar"
+
     val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
       if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
   }

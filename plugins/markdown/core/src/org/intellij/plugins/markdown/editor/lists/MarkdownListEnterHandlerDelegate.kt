@@ -10,23 +10,23 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.obtainMarkerNumber
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -99,7 +99,8 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       caretOffset.set(markerElement.endOffset)
     }
 
-    emptyItem = document.getLineIndentSpaces(itemLine) + item.normalizedMarker
+    val indentSpaces = document.getLineIndentSpaces(itemLine, file) ?: ""
+    emptyItem = indentSpaces + item.normalizedMarker
     return EnterHandlerDelegate.Result.Default
   }
 
@@ -140,17 +141,30 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     val emptyItem = emptyItem ?: return EnterHandlerDelegate.Result.Continue // for smart cast
 
     val document = editor.document
-    runWriteAction {
-      EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
-    }
-
+    EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
-
-    (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-      .list.renumberInBulk(document, recursive = false, restart = false)
+    val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
+    if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+      // Will fix numbering in a whole list
+      item.list.renumberInBulk(document, recursive = false, restart = false)
+    } else {
+      // Will only fix current item based on previous one
+      val previousItem = item.siblings(forward = false, withSelf = false).filterIsInstance<MarkdownListItem>().firstOrNull()
+      val previousNumber = previousItem?.obtainMarkerNumber()
+      if (previousNumber != null) {
+        val marker = item.markerElement as? MarkdownListNumber
+        marker?.replaceWithOtherNumber(previousNumber + 1)
+      }
+    }
 
     // it is possible that there will be no pre-processing before next post-processing, see IDEA-270501 and EnterInLineCommentHandler
     this.emptyItem = null
     return EnterHandlerDelegate.Result.Stop
+  }
+
+  companion object {
+    private fun MarkdownListNumber.replaceWithOtherNumber(number: Int): MarkdownListNumber {
+      return replaceWithText("$number$delimiter ") as MarkdownListNumber
+    }
   }
 }

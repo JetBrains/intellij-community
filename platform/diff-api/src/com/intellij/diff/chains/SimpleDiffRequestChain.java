@@ -15,12 +15,19 @@
  */
 package com.intellij.diff.chains;
 
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +35,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class SimpleDiffRequestChain extends DiffRequestChainBase {
-  @NotNull private final List<? extends DiffRequestProducer> myRequests;
+public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain {
+  @NotNull private final ListSelection<? extends DiffRequestProducer> myRequests;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
     this(Collections.singletonList(request));
   }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
-    myRequests = ContainerUtil.map(requests, request -> new DiffRequestProducerWrapper(request));
+    this(requests, 0);
   }
 
-  private SimpleDiffRequestChain(@NotNull List<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
+  public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests, int selectedIndex) {
+    myRequests = ListSelection.createAt(requests, selectedIndex).map(request -> new DiffRequestProducerWrapper(request));
+  }
+
+  private SimpleDiffRequestChain(@NotNull ListSelection<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
     assert constructorFlag == null;
     myRequests = requests;
   }
@@ -53,14 +64,15 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
   }
 
   public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers, int selectedIndex) {
-    SimpleDiffRequestChain chain = new SimpleDiffRequestChain(producers, null);
-    if (selectedIndex > 0) chain.setIndex(selectedIndex);
-    return chain;
+    return fromProducers(ListSelection.createAt(producers, selectedIndex));
+  }
+
+  public static SimpleDiffRequestChain fromProducers(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
+    return new SimpleDiffRequestChain(producers, null);
   }
 
   @Override
-  @NotNull
-  public List<? extends DiffRequestProducer> getRequests() {
+  public @NotNull ListSelection<? extends DiffRequestProducer> getListSelection() {
     return myRequests;
   }
 
@@ -82,6 +94,18 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
       String title = myRequest.getTitle();
       if (title != null) return title;
       return DiffBundle.message("diff.files.generic.request.title");
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      ContentDiffRequest contentRequest = ObjectUtils.tryCast(myRequest, ContentDiffRequest.class);
+      if (contentRequest != null) {
+        return JBIterable.from(contentRequest.getContents())
+          .map(DiffContent::getContentType)
+          .filter(fileType -> fileType != null && fileType != UnknownFileType.INSTANCE)
+          .first();
+      }
+      return null;
     }
 
     @NotNull

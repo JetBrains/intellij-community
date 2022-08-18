@@ -23,7 +23,6 @@ public interface Label {
    * Revert all changes up to this Label according to the local history
    *
    * @param file file or directory that should be reverted
-   * @throws LocalHistoryException
    */
   void revert(@NotNull Project project, @NotNull VirtualFile file) throws LocalHistoryException;
 

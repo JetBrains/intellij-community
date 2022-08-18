@@ -1,15 +1,32 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.key
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -18,14 +35,14 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -47,24 +64,23 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 internal suspend fun installedPackages(
-    dependenciesByModule: Map<ProjectModule, List<UnifiedDependency>>,
+    dependenciesByModule: Map<ProjectModule, List<ResolvedUnifiedDependency>>,
     project: Project,
     dataProvider: ProjectDataProvider,
     traceInfo: TraceInfo
 ): List<PackageModel.Installed> {
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
     for (module in dependenciesByModule.keys) {
-        dependenciesByModule[module]?.forEach { dependency ->
+        dependenciesByModule[module]?.forEach { (dependency, resolvedVersion, declarationIndexInBuildFile) ->
             yield()
-            // Skip packages we don't know the version for
-            val rawVersion = dependency.coordinates.version
-
             val usageInfo = DependencyUsageInfo(
                 projectModule = module,
-                version = PackageVersion.from(rawVersion),
+                declaredVersion = PackageVersion.from(dependency.coordinates.version),
+                resolvedVersion = PackageVersion.from(resolvedVersion),
                 scope = PackageScope.from(dependency.scope),
                 userDefinedScopes = module.moduleType.userDefinedScopes(project)
-                    .map { rawScope -> PackageScope.from(rawScope) }
+                    .map { rawScope -> PackageScope.from(rawScope) },
+                declarationIndexInBuildFile = declarationIndexInBuildFile
             )
             val usageInfoList = usageInfoByDependency.getOrPut(dependency) { mutableListOf() }
             usageInfoList.add(usageInfo)
@@ -72,7 +88,7 @@ internal suspend fun installedPackages(
     }
 
     val installedDependencies = dependenciesByModule.values.flatten()
-        .mapNotNull { InstalledDependency.from(it) }
+        .mapNotNull { InstalledDependency.from(it.dependency) }
 
     val dependencyRemoteInfoMap = dataProvider.fetchInfoFor(installedDependencies, traceInfo)
 
@@ -97,34 +113,34 @@ internal suspend fun fetchProjectDependencies(
     modules: List<ProjectModule>,
     cacheDirectory: Path,
     json: Json
-): Map<ProjectModule, List<UnifiedDependency>> =
-    coroutineScope {
-        modules.associateWith { module -> async { module.installedDependencies(cacheDirectory, json) } }
-            .mapValues { (_, value) -> value.await() }
-    }
+) = coroutineScope {
+    modules.associateWith { module -> async { module.installedDependencies(cacheDirectory, json) } }
+        .mapValues { (_, value) -> value.await() }
+}
 
-@Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json): List<UnifiedDependency> = coroutineScope {
-    val fileHashCode = buildFile.hashCode()
+internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json) = coroutineScope {
+    val fileHashCode = buildFile?.hashCode() ?: return@coroutineScope emptyList()
 
     val cacheFile = File(cacheDirectory.absolutePathString(), "$fileHashCode.json")
 
-    if (!cacheFile.exists()) withContext(Dispatchers.IO) {
-        cacheFile.apply { parentFile.mkdirs() }.createNewFile()
+    if (!cacheFile.exists()) {
+        withContext(Dispatchers.IO) {
+            cacheFile.apply { parentFile.mkdirs() }.createNewFile()
+        }
     }
 
-    val sha256Deferred: Deferred<String> = async(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+    val sha256Deferred: Deferred<String> = ApplicationManager.getApplication().coroutineScope.async {
         StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
-    val cachedContents = withContext(Dispatchers.IO) { kotlin.runCatching { cacheFile.readText() } }
-        .onFailure { logDebug("installedDependencies", it) { "Someone messed with our cache file UGH ${cacheFile.absolutePath}" } }
-        .getOrNull()?.takeIf { it.isNotBlank() }
+    val cachedContents = runCatching { cacheFile.readText() }
+        .onFailure { logWarn("installedDependencies", it) { "Unable to load caches from \"${cacheFile.absolutePath}\"" } }
+        .getOrNull()
+        ?.takeIf { it.isNotBlank() }
 
     val cache = if (cachedContents != null) {
-        // TODO: consider invalidating when ancillary files change (e.g., gradle.properties)
         runCatching { json.decodeFromString<InstalledDependenciesCache>(cachedContents) }
-            .onFailure { logDebug("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
+            .onFailure { logWarn("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
             .getOrNull()
     } else {
         null
@@ -140,16 +156,38 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     ) {
         return@coroutineScope cache.dependencies
     }
+    val operationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(moduleType)
 
-    val dependencies =
-        readAction {
-            runCatching {
-                ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                    ?.listDependenciesInModule(this@installedDependencies)
-            }
+    val declaredDependencies =
+        runCatching { operationProvider?.declaredDependenciesInModule(this@installedDependencies) }
+            .onFailure { logWarn("installedDependencies", it) { "Unable to list dependencies in module $name" } }
+            .getOrNull()
+            ?.toList()
+            ?: emptyList()
+
+    val scopes = declaredDependencies.mapNotNull { it.unifiedDependency.scope }.toSet()
+
+    val resolvedDependenciesMapJob = async {
+        runCatching {
+            operationProvider?.resolvedDependenciesInModule(this@installedDependencies, scopes)
+                ?.mapNotNull { dep -> dep.key?.let { it to dep.coordinates.version } }
+                ?.toMap()
+                ?: emptyMap()
+        }.onFailure { logWarn("Error while evaluating resolvedDependenciesInModule for $name", it) }
+            .getOrElse { emptyMap() }
+    }
+
+    val dependenciesLocationMap = declaredDependencies
+        .mapNotNull { dependency ->
+            dependencyDeclarationCallback(dependency).await()
+                ?.let { location -> dependency to location }
         }
-            .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
-            .getOrNull()?.toList() ?: emptyList()
+        .toMap()
+
+    val resolvedDependenciesMap = resolvedDependenciesMapJob.await()
+
+    val dependencies: List<ResolvedUnifiedDependency> = declaredDependencies.map {
+        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it]) }
 
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(
@@ -163,9 +201,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
             )
         )
 
-        withContext(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-            cacheFile.writeText(jsonText)
-        }
+        cacheFile.writeText(jsonText)
     }
 
     dependencies
@@ -178,7 +214,14 @@ internal data class InstalledDependenciesCache(
     val sha256: String,
     val parsingAttempts: Int = 0,
     val projectName: String,
-    val dependencies: List<@Serializable(with = UnifiedDependencySerializer::class) UnifiedDependency>
+    val dependencies: List<ResolvedUnifiedDependency>
+)
+
+@Serializable
+data class ResolvedUnifiedDependency(
+    val dependency: @Serializable(with = UnifiedDependencySerializer::class) UnifiedDependency,
+    val resolvedVersion: String? = null,
+    val declarationIndexes: DependencyDeclarationIndexes?
 )
 
 internal object UnifiedCoordinatesSerializer : KSerializer<UnifiedCoordinates> {

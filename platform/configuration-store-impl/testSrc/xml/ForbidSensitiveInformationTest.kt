@@ -22,7 +22,7 @@ internal class ForbidSensitiveInformationTest {
   val disposableRule = DisposableRule()
   @Before
   fun before() {
-    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
   }
   @Test
   fun `do not store password as attribute`() {

@@ -705,7 +705,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     boolean expectNotNull() {
-      if (myImmutable) return true;
+      if (myImmutable && !"toList".equals(myCall.getMethodExpression().getReferenceName())) return true;
       PsiType collectionType = ExpectedTypeUtils.findExpectedType(myCall, false);
       PsiType itemType = JavaGenericsUtil.getCollectionItemType(collectionType, myCall.getResolveScope());
       return DfaPsiUtil.getTypeNullability(itemType) == Nullability.NOT_NULL;

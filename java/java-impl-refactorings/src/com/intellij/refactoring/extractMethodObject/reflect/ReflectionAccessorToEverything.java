@@ -35,43 +35,43 @@ public class ReflectionAccessorToEverything {
     private final List<ItemToReplaceDescriptor> myReplaceDescriptors = new ArrayList<>();
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
       addIfNotNull(ParameterDescriptor.createIfInaccessible(parameter));
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       addIfNotNull(MethodDeclarationDescriptor.createIfInaccessible(method, myOuterClass));
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       addIfNotNull(ThisReferenceDescriptor.createIfInaccessible(expression));
     }
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
       addIfNotNull(LocalVariableDeclarationDescriptor.createIfInaccessible(statement));
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       addIfNotNull(FieldDeclarationDescriptor.createIfInaccessible(field));
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       // TODO: check if anonymous class is accessible
@@ -80,7 +80,7 @@ public class ReflectionAccessorToEverything {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       addIfNotNull(MethodDescriptor.createIfInaccessible(myOuterClass, expression));
     }
@@ -96,7 +96,7 @@ public class ReflectionAccessorToEverything {
     private final List<PsiMethodReferenceExpression> myMethodReferencesToReplace = new ArrayList<>();
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (!PsiReflectionAccessUtil.isAccessibleMethodReference(expression)) {
         myMethodReferencesToReplace.add(expression);
       }

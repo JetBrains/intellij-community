@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import static com.siyeh.InspectionGadgetsBundle.message;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -50,10 +48,10 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     final PsiVariable variable = (PsiVariable)infos[0];
     final String variableName = variable.getName();
     if (variable instanceof PsiParameter) {
-      return message("unnecessary.final.on.parameter.problem.descriptor", variableName);
+      return InspectionGadgetsBundle.message("unnecessary.final.on.parameter.problem.descriptor", variableName);
     }
     else {
-      return message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
+      return InspectionGadgetsBundle.message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
     }
   }
 
@@ -61,9 +59,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box1 = panel.addCheckboxEx(message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
-    final JCheckBox box2 = panel.addCheckboxEx(message("unnecessary.final.report.parameters.option"), "reportParameters");
-    panel.addDependentCheckBox(message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
+    final JCheckBox box1 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
+    final JCheckBox box2 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"), "reportParameters");
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
 
     box1.addChangeListener(e -> {
       if (!box1.isSelected()) box2.setSelected(true);
@@ -88,7 +86,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   private class UnnecessaryFinalOnLocalVariableOrParameterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
       if (!reportLocalVariables) {
         return;
@@ -116,11 +114,11 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         }
       }
       final PsiLocalVariable variable = (PsiLocalVariable)firstElement;
-      registerModifierError(PsiModifier.FINAL, variable, ProblemHighlightType.LIKE_UNUSED_SYMBOL, variable);
+      registerModifierError(PsiModifier.FINAL, variable, variable);
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!reportParameters) {
         return;
@@ -137,7 +135,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         return;
       }
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
+        registerModifierError(PsiModifier.FINAL, parameter, parameter);
       }
       else if (!onlyWarnOnAbstractMethods) {
         check(parameter);
@@ -145,21 +143,21 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     }
 
     @Override
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (onlyWarnOnAbstractMethods || !reportParameters) {
-        return;
-      }
       final PsiResourceList resourceList = statement.getResourceList();
-      if (resourceList != null) {
+      if (resourceList != null && reportLocalVariables) {
         for (PsiResourceListElement element : resourceList) {
           if (element instanceof PsiResourceVariable) {
             final PsiResourceVariable variable = (PsiResourceVariable)element;
             if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-              registerModifierError(PsiModifier.FINAL, variable, ProblemHighlightType.LIKE_UNUSED_SYMBOL, variable);
+              registerModifierError(PsiModifier.FINAL, variable, variable);
             }
           }
         }
+      }
+      if (onlyWarnOnAbstractMethods || !reportParameters) {
+        return;
       }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
@@ -172,13 +170,13 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
           continue;
         }
         if (parameter.getType() instanceof PsiDisjunctionType || !isNecessaryFinal(parameter, parameter.getDeclarationScope())) {
-          registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
+          registerModifierError(PsiModifier.FINAL, parameter, parameter);
         }
       }
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       if (onlyWarnOnAbstractMethods || !reportParameters) {
         return;
@@ -197,7 +195,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
 
     private void check(PsiParameter parameter) {
       if (!isNecessaryFinal(parameter, parameter.getDeclarationScope())) {
-        registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
+        registerModifierError(PsiModifier.FINAL, parameter, parameter);
       }
     }
   }

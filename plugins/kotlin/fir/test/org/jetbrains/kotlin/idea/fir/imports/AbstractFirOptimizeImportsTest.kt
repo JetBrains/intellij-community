@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.imports
 
-import com.intellij.lang.ImportOptimizer
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
@@ -12,13 +11,14 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
     override val runTestInWriteCommand: Boolean = false
+    override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfEnabledByFileDirective(
-            testDataFile().toPath(),
-            IgnoreTests.DIRECTIVES.FIR_COMPARISON,
-            ".after",
-            test = { super.doTest(unused) }
+          dataFile().toPath(),
+          IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+          ".after",
+          test = { super.doTest(unused) }
         )
     }
 

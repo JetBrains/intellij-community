@@ -13,7 +13,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 buildscript {
-    ext.kotlin_version = '$VERSION$'
+    ext.kotlin_version = '1.6.20'
     repositories {
         mavenCentral()
     }
@@ -31,3 +31,5 @@ compileTestKotlin {
         jvmTarget = "1.8"
     }
 }
+
+// VERSION: 1.6.20

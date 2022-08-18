@@ -2,10 +2,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -64,6 +61,11 @@ public class ChooseLocaleAction extends ComboBoxAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getEditor(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private class SetLocaleAction extends AnAction {

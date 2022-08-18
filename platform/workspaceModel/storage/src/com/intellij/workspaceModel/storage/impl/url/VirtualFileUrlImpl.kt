@@ -20,6 +20,10 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return cachedUrl!!
   }
 
+  override fun getUrlSegments(): List<String> {
+    return url.split('/', '\\')
+  }
+
   override fun getFileName(): String = url.substringAfterLast('/')
 
   override fun getPresentableUrl(): String {

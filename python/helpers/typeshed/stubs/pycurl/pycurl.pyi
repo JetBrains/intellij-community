@@ -1,6 +1,5 @@
-# TODO(MichalPokorny): more precise types
-
 from typing import Any, Text
+from typing_extensions import final
 
 GLOBAL_ACK_EINTR: int
 GLOBAL_ALL: int
@@ -18,6 +17,7 @@ def version_info() -> tuple[int, str, int, str, int, str, int, str, tuple[str, .
 
 class error(Exception): ...
 
+@final
 class Curl:
     def close(self) -> None: ...
     def setopt(self, option: int, value: Any) -> None: ...
@@ -34,6 +34,7 @@ class Curl:
     # TODO(MichalPokorny): wat?
     USERPWD: int
 
+@final
 class CurlMulti:
     def close(self) -> None: ...
     def add_handle(self, obj: Curl) -> None: ...
@@ -44,6 +45,7 @@ class CurlMulti:
     def info_read(self, max_objects: int = ...) -> tuple[int, list[Any], list[Any]]: ...
     def socket_action(self, sockfd: int, ev_bitmask: int) -> tuple[int, int]: ...
 
+@final
 class CurlShare:
     def close(self) -> None: ...
     def setopt(self, option: int, value: Any) -> Any: ...

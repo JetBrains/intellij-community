@@ -12,6 +12,7 @@ import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.add.target.ProjectSync
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -36,6 +37,17 @@ interface PythonInterpreterTargetEnvironmentFactory {
    * Enables additional UI options and target-specific mechanics for project synchronization.
    */
   fun getProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync?
+
+  /**
+   * Target provides access to its filesystem using VFS (like WSL)
+   */
+  fun asTargetWithMappedLocalVfs(envConfig: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? = null
+
+
+  /**
+   * See [isPackageManagementSupported]
+   */
+  fun packageManagementSupported(evConfiguration: TargetEnvironmentConfiguration): Boolean? = null
 
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
@@ -86,5 +98,23 @@ interface PythonInterpreterTargetEnvironmentFactory {
 
     fun TargetEnvironmentConfiguration.isOfType(targetEnvironmentType: TargetEnvironmentType<*>): Boolean =
       typeId == targetEnvironmentType.id
+
+    /**
+     * Target provides access to its filesystem using VFS (like WSL)
+     */
+    @JvmStatic
+    fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) = EP_NAME.extensionList.asSequence().mapNotNull {
+      it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
+    }.firstOrNull()
+
+    /**
+     * Null means this sdk is not target based. In other case value means if user can install package in this SDK
+     */
+    @JvmStatic
+    fun isPackageManagementSupported(sdk: Sdk): Boolean? = (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)
+      ?.targetEnvironmentConfiguration
+      ?.let { targetEnvironmentConfiguration ->
+        EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
+      }
   }
 }

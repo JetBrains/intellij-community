@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -27,7 +27,7 @@ public final class ToolbarUtil {
                                        @NotNull JRootPane rootPane,
                                        Consumer<? super Runnable> onDispose) {
     if (SystemInfoRt.isMac) {
-      if (ExperimentalUI.isNewToolbar()) {
+      if (ExperimentalUI.isNewUI()) {
         setCustomTitleForToolbar(window, rootPane, onDispose);
       }
       else if (isMacTransparentTitleBarAppearance()) {
@@ -41,7 +41,9 @@ public final class ToolbarUtil {
   }
 
   public static void removeSystemTitleBar(@NotNull JRootPane rootPane) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
+      return;
+    }
 
     rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
@@ -51,7 +53,9 @@ public final class ToolbarUtil {
   public static void setCustomTitleForToolbar(@NotNull Window window,
                                               @NotNull JRootPane rootPane,
                                               Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
+      return;
+    }
 
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {
@@ -153,7 +157,7 @@ public final class ToolbarUtil {
           if (isMacTransparentTitleBarAppearance()) {
             if (window instanceof RootPaneContainer) {
               JRootPane pane = ((RootPaneContainer)window).getRootPane();
-              if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) != Boolean.TRUE) {
+              if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == Boolean.FALSE) {
                 graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
                 LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1,
                                     LinePainter2D.StrokeType.INSIDE, 1);

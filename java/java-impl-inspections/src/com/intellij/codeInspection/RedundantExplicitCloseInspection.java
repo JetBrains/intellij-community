@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -23,7 +23,7 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         PsiResourceList resourceList = statement.getResourceList();
         if (resourceList == null) return;
 
@@ -45,8 +45,7 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
                      EquivalenceChecker.getCanonicalPsiEquivalence()
                                        .expressionsAreEquivalent(reference, ((PsiResourceExpression)element).getExpression()));
         if(!isReferenceToResourceVariable) return;
-        holder.registerProblem(last, JavaBundle.message("inspection.redundant.explicit.close"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteRedundantCloseFix());
+        holder.registerProblem(last, JavaBundle.message("inspection.redundant.explicit.close"), new DeleteRedundantCloseFix());
 
       }
     };

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +70,7 @@ public final class JBCefCookieManager {
   /**
    * Retrieves cookies asynchronously.
    *
-   * @param url             filter by the given url scheme, host, domain and path.
+   * @param url             filter by the given URL scheme, host, domain and path.
    * @param includeHttpOnly include only true HTTP-only cookies.
    * @return a future with the list of {@link JBCefCookie} which can be empty if cookies cannot be accessed or do not exist
    */
@@ -111,10 +111,10 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * WARNING: the method can lead to a freeze when called from a browser callback.
-   *
+   * WARNING: The method can lead to a freeze when called from a browser callback.
+   * <p>
    * Gets cookies. Underlying native method is asynchronous.
-   * This method is executed with synchronization and can take up to `maxTimeToWait` ms.
+   * This method is executed with synchronization and can take up to {@code maxTimeToWait} ms.
    *
    * @param url             filter by the given url scheme, host, domain and path.
    * @param includeHttpOnly include only true HTTP-only cookies.
@@ -146,14 +146,14 @@ public final class JBCefCookieManager {
    * The method expects each attribute to be well-formed. It will check for disallowed characters
    * (e.g. the ';' character is disallowed within the cookie value attribute) and fail without setting
    * the cookie if such characters are found.
-   *
-   * It's recommended that a caller of the method either waits for the returned {@code future} to complete
+   * <p>
+   * It's recommended that a caller of the method either waits for the returned {@code Future} to complete
    * or cancels it when no confirmation of the success is required. Otherwise, it is possible that
    * the confirmation task performs infinitely in case something went wrong with the setting.
    *
    * @param url the cookie URL (should match the cookie's domain)
    * @param jbCefCookie the cookie
-   * @return a future with false if an invalid URL is specified or if cookies cannot be accessed.
+   * @return a future with {@code false} if an invalid URL is specified or if cookies cannot be accessed.
    */
   public @NotNull Future<@NotNull Boolean> setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie) {
     if (!checkArgs(url, jbCefCookie)) {
@@ -191,14 +191,14 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * WARNING: the method can lead to a freeze when called from a browser callback.
-   *
+   * WARNING: The method can lead to a freeze when called from a browser callback.
+   * <p>
    * Sets a cookie given a valid URL and explicit user-provided cookie attributes.
    * Underlying native method {@link CefCookieManager#setCookie(String, CefCookie)} is asynchronous.
    * This method is synchronous and will wait up to `maxTimeToWait` ms.
    *
    * @param maxTimeToWait time to wait setting cookie in ms, or default
-   * @return true if setting the cookie was successful.
+   * @return {@code true} if setting the cookie was successful.
    *
    * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
@@ -273,19 +273,19 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * Deletes asynchronously all cookies that match the specified parameters. If both {@code url] and {@code cookieName} values
+   * Deletes asynchronously all cookies that match the specified parameters. If both {@code url} and {@code cookieName} values
    * are specified all host and domain cookies matching both will be deleted. If only {@code url} is
    * specified all host cookies (but not domain cookies) irrespective of path will be deleted. If
    * {@code url} is empty all cookies for all hosts and domains will be deleted. Cookies can alternately
    * be deleted using the visit*Cookies() methods.
-   *
-   * It's recommended that a caller of the method either waits for the returned {@code future} to complete
+   * <p>
+   * It's recommended that a caller of the method either waits for the returned {@code Future} to complete
    * or cancels it when no confirmation of the success is required. Otherwise, it is possible that
    * the confirmation task performs infinitely in case something went wrong with the deletion.
    *
-   * @param url The cookie URL to delete or null.
-   * @param cookieName The cookie name to delete or null.
-   * @return a future with false if a non-empty invalid URL is specified or if cookies cannot be accessed.
+   * @param url The cookie URL to delete or {@code null}.
+   * @param cookieName The cookie name to delete or {@code null}.
+   * @return a future with {@code false} if a non-empty invalid URL is specified or if cookies cannot be accessed.
    */
   public @NotNull Future<@NotNull Boolean> deleteCookies(@Nullable String url, @Nullable String cookieName) {
     if (!myCefCookieManager.deleteCookies(url, cookieName)) {
@@ -344,8 +344,8 @@ public final class JBCefCookieManager {
   /**
    * Deletes all host and domain cookies matching |url| and |cookieName| values.
    *
-   * @param doSync if false - underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
-   *               true - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
+   * @param doSync if {@code false}, underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
+   *               {@code true} - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
    *
    * @deprecated use {@link #deleteCookies(String, String)}
    */

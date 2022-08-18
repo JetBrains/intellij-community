@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnnecessaryReturnInspection extends BaseInspection {
+public class UnnecessaryReturnInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreInThenBranch = false;
 
@@ -84,7 +84,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       super.visitReturnStatement(statement);
       final Ref<Boolean> constructorRef = Ref.create();
       if (isReturnRedundant(statement, ignoreInThenBranch, true, constructorRef)) {
-        registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, constructorRef.get());
+        registerError(statement.getFirstChild(), constructorRef.get());
       }
     }
 

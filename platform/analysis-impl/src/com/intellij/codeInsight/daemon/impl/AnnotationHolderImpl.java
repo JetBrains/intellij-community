@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -12,7 +14,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
@@ -195,8 +200,13 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
       //todo temporary fix. CLion guys promised to fix their annotator eventually
       //LOG.warnInProduction(pluginException);
       Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
-      String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears()/100, p.getYears()%100, p.getMonths(), p.getDays());
-      LOG.warn(f, pluginException);
+      String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
+      if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.warn(f+"\nthread dump:\n+"+ThreadDumper.dumpThreadsToString(), pluginException);
+      }
+      else {
+        LOG.warn(pluginException);
+      }
     }
     else {
       LOG.warnInProduction(pluginException);

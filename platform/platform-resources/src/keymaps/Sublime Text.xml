@@ -61,7 +61,6 @@
     <keyboard-shortcut first-keystroke="control shift d"/>
   </action>
   <action id="Diff.ShowSettingsPopup"/>
-  <action id="TagDocumentationNavigation"/>
   <action id="CIDR.Lang.Cpp.GenerateDefinitions"/>
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control j"/>

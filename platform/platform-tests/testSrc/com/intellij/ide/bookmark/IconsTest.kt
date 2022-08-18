@@ -4,18 +4,18 @@ package com.intellij.ide.bookmark
 import junit.framework.TestCase
 import javax.swing.Icon
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertSame
 
-private const val BOOKMARK_ICON_STRING = "IconWrapperWithTooltip:BookmarkIcon"
 private const val MNEMONIC_ICON_PREFIX = "IconWrapperWithTooltip:BookmarkMnemonicIcon:"
 
 private fun testIcons(iconSupplier: (BookmarkType) -> Icon) = BookmarkType.values().forEach {
   val icon = iconSupplier(it)
-  val expected = when (Char.MIN_VALUE != it.mnemonic) {
-    true -> MNEMONIC_ICON_PREFIX + it.mnemonic
-    else -> BOOKMARK_ICON_STRING
+  when (Char.MIN_VALUE != it.mnemonic) {
+    true -> assertEquals(MNEMONIC_ICON_PREFIX + it.mnemonic, icon.toString(), "unexpected #toString")
+    else -> assertNotEquals(MNEMONIC_ICON_PREFIX, icon.toString(), "unexpected #toString")
   }
-  assertEquals(expected, icon.toString(), "unexpected #toString")
+
   assertSame(icon, iconSupplier(it), "different icon instances for the same type")
 }
 

@@ -2321,4 +2321,5 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
 }
 
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// SET_FALSE: ALIGN_MULTILINE_PARAMETERS_IN_CALLS
+// IGNORE_FORMATTER

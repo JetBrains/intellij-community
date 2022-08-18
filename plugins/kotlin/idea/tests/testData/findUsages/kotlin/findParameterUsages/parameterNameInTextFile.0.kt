@@ -7,3 +7,5 @@ fun foo(<caret>param: String) {
 fun bar() {
     foo(param = "")
 }
+
+// FIR_COMPARISON

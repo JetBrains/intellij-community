@@ -63,7 +63,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-public final class RunIdeConsoleAction extends DumbAwareAction implements UpdateInBackground {
+public final class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
@@ -71,6 +71,11 @@ public final class RunIdeConsoleAction extends DumbAwareAction implements Update
   private static final Key<IdeScriptEngineManager.EngineInfo> SELECTED_ENGINE_INFO_KEY = Key.create("SELECTED_ENGINE_INFO_KEY");
   private static final Key<Trinity<IdeScriptEngine, IdeScriptEngineManager.EngineInfo, VirtualFile>> SCRIPT_ENGINE_KEY =
     Key.create("SCRIPT_ENGINE_KEY");
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -303,6 +308,10 @@ public final class RunIdeConsoleAction extends DumbAwareAction implements Update
           virtualFile.getExtension() != null));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();

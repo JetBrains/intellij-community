@@ -24,10 +24,15 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class DissociateResourceBundleAction extends AnAction implements UpdateInBackground {
+public class DissociateResourceBundleAction extends AnAction {
 
   public DissociateResourceBundleAction() {
     super(Presentation.NULL_STRING, Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

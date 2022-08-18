@@ -1,22 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
-import org.jetbrains.kotlin.test.TargetBackend
-import org.jetbrains.kotlin.test.TestJdkKind
 import com.google.common.collect.ImmutableList
-import org.jetbrains.kotlin.test.KotlinRoot
 import com.google.common.collect.ImmutableMap
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.checkers.ENABLE_JVM_PREVIEW
-import org.jetbrains.kotlin.idea.checkers.parseLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.JvmTarget.Companion.fromString
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.checkers.ENABLE_JVM_PREVIEW
+import org.jetbrains.kotlin.idea.checkers.parseLanguageVersionSettings
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.TestJdkKind
 import java.io.File
 import java.lang.reflect.Field
 import java.util.*

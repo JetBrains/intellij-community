@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
-class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisitor() {
+internal class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisitor() {
   private var seenFirstMarker = false
 
   private val HEADERS = MarkdownTokenTypeSets.HEADERS.types.map { MarkdownElementType.markdownType(it) }.toSet()
@@ -40,6 +40,10 @@ class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisit
 
     super.visitNode(node)
     ensureBuilderInPosition(node.endOffset)
+    if (node.type is MarkdownCollapsableElementType) {
+      marker.collapse(MarkdownElementType.platformType(node.type))
+      return
+    }
     marker.done(MarkdownElementType.platformType(node.type))
   }
 
@@ -50,7 +54,7 @@ class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisit
     }
   }
 
-  fun leadingWhitespaces(): WhitespacesAndCommentsBinder? {
+  fun leadingWhitespaces(): WhitespacesAndCommentsBinder {
     return WhitespacesAndCommentsBinder { tokens, _, getter ->
       var i = 0
       while (i < tokens.size && (tokens[i] != MarkdownTokenTypes.WHITE_SPACE || getter.get(i).isNotBlank())) {

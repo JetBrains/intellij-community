@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
@@ -16,16 +15,16 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
-import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleJavaBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator.NotificationKind.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.util.function.Function
 import javax.swing.JComponent
@@ -81,11 +80,11 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                                     text(KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed"))
                                 }
 
-                                createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
+                                createActionLabel(KotlinGradleJavaBundle.message("notification.action.text.load.script.configuration")) {
                                     actions.reload()
                                 }
 
-                                createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.enable.auto.reload")) {
+                                createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
                                     actions.enableAutoReload()
                                 }
 
@@ -145,11 +144,11 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                                     KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed")
                         )
 
-                        createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
+                        createActionLabel(KotlinGradleJavaBundle.message("notification.action.text.load.script.configuration")) {
                             actions.reload()
                         }
 
-                        createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.enable.auto.reload")) {
+                        createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
                             actions.enableAutoReload()
                         }
                     } else {
@@ -180,9 +179,9 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
 
         // from AttachExternalProjectAction
 
-        val manager = ExternalSystemApiUtil.getManager(GRADLE_SYSTEM_ID) ?: return
+        val manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID) ?: return
         val provider = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.extensions.find {
-            it is AbstractExternalProjectImportProvider && GRADLE_SYSTEM_ID == it.externalSystemId
+            it is AbstractExternalProjectImportProvider && GradleConstants.SYSTEM_ID == it.externalSystemId
         } ?: return
         val projectImportProviders = arrayOf(provider)
 

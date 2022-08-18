@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 
@@ -21,9 +20,6 @@ interface KotlinMultiplatformComponentBuilder<TOrigin, TRet> :
 
 interface KotlinMultiplatformComponentBuilderBase<TRet> :
     KotlinModelComponentBuilder<Any, MultiplatformModelImportingContext, TRet>
-
-interface KotlinProjectModelComponentBuilder<TOrigin, TRet> :
-    KotlinModelComponentBuilder<TOrigin, KotlinProjectModelImportingContext, TRet>
 
 /**
  * Returns only those dependencies with RUNTIME scope which are not present with compile scope

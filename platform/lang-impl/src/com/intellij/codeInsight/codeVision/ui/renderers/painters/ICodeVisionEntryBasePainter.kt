@@ -29,7 +29,7 @@ interface ICodeVisionEntryBasePainter<T> : ICodeVisionPainter {
              textAttributes: TextAttributes,
              value: T,
              state: RangeCodeVisionModel.InlayState,
-             hovered: Boolean) = object : Icon {
+             hovered: Boolean): Icon = object : Icon {
     var size = size(editor, state, value)
 
     override fun getIconHeight(): Int = size.height

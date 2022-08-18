@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -10,8 +10,9 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -28,13 +29,16 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
-import com.intellij.util.PlatformUtils
+import com.intellij.util.PlatformUtils.isIntelliJ
+import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -43,7 +47,14 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for workspace model in IDE.
  */
+@Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
+  companion object {
+    fun getInstance(project: Project): JpsProjectModelSynchronizer = project.service()
+
+    private val LOG = logger<JpsProjectModelSynchronizer>()
+  }
+
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
@@ -61,7 +72,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun reloadProjectEntities() {
+  suspend fun reloadProjectEntities() {
     if (StoreReloadManager.getInstance().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return
@@ -85,20 +96,20 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
 
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          val storage = builder.toStorage()
+          val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
                                     || it is DummyParentEntitySource }, storage)
           runAutomaticModuleUnloader(updater)
         }
         sourcesToSave.removeAll(changedSources)
       }
-    })
+    }
   }
 
-  private fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
+  private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
     val reporter = IdeErrorReporter(project)
     val result = action(reporter)
     val errors = reporter.errors
@@ -130,8 +141,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         val addedUrls = ArrayList<String>()
         val removedUrls = ArrayList<String>()
         val changedUrls = ArrayList<String>()
-        //JPS model is loaded from *.iml files, files in .idea directory (modules.xml), files from directories in .idea (libraries) and *.ipr file
-        // so we can ignore all other events to speed up processing
+        // JPS model is loaded from *.iml files, files in .idea directory (modules.xml),
+        // files from directories in .idea (libraries) and *.ipr file, so we can ignore all other events to speed up processing
         for (event in events) {
           if (isFireStorageFileChangedEvent(event)) {
             when (event) {
@@ -166,34 +177,28 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
-        event.getAllChanges().forEach {
-          when (it) {
-            is EntityChange.Added -> sourcesToSave.add(it.entity.entitySource)
-            is EntityChange.Removed -> sourcesToSave.add(it.entity.entitySource)
-            is EntityChange.Replaced -> {
-              sourcesToSave.add(it.oldEntity.entitySource)
-              sourcesToSave.add(it.newEntity.entitySource)
-            }
-          }
+        event.getAllChanges().forEach { change ->
+          change.oldEntity?.entitySource?.let { sourcesToSave.add(it) }
+          change.newEntity?.entitySource?.let { sourcesToSave.add(it) }
         }
       }
     })
   }
 
-  fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
-    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
+  suspend fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
+    val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
     childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return builder.toStorage() to sourcesToUpdate
+      return builder.toSnapshot() to sourcesToUpdate
     }
     else {
       childActivity?.end()
@@ -204,19 +209,26 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
-    if (storeToEntitySources == null) return
-    WriteAction.runAndWait<RuntimeException> {
-      if (project.isDisposed) return@runAndWait
-      childActivity = childActivity?.endAndStart("applying loaded changes")
-      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-        updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
-                                  || it is DummyParentEntitySource }, storeToEntitySources.first)
-        childActivity = childActivity?.endAndStart("unloaded modules loading")
-        runAutomaticModuleUnloader(updater)
+  suspend fun applyLoadedStorage(storeToEntitySources: Pair<EntityStorage, List<EntitySource>>?) {
+    if (storeToEntitySources == null) {
+      return
+    }
+
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        if (project.isDisposed) return@runWriteAction
+        childActivity = childActivity?.endAndStart("applying loaded changes")
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+          updater.replaceBySource({
+                                    it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
+                                    || it is DummyParentEntitySource
+                                  }, storeToEntitySources.first)
+          childActivity = childActivity?.endAndStart("unloaded modules loading")
+          runAutomaticModuleUnloader(updater)
+        }
+        childActivity?.end()
+        childActivity = null
       }
-      childActivity?.end()
-      childActivity = null
     }
     sourcesToSave.clear()
     sourcesToSave.addAll(storeToEntitySources.second)
@@ -226,20 +238,18 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity = null
   }
 
-  fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))
+  suspend fun loadProject(project: Project) {
+    applyLoadedStorage(loadProjectToEmptyStorage(project))
+  }
 
-  private fun runAutomaticModuleUnloader(storage: WorkspaceEntityStorage) {
+  private fun runAutomaticModuleUnloader(storage: EntityStorage) {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)
   }
 
-  // FIXME: 21.01.2021 This is a fix for OC-21192
-  // We do disable delayed loading of JPS model if modules.xml file missing (what happens because of bug if you open a project in 2020.3)
-  fun blockCidrDelayedUpdate(): Boolean {
-    if (!PlatformUtils.isCidr()) return false
-
-    val currentSerializers = prepareSerializers() as JpsProjectSerializersImpl
-    if (currentSerializers.moduleSerializers.isNotEmpty()) return false
-    return currentSerializers.moduleListSerializersByUrl.keys.all { !JpsPathUtil.urlToFile(it).exists() }
+  // IDEA-288703
+  fun hasNoSerializedJpsModules(): Boolean {
+    return !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
+           !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
   }
 
   private fun prepareSerializers(): JpsProjectSerializers {
@@ -259,7 +269,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
     return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
-                                                             WorkspaceModel.enabledForArtifacts,
                                                              virtualFileManager,
                                                              externalStorageConfigurationManager, fileInDirectorySourceNames)
   }
@@ -344,10 +353,5 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @TestOnly
   fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
-
-  companion object {
-    fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
-    private val LOG = logger<JpsProjectModelSynchronizer>()
-  }
 }
 

@@ -2,6 +2,7 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.xml.tree.DomModelTreeView;
@@ -27,6 +28,11 @@ abstract public class BaseDomTreeAction extends AnAction {
     else {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected DomModelTreeView getTreeView(AnActionEvent e) {

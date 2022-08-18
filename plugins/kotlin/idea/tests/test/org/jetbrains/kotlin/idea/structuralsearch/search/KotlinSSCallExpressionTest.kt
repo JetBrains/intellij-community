@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSCallExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSCallExpressionTest : KotlinStructuralSearchTest() {
     fun testConstrArgCall() { doTest("A(true, 0, 1)", """
         class A(val b: Boolean, val c: Int, val d: Int)
 

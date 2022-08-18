@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RemoveExplicitTypeArguments")
 
 package org.jetbrains.plugins.groovy.intentions.style.inference.search
@@ -116,7 +116,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
     return delegateProcessor.processTextOccurrence(element, offsetInElement, consumer)
   }
 
-  fun hasSelfReferencesInCaller(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
+  private fun hasSelfReferencesInCaller(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
     val enclosingClosure: GrFunctionalExpression = element.parentOfType<GrFunctionalExpression>() ?: return false
     val call: GrMethodCall = enclosingClosure.parentOfType<GrMethodCall>() ?: return false
     val arguments: List<GrExpression> = call.closureArguments.asList().plus(call.expressionArguments.asList())
@@ -132,7 +132,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
   /**
    * Performs checks against calls like foo(foo()) due to possibly undefined return type
    */
-  fun hasSelfReferencesInArguments(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
+  private fun hasSelfReferencesInArguments(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
     val expressionWithArguments: GrExpression = element.parentOfTypes(GrMethodCall::class, GrAssignmentExpression::class) ?: return false
     val isCorrectlyPointing = when (expressionWithArguments) {
       is GrMethodCall -> expressionWithArguments.invokedExpression === element

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -65,12 +65,6 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final IntEventField TYPED_NAVIGATION_KEYS = EventFields.Int("typedNavigationKeys");
   public static final EventId2<Integer, Integer> SESSION_FINISHED =
     GROUP.registerEvent("sessionFinished", TYPED_NAVIGATION_KEYS, TYPED_SYMBOL_KEYS);
-
-  public static final String TYPED_BACKSPACES_DATA_KEY = "typedBackspaces";
-  public static final String SESSION_ID_LOG_DATA_KEY = "sessionId";
-  public static final String COLLECTED_RESULTS_DATA_KEY = "collectedResults";
-  public static final String SELECTED_INDEXES_DATA_KEY = "selectedIndexes";
-  public static final String TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount";
 
   @Override
   public EventLogGroup getGroup() {

@@ -14,36 +14,49 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.UIManager
 
 private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-  private val layoutMap = mapOf(
+  private val layoutMap = EnumMap(mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
     Position.Center to HorizontalLayout.CENTER
-  )
+  ))
   private val visibleComponentsPool = VisibleComponentsPool()
   private val disposable = Disposer.newDisposable()
+  private val mainMenuButton: MainMenuButton?
 
   init {
-    background = UIManager.getColor("MainToolbar.background")
+    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
+    if (IdeRootPane.isMenuButtonInToolbar()) {
+      mainMenuButton = MainMenuButton()
+      Disposer.register(disposable, mainMenuButton.menuShortcutHandler)
+    }
+    else {
+      mainMenuButton = null
+    }
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
-  // as part of EDT task scheduled in a start-up activity, do fill it.
-  // That's to avoid flickering due to resizing
+  // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   fun init(project: Project?) {
+    mainMenuButton?.let {
+      addWidget(it.button, Position.Left)
+    }
+
     for (factory in MainToolbarAppWidgetFactory.EP_NAME.extensionList) {
       addWidget(factory.createWidget(), factory.getPosition())
     }
@@ -54,12 +67,18 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       }
     }
 
-    createActionsBar()?.let { addWidget(it, Position.Right) }
+    createActionBar()?.let { addWidget(it, Position.Right) }
     addComponentListener(ResizeListener())
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    mainMenuButton?.menuShortcutHandler?.registerShortcuts(rootPane)
   }
 
   override fun removeNotify() {
     super.removeNotify()
+    mainMenuButton?.menuShortcutHandler?.unregisterShortcuts()
     Disposer.dispose(disposable)
   }
 
@@ -69,7 +88,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionsBar(): JComponent? {
+  private fun createActionBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
     return group?.let {
       val toolbar = TitleActionToolbar(ActionPlaces.MAIN_TOOLBAR, it, true)
@@ -85,7 +104,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      val visibleElementsWidth = components.filter { it.isVisible }.sumOf { it.preferredSize.width }
+      val visibleElementsWidth = components.asSequence().filter { it.isVisible }.sumOf { it.preferredSize.width }
       val componentWidth = size.width
       if (visibleElementsWidth > componentWidth) {
         decreaseVisibleSizeBy(visibleElementsWidth - componentWidth)
@@ -120,11 +139,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 }
 
 private class VisibleComponentsPool {
-  val elements = mapOf<Position, MutableList<JComponent>>(
-    Pair(Position.Left, mutableListOf()),
-    Pair(Position.Right, mutableListOf()),
-    Pair(Position.Center, mutableListOf())
-  )
+  val elements = EnumMap(mapOf<Position, MutableList<JComponent>>(
+    Position.Left to mutableListOf(),
+    Position.Right to mutableListOf(),
+    Position.Center to mutableListOf()
+  ))
 
   fun addElement(comp: JComponent, position: Position) = elements[position]!!.add(comp)
 
@@ -142,6 +161,6 @@ private class VisibleComponentsPool {
 }
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
-          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable();
+  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
+          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable()
 }

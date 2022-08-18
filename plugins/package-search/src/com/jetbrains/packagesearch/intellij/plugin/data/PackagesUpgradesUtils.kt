@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.openapi.module.Module
@@ -14,7 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeC
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
+import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal suspend fun computePackageUpgrades(
     installedPackages: List<PackageModel.Installed>,
@@ -30,16 +46,16 @@ internal suspend fun computePackageUpgrades(
         if (installedPackageModel.remoteInfo == null || availableVersions.isEmpty()) continue
 
         for (usageInfo in installedPackageModel.usageInfo) {
-            val currentVersion = usageInfo.version
+            val currentVersion = usageInfo.getResolvedVersionOrFallback()
             if (currentVersion !is PackageVersion.Named) continue
 
-            val normalizedPackageVersion = runCatching { NormalizedPackageVersion.parseFrom(currentVersion, normalizer) }
+            val normalizedPackageVersion = runCatching { normalizer.parse(currentVersion) }
                 .onFailure { logError(throwable = it) { "Unable to normalize version: $currentVersion" } }
                 .getOrNull() ?: continue
 
             val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
-            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named) {
-                val moduleModel = nativeModulesMap.getValue(usageInfo.projectModule)
+            val moduleModel = nativeModulesMap[usageInfo.projectModule]
+            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named && moduleModel != null) {
                 @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
                 updatesByModule.getOrPut(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
                     PackagesToUpgrade.PackageUpgradeInfo(
@@ -61,7 +77,7 @@ internal suspend fun computePackageUpgrades(
     return PackagesToUpgrade(updatesByModule)
 }
 
-internal suspend inline fun computeUpgradeOperationsForSingleModule(
+internal inline fun computeUpgradeOperationsForSingleModule(
     packageModel: PackageModel.Installed,
     targetModule: ModuleModel,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

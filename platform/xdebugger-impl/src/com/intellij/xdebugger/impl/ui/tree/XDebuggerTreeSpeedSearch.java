@@ -158,6 +158,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       .setPreferredPosition(Balloon.Position.above)
       .setAwtTooltip(true)
       .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setBorderColor(HintUtil.getHintBorderColor())
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
 
@@ -252,6 +253,11 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myCanExpand;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.DumbAwareAction
@@ -24,8 +25,10 @@ import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
-@Suppress("HardCodedStringLiteral")
-class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
+internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
 

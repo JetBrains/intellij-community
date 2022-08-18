@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.application.WriteAction
@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.MockSdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertThrows
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.EnvironmentUtil
@@ -85,6 +83,14 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
   @Test
   fun testResolveJdkName() {
+    // Kotlin generates private `testResolveJdkName$lambda-6` and `testResolveJdkName$lambda-7` methods,
+    // and JUnit yields a warning about non-public test method.
+    // Separate `doTestResolveJdkName` method makes Kotlin generate the same methods with another names,
+    // which are not considered as tests by JUnit.
+    doTestResolveJdkName()
+  }
+
+  private fun doTestResolveJdkName() {
     assertThat(resolveJdkName(null, null)).isNull()
 
     assertThat(resolveJdkName(null, USE_INTERNAL_JAVA)?.homePath)

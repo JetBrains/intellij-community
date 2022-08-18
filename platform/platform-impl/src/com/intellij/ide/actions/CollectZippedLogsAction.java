@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -93,7 +94,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<Compressor> additionalFiles) throws IOException {
+  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<? super Compressor> additionalFiles) throws IOException {
     PerformanceWatcher.getInstance().dumpThreads("", false);
 
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
@@ -145,5 +146,10 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
 
     return archive;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

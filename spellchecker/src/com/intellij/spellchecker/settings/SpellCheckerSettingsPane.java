@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
@@ -137,7 +137,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   private static String getSupportedDictionariesDescription() {
-    final String supported = CustomDictionaryProvider.EP_NAME.extensions()
+    final String supported = CustomDictionaryProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.getDictionaryType())
       .collect(Collectors.joining(", "));
 
@@ -220,14 +220,14 @@ public class SpellCheckerSettingsPane implements Disposable {
     @Override
     protected void customizeDecorator(ToolbarDecorator decorator) {
       decorator.setRemoveAction((button) -> {
-        SpellcheckerActionStatistics.reportAction("remove.from.accepted.words.ui", manager.getProject());
+        SpellcheckerActionStatistics.REMOVE_FROM_ACCEPTED_WORDS.log(manager.getProject());
         ListUtil.removeSelectedItems(myList);
       });
     }
 
     @Override
     protected String findItemToAdd() {
-      SpellcheckerActionStatistics.reportAction("add.to.accepted.words.ui", manager.getProject());
+      SpellcheckerActionStatistics.ADD_TO_ACCEPTED_WORDS.log(manager.getProject());
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {

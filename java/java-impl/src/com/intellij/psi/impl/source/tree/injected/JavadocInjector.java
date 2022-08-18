@@ -36,15 +36,8 @@ public class JavadocInjector implements MultiHostInjector {
     if (ranges.isEmpty()) return;
 
     registrar.startInjecting(language);
-    if (ranges.size() == 1) {
-        registrar.addPlace(null, null, snippet, ranges.get(0));
-    }
-    else {
-      registrar.addPlace(null, null, snippet, ranges.get(0));
-      for (TextRange range : ranges.subList(1, ranges.size() - 1)) {
-        registrar.addPlace(null, null, snippet, range);
-      }
-      registrar.addPlace(null, null, snippet, ContainerUtil.getLastItem(ranges));
+    for (TextRange range : ranges) {
+      registrar.addPlace(null, null, snippet, range);
     }
     registrar.doneInjecting();
 
@@ -62,6 +55,10 @@ public class JavadocInjector implements MultiHostInjector {
       if (langValue == null) break;
 
       final String langValueText = stripPossibleLeadingAndTrailingQuotes(langValue);
+
+      if ("java".equalsIgnoreCase(langValueText)) {
+        return JShellLanguage.INSTANCE;
+      }
 
       final Language language = findRegisteredLanguage(langValueText);
       if (language == null) break;

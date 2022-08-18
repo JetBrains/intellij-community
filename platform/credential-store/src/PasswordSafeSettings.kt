@@ -4,6 +4,7 @@ package com.intellij.credentialStore
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
@@ -13,11 +14,13 @@ import com.intellij.util.xmlb.annotations.OptionTag
 @State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeSettings.PasswordSafeOptions> {
   companion object {
+    private val LOG = logger<PasswordSafeSettings>()
+
     @JvmField
     val TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
 
     private val defaultProviderType: ProviderType
-      get() = if (SystemInfo.isWindows) ProviderType.KEEPASS else ProviderType.KEYCHAIN
+      get() = CredentialStoreManager.getInstance().defaultProvider()
   }
 
   private var state = PasswordSafeOptions()
@@ -48,7 +51,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       }
 
       val oldValue = state.provider
-      if (newValue !== oldValue) {
+      if (newValue !== oldValue && CredentialStoreManager.getInstance().isSupported(newValue)) {
         state.provider = newValue
         ApplicationManager.getApplication()?.messageBus?.syncPublisher(TOPIC)?.typeChanged(oldValue, newValue)
       }
@@ -57,6 +60,13 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   override fun getState() = state
 
   override fun loadState(state: PasswordSafeOptions) {
+    val credentialStoreManager = CredentialStoreManager.getInstance()
+    @Suppress("DEPRECATION")
+    if (state.provider === ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(ProviderType.MEMORY_ONLY)
+        || state.provider !== ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(state.provider)) {
+      LOG.error("Provider ${state.provider} from loaded credential store config is not supported in this environment")
+    }
+
     this.state = state
     providerType = state.provider
     state.keepassDb = state.keepassDb.nullize(nullizeSpaces = true)
@@ -76,12 +86,4 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     // do not use it directly
     var pgpKeyId by string()
   }
-}
-
-enum class ProviderType {
-  MEMORY_ONLY, KEYCHAIN, KEEPASS,
-
-  // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
-  @Deprecated("")
-  DO_NOT_STORE
 }

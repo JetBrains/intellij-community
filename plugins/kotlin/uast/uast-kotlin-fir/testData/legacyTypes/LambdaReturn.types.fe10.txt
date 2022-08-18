@@ -1,7 +1,7 @@
 UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin...]
     UClass (name = LambdaReturnKt) [public final class LambdaReturnKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam1) [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                         ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>

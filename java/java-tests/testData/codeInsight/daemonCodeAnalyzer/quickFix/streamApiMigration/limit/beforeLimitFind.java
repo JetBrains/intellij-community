@@ -1,4 +1,4 @@
-// "Replace with findFirst()" "true"
+// "Replace with findFirst()" "true-preview"
 
 public class Main {
   public String test(String[] array) {

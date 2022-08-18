@@ -1,4 +1,4 @@
-// "Extract intermediate operations" "true"
+// "Extract intermediate operations" "true-preview"
 
 import java.util.*;
 

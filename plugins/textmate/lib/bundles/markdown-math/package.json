@@ -1,33 +1,13 @@
 {
   "name": "markdown-math",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "icon": "icon.png",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
-  "engines": {
-    "vscode": "^1.54.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "capabilities": {
-    "virtualWorkspaces": true,
-    "untrustedWorkspaces": {
-      "supported": true
-    }
-  },
-  "main": "./out/extension",
-  "browser": "./dist/browser/extension",
-  "activationEvents": [],
   "contributes": {
     "languages": [
       {
         "id": "markdown-math",
-        "aliases": [],
-        "configuration": "./language-configuration.json"
+        "aliases": []
       }
     ],
     "grammars": [
@@ -43,7 +23,7 @@
           "text.html.markdown"
         ],
         "embeddedLanguages": {
-          "meta.embedded.math.markdown": "markdown-math"
+          "meta.embedded.math.markdown": "latex"
         }
       },
       {
@@ -53,16 +33,16 @@
           "text.html.markdown"
         ],
         "embeddedLanguages": {
-          "meta.embedded.math.markdown": "markdown-math"
+          "meta.embedded.math.markdown": "latex"
         }
       }
     ],
     "notebookRenderer": [
       {
-        "id": "markdownItRenderer-katex",
+        "id": "vscode.markdown-it-katex-extension",
         "displayName": "Markdown it KaTeX renderer",
         "entrypoint": {
-          "extends": "markdownItRenderer",
+          "extends": "vscode.markdown-it-renderer",
           "path": "./notebook-out/katex.js"
         }
       }
@@ -84,21 +64,5 @@
         }
       }
     ]
-  },
-  "scripts": {
-    "compile": "npm run build-notebook",
-    "watch": "npm run build-notebook",
-    "build-notebook": "node ./esbuild"
-  },
-  "dependencies": {
-    "@iktakahiro/markdown-it-katex": "https://github.com/mjbvz/markdown-it-katex.git"
-  },
-  "devDependencies": {
-    "@types/markdown-it": "^0.0.0",
-    "@types/vscode-notebook-renderer": "^1.60.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }

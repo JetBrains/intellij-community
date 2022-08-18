@@ -24,12 +24,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ExpressionUtils.resolveLocalVariable;
 
 class SpecialFirstIterationLoop {
-  private final @NotNull List<PsiStatement> myFirstIterationStatements;
-  private final @NotNull List<PsiStatement> myOtherIterationStatements;
+  private final @NotNull List<? extends PsiStatement> myFirstIterationStatements;
+  private final @NotNull List<? extends PsiStatement> myOtherIterationStatements;
   private final @Nullable PsiLocalVariable myVariable;
 
-  SpecialFirstIterationLoop(@NotNull List<PsiStatement> firstIterationStatements,
-                                   @NotNull List<PsiStatement> otherIterationStatements,
+  SpecialFirstIterationLoop(@NotNull List<? extends PsiStatement> firstIterationStatements,
+                                   @NotNull List<? extends PsiStatement> otherIterationStatements,
                                    @Nullable PsiLocalVariable variable) {
     myFirstIterationStatements = firstIterationStatements;
     myOtherIterationStatements = otherIterationStatements;
@@ -37,13 +37,11 @@ class SpecialFirstIterationLoop {
   }
 
 
-  @NotNull
-  public List<PsiStatement> getOtherIterationStatements() {
+  @NotNull List<? extends PsiStatement> getOtherIterationStatements() {
     return myOtherIterationStatements;
   }
 
-  @NotNull
-  public List<PsiStatement> getFirstIterationStatements() {
+  @NotNull List<? extends PsiStatement> getFirstIterationStatements() {
     return myFirstIterationStatements;
   }
 
@@ -84,15 +82,15 @@ class SpecialFirstIterationLoop {
   @Nullable
   private static SpecialFirstIterationLoop extract(boolean firstIterationThen,
                                                    int index,
-                                                   @NotNull List<PsiStatement> thenStatements,
-                                                   @NotNull List<PsiStatement> elseStatements,
-                                                   @NotNull List<PsiStatement> statements,
+                                                   @NotNull List<? extends PsiStatement> thenStatements,
+                                                   @NotNull List<? extends PsiStatement> elseStatements,
+                                                   @NotNull List<? extends PsiStatement> statements,
                                                    @NotNull PsiLocalVariable checkVar) {
     PsiStatement statement = statements.get(index);
     PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
     if (ifStatement == null) return null;
-    List<PsiStatement> beforeStatements = statements.subList(0, index);
-    List<PsiStatement> afterStatements = statements.subList(index + 1, statements.size());
+    List<? extends PsiStatement> beforeStatements = statements.subList(0, index);
+    List<? extends PsiStatement> afterStatements = statements.subList(index + 1, statements.size());
 
 
     ArrayList<PsiStatement> firstIteration = new ArrayList<>(beforeStatements);
@@ -110,7 +108,7 @@ class SpecialFirstIterationLoop {
   /**
    * @return index of PsiStatement if it is the only statement, matches predicate or -1 otherwise
    */
-  private static int getSingleStatementIndex(@NotNull List<PsiStatement> statements, @NotNull Predicate<PsiStatement> predicate) {
+  private static int getSingleStatementIndex(@NotNull List<? extends PsiStatement> statements, @NotNull Predicate<? super PsiStatement> predicate) {
     int index = -1;
     for (int i = 0; i < statements.size(); i++) {
       PsiStatement statement = statements.get(i);
@@ -121,7 +119,7 @@ class SpecialFirstIterationLoop {
     return index;
   }
 
-  private static int getSingleAssignmentIndex(@NotNull List<PsiStatement> statements) {
+  private static int getSingleAssignmentIndex(@NotNull List<? extends PsiStatement> statements) {
     return getSingleStatementIndex(statements, statement -> ExpressionUtils.getAssignment(statement) != null);
   }
 

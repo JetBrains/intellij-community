@@ -2,12 +2,9 @@
 package org.jetbrains.yaml;
 
 import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface YAMLElementTypes {
-  IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
-
   YAMLElementType DOCUMENT = new YAMLElementType("Document ---");
 
   YAMLElementType KEY_VALUE_PAIR = new YAMLElementType("Key value pair");
@@ -80,7 +77,7 @@ public interface YAMLElementTypes {
   );
 
   TokenSet TOP_LEVEL = TokenSet.create(
-    FILE,
+    YAMLParserDefinition.FILE,
     DOCUMENT
   );
 
@@ -91,4 +88,8 @@ public interface YAMLElementTypes {
     SCALAR_LIST_VALUE,
     SCALAR_TEXT_VALUE
   );
+
+  TokenSet YAML_COMMENT_TOKENS = TokenSet.create(YAMLTokenTypes.COMMENT);
+
+  TokenSet WHITESPACE_TOKENS = TokenSet.create(YAMLTokenTypes.WHITESPACE);
 }

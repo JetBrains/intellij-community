@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.gradleJava
 
@@ -27,7 +27,6 @@ class ParcelizeIdeModelDataService : AbstractProjectDataService<ParcelizeIdeMode
     override fun getTargetDataKey() = ParcelizeIdeModel.KEY
 }
 
-@Suppress("unused")
 class ParcelizeProjectResolverExtension : AbstractProjectResolverExtension() {
     override fun getExtraProjectModelClasses() = setOf(ParcelizeGradleModel::class.java)
     override fun getToolingExtensionsClasses() = setOf(ParcelizeModelBuilderService::class.java, Unit::class.java)

@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
@@ -51,6 +52,9 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     Command command = newCommand(SvnCommandName.ci);
 
     command.put(Depth.EMPTY);
+    if (SvnConfiguration.getInstance(myVcs.getProject()).isKeepLocks()) {
+      command.put("--no-unlock");
+    }
     command.put("-m", message);
     // TODO: seems that sort is not necessary here
     ContainerUtil.sort(paths);

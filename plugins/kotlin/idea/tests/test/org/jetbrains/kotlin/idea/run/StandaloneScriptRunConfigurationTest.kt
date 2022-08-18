@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run
 
@@ -13,10 +13,10 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ActionRunner
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfiguration
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
@@ -45,7 +45,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
     fun testConfigurationForScript() {
         configureByFile("run/simpleScript.kts")
-        val script = KotlinScriptFqnIndex.instance.get("foo.SimpleScript", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex.get("foo.SimpleScript", project, project.allScope()).single()
         val runConfiguration = createConfigurationFromElement(script) as KotlinStandaloneScriptRunConfiguration
 
         assertEqualPaths(script.containingFile.virtualFile.canonicalPath, runConfiguration.filePath)
@@ -62,7 +62,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         val programParametersList = javaParameters.programParametersList.list
 
         programParametersList.checkParameter("-script") { it.contains("simpleScript.kts") }
-        programParametersList.checkParameter("-kotlin-home") { it == KotlinArtifacts.instance.kotlincDirectory.absolutePath }
+        programParametersList.checkParameter("-kotlin-home") { it == KotlinPluginLayout.kotlinc.absolutePath }
 
         Assert.assertTrue(!programParametersList.contains("-cp"))
 
@@ -70,7 +70,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
     fun testOnFileRename() {
         configureByFile("renameFile/simpleScript.kts")
-        val script = KotlinScriptFqnIndex.instance.get("foo.SimpleScript", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex.get("foo.SimpleScript", project, project.allScope()).single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("simpleScript.kts", runConfiguration.name)
@@ -97,7 +97,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
 
-        val script = KotlinScriptFqnIndex.instance.get("foo.Script", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex.get("foo.Script", project, project.allScope()).single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
@@ -124,7 +124,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
 
-        val script = KotlinScriptFqnIndex.instance.get("foo.Script", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex.get("foo.Script", project, project.allScope()).single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)

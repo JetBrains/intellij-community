@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -24,12 +25,7 @@ public final class BaseFilterLexerUtil {
     boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
     if (!needIdIndex) return Collections.emptyMap();
     IdDataConsumer consumer = new IdDataConsumer();
-    OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(consumer, false);
-    Lexer filterLexer = indexer.createLexer(occurrenceConsumer);
-    filterLexer.start(content.getContentAsText());
-    while (filterLexer.getTokenType() != null) {
-      filterLexer.advance();
-    }
+    scanContentWithCheckCanceled(content, indexer.createLexer(new OccurrenceConsumer(consumer, false)));
     return consumer.getResult();
   }
 
@@ -40,12 +36,7 @@ public final class BaseFilterLexerUtil {
     if (todoPatterns.length == 0) return Collections.emptyMap();
 
     OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
-    Lexer filterLexer = indexer.createLexer(occurrenceConsumer);
-    filterLexer.start(content.getContentAsText());
-
-    while (filterLexer.getTokenType() != null) {
-      filterLexer.advance();
-    }
+    scanContentWithCheckCanceled(content, indexer.createLexer(occurrenceConsumer));
 
     Map<TodoIndexEntry, Integer> todoMap = null;
     for (IndexPattern indexPattern : todoPatterns) {
@@ -55,5 +46,16 @@ public final class BaseFilterLexerUtil {
       todoMap.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
     }
     return todoMap != null ? todoMap : Collections.emptyMap();
+  }
+
+  private static void scanContentWithCheckCanceled(@NotNull FileContent content, @NotNull Lexer filterLexer) {
+    filterLexer.start(content.getContentAsText());
+    int tokenIdx = 0;
+    while (filterLexer.getTokenType() != null) {
+      if (tokenIdx++ % 100 == 0) {
+        ProgressManager.checkCanceled();
+      }
+      filterLexer.advance();
+    }
   }
 }

@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.codeInsight.navigation.impl
 
@@ -47,6 +46,8 @@ private class GTDProviderData(
     require(targetElements.isNotEmpty())
   }
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   override fun ctrlMouseInfo(): CtrlMouseInfo {
     val singleTarget = targetElements.singleOrNull()
     return if (singleTarget == null) {

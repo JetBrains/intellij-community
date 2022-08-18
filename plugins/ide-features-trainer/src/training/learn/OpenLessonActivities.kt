@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.scratch.ScratchFileService
@@ -55,7 +55,9 @@ import java.io.IOException
 internal class OpenLessonParameters(val projectWhereToStartLesson: Project,
                                     val lesson: Lesson,
                                     val forceStartLesson: Boolean,
-                                    val startingWay: LessonStartingWay)
+                                    val startingWay: LessonStartingWay,
+                                    val forceLearningProject: Boolean
+)
 
 internal object OpenLessonActivities {
   private val LOG = logger<OpenLessonActivities>()
@@ -99,7 +101,9 @@ internal object OpenLessonActivities {
 
       val lessonType = params.lesson.lessonType
       when {
-        lessonType == LessonType.SCRATCH -> {
+        lessonType == LessonType.SCRATCH
+        && !params.forceLearningProject
+        && langSupport.isSdkConfigured(projectWhereToStartLesson) -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
         }
         lessonType == LessonType.USER_PROJECT -> {
@@ -111,7 +115,7 @@ internal object OpenLessonActivities {
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson, null) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
-              openLessonWhenLearnProjectStart(OpenLessonParameters(it, params.lesson, params.forceStartLesson, params.startingWay))
+              openLessonWhenLearnProjectStart(OpenLessonParameters(it, params.lesson, params.forceStartLesson, params.startingWay, true))
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... open lesson when learn project has been started")
             }
             return
@@ -291,7 +295,7 @@ internal object OpenLessonActivities {
     val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor, vf)
     val lessonContext = LessonContextImpl(executor)
     LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
-    lesson.lessonContent(lessonContext)
+    lesson.fullLessonContent(lessonContext)
     executor.startLesson()
   }
 
@@ -391,7 +395,7 @@ internal object OpenLessonActivities {
       openLesson()
     }
     else {
-      startupManager.registerPostStartupActivity {
+      startupManager.runAfterOpened {
         openLesson()
       }
     }

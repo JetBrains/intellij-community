@@ -28,6 +28,8 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
            ?: gotoDeclaration(file, offset)
   }
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
     return gotoDeclaration(file.project, editor, file, offset)?.ctrlMouseInfo()
   }

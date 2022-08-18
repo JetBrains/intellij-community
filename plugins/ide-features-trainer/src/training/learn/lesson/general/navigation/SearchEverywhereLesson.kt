@@ -36,6 +36,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   private var backupPopupLocation: Point? = null
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     task("SearchEverywhere") {
       triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null

@@ -10,14 +10,14 @@ public class UnnecessaryUnboxing {
                        Byte shortValue, Double doubleValue,
                        Float floatValue, Long byteValue,
                        Boolean booleanValue, Character character) {
-        final int bareIntValue = <warning descr="Unnecessary unboxing 'intValue.intValue()'">intValue.intValue()</warning>;
-        final long bareLongValue = <warning descr="Unnecessary unboxing 'longValue.longValue()'">longValue.longValue()</warning>;
+        final int bareIntValue = intValue.<warning descr="Unnecessary unboxing">intValue</warning>();
+        final long bareLongValue = longValue.<warning descr="Unnecessary unboxing">longValue</warning>();
         final short bareShortValue = shortValue.shortValue();
-        final double bareDoubleValue = <warning descr="Unnecessary unboxing 'doubleValue.doubleValue()'">doubleValue.doubleValue()</warning>;
-        final float bareFloatValue = <warning descr="Unnecessary unboxing 'floatValue.floatValue()'">floatValue.floatValue()</warning>;
+        final double bareDoubleValue = doubleValue.<warning descr="Unnecessary unboxing">doubleValue</warning>();
+        final float bareFloatValue = floatValue.<warning descr="Unnecessary unboxing">floatValue</warning>();
         final byte bareByteValue = byteValue.byteValue();
-        final boolean bareBooleanValue = <warning descr="Unnecessary unboxing 'booleanValue.booleanValue()'">booleanValue.booleanValue()</warning>;
-        final char bareCharValue = <warning descr="Unnecessary unboxing 'character.charValue()'">character.charValue()</warning>;
+        final boolean bareBooleanValue = booleanValue.<warning descr="Unnecessary unboxing">booleanValue</warning>();
+        final char bareCharValue = character.<warning descr="Unnecessary unboxing">charValue</warning>();
     }
 
     Integer foo2(String foo, Integer bar) {
@@ -25,7 +25,7 @@ public class UnnecessaryUnboxing {
     }
 
     Integer foo3(String foo, Integer bar) {
-        return foo == null ? 0 : <warning descr="Unnecessary unboxing 'bar.intValue()'">bar.intValue()</warning>;
+        return foo == null ? 0 : bar.<warning descr="Unnecessary unboxing">intValue</warning>();
     }
 
     UnnecessaryUnboxing(Object object) {}
@@ -36,8 +36,8 @@ public class UnnecessaryUnboxing {
     }
 
     void casting(Byte b) {
-        System.out.println((byte)<warning descr="Unnecessary unboxing 'b.byteValue()'">b.byteValue()</warning>);
-        casting((((<warning descr="Unnecessary unboxing 'b.byteValue()'">b.byteValue()</warning>))));
+        System.out.println((byte)b.<warning descr="Unnecessary unboxing">byteValue</warning>());
+        casting((((b.<warning descr="Unnecessary unboxing">byteValue</warning>()))));
     }
 
 
@@ -50,7 +50,7 @@ public class UnnecessaryUnboxing {
         Integer b = Integer.valueOf(1024);
         System.out.println(a == b == true); // false
         System.out.println(a.intValue() == b.intValue() == true); // true
-        System.out.println(<warning descr="Unnecessary unboxing 'a.intValue()'">a.intValue()</warning> == 1024);
+        System.out.println(a.<warning descr="Unnecessary unboxing">intValue</warning>() == 1024);
     }
 }
 
@@ -63,7 +63,7 @@ class A23 extends B23 {
     private A23() {
         Object o = 2d;
         B23 b23 = new B23();
-        b23.set(<warning descr="Unnecessary unboxing '((Double) o).doubleValue()'">((Double) o).doubleValue()</warning>);
+        b23.set(((Double) o).<warning descr="Unnecessary unboxing">doubleValue</warning>());
     }
 }
 class test {

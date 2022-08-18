@@ -7,8 +7,12 @@ import org.jetbrains.annotations.Nullable;
 public interface ChangesViewEx extends ChangesViewI {
   void refreshImmediately();
 
+  boolean isAllowExcludeFromCommit();
+
+  /**
+   * @deprecated Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.
+   */
+  @Deprecated
   @Nullable
   ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
-
-  boolean isAllowExcludeFromCommit();
 }

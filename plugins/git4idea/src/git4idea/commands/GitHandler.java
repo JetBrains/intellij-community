@@ -574,7 +574,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * @param postStartAction
    * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated

@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -24,6 +25,11 @@ public abstract class SplitterAction extends DumbAwareAction {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(isEnabled(event));
     presentation.setVisible(presentation.isEnabled() || !ActionPlaces.isPopupPlace(event.getPlace()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   boolean isEnabled(@NotNull AnActionEvent event) {
@@ -90,6 +96,11 @@ public abstract class SplitterAction extends DumbAwareAction {
       else {
         event.getPresentation().setEnabled(manager != null && manager.isInSplitter());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private static FileEditorManagerEx getManager(@NotNull AnActionEvent event) {

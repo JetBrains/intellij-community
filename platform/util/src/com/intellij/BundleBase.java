@@ -107,7 +107,7 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    BiConsumer<String, String> consumer = ourTranslationConsumer;
+    BiConsumer<? super String, ? super String> consumer = ourTranslationConsumer;
     if (consumer != null) consumer.accept(key, result);
 
     if (!resourceFound) {
@@ -221,9 +221,6 @@ public abstract class BundleBase {
               mnemonicAdded = true;
               builder.append(MNEMONIC);
             }
-            else {
-              LOG.warn("ignore extra mnemonic in " + value);
-            }
           }
           i++;
         }
@@ -231,9 +228,6 @@ public abstract class BundleBase {
           if (!mnemonicAdded) {
             mnemonicAdded = true;
             builder.append(MNEMONIC);
-          }
-          else {
-            LOG.warn("ignore extra mnemonic in " + value);
           }
         }
       }
@@ -247,11 +241,11 @@ public abstract class BundleBase {
   }
 
   //<editor-fold desc="Test stuff">
-  private static volatile @Nullable BiConsumer<String, String> ourTranslationConsumer;
+  private static volatile BiConsumer<? super String, ? super String> ourTranslationConsumer;
 
   /** The consumer is used by the "robot-server" plugin to collect key/text pairs - handy for writing UI tests for different locales. */
   @TestOnly
-  public static void setTranslationConsumer(@Nullable BiConsumer<String, String> consumer) {
+  public static void setTranslationConsumer(@Nullable BiConsumer<? super String, ? super String> consumer) {
     ourTranslationConsumer = consumer;
   }
   //</editor-fold>

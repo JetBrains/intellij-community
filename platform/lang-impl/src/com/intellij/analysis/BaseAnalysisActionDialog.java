@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 
 
@@ -37,7 +36,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final boolean myShowInspectTestSource;
   private final @NlsContexts.Separator String myScopeTitle;
   private final Project myProject;
-  private final ButtonGroup myGroup = new ButtonGroup();
+  private final ArrayList<JRadioButton> radioButtons = new ArrayList<>();
   private final JCheckBox myInspectTestSource = new JCheckBox();
   private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
@@ -108,14 +107,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
     myAnalyzeInjectedCode.setVisible(false);
 
-    ArrayList<JRadioButton> buttons = new ArrayList<>();
     JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource,
-                                                          myAnalyzeInjectedCode, buttons, myDisposable,
+                                                          myAnalyzeInjectedCode, radioButtons, myDisposable,
                                                           getAdditionalActionSettings(myProject));
-    buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
-    new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
+    new RadioUpDownListener(radioButtons.toArray(new JRadioButton[0]));
 
     panel.setPreferredSize(panel.getMinimumSize());
     return panel;
@@ -162,9 +159,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final Enumeration<AbstractButton> enumeration = myGroup.getElements();
-    while (enumeration.hasMoreElements()) {
-      final AbstractButton button = enumeration.nextElement();
+    for (JRadioButton button : radioButtons) {
       if (button.isSelected()) {
         return button;
       }

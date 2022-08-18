@@ -88,7 +88,7 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
     }
 
     @Throws(ExecutionException::class)
-    override fun execute(executor: Executor, converter: PythonScriptTargetedCommandLineBuilder): ExecutionResult {
+    override fun execute(executor: Executor, converter: PythonScriptTargetedCommandLineBuilder): ExecutionResult? {
       // Insane rerun tests with out of spec.
       if (testSpecs.isEmpty()) {
         throw ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"))

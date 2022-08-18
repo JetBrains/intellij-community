@@ -30,10 +30,10 @@ import java.util.List;
 public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
   @NotNull
   @Override
-  public List<IndentTransferableData> collectTransferableData(PsiFile file,
-                                                          Editor editor,
-                                                          int[] startOffsets,
-                                                          int[] endOffsets) {
+  public List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,
+                                                              @NotNull Editor editor,
+                                                              int @NotNull [] startOffsets,
+                                                              int @NotNull [] endOffsets) {
     if (!acceptFileType(file.getFileType())) {
       return Collections.emptyList();
     }
@@ -47,7 +47,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
 
   @NotNull
   @Override
-  public List<IndentTransferableData> extractTransferableData(Transferable content) {
+  public List<IndentTransferableData> extractTransferableData(@NotNull Transferable content) {
     IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
@@ -65,12 +65,12 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
   }
 
   @Override
-  public void processTransferableData(final Project project,
-                                      final Editor editor,
-                                      final RangeMarker bounds,
+  public void processTransferableData(final @NotNull Project project,
+                                      final @NotNull Editor editor,
+                                      final @NotNull RangeMarker bounds,
                                       final int caretOffset,
-                                      final Ref<? super Boolean> indented,
-                                      final List<? extends IndentTransferableData> values) {
+                                      final @NotNull Ref<? super Boolean> indented,
+                                      final @NotNull List<? extends IndentTransferableData> values) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }

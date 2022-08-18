@@ -15,7 +15,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +39,11 @@ final class ExternalToolWindowManager implements ExternalSystemSettingsListenerE
   public void onProjectsLinked(@NotNull Project project,
                                @NotNull ExternalSystemManager<?, ?, ?, ?, ?> manager,
                                @NotNull Collection<? extends ExternalProjectSettings> __) {
+    // https://youtrack.jetbrains.com/issue/IDEA-289729
+    if (project.isDefault()) {
+      return;
+    }
+
     StartupManager startupManager = StartupManager.getInstance(project);
     // show tool window, but only if linked after start-up
     boolean showToolWindow = startupManager.postStartupActivityPassed();
@@ -87,7 +92,7 @@ final class ExternalToolWindowManager implements ExternalSystemSettingsListenerE
       return;
     }
 
-    EdtInvocationManager.invokeLaterIfNeeded(() -> {
+    AppUIUtil.invokeLaterIfProjectAlive(toolWindow.getProject(), () -> {
       boolean shouldShow = showToolWindow &&
                            settings.getLinkedProjectsSettings().size() == 1 &&
                            settings.getProject().getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null;

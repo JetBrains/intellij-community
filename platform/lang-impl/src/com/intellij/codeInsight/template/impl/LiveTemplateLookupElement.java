@@ -51,7 +51,7 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getItemText());
     presentation.setTypeText(myDescription);
     presentation.setIcon(AllIcons.Nodes.Template);

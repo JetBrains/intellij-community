@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -18,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +183,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         }
       }
     }
-    return list.toArray(new HierarchyNodeDescriptor[0]);
+    return list.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
   protected PsiElement @NotNull [] getSelectedElements() {
@@ -224,25 +225,8 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement anElement = getSelectedElement();
-      return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
-    }
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return getSelectedElements();
-    }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return null;
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode == null) return null;
-      HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
-      if (descriptor == null) return null;
-      return getNavigatable(descriptor);
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatables();
     }
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       JTree tree = getCurrentTree();
@@ -250,7 +234,34 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         return new DefaultTreeExpander(tree);
       }
     }
+    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      return getSelectedDescriptors();
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider bgtProvider = (DataProvider)super.getData(PlatformCoreDataKeys.BGT_DATA_PROVIDER.getName());
+      HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, descriptors), bgtProvider);
+    }
     return super.getData(dataId);
+  }
+
+  protected @Nullable Object getSlowData(@NotNull String dataId, HierarchyNodeDescriptor @NotNull [] selection) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      PsiElement anElement = selection.length > 0 ? getElementFromDescriptor(selection[0]) : null;
+      return anElement != null && anElement.isValid() ? anElement : null;
+    }
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return JBIterable.of(selection).filterMap(this::getElementFromDescriptor).toArray(PsiElement.EMPTY_ARRAY);
+    }
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;;
+      if (descriptor == null) return null;
+      return getNavigatable(descriptor);
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return JBIterable.of(selection).filterMap(this::getNavigatable).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    }
+    return null;
   }
 
   private final class CloseAction extends CloseTabToolbarAction {
@@ -265,6 +276,11 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myContent != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

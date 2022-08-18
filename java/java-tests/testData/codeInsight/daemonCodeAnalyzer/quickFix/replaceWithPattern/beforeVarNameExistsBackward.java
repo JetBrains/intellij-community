@@ -1,4 +1,4 @@
-// "Replace with 'Integer ignored1'" "true"
+// "Replace with 'Integer ignored1'" "true-preview"
 class Test {
   void test(Integer n, int ignored) {
     switch (n) {

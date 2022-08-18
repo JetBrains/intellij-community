@@ -48,11 +48,11 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
 
-    final JBList list = new JBList(myPlugins);
+    final JBList<Pair<String, String>> list = new JBList<Pair<String, String>>(myPlugins);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     Runnable runnable = () -> {
-      final Pair selected = (Pair)list.getSelectedValue();
+      final Pair<String, String> selected = list.getSelectedValue();
       WriteCommandAction.writeCommandAction(project, file).withName(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"))
                         .run(() -> {
                           if (selected == null) return;
@@ -85,7 +85,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle(GradleBundle.message("gradle.codeInsight.action.apply_plugin.popup.title"))
         .setItemChoosenCallback(runnable)
-        .setNamerForFiltering(o -> String.valueOf(((Pair<?, ?>)o).first))
+        .setNamerForFiltering(o -> String.valueOf(o.first))
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -96,7 +96,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private static class MyListCellRenderer implements ListCellRenderer {
+  private static class MyListCellRenderer implements ListCellRenderer<Pair<String, String>> {
     private final JPanel myPanel;
     private final JLabel myNameLabel;
     private final JLabel myDescLabel;
@@ -117,17 +117,20 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Pair descriptor = (Pair)value;
+    public Component getListCellRendererComponent(JList<? extends Pair<String, String>> list,
+                                                  Pair<String, String> value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
       Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
 
-      myNameLabel.setText(String.valueOf(descriptor.first));
+      myNameLabel.setText(String.valueOf(value.first));
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
       String description =
         new HtmlBuilder()
-          .append(String.valueOf(descriptor.second))
+          .append(String.valueOf(value.second))
           .wrapWith(HtmlChunk.div().attr("WIDTH", "400"))
           .wrapWith("html")
           .toString();

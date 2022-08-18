@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -124,6 +124,14 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     return myWholePanel;
   }
 
+  boolean isSpecificallyModified() {
+    if (myRCStorageUi != null) {
+      return myRCStorageUi.isModified();
+    }
+
+    return false;
+  }
+
   @Override
   public void resetEditorFrom(@NotNull final RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
@@ -135,9 +143,8 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myEditor.applyEditorTo(settings);
     doApply((RunnerAndConfigurationSettingsImpl)settings, false);
 
-    if (myRCStorageUi != null) {
+    if (myRunOnTargetPanel != null) {
       // editing a template run configuration
-      myRCStorageUi.apply(settings);
       myRunOnTargetPanel.apply();
     }
   }
@@ -176,6 +183,14 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     settingsToApply.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     if (myIsAllowRunningInParallelCheckBox.isVisible()) {
       settings.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallelCheckBox.isSelected());
+    }
+
+    if (myRCStorageUi != null) {
+      // editing a template run configuration
+      myRCStorageUi.apply(settings);
+      if (!isSnapshot) {
+        myRCStorageUi.reset(settings); // to reset its internal state
+      }
     }
   }
 

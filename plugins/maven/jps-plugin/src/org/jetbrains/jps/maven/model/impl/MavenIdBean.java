@@ -20,7 +20,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenIdBean {
+public final class MavenIdBean {
   @Tag("groupId")
   public String groupId;
 

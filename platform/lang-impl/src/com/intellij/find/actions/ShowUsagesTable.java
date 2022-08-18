@@ -5,14 +5,12 @@ import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -22,6 +20,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
 import com.intellij.usages.impl.*;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -30,20 +29,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
-  private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
 
@@ -60,31 +59,34 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final int[] selected = getSelectedRows();
-      if (selected.length == 1) {
-        return getPsiElementForHint(getValueAt(selected[0], 0));
-      }
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<Object> selection = Arrays.stream(getSelectedRows())
+        .mapToObj(o -> getValueAt(o, 0))
+        .collect(Collectors.toList());
+      return (DataProvider)slowId -> getSlowData(slowId, selection);
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<Object> selection) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      Object single = ContainerUtil.getOnlyItem(selection);
+      return single == null ? null : getPsiElementForHint(single);
     }
     return null;
   }
 
   @Override
   public int getRowHeight() {
-    return super.getRowHeight() + 2 * MARGIN;
-  }
-
-  @NotNull
-  @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-    Component component = super.prepareRenderer(renderer, row, column);
-    if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+    if (ExperimentalUI.isNewUI()) {
+      Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      return JBUI.CurrentTheme.List.rowHeight() + innerInsets.top + innerInsets.bottom;
     }
-    return component;
+
+    return super.getRowHeight() + 2 * ShowUsagesTableCellRenderer.MARGIN;
   }
 
   @NotNull

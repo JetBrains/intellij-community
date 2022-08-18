@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -196,12 +196,6 @@ public final class VcsLogUtil {
   @NotNull
   public static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
     return new TextRevisionNumber(hash.asString(), hash.toShortString());
-  }
-
-  @NotNull
-  public static VcsFullCommitDetails getDetails(@NotNull VcsLogData data, @NotNull VirtualFile root, @NotNull Hash hash)
-    throws VcsException {
-    return Objects.requireNonNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
   }
 
   @NotNull

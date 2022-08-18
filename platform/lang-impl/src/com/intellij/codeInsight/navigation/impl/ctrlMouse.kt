@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.codeInsight.navigation.impl
 
@@ -10,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
+@Suppress("DEPRECATION")
+@Deprecated("Unused in v2 implementation")
 internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
   val targets = this.targets
   if (targets.isEmpty()) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,16 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
              : QuickFixBundle.message("fix.variable.type.text", formatType(variable), variable.getName(), myTargetType.getCanonicalText());
     myFamilyName = QuickFixBundle.message(myTargetType.equals(variable.getType()) && myNewExpression != null ? "change.new.operator.type.family"
                                                                                                              : "fix.variable.type.family");
+  }
+
+  private VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer,
+                               @NotNull PsiArrayType targetType,
+                               @IntentionName String name,
+                               @IntentionFamilyName String familyName) {
+    super(initializer);
+    myTargetType = targetType;
+    myName = name;
+    myFamilyName = familyName;
   }
 
   @Nullable
@@ -125,7 +137,15 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    PsiFile file = myStartElement.getContainingFile();
+    return file != null && !file.isPhysical(); // for preview
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiArrayInitializerExpression initializer = ObjectUtils.tryCast(getStartElement(), PsiArrayInitializerExpression.class);
+    if (initializer == null) return null;
+    return new VariableArrayTypeFix(PsiTreeUtil.findSameElementInCopy(initializer, target), myTargetType, myName, myFamilyName);
   }
 
   @Override
@@ -137,6 +157,17 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
       only for the case when in same statement with initialization
      */
     final PsiNewExpression myNewExpression = getNewExpressionLocal(myInitializer);
+
+    if (!file.isPhysical()) {
+      if (!myTargetType.equals(myVariable.getType()) && myVariable.getContainingFile().equals(file)) {
+        fixVariableType(project, file, myVariable);
+      }
+
+      if (myNewExpression != null) {
+        fixArrayInitializer(myInitializer, myNewExpression);
+      }
+      return;
+    }
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
 

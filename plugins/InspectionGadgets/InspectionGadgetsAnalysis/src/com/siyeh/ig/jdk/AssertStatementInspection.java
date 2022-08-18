@@ -39,7 +39,7 @@ public class AssertStatementInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       super.visitAssertStatement(statement);
       registerStatementError(statement);
     }

@@ -308,6 +308,10 @@ class XDebugSessionTab2(
 
           setSelected(e, threadsIsVisible)
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+          return ActionUpdateThread.BGT
+        }
       }, constraints)
 
       add(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP), constraints)
@@ -389,7 +393,7 @@ class XDebugSessionTab2(
         is XDebuggerThreadsList -> component.isEmpty
         is XDebuggerFramesList -> component.isEmpty
         is XDebuggerTree -> component.isEmpty
-        else -> false;
+        else -> false
       }
     }
   }

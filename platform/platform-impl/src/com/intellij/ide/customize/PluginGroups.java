@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.*;
@@ -7,13 +7,15 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PluginGroups {
@@ -28,10 +30,8 @@ public class PluginGroups {
 
   private final Map<PluginId, PluginNode> myPluginsFromRepository = new HashMap<>();
   private final Set<PluginId> myDisabledPluginIds = new HashSet<>(DisabledPluginsState.loadDisabledPlugins());
-  private final Map<PluginId, IdeaPluginDescriptorImpl> myEnabledPlugins = PluginDescriptorLoader
-    .loadUncachedDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources())
-    .stream()
-    .collect(Collectors.toUnmodifiableMap(IdeaPluginDescriptorImpl::getPluginId, Function.identity()));
+  private final Map<PluginId, IdeaPluginDescriptorImpl> myEnabledPlugins = PluginDescriptorLoader.loadDescriptorsForDeprecatedWizard()
+    .enabledPluginsById;
 
   private boolean myInitialized;
   private Runnable myLoadingCallback;

@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -23,13 +23,24 @@ public final class DialogAppender extends Handler {
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
+  private static volatile boolean ourDelay;
+
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
+  //TODO android update checker accesses project jdk, fix it and remove
+  public static void delayPublishingForcibly() {
+    ourDelay = true;
+  }
+
+  public static void stopForceDelaying() {
+    ourDelay = false;
+  }
+
   @Override
-  public synchronized void publish(LogRecord event) {
-    if (event.getLevel().intValue() < Level.SEVERE.intValue() || Main.isCommandLine()) {
+  public void publish(LogRecord event) {
+    if (event.getLevel().intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
@@ -44,13 +55,15 @@ public final class DialogAppender extends Handler {
       ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
     }
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      IdeaLoggingEvent queued;
-      while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
-      queueAppend(ideaEvent);
-    }
-    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
-      myEarlyEvents.add(ideaEvent);
+    synchronized (this) {
+      if (LoadingState.COMPONENTS_LOADED.isOccurred() && !ourDelay) {
+        IdeaLoggingEvent queued;
+        while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
+        queueAppend(ideaEvent);
+      }
+      else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+        myEarlyEvents.add(ideaEvent);
+      }
     }
   }
 

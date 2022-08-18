@@ -3,6 +3,7 @@ package com.intellij.ide.actions.toolbar.experimental;
 
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +26,11 @@ final class ViewObsoleteToolbarAction extends ToggleAction implements DumbAware 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(ToolbarSettings.getInstance().isEnabled());
+    e.getPresentation().setEnabledAndVisible(ToolbarSettings.getInstance().isAvailable());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

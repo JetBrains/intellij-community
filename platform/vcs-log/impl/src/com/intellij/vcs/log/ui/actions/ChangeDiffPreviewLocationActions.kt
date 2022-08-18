@@ -30,5 +30,7 @@ abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
 }
 
 class DiffPreviewLocationActionGroup : DefaultActionGroup() {
-  override fun hideIfNoVisibleChildren() = true
+  init {
+    templatePresentation.isHideGroupIfEmpty = true
+  }
 }

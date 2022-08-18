@@ -2,6 +2,10 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.intellij.model.Pointer
+import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
 import com.intellij.psi.PsiElementVisitor
@@ -9,12 +13,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.IncorrectOperationException
+import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 
 @Suppress("DEPRECATION")
-class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node) {
+class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node), PsiExternalReferenceHost, NavigationTarget {
   override fun accept(visitor: PsiElementVisitor) {
-    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitLinkDestination(this)
       else -> super.accept(visitor)
@@ -42,5 +46,15 @@ class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node) 
         else -> TextRange.allOf(text)
       }
     }
+  }
+
+  override fun createPointer(): Pointer<out NavigationTarget> {
+    return Pointer.hardPointer(this)
+  }
+
+  override fun getTargetPresentation(): TargetPresentation {
+    return TargetPresentation.builder(text)
+      .icon(MarkdownIcons.EditorActions.Link)
+      .presentation()
   }
 }

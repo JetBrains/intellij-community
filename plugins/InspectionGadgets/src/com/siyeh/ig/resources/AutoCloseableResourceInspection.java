@@ -61,7 +61,10 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
                   "java.io.StringWriter",
                   "java.io.StringReader",
                   "java.util.Formatter",
-                  "java.util.Scanner");
+                  "java.util.Scanner",
+                  "org.springframework.context.ConfigurableApplicationContext",
+                  "io.micronaut.context.ApplicationContext");
+
   protected final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
@@ -233,7 +236,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   private class AutoCloseableResourceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (isSafelyClosedResource(expression)) {
         return;
@@ -242,7 +245,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
@@ -265,7 +268,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (ignoreConstructorMethodReferences) return;
       if (!expression.isConstructor()) {

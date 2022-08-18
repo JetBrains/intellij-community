@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.versions.lastStableKnownCompilerVersionShort
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.junit.runner.Description
 import java.io.File
@@ -110,7 +109,8 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
                         file.extension == "gradle" -> {
                             val text = FileUtil.loadFile(file, true)
-                            val fileText = text.replace("\$PLUGIN_VERSION", KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort)
+                            val kgpArtifactVersion = KotlinPluginLayout.standaloneCompilerVersion.artifactVersion
+                            val fileText = text.replace("\$PLUGIN_VERSION", kgpArtifactVersion)
                             configureByText(file.name, fileText)!!
                         }
 

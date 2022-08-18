@@ -24,7 +24,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author: Fedor.Korotkov
+ * @author Fedor.Korotkov
  */
 public class MicrodataReferenceProvider extends PsiReferenceProvider {
   @Override

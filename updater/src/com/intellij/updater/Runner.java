@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -112,6 +112,9 @@ public class Runner {
       jarFile = resolveJarFile();
     }
 
+    LOG.info("args: " + Arrays.toString(args));
+    LOG.info(".jar: " + jarFile);
+
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
       String newVersionDesc = args[2];
@@ -121,7 +124,6 @@ public class Runner {
 
       checkCaseSensitivity(newFolder);
 
-      LOG.info("args: " + Arrays.toString(args));
       LOG.info("case-sensitive: " + ourCaseSensitiveFs);
 
       boolean binary = hasArgument(args, "zip_as_binary");
@@ -182,7 +184,6 @@ public class Runner {
 
       checkCaseSensitivity(destDirectory.toString());
 
-      LOG.info("args: " + Arrays.toString(args));
       LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
       UpdaterUI ui;
@@ -213,6 +214,7 @@ public class Runner {
     }
     else {
       printUsage();
+      System.exit(1);
     }
   }
 
@@ -312,13 +314,12 @@ public class Runner {
       LOG.info("Packing JAR file: " + spec.getPatchFile());
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
-           ZipInputStream in = new ZipInputStream(new FileInputStream(spec.getJarFile()))) {
+      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
+           ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
         ZipEntry e;
         while ((e = in.getNextEntry()) != null) {
           out.zipEntry(e, in);
         }
-
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
@@ -370,7 +371,7 @@ public class Runner {
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(patch);
              InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-             OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+             OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
           Utils.copyStream(in, out);
         }
 
@@ -468,7 +469,7 @@ public class Runner {
           patchFiles.add(patchFile);
           try (ZipFile zipFile = new ZipFile(patches[i]);
                InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-               OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+               OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
             Utils.copyStream(in, out);
           }
           ui.checkCancelled();
@@ -614,14 +615,14 @@ public class Runner {
   }
 
   private static String resolveJarFile() {
-    URL url = Runner.class.getResource("");
+    URL url = Runner.class.getResource(Runner.class.getSimpleName() + ".class");
     if (url == null) throw new IllegalArgumentException("Cannot resolve JAR file path");
     if (!"jar".equals(url.getProtocol())) throw new IllegalArgumentException("Patch file is not a JAR file");
 
     String path = url.getPath();
 
     int start = path.indexOf("file:/");
-    int end = path.indexOf("!/");
+    int end = path.lastIndexOf("!/");
     if (start == -1 || end == -1) throw new IllegalArgumentException("Unknown protocol: " + url);
 
     String jarFileUrl = path.substring(start, end);

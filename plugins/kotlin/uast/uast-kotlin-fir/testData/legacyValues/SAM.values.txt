@@ -20,7 +20,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UQualifiedReferenceExpression [java.lang] = external lang()
                     USimpleNameReferenceExpression (identifier = java) [java] = external java()
                     USimpleNameReferenceExpression (identifier = lang) [lang] = external lang()
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
 
 })(Undetermined)
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
@@ -31,8 +31,8 @@ UFile (package = ) [import java.lang.Thread...]
                         UBlockExpression [{...}] = Undetermined
         UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression]
         UMethod (name = getFoo) [public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression]
-        UMethod (name = setFoo) [public static final fun setFoo(@org.jetbrains.annotations.NotNull value: java.lang.Runnable) : void = UastEmptyExpression]
-            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.Runnable]
+        UMethod (name = setFoo) [public static final fun setFoo(@org.jetbrains.annotations.NotNull <set-?>: java.lang.Runnable) : void = UastEmptyExpression]
+            UParameter (name = <set-?>) [@org.jetbrains.annotations.NotNull var <set-?>: java.lang.Runnable]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public static final fun bar() : java.lang.Runnable {...}]
             UBlockExpression [{...}] = Nothing
@@ -99,7 +99,7 @@ UFile (package = ) [import java.lang.Thread...]
 }))(external Runnable({
     println("hello2")
 })(Undetermined))
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
     println("hello2")
 })(Undetermined)
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
@@ -129,7 +129,7 @@ UFile (package = ) [import java.lang.Thread...]
 }))(external Supplier({
     return "Supplier"
 })(Undetermined))
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Supplier({ ...})] = external Supplier({
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Supplier({ ...})] = external Supplier({
     return "Supplier"
 })(Undetermined)
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
@@ -151,7 +151,7 @@ UFile (package = ) [import java.lang.Thread...]
 }))(external Callable({
     return "Callable"
 })(Undetermined))
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Callable({ ...})] = external Callable({
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Callable({ ...})] = external Callable({
     return "Callable"
 })(Undetermined)
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]

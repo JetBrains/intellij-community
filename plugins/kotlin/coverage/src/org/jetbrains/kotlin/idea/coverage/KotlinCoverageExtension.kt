@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.coverage
 
@@ -15,8 +15,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -55,7 +56,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         LOG.info("Retrieving coverage for " + element.name)
 
         val qualifiedNames = collectGeneratedClassQualifiedNames(findOutputRoots(element), element)
-        return if (qualifiedNames == null || qualifiedNames.isEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
+        return if (qualifiedNames.isNullOrEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
     }
 
     override fun keepCoverageInfoForClassWithoutSource(bundle: CoverageSuitesBundle, classFile: File): Boolean {
@@ -150,7 +151,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         private fun findOutputRoots(file: KtFile): Array<VirtualFile>? {
             val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
             val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-            val inTests = fileIndex.isInTestSourceContentKotlinAware(file.virtualFile)
+            val inTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
             return JavaCoverageClassesEnumerator.getRoots(CoverageDataManager.getInstance(file.project), module, inTests)
         }
 

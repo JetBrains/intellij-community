@@ -26,7 +26,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
         launcherFolder.mkdirs()
       }
 
-      val classPathArgFile = launcherFolder.resolve("${paths.productId}Launcher_${UUID.randomUUID()}.classpath")
+      val classPathArgFile = launcherFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
       CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile, listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
     }
@@ -43,7 +43,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", m2HomePath.canonicalPath)
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.canonicalPath)
+    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
     if (!productionOutput.isDirectory) {

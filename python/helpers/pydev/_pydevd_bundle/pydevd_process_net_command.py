@@ -232,9 +232,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # the text is: thread_id\tframe_id\tFRAME|GLOBAL\tattributes*
                 try:
                     thread_id, frame_id, scopeattrs = text.split('\t', 2)
-
                     if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
-                        scope, attrs = scopeattrs.split('\t', 1)
+                        scope, _,  attrs = scopeattrs.split('\t', 2)
                     else:
                         scope, attrs = (scopeattrs, None)
 
@@ -251,7 +250,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     roffset, coffset, rows, cols, format, thread_id, frame_id, scopeattrs  = text.split('\t', 7)
 
                     if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
-                        scope, attrs = scopeattrs.split('\t', 1)
+                        scope, _, attrs = scopeattrs.split('\t', 2)
                     else:
                         scope, attrs = (scopeattrs, None)
 
@@ -309,9 +308,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     traceback.print_exc()
 
             elif cmd_id == CMD_GET_FRAME:
-                thread_id, frame_id, scope = text.split('\t', 2)
+                thread_id, frame_id, scope, group_type = text.split('\t', 3)
 
-                int_cmd = InternalGetFrame(seq, thread_id, frame_id)
+                int_cmd = InternalGetFrame(seq, thread_id, frame_id, int(group_type))
                 py_db.post_internal_command(int_cmd, thread_id)
 
             elif cmd_id == CMD_SET_BREAK:

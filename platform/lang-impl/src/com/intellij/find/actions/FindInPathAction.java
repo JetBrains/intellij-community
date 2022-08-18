@@ -38,6 +38,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
 
     FindInProjectManager findManager = FindInProjectManager.getInstance(project);
     if (!findManager.isEnabled()) {
@@ -58,17 +59,22 @@ public class FindInPathAction extends AnAction implements DumbAware {
     doUpdate(e);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   static void doUpdate(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null && !LightEdit.owns(project));
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (ActionPlaces.isPopupPlace(e.getPlace()) && !e.getPlace().equals(ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION)) {
       presentation.setVisible(isValidSearchScope(e));
     }
   }
 
   private static boolean isValidSearchScope(@NotNull AnActionEvent e) {
-    final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
+    final PsiElement[] elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiDirectoryContainer) {
       return true;
     }

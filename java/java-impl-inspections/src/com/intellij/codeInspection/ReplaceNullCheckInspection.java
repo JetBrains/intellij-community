@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -41,8 +41,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel
-      .addCheckbox(JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
+    panel.addCheckbox(JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
     return panel;
   }
 
@@ -55,17 +54,18 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitIfStatement(PsiIfStatement ifStatement) {
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
         if(context == null) return;
         String method = getMethodWithClass(context.myExpressionToReplace, context.myIsStream);
 
         PsiStatement nextToDelete = context.myNextToDelete;
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
-        boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
+        boolean isInfoLevel = noWarningReplacementBigger &&
+                              ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
         if (!isOnTheFly && highlight == ProblemHighlightType.INFORMATION) return;
-        holder.registerProblem(ifStatement.getFirstChild(), JavaBundle.message("inspection.require.non.null.message", method), highlight,
+        holder.registerProblem(ifStatement.getFirstChild(), JavaBundle.message("inspection.require.non.null.message", 1, method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
       }
 
@@ -81,18 +81,18 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression ternary) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {
         TernaryNotNullContext context = TernaryNotNullContext.from(ternary);
         if(context == null) return;
         String method = getMethodWithClass(context.myNullExpr, false);
         String name = context.myReferenceExpression.getText();
         boolean replacementShorter =
-          name != null
-          && context.myNullExpr.getTextLength() + method.length() + name.length() < context.myTernary.getTextLength() + MINIMAL_WARN_DELTA_SIZE;
+          name != null &&
+          context.myNullExpr.getTextLength() + method.length() + name.length() < context.myTernary.getTextLength() + MINIMAL_WARN_DELTA_SIZE;
         boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         if (!isOnTheFly && highlightType == ProblemHighlightType.INFORMATION) return;
-        holder.registerProblem(ternary, JavaBundle.message("inspection.require.non.null.message", method),
+        holder.registerProblem(ternary, JavaBundle.message("inspection.require.non.null.message", 2, method),
                                highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }
     };
@@ -110,7 +110,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getName() {
-      return JavaBundle.message("inspection.require.non.null.message", myMethod);
+      return JavaBundle.message("inspection.require.non.null.quickfix", myIsTernary ? 2 : 1, myMethod);
     }
 
     @Nls
@@ -207,11 +207,11 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
     @Nullable
     static NotNullContext from(@NotNull PsiIfStatement ifStatement) {
-      PsiExpression condition = ifStatement.getCondition();
+      PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
       if(condition == null) return null;
       PsiBinaryExpression binOp = tryCast(condition, PsiBinaryExpression.class);
       if(binOp == null) return null;
-      PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
+      PsiExpression value = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull(binOp));
       PsiReferenceExpression referenceExpression = tryCast(value, PsiReferenceExpression.class);
       if(referenceExpression == null) return null;
       PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);

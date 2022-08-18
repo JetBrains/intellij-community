@@ -9,5 +9,5 @@ repositories {
 }
 
 dependencies {
-    compile project(":hmpp-mod-a")
+    implementation project(":hmpp-mod-a")
 }

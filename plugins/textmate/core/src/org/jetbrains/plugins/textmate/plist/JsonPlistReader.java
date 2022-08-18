@@ -1,10 +1,14 @@
 package org.jetbrains.plugins.textmate.plist;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +18,8 @@ import static org.jetbrains.plugins.textmate.plist.PListValue.value;
 
 public class JsonPlistReader implements PlistReader {
   @Override
-  public Plist read(@NotNull File file) throws IOException {
-    return read(new FileInputStream(file));
-  }
-
-  @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
-    return internalRead(new Gson().fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), Object.class));
+    return internalRead(createJsonReader().readValue(new InputStreamReader(inputStream, StandardCharsets.UTF_8), Object.class));
   }
 
   private static Plist internalRead(Object root) throws IOException {
@@ -77,12 +76,22 @@ public class JsonPlistReader implements PlistReader {
     else if (value instanceof Boolean) {
       return value(value, PlistValueType.BOOLEAN);
     }
+    else if (value instanceof Integer) {
+      return value(Long.valueOf((Integer)value), PlistValueType.INTEGER);
+    }
     else if (value instanceof Double) {
-      long integer = ((Double)value).longValue();
-      if (value.equals(Double.valueOf(integer))) {
-        return value(integer, PlistValueType.INTEGER);
-      }
       return value(value, PlistValueType.REAL);
     }
     return null;
-  }}
+  }
+
+  public static ObjectMapper createJsonReader() {
+    JsonFactory factory = JsonFactory.builder()
+      .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+      .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+      .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+      .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+      .build();
+    return new ObjectMapper(factory);
+  }
+}

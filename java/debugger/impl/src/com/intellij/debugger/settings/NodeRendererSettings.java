@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerContext;
@@ -125,7 +125,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {
@@ -250,7 +249,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     // plugins registered renderers come after that
-    CompoundRendererProvider.EP_NAME.extensions().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
+    CompoundRendererProvider.EP_NAME.getExtensionList().stream().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff

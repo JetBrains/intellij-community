@@ -9,10 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Validates input for new chosen name of the element to be renamed.
+ * Extend {@link RenameInputValidatorEx} to provide custom error messages.
  * <p>
- * Extend {@link RenameInputValidatorEx} to provide custom error message.
- *
- * @author Gregory.Shrago
+ * Register in {@code com.intellij.renameInputValidator} extension point.
+ * @see RenameInputValidatorRegistry
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/rename-refactoring.html">Rename Refactoring (IntelliJ Platform Docs)</a>
  */
 public interface RenameInputValidator {
   ExtensionPointName<RenameInputValidator> EP_NAME = ExtensionPointName.create("com.intellij.renameInputValidator");
@@ -21,9 +22,9 @@ public interface RenameInputValidator {
   ElementPattern<? extends PsiElement> getPattern();
 
   /**
-   * Invoked for elements accepted by pattern {@link #getPattern()}.
+   * Invoked for elements accepted by pattern returned from {@link #getPattern()}.
    * <p>
-   * Return {@code true} if {@link RenameInputValidatorEx} should return custom error message,
+   * Return {@code true} if {@link RenameInputValidatorEx} should return a custom error message,
    * otherwise default message "'[newName]' is not a valid identifier" will be shown.
    */
   boolean isInputValid(@NotNull final String newName, @NotNull final PsiElement element, @NotNull final ProcessingContext context);

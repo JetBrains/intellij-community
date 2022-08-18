@@ -53,6 +53,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/ConstructorWithoutTypeParametersType.kt");
     }
 
+    @TestMetadata("DefinitelyNonNullTypes.kt")
+    public void testDefinitelyNonNullTypes() throws Exception {
+        runTest("testData/codeInsight/hints/types/DefinitelyNonNullTypes.kt");
+    }
+
     @TestMetadata("DestructingType.kt")
     public void testDestructingType() throws Exception {
         runTest("testData/codeInsight/hints/types/DestructingType.kt");

@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DEPRECATION")
 
 package com.intellij.grazie.ide.inspection.grammar
 
@@ -53,9 +52,21 @@ class GrazieInspection : LocalInspectionTool() {
   }
 
   companion object {
+    private val hasSpellChecking: Boolean by lazy {
+      try {
+        Class.forName("com.intellij.spellchecker.ui.SpellCheckingEditorCustomization")
+        true
+      }
+      catch (e: ClassNotFoundException) {
+        false
+      }
+    }
+
     @JvmStatic
-    fun ignoreGrammarChecking(file: PsiFile): Boolean =
-      SpellCheckingEditorCustomization.isSpellCheckingDisabled(file) // they probably don't want grammar checks as well
+    fun ignoreGrammarChecking(file: PsiFile): Boolean = hasSpellChecking && isSpellCheckingDisabled(file)
+
+    // those who disable spell-checking probably don't want grammar checks either
+    private fun isSpellCheckingDisabled(file: PsiFile) = SpellCheckingEditorCustomization.isSpellCheckingDisabled(file)
 
     @JvmStatic
     fun checkedDomains(): Set<TextContent.TextDomain> {

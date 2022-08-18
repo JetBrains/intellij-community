@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundCompositeConfigurable
@@ -174,7 +175,16 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
           .columns(4)
           .enabledIf(cbAutopopupJavaDoc.selected)
           .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
         label(ApplicationBundle.message("editbox.ms"))
+      }
+
+      if (OptionsApplicabilityFilter.isApplicable(OptionId.INSERT_PARENTHESES_AUTOMATICALLY)) {
+        row {
+          checkBox(ApplicationBundle.message("completion.option.insert.parentheses"))
+            .bindSelected(EditorSettingsExternalizable.getInstance()::isInsertParenthesesAutomatically,
+                          EditorSettingsExternalizable.getInstance()::setInsertParenthesesAutomatically)
+        }
       }
 
       addOptions()
@@ -196,6 +206,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
             .columns(4)
             .enabledIf(cbParameterInfoPopup.selected)
             .gap(RightGap.SMALL)
+          @Suppress("DialogTitleCapitalization")
           label(ApplicationBundle.message("editbox.ms"))
         }
 

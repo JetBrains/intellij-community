@@ -69,7 +69,7 @@ public class MavenProjectResolver {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjects) {
           mavenProject.setConfigFileError(null);
-          for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
+          for (MavenImporter mavenImporter : MavenImporter.getSuitableImporters(mavenProject)) {
             mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
           }
         }
@@ -152,14 +152,18 @@ public class MavenProjectResolver {
 
       if (mavenProjectCandidate == null) continue;
 
-      MavenProjectChanges changes = mavenProjectCandidate
+      MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
+      mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
-      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
-        for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
+        for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
         }
       }
+      // project may be modified by MavenImporters, so we need to collect the changes after them:
+      MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
+
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
     }
   }
@@ -250,14 +254,14 @@ public class MavenProjectResolver {
                         });
   }
 
-  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
-                                                                           @NotNull Collection<MavenProject> projects,
-                                                                           @Nullable Collection<MavenArtifact> artifacts,
-                                                                           boolean downloadSources,
-                                                                           boolean downloadDocs,
-                                                                           @NotNull MavenEmbeddersManager embeddersManager,
-                                                                           @NotNull MavenConsole console,
-                                                                           @NotNull MavenProgressIndicator process)
+  public @NotNull MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
+                                                                                    @NotNull Collection<MavenProject> projects,
+                                                                                    @Nullable Collection<MavenArtifact> artifacts,
+                                                                                    boolean downloadSources,
+                                                                                    boolean downloadDocs,
+                                                                                    @NotNull MavenEmbeddersManager embeddersManager,
+                                                                                    @NotNull MavenConsole console,
+                                                                                    @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(projects);
     MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();

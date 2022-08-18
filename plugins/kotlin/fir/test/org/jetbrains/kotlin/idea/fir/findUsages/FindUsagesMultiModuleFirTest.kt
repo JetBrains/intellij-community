@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.findUsages
 
@@ -21,7 +21,7 @@ class FindUsagesMultiModuleFirTest : FindUsagesMultiModuleTest() {
 
     override fun doFindUsagesTest() {
         IgnoreTests.runTestIfEnabledByFileDirective(
-            Paths.get(mainFile.virtualFilePath),
+            getTestdataFile().toPath().resolve("directives.txt"),
             IgnoreTests.DIRECTIVES.FIR_COMPARISON,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
@@ -26,7 +12,7 @@ import org.jetbrains.uast.UDeclaration;
 import java.util.Collection;
 
 /**
- * A node in the reference graph corresponding to a Java method.
+ * A node in the reference graph corresponding to a Java method or Kotlin function.
  *
  * @author anna
  */
@@ -71,6 +57,15 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
    * @return true if the method only calls its super method, false otherwise.
    */
   boolean isOnlyCallsSuper();
+
+  /**
+   * Checks if the method is a record accessor method.
+   *
+   * @return true if the method is a record accessor method, false otherwise.
+   */
+  default boolean isRecordAccessor() {
+    return false;
+  }
 
   /**
    * Checks if the method is a test method in a testcase class.
@@ -134,12 +129,12 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
   /**
    * Returns the list of exceptions which are included in the {@code throws} list
    * of the method but cannot be actually thrown. 
-   * 
+   * <p>
    * To return valid results, requires com.intellij.codeInspection.unneededThrows.RedundantThrowsGraphAnnotator.
    * (Dbl) Annotator registration is possible in {@link GlobalInspectionTool#initialize(com.intellij.codeInspection.GlobalInspectionContext)}
    * or {@link GlobalInspectionTool#getAnnotator(RefManager)} 
    *
-   * @return the list of exceptions declared but not thrown, or null if there are no
+   * @return the array of exceptions declared but not thrown, or null if there are no
    * such exceptions.
    */
   PsiClass @Nullable [] getUnThrownExceptions();

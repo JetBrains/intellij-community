@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
-public class MyIntentionActionWithDescription implements com.intellij.codeInsight.intention.IntentionAction {
+class MyIntentionActionWithDescription implements com.intellij.codeInsight.intention.IntentionAction {
 
   public String getText() { return"text"; }
   public String getFamilyName() { return"familyName"; }

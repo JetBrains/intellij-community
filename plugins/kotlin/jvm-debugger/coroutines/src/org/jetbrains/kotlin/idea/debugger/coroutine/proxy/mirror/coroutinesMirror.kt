@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class StandaloneCoroutine private constructor(context: DefaultExecutionContext) :
     BaseMirror<ObjectReference, MirrorOfStandaloneCoroutine>("kotlinx.coroutines.StandaloneCoroutine", context) {
@@ -36,7 +37,7 @@ class ChildContinuation(context: DefaultExecutionContext) :
     BaseMirror<ObjectReference, MirrorOfChildContinuation>("kotlinx.coroutines.ChildContinuation", context) {
     private val childFieldRef by FieldMirrorDelegate("child", CancellableContinuationImpl(context)) // cancellableContinuationImpl
 
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfChildContinuation? {
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfChildContinuation {
         return MirrorOfChildContinuation(value, childFieldRef.mirror(value, context))
     }
 }
@@ -49,7 +50,7 @@ class CancellableContinuationImpl(context: DefaultExecutionContext) :
     private val submissionTimeFieldRef by FieldDelegate<LongValue>("submissionTime")
     private val contextFieldRef by FieldMirrorDelegate("context", CoroutineContext(context))
 
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfCancellableContinuationImpl? {
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfCancellableContinuationImpl {
         val decision = decisionFieldRef.value(value)?.intValue()
         val dispatchedContinuation = delegateFieldRef.mirror(value, context)
         val submissionTime = submissionTimeFieldRef.value(value)?.longValue()
@@ -63,7 +64,7 @@ class DispatchedContinuation(context: DefaultExecutionContext) :
     BaseMirror<ObjectReference, MirrorOfDispatchedContinuation>("kotlinx.coroutines.DispatchedContinuation", context) {
     private val continuation by FieldDelegate<ObjectReference>("continuation")
 
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDispatchedContinuation? {
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDispatchedContinuation {
         return MirrorOfDispatchedContinuation(value, continuation.value(value))
     }
 }

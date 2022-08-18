@@ -1,4 +1,4 @@
-// "Cast argument to 'List'" "true"
+// "Cast argument to 'List'" "true-preview"
 class Test {
   void m(Object o) {
     foo(<caret>o);

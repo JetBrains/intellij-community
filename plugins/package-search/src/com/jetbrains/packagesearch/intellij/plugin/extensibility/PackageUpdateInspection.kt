@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -7,13 +23,13 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import javax.swing.JPanel
 
 /**
@@ -53,7 +69,6 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
                 else -> false
             }
         }
-
     }
 
     override fun createOptionsPanel(): JPanel {
@@ -69,16 +84,18 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
 
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
         file.project.packageSearchProjectService.packageUpgradesStateFlow.value
-            .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
+            .getPackagesToUpgrade(onlyStable)
+            .upgradesByModule[fileModule]
             ?.filter { isNotExcluded(it.packageModel.identifier) }
             ?.filter { it.computeUpgradeOperationsForSingleModule.isNotEmpty() }
             ?.forEach { (packageModel, usageInfo,
                 targetVersion, precomputedOperations) ->
 
-                val currentVersion = usageInfo.version
-                val scope = usageInfo.scope
-                val unifiedDependency = packageModel.toUnifiedDependency(currentVersion, scope)
-                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@forEach
+                val versionElement = tryDoing {
+                    usageInfo.declarationIndexInBuildFile
+                        ?.let { selectPsiElementIndex(it) }
+                        ?.let { PsiUtil.getElementAtOffset(file, it) }
+                } ?: return@forEach
 
                 registerProblem(
                     versionElement,

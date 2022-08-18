@@ -13,6 +13,9 @@ object MarkdownPsiFactory {
     return when (val elementType = node.elementType) {
       MarkdownElementTypes.PARAGRAPH -> MarkdownParagraph(node)
       MarkdownElementTypes.CODE_FENCE -> node as MarkdownCodeFence
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> node as MarkdownFrontMatterHeader
+      MarkdownElementTypes.INLINE_LINK -> MarkdownInlineLink(node)
+      MarkdownElementTypes.LINK_TEXT -> MarkdownLinkText(node)
       MarkdownElementTypes.IMAGE -> MarkdownImage(node)
       MarkdownElementTypes.LIST_ITEM -> MarkdownListItem(node)
       MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockQuote(node)
@@ -24,7 +27,9 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.TABLE -> MarkdownTable(node)
       MarkdownElementTypes.TABLE_ROW, MarkdownElementTypes.TABLE_HEADER -> MarkdownTableRow(node)
       MarkdownElementTypes.TABLE_CELL -> MarkdownTableCell(node)
+      MarkdownElementTypes.AUTOLINK -> MarkdownCompositeAutoLink(node)
       else -> when {
+        elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)
         MarkdownTokenTypeSets.LISTS.contains(elementType) -> MarkdownList(node)
         else -> ASTWrapperPsiElement(node)

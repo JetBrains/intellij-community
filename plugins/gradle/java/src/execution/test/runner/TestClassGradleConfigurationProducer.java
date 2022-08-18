@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiClass, PsiClass> {
@@ -110,5 +113,26 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
       testsTasksToRun.addAll(ContainerUtil.map(findAllTestsTaskToRun(source, project), it -> new TestTasksToRun(it, testFilter)));
     }
     return testsTasksToRun;
+  }
+
+  private static boolean pointsToMethod(@NotNull ConfigurationContext context) {
+    var location = context.getLocation();
+    return location != null && getMethodLocation(location) != null;
+  }
+
+  @Override
+  protected boolean doSetupConfigurationFromContext(@NotNull GradleRunConfiguration configuration,
+                                                    @NotNull ConfigurationContext context,
+                                                    @NotNull Ref<PsiElement> sourceElement) {
+    if (pointsToMethod(context)) return false;
+
+    return super.doSetupConfigurationFromContext(configuration, context, sourceElement);
+  }
+
+  @Override
+  protected boolean doIsConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
+    if (pointsToMethod(context)) return false;
+
+    return super.doIsConfigurationFromContext(configuration, context);
   }
 }

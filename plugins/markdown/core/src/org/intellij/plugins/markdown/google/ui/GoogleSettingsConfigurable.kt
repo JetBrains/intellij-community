@@ -12,17 +12,25 @@ import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.createGoogleAccountPanel
 
-internal class GoogleSettingsConfigurableProvider : ConfigurableProvider() {
+internal class GoogleSettingsConfigurableProvider: ConfigurableProvider() {
+  override fun createConfigurable(): Configurable {
+    return GoogleSettingsConfigurable()
+  }
 
-  override fun createConfigurable(): Configurable = GoogleSettingsConfigurable()
-
-  override fun canCreateConfigurable(): Boolean = Registry.`is`("markdown.google.docs.import.action.enable")
+  override fun canCreateConfigurable(): Boolean {
+    return Registry.`is`("markdown.google.docs.import.action.enable", false)
+  }
 }
 
-internal class GoogleSettingsConfigurable : BoundConfigurable(MarkdownBundle.message("markdown.google.accounts.preferences")) {
-
-  private val accountsListModel = GoogleAccountsListModel()
-  private val accountManager = service<GoogleAccountManager>()
-
-  override fun createPanel(): DialogPanel = createGoogleAccountPanel(disposable!!, accountsListModel, accountManager)
+internal class GoogleSettingsConfigurable: BoundConfigurable(
+  MarkdownBundle.message("markdown.google.accounts.preferences")
+) {
+  override fun createPanel(): DialogPanel {
+    val accountManager = service<GoogleAccountManager>()
+    return createGoogleAccountPanel(
+      disposable!!,
+      GoogleAccountsListModel(),
+      accountManager
+    )
+  }
 }

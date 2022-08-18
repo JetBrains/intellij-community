@@ -57,7 +57,7 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
-from _pydevd_bundle.pydevd_utils import save_main_module
+from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
@@ -102,7 +102,7 @@ if SUPPORT_PLUGINS:
 
 
 threadingEnumerate = threading.enumerate
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 
 original_excepthook = sys.__excepthook__
 
@@ -130,7 +130,7 @@ class PyDBCommandThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self._py_db_command_thread_event = py_db._py_db_command_thread_event
         self.py_db = py_db
-        self.setName('pydevd.CommandThread')
+        self.name = 'pydevd.CommandThread'
 
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
@@ -170,7 +170,7 @@ class CheckOutputThread(PyDBDaemonThread):
     def _on_run(self):
         while not self.killReceived:
             time.sleep(0.3)
-            if not self.py_db.has_threads_alive() and self.py_db.writer.empty():
+            if (not self.py_db.has_threads_alive() or self.py_db.wait_output_checker_thread) and self.py_db.writer.empty():
                 try:
                     pydev_log.debug("No threads alive, finishing debug session")
                     self.py_db.finish_debugging_session()
@@ -501,6 +501,9 @@ class PyDB(object):
         # If True, pydevd will stop on assertion errors in tests.
         self.stop_on_failed_tests = False
 
+        # If True, pydevd finished all work and only waits output_checker_thread
+        self.wait_output_checker_thread = False
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -700,8 +703,9 @@ class PyDB(object):
     def init_matplotlib_in_debug_console(self):
         # import hook and patches for matplotlib support in debug console
         from _pydev_bundle.pydev_import_hook import import_hook_manager
-        for module in dict_keys(self.mpl_modules_for_patching):
-            import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
+        if is_current_thread_main_thread():
+            for module in dict_keys(self.mpl_modules_for_patching):
+                import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
 
     def init_matplotlib_support(self):
         # prepare debugger for integration with matplotlib GUI event loop
@@ -728,11 +732,12 @@ class PyDB(object):
 
     def _activate_mpl_if_needed(self):
         if len(self.mpl_modules_for_patching) > 0:
-            for module in dict_keys(self.mpl_modules_for_patching):
-                if module in sys.modules:
-                    activate_function = self.mpl_modules_for_patching.pop(module)
-                    activate_function()
-                    self.mpl_in_use = True
+            if is_current_thread_main_thread():
+                for module in dict_keys(self.mpl_modules_for_patching):
+                    if module in sys.modules:
+                        activate_function = self.mpl_modules_for_patching.pop(module)
+                        activate_function()
+                        self.mpl_in_use = True
 
     def _call_mpl_hook(self):
         try:
@@ -1528,7 +1533,7 @@ class PyDB(object):
     def wait_for_commands(self, globals):
         self._activate_mpl_if_needed()
 
-        thread = threading.currentThread()
+        thread = threading.current_thread()
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
@@ -2176,6 +2181,15 @@ def main():
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
+
+        # CheckOutputThread is not a daemon, so need to wait for its completion
+        if debugger.output_checker_thread is not None:
+            debugger.wait_output_checker_thread = True
+
+            try:
+                debugger.output_checker_thread.join()
+            except:
+                pass
 
 if __name__ == '__main__':
     main()

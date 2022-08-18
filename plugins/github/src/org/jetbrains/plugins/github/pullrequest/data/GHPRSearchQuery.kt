@@ -38,36 +38,14 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
 
   companion object {
-    val DEFAULT = GHPRSearchQuery(listOf(Term.Qualifier.Enum(QualifierName.state, GithubIssueState.open)))
-    val EMPTY = GHPRSearchQuery(listOf())
-
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
-
-    fun parseFromString(string: String): GHPRSearchQuery {
-      val result = mutableListOf<Term<*>>()
-      val terms = string.trim().split(' ')
-      for (term in terms) {
-        if (term.isEmpty()) continue
-
-        val colonIdx = term.indexOf(':')
-        if (colonIdx < 0) {
-          result.add(Term.QueryPart(term.replace("#", "")))
-        }
-        else {
-          try {
-            result.add(QualifierName.valueOf(term.substring(0, colonIdx)).createTerm(term.substring(colonIdx + 1)))
-          }
-          catch (e: IllegalArgumentException) {
-            result.add(Term.QueryPart(term))
-          }
-        }
-      }
-      return GHPRSearchQuery(result)
-    }
   }
 
   @Suppress("EnumEntryName")
   enum class QualifierName(val apiName: String) {
+    `is`("is") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    },
     state("state") {
       override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
     },
@@ -92,6 +70,11 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
       override fun toString() = apiName
     },
     reviewRequested("review-requested") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+
+      override fun toString() = apiName
+    },
+    review("review") {
       override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
 
       override fun toString() = apiName
@@ -133,6 +116,18 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
       class Simple(name: QualifierName, value: String) : Qualifier<String>(name, value) {
         override val apiValue = this.value
+
+        private var not: Boolean = false
+
+        fun not(): Simple {
+          not = !not
+          return this
+        }
+
+        override fun toString(): String {
+          val minus = if (not) "-" else ""
+          return "$minus$name:$value"
+        }
       }
 
       class Enum<T : kotlin.Enum<T>>(name: QualifierName, value: T) : Qualifier<kotlin.Enum<T>>(name, value) {

@@ -13,13 +13,13 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
+import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -70,6 +70,11 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
   private static final Logger LOG = getInstance(DiffShelvedChangesActionProvider.class);
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(ShelvedChangesViewManager.SHELVED_CHANGES_TREE) != null;
   }
@@ -99,7 +104,8 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     showShelvedChangesDiff(dc, false);
   }
 
-  public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull DataContext dc, boolean withLocal){
+  public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull DataContext dc,
+                                                                                                       boolean withLocal) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return null;
 
@@ -158,7 +164,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(dc, withLocal);
     if (diffRequestProducers == null || diffRequestProducers.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers.getList(), diffRequestProducers.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers);
     chain.putUserData(PatchesPreloader.SHELF_PRELOADER, new PatchesPreloader(project));
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.FRAME);
   }
@@ -344,8 +350,8 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     @NotNull private final ShelvedBinaryFile myBinaryChange;
 
     BinaryShelveDiffRequestProducer(@NotNull Project project,
-                                           @NotNull ShelvedBinaryFile change,
-                                           @NotNull FilePath filePath) {
+                                    @NotNull ShelvedBinaryFile change,
+                                    @NotNull FilePath filePath) {
       super(filePath);
       myBinaryChange = change;
       myProject = project;
@@ -401,9 +407,9 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     private final boolean myWithLocal;
 
     NewFileTextShelveDiffRequestProducer(@NotNull Project project,
-                                                @NotNull ShelvedChange change,
-                                                @NotNull FilePath filePath,
-                                                boolean withLocal) {
+                                         @NotNull ShelvedChange change,
+                                         @NotNull FilePath filePath,
+                                         boolean withLocal) {
       super(project, change, filePath);
       myWithLocal = withLocal;
     }
@@ -441,11 +447,11 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     private final boolean myWithLocal;
 
     TextShelveDiffRequestProducer(@NotNull Project project,
-                                         @NotNull ShelvedChange change,
-                                         @NotNull FilePath filePath,
-                                         @NotNull VirtualFile file,
-                                         @NotNull ApplyPatchContext patchContext,
-                                         boolean withLocal) {
+                                  @NotNull ShelvedChange change,
+                                  @NotNull FilePath filePath,
+                                  @NotNull VirtualFile file,
+                                  @NotNull ApplyPatchContext patchContext,
+                                  boolean withLocal) {
       super(project, change, filePath);
       myFile = file;
       myPatchContext = patchContext;
@@ -471,8 +477,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
         }
         else {
           String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
-          CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
-            .provideContent(myProject, path, commitContext);
+          CharSequence baseContents = BaseRevisionTextPatchEP.getBaseContent(myProject, path, commitContext);
 
           ApplyPatchForBaseRevisionTexts texts =
             ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);
@@ -536,7 +541,8 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                     @NotNull UserDataHolder context,
                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       DiffRequest diffRequest = myChange.isConflictingChange()
-                                ? createConflictDiffRequest(myProject, myFile, patch, VcsBundle.message("shelve.shelved.version"), texts, getName())
+                                ? createConflictDiffRequest(myProject, myFile, patch, VcsBundle.message("shelve.shelved.version"),
+                                                            texts, getName())
                                 : createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       if (!myWithLocal) {
         DiffUtil.addNotification(createNotificationProvider(
@@ -551,8 +557,8 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     @NotNull protected final ShelvedChange myChange;
 
     BaseTextShelveDiffRequestProducer(@NotNull Project project,
-                                             @NotNull ShelvedChange change,
-                                             @NotNull FilePath filePath) {
+                                      @NotNull ShelvedChange change,
+                                      @NotNull FilePath filePath) {
       super(filePath);
       myChange = change;
       myProject = project;

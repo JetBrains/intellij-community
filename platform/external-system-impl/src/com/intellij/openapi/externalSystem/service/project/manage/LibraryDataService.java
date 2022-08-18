@@ -23,10 +23,8 @@ import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -43,7 +42,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
+  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = File::new;
 
   @Override
   public @NotNull Key<LibraryData> getTargetDataKey() {
@@ -88,6 +87,15 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
   }
 
+  private static void refreshVfsFiles(Collection<File> files) {
+    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    for (File file : files) {
+      Path path = file.toPath();
+      // search for jar file first otherwise lib root won't be found!
+      virtualFileManager.refreshAndFindFileByNioPath(path);
+    }
+  }
+
   public @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
@@ -99,7 +107,9 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if (paths.isEmpty()) {
         continue;
       }
-      result.put(orderRootType, ContainerUtil.map(paths, PATH_TO_FILE));
+      List<File> files = ContainerUtil.map(paths, PATH_TO_FILE);
+      refreshVfsFiles(files);
+      result.put(orderRootType, files);
     }
     return result;
   }
@@ -251,10 +261,10 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
-      for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
-        String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
+      for (String url : ideLibrary.getUrls(ideType)) {
+        String idePath = getLocalPath(url);
         if (!toAddPerType.remove(idePath)) {
-          toRemovePerType.add(ideFile.getUrl());
+          toRemovePerType.add(url);
         }
       }
     }
@@ -275,5 +285,13 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(false, roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
     }
+  }
+
+  @NotNull
+  private static String getLocalPath(@NotNull String url) {
+    if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
+      url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
+    }
+    return VfsUtilCore.urlToPath(url);
   }
 }

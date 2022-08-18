@@ -25,10 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -114,7 +111,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final Set<PsiMethod> usedMethods = new LinkedHashSet<>();
       getMethod().accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           final PsiMethod method = expression.resolveMethod();
           if (method != null) {
@@ -267,15 +264,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final List<PsiReturnStatement> returnStatements = new ArrayList<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         returnStatements.add(statement);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
     });
     if (myExtractProcessor.generatesConditionalExit()) {
       for (int i = 0; i < returnStatements.size() - 1; i++) {
@@ -303,7 +300,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReturnStatement(final PsiReturnStatement statement) {
+      public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         try {
           PsiStatement returnThisStatement = myElementFactory.createStatementFromText("return this;", statement);
@@ -316,13 +313,13 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
       @Override
-      public void visitDeclarationStatement(final PsiDeclarationStatement statement) {
+      public void visitDeclarationStatement(final @NotNull PsiDeclarationStatement statement) {
         super.visitDeclarationStatement(statement);
         final PsiElement[] declaredElements = statement.getDeclaredElements();//todo
         for (PsiElement declaredElement : declaredElements) {
@@ -338,7 +335,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitParameter(PsiParameter parameter) {
+      public void visitParameter(@NotNull PsiParameter parameter) {
         super.visitParameter(parameter);
         final PsiElement declarationScope = parameter.getDeclarationScope();
         for (PsiVariable variable : outputVariables) {
@@ -349,7 +346,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiLocalVariable) {
@@ -510,7 +507,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiSubstitutor substitutor = methodCallExpression.resolveMethodGenerics().getSubstitutor();
       for (final PsiTypeParameter typeParameter : methodTypeParameters) {
         final PsiType type = substitutor.substitute(typeParameter);
-        if (type == null || PsiType.NULL.equals(type)) {
+        if (!PsiTypesUtil.isDenotableType(type, methodCallExpression)) {
           return "";
         }
         typeSignature.add(type.getPresentableText());
@@ -572,28 +569,28 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     //noinspection UnsafeReturnStatementVisitor
     body.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         if (statement.getCopyableUserData(GENERATED_RETURN) == null) { // do not modify our generated returns
           super.visitReturnStatement(statement);
         }
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         if (expression.getQualifier() == null) {
           expression.replace(RefactoringChangeUtil.createThisExpression(manager, targetClass));
         }
       }
 
       @Override
-      public void visitSuperExpression(PsiSuperExpression expression) {
+      public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
         if (expression.getQualifier() == null) {
           expression.replace(RefactoringChangeUtil.createSuperExpression(manager, targetClass));
         }
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         // do not visit sub classes
       }
     });
@@ -751,7 +748,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+    protected void initDuplicates(@Nullable Set<? extends TextRange> textRanges) {
       myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
                              .map(finder -> finder.findDuplicates(myTargetClass))
                              .orElse(new ArrayList<>());
@@ -922,7 +919,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         final Map<PsiElement, PsiElement> replaceMap = new HashMap<>();
         exitStatementCopy.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (expression.resolve() == null) {
               final PsiVariable variable = outVarsNames.get(expression.getReferenceName());

@@ -27,9 +27,10 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.GenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -41,11 +42,11 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import javax.swing.ListSelectionModel
 
@@ -62,8 +63,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         superMember: CallableMemberDescriptor
     ): CallableMemberDescriptor? {
         val superClass = superMember.containingDeclaration as? ClassDescriptor ?: return null
-        val substitutor = getTypeSubstitutor(superClass.defaultType, subClass.defaultType) ?: TypeSubstitutor.EMPTY
-        val signatureInSubClass = superMember.substitute(substitutor) as? CallableMemberDescriptor ?: return null
+        val substitution = getTypeSubstitution(superClass.defaultType, subClass.defaultType).orEmpty()
+        val signatureInSubClass = superMember.substitute(substitution) as? CallableMemberDescriptor ?: return null
         val subMember = subClass.findCallableMemberBySignature(signatureInSubClass)
         return if (subMember?.kind?.isReal == true) subMember else null
     }
@@ -116,9 +117,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val subClassDescriptor = targetClass.resolveToDescriptorIfAny() ?: return
         val superMemberDescriptor = member.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return
         val superClassDescriptor = superMemberDescriptor.containingDeclaration as? ClassDescriptor ?: return
-        val substitutor = getTypeSubstitutor(superClassDescriptor.defaultType, subClassDescriptor.defaultType)
-            ?: TypeSubstitutor.EMPTY
-        val descriptorToImplement = superMemberDescriptor.substitute(substitutor) as CallableMemberDescriptor
+        val substitution = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
+        val descriptorToImplement = superMemberDescriptor.substitute(substitution) as CallableMemberDescriptor
         val chooserObject = OverrideMemberChooserObject.create(
             member.project,
             descriptorToImplement,

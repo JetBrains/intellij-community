@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.RootProvider
@@ -18,14 +19,15 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_L
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import java.util.function.Supplier
 
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
@@ -49,14 +51,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
           // Roots changed event should be fired for the global libraries linked with module
           val moduleChanges = event.getChanges(ModuleEntity::class.java)
           for (change in moduleChanges) {
-            when (change) {
-              is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
-              is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
-              is EntityChange.Replaced -> {
-                removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
-                addTrackedLibraryAndJdkFromEntity(change.newEntity)
-              }
-            }
+            change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
+            change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
           }
         }
       })
@@ -68,7 +64,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   override fun getActionToRunWhenProjectJdkChanges(): Runnable {
     return Runnable {
       super.getActionToRunWhenProjectJdkChanges().run()
-      if (jdkChangeListener.hasProjectSdkDependency()) fireRootsChanged()
+      if (jdkChangeListener.hasProjectSdkDependency()) fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk())
     }
   }
 
@@ -151,9 +147,9 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
   }
 
-  private fun fireRootsChanged() {
+  private fun fireRootsChanged(info: RootsChangeRescanningInfo) {
     if (myProject.isOpen) {
-      makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+      makeRootsChange(EmptyRunnable.INSTANCE, info)
     }
   }
 
@@ -169,13 +165,13 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.addRootSetChangedListener(this)
       }
-      librariesPerModuleMap.put(moduleEntity.persistentId(), libraryIdentifier)
+      librariesPerModuleMap.put(moduleEntity.persistentId, libraryIdentifier)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      librariesPerModuleMap.remove(moduleEntity.persistentId(), libraryIdentifier)
+      librariesPerModuleMap.remove(moduleEntity.persistentId, libraryIdentifier)
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.removeRootSetChangedListener(this)
       }
@@ -186,11 +182,12 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
     override fun afterLibraryAdded(newLibrary: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary))) fireRootsChanged()
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary)))
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(newLibrary))
     }
 
     override fun afterLibraryRemoved(library: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) fireRootsChanged()
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) fireRootsChanged(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
     }
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
@@ -209,8 +206,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                     it.copy(library = LibraryId(newName, libraryTableId))
                   else -> it
                 }
-              }
-              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+              } as MutableList<ModuleDependencyItem>
+              builder.modifyEntity(module) {
                 dependencies = updated
               }
             }
@@ -223,7 +220,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (insideRootsChange) return
       insideRootsChange = true
       try {
-        fireRootsChanged()
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(wrapper as Library))
       }
       finally {
         insideRootsChange = false
@@ -246,7 +243,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
         if (watchedSdks.add(jdk.rootProvider)) {
           jdk.rootProvider.addRootSetChangedListener(this)
         }
-        fireRootsChanged()
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(jdk))
       }
     }
 
@@ -262,8 +259,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                 is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
                 else -> it
               }
-            }
-            builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+            } as MutableList<ModuleDependencyItem>
+            builder.modifyEntity(module) {
               dependencies = updated
             }
           }
@@ -276,12 +273,13 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
         jdk.rootProvider.removeRootSetChangedListener(this)
       }
       if (hasDependencies(jdk)) {
-        fireRootsChanged()
+        fireRootsChanged(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
       }
     }
 
     override fun rootSetChanged(wrapper: RootProvider) {
-      fireRootsChanged()
+      LOG.assertTrue(wrapper is Supplier<*>, "Unexpected root provider $wrapper does not implement Supplier<Sdk>")
+      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk((wrapper as Supplier<Sdk>).get()))
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
@@ -289,11 +287,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
         sdk.rootProvider.addRootSetChangedListener(this)
       }
-      sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId())
+      sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId)
     }
 
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
-      sdkDependencies.remove(sdkDependency, moduleEntity.persistentId())
+      sdkDependencies.remove(sdkDependency, moduleEntity.persistentId)
       val sdk = findSdk(sdkDependency)
       if (sdk != null && !hasDependencies(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(this)

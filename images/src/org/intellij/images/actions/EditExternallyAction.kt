@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,10 +36,10 @@ internal class EditExternallyAction : DumbAwareAction() {
     if (!StringUtil.isEmpty(executablePath)) {
       EnvironmentUtil.getEnvironmentMap().forEach { (varName, varValue) ->
         executablePath = if (SystemInfo.isWindows) StringUtil.replace(executablePath, "%$varName%", varValue, true)
-                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false);
+                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false)
         }
 
-      executablePath = FileUtil.toSystemDependentName(executablePath);
+      executablePath = FileUtil.toSystemDependentName(executablePath)
       val executable = File(executablePath)
       val commandLine = GeneralCommandLine()
       val path = if(executable.exists()) executable.absolutePath else executablePath
@@ -62,7 +63,7 @@ internal class EditExternallyAction : DumbAwareAction() {
         commandLine.createProcess()
       }
       catch (ex: ExecutionException) {
-        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"));
+        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"))
         ImagesConfigurable.show(e.project)
       }
     }
@@ -83,5 +84,9 @@ internal class EditExternallyAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabled = enabled
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

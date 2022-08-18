@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.BuilderByPattern
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.ImportPath
 
 private val POST_INSERTION_ACTION: Key<(KtElement) -> Unit> = Key("POST_INSERTION_ACTION")
 private val PRE_COMMIT_ACTION: Key<(KtElement) -> Unit> = Key("PRE_COMMIT_ACTION_KEY")
@@ -20,7 +20,7 @@ private val PRE_COMMIT_ACTION: Key<(KtElement) -> Unit> = Key("PRE_COMMIT_ACTION
 internal class MutableCodeToInline(
     var mainExpression: KtExpression?,
     val statementsBefore: MutableList<KtExpression>,
-    val fqNamesToImport: MutableCollection<FqName>,
+    val fqNamesToImport: MutableCollection<ImportPath>,
     val alwaysKeepMainExpression: Boolean,
     var extraComments: CommentHolder?,
 ) {

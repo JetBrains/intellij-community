@@ -1,8 +1,9 @@
 <html>
 <body>
-Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.
-<p> An entry point can be the main method, tests, classes mentioned outside the specified scope, classes accessible from
-  <code>module-info.java</code>, and so on. You can also configure custom entry points by using name patterns or annotations.
+Reports classes, methods, or fields that are not used or unreachable from the entry points.
+<p> An entry point can be a main method, tests, classes from outside the specified scope, classes accessible from
+  <code>module-info.java</code>, and so on. It is possible to configure custom entry points by using name patterns or annotations.
+</p>
 <p><b>Example:</b></p>
 <pre><code>
   public class Department {

@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.withModalContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressDialogUI
@@ -19,14 +20,14 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import java.awt.Component
+import java.awt.GraphicsEnvironment
 import javax.swing.SwingUtilities
 
 internal class PlatformTaskSupport : TaskSupport {
 
-  override fun taskCancellationNonCancellableInternal(): TaskCancellation = NonCancellableTaskCancellation
+  override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
 
   override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
 
@@ -116,8 +117,8 @@ private suspend fun ProgressIndicatorEx.updateFromSink(stateFlow: Flow<ProgressS
     if (state.fraction >= 0.0) {
       // first fraction update makes the indicator determinate
       isIndeterminate = false
+      fraction = state.fraction
     }
-    fraction = state.fraction
   }
   error("collect call must be cancelled")
 }
@@ -145,7 +146,14 @@ private fun CoroutineScope.showModalIndicator(
   delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
   val mainJob = this@showModalIndicator.coroutineContext.job
   withContext(Dispatchers.EDT) {
-    val window = ownerWindow(owner) ?: return@withContext
+    val window = ownerWindow(owner)
+    if (window == null) {
+      if (!GraphicsEnvironment.isHeadless()) {
+        logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
+      }
+      return@withContext
+    }
+
     val ui = ProgressDialogUI()
     ui.initCancellation(cancellation) {
       mainJob.cancel("button cancel")

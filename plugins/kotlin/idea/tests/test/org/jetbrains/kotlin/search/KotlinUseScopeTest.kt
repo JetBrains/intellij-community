@@ -12,8 +12,8 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
-import org.jetbrains.kotlin.idea.search.useScope
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import kotlin.test.assertNotEquals
 
@@ -303,7 +303,7 @@ class KotlinUseScopeTest : JavaCodeInsightFixtureTestCase() {
 
 private fun assertLightAndOriginalScope(element: PsiNamedElement, expected: String, expectedOriginal: String = expected) {
     val ktElement = element.unwrapped as KtNamedDeclaration
-    TestCase.assertEquals("light: ${element.getKotlinFqName().toString()}", expected, element.useScope().findFiles())
+    TestCase.assertEquals("light: ${element.kotlinFqName.toString()}", expected, element.useScope().findFiles())
     TestCase.assertEquals("kt: ${ktElement.fqName.toString()}", expectedOriginal, ktElement.useScope().findFiles())
 }
 

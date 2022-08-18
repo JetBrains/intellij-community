@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
+import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
@@ -30,7 +33,7 @@ class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
     for (result in results) {
       type = TypesUtil.getLeastUpperBoundNullable(type, getTypeFromResult(result, arguments, expression), expression.manager)
     }
-    return type
+    return type?.boxIfNecessary(expression)
   }
 }
 
@@ -78,6 +81,17 @@ private fun getTypeFromPropertyCall(element: PsiElement?, arguments: Arguments?,
 
 fun PsiType?.devoid(context: PsiElement): PsiType? {
   return if (this == PsiType.VOID && !isCompileStatic(context)) PsiType.NULL else this
+}
+
+private fun PsiType.boxIfNecessary(call: GrMethodCall) : PsiType {
+  if (this !is PsiPrimitiveType) {
+    return this
+  }
+  return if (call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.dotTokenType == GroovyElementTypes.T_SAFE_DOT) {
+    this.box(call)
+  } else {
+    this
+  }
 }
 
 private fun hasGenerics(type: PsiType): Boolean {

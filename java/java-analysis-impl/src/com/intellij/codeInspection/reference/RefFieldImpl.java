@@ -2,33 +2,29 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.List;
-
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
-  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
-  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
-  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000;
-
-  private List<RefMethod> myAccessors;
+  private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit
+  private static final int USED_FOR_WRITING_MASK             = 0b10_00000000_00000000; // 18th bit
+  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
+  private static final int IMPLICITLY_READ_MASK              = 0b1000_00000000_00000000; // 20th bit
+  private static final int IMPLICITLY_WRITTEN_MASK           = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_ENUM_CONSTANT                  = 0b100000_00000000_00000000; // 22nd bit
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
-    if (psi instanceof UElement) {
-      LOG.error(new Exception("psi should not be uast element: " + psi));
-    }
 
     if (field instanceof UEnumConstant) {
-      putUserData(ENUM_CONSTANT, true);
+      setEnumConstant(true);
     }
   }
 
@@ -38,13 +34,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
-    this.setOwner((WritableRefEntity)owner);
-
-    if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
-      setIsStatic(true);
-      setIsFinal(true);
-    }
+    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
   }
 
   @Deprecated
@@ -59,10 +49,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  protected void markReferenced(@NotNull RefElementImpl refFrom,
-                                boolean forWriting,
-                                boolean forReading,
-                                UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom, boolean forWriting, boolean forReading, UExpression expressionFrom) {
     addInReference(refFrom);
 
     boolean referencedFromClassInitializer = false;
@@ -90,8 +77,13 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public boolean isUsedForReading() {
-    return checkFlag(USED_FOR_READING_MASK);
+  public synchronized boolean isUsedForReading() {
+    if (checkFlag(USED_FOR_READING_MASK)) {
+      return true;
+    }
+    RefClass ownerClass = getOwnerClass();
+    // record fields are always implicitly read in hashCode() & equals()
+    return ownerClass != null && ownerClass.isRecord();
   }
 
   private void setUsedForReading(boolean usedForReading) {
@@ -99,11 +91,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public boolean isUsedForWriting() {
-    return checkFlag(USED_FOR_WRITING_MASK);
+  public synchronized boolean isUsedForWriting() {
+    if (checkFlag(USED_FOR_WRITING_MASK)) {
+      return true;
+    }
+    RefClass ownerClass = getOwnerClass();
+    // record fields are always implicitly written in the constructor
+    return ownerClass != null && ownerClass.isRecord();
   }
 
-  private void setUsedForWriting(boolean usedForWriting) {
+  private synchronized void setUsedForWriting(boolean usedForWriting) {
     setFlag(false, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
     setFlag(usedForWriting, USED_FOR_WRITING_MASK);
   }
@@ -111,6 +108,33 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   @Override
   public boolean isOnlyAssignedInInitializer() {
     return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER_MASK);
+  }
+
+  private void setEnumConstant(boolean enumConstant) {
+    setFlag(enumConstant, IS_ENUM_CONSTANT);
+  }
+
+  @Override
+  public boolean isEnumConstant() {
+    return checkFlag(IS_ENUM_CONSTANT);
+  }
+
+  private void setImplicitlyRead(boolean implicitlyRead) {
+    setFlag(implicitlyRead, IMPLICITLY_READ_MASK);
+  }
+
+  @Override
+  public boolean isImplicitlyRead() {
+    return checkFlag(IMPLICITLY_READ_MASK);
+  }
+
+  private void setImplicitlyWritten(boolean implicitlyWritten) {
+    setFlag(implicitlyWritten, IMPLICITLY_WRITTEN_MASK);
+  }
+
+  @Override
+  public boolean isImplicitlyWritten() {
+    return checkFlag(IMPLICITLY_WRITTEN_MASK);
   }
 
   @Override
@@ -137,16 +161,15 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         setInitializerMasks();
       }
       else if (RefUtil.isImplicitWrite(uField.getJavaPsi())) {
-        putUserData(IMPLICITLY_WRITTEN, true);
+        setImplicitlyWritten(true);
         setInitializerMasks();
       }
 
       if (RefUtil.isImplicitRead(uField.getJavaPsi())) {
-        putUserData(IMPLICITLY_READ, true);
+        setImplicitlyRead(true);
       }
 
       refUtil.addTypeReference(uField, uField.getType(), getRefManager(), this);
-      getRefManager().fireBuildReferences(this);
     }
   }
 
@@ -164,16 +187,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public String getExternalName() {
-    return ReadAction.compute(() -> {
-      UField uField = getUastElement();
-      if (uField == null) {
-        WritableRefEntity owner = getOwner();
-        String parentName = owner != null ? owner.getName() : "no parent class";
-        LOG.error("No uField found for psi: " + getPsiElement() + ", name: " + getName() + ", " + parentName);
-        return null;
-      }
-      return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
-    });
+    WritableRefEntity owner = getOwner();
+    if (owner == null) {
+      LOG.error("No parent class for: " + getName());
+      return null;
+    }
+    return owner.getExternalName() + " " + getName();
   }
 
   @Nullable
@@ -181,6 +200,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
+  @SuppressWarnings("WeakerAccess") // used by TeamCity
   @Nullable
   public static PsiField findPsiField(PsiManager manager, String externalName) {
     int classNameDelimiter = externalName.lastIndexOf(' ');
@@ -199,16 +219,5 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public boolean isSuspicious() {
     if (isEntry()) return false;
     return super.isSuspicious() || isUsedForReading() != isUsedForWriting();
-  }
-
-  public synchronized @Nullable List<RefMethod> getAccessors() {
-    return myAccessors;
-  }
-
-  public synchronized void addAccessor(@NotNull RefMethod accessor) {
-    if (myAccessors == null) {
-      myAccessors = new SmartList<>();
-    }
-    myAccessors.add(accessor);
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.actions.impl.NextDifferenceAction;
 import com.intellij.diff.actions.impl.PrevDifferenceAction;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -212,7 +213,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
     List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
-                                                   : ContainerUtil.packNullables(resolveAction, cancelAction);
+                                                 : ContainerUtil.packNullables(resolveAction, cancelAction);
 
     JRootPane rootPane = getRootPane();
     JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
@@ -343,7 +344,12 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.warn(e);
-      new Notification("Merge Internal Error", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
+      new Notification("Merge Internal Error",
+                       DiffBundle.message("can.t.finish.merge.resolve"),
+                       e.getMessage(),
+                       NotificationType.ERROR)
+        .setDisplayId(DiffNotificationIdsHolder.MERGE_INTERNAL_ERROR)
+        .notify(myProject);
     }
   }
 

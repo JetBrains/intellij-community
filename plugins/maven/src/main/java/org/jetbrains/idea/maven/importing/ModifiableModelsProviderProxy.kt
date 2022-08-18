@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import java.util.*
 
 interface ModifiableModelsProviderProxy {
@@ -49,7 +49,7 @@ interface ModifiableModelsProviderProxy {
 
 
 class ModifiableModelsProviderProxyImpl(private val project: Project,
-                                        val diff : WorkspaceEntityStorageBuilder) : ModifiableModelsProviderProxy {
+                                        val diff : MutableEntityStorage) : ModifiableModelsProviderProxy {
 
   override val moduleModelProxy by lazy { ModuleModelProxyImpl(diff, project) }
   private val substitutionWorkspace by lazy {
@@ -72,7 +72,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
     }
   }
 
-  private fun workspaceCommit(diff: WorkspaceEntityStorageBuilder) {
+  private fun workspaceCommit(diff: MutableEntityStorage) {
     updateSubstitutions()
 
     for ((fromLibrary, modifiableModel) in modifiableLibraryModels.entries) {
@@ -106,7 +106,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
       (model as ModifiableRootModelBridge).prepareForCommit()
     }
 
-    WorkspaceModel.getInstance(project).updateProjectModel<Any?> { builder: WorkspaceEntityStorageBuilder ->
+    WorkspaceModel.getInstance(project).updateProjectModel<Any?> { builder: MutableEntityStorage ->
       builder.addDiff(diff)
       null
     }

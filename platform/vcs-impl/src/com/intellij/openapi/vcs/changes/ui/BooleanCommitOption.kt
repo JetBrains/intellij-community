@@ -5,7 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.disableWhenDumb
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
 import com.intellij.openapi.vcs.configurable.CommitOptionsConfigurable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
@@ -18,7 +18,7 @@ import kotlin.reflect.KMutableProperty0
 open class BooleanCommitOption(
   private val checkinPanel: CheckinProjectPanel,
   @Nls text: String,
-  disableWhenDumb: Boolean,
+  private val disableWhenDumb: Boolean,
   private val getter: () -> Boolean,
   private val setter: Consumer<Boolean>
 ) : RefreshableOnComponent,
@@ -29,8 +29,6 @@ open class BooleanCommitOption(
 
   protected val checkBox = JBCheckBox(text).apply {
     isFocusable = isInSettings || isInNonModalOptionsPopup || UISettings.shadowInstance.disableMnemonicsInControls
-    if (disableWhenDumb && !isInSettings) disableWhenDumb(checkinPanel.project, this,
-                                                          VcsBundle.message("changes.impossible.until.indices.are.up.to.date"))
   }
 
   private val isInSettings get() = checkinPanel is CommitOptionsConfigurable.CheckinPanel
@@ -42,6 +40,10 @@ open class BooleanCommitOption(
 
   override fun restoreState() {
     checkBox.isSelected = getter()
+    if (disableWhenDumb && !isInSettings) {
+      CheckinHandlerUtil.disableWhenDumb(checkinPanel.project, checkBox,
+                                         VcsBundle.message("changes.impossible.until.indices.are.up.to.date"))
+    }
   }
 
   override fun getComponent(): JComponent = checkBox

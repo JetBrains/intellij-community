@@ -17,13 +17,11 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
@@ -34,8 +32,8 @@ public final class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
    */
-  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = ContainerUtil
-    .set(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
+  private static final TokenSet ASSIGNMENT_ELEMENT_TYPES = TokenSet
+    .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
   private JavaFormatterUtil() { }
 
@@ -122,7 +120,7 @@ public final class JavaFormatterUtil {
 
   /**
    * Creates {@link Wrap wrap} to be used with the children blocks of the given block.
-   *
+   * <p>
    * It is important that single instance of wrap will be used for all children which use default wrap.
    *
    * @param block                 target block which sub-blocks should use wrap created by the current method
@@ -423,7 +421,7 @@ public final class JavaFormatterUtil {
 
   /**
    * Check if annotation goes after a keyword (maybe even not directly).
-   *
+   * <p>
    * Example: {@code private @Foo @Bar void method() {} }
    * Here both Foo and Bar are after keyword
    */

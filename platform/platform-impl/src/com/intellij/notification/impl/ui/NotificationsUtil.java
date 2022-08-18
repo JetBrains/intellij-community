@@ -62,6 +62,11 @@ public final class NotificationsUtil {
     return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
   }
 
+  public static @NotNull @Nls String buildFullContent(@NotNull Notification notification) {
+    String content = StringUtil.replace(notification.getContent(), P_TAG, BR_TAG);
+    return buildHtml(null, null, content, null, null, null, null);
+  }
+
   public static @NotNull @Nls String buildHtml(@Nullable @Nls String title,
                                                @Nullable @Nls String subtitle,
                                                @Nullable @Nls String content,

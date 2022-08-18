@@ -1,4 +1,4 @@
-// "Replace with 'Comparator.reverseOrder'" "true"
+// "Replace with 'Comparator.reverseOrder'" "true-preview"
 
 import java.util.*;
 

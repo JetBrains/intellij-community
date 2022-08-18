@@ -62,16 +62,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       }
     }
     catch (IOException e) {
-      if ("Invalid execution data file.".equals(e.getMessage())) {
-        final String path = sessionDataFile.getAbsolutePath();
-        Notifications.Bus.notify(new Notification("Coverage",
-                                                  CoverageBundle.message("coverage.error.loading.report"),
-                                                  JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
-                                                  NotificationType.ERROR));
-        LOG.info(e);
-        return data;
-      }
-      LOG.error(e);
+      processError(sessionDataFile, e);
       return data;
     }
     catch (Exception e) {
@@ -79,6 +70,27 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       return data;
     }
     return data;
+  }
+
+  private static void processError(@NotNull File sessionDataFile, IOException e) {
+    final String path = sessionDataFile.getAbsolutePath();
+    if ("Invalid execution data file.".equals(e.getMessage())) {
+      Notifications.Bus.notify(new Notification("Coverage",
+                                                CoverageBundle.message("coverage.error.loading.report"),
+                                                JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
+                                                NotificationType.ERROR));
+      LOG.info(e);
+    }
+    else if (e.getMessage() != null && e.getMessage().startsWith("Unknown block type")) {
+      Notifications.Bus.notify(new Notification("Coverage",
+                                                CoverageBundle.message("coverage.error.loading.report"),
+                                                JavaCoverageBundle.message("coverage.error.jacoco.report.corrupted", path),
+                                                NotificationType.ERROR));
+      LOG.info(e);
+    }
+    else {
+      LOG.error(e);
+    }
   }
 
   private static void loadExecutionData(@NotNull final File sessionDataFile,
@@ -273,7 +285,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     CoverageBuilder coverageBuilder = new CoverageBuilder();
     for (CoverageSuite aSuite : suite.getSuites()) {
       File coverageFile = new File(aSuite.getCoverageDataFileName());
-      loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+      try {
+        loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+      } catch (IOException e) {
+        processError(coverageFile, e);
+      }
     }
 
     final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(suite.getPresentableName());
@@ -311,5 +327,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   @NotNull
   public String getDataFileExtension() {
     return "exec";
+  }
+
+  @Override
+  public boolean shouldProcessUnloadedClasses() {
+    // All classes are already processed in JaCoCoCoverageRunner.loadReportToCoverageBuilder
+    return false;
   }
 }

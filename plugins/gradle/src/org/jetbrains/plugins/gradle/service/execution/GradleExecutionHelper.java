@@ -61,8 +61,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
@@ -131,11 +129,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          Map<String, String> propertiesFixes = newHashMap(
-            pair("user.dir", projectDir),
-            pair("java.system.class.loader", null)
-          );
-          return maybeFixSystemProperties(() -> f.fun(connection), propertiesFixes);
+          return maybeFixSystemProperties(() -> f.fun(connection), projectDir);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -150,18 +144,17 @@ public class GradleExecutionHelper {
       });
   }
 
-  public static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, Map<String, String> keyToMask) {
+  private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
+    Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
     Map<String, String> oldValues = new HashMap<>();
     try {
-      if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
-        keyToMask.forEach((key, newVal) -> {
-          String oldVal = System.getProperty(key);
-          oldValues.put(key, oldVal);
-          if (oldVal != null) {
-            SystemProperties.setProperty(key, newVal);
-          }
-        });
-      }
+      keyToMask.forEach((key, newVal) -> {
+        String oldVal = System.getProperty(key);
+        oldValues.put(key, oldVal);
+        if (oldVal != null) {
+          SystemProperties.setProperty(key, newVal);
+        }
+      });
       return action.compute();
     }
     finally {
@@ -171,6 +164,26 @@ public class GradleExecutionHelper {
           System.setProperty(k, v);
         }
       });
+    }
+  }
+
+  /**
+   * Use with caution! IDE system properties will be changed for the period of running Gradle long-running operations.
+   * This is a workaround to fix leaking unwanted IDE system properties to Gradle process.
+   */
+  @ApiStatus.Internal
+  public static class SystemPropertiesAdjuster {
+    public SystemPropertiesAdjuster() {
+      LOG.info("Gradle system adjuster service: " + this.getClass().getName());
+    }
+
+    public Map<String, String> getKeyToMask(@NotNull String projectDir) {
+      Map<String, String> propertiesFixes = new HashMap<>();
+      if (Registry.is("gradle.tooling.adjust.user.dir", true)) {
+        propertiesFixes.put("user.dir", projectDir);
+      }
+      propertiesFixes.put("java.system.class.loader", null);
+      return propertiesFixes;
     }
   }
 
@@ -214,7 +227,7 @@ public class GradleExecutionHelper {
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
         // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-        executeWrapperTask(id, settings, listener, connection, cancellationToken);
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
         Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
         if (wrapperPropertiesFile != null) {
@@ -224,7 +237,7 @@ public class GradleExecutionHelper {
       else {
         Supplier<String> propertiesFile = setupWrapperTaskInInitScript(gradleVersion, settings);
 
-        executeWrapperTask(id, settings, listener, connection, cancellationToken);
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
         String wrapperPropertiesFile = propertiesFile.get();
         if (wrapperPropertiesFile != null) {
@@ -258,14 +271,17 @@ public class GradleExecutionHelper {
   private void executeWrapperTask(
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
+    @NotNull String projectPath,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken
-  ) {
-    BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-    launcher.withCancellationToken(cancellationToken);
-    launcher.forTasks("wrapper");
-    launcher.run();
+    @NotNull CancellationToken cancellationToken) {
+    maybeFixSystemProperties(() -> {
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      launcher.withCancellationToken(cancellationToken);
+      launcher.forTasks("wrapper");
+      launcher.run();
+      return null;
+    }, projectPath);
   }
 
   private static @NotNull Supplier<String> setupWrapperTaskInInitScript(

@@ -6,13 +6,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,9 +22,12 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +35,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +43,7 @@ import java.util.function.Supplier;
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
+  private static final IntSet SEEN_ACTION_GROUPS = new IntOpenHashSet(50);
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
@@ -98,15 +99,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
-      // This fake event might be sent from BegMenuItemUI
-      // to update items in case of multiple choice when there are dependencies between items like:
-      // 1. Selected A means unselected B and vise versa
-      // 2. Selected/unselected A means enabled/disabled B
-      addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          updateChildren(null);
-        }
+      BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
+        Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
     }
@@ -128,10 +122,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
                                         DataManager.getInstance().getDataContext(component, x2, y2));
       updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
-        LOG.warn("no components in popup menu " + myPlace);
+        LOG.warn("'" + myPlace + "' popup menu fails to show: no menu items");
         return;
       }
       if (!component.isShowing()) {
+        LOG.warn("'" + myPlace + "' popup menu fails to show: component is not showing (" + component.getClass().getName() + ")");
         return;
       }
 
@@ -151,7 +146,13 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     public void addNotify() {
       super.addNotify();
       long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
-      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(time, myPlace);
+      final Language language = CommonDataKeys.LANGUAGE.getData(myContext);
+      int languageHashCode = language != null ? language.hashCode() : 0;
+      final boolean coldStart = SEEN_ACTION_GROUPS.add(myGroup.hashCode() + languageHashCode);
+      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                                                  EventFields.ActionPlace.with(myPlace),
+                                                                  IdeHeartbeatEventReporter.UILatencyLogger.COLD_START.with(coldStart),
+                                                                  EventFields.Language.with(language));
       //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral

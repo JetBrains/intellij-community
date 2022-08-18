@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import java.io.BufferedOutputStream
@@ -10,20 +10,16 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
 
-
 class RollingFileHandler @JvmOverloads constructor(
   val logPath: Path,
   val limit: Long,
   val count: Int,
   val append: Boolean,
-  val onRotate: Runnable? = null
+  private val onRotate: Runnable? = null
 ) : StreamHandler() {
-  private lateinit var meter: MeteredOutputStream
+  @Volatile private lateinit var meter: MeteredOutputStream
 
-  private class MeteredOutputStream(
-    private val delegate: OutputStream,
-    var written: Long,
-  ) : OutputStream() {
+  private class MeteredOutputStream(private val delegate: OutputStream, @Volatile var written: Long) : OutputStream() {
     override fun write(b: Int) {
       delegate.write(b)
       written++
@@ -39,13 +35,9 @@ class RollingFileHandler @JvmOverloads constructor(
       written += len
     }
 
-    override fun close() {
-      delegate.close()
-    }
+    override fun close() = delegate.close()
 
-    override fun flush() {
-      delegate.flush()
-    }
+    override fun flush() = delegate.flush()
   }
 
   init {
@@ -54,9 +46,9 @@ class RollingFileHandler @JvmOverloads constructor(
   }
 
   private fun open(append: Boolean) {
-    val fout = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-    val bout = BufferedOutputStream(fout)
-    meter = MeteredOutputStream(bout, if (append) Files.size(logPath) else 0)
+    Files.createDirectories(logPath.parent)
+    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+    meter = MeteredOutputStream(delegate, if (append) Files.size(logPath) else 0)
     setOutputStream(meter)
   }
 
@@ -65,15 +57,20 @@ class RollingFileHandler @JvmOverloads constructor(
     super.publish(record)
     flush()
     if (limit > 0 && meter.written >= limit) {
-      rotate()
+      synchronized(this) {
+        if (meter.written >= limit) {
+          rotate()
+        }
+      }
     }
   }
 
   private fun rotate() {
     onRotate?.run()
+
     try {
       Files.deleteIfExists(logPathWithIndex(count))
-      for (i in 1 until count) {
+      for (i in count-1 downTo 1) {
         val path = logPathWithIndex(i)
         if (Files.exists(path)) {
           Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)
@@ -82,17 +79,25 @@ class RollingFileHandler @JvmOverloads constructor(
     }
     catch (e: IOException) {
       // rotate failed, keep writing to existing log
-      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}"))
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
       return
     }
+
     close()
-    try {
-      Files.move(logPath, logPathWithIndex(1))
+
+    val e = try {
+      Files.move(logPath, logPathWithIndex(1), StandardCopyOption.ATOMIC_MOVE)
+      null
     }
     catch (e: IOException) {
-      // ignore?
+      e
     }
+
     open(false)
+
+    if (e != null) {
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
+    }
   }
 
   private fun logPathWithIndex(index: Int): Path {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin.psi
 
@@ -31,8 +31,12 @@ internal class UastDescriptorLightMethod(
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.upperBounds.forEach { bound ->
-                                    bound.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false)
-                                        .safeAs<PsiClassType>()
+                                    bound.toPsiType(
+                                        this@UastDescriptorLightMethod,
+                                        context,
+                                        TypeOwnerKind.DECLARATION,
+                                        boxed = false
+                                    ).safeAs<PsiClassType>()
                                         ?.let { addReference(it) }
                                 }
                             }
@@ -59,18 +63,28 @@ internal class UastDescriptorLightMethod(
                     this.addParameter(
                         UastDescriptorLightParameterBase(
                             "\$this\$${original.name.identifier}",
-                            receiver.type.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false),
+                            receiver.type.toPsiType(
+                                this@UastDescriptorLightMethod,
+                                context,
+                                TypeOwnerKind.DECLARATION,
+                                boxed = false
+                            ),
                             parameterList,
                             receiver
                         )
                     )
                 }
 
-                for ((i, p) in original.valueParameters.withIndex()) {
+                for (p in original.valueParameters) {
                     this.addParameter(
                         UastDescriptorLightParameter(
                             p.name.identifier,
-                            p.type.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false),
+                            p.type.toPsiType(
+                                this@UastDescriptorLightMethod,
+                                context,
+                                TypeOwnerKind.DECLARATION,
+                                boxed = false
+                            ),
                             parameterList,
                             p
                         )

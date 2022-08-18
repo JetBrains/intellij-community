@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.live
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -21,18 +20,19 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initApp
-import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initSdk
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
+import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.testFramework.*
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openInEditor
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
 import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
@@ -216,11 +216,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
 
         logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
-        with(DumbService.getInstance(project)) {
-            queueTask(UnindexedFilesUpdater(project))
-            completeJustSubmittedTasks()
-        }
-        dispatchAllInvocationEvents()
+        project.waitIndexingComplete("index project")
 
         Fixture.enableAnnotatorsAndLoadDefinitions(project)
 

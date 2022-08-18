@@ -220,7 +220,10 @@ public final class ExternalSystemUtil {
   private static @NotNull String extractDetails(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     if (unwrapped instanceof ExternalSystemException) {
-      return ((ExternalSystemException)unwrapped).getOriginalReason();
+      String reason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      if (!reason.isEmpty()) {
+        return reason;
+      }
     }
     return ExternalSystemApiUtil.stacktraceAsString(e);
   }

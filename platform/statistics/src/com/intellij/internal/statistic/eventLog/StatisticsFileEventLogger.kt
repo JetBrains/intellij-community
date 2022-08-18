@@ -122,6 +122,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   override fun dispose() {
+    lastEventFlushFuture?.cancel(false)
     flush()
     logExecutor.shutdown()
     Disposer.dispose(writer)

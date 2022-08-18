@@ -12,7 +12,9 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Objects;
 
 abstract class ContentLayout {
   ToolWindowContentUi ui;
@@ -51,11 +53,17 @@ abstract class ContentLayout {
     if (suffix != null) title += suffix;
 
     label.setText(title);
-    label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
+    Border border = JBUI.Borders.empty(0, 2, 0, 7);
     if (ExperimentalUI.isNewUI()) {
-      label.setBorder(shouldShowId()
-                      ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
-                      : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
+      border = shouldShowId()
+               ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
+               : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets());
+    }
+    Border oldBorder = label.getBorder();
+    // Don't update component border (with following revalidation and repainting) if existing border is exactly the same we're going to set
+    if (oldBorder == null || !Objects.equals(oldBorder.getClass(), border.getClass())
+        || !oldBorder.getBorderInsets(label).equals(border.getBorderInsets(label))) {
+      label.setBorder(border);
     }
     label.setVisible(shouldShowId());
   }

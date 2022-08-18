@@ -1442,6 +1442,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClasses.0.java");
             }
 
+            @TestMetadata("JKClassDerivedClassesCircular.0.java")
+            public void testJKClassDerivedClassesCircular() throws Exception {
+                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClassesCircular.0.java");
+            }
+
             @TestMetadata("JKClassDerivedInnerClasses.0.java")
             public void testJKClassDerivedInnerClasses() throws Exception {
                 runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedInnerClasses.0.java");

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.checkers;
 
@@ -11,10 +11,10 @@ import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.highlighting.KotlinNameHighlightingStateUtils;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
+import org.jetbrains.kotlin.idea.util.ElementKind;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
-import org.jetbrains.kotlin.idea.highlighter.NameHighlighter;
 import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 
 import java.io.File;
-import java.util.Arrays;
 
 import static org.jetbrains.kotlin.resolve.lazy.ResolveSession.areDescriptorsCreatedForDeclaration;
 
@@ -52,19 +51,15 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
     }
 
     public void doTestWithInfos(@NotNull String filePath) throws Exception {
-        try {
-            myFixture.configureByFile(fileName());
+        myFixture.configureByFile(fileName());
 
-            //noinspection unchecked
-            myFixture.enableInspections(SpellCheckingInspection.class);
+        myFixture.enableInspections(SpellCheckingInspection.class);
 
-            NameHighlighter.INSTANCE.setNamesHighlightingEnabled(false);
+        KotlinNameHighlightingStateUtils.withNameHighlightingDisabled(myFixture.getProject(), () -> {
             checkHighlighting(true, true, false);
             checkResolveToDescriptor();
-        }
-        finally {
-            NameHighlighter.INSTANCE.setNamesHighlightingEnabled(true);
-        }
+            return null;
+        });
     }
 
     protected long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
@@ -79,8 +74,8 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                             ((JavaCodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(true);
                         }
                         if (suppressHighlight && ktFile != null) {
-                            ElementSelectionUtilsKt.selectElement(myFixture.getEditor(), ktFile, Arrays.asList(
-                                    CodeInsightUtils.ElementKind.EXPRESSION), new Function1<PsiElement, Unit>() {
+                            ElementSelectionUtilsKt.selectElement(myFixture.getEditor(), ktFile, ElementKind.EXPRESSION,
+                                                                  new Function1<PsiElement, Unit>() {
                                 @Override
                                 public Unit invoke(PsiElement element) {
                                     if (element instanceof KtElement) {

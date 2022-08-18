@@ -363,9 +363,19 @@ public class PyRenameTest extends PyTestCase {
     doMultiFileTest("bar.pyi");
   }
 
+  // PY-29898
+  public void testRenameDataclassAttributeAndKeywordArgument() {
+    doTest("y");
+  }
+
   // PY-48012
   public void testRenameKeywordParameter() {
     doTest("bar");
+  }
+
+  // PY-55231
+  public void testRenameKeywordArgumentConstructorParameter() {
+    doTest("taram");
   }
 
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {

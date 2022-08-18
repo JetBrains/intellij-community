@@ -110,7 +110,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   @NotNull
   public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
-    return (Function<PsiElement, String>)element -> {
+    return element -> {
       Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
       StringBuilder tooltip = new StringBuilder();
       for (String info : tooltips) {

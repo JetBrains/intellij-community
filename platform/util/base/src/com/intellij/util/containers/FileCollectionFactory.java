@@ -100,6 +100,10 @@ public final class FileCollectionFactory {
     return new ObjectOpenCustomHashSet<>(files, new PathSerializableHashStrategy());
   }
 
+  public static @NotNull Set<String> createCanonicalFilePathSet() {
+    return CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASH_STRATEGY);
+  }
+
   public static @NotNull Set<File> createCanonicalFileLinkedSet() {
     return new ObjectLinkedOpenCustomHashSet<>(new Hash.Strategy<File>() {
       @Override

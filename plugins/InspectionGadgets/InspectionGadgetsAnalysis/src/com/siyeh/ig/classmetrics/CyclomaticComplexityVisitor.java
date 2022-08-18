@@ -52,13 +52,13 @@ public class CyclomaticComplexityVisitor extends JavaRecursiveElementWalkingVisi
   }
 
   @Override
-  public void visitConditionalExpression(PsiConditionalExpression expression) {
+  public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     m_complexity++;
   }
 
   @Override
-  public void visitSwitchExpression(PsiSwitchExpression expression) {
+  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     super.visitSwitchExpression(expression);
     visitSwitchBlock(expression);
   }
@@ -96,7 +96,7 @@ public class CyclomaticComplexityVisitor extends JavaRecursiveElementWalkingVisi
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     super.visitPolyadicExpression(expression);
     final IElementType token = expression.getOperationTokenType();
     if (token.equals(JavaTokenType.ANDAND) || token.equals(JavaTokenType.OROR)) {
@@ -105,7 +105,7 @@ public class CyclomaticComplexityVisitor extends JavaRecursiveElementWalkingVisi
   }
 
   @Override
-  public void visitCatchSection(PsiCatchSection section) {
+  public void visitCatchSection(@NotNull PsiCatchSection section) {
     super.visitCatchSection(section);
     m_complexity++;
   }

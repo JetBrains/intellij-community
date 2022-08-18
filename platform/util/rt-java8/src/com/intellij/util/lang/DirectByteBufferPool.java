@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,19 +6,27 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class DirectByteBufferPool {
-  public static final DirectByteBufferPool DEFAULT_POOL = new DirectByteBufferPool();
+  public static final DirectByteBufferPool DEFAULT_POOL = new DirectByteBufferPool(it -> {});
 
   private static final int MIN_SIZE = 2048;
   private static final int MAX_POOL_SIZE = 32;
 
   private final ConcurrentSkipListMap<Integer, ByteBuffer> pool = new ConcurrentSkipListMap<>();
   private final AtomicInteger count = new AtomicInteger();
+  private final @NotNull Consumer<? super ByteBuffer> releaser;
+
+  // ByteBufferCleaner cannot be located in this module (JDK 9 at least is required)
+  public DirectByteBufferPool(@NotNull Consumer<? super ByteBuffer> releaser) {
+    this.releaser = releaser;
+  }
 
   public @NotNull ByteBuffer allocate(int requiredSize) {
     int size = roundUpInt(requiredSize, MIN_SIZE);
@@ -33,7 +41,6 @@ public final class DirectByteBufferPool {
 
     ByteBuffer result;
     if (entry == null) {
-
       result = ByteBuffer.allocateDirect(size);
     }
     else {
@@ -51,6 +58,7 @@ public final class DirectByteBufferPool {
       return;
     }
 
+    // limit is set on allocate
     buffer.rewind();
     buffer.order(ByteOrder.BIG_ENDIAN);
     // keep the only buffer for size
@@ -58,7 +66,17 @@ public final class DirectByteBufferPool {
       count.incrementAndGet();
     }
     else {
-      // no need to explicitly release - https://stackoverflow.com/a/36077936
+      this.releaser.accept(buffer);
+    }
+  }
+
+  // pool is not expected to be used during releaseAll call
+  public void releaseAll() {
+    Iterator<ByteBuffer> iterator = pool.values().iterator();
+    while (iterator.hasNext()) {
+      ByteBuffer buffer = iterator.next();
+      iterator.remove();
+      releaser.accept(buffer);
     }
   }
 

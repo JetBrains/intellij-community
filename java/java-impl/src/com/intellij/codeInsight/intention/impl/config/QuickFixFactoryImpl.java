@@ -142,7 +142,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
@@ -255,12 +255,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
     return new AddTypeCastFix(type, expression);
-  }
-
-  @NotNull
-  @Override
-  public IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    return new WrapExpressionFix(type, expression);
   }
 
   @NotNull
@@ -379,7 +373,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
+  public @NotNull IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
     return new UpgradeSdkFix(level);
   }
 
@@ -463,7 +457,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSuperMethodReturnFix(@NotNull PsiMethod superMethod, @NotNull PsiType superMethodType) {
-    return new SuperMethodReturnFix(superMethod, superMethodType);
+    return new MethodReturnTypeFix(superMethod, superMethodType, false, false, true);
   }
 
   @NotNull
@@ -743,7 +737,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+      JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
 
   @NotNull
@@ -761,7 +755,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
     return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
   }
 
@@ -922,7 +916,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return new WrapWithAdapterMethodCallFix(type, expression);
+    return new WrapWithAdapterMethodCallFix(type, expression, null);
   }
 
   @NotNull
@@ -1044,8 +1038,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates) {
-    return new UnimplementInterfaceAction(className, isDuplicates);
+  public @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className) {
+    return new UnimplementInterfaceAction.RemoveDuplicateExtendFix(className);
   }
 
   @Override
@@ -1102,7 +1096,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement) {
-    return new DeleteSwitchLabelFix(labelElement);
+    return new DeleteSwitchLabelFix(labelElement, false);
   }
 
   @Nullable
@@ -1158,6 +1152,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                @IntentionName String message) {
     return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+  }
+
+  @Override
+  public @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass) {
+    return new MoveAnonymousToInnerFix(anonymousClass);
   }
 
   private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {

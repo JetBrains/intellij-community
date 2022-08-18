@@ -1,4 +1,4 @@
-// "Extract side effects as an 'if' statement" "true"
+// "Extract side effects as an 'if' statement" "true-preview"
 import java.io.File;
 
 public class Main {

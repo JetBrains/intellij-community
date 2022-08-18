@@ -656,6 +656,11 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     }
 
     @Override
+    public Icon getLoadingImageIcon() {
+      return AllIcons.Process.Step_passive;
+    }
+
+    @Override
     public int getResizeWeight(int axis) {
       return 1;
     }
@@ -738,6 +743,11 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myPane != null && myPane.hasSelection());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

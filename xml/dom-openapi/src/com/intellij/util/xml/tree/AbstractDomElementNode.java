@@ -31,9 +31,9 @@ import java.util.Optional;
 
 abstract public class AbstractDomElementNode extends SimpleNode {
 
-  public static final Key<Map<Class, Boolean>> TREE_NODES_HIDERS_KEY = Key.create("TREE_NODES_HIDERS_KEY");
+  public static final Key<Map<Class<?>, Boolean>> TREE_NODES_HIDERS_KEY = Key.create("TREE_NODES_HIDERS_KEY");
 
-  private final static Comparator<Class> INHERITORS_COMPARATOR = (o1, o2) -> o1.isAssignableFrom(o2) ? 1 : -1;
+  private final static Comparator<Class<?>> INHERITORS_COMPARATOR = (o1, o2) -> o1.isAssignableFrom(o2) ? 1 : -1;
 
   private boolean isExpanded;
 
@@ -66,12 +66,12 @@ abstract public class AbstractDomElementNode extends SimpleNode {
   }
 
   protected boolean shouldBeShown(final Type type) {
-    final Map<Class, Boolean> hiders = DomUtil.getFile(getDomElement()).getUserData(TREE_NODES_HIDERS_KEY);
+    final Map<Class<?>, Boolean> hiders = DomUtil.getFile(getDomElement()).getUserData(TREE_NODES_HIDERS_KEY);
     if (type == null || hiders == null || hiders.size() == 0) return true;
 
-    final Class aClass = ReflectionUtil.getRawType(type);
+    final Class<?> aClass = ReflectionUtil.getRawType(type);
 
-    Optional<Class> parent = hiders.keySet().stream()
+    Optional<Class<?>> parent = hiders.keySet().stream()
       .filter(klass -> klass.isAssignableFrom(aClass)).min(INHERITORS_COMPARATOR);
     return parent.map(hiders::get).orElse(Boolean.FALSE).booleanValue();
 

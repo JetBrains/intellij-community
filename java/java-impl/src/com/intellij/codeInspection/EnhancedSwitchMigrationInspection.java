@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -49,7 +49,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchStatement(PsiSwitchStatement statement) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         SwitchReplacer replacer = findSwitchReplacer(statement);
         if (replacer == null) return;
         PsiElement switchKeyword = statement.getFirstChild();
@@ -642,6 +642,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         }
         sb.append(labels);
       }
+      else if (!myIsDefault) {
+        sb.append("case ");
+      }
       if (myIsDefault) {
         if (!myCaseExpressions.isEmpty()) {
           sb.append(",");
@@ -700,14 +703,6 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         if (caseLabelElementList == null) return StreamEx.empty();
         return StreamEx.of(caseLabelElementList.getElements());
       }).toList();
-    }
-
-    private List<PsiCaseLabelElement> getCurrentBranchCaseLabelElements() {
-      final PsiCaseLabelElementList caseLabelElementList = myLabelStatement.getCaseLabelElementList();
-      if (caseLabelElementList == null) {
-        return Collections.emptyList();
-      }
-      return Arrays.asList(caseLabelElementList.getElements());
     }
 
     /**

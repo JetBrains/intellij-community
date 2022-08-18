@@ -1,20 +1,41 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributeView
 import java.util.*
 import java.util.function.Predicate
+import java.util.regex.Pattern
 
-internal val RW_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
-                                        StandardOpenOption.CREATE_NEW)
-internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+@PublishedApi
+internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING)
 
-internal val isWindows = !System.getProperty("os.name").startsWith("windows", ignoreCase = true)
+fun copyFileToDir(file: Path, targetDir: Path) {
+  doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
+}
 
+fun moveFile(source: Path, target: Path) {
+  Files.createDirectories(target.parent)
+  Files.move(source, target)
+}
+
+fun moveFileToDir(file: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.move(file, targetDir.resolve(file.fileName))
+}
+
+fun copyFile(file: Path, target: Path) {
+  doCopyFile(file, target, target.parent)
+}
+
+private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+}
+
+@JvmOverloads
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(
@@ -25,7 +46,7 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
   ))
 }
 
-internal inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
+inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
   Files.createDirectories(file.parent)
   FileChannel.open(file, W_CREATE_NEW).use {
     task(it)
@@ -36,12 +57,10 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
                                    private val targetDir: Path,
                                    private val dirFilter: Predicate<Path>,
                                    private val fileFilter: Predicate<Path>) : SimpleFileVisitor<Path>() {
-  private val useHardlink: Boolean
   private val sourceToTargetFile: (Path) -> Path
 
   init {
     val isTheSameFileStore = Files.getFileStore(sourceDir) == Files.getFileStore(targetDir)
-    useHardlink = !isWindows && isTheSameFileStore
     // support copying to ZipFS
     if (isTheSameFileStore) {
       sourceToTargetFile = { targetDir.resolve(sourceDir.relativize(it)) }
@@ -70,18 +89,16 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
     }
 
     val targetFile = sourceToTargetFile(sourceFile)
-
-    if (useHardlink) {
-      Files.createLink(targetFile, sourceFile)
-    }
-    else {
-      Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
-    }
+    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
     return FileVisitResult.CONTINUE
   }
 }
 
-internal fun deleteDir(startDir: Path) {
+fun deleteDir(startDir: Path) {
+  if (!Files.exists(startDir)) {
+    return
+  }
+
   Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       deleteFile(file)
@@ -113,13 +130,6 @@ private fun deleteFile(file: Path) {
         throw e
       }
 
-      if (e is AccessDeniedException && isWindows) {
-        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
-        if (view != null && view.readAttributes().isReadOnly) {
-          view.setReadOnly(false)
-        }
-      }
-
       try {
         Thread.sleep(10)
       }
@@ -130,7 +140,53 @@ private fun deleteFile(file: Path) {
   }
 }
 
-internal inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
+@JvmOverloads
+fun substituteTemplatePlaceholders(inputFile: Path,
+                                   outputFile: Path,
+                                   placeholder: String,
+                                   values: List<Pair<String, String>>,
+                                   mustUseAllPlaceholders: Boolean = true,
+                                   convertToUnixLineEndings: Boolean = false) {
+  var result = Files.readString(inputFile)
+
+  if (convertToUnixLineEndings) {
+    result = result.replace("\r", "")
+  }
+
+  val missingPlaceholders = mutableListOf<String>()
+  for ((name, value) in values) {
+    check (!name.contains(placeholder)) {
+      "Do not use placeholder '$placeholder' in name: $name"
+    }
+
+    val s = "$placeholder$name$placeholder"
+    if (!result.contains(s)) {
+      missingPlaceholders.add(s)
+    }
+
+    result = result.replace(s, value)
+  }
+
+  check(!mustUseAllPlaceholders || missingPlaceholders.isEmpty()) {
+    "Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile"
+  }
+
+  val escapedPlaceHolder = Pattern.quote(placeholder)
+  val regex = Regex("$escapedPlaceHolder.+$escapedPlaceHolder")
+  val unsubstituted = result
+    .splitToSequence('\n')
+    .mapIndexed { line, s -> "line ${line + 1}: $s" }
+    .filter(regex::containsMatchIn)
+    .joinToString("\n")
+  check (unsubstituted.isBlank()) {
+    "Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted"
+  }
+
+  Files.createDirectories(outputFile.parent)
+  Files.writeString(outputFile, result)
+}
+
+inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
   val tempFile = file.parent.resolve("${file.fileName}.tmp")
   try {
     task(tempFile)

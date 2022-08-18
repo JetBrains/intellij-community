@@ -512,9 +512,7 @@ public abstract class GroovyRefactoringUtil {
    *    while (true) a=foo()
    *  will be replaced with
    *    while(true) {a=foo()}
-   * @param statement
    * @return corresponding statement inside block if it has been created or statement itself.
-   * @throws IncorrectOperationException
    */
 
   @NotNull

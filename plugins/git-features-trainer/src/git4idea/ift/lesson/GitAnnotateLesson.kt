@@ -3,6 +3,7 @@ package git4idea.ift.lesson
 
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
+import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -29,7 +30,6 @@ import org.assertj.swing.timing.Timeout
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
-import training.learn.LearnBundle
 import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
@@ -89,7 +89,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
 
       task("Annotate") {
-        val addShortcutText = LearnBundle.message("shortcut.balloon.add.shortcut")
+        val addShortcutText = IdeBundle.message("shortcut.balloon.add.shortcut")
         text(GitLessonsBundle.message("git.annotate.choose.annotate", strong(annotateMenuItemText)))
         text(GitLessonsBundle.message("git.annotate.add.shortcut.tip", strong(annotateActionName), action(it), strong(addShortcutText)))
         trigger(it)

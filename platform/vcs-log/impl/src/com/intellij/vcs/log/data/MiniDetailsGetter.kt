@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
@@ -35,6 +35,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     doLoadCommitsData(task.commits, this::saveInCache)
     notifyLoaded()
   }
+
   /**
    * The sequence number of the current "loading" task.
    */
@@ -42,18 +43,19 @@ class MiniDetailsGetter internal constructor(project: Project,
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
   override fun getCommitData(commit: Int): VcsCommitMetadata {
-    return getCommitData(commit, setOf(commit))
+    return getCommitData(commit, emptySet())
   }
 
-  fun getCommitData(commit: Int, neighbourHashes: Iterable<Int>): VcsCommitMetadata {
-    if (!EventQueue.isDispatchThread()) {
-      return cache.getIfPresent(commit)
-             ?: return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
-    }
+  fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
     val details = getCommitDataIfAvailable(commit)
     if (details != null) return details
 
-    val toLoad = IntOpenHashSet(neighbourHashes.iterator())
+    if (!EventQueue.isDispatchThread()) {
+      thisLogger().assertTrue(commitsToLoad.none(), "Requesting loading commits in background thread is not supported.")
+      return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+
+    val toLoad = IntOpenHashSet(commitsToLoad.iterator())
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
@@ -90,7 +92,6 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
-  private fun saveInCache(details: VcsCommitMetadata) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
   @RequiresEdt
   private fun cacheCommit(commitId: Int, taskNumber: Long) {
@@ -105,31 +106,6 @@ class MiniDetailsGetter internal constructor(project: Project,
   override fun cacheCommits(commits: IntOpenHashSet) {
     val taskNumber = currentTaskIndex++
     commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
-  }
-
-  @RequiresBackgroundThread
-  @Throws(VcsException::class)
-  fun loadCommitsData(commits: Iterable<Int>,
-                      consumer: Consumer<in VcsCommitMetadata>,
-                      indicator: ProgressIndicator) {
-    val toLoad = IntOpenHashSet()
-    for (id in commits) {
-      val details = cache.getIfPresent(id)
-      if (details == null || details is LoadingDetails) {
-        toLoad.add(id)
-      }
-      else {
-        consumer.consume(details)
-      }
-    }
-    if (!toLoad.isEmpty()) {
-      indicator.checkCanceled()
-      doLoadCommitsData(toLoad) { metadata ->
-        saveInCache(metadata)
-        consumer.consume(metadata)
-      }
-      notifyLoaded()
-    }
   }
 
   @RequiresBackgroundThread

@@ -153,7 +153,7 @@ public final class TypeInferenceHelper {
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
     if (isFlatDFAAllowed() && ControlFlowUtils.getTopmostOwner(scope) != scope) {
-      assert false;
+      LOG.error("Flat DFA inconsistency: scope is " + scope + ", but topmost owner is " + ControlFlowUtils.getTopmostOwner(scope));
     }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
@@ -168,7 +168,7 @@ public final class TypeInferenceHelper {
 
   @Nullable
   static List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow.getFlow());
+    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow.getFlow(), dfaInstance, lattice);
     List<@Nullable DefinitionMap> maps = engine.performDFAWithTimeout();

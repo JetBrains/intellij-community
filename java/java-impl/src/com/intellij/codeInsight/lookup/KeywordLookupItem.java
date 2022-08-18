@@ -61,7 +61,7 @@ public class KeywordLookupItem extends LookupElement implements TypedLookupItem 
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setItemTextBold(true);
   }

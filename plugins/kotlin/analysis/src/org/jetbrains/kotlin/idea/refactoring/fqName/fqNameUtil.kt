@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.refactoring.fqName
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName as _getKotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported as _isImported
 
 val KotlinType.fqName: FqName?
@@ -17,15 +17,14 @@ val KotlinType.fqName: FqName?
     }
 
 @Deprecated(
-    "For binary compatibility",
-    replaceWith = ReplaceWith("getKotlinFqName()", "org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName"),
+    "Replace with 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName'",
+    replaceWith = ReplaceWith("kotlinFqName", "org.jetbrains.kotlin.idea.base.psi.kotlinFqName"),
 )
-fun PsiElement.getKotlinFqName(): FqName? =
-    _getKotlinFqName()
+fun PsiElement.getKotlinFqName(): FqName? = this.kotlinFqName
 
 @Deprecated(
     "For binary compatibility",
-    replaceWith = ReplaceWith("isImported", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),
+    replaceWith = ReplaceWith("this.isImported(importPath, skipAliasedImports)", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),
 )
 fun FqName.isImported(importPath: ImportPath, skipAliasedImports: Boolean = true): Boolean =
     _isImported(importPath, skipAliasedImports)

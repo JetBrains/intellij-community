@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
@@ -6,6 +6,7 @@ import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 
 class KotlinSourceSetProto(
     val name: String,
@@ -143,6 +144,16 @@ data class KotlinNativeCompilationExtensionsImpl(
     constructor(extensions: KotlinNativeCompilationExtensions) : this(extensions.konanTarget)
 }
 
+data class KotlinCompilationCoordinatesImpl(
+    override val targetName: String,
+    override val compilationName: String
+) : KotlinCompilationCoordinates {
+    constructor(coordinates: KotlinCompilationCoordinates) : this(
+        targetName = coordinates.targetName,
+        compilationName = coordinates.compilationName
+    )
+}
+
 @Suppress("DEPRECATION_ERROR")
 data class KotlinCompilationImpl(
     override val name: String,
@@ -156,7 +167,8 @@ data class KotlinCompilationImpl(
     override val dependencyClasspath: Array<String>,
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
-    override val nativeExtensions: KotlinNativeCompilationExtensions?
+    override val nativeExtensions: KotlinNativeCompilationExtensions?,
+    override val associateCompilations: Set<KotlinCompilationCoordinates>
 ) : KotlinCompilation {
 
     // create deep copy
@@ -168,9 +180,10 @@ data class KotlinCompilationImpl(
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
         arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
-        cachedArgsInfo = kotlinCompilation.cachedArgsInfo.duplicate(),
+        cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
-        nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
+        nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
+        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -199,6 +212,12 @@ data class KotlinCompilationImpl(
                 }
             }
 
+        private fun cloneCompilationCoordinatesWithCaching(
+            coordinates: Set<KotlinCompilationCoordinates>,
+            cloningCache: MutableMap<Any, Any>
+        ): Set<KotlinCompilationCoordinates> = coordinates.map { initial ->
+            cloningCache.getOrPut(initial) { KotlinCompilationCoordinatesImpl(initial) } as KotlinCompilationCoordinates
+        }.toSet()
     }
 }
 
@@ -226,7 +245,7 @@ data class KotlinTargetImpl(
         KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
         target.compilations.map { initialCompilation ->
             (cloningCache[initialCompilation] as? KotlinCompilation)
-                ?: KotlinCompilationImpl(initialCompilation as KotlinCompilationImpl, cloningCache).also {
+                ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
                     cloningCache[initialCompilation] = it
                 }
         }.toList(),
@@ -270,7 +289,6 @@ data class KotlinNativeMainRunTaskImpl(
 data class ExtraFeaturesImpl(
     override val coroutinesState: String?,
     override val isHMPPEnabled: Boolean,
-    override val isNativeDependencyPropagationEnabled: Boolean
 ) : ExtraFeatures
 
 data class KotlinMPPGradleModelImpl(
@@ -279,7 +297,7 @@ data class KotlinMPPGradleModelImpl(
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
-    override val partialCacheAware: CompilerArgumentsCacheAware,
+    override val cacheAware: CompilerArgumentsCacheAware,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf()
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
@@ -295,13 +313,21 @@ data class KotlinMPPGradleModelImpl(
         extraFeatures = ExtraFeaturesImpl(
             mppModel.extraFeatures.coroutinesState,
             mppModel.extraFeatures.isHMPPEnabled,
-            mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
-        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware),
+        cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) }
     )
+
+    @Deprecated(
+        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("KotlinMPPGradleModel#cacheAware")
+    )
+    @Suppress("OverridingDeprecatedMember")
+    override val partialCacheAware: CompilerArgumentsCacheAware
+        get() = cacheAware
+
 }
 
 class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
@@ -341,7 +367,8 @@ data class KonanArtifactModelImpl(
     override val runConfiguration: KonanRunConfigurationModel,
     override val isTests: Boolean,
     override val freeCompilerArgs: Array<String>? = emptyArray(), // nullable for backwards compatibility
-    override val exportDependencies: Array<KotlinDependencyId>? = emptyArray() // nullable for backwards compatibility
+    override val exportDependencies: Array<KotlinDependencyId>? = emptyArray(), // nullable for backwards compatibility
+    override val binaryOptions: Array<String>? = emptyArray(), // nullable for backwards compatibility
 ) : KonanArtifactModel {
     constructor(artifact: KonanArtifactModel) : this(
         artifact.targetName,
@@ -353,7 +380,8 @@ data class KonanArtifactModelImpl(
         KonanRunConfigurationModelImpl(artifact.runConfiguration),
         artifact.isTests,
         checkNotNull(artifact.freeCompilerArgs) { "free compiler arguments are unexpectedly null" },
-        checkNotNull(artifact.exportDependencies) { "export dependencies are unexpectedly null" }
+        checkNotNull(artifact.exportDependencies) { "export dependencies are unexpectedly null" },
+        checkNotNull(artifact.binaryOptions) { "binary compiler options are unexpectedly null" },
     )
 }
 

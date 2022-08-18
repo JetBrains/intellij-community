@@ -94,13 +94,21 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XExecutionStack> collectThreads(@NotNull XDebugSession session) {
-    return collectThreadsWithErrors(session).first;
+    return collectThreads(session, TIMEOUT_MS);
+  }
+
+  public static List<XExecutionStack> collectThreads(@NotNull XDebugSession session, int timeoutMs) {
+    return collectThreadsWithErrors(session, timeoutMs).first;
   }
 
   public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) {
+    return collectThreadsWithErrors(session, TIMEOUT_MS);
+  }
+
+  public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session, int timeoutMs) {
     XTestExecutionStackContainer container = new XTestExecutionStackContainer();
     session.getSuspendContext().computeExecutionStacks(container);
-    return container.waitFor(TIMEOUT_MS);
+    return container.waitFor(timeoutMs);
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) {

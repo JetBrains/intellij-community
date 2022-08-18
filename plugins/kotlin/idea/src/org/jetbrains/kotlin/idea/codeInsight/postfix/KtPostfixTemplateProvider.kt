@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
@@ -28,32 +28,36 @@ import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
 
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
-    override fun getTemplates() = setOf(
-        KtNotPostfixTemplate,
-        KtIfExpressionPostfixTemplate,
-        KtElseExpressionPostfixTemplate,
-        KtNotNullPostfixTemplate("notnull"),
-        KtNotNullPostfixTemplate("nn"),
-        KtIsNullPostfixTemplate,
-        KtWhenExpressionPostfixTemplate,
-        KtTryPostfixTemplate,
-        KtIntroduceVariablePostfixTemplate("val"),
-        KtIntroduceVariablePostfixTemplate("var"),
-        KtForEachPostfixTemplate("for"),
-        KtForEachPostfixTemplate("iter"),
-        KtAssertPostfixTemplate,
-        KtParenthesizedPostfixTemplate,
-        KtSoutPostfixTemplate,
-        KtReturnPostfixTemplate,
-        KtWhilePostfixTemplate,
-        KtWrapWithListOfPostfixTemplate,
-        KtWrapWithSetOfPostfixTemplate,
-        KtWrapWithArrayOfPostfixTemplate,
-        KtWrapWithSequenceOfPostfixTemplate,
-        KtSpreadPostfixTemplate,
-        KtArgumentPostfixTemplate,
-        KtWithPostfixTemplate,
-    )
+    private val templatesSet by lazy {
+        setOf(
+            KtNotPostfixTemplate(this),
+            KtIfExpressionPostfixTemplate(this),
+            KtElseExpressionPostfixTemplate(this),
+            KtNotNullPostfixTemplate("notnull", this),
+            KtNotNullPostfixTemplate("nn", this),
+            KtIsNullPostfixTemplate(this),
+            KtWhenExpressionPostfixTemplate(this),
+            KtTryPostfixTemplate(this),
+            KtIntroduceVariablePostfixTemplate("val", this),
+            KtIntroduceVariablePostfixTemplate("var", this),
+            KtForEachPostfixTemplate("for", this),
+            KtForEachPostfixTemplate("iter", this),
+            KtAssertPostfixTemplate(this),
+            KtParenthesizedPostfixTemplate(this),
+            KtSoutPostfixTemplate(this),
+            KtReturnPostfixTemplate(this),
+            KtWhilePostfixTemplate(this),
+            KtWrapWithListOfPostfixTemplate(this),
+            KtWrapWithSetOfPostfixTemplate(this),
+            KtWrapWithArrayOfPostfixTemplate(this),
+            KtWrapWithSequenceOfPostfixTemplate(this),
+            KtSpreadPostfixTemplate(this),
+            KtArgumentPostfixTemplate(this),
+            KtWithPostfixTemplate(this),
+        )
+    }
+
+    override fun getTemplates() = templatesSet
 
     override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
 
@@ -75,14 +79,16 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
     }
 }
 
-private object KtNotPostfixTemplate : NotPostfixTemplate(
+private class KtNotPostfixTemplate(provider: PostfixTemplateProvider) : NotPostfixTemplate(
     KtPostfixTemplatePsiInfo,
-    createExpressionSelector { it.isBoolean() }
+    createExpressionSelector { it.isBoolean() },
+    provider
 )
 
 private class KtIntroduceVariablePostfixTemplate(
-    val kind: String
-) : PostfixTemplateWithExpressionSelector(kind, "$kind name = expression", createExpressionSelector()) {
+    val kind: String,
+    provider: PostfixTemplateProvider
+) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         KotlinIntroduceVariableHandler.doRefactoring(
             expression.project, editor, expression as KtExpression,
@@ -128,6 +134,8 @@ private class KtExpressionPostfixTemplateSelector(
 
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
+
+        if (element.parent is KtThisExpression) return false
 
         // Can't be independent expressions
         if (element.isSelector || element.parent is KtUserType || element.isOperationReference || element is KtBlockExpression) return false

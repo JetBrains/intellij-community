@@ -4,6 +4,17 @@ from http.client import HTTPResponse
 from typing import ClassVar, Iterable, Iterator, Pattern, Sequence, TypeVar, overload
 from urllib.request import Request
 
+__all__ = [
+    "Cookie",
+    "CookieJar",
+    "CookiePolicy",
+    "DefaultCookiePolicy",
+    "FileCookieJar",
+    "LWPCookieJar",
+    "LoadError",
+    "MozillaCookieJar",
+]
+
 _T = TypeVar("_T")
 
 class LoadError(OSError): ...

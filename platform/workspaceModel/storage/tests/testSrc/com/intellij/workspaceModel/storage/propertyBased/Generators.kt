@@ -1,17 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.createEmptyBuilder
+import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
 import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.toClassId
 import org.jetbrains.jetCheck.GenerationEnvironment
 import org.jetbrains.jetCheck.Generator
 
-internal val newEmptyWorkspace: Generator<WorkspaceEntityStorageBuilderImpl>
+internal val newEmptyWorkspace: Generator<MutableEntityStorageImpl>
   get() = Generator.constant(createEmptyBuilder())
 
-internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuilderImpl) : java.util.function.Function<GenerationEnvironment, EntityId?> {
+internal class EntityIdGenerator(private val storage: MutableEntityStorageImpl) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
     val filtered = storage.entitiesByType.entityFamilies.asSequence().filterNotNull().flatMap { it.entities.filterNotNull().asSequence() }
     if (filtered.none()) return null
@@ -21,11 +25,11 @@ internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuil
   }
 
   companion object {
-    fun create(storage: WorkspaceEntityStorageBuilderImpl) = Generator.from(EntityIdGenerator(storage))
+    fun create(storage: MutableEntityStorageImpl) = Generator.from(EntityIdGenerator(storage))
   }
 }
 
-internal class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStorageBuilderImpl,
+internal class EntityIdOfFamilyGenerator(private val storage: MutableEntityStorageImpl,
                                          private val family: Int) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
     val entityFamily = storage.entitiesByType.entityFamilies.getOrNull(family) ?: return null
@@ -36,7 +40,7 @@ internal class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntitySto
   }
 
   companion object {
-    fun create(storage: WorkspaceEntityStorageBuilderImpl, family: Int) = Generator.from(EntityIdOfFamilyGenerator(storage, family))
+    fun create(storage: MutableEntityStorageImpl, family: Int) = Generator.from(EntityIdOfFamilyGenerator(storage, family))
   }
 }
 
@@ -57,7 +61,7 @@ internal val randomNames = Generator.sampledFrom(
   "reflection", "dad", "activity", "instance", "idea"
 )
 
-internal inline fun <reified T : WorkspaceEntity> parentGenerator(storage: WorkspaceEntityStorageBuilderImpl): Generator<T?> {
+internal inline fun <reified T : WorkspaceEntity> parentGenerator(storage: MutableEntityStorageImpl): Generator<T?> {
   return Generator.from {
     val classId = T::class.java.toClassId()
     val parentId = it.generate(

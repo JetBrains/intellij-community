@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProblemConsumer;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,11 @@ public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPr
     if (filter != null && !filter.shouldReportProblem(refElement, descriptors)) {
       return;
     }
-    exportResults(descriptors, refElement, element -> myDelegate.consume(element, myToolWrapper), __ -> false);
+
+    if (myToolWrapper instanceof LocalInspectionToolWrapper) {
+      exportResults(descriptors, refElement, element -> myDelegate.consume(element, myToolWrapper), __ -> false);
+    } else {
+      myProblemElements.put(refElement, descriptors);
+    }
   }
 }

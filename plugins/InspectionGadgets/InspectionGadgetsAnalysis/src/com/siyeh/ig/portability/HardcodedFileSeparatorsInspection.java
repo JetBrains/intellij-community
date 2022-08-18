@@ -17,6 +17,7 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -206,8 +207,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           return false;
         }
       }
-      final char startChar = string.charAt(0);
-      if (Character.isLetter(startChar) && string.charAt(1) == ':') {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(string)) {
         return true;
       }
       if (isXMLString(string)) {
@@ -231,9 +231,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
       final String text = expression.getText();
       final int[] offsets = new int[text.length() + 1];
-      final StringBuilder result = new StringBuilder();
-      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
-      if (!success) {
+      final CharSequence result = CodeInsightUtilCore.parseStringCharacters(text, offsets);
+      if (result == null) {
         return;
       }
       for (int i = 0, length = result.length(); i < length; i++) {
@@ -277,7 +276,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         // with a slash.
         return false;
       }
-      else if (Character.isLetter(startChar) && string.charAt(1) == ':') {
+      else if (OSAgnosticPathUtil.startsWithWindowsDrive(string)) {
         // Most likely this is a Windows-style full file name.
         return false;
       }

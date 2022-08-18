@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Implementers of this interface may provide their own way of finding an associated doc comment owner element
  * which may be essential for languages other than Java.
- *
- * @author Rustam Vishnyakov
  */
 public interface PsiDocCommentBase extends PsiComment {
   /**

@@ -2,9 +2,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
@@ -33,8 +31,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
+import com.intellij.ui.render.IconCompOptionalCompPanel;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -60,7 +59,7 @@ import java.util.regex.Pattern;
 public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   private final @Nullable Project myProject;
   private final @Nullable WeakReference<Editor> myEditor;
@@ -203,7 +202,18 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Nullable
     @Override
     public String toString() {
-      return getMatchingDegree() + " " + getValueText();
+      String presentation;
+      if (value instanceof OptionDescription) {
+        presentation = String.format("%s, %s, %s",
+                                     ((OptionDescription)value).getHit(),
+                                     ((OptionDescription)value).getOption(),
+                                     ((OptionDescription)value).getConfigurableId());
+      }
+      else {
+        presentation = value.toString();
+      }
+
+      return String.format("%d %s; %s; %s", getMatchingDegree(), getValueText(), presentation, value.getClass());
     }
 
     public int getMatchingDegree() {
@@ -301,10 +311,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @NotNull
-  private static JLabel createIconLabel(@Nullable Icon icon, boolean disabled) {
+  private static LayeredIcon createLayeredIcon(@Nullable Icon icon, boolean disabled) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon == null) return new JLabel(layeredIcon);
+    if (icon == null) {
+      return layeredIcon;
+    }
 
     int width = icon.getIconWidth();
     int height = icon.getIconHeight();
@@ -316,7 +328,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                           (emptyIconHeight - height) / 2);
     }
 
-    return new JLabel(layeredIcon);
+    return layeredIcon;
   }
 
   @Override
@@ -362,17 +374,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
     if (actionGroups.containsKey(group)) return;
-
-    List<? extends AnAction> actions = ReadAction.nonBlocking(() -> {
-      try {
-        return myUpdateSession.children(group);
-      }
-      catch (PluginException e) {
-        LOG.error(e);
-        return Collections.<AnAction>emptyList();
-      }
-    })
-      .executeSynchronously();
+    AnAction[] actions = group instanceof DefaultActionGroup ?
+                         group.getChildren(null, ActionManager.getInstance()) : AnAction.EMPTY_ARRAY;
 
     boolean hasRegisteredChild = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasRegisteredChild) {
@@ -537,10 +540,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return getFirstGroupName();
     }
 
+    @Nullable
+    public List<ActionGroup> getFirstGroup() {
+      return ContainerUtil.getFirstItem(myPaths);
+    }
+
     @Nls
     @Nullable
     private String getFirstGroupName() {
-      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      List<ActionGroup> path = getFirstGroup();
       return path != null ? getPathName(path) : null;
     }
 
@@ -651,6 +659,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return myMode;
     }
 
+    @Nullable
+    public GroupMapping getGroupMapping() {
+      return myGroupMapping;
+    }
+
     public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
@@ -740,7 +753,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       SimpleColoredComponent nameComponent = new SimpleColoredComponent();
 
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
-      JPanel panel = new JPanel(new BorderLayout()) {
+      IconCompOptionalCompPanel<SimpleColoredComponent>
+        panel = new IconCompOptionalCompPanel<>(nameComponent) {
         @Override
         public AccessibleContext getAccessibleContext() {
           return nameComponent.getAccessibleContext();
@@ -756,13 +770,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         nameComponent.setFont(list.getFont());
       }
       nameComponent.setOpaque(false);
-      panel.add(nameComponent, BorderLayout.CENTER);
 
       if (matchedValue instanceof String) { //...
         if (showIcon) {
-          panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
+          panel.setIcon(EMPTY_ICON);
         }
-        String str = cutName((String)matchedValue, null, list, panel, nameComponent);
+        String str = cutName((String)matchedValue, null, list, panel);
         nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultActionForeground(isSelected, cellHasFocus, null)));
         return panel;
       }
@@ -788,7 +801,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
         if (showIcon) {
           Icon icon = presentation.getIcon();
-          panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
+          panel.setIcon(createLayeredIcon(icon, disabled));
         }
 
         if (toggle) {
@@ -803,7 +816,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
             groupLabel.setBackground(bg);
             groupLabel.setBorder(eastBorder);
             groupLabel.setForeground(groupFg);
-            panel.add(groupLabel, BorderLayout.EAST);
+            panel.setRight(groupLabel);
           }
         }
 
@@ -812,7 +825,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
         String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
         String name = getName(presentation.getText(), groupName, toggle);
-        name = cutName(name, shortcutText, list, panel, nameComponent);
+        name = cutName(name, shortcutText, list, panel);
 
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
         if (UISettings.getInstance().getShowInplaceCommentsInternal() && actionId != null) {
@@ -839,7 +852,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         Color fg = UIUtil.getListForeground(isSelected, cellHasFocus);
 
         if (showIcon) {
-          panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+          panel.setIcon(EMPTY_ICON);
         }
         if (value instanceof BooleanOptionDescription) {
           boolean selected = ((BooleanOptionDescription)value).isOptionEnabled();
@@ -850,10 +863,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           settingsLabel.setForeground(groupFg);
           settingsLabel.setBackground(bg);
           settingsLabel.setBorder(eastBorder);
-          panel.add(settingsLabel, BorderLayout.EAST);
+          panel.setRight(settingsLabel);
         }
 
-        String name = cutName(hit, null, list, panel, nameComponent);
+        String name = cutName(hit, null, list, panel);
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
       }
       return panel;
@@ -875,8 +888,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     private static String cutName(@ActionText String name,
                                   @NlsSafe String shortcutText,
                                   JList<?> list,
-                                  JPanel panel,
-                                  SimpleColoredComponent nameComponent) {
+                                  IconCompOptionalCompPanel<SimpleColoredComponent> panel) {
       if (!list.isShowing() || list.getWidth() <= 0) {
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
@@ -884,12 +896,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       // we have a min size for SE, which is ~40 symbols, don't spend time for trimming, let's use a shortcut
       if (name.length() < 40) return name;
 
-      int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
+      int freeSpace = calcFreeSpace(list, panel, shortcutText);
 
       if (freeSpace <= 0) {
         return name;
       }
 
+      SimpleColoredComponent nameComponent = panel.getCenter();
       FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont());
       int strWidth = fm.stringWidth(name);
       if (strWidth <= freeSpace) {
@@ -906,18 +919,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return name.trim() + "...";
     }
 
-    private static int calcFreeSpace(JList<?> list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
-      BorderLayout layout = (BorderLayout)panel.getLayout();
-      Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
-      Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
+    private static int calcFreeSpace(JList<?> list, IconCompOptionalCompPanel<SimpleColoredComponent> panel, String shortcutText) {
+      SimpleColoredComponent nameComponent = panel.getCenter();
+      Insets insets = nameComponent.getInsets();
+      Insets ipad = nameComponent.getIpad();
       int freeSpace = list.getWidth()
                       - (list.getInsets().right + list.getInsets().left)
-                      - (panel.getInsets().right + panel.getInsets().left)
-                      - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
-                      - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
-                      - (nameComponent.getInsets().right + nameComponent.getInsets().left)
-                      - (nameComponent.getIpad().right + nameComponent.getIpad().left)
-                      - nameComponent.getIconTextGap();
+                      - RendererPanelsUtils.calculateNonResizeableWidth(panel)
+                      - (insets.right + insets.left)
+                      - (ipad.right + ipad.left);
 
       if (StringUtil.isNotEmpty(shortcutText)) {
         FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
@@ -927,10 +937,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return freeSpace;
     }
 
-    private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {
+    private static void addOnOffButton(@NotNull IconCompOptionalCompPanel<SimpleColoredComponent> panel, boolean selected) {
       OnOffButton button = new OnOffButton();
       button.setSelected(selected);
-      panel.add(button, BorderLayout.EAST);
+      panel.setRight(button);
       panel.setBorder(TOGGLE_BUTTON_BORDER);
     }
 

@@ -130,7 +130,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * list is shown as soon as possible. If there are heavy computations involved, consider making them optional and moving into
    * to {@link #getExpensiveRenderer()}.
    */
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
   }
 
@@ -146,7 +146,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /** Prefer to use {@link #as(Class)} */
   @Nullable
-  public <T> T as(ClassConditionKey<T> conditionKey) {
+  public <T> T as(@NotNull ClassConditionKey<T> conditionKey) {
     //noinspection unchecked
     return conditionKey.isInstance(this) ? (T)this : null;
   }
@@ -156,7 +156,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * If this object is not a decorator, return it if it's instance of the given class, otherwise null.
    */
   @Nullable
-  public <T> T as(Class<T> clazz) {
+  public <T> T as(@NotNull Class<T> clazz) {
     //noinspection unchecked
     return clazz.isInstance(this) ? (T) this : null;
   }

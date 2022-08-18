@@ -128,13 +128,16 @@ public class InheritorChooser {
       return true;
     }
     
-    if (containingClass != null) {
-      return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass.getContainingClass(), acceptAbstractCondition);
+    if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass gContainingClass = containingClass.getContainingClass();
+      if (gContainingClass != null && !containingClass.isInheritor(gContainingClass, true)) {
+        return runMethodInAbstractClass(context, performRunnable, psiMethod, gContainingClass, acceptAbstractCondition);
+      }
     }
     return false;
   }
 
-  private static void collectClasses(PsiClass containingClass, List<PsiClass> classes, HashSet<PsiClass> visited) {
+  private static void collectClasses(PsiClass containingClass, List<? super PsiClass> classes, HashSet<? super PsiClass> visited) {
     if (!visited.add(containingClass)) return;
     Set<PsiClass> containers = new HashSet<>();
     final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
@@ -143,7 +146,7 @@ public class InheritorChooser {
       if (container != null && container.hasModifierProperty(PsiModifier.ABSTRACT)) {
         containers.add(container);
       }
-      else if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
+      if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
         classes.add(aClass);
       }
       return true;
@@ -186,7 +189,7 @@ public class InheritorChooser {
 
   public static void chooseAbstractClassInheritors(final ConfigurationContext context,
                                                    final PsiClass psiClass,
-                                                   final Consumer<List<PsiClass>> onClassesChosen) {
+                                                   final Consumer<? super List<PsiClass>> onClassesChosen) {
     InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {

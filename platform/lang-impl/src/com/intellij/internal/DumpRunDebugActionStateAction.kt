@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.execution.RunManager
@@ -12,13 +12,22 @@ import com.intellij.openapi.ui.Messages
 import javax.swing.JComponent
 
 @Deprecated(message = "not really needed anymore")
-class DumpRunDebugActionStateAction : AnAction() {
+internal class DumpRunDebugActionStateAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
+
     val result = buildString {
       val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
       appendLine("Selected configuration: ${selectedConfiguration?.name}")
-      val toolbar = ActionToolbarImpl.findToolbar(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR) as ActionGroup) ?: run {
+      val toolbar = ActionToolbarImpl.findToolbar(
+        CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR) as ActionGroup) ?: run {
         appendLine("No toolbar for action group NavBarToolBar")
         return@buildString
       }

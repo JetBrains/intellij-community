@@ -3,12 +3,11 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.application.options.RegistryManager
-import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
@@ -18,11 +17,12 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.ide.util.TipDialog
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.idea.IdeaLogger
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -40,12 +40,14 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -455,9 +457,14 @@ object DynamicPlugins {
 
     try {
       if (options.save) {
-        saveDocumentsAndProjectsAndApp(true)
+        runInAutoSaveDisabledMode {
+          FileDocumentManager.getInstance().saveAllDocuments()
+          runBlockingUnderModalProgress {
+            saveProjectsAndApp(true)
+          }
+        }
       }
-      TipDialog.hideForProject(null)
+      TipAndTrickManager.getInstance().closeTipDialog()
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
@@ -512,7 +519,7 @@ object DynamicPlugins {
 
           for (classLoader in classLoaders) {
             IconLoader.detachClassLoader(classLoader)
-            Language.unregisterLanguages(classLoader)
+            Language.unregisterAllLanguagesIn(classLoader, pluginDescriptor)
           }
           serviceIfCreated<IconDeferrer>()?.clearCache()
 
@@ -520,12 +527,10 @@ object DynamicPlugins {
           @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
-          val newPluginSet = if (options.disable) {
-            pluginSet.updateEnabledPlugins()
-          }
-          else {
-            pluginSet.removePluginAndUpdateEnabledPlugins(pluginDescriptor)
-          }
+          val newPluginSet = pluginSet.withoutModule(
+            module = pluginDescriptor,
+            disable = options.disable,
+          ).createPluginSetWithEnabledModulesMap()
 
           PluginManagerCore.setPluginSet(newPluginSet)
         }
@@ -818,11 +823,17 @@ object DynamicPlugins {
 
     val loadStartTime = System.currentTimeMillis()
 
-    val pluginSet = PluginManagerCore.getPluginSet().enablePlugin(pluginDescriptor)
+    val pluginSet = PluginManagerCore.getPluginSet()
+      .withModule(pluginDescriptor)
+      .createPluginSetWithEnabledModulesMap()
+
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
-    // todo loadPlugin should be called per each module, getPluginWithContentModules is a temporary solution
-    val pluginWithContentModules = getPluginWithContentModules(pluginDescriptor, pluginSet)
-    pluginWithContentModules.forEach(classLoaderConfigurator::configureModule)
+
+    // todo loadPlugin should be called per each module, temporary solution
+    val pluginWithContentModules = pluginSet.getEnabledModules()
+      .filter { it.pluginId == pluginDescriptor.pluginId }
+      .filter(classLoaderConfigurator::configureModule)
+      .toList()
 
     val app = ApplicationManager.getApplication() as ApplicationImpl
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
@@ -831,11 +842,14 @@ object DynamicPlugins {
         PluginManagerCore.setPluginSet(pluginSet)
 
         val listenerCallbacks = mutableListOf<Runnable>()
-        loadModule(pluginWithContentModules, app, listenerCallbacks)
-        for (module in optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet)) {
-          // 4. load into service container
-          loadModule(sequenceOf(module), app, listenerCallbacks)
-        }
+
+        // 4. load into service container
+        loadModules(pluginWithContentModules, app, listenerCallbacks)
+        loadModules(
+          optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet),
+          app,
+          listenerCallbacks,
+        )
 
         clearPluginClassLoaderParentListCache(pluginSet)
         clearCachedValues()
@@ -886,7 +900,7 @@ private fun clearTemporaryLostComponent() {
     clearMethod.isAccessible = true
     loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
       val window = when (frame) {
-        is ProjectFrameHelper -> frame.frame
+        is ProjectFrameHelper -> frame.frameOrNull
         is Window -> frame
         else -> continue@loop
       }
@@ -1003,66 +1017,56 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val mainToModules = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
   val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    val modules = mainToModules.computeIfAbsent(main) {
-      mutableListOf()
-    }
-    if (modules.any { it === module }) {
-      throw PluginException("Descriptor has already been added: $module", module.pluginId)
-    }
-
     modulesToMain[module] = main
-    modules.add(module)
+    true
   }
 
-  if (mainToModules.isEmpty()) {
+  if (modulesToMain.isEmpty()) {
     return emptySet()
   }
 
   // 2. sort topologically
-  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainToModules.keys.toList())
-                                                        .moduleGraph
-                                                        .topologicalComparator)
-  // 3. setup classloaders
-  for ((moduleDescriptor, mainDescriptor) in sortedModulesToMain) {
-    classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+  val topologicalComparator = PluginSetBuilder(modulesToMain.values)
+    .moduleGraph
+    .topologicalComparator
+
+  return modulesToMain.toSortedMap(topologicalComparator)
+    .filter { (moduleDescriptor, mainDescriptor) ->
+      // 3. setup classloaders
+      classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+    }.keys
+}
+
+private fun loadModules(
+  modules: Collection<IdeaPluginDescriptorImpl>,
+  app: ApplicationImpl,
+  listenerCallbacks: MutableList<Runnable>,
+) {
+  fun registerComponents(componentManager: ComponentManager) {
+    (componentManager as ComponentManagerImpl).registerComponents(
+      modules = modules.toList(),
+      app = app,
+      precomputedExtensionModel = null,
+      listenerCallbacks = listenerCallbacks,
+    )
   }
 
-  return sortedModulesToMain.keys
+  registerComponents(app)
+  for (openProject in ProjectUtil.getOpenProjects()) {
+    registerComponents(openProject)
+
+    for (module in ModuleManager.getInstance(openProject).modules) {
+      registerComponents(module)
+    }
+  }
+
+  (ActionManager.getInstance() as ActionManagerImpl).registerActions(modules)
 }
 
-private fun loadModule(modules: Sequence<IdeaPluginDescriptorImpl>,
-                       app: ApplicationImpl,
-                       listenerCallbacks: MutableList<Runnable>) {
-  app.registerComponents(modules = modules,
-                         app = app,
-                         precomputedExtensionModel = null,
-                         listenerCallbacks = listenerCallbacks)
- for (openProject in ProjectUtil.getOpenProjects()) {
-   (openProject as ComponentManagerImpl).registerComponents(modules = modules,
-                                                            app = app,
-                                                            precomputedExtensionModel = null,
-                                                            listenerCallbacks = listenerCallbacks)
-   for (module in ModuleManager.getInstance(openProject).modules) {
-     (module as ComponentManagerImpl).registerComponents(modules = modules,
-                                                         app = app,
-                                                         precomputedExtensionModel = null,
-                                                         listenerCallbacks = listenerCallbacks)
-   }
- }
-
- (ActionManager.getInstance() as ActionManagerImpl).registerActions(modules)
-}
-
-private fun getPluginWithContentModules(pluginDescriptor: IdeaPluginDescriptorImpl,
-                                        pluginSet: PluginSet): Sequence<IdeaPluginDescriptorImpl> {
- return pluginSet.getEnabledModules().filter { it.pluginId == pluginDescriptor.pluginId }
-}
-
- private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
+private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
   FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
     val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, progressIndicator ->
       AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator)

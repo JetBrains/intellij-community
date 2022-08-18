@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class SMTRunnerNodeDescriptor extends BaseTestProxyNodeDescriptor<SMTestProxy> {
   public SMTRunnerNodeDescriptor(final Project project,

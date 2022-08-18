@@ -11,7 +11,7 @@ public abstract class Test {
   }
 
     @NotNull
-    private String renamed() {
+    private static String renamed() {
         return "4" + "2";
     }
 }

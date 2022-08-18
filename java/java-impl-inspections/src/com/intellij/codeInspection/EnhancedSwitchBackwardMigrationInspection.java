@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -27,7 +27,8 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   private static final SwitchMigrationCase[] ourCases = new SwitchMigrationCase[]{
     EnhancedSwitchBackwardMigrationInspection::inspectReturningSwitch,
     EnhancedSwitchBackwardMigrationInspection::inspectVariableSavingSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectSwitchStatement
+    EnhancedSwitchBackwardMigrationInspection::inspectSwitchStatement,
+    EnhancedSwitchBackwardMigrationInspection::inspectAssignmentSwitch,
   };
 
   @NotNull
@@ -35,7 +36,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = JavaBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
@@ -43,7 +44,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       }
 
       @Override
-      public void visitSwitchStatement(PsiSwitchStatement statement) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
         String message = JavaBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
@@ -78,6 +79,13 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     PsiLocalVariable variable = tryCast(switchBlock.getParent(), PsiLocalVariable.class);
     if (variable == null) return null;
     return new VariableSavingReplacer(variable);
+  }
+
+  private static Replacer inspectAssignmentSwitch(@NotNull PsiSwitchBlock switchBlock) {
+    if (!(switchBlock instanceof PsiSwitchExpression)) return null;
+    PsiAssignmentExpression assignment = tryCast(switchBlock.getParent(), PsiAssignmentExpression.class);
+    if (assignment == null || !(assignment.getLExpression() instanceof PsiReferenceExpression)) return null;
+    return new AssignmentReplacer(assignment);
   }
 
   private static Replacer inspectSwitchStatement(@NotNull PsiSwitchBlock switchBlock) {
@@ -141,15 +149,34 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(block.getProject());
       PsiTypesUtil.replaceWithExplicitType(myVariable.getTypeElement());
       CommentTracker ct = new CommentTracker();
-      PsiSwitchStatement switchStatement = new VarSavingSwitchGenerator(block, myVariable).generate(ct);
+      PsiSwitchStatement switchStatement = new VarSavingSwitchGenerator(block, myVariable.getName(), "=").generate(ct);
       ct.markUnchanged(block);
       PsiDeclarationStatement variableDeclaration =
-        (PsiDeclarationStatement)factory.createStatementFromText(myVariable.getTypeElement().getText() + " " + myVariable.getName() + ";", myVariable);
+        (PsiDeclarationStatement)factory.createStatementFromText(myVariable.getTypeElement().getText() + " " + myVariable.getName() + ";",
+                                                                 myVariable);
 
       ct.markUnchanged(switchStatement);
       PsiStatement declaration = (PsiStatement)ct.replaceAndRestoreComments(myVariable.getParent(), variableDeclaration);
 
       BlockUtils.addAfter(declaration, switchStatement);
+    }
+  }
+
+  private static final class AssignmentReplacer implements Replacer {
+    private final @NotNull PsiAssignmentExpression myAssignment;
+
+    private AssignmentReplacer(@NotNull PsiAssignmentExpression assignment) {
+      myAssignment = assignment;
+    }
+
+    @Override
+    public void replace(PsiSwitchBlock block) {
+      PsiExpression expression = myAssignment.getLExpression();
+      if (!(expression instanceof PsiReferenceExpression)) return;
+      CommentTracker ct = new CommentTracker();
+      String sign = myAssignment.getOperationSign().getText();
+      PsiSwitchStatement switchStatement = new VarSavingSwitchGenerator(block, expression.getText(), sign).generate(ct);
+      ct.replaceAndRestoreComments(myAssignment.getParent(), switchStatement);
     }
   }
 
@@ -288,18 +315,20 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   }
 
   private static class VarSavingSwitchGenerator extends SwitchGenerator {
-    private final @NotNull PsiLocalVariable myVariable;
+    private final @NotNull String myReferenceText;
+    private final @NotNull String mySign;
 
-    VarSavingSwitchGenerator(PsiSwitchBlock switchBlock, @NotNull PsiLocalVariable variable) {
+    VarSavingSwitchGenerator(PsiSwitchBlock switchBlock, @NotNull String referenceText, @NotNull String sign) {
       super(switchBlock);
-      myVariable = variable;
+      myReferenceText = referenceText;
+      mySign = sign;
     }
 
     @Override
     void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
       PsiExpression valueExpression = yieldStatement.getExpression();
       assert valueExpression != null;
-      String assignText = myVariable.getName() + " = " + ct.text(valueExpression) + ";\n";
+      String assignText = myReferenceText + " " + mySign + " " + ct.text(valueExpression) + ";\n";
       PsiStatement assignment = myFactory.createStatementFromText(assignText, valueExpression);
       PsiStatement newAssignment = (PsiStatement)ct.replace(yieldStatement, assignment);
       BlockUtils.addAfter(newAssignment, myFactory.createStatementFromText("break;", null));
@@ -310,7 +339,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       if (statement instanceof PsiThrowStatement) {
         return ct.text(statement);
       }
-      return myVariable.getName() + " = " + ct.text(statement) + "\nbreak;";
+      return myReferenceText + " " + mySign + " " + ct.text(statement) + "\nbreak;";
     }
   }
 

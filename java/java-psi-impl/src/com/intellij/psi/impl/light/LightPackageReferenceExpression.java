@@ -26,6 +26,16 @@ public class LightPackageReferenceExpression extends LightPackageReference imple
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public PsiExpression getQualifierExpression(){
     return null;
   }

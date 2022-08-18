@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -20,18 +20,25 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val values = getStableValuesInExpression(expr, bindingContext)
     if (values.isEmpty()) return false
     val resolutionFacade = expr.getResolutionFacade()
-    val factory = resolutionFacade.getDataFlowValueFactory()
+    val factory = resolutionFacade.dataFlowValueFactory
     val moduleDescriptor = expr.findModuleDescriptor()
+    val receiverCastType = values.firstOrNull { info -> info.id is IdentifierInfo.Receiver }?.type
     return getConditionScopes(expr, value)
         .asSequence()
         .flatMap { scope -> SyntaxTraverser.psiTraverser(scope) }
         .filterIsInstance(KtExpression::class.java)
         .any { e ->
+            if (receiverCastType != null) {
+                val receiverCast = bindingContext.get(BindingContext.IMPLICIT_RECEIVER_SMARTCAST, e)
+                if (receiverCast != null && receiverCast.receiverTypes.any { (receiver, _) -> receiver.type == receiverCastType }) {
+                    return@any true
+                }
+            }
             val type = e.getKotlinType() ?: return@any false
             val dfValue = factory.createDataFlowValue(e, type, bindingContext, moduleDescriptor)
             if (!dfValue.isStable) return@any false
             val dataFlowType = bindingContext.get(BindingContext.EXPRESSION_TYPE_INFO, e)
-                ?.dataFlowInfo?.getStableTypes(dfValue, resolutionFacade.getLanguageVersionSettings())?.singleOrNull()
+                ?.dataFlowInfo?.getStableTypes(dfValue, resolutionFacade.languageVersionSettings)?.singleOrNull()
                 ?: type
             if (!values.any { it.id == dfValue.identifierInfo && it.type != dataFlowType }) return@any false
             // TODO: check if smart-cast is actually induced by original expression
@@ -97,7 +104,7 @@ private fun getStableValuesInExpression(
     bindingContext: BindingContext
 ): Set<IdentifierType> {
     val resolutionFacade = expr.getResolutionFacade()
-    val factory = resolutionFacade.getDataFlowValueFactory()
+    val factory = resolutionFacade.dataFlowValueFactory
     val moduleDescriptor = expr.findModuleDescriptor()
     return SyntaxTraverser.psiTraverser(expr)
         .filter(KtExpression::class.java)
@@ -107,7 +114,7 @@ private fun getStableValuesInExpression(
             val dfValue = factory.createDataFlowValue(e, type, bindingContext, moduleDescriptor)
             if (!dfValue.isStable) return@mapNotNull null
             val dataFlowType = bindingContext.get(BindingContext.EXPRESSION_TYPE_INFO, e)
-                ?.dataFlowInfo?.getStableTypes(dfValue, resolutionFacade.getLanguageVersionSettings())?.singleOrNull()
+                ?.dataFlowInfo?.getStableTypes(dfValue, resolutionFacade.languageVersionSettings)?.singleOrNull()
                 ?: type
             IdentifierType(dfValue.identifierInfo, dataFlowType)
         }

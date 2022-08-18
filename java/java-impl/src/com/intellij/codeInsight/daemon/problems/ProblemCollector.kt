@@ -10,6 +10,11 @@ internal class ProblemCollector {
 
   companion object {
 
+    /**
+     * Collect broken usages based on current and previous state of an element.
+     * Broken usages are searched in a union scope of previous member state and current member state.
+     * In order to determine if usage is broken or not we run highlighter (see ProblemSearcher for details)
+     */
     @JvmName("collect")
     @JvmStatic
     internal fun collect(prevMember: ScopedMember?, curMember: PsiMember): Set<Problem>? {

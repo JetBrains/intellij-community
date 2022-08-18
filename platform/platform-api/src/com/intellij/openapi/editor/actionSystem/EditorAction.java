@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ import java.awt.event.KeyEvent;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible {
+public abstract class EditorAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -30,6 +29,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   protected EditorAction(EditorActionHandler defaultHandler) {
     myHandler = defaultHandler;
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
@@ -155,20 +159,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
     }
   }
 
-  private static DataContext getProjectAwareDataContext(final Editor editor, @NotNull final DataContext original) {
+  private static @NotNull DataContext getProjectAwareDataContext(@NotNull Editor editor, @NotNull DataContext original) {
     if (PROJECT.getData(original) == editor.getProject()) {
-      return new DialogAwareDataContext(original);
+      return original;
     }
-
-    return dataId -> {
-      if (PROJECT.is(dataId)) {
-        final Project project = editor.getProject();
-        if (project != null) {
-          return project;
-        }
-      }
-      return original.getData(dataId);
-    };
+    return CustomizedDataContext.create(original, dataId -> PROJECT.is(dataId) ? editor.getProject() : null);
   }
 
   public synchronized void clearDynamicHandlersCache() {

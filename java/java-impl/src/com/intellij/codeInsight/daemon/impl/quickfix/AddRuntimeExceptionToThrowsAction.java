@@ -17,7 +17,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   @Override
@@ -28,14 +28,15 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiClassType aClass = getRuntimeExceptionAtCaret(editor, file);
     PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class);
-
-    AddExceptionToThrowsFix.addExceptionsToThrowsList(project, method, Collections.singleton(aClass));
+    if (method != null) {
+      if (method.isPhysical()) {
+        AddExceptionToThrowsFix.addExceptionsToThrowsList(project, method, Collections.singleton(aClass));
+      } else {
+        AddExceptionToThrowsFix.processMethod(project, method, Collections.singleton(aClass));
+      }
+    }
   }
 
 

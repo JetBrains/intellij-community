@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Task
@@ -19,6 +19,7 @@ interface KonanArtifactReflection {
     val runTask: Exec?
     val isTests: Boolean?
     val freeCompilerArgs: Collection<String>?
+    val binaryOptions: Map<String, String>?
 }
 
 private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArtifactReflection {
@@ -68,6 +69,10 @@ private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArti
     override val freeCompilerArgs: Collection<String>? by lazy {
         linkTask?.callReflectiveAnyGetter("getKotlinOptions", logger)
             ?.callReflectiveGetter("getFreeCompilerArgs", logger)
+    }
+
+    override val binaryOptions: Map<String, String>? by lazy {
+        linkTask?.callReflectiveGetter("getBinaryOptions", logger)
     }
 
     companion object {

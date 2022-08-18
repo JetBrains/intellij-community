@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
@@ -282,7 +279,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(message, NotificationType.WARNING)
-      .setDisplayId("vcs.obsolete.plugin.unbundled")
+      .setDisplayId(VcsNotificationIdsHolder.OBSOLETE_PLUGIN_UNBUNDLED)
       .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"), () -> installPlugin(vcs)))
       .addAction(NotificationAction.createSimple(VcsBundle.message("action.NotificationAction.AllVcses.text.read.more"), () -> {
         BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
@@ -300,7 +297,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginEnabler.HEADLESS.enablePlugins(List.of(descriptor));
+              PluginEnabler.HEADLESS.enable(List.of(descriptor));
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }
@@ -318,7 +315,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
         Notification notification = IMPORTANT_ERROR_NOTIFICATION
           .createNotification(title, message, NotificationType.ERROR)
-          .setDisplayId("plugin.install.failed")
+          .setDisplayId(VcsNotificationIdsHolder.SUGGESTED_PLUGIN_INSTALL_FAILED)
           .addAction(
             NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
               BrowserUtil.browse(vcs.pluginUrl);

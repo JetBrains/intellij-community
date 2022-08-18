@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
@@ -44,6 +45,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
 import java.awt.event.InputEvent
@@ -92,7 +94,6 @@ private val cdSeparateMainMenu
 
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
-private val cdOverrideLaFFont get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdMergeMainMenuWithWindowTitle
@@ -128,7 +129,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
-    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) }, disposable!!)
+    val updateLaf: (LafManager.LafReference) -> Unit = {
+      ApplicationManager.getApplication().invokeLater {
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true)
+      }
+    }
+    lafProperty.afterChange(updateLaf, disposable!!)
     syncThemeProperty.afterChange({ lafManager.autodetect = it }, disposable!!)
 
     return panel {
@@ -155,28 +161,39 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       row {
-        val overrideLaF = checkBox(cdOverrideLaFFont)
+        val fontFace = cell(FontComboBox())
+          .label(message("label.font.name"))
+          .bind({ it.fontName }, { it, value -> it.fontName = value },
+                MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+                                { settings.fontFace = it }))
           .shouldUpdateLaF()
-          .gap(RightGap.SMALL)
-        cell(FontComboBox())
-          .bind(
-            { it.fontName },
-            { it, value -> it.fontName = value },
-            MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
-                            { settings.fontFace = it })
-          )
-          .shouldUpdateLaF()
-          .enabledIf(overrideLaF.selected)
-          .accessibleName(cdOverrideLaFFont.name)
+          .accessibleName(message("label.font.name"))
+          .component
 
-        fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
+        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
                          { settings.fontSize = it },
                          settings.fontSize)
           .label(message("label.font.size"))
           .shouldUpdateLaF()
-          .enabledIf(overrideLaF.selected)
           .accessibleName(message("label.font.size"))
+          .component
+
+        lateinit var resetCustomFont: Cell<ActionLink>
+        resetCustomFont = link(message("font.reset.link")) {
+          val defaultFont = getDefaultFont()
+          fontFace.fontName = defaultFont.family
+          val fontSizeValue = defaultFont.size.toString()
+          fontSize.selectedItem = fontSizeValue
+          fontSize.editor.item = fontSizeValue
+          resetCustomFont.enabled(false)
+        }.enabledIf(fontFace.selectedValueMatches { value -> value?.toString() != getDefaultFont().family }
+                      or fontSize.editableValueMatches { value -> value != getDefaultFont().size.toString() })
       }.topGap(TopGap.SMALL)
+
+      onApply {
+        val defaultFont = getDefaultFont()
+        settings.overrideLafFonts = settings.fontFace != defaultFont.family || settings.fontSize != defaultFont.size
+      }
 
       group(message("title.accessibility")) {
         row {
@@ -243,7 +260,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
-          if (SystemInfo.isWindows && ExperimentalUI.isNewToolbar()) {
+          if (SystemInfo.isWindows && ExperimentalUI.isNewUI()) {
             yield({ checkBox(cdSeparateMainMenu) })
           }
         }
@@ -254,7 +271,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   contextHelp(message("checkbox.smooth.scrolling.description"))
                 })
           yield({ checkBox(cdDnDWithAlt) })
-          if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+          if (SystemInfo.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()) {
             yield({
                     val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
                     checkBox(cdMergeMainMenuWithWindowTitle)
@@ -356,7 +373,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
-          { checkBox(cdShowToolWindowNumbers) }
+          {
+            checkBox(cdWidescreenToolWindowLayout)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+          }
         )
         twoColumnsRow(
           { checkBox(cdLeftToolWindowLayout) },
@@ -364,9 +385,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         )
         twoColumnsRow(
           {
-            checkBox(cdWidescreenToolWindowLayout)
-              .gap(RightGap.SMALL)
-            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+            checkBox(cdShowToolWindowNumbers).visible(!ExperimentalUI.isNewUI())
           })
       }
 
@@ -399,6 +418,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
 }
 
+private fun getDefaultFont(): Font {
+  val lafManager = LafManager.getInstance() as? LafManagerImpl
+  return lafManager?.defaultFont ?: JBFont.label()
+}
+
 private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
   return fontSizeComboBox(MutableProperty({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
 }
@@ -420,16 +444,8 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {
-  if (text != null && text.isNotBlank()) {
+  if (!text.isNullOrBlank()) {
     val value = text.toIntOrNull()
-    if (value != null && value > 0) return value
-  }
-  return defaultValue
-}
-
-private fun getFloatValue(text: String?, defaultValue: Float): Float {
-  if (text != null && text.isNotBlank()) {
-    val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }
   return defaultValue

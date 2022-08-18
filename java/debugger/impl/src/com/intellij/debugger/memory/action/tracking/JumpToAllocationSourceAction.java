@@ -7,6 +7,7 @@ import com.intellij.debugger.memory.action.DebuggerTreeAction;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.StackFramePopup;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
@@ -19,6 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class JumpToAllocationSourceAction extends DebuggerTreeAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getStack(e) != null);

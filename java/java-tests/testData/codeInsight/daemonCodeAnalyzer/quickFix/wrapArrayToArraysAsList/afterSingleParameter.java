@@ -1,4 +1,4 @@
-// "Wrap argument using 'Arrays.asList()'" "true"
+// "Adapt argument using 'Arrays.asList()'" "true-preview"
 import java.util.Arrays;
 import java.util.List;
 

@@ -398,16 +398,22 @@ public final class AnnotationsHighlightUtil {
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
 
     if (applicable == null) {
-      String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
-      String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
-      HighlightInfo info = annotationError(annotation, message);
-      if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
-        for (PsiAnnotation.TargetType targetType : targets) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType));
+      if (targets.length == 1 && targets[0] == PsiAnnotation.TargetType.TYPE_USE) {
+        PsiElement parent = annotation.getParent();
+        if (parent instanceof PsiTypeElement) {
+          PsiElement modifierList = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class, PsiComment.class, PsiTypeParameterList.class);
+          if (modifierList instanceof PsiModifierList) {
+            targets = AnnotationTargetUtil.getTargetsForLocation((PsiModifierList)modifierList);
+            if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets) == null) {
+              return notApplicableTargetInfo(annotation, nameRef, targets);
+            }
+            return null;
+          }
         }
       }
-      return info;
+      return notApplicableTargetInfo(annotation, nameRef, targets);
     }
+
 
     if (applicable == PsiAnnotation.TargetType.TYPE_USE) {
       if (owner instanceof PsiClassReferenceType) {
@@ -450,6 +456,21 @@ public final class AnnotationsHighlightUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static HighlightInfo notApplicableTargetInfo(@NotNull PsiAnnotation annotation,
+                                                       PsiJavaCodeReferenceElement nameRef,
+                                                       PsiAnnotation.TargetType[] targets) {
+    String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
+    String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
+    HighlightInfo info = annotationError(annotation, message);
+    if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+      for (PsiAnnotation.TargetType targetType : targets) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType));
+      }
+    }
+    return info;
   }
 
   @Nullable
@@ -753,9 +774,7 @@ public final class AnnotationsHighlightUtil {
     if (!(containerRef instanceof PsiClassObjectAccessExpression)) return null;
     PsiType containerType = ((PsiClassObjectAccessExpression)containerRef).getOperand().getType();
     if (!(containerType instanceof PsiClassType)) return null;
-    PsiClass container = ((PsiClassType)containerType).resolve();
-    if (container == null) return null;
-    return container;
+    return ((PsiClassType)containerType).resolve();
   }
 
   static HighlightInfo checkReceiverPlacement(@NotNull PsiReceiverParameter parameter) {

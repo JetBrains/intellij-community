@@ -1,7 +1,9 @@
-// "Replace 'switch' with 'if'" "true"
+import java.util.Objects;
+
+// "Replace 'switch' with 'if'" "true-preview"
 class Test {
   void test(Object obj) {
-      if ((obj instanceof String s).equals(obj)) {
+      if (Objects.requireNonNull(obj) == obj instanceof String s) {
       }
   }
 }

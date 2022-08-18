@@ -95,7 +95,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
   private static class SplitMultiCatchVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
       if (isAcceptable(parameter)) {
         registerError(parameter);
@@ -103,7 +103,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
     }
 
     @Override
-    public void visitKeyword(PsiKeyword keyword) {
+    public void visitKeyword(@NotNull PsiKeyword keyword) {
       super.visitKeyword(keyword);
       if (isOnTheFly() && keyword.getTokenType() == JavaTokenType.CATCH_KEYWORD && isAcceptable(keyword)) {
         registerError(keyword);

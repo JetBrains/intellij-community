@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -19,7 +20,6 @@ import javax.swing.*;
 import java.util.*;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private Set<RefClass> myOutTypeReferences; // guarded by this
   private static final int ACCESS_MODIFIER_MASK = 0b11;
   private static final int ACCESS_PRIVATE = 0b00;
   private static final int ACCESS_PROTECTED = 0b01;
@@ -44,6 +44,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected RefJavaElementImpl(UDeclaration elem, PsiElement psi, RefManager manager) {
     super(getName(elem), psi, manager);
+    assert (!(psi instanceof UElement));
 
     PsiModifierListOwner javaPsi = Objects.requireNonNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
     setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));
@@ -63,14 +64,15 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @Override
   @NotNull
   public synchronized Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+    final RefEntity owner = getOwner();
+    return owner instanceof RefJavaElement ? ((RefJavaElement)owner).getOutTypeReferences() : Collections.emptySet();
   }
 
-  synchronized void addOutTypeReference(RefClass refClass){
-    if (myOutTypeReferences == null){
-      myOutTypeReferences = new HashSet<>();
+  synchronized void addOutTypeReference(RefClass refClass) {
+    final RefEntity owner = getOwner();
+    if (owner instanceof RefJavaElementImpl) {
+      ((RefJavaElementImpl)owner).addOutTypeReference(refClass);
     }
-    myOutTypeReferences.add(refClass);
   }
 
   @NotNull
@@ -95,7 +97,10 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
     if (element instanceof PsiMethod) {
       if (element instanceof SyntheticElement) {
-        return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        Language language = element.getLanguage();
+        if (language.isKindOf("JSP") || language.isKindOf("JSPX")) {
+          return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        }
       }
       return PsiFormatUtil.formatMethod((PsiMethod)element,
                                         PsiSubstitutor.EMPTY,
@@ -267,8 +272,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression ||
          expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
-      waitForInitialized();
-      refFrom.waitForInitialized();
+      initializeIfNeeded();
+      refFrom.initializeIfNeeded();
       if (RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
         setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
       }

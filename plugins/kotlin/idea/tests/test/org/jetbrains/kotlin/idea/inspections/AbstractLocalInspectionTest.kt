@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -16,6 +16,7 @@ import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
@@ -24,7 +25,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.div
 
 
 abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -154,23 +157,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             state.tool.tool.readSettings(inspectionSettings)
         }
 
-        val passIdsToIgnore = mutableListOf(
-            Pass.LINE_MARKERS,
-            Pass.EXTERNAL_TOOLS,
-            Pass.POPUP_HINTS,
-            Pass.UPDATE_ALL,
-            Pass.UPDATE_FOLDING,
-            Pass.WOLF
-        )
-
-        val caretOffset = myFixture.caretOffset
-        val highlightInfos: MutableList<HighlightInfo> = ArrayList()
-        // exclude AbstractHighlightingPassBase-derived passes in tests
-        AbstractHighlightingPassBase.ignoreThesePassesInTests {
-            highlightInfos.addAll(CodeInsightTestFixtureImpl.instantiateAndRun(
-                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
-            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset })
-        }
+        val highlightInfos = collectHighlightInfos()
 
         Assert.assertTrue(
             if (!problemExpected)
@@ -237,6 +224,27 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return true
     }
 
+    protected open fun collectHighlightInfos(): List<HighlightInfo> {
+        val passIdsToIgnore = mutableListOf(
+            Pass.LINE_MARKERS,
+            Pass.SLOW_LINE_MARKERS,
+            Pass.EXTERNAL_TOOLS,
+            Pass.POPUP_HINTS,
+            Pass.UPDATE_ALL,
+            Pass.UPDATE_FOLDING,
+            Pass.WOLF
+        )
+
+        val caretOffset = myFixture.caretOffset
+
+        // exclude AbstractHighlightingPassBase-derived passes in tests
+        return AbstractHighlightingPassBase.ignoreThesePassesInTests {
+            CodeInsightTestFixtureImpl.instantiateAndRun(
+                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
+            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
+        }
+    }
+
     protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
         val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
@@ -265,7 +273,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    @OptIn(ExperimentalPathApi::class)
     private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
         val path = Path(testDataPath) / canonicalPathToExpectedFile
 

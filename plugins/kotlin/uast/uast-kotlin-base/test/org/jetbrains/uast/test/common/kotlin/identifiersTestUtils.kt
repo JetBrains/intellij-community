@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.jetbrains.uast.test.common.UElementToParentMap
 import org.jetbrains.uast.test.common.visitUFileAndGetResult
 import org.junit.ComparisonFailure
+import kotlin.test.assertIsNot
 import kotlin.test.assertNotNull
 import kotlin.test.fail
 
@@ -25,6 +28,12 @@ fun UFile.asIdentifiersWithParents() = object : IndentedPrintingVisitor(KtBlockE
 fun UFile.testIdentifiersParents() {
     accept(object : AbstractUastVisitor() {
         override fun visitElement(node: UElement): Boolean {
+            // Usage of UElement as PsiElement is not recommended, but some still use that way.
+            // E.g., https://issuetracker.google.com/issues/217320692
+            if (node is PsiNameIdentifierOwner) {
+                assertIsNot<PsiCompiledElement>(node.nameIdentifier)
+            }
+
             val uIdentifier = when (node) {
                 is UAnchorOwner -> node.uastAnchor ?: return false
                 is UBinaryExpression -> node.operatorIdentifier ?: return false

@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LocalTargetEnvironment extends TargetEnvironment implements TargetEnvironment.PtyTargetEnvironment {
+public class LocalTargetEnvironment extends TargetEnvironment {
   private final Map<UploadRoot, UploadableVolume> myUploadVolumes = new HashMap<>();
   private final Map<DownloadRoot, DownloadableVolume> myDownloadVolumes = new HashMap<>();
   private final Map<TargetPortBinding, Integer> myTargetPortBindings = new HashMap<>();
@@ -87,11 +87,6 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
     return (LocalTargetEnvironmentRequest)super.getRequest();
   }
 
-  @Override
-  public boolean isWithPty() {
-    return getRequest().getPtyOptions() != null;
-  }
-
   private static @NotNull ResolvedPortBinding getResolvedPortBinding(int port) {
     HostPort hostPort = new HostPort("127.0.0.1", port);
     return new ResolvedPortBinding(hostPort, hostPort);
@@ -136,11 +131,12 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      LocalPtyOptions ptyOptions = getRequest().getPtyOptions();
+      PtyOptions ptyOption = commandLine.getPtyOptions();
+      LocalPtyOptions localPtyOptions = ptyOption != null ? LocalTargets.toLocalPtyOptions(ptyOption) : null;
       GeneralCommandLine generalCommandLine;
-      if (ptyOptions != null) {
+      if (localPtyOptions != null) {
         PtyCommandLine ptyCommandLine = new PtyCommandLine(commandLine.collectCommandsSynchronously());
-        ptyCommandLine.withOptions(ptyOptions);
+        ptyCommandLine.withOptions(localPtyOptions);
         generalCommandLine = ptyCommandLine;
       }
       else {
@@ -234,4 +230,3 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
     }
   }
 }
-

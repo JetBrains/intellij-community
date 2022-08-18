@@ -1,4 +1,4 @@
-// "Replace with 'Files.newInputStream'" "true"
+// "Replace with 'Files.newInputStream()'" "true-preview"
 import java.io.*;
 import java.nio.file.Files;
 

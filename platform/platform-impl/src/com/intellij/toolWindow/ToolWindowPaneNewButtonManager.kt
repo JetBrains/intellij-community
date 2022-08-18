@@ -7,15 +7,18 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
-  private val left = ToolWindowLeftToolbar()
-  private val right = ToolWindowRightToolbar()
+internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
+
+  constructor(paneId: String) : this(paneId, true)
+
+  private val left = ToolWindowLeftToolbar(paneId, isPrimary)
+  private val right = ToolWindowRightToolbar(paneId)
 
   override val isNewUi: Boolean
     get() = true
@@ -27,9 +30,14 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {
     val oldSquareVisible = left.isVisible && right.isVisible
-    left.isVisible = showButtons
-    right.isVisible = showButtons
-    return oldSquareVisible != showButtons
+    val visible = showButtons || state.isStripesOverlaid
+    left.isVisible = visible
+    right.isVisible = visible
+    return oldSquareVisible != visible
+  }
+
+  override fun initMoreButton() {
+    left.initMoreButton()
   }
 
   override fun layout(size: Dimension, layeredPane: JComponent) {
@@ -44,21 +52,35 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
 
   override fun getBottomHeight() = 0
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
+  override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
     return when (anchor) {
-      ToolWindowAnchor.LEFT, ToolWindowAnchor.BOTTOM -> left.getStripeFor(anchor)
-      ToolWindowAnchor.RIGHT, ToolWindowAnchor.TOP -> right.getStripeFor(anchor)
+      ToolWindowAnchor.LEFT -> left.getStripeFor(anchor)
+      ToolWindowAnchor.BOTTOM -> isSplit?.let { if (it) right.getStripeFor(anchor) else left.getStripeFor(anchor) }
+                                 ?: throw IllegalArgumentException("Split mode isn't expected to be used here, anchor: " + anchor.displayName)
+      ToolWindowAnchor.RIGHT -> right.getStripeFor(anchor)
       else -> throw IllegalArgumentException("Anchor=$anchor")
     }
   }
 
-  override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
-    if (preferred.containsPoint(screenPoint)) {
-      return preferred
+  override fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+    val screenPoint = devicePoint.getLocationOnScreen(pane)
+    return if (preferred.containsPoint(screenPoint)) {
+      preferred
     }
     else {
-      return left.getStripeFor(screenPoint) ?: right.getStripeFor(screenPoint)
+      left.getStripeFor(screenPoint) ?: right.getStripeFor(screenPoint)
     }
+  }
+
+  override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
+    if (anchor == ToolWindowAnchor.BOTTOM || anchor == ToolWindowAnchor.TOP) return 0
+    val stripe = getStripeFor(anchor, null)
+    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
+  }
+
+  override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
+    // New UI only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
+    return 0
   }
 
   fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolWindowToolbar {
@@ -97,13 +119,19 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     right.repaint()
   }
 
-  private fun findToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
+  private fun findToolbar(anchor: ToolWindowAnchor, isSplit: Boolean) =
+    when (anchor) {
+      ToolWindowAnchor.LEFT -> left
+      ToolWindowAnchor.BOTTOM -> if (isSplit) right else left
+      ToolWindowAnchor.RIGHT -> right
+      else -> throw IllegalArgumentException("Anchor=$anchor")
+    }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val squareStripeButton = SquareStripeButton(toolWindow)
     val manager = object : StripeButtonManager {
-      override val id: String
-        get() = toolWindow.id
+      override val id: String = toolWindow.id
+      override val toolWindow: ToolWindowImpl = toolWindow
 
       override val windowDescriptor: WindowInfo
         get() = toolWindow.windowInfo
@@ -113,15 +141,15 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
       }
 
       override fun updatePresentation() {
-        squareStripeButton.syncIcon()
+        squareStripeButton.updatePresentation()
       }
 
       override fun updateIcon(icon: Icon?) {
-        squareStripeButton.syncIcon()
+        squareStripeButton.updatePresentation()
       }
 
       override fun remove() {
-        findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).removeButton(this)
+        findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).removeButton(this)
       }
 
       override fun getComponent() = squareStripeButton
@@ -130,7 +158,9 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
         return "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
       }
     }
-    findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
+    findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
     return manager
   }
+
+  override fun hasButtons() = left.hasButtons() || right.hasButtons()
 }

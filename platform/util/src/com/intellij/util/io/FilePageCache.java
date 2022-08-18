@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.hash.LongLinkedHashMap;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,44 +20,84 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
-public final class FilePageCache {
+final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
 
-  static final int MAX_PAGES_COUNT = 0xFFFF;
-  private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
+  static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
+  private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
-  private static final int FILE_INDEX_MASK = 0xFFFF0000;
-  private static final int FILE_INDEX_SHIFT = 16;
-
-  private static final int LOWER_LIMIT;
-  private static final int UPPER_LIMIT;
-  static final int BUFFER_SIZE;
+  private static final int CACHE_SIZE;
+  static final int ALLOCATOR_SIZE;
+  static final int PAGE_SIZE;
 
   static {
     final int lower = 100;
     final int upper = CpuArch.is32Bit() ? 200 : 500;
 
-    BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
-    final long max = maxDirectMemory() - 2L * BUFFER_SIZE;
-    LOWER_LIMIT = (int)Math.min(lower * PagedFileStorage.MB, max);
-    UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
-
-    LOG.info("lower=" + (LOWER_LIMIT / PagedFileStorage.MB) +
-             "; upper=" + (UPPER_LIMIT / PagedFileStorage.MB) +
-             "; buffer=" + (BUFFER_SIZE / PagedFileStorage.MB) +
-             "; max=" + (max / PagedFileStorage.MB));
+    PAGE_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
+    final long max = maxDirectMemory() - 2L * PAGE_SIZE;
+    int lowerLimit = (int)Math.min(lower * PagedFileStorage.MB, max);
+    CACHE_SIZE = (int)Math.min(Math.max(lowerLimit, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
+    ALLOCATOR_SIZE = (int)Math.min(100 * PagedFileStorage.MB, Math.max(0, max - CACHE_SIZE - 300 * PagedFileStorage.MB));
   }
 
   void assertUnderSegmentAllocationLock() {
     assert mySegmentsAllocationLock.isHeldByCurrentThread();
   }
 
+  @SuppressWarnings("NonAtomicOperationOnVolatileField") // expected, we don't need 100% precision
+  public void incrementUncachedFileAccess() {
+    myUncachedFileAccess++;
+  }
+
+  public void assertNoBuffersLocked() {
+    mySegmentsAllocationLock.lock();
+    try {
+      mySegmentsAccessLock.lock();
+      try {
+        for (DirectBufferWrapper value : mySegments.values()) {
+          if (value.isLocked()) {
+            throw new AssertionError();
+          }
+        }
+        for (DirectBufferWrapper value : mySegmentsToRemove.values()) {
+          if (value.isLocked()) {
+            throw new AssertionError();
+          }
+        }
+      }
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
+    }
+    finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
+
+  public void incrementFastCacheHitsCount() {
+    myFastCacheHits++;
+  }
+
+  public long getMaxSize() {
+    return mySizeLimit;
+  }
+
   private static long maxDirectMemory() {
+    try {
+      Class<?> aClass = Class.forName("jdk.internal.misc.VM");
+      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
+      return (Long)maxDirectMemory.invoke(null);
+    }
+    catch (Throwable ignore) { }
+
     try {
       Class<?> aClass = Class.forName("sun.misc.VM");
       Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
@@ -70,41 +113,95 @@ public final class FilePageCache {
     }
     catch (Throwable ignore) { }
 
+    try {
+      Class<?> aClass = Class.forName("java.nio.Bits");
+      Field maxMemory = aClass.getDeclaredField("MAX_MEMORY");
+      maxMemory.setAccessible(true);
+      return (Long)maxMemory.get(null);
+    }
+    catch (Throwable ignore) { }
+
     return Runtime.getRuntime().maxMemory();
   }
 
-  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  @NotNull FilePageCacheStatistics getStatistics() {
+    mySegmentsAllocationLock.lock();
+    try {
+      mySegmentsAccessLock.lock();
+      try {
+        return new FilePageCacheStatistics(PagedFileStorage.CHANNELS_CACHE.getStatistics(),
+                                           myUncachedFileAccess,
+                                           myMaxRegisteredFiles,
+                                           myMaxLoadedSize,
+                                           myHits,
+                                           myFastCacheHits,
+                                           myMisses,
+                                           myLoad,
+                                           myMappingChangeCount,
+                                           mySizeLimit);
+      }
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
+    }
+    finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
 
-  private final LinkedHashMap<Integer, DirectBufferWrapper> mySegments;
+  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = new Int2ObjectOpenHashMap<>();
+
+  private final LongLinkedHashMap<DirectBufferWrapper> mySegments;
 
   private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
   // todo avoid locking for access
   private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
-  private final ConcurrentLinkedQueue<DirectBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<>();
+  private final LinkedHashMap<Long, DirectBufferWrapper> mySegmentsToRemove = new LinkedHashMap<>();
 
   private final long mySizeLimit;
   private long mySize;
+  private volatile int myUncachedFileAccess;
+  private int myFastCacheHits;
+  private int myHits;
+  private int myMisses;
+  private int myLoad;
+  private volatile int myMaxRegisteredFiles;
+  private long myMaxLoadedSize;
   private volatile int myMappingChangeCount;
 
-  public FilePageCache() {
-    mySizeLimit = UPPER_LIMIT;
-    mySegments = new LinkedHashMap<Integer, DirectBufferWrapper>(10, 0.75f, true) {
+  private long myCreatedCount;
+  private long myCreatedMs;
+  private long myDisposalMs;
+
+  FilePageCache() {
+    mySizeLimit = CACHE_SIZE;
+
+    // super hot-spot, it's very essential to use specialized collection here
+    mySegments = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, true) {
       @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, DirectBufferWrapper> eldest) {
+      protected boolean removeEldestEntry(LongLinkedHashMap.Entry<DirectBufferWrapper> eldest) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         return mySize > mySizeLimit;
       }
 
+      @Override
+      public DirectBufferWrapper put(long key, @NotNull DirectBufferWrapper wrapper) {
+        mySize += wrapper.getLength();
+        DirectBufferWrapper oldShouldBeNull = super.put(key, wrapper);
+        myMaxLoadedSize = Math.max(myMaxLoadedSize, mySize);
+        return oldShouldBeNull;
+      }
+
       @Nullable
       @Override
-      public DirectBufferWrapper remove(Object key) {
+      public DirectBufferWrapper remove(long key) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
         if (wrapper != null) {
           //noinspection NonAtomicOperationOnVolatileField
           ++myMappingChangeCount;
-          mySegmentsToRemove.offer(wrapper);
+          mySegmentsToRemove.put(key, wrapper);
           mySize -= wrapper.getLength();
         }
         return wrapper;
@@ -112,37 +209,36 @@ public final class FilePageCache {
     };
   }
 
-  int getMappingChangeCount() {
-    return myMappingChangeCount;
-  }
-
-  int registerPagedFileStorage(@NotNull PagedFileStorage storage) {
+  long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (myIndex2Storage) {
-      int registered = myIndex2Storage.size();
-      assert registered <= MAX_LIVE_STORAGES_COUNT;
-      int value = registered << FILE_INDEX_SHIFT;
+      // assume that storages never closed (or closed but not so often)
+      int value = myIndex2Storage.size();
       while(myIndex2Storage.get(value) != null) {
-        ++registered;
-        assert registered <= MAX_LIVE_STORAGES_COUNT;
-        value = registered << FILE_INDEX_SHIFT;
+        value++;
       }
       myIndex2Storage.put(value, storage);
-      return value;
+      myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, myIndex2Storage.size());
+      return (long)value << 32;
     }
   }
 
   @NotNull("Seems accessed storage has been closed")
-  private PagedFileStorage getRegisteredPagedFileStorageByIndex(int key) {
-    final int storageIndex = key & FILE_INDEX_MASK;
-    return myIndex2Storage.get(storageIndex);
+  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long key) {
+    int storageIndex = (int)((key & FILE_INDEX_MASK) >> 32);
+    synchronized (myIndex2Storage) {
+      return myIndex2Storage.get(storageIndex);
+    }
   }
 
-  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) throws IOException {
+  DirectBufferWrapper get(Long key, boolean read, boolean checkAccess) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
       wrapper = mySegments.get(key);
-      if (wrapper != null) return wrapper;
+      if (wrapper != null) {
+        myHits++;
+        return wrapper;
+      }
     }
     finally {
       mySegmentsAccessLock.unlock();
@@ -150,6 +246,22 @@ public final class FilePageCache {
 
     mySegmentsAllocationLock.lock();
     try {
+      DirectBufferWrapper notYetRemoved = mySegmentsToRemove.remove(key);
+      if (notYetRemoved != null) {
+        mySegmentsAccessLock.lock();
+        try {
+          DirectBufferWrapper previous = mySegments.put(key, notYetRemoved);
+          assert previous == null;
+        }
+        finally {
+          mySegmentsAccessLock.unlock();
+        }
+
+        disposeRemovedSegments(null);
+        myHits++;
+        return notYetRemoved;
+      }
+
       // check if anybody cared about our segment
       mySegmentsAccessLock.lock();
       try {
@@ -160,24 +272,30 @@ public final class FilePageCache {
       }
 
       long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+
       PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(key);
+      disposeRemovedSegments(null);
 
-      disposeRemovedSegments();
+      long disposed = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
-      wrapper = createValue(key, read, readOnly, fileStorage);
+      wrapper = createValue(key, read, fileStorage, checkAccess);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
-        if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-          IOStatistics.dump(
-            "Mapping " + wrapper + " for " + (finished - started));
-        }
+        myCreatedCount++;
+        myCreatedMs += (finished - disposed);
+        myDisposalMs += (disposed - started);
       }
 
       mySegmentsAccessLock.lock();
       try {
+        if (mySize + fileStorage.myPageSize < mySizeLimit) {
+          myLoad++;
+        }
+        else {
+          myMisses++;
+        }
         mySegments.put(key, wrapper);
-        mySize += wrapper.getLength();
       }
       finally {
         mySegmentsAccessLock.unlock();
@@ -192,19 +310,24 @@ public final class FilePageCache {
     }
   }
 
-  private void disposeRemovedSegments() {
+  private void disposeRemovedSegments(@Nullable PagedFileStorage verificationStorage) {
     assertUnderSegmentAllocationLock();
 
     if (mySegmentsToRemove.isEmpty()) return;
-    Iterator<DirectBufferWrapper> iterator = mySegmentsToRemove.iterator();
+    Iterator<Map.Entry<Long, DirectBufferWrapper>> iterator = mySegmentsToRemove.entrySet().iterator();
     while (iterator.hasNext()) {
       try {
-        iterator.next().release();
+        Map.Entry<Long, DirectBufferWrapper> entry = iterator.next();
+        DirectBufferWrapper wrapper = entry.getValue();
+        boolean released = wrapper.tryRelease(wrapper.getFile() == verificationStorage);
+
+        if (released) {
+          iterator.remove();
+        }
       }
       catch (IOException e) {
         LOG.error(e);
       }
-      iterator.remove();
     }
   }
 
@@ -221,38 +344,34 @@ public final class FilePageCache {
       mySegmentsAccessLock.unlock();
     }
 
-    disposeRemovedSegments();
+    disposeRemovedSegments(null);
   }
 
   @NotNull
-  private static DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly, PagedFileStorage owner) throws IOException {
-    StorageLockContext context = owner.getStorageLockContext();
-    if (read) {
-      context.checkReadAccess();
+  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner, boolean checkAccess) throws IOException {
+    if (checkAccess) {
+      StorageLockContext context = owner.getStorageLockContext();
+      if (read) {
+        context.checkReadAccess();
+      }
+      else {
+        context.checkWriteAccess();
+      }
     }
-    else {
-      context.checkWriteAccess();
-    }
-    long off = (long)(key & MAX_PAGES_COUNT) * owner.myPageSize;
-    long ownerLength = owner.length();
-    if (off > ownerLength) {
-      throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + ownerLength);
-    }
+    long off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
 
-    int min = (int)Math.min(ownerLength - off, owner.myPageSize);
-    return readOnly
-           ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
-           : DirectBufferWrapper.readWriteDirect(owner, off, min);
+    return new DirectBufferWrapper(owner, off);
   }
 
   @NotNull
-  private Map<Integer, DirectBufferWrapper> getBuffersOrderedForOwner(@NotNull StorageLockContext storageLockContext) {
+  private Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
+    StorageLockContext storageLockContext = storage.getStorageLockContext();
     mySegmentsAccessLock.lock();
     try {
       storageLockContext.checkReadAccess();
-      Map<Integer, DirectBufferWrapper> mineBuffers = new TreeMap<>(Comparator.comparingInt(o -> o));
-      for (Map.Entry<Integer, DirectBufferWrapper> entry : mySegments.entrySet()) {
-        if (entry.getValue().belongs(storageLockContext)) {
+      Map<Long, DirectBufferWrapper> mineBuffers = new TreeMap<>();
+      for (LongLinkedHashMap.Entry<DirectBufferWrapper> entry : mySegments.entrySet()) {
+        if (entry.getValue().getFile() == storage) {
           mineBuffers.put(entry.getKey(), entry.getValue());
         }
       }
@@ -263,32 +382,51 @@ public final class FilePageCache {
     }
   }
 
-  void unmapBuffersForOwner(@NotNull StorageLockContext storageLockContext) {
-    final Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(storageLockContext);
+  void unmapBuffersForOwner(PagedFileStorage fileStorage) {
+    Map<Long, DirectBufferWrapper> buffers = getBuffersForOwner(fileStorage);
 
     if (!buffers.isEmpty()) {
       mySegmentsAccessLock.lock();
       try {
-        for (Integer key : buffers.keySet()) {
+        for (Long key : buffers.keySet()) {
           mySegments.remove(key);
         }
       }
       finally {
         mySegmentsAccessLock.unlock();
       }
+    }
 
-      mySegmentsAllocationLock.lock();
-      try {
-        disposeRemovedSegments();
-      } finally {
-        mySegmentsAllocationLock.unlock();
-      }
+    mySegmentsAllocationLock.lock();
+    try {
+      disposeRemovedSegments(fileStorage);
+    } finally {
+      mySegmentsAllocationLock.unlock();
     }
   }
 
-  void flushBuffersForOwner(StorageLockContext storageLockContext) throws IOException {
-    storageLockContext.checkReadAccess();
-    Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(storageLockContext);
+  void flushBuffers() {
+    mySegmentsAccessLock.lock();
+    try {
+      while (!mySegments.isEmpty()) {
+        mySegments.doRemoveEldestEntry();
+      }
+    }
+    finally {
+      mySegmentsAccessLock.unlock();
+    }
+
+    mySegmentsAllocationLock.lock();
+    try {
+      disposeRemovedSegments(null);
+    } finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
+
+  void flushBuffersForOwner(PagedFileStorage storage) throws IOException {
+    storage.getStorageLockContext().checkReadAccess();
+    Map<Long, DirectBufferWrapper> buffers = getBuffersForOwner(storage);
 
     if (!buffers.isEmpty()) {
       List<IOException> exceptions = new SmartList<>();
@@ -316,23 +454,9 @@ public final class FilePageCache {
     }
   }
 
-  void invalidateBuffer(int page, @NotNull StorageLockContext storageLockContext) {
-    mySegmentsAccessLock.lock();
-    try {
-      mySegments.remove(page);
-    } finally {
-      mySegmentsAccessLock.unlock();
+  void removeStorage(long index) {
+    synchronized (myIndex2Storage) {
+      myIndex2Storage.remove((int)(index >> 32));
     }
-    mySegmentsAllocationLock.lock();
-    try {
-      disposeRemovedSegments();
-    }
-    finally {
-      mySegmentsAllocationLock.unlock();
-    }
-  }
-
-  void removeStorage(int index) {
-    myIndex2Storage.remove(index);
   }
 }

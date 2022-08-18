@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -71,7 +71,6 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     KeyboardComboSwitcher.setupActions(myReplaceFieldsCb, myProject);
     component.setComponent(myReplaceFieldsCb);
     component.setText(JavaRefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters"));
-    component.getLabel().setDisplayedMnemonic('u');
     component.setLabelLocation(BorderLayout.NORTH);
     component.setBorder(JBUI.Borders.empty(3, 3, 2, 2));
     return component;

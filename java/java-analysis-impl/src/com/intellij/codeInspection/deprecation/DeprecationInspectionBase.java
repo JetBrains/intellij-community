@@ -49,7 +49,6 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
                                      boolean forRemoval,
-                                     boolean ignoreApiDeclaredInThisProject, 
                                      @NotNull ProblemHighlightType highlightType) {
     if (PsiImplUtil.isDeprecated(element)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
@@ -61,14 +60,12 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
-                          false, ignoreInSameOutermostClass, holder, forRemoval, ignoreApiDeclaredInThisProject, highlightType);
+                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
         }
       }
       return;
     }
 
-    if (ignoreApiDeclaredInThisProject && element.getManager().isInProject(element)) return;
-    
     if (ignoreInSameOutermostClass && areElementsInSameOutermostClass(element, elementToHighlight)) return;
 
     if (ignoreInsideDeprecated && isElementInsideDeprecated(elementToHighlight)) return;
@@ -211,7 +208,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .map(resolved -> ObjectUtils.tryCast(resolved, clazz))
       .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated()) // not deprecated
-      .filter(tagMethod -> PsiResolveHelper.SERVICE.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
+      .filter(tagMethod -> PsiResolveHelper.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
       .filter(tagMethod -> !member.getManager().areElementsEquivalent(tagMethod, member)); // not the same
   }
 

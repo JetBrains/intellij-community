@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
+@FileModifier.SafeTypeForPreview
 class LambdaAndExplicitMethodPair {
   static final LambdaAndExplicitMethodPair[] INFOS = {
     new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent", "putIfAbsent", 1, "V", "k") {

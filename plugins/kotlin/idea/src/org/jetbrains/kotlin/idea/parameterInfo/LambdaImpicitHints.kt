@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.parameterInfo
 
@@ -6,9 +6,9 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiComment
 import com.intellij.psi.TokenType
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -41,7 +41,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
     return listOfNotNull(implicitReceiverHint, singleParameterHint)
 }
 
-private fun ASTNode.isFollowedByNewLine(): Boolean {
+internal fun ASTNode.isFollowedByNewLine(): Boolean {
     for (sibling in siblings()) {
         if (sibling.elementType != TokenType.WHITE_SPACE && sibling.psi !is PsiComment) {
             continue

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -19,6 +20,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -28,12 +30,13 @@ import org.jetbrains.plugins.gradle.tooling.tasks.DependencyNodeDeserializer
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
 
 class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
-  private val projects = ConcurrentHashMap<String, GradleModuleData>()
+  private val projects = ConcurrentHashMap<DependencyAnalyzerProject, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
   private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
 
@@ -53,23 +56,30 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   override fun getProjects(): List<DependencyAnalyzerProject> {
     if (projects.isEmpty()) {
-      ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
-        .mapNotNull { it.externalProjectStructure }
-        .flatMap { ExternalSystemApiUtil.findAll(it, ProjectKeys.MODULE) }
-        .map(::GradleModuleData)
-        .filterNot(GradleModuleData::isBuildSrcModule)
-        .associateByTo(projects, GradleModuleData::gradleProjectDir)
+      val projectDataManager = ProjectDataManager.getInstance()
+      for (projectInfo in projectDataManager.getExternalProjectsData(project, GradleConstants.SYSTEM_ID)) {
+        val projectStructure = projectInfo.externalProjectStructure ?: continue
+        for (moduleNode in ExternalSystemApiUtil.findAll(projectStructure, ProjectKeys.MODULE)) {
+          val moduleData = moduleNode.data
+          val gradleModuleData = GradleModuleData(moduleNode)
+          if (!gradleModuleData.isBuildSrcModule) {
+            val module = GradleUtil.findGradleModule(project, moduleData) ?: continue
+            val externalProject = DAProject(module, moduleData.moduleName)
+            projects[externalProject] = gradleModuleData
+          }
+        }
+      }
     }
-    return projects.values.map { DAProject(it.gradleProjectDir, it.moduleName) }
+    return projects.keys.toList()
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope> {
-    val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
+  override fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope> {
+    val gradleModuleData = projects[externalProject] ?: return emptyList()
     return getOrRefreshData(gradleModuleData).map { it.toScope() }
   }
 
-  override fun getDependencies(externalProjectPath: String): List<Dependency> {
-    val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
+  override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
+    val gradleModuleData = projects[externalProject] ?: return emptyList()
     val scopeNodes = getOrRefreshData(gradleModuleData)
     return getDependencies(gradleModuleData, scopeNodes)
   }
@@ -85,6 +95,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     if (scopeNodes.isEmpty()) return emptyList()
     val dependencies = ArrayList<Dependency>()
     val root = DAModule(moduleData.moduleName)
+    root.putUserData(MODULE_DATA, moduleData.moduleData)
 
     val rootDependency = DADependency(root, defaultConfiguration, null, emptyList())
     dependencies.add(rootDependency)
@@ -144,7 +155,10 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   private fun DependencyNode.getDependencyData(): Dependency.Data? {
     return when (this) {
       is ProjectDependencyNode -> {
-        DAModule(projectName)
+        val data = DAModule(projectName)
+        val moduleData = getModuleData()
+        data.putUserData(MODULE_DATA, moduleData)
+        data
       }
       is ArtifactDependencyNode -> {
         DAArtifact(group, module, version)
@@ -153,8 +167,16 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     }
   }
 
+  private fun ProjectDependencyNode.getModuleData(): ModuleData? {
+    return projects.values.asSequence()
+      .map { it.moduleData }
+      .find { it.id == projectPath }
+  }
+
   companion object {
     internal val defaultConfiguration = scope("default")
+
+    internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
 
     private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
       var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()

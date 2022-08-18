@@ -73,15 +73,12 @@ public abstract class XDebuggerPopupPanel {
 
   protected static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(popupWindow);
-    final int screenWidth = screenRectangle.width;
 
     // shift the x coordinate if there is not enough space on the right
     Point location = popupWindow.getLocation();
-    int screenRightEdgeX = screenRectangle.x + screenWidth;
-    if (screenRightEdgeX - location.x < newWidth) {
-      int newX = Math.max(screenRectangle.x, screenRightEdgeX - newWidth);
-      location = new Point(newX, location.y);
-    }
+    int delta = (location.x + newWidth) - (screenRectangle.x + screenRectangle.width);
+    location.x -= Math.max(delta, 0);
+    location.x = Math.max(location.x, screenRectangle.x);
 
     final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
 
@@ -192,7 +189,6 @@ public abstract class XDebuggerPopupPanel {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());
@@ -233,6 +229,11 @@ public abstract class XDebuggerPopupPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(myDelegate));
       presentation.setVisible(presentation.isVisible() && shouldBeVisible(myDelegate));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
     }
 
     @Override

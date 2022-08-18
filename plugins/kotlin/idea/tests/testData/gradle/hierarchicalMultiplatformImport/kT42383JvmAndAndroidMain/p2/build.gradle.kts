@@ -6,7 +6,7 @@ android {
     compileSdkVersion({{compile_sdk_version}})
 }
 kotlin {
-    js()
+    js { browser() }
     jvm()
     android()
     sourceSets {

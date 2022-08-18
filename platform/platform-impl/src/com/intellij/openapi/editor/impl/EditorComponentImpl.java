@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -8,10 +8,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
@@ -48,8 +45,9 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -220,9 +218,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public ActionCallback type(final String text) {
-    final ActionCallback result = new ActionCallback();
-    UIUtil.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
+  public ActionCallback type(String text) {
+    ActionCallback result = new ActionCallback();
+    EdtInvocationManager.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
     return result;
   }
 
@@ -257,7 +255,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     Project project = myEditor.getProject();
     if (project != null) {
-      EditorsSplitters.stopOpenFilesActivity(project);
+      EditorsSplitters.Companion.stopOpenFilesActivity(project);
     }
   }
 
@@ -355,7 +353,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleEditorComponentImpl();
+      accessibleContext = new EditorAccessibleContextDelegate();
     }
     return accessibleContext;
   }
@@ -1520,6 +1518,75 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       return newOffset;
+    }
+  }
+
+  private class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
+    public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
+
+    @Override
+    protected void doShowContextMenu() {
+      ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, EditorComponentImpl.this.getEditor().getContentComponent(), null, true);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return getParent();
+    }
+
+    @Override
+    public int getIndexAtPoint(Point point) {
+      return ((AccessibleText) getDelegate()).getIndexAtPoint(point);
+    }
+
+    @Override
+    public Rectangle getCharacterBounds(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterBounds(i);
+    }
+
+    @Override
+    public int getCharCount() {
+      return ((AccessibleText) getDelegate()).getCharCount();
+    }
+
+    @Override
+    public int getCaretPosition() {
+      return ((AccessibleText) getDelegate()).getCaretPosition();
+    }
+
+    @Override
+    public String getAtIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAtIndex(part, index);
+    }
+
+    @Override
+    public String getAfterIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAfterIndex(part, index);
+    }
+
+    @Override
+    public String getBeforeIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getBeforeIndex(part, index);
+    }
+
+    @Override
+    public AttributeSet getCharacterAttribute(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterAttribute(i);
+    }
+
+    @Override
+    public int getSelectionStart() {
+      return ((AccessibleText) getDelegate()).getSelectionStart();
+    }
+
+    @Override
+    public int getSelectionEnd() {
+      return ((AccessibleText) getDelegate()).getSelectionEnd();
+    }
+
+    @Override
+    public String getSelectedText() {
+      return ((AccessibleText) getDelegate()).getSelectedText();
     }
   }
 }

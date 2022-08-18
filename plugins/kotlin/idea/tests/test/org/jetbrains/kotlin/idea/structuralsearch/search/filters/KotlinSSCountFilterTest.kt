@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSCountFilterTest : KotlinSSResourceInspectionTest() {
+class KotlinSSCountFilterTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "countFilter"
 
     // isApplicableMinCount
@@ -97,6 +97,8 @@ class KotlinSSCountFilterTest : KotlinSSResourceInspectionTest() {
     """.trimIndent()) }
 
     fun testMaxWhenConditionWithExpression() { doTest("when ('_?) { '_{2,2} -> '_ }", """
+        // LANGUAGE_VERSION: 1.6
+        
         fun foo(): Int {
             fun f() {}
             <warning descr="SSR">when (1) {

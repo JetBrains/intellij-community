@@ -50,7 +50,7 @@ public class SynchronizationOnGetClassInspection extends BaseInspection {
   private static class SynchronizationOnGetClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
       if (!(lockExpression instanceof PsiMethodCallExpression)) {

@@ -101,3 +101,15 @@ internal class ParenPositionConvertorFactory(private val keepLineBreaks: Boolean
   fun ifInternalIsTrueExport(eclipseValue: String) = ParenPositionConvertor(keepLineBreaks, eclipseValue)
 }
 
+internal object TabCharacterConvertor : Convertor<String, String> {
+  override fun convertIncoming(value: String): String {
+    return when (val lowercase = value.lowercase()) {
+      TAB_CHAR_MIXED,
+      TAB_CHAR_TAB,
+      TAB_CHAR_SPACE -> lowercase
+      else -> throw UnexpectedIncomingValue(value)
+    }
+  }
+
+  override fun convertOutgoing(value: String): String = value
+}

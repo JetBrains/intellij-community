@@ -31,7 +31,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
@@ -686,7 +689,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       reInitFileTypeManagerComponent(element);
       assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
 
-      myFileTypeManager.unregisterFileType(typeFromPlugin);
+      myFileTypeManager.unregisterFileType(typeFromPlugin, FileTypeManagerImpl.coreIdeaPluginDescriptor());
     }
     finally {
       Disposer.dispose(disposable);
@@ -1172,7 +1175,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     // todo restore old AbstractFileType automatically?
     AbstractFileType old = new AbstractFileType(new SyntaxTable());
     old.setName(MyHaskellFileType.NAME);
-    myFileTypeManager.registerFileType(old, List.of(), myFileTypeManager);
+    myFileTypeManager.registerFileType(old, List.of(), myFileTypeManager, FileTypeManagerImpl.coreIdeaPluginDescriptor());
   }
 
   private static class MyCustomImageFileType implements FileType {
@@ -1360,12 +1363,17 @@ public class FileTypesTest extends HeavyPlatformTestCase {
                                            @NotNull String extension,
                                            @NotNull Disposable disposable) {
     FileType myType = new FakeFileType() {
-      @Override public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
-      @Override public @NotNull String getName() { return name; }
-      @Override public @Nls @NotNull String getDisplayName() { return displayName; }
-      @Override public @NotNull @NlsContexts.Label String getDescription() { return description; }
+      @Override
+      public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
+      @Override
+      public @NotNull String getName() { return name; }
+      @Override
+      public @Nls @NotNull String getDisplayName() { return displayName; }
+      @Override
+      public @NotNull @NlsContexts.Label String getDescription() { return description; }
     };
-    myFileTypeManager.registerFileType(myType, List.of(new ExtensionFileNameMatcher(extension)), disposable);
+    myFileTypeManager.registerFileType(myType, List.of(new ExtensionFileNameMatcher(extension)), disposable,
+                                       FileTypeManagerImpl.coreIdeaPluginDescriptor());
     return myType;
   }
 
@@ -1394,7 +1402,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     };
     Disposable disposable = Disposer.newDisposable();
     try {
-      myFileTypeManager.registerFileType(newFileType, List.of(new ExtensionFileNameMatcher(nativeExt)), disposable);
+      myFileTypeManager.registerFileType(newFileType, List.of(new ExtensionFileNameMatcher(nativeExt)), disposable, FileTypeManagerImpl.coreIdeaPluginDescriptor());
       assertEquals("Foo", myFileTypeManager.getFileTypeByFileName("foo." + nativeExt).getName());
     }
     finally {
@@ -1453,7 +1461,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         @Override public @Nls @NotNull String getDisplayName() { return getName(); }
         @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
       }
-      myFileTypeManager.registerFileType(new MyFileTypeIdentifiableByFile(), List.of(), disposable);
+      myFileTypeManager.registerFileType(new MyFileTypeIdentifiableByFile(), List.of(), disposable, FileTypeManagerImpl.coreIdeaPluginDescriptor());
 
       AtomicInteger otherFileTypeCalledCount = new AtomicInteger();
       class MyOtherFileTypeIdentifiableByFile extends FakeFileType {
@@ -1465,7 +1473,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         @Override public @Nls @NotNull String getDisplayName() { return getName(); }
         @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
       }
-      myFileTypeManager.registerFileType(new MyOtherFileTypeIdentifiableByFile(), List.of(), disposable);
+      myFileTypeManager.registerFileType(new MyOtherFileTypeIdentifiableByFile(), List.of(), disposable, FileTypeManagerImpl.coreIdeaPluginDescriptor());
 
       File f = createTempFile("xx.lkj_lkj_lkj_ljk", "a");
       VirtualFile virtualFile = getVirtualFile(f);

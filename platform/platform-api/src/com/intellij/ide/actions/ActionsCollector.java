@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.lang.Language;
@@ -36,4 +36,6 @@ public abstract class ActionsCollector {
   public abstract void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang);
 
   public abstract void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId);
+
+  public abstract void recordUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, long durationMs);
 }

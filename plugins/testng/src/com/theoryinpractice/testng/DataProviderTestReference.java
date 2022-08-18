@@ -3,6 +3,7 @@ package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataProviderTestReference extends PsiReferenceBase<PsiLiteral> {
+public class DataProviderTestReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference {
 
   public DataProviderTestReference(PsiLiteral element) {
     super(element, false);

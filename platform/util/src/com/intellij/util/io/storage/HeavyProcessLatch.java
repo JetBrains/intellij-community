@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.UtilBundle;
@@ -14,24 +14,23 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Allows to track some operations as "heavy" and query about their execution status.
+ * Allows tracking some operations as "heavy" and querying their execution status.
  * Typically, some threads call {@link #performOperation} to execute heavy operation (heavy operations can be arbitrarily interleaved).
  * Some other threads then call {@link #isRunning()} and others to query for heavy operations running in background.
  */
 public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
+
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final List<Operation> myHeavyProcesses = ContainerUtil.createLockFreeCopyOnWriteList();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+  private final Queue<Runnable> myExecuteOutOfHeavyActivity = new ConcurrentLinkedQueue<>();
 
-  private final Queue<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedQueue<>();
-
-  private HeavyProcessLatch() {
-  }
+  private HeavyProcessLatch() { }
 
   /**
-   * Approximate type of a heavy operation. Used in {@link com.intellij.codeInsight.daemon.impl.TrafficLightRenderer} UI as brief description.
+   * Approximate type of heavy operation. Used in {@link com.intellij.codeInsight.daemon.impl.TrafficLightRenderer} UI as brief description.
    */
   public enum Type {
     Indexing("heavyProcess.type.indexing"),
@@ -39,20 +38,18 @@ public final class HeavyProcessLatch {
     Processing("heavyProcess.type.processing");
 
     private final String bundleKey;
-    Type(@NotNull String bundleKey) {
+
+    Type(String bundleKey) {
       this.bundleKey = bundleKey;
     }
 
-    @Nls
     @Override
-    public String toString() {
+    public @Nls String toString() {
       return UtilBundle.message(bundleKey);
     }
   }
 
-  /**
-   * @deprecated use {@link #performOperation} instead
-   */
+  /** @deprecated use {@link #performOperation} instead */
   @Deprecated
   public @NotNull AccessToken processStarted(@NotNull @Nls String displayName) {
     Op op = new Op(Type.Processing, displayName);
@@ -69,7 +66,7 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * Executes {@code runnable} as a heavy operation. E.g. during this method execution, {@link #isRunning()} returns true.
+   * Executes {@code runnable} as a heavy operation. E.g., during this method execution, {@link #isRunning()} returns true.
    */
   public void performOperation(@NotNull Type type, @NotNull @Nls String displayName, @NotNull Runnable runnable) {
     Op op = new Op(type, displayName);
@@ -88,7 +85,7 @@ public final class HeavyProcessLatch {
   private void executeHandlers() {
     if (!isRunning()) {
       Runnable runnable;
-      while ((runnable = toExecuteOutOfHeavyActivity.poll()) != null) {
+      while ((runnable = myExecuteOutOfHeavyActivity.poll()) != null) {
         try {
           runnable.run();
         }
@@ -100,20 +97,22 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * @return true if some heavy operation is running in some thread
+   * @return {@code true} if some heavy operation is running on some thread
    */
   public boolean isRunning() {
     return !myHeavyProcesses.isEmpty();
   }
 
   /**
-   * @return true if any heavy operation of type {@code type} is currently running in some thread
+   * @return {@code true} if any heavy operation of type {@code type} is currently running in some thread
    */
   public boolean isRunning(@NotNull Type type) {
     return ContainerUtil.exists(myHeavyProcesses, op->op.getType() == type);
   }
+
   /**
-   * @return true if there is a heavy operation currently running in some thread which has its {@link Operation#getType()} != {@code type}
+   * @return {@code true} if there is a heavy operation currently running in some thread,
+   * which has its {@link Operation#getType()} != {@code type}
    */
   public boolean isRunningAnythingBut(@NotNull Type type) {
     return ContainerUtil.exists(myHeavyProcesses, op->op.getType() != type);
@@ -128,22 +127,22 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * @return all heavy operations currently running (or empty collection if none), in undefined order
+   * @return all heavy operations currently running, in undefined order, or an empty collection
    */
   public @NotNull Collection<Operation> getRunningOperations() {
     return new ArrayList<>(myHeavyProcesses);
   }
 
+  @SuppressWarnings("InterfaceMayBeAnnotatedFunctional")
   public interface HeavyProcessListener extends EventListener {
-    default void processStarted(@NotNull Operation op) {
-    }
+    default void processStarted(@NotNull Operation op) { }
 
     void processFinished(@NotNull Operation op);
   }
 
   public interface Operation {
     @NotNull Type getType();
-    @Nls @NotNull String getDisplayName();
+    @NotNull @Nls String getDisplayName();
   }
 
   public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
@@ -151,18 +150,18 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * schedules {@code runnable} to be executed when all heavy operations are finished (i.e. when {@link #isRunning()} returned false)
+   * schedules {@code runnable} to be executed when all heavy operations are finished (i.e., when {@link #isRunning()} returned false)
    */
   public void queueExecuteOutOfHeavyProcess(@NotNull Runnable runnable) {
     if (isRunning()) {
-      toExecuteOutOfHeavyActivity.add(runnable);
+      myExecuteOutOfHeavyActivity.add(runnable);
     }
     else {
       runnable.run();
     }
   }
 
-  private static class Op implements Operation {
+  private static final class Op implements Operation {
     private final Type myType;
     private final @NotNull @Nls String myDisplayName;
 
@@ -176,9 +175,8 @@ public final class HeavyProcessLatch {
       return myType;
     }
 
-    @Nls
     @Override
-    public @NotNull String getDisplayName() {
+    public @Nls @NotNull String getDisplayName() {
       return myDisplayName;
     }
   }

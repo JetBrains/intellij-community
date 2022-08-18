@@ -1,0 +1,6 @@
+// "Make 'Private' public" "true"
+
+private interface I2 {
+    class Private
+    fun <caret>pp() = Private()
+}

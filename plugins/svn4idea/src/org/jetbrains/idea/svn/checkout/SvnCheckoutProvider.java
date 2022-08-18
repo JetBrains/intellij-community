@@ -5,12 +5,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -19,6 +19,10 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -100,43 +104,52 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               boolean ignoreExternals,
                               Listener listener,
                               WorkingCopyFormat selectedFormat) {
-    final Ref<Boolean> checkoutSuccessful = new Ref<>();
-    final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true) {
+    String projectAbsolutePath = target.getAbsolutePath();
+    String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
+
+    CloneTask cloneTask = new CloneTask() {
+      final Ref<Boolean> checkoutSuccessful = new Ref<>();
+
+      @NotNull
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public CloneTaskInfo taskInfo() {
+        return new CloneTaskInfo(message("progress.title.check.out"),
+                                 message("progress.title.check.out.cancel"),
+                                 message("checkout.repository"),
+                                 message("checkout.repository.tooltip"),
+                                 message("checkout.repository.failed"),
+                                 message("checkout.repository.canceled"),
+                                 message("checkout.stop.message.title"),
+                                 message("checkout.stop.message.description", url.toString()));
+      }
+
+      @NotNull
+      @Override
+      public CloneStatus run(@NotNull ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
-        ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
+        indicator.setText(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           getFactory(vcs).createCheckoutClient()
             .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
-          ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
-        }
-        catch (VcsException e) {
-          exception[0] = e;
-        }
-      }
 
-      @Override
-      public void onCancel() {
-        onSuccess();
-      }
-
-      @Override
-      public void onSuccess() {
-        if (exception[0] != null) {
-          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("dialog.title.check.out"));
+          return CloneStatus.SUCCESS;
         }
-
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-        if (vf != null) {
-          vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
-        }
-        else {
-          notifyListener();
+        catch (VcsException exception) {
+          getApplication().invokeLater(() -> {
+            showErrorDialog(message("message.text.cannot.checkout", exception.getMessage()), message("dialog.title.check.out"));
+          });
+          return CloneStatus.FAILURE;
+        } finally {
+          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+          if (vf != null) {
+            vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
+          }
+          else {
+            notifyListener();
+          }
         }
       }
 
@@ -150,7 +163,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       }
     };
-    ProgressManager.getInstance().run(checkoutBackgroundTask);
+
+    CloneableProjectsService.getInstance().runCloneTask(projectPath, cloneTask);
   }
 
   private static void notifyRootManagerIfUnderProject(@NotNull Project project, @NotNull File directory) {
@@ -332,7 +346,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new SvnCloneDialogExtension(project);
   }
 }

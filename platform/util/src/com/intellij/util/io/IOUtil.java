@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +26,30 @@ import java.util.stream.Stream;
 
 public final class IOUtil {
   @ApiStatus.Internal
-  public static final String BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = "idea.bytebuffers.use.native.byte.order";
+  public static final ThreadLocal<Boolean> OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = new ThreadLocal<Boolean>() {
+    @Override
+    public void set(Boolean value) {
+      if (get() != null) {
+        throw new RuntimeException("Reentrant access");
+      }
+      super.set(value);
+    }
+  };
+
+  @ApiStatus.Internal
+  public static final String SHARED_CACHES_PROP = "idea.shared.caches";
 
   /**
    * if false then storages will use {@link java.nio.ByteOrder#BIG_ENDIAN}
    */
   @ApiStatus.Internal
   public static boolean useNativeByteOrderForByteBuffers() {
-    return SystemProperties.getBooleanProperty(BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP, true);
+    Boolean forced = OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.get();
+    return forced == null || forced.booleanValue();
+  }
+
+  public static boolean isSharedCachesEnabled() {
+    return SystemProperties.getBooleanProperty(SHARED_CACHES_PROP, false);
   }
 
   private static final int STRING_HEADER_SIZE = 1;
@@ -60,21 +77,24 @@ public final class IOUtil {
   }
 
   public static void writeString(@Nullable String s, @NotNull DataOutput stream) throws IOException {
+    writeCharSequence(s, stream);
+  }
+
+  public static void writeCharSequence(@Nullable CharSequence s, @NotNull DataOutput stream) throws IOException {
     if (s == null) {
       stream.writeInt(-1);
       return;
     }
 
     stream.writeInt(s.length());
-    if (s.isEmpty()) {
+    if (s.length() == 0) {
       return;
     }
 
-    char[] chars = s.toCharArray();
-    byte[] bytes = new byte[chars.length * 2];
+    byte[] bytes = new byte[s.length() * 2];
 
-    for (int i = 0, i2 = 0; i < chars.length; i++, i2 += 2) {
-      char aChar = chars[i];
+    for (int i = 0, i2 = 0; i < s.length(); i++, i2 += 2) {
+      char aChar = s.charAt(i);
       bytes[i2] = (byte)(aChar >>> 8 & 0xFF);
       bytes[i2 + 1] = (byte)(aChar & 0xFF);
     }
@@ -104,8 +124,16 @@ public final class IOUtil {
     writeUTFFast(ourReadWriteBuffersCache.getValue(), storage, value);
   }
 
+  public static void writeUTF(@NotNull DataOutput storage, @NotNull CharSequence value) throws IOException {
+    writeUTFFast(ourReadWriteBuffersCache.getValue(), storage, value);
+  }
+
   public static String readUTF(@NotNull DataInput storage) throws IOException {
     return readUTFFast(ourReadWriteBuffersCache.getValue(), storage);
+  }
+
+  public static CharSequence readUTFCharSequence(@NotNull DataInput storage) throws IOException {
+    return readUTFFastCharSequence(storage);
   }
 
   public static byte @NotNull [] allocReadWriteUTFBuffer() {
@@ -113,6 +141,10 @@ public final class IOUtil {
   }
 
   public static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull String value) throws IOException {
+    writeUTFFast(buffer, storage, (CharSequence) value);
+  }
+
+  public static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull CharSequence value) throws IOException {
     int len = value.length();
     if (len < STRING_LENGTH_THRESHOLD) {
       buffer[0] = (byte)len;
@@ -133,29 +165,44 @@ public final class IOUtil {
     storage.writeByte((byte)0xFF);
 
     try {
-      storage.writeUTF(value);
+      storage.writeUTF(value.toString());
     }
     catch (UTFDataFormatException e) {
       storage.writeUTF(LONGER_THAN_64K_MARKER);
-      writeString(value, storage);
+      writeCharSequence(value, storage);
     }
   }
 
   public static String readUTFFast(byte @NotNull [] buffer, @NotNull DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
-      String result = storage.readUTF();
-      if (LONGER_THAN_64K_MARKER.equals(result)) {
-        return readString(storage);
-      }
-
-      return result;
+      return readLongString(storage);
     }
 
     if (len == 0) return "";
     storage.readFully(buffer, 0, len);
-
     return new String(buffer, 0, len, StandardCharsets.ISO_8859_1);
+  }
+
+  @Nullable
+  private static String readLongString(@NotNull DataInput storage) throws IOException {
+    String result = storage.readUTF();
+    if (LONGER_THAN_64K_MARKER.equals(result)) {
+      return readString(storage);
+    }
+    return result;
+  }
+
+  public static CharSequence readUTFFastCharSequence(@NotNull DataInput storage) throws IOException {
+    int len = 0xFF & (int)storage.readByte();
+    if (len == 0xFF) {
+      return readLongString(storage);
+    }
+
+    if (len == 0) return "";
+    byte[] data = new byte[len];
+    storage.readFully(data, 0, len);
+    return new ByteArrayCharSequence(data, 0, len);
   }
 
   public static boolean isAscii(@NotNull String str) {

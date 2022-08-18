@@ -1,23 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.ide.plugins.DynamicPluginsTestUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,10 +36,9 @@ import org.junit.Test;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -196,7 +201,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
+  public void testJarHandlerDoNotCreateCopyWhenListingArchive() {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     JarFileSystemImpl fs = (JarFileSystemImpl)JarFileSystem.getInstance();
     fs.setNoCopyJarForPath(jar.getPath());
@@ -418,6 +423,61 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
     finally {
       System.setProperty("zip.handler.uses.crc.instead.of.timestamp", Boolean.toString(value));
+    }
+  }
+
+  @Test
+  public void testArchiveHandlerCacheInvalidation() throws IOException {
+    var originalJar = Path.of(PathManager.getJarPathForClass(Test.class));
+    var copiedJar = Files.copy(originalJar, tempDir.getRootPath().resolve("temp.jar"));
+    var rootUrl = "corrupted-jar://" + FileUtil.toSystemIndependentName(copiedJar.toString()) + "!/";
+    var fileUrl = rootUrl + "org/junit/Test.class";
+
+    var fsExtText = "<virtualFileSystem implementationClass='" + CorruptedJarFileSystemTestWrapper.class.getName() + "' key='corrupted-jar' physical='true'/>";
+    EdtTestUtil.runInEdtAndWait(() -> {
+      assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(copiedJar));
+
+      var fsRegistration = DynamicPluginsTestUtil.loadExtensionWithText(fsExtText, "com.intellij");
+      try {
+        Disposer.register(fsRegistration, ZipHandler::clearFileAccessorCache);
+
+        CorruptedJarFileSystemTestWrapper.corrupted = true;
+        var root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(rootUrl);
+        assertNotNull("not found: " + rootUrl, root);
+        assertTrue(root.isValid());
+        assertNull(VirtualFileManager.getInstance().findFileByUrl(fileUrl));
+
+        CorruptedJarFileSystemTestWrapper.corrupted = false;
+        var event = new TestActionEvent(
+          dataId -> CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) ? new VirtualFile[]{root} :
+                    CommonDataKeys.PROJECT.is(dataId) ? DefaultProjectFactory.getInstance().getDefaultProject() :
+                    null);
+        ActionManager.getInstance().getAction("SynchronizeCurrentFile").actionPerformed(event);
+
+        assertNotNull(VirtualFileManager.getInstance().findFileByUrl(fileUrl));
+      }
+      finally {
+        Disposer.dispose(fsRegistration);
+      }
+    });
+  }
+
+  private static final class CorruptedJarFileSystemTestWrapper extends JarFileSystemImpl {
+    private static volatile boolean corrupted = false;
+
+    @Override
+    public @NotNull String getProtocol() {
+      return "corrupted-jar";
+    }
+
+    @Override
+    protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+      return VfsImplUtil.getHandler(this, entryFile, path -> new ZipHandler(path) {
+        @Override
+        protected @NotNull Map<String, EntryInfo> getEntriesMap() {
+          return corrupted ? Map.of() : super.getEntriesMap();
+        }
+      });
     }
   }
 }

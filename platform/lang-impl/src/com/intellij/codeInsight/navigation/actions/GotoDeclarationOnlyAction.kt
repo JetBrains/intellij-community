@@ -13,6 +13,8 @@ class GotoDeclarationOnlyAction : GotoDeclarationAction() {
     return GotoDeclarationOnlyHandler2
   }
 
+  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+  @Deprecated("Unused in v2 implementation")
   override fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
     return GotoDeclarationOnlyHandler2.getCtrlMouseInfo(editor, file, offset)
   }

@@ -5,6 +5,8 @@ from typing import Any, Generic, Iterable, Iterator, MutableSet, TypeVar
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+__all__ = ["WeakSet"]
+
 _S = TypeVar("_S")
 _T = TypeVar("_T")
 

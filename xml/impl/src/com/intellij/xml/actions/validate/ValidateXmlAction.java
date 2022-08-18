@@ -96,4 +96,9 @@ public class ValidateXmlAction extends AnAction {
       presentation.setVisible(enabled);
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

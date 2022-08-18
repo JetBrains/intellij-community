@@ -1,7 +1,8 @@
 fun foo() {
     if ("abc" > "def" &&
         "qqq" < "bbb" &&
-        "ddd" > "efg") {
+        "ddd" > "efg"
+    ) {
         println("foo")
     }
 }
@@ -10,7 +11,8 @@ fun foo() {
     if (
         "abc" > "def" &&
         "qqq" < "bbb" &&
-        "ddd" > "efg") {
+        "ddd" > "efg"
+    ) {
         println("foo")
     }
 }

@@ -15,7 +15,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -430,11 +429,11 @@ public class NewExprent extends Exprent {
     if (!(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return Objects.equals(newType, ne.getNewType()) &&
-           InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-           Objects.equals(constructor, ne.getConstructor()) &&
+    return Objects.equals(newType, ne.newType) &&
+           Objects.equals(lstDims, ne.lstDims) &&
+           Objects.equals(constructor, ne.constructor) &&
            directArrayInit == ne.directArrayInit &&
-           InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+           Objects.equals(lstArrayElements, ne.lstArrayElements);
   }
 
   public InvocationExprent getConstructor() {

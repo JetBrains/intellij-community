@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.actions.CopyElementAction;
@@ -59,10 +59,14 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    String place = e.getPlace();
     e.getPresentation().setVisible(
-      ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
-      || ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())
-      || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())
+      ActionPlaces.MAIN_MENU.equals(place) || 
+      ActionPlaces.ACTION_SEARCH.equals(place) || 
+      ActionPlaces.isShortcutPlace(place) ||
+      ActionPlaces.MAIN_MENU_IN_POPUP.equals(place) || 
+      ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(place) || 
+      ActionPlaces.TOUCHBAR_GENERAL.equals(place)
     );
   }
 
@@ -71,7 +75,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     return RefactoringBundle.message("refactor.this.title");
   }
 
-  private static class MyGroup extends ActionGroup implements UpdateInBackground {
+  private static class MyGroup extends ActionGroup {
     final ActionGroup delegate;
     final ActionManager actionManager;
 
@@ -83,8 +87,8 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
 
     @Override
-    public boolean isUpdateInBackground() {
-      return UpdateInBackground.isUpdateInBackground(delegate);
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return delegate.getActionUpdateThread();
     }
 
     @Override

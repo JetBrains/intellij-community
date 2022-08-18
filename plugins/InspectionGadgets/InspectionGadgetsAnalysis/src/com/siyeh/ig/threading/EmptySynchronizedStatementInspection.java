@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiKeyword;
@@ -63,7 +62,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
       if (!ControlFlowUtils.isEmptyCodeBlock(body)) {
         return;
       }
-      registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(statement.getFirstChild());
     }
   }
 }

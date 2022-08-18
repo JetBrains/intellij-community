@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -44,7 +44,7 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
     }
   }
 
-  fun loadFromCache(key: Int, scale: Float, isDark: Boolean, docSize: ImageLoader.Dimension2DDouble): Image? {
+  fun loadFromCache(key: Int, scale: Float, isDark: Boolean, docSize: ImageLoader.Dimension2DDouble? = null): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val list = if (isDark) darkStores else lightStores
     // not supported scale
@@ -74,7 +74,7 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
       actualHeight = readVar(data)
     }
 
-    docSize.setSize((actualWidth / scale).toDouble(), (actualHeight / scale).toDouble())
+    docSize?.setSize((actualWidth / scale).toDouble(), (actualHeight / scale).toDouble())
 
     val image = SvgCacheManager.readImage(data, actualWidth, actualHeight)
     IconLoadMeasurer.svgPreBuiltLoad.end(start)

@@ -110,7 +110,7 @@ public interface IdeActions {
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
   String GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS = "ExperimentalToolbarActions";
   String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
-  String GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART = "NewToolbarActionsWithoutRight";
+  String GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN = "NewToolbarActionsXamarin";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
@@ -206,12 +206,6 @@ public interface IdeActions {
   String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
   String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
-
-  String GROUP_FAVORITES_VIEW_POPUP = "FavoritesViewPopupMenu";
-  String ADD_TO_FAVORITES = "AddToFavorites";
-  String ADD_NEW_FAVORITES_LIST = "AddNewFavoritesList";
-  String REMOVE_FAVORITES_LIST = "RemoveFavoritesList";
-  String REMOVE_ALL_FAVORITES_LISTS_BUT_THIS = "RemoveAllFavoritesListsButThis";
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
@@ -375,4 +369,6 @@ public interface IdeActions {
   String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 
   String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
+
+  String ACTION_FOCUS_EDITOR = "FocusEditor";
 }

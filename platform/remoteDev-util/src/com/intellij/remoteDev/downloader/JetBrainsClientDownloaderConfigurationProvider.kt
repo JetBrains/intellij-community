@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.io.exists
@@ -15,7 +16,9 @@ import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import org.jetbrains.annotations.ApiStatus
-import java.net.*
+import java.net.Inet4Address
+import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -28,8 +31,8 @@ import kotlin.io.path.*
 interface JetBrainsClientDownloaderConfigurationProvider {
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
-  val clientDownloadLocation: URI
-  val jreDownloadLocation: URI
+  val clientDownloadUrl: URI
+  val jreDownloadUrl: URI
   val clientCachesDir: Path
 
   val verifySignature: Boolean
@@ -42,9 +45,17 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override val jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
-  override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+  override val clientDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+  override val jreDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getJreDownloadUrl().value
+  override val clientCachesDir: Path get () {
+    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+    if (downloadDestination.value != null) {
+      return Path(downloadDestination.value)
+    }
+    return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+  }
   override val verifySignature: Boolean = true
 
   override fun patchVmOptions(vmOptionsFile: Path) { }
@@ -70,8 +81,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
   }
 
-  override var clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override var jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
+  override var clientDownloadUrl: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
+  override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var verifySignature: Boolean = true
 
@@ -134,11 +145,11 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     thisLogger().info("Starting http server at ${server.address}")
 
 
-    clientDownloadLocation = URI("http:/${server.address}/")
+    clientDownloadUrl = URI("http:/${server.address}/")
     verifySignature = false
 
     lifetime.onTerminationOrNow {
-      clientDownloadLocation = URI("INVALID")
+      clientDownloadUrl = URI("INVALID")
       verifySignature = true
 
       tarGzServer = null
@@ -151,6 +162,10 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     tarGzServer = server
 
     return server.address
+  }
+
+  fun serveFiles(files: Array<Path>) {
+    files.forEach { serveFile(it) }
   }
 
   fun serveFile(file: Path) {

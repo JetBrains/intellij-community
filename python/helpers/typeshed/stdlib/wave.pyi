@@ -3,6 +3,11 @@ from _typeshed import ReadableBuffer, Self
 from typing import IO, Any, BinaryIO, NamedTuple, NoReturn, Union, overload
 from typing_extensions import Literal
 
+if sys.version_info >= (3, 9):
+    __all__ = ["open", "Error", "Wave_read", "Wave_write"]
+else:
+    __all__ = ["open", "openfp", "Error", "Wave_read", "Wave_write"]
+
 _File = Union[str, IO[bytes]]
 
 class Error(Exception): ...

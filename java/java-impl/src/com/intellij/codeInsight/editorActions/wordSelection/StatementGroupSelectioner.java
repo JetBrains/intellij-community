@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,12 +38,7 @@ public class StatementGroupSelectioner extends BasicSelectioner {
     while (startElement.getPrevSibling() != null) {
       PsiElement sibling = startElement.getPrevSibling();
 
-      if (sibling instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)sibling;
-        if (token.getTokenType() == JavaTokenType.LBRACE) {
-          break;
-        }
-      }
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.LBRACE)) break;
 
       if (sibling instanceof PsiWhiteSpace) {
         PsiWhiteSpace whiteSpace = (PsiWhiteSpace)sibling;
@@ -65,12 +61,7 @@ public class StatementGroupSelectioner extends BasicSelectioner {
     while (endElement.getNextSibling() != null) {
       PsiElement sibling = endElement.getNextSibling();
 
-      if (sibling instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)sibling;
-        if (token.getTokenType() == JavaTokenType.RBRACE) {
-          break;
-        }
-      }
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.RBRACE)) break;
 
       if (sibling instanceof PsiWhiteSpace) {
         PsiWhiteSpace whiteSpace = (PsiWhiteSpace)sibling;

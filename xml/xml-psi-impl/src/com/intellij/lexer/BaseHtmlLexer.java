@@ -55,7 +55,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
       .filter(this::acceptEmbeddedContentProvider)
-      .collect(Collectors.toUnmodifiableList());
+      .toList();
     myTagEmbedmentStartTokens = createTagEmbedmentStartTokenSet();
     myAttributeEmbedmentTokens = createAttributeEmbedmentTokenSet();
   }

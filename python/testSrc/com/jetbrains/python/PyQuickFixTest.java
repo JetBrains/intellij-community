@@ -747,6 +747,13 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
   }
 
+  // PY-53671
+  public void testChangeSignatureOfExportedBoundMethod() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b, <b>i</b>)</html>", "mod.py");
+    });
+  }
+
   // PY-8174
   public void testChangeSignatureParametersDefaultValues() {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);

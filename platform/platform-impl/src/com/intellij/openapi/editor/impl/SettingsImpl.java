@@ -3,7 +3,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -81,13 +80,13 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace;
   private Boolean myIsRefrainFromScrolling;
   private Boolean myUseSoftWraps;
+  private boolean myPaintSoftWraps = true;
   private Boolean myUseCustomSoftWrapIndent;
   private Integer myCustomSoftWrapIndent;
   private Boolean myRenamePreselect;
   private Boolean myWrapWhenTypingReachesRightMargin;
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
-  private Boolean myShowVisualFormattingLayer;
 
   private List<Integer> mySoftMargins;
 
@@ -689,6 +688,16 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean isPaintSoftWraps() {
+    return myPaintSoftWraps;
+  }
+
+  @Override
+  public void setPaintSoftWraps(boolean val) {
+    myPaintSoftWraps = val;
+  }
+
+  @Override
   public boolean isUseCustomSoftWrapIndent() {
     return myUseCustomSoftWrapIndent == null ? EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent()
                                              : myUseCustomSoftWrapIndent;
@@ -774,14 +783,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  @Nullable
-  public Boolean isShowVisualFormattingLayer() {
-    return myShowVisualFormattingLayer;
+  public boolean isInsertParenthesesAutomatically() {
+    return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically();
   }
-
-  @Override
-  public void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {
-    myShowVisualFormattingLayer = showVisualFormattingLayer;
-  }
-
 }

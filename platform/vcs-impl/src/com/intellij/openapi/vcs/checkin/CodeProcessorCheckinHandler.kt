@@ -54,12 +54,9 @@ abstract class CodeProcessorCheckinHandler(
   override fun showDetails(problem: CommitProblem) = Unit
 
   /**
-   * Won't be called for Commit Tool Window as [CommitCheck] is implemented.
-   *
-   * @see com.intellij.vcs.commit.NonModalCommitWorkflow.runMetaHandler
+   * Do nothing - interface is implemented to override execution order.
    */
-  override fun runCheckinHandlers(runnable: Runnable) =
-    throw UnsupportedOperationException("Commit Dialog is not supported")
+  override fun runCheckinHandlers(runnable: Runnable) = runnable.run()
 }
 
 internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {

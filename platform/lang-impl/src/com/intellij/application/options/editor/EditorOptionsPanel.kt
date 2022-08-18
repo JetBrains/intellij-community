@@ -353,7 +353,7 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
           row { checkBox(cdShowQuickDocOnMouseMove) }
         }
       }
-      if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
+      if (!EditorOptionsPageCustomizer.EP_NAME.extensionList.any { it.shouldHideRefactoringsSection() }) {
         group(message("group.refactorings")) {
           buttonsGroup(message("radiogroup.rename.local.variables")) {
             row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }

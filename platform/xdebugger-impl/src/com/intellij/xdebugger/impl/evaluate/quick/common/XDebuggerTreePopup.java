@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
@@ -75,7 +76,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
   }
 
   protected JComponent createPopupContent(Tree tree) {
-    tree.setBackground(UIUtil.getToolTipBackground());
+    tree.setBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getToolTipBackground());
     return ScrollPaneFactory.createScrollPane(tree, true);
   }
 

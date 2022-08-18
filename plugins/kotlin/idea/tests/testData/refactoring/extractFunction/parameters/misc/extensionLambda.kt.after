@@ -1,4 +1,4 @@
-// PARAM_DESCRIPTOR: local final fun Builder.<anonymous>(): kotlin.Unit defined in test.<anonymous>
+// PARAM_DESCRIPTOR: local final fun Builder.`<anonymous>`(): kotlin.Unit defined in test.`<anonymous>`
 // PARAM_TYPES: Builder
 
 class Builder()

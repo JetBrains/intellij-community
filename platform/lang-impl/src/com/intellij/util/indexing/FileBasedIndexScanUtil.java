@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,14 +64,18 @@ public final class FileBasedIndexScanUtil {
     return result == null ? null : processor.getResults();
   }
 
+  /**
+   * Basically this method implements processAllKeys() for the indexes that could be implemented without index -- usually by direct
+   * scan of apt subset of VFS
+   */
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
                                               @NotNull Processor<? super K> processor,
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       //noinspection unchecked
-      return FSRecords.processAllNames((Processor<String>)processor);
+      return FSRecords.processAllNames((Processor<CharSequence>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
@@ -107,7 +111,7 @@ public final class FileBasedIndexScanUtil {
                                                        @NotNull GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
@@ -229,7 +233,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable IdFilter idFilter,
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
@@ -269,24 +273,34 @@ public final class FileBasedIndexScanUtil {
     FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
     FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
     DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     return file -> {
-      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return null;
+      IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, indexedFile)) return null;
       int fileId = FileBasedIndex.getFileId(file);
-      if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
-        try {
-          return index.getIndexedFileData(fileId);
+      Document document = fileDocumentManager.getCachedDocument(file);
+      boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
+      try {
+        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile) == FileIndexingState.UP_TO_DATE) {
+          try {
+            return index.getIndexedFileData(fileId);
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (StorageException e) {
-          throw new RuntimeException(e);
-        }
+        FileContent content = getFileContent(file, project, binary);
+        Map<K, V> map = content == null ? null : indexer.map(content);
+        if (unsavedDocument) return map;
+        InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
+        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        return map;
       }
-      FileContent content = getFileContent(file, project, binary);
-      Map<K, V> map = content == null ? null : indexer.map(content);
-      InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
-      Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
-      ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-      IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
-      return map;
+      finally {
+        IndexingStamp.flushCache(fileId);
+      }
     };
   }
 

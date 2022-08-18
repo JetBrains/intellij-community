@@ -133,7 +133,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setAccessibleName(LangBundle.message("intention.name.convert.number.to"))
-      .setTitle(StringUtil.wordsToBeginFromUpperCase(LangBundle.message("intention.name.convert.number.to")))
+      .setTitle(LangBundle.message("intention.name.convert.number.to.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)

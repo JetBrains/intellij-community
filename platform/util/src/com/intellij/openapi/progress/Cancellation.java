@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
@@ -50,9 +50,9 @@ public final class Cancellation {
    * Installs the given job as {@link Cancellation#currentJob() current}, runs {@code action}, and returns its result.
    * If the given job becomes cancelled, then {@code ProgressManager#checkCanceled} will throw an instance
    * of the special {@link ProcessCanceledException} subclass inside the given action,
-   * and this method will throw the original cancellation exception of the job.
+   * and this method will throw the cancellation exception wrapping PCE.
    */
-  public static <T, E extends Throwable> T withJob(
+  public static <T, E extends Throwable> T withCurrentJob(
     @NotNull Job job,
     @NotNull ThrowableComputable<T, E> action
   ) throws E, CancellationException {
@@ -65,7 +65,45 @@ public final class Cancellation {
       if (!job.isCancelled()) {
         throw new IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e);
       }
-      throw e.getCause();
+      throw new CurrentJobCancellationException(e);
+    }
+  }
+
+  public static @Nullable Throwable getCause(@NotNull CancellationException ce) {
+    if (ce instanceof CurrentJobCancellationException) {
+      return ((CurrentJobCancellationException)ce).getOriginalCancellationException().getCause();
+    }
+    else {
+      return ce.getCause();
+    }
+  }
+
+  /**
+   * {@code true} if running in non-cancelable section started with {@link #computeInNonCancelableSection)} in this thread,
+   * otherwise {@code false}
+   */
+  // do not supply initial value to conserve memory
+  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>();
+
+  public static boolean isInNonCancelableSection() {
+    return isInNonCancelableSection.get() != null;
+  }
+
+  public static <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
+    try {
+      if (isInNonCancelableSection()) {
+        return computable.compute();
+      }
+      try {
+        isInNonCancelableSection.set(Boolean.TRUE);
+        return computable.compute();
+      }
+      finally {
+        isInNonCancelableSection.remove();
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
     }
   }
 }

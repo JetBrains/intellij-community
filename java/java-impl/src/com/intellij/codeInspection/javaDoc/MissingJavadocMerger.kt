@@ -2,37 +2,55 @@
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase
+import com.intellij.openapi.util.JDOMExternalizerUtil
 import org.jdom.Element
 
 class MissingJavadocMerger: InspectionElementsMergerBase() {
   override fun getMergedToolName(): String = "MissingJavadoc"
   override fun getSourceToolNames(): Array<String> = arrayOf("JavaDoc")
   override fun transformElement(sourceToolName: String, sourceElement: Element, toolElement: Element): Element {
-    val oldInspection = JavaDocLocalInspection()
-    oldInspection.readSettings(sourceElement)
     val newInspection = MissingJavadocInspection()
-    newInspection.IGNORE_ACCESSORS = oldInspection.isIgnoreSimpleAccessors
-    newInspection.IGNORE_DEPRECATED_ELEMENTS = oldInspection.IGNORE_DEPRECATED
-    newInspection.PACKAGE_SETTINGS = transformOptions(oldInspection.PACKAGE_OPTIONS)
-    newInspection.MODULE_SETTINGS = transformOptions(oldInspection.MODULE_OPTIONS)
-    newInspection.TOP_LEVEL_CLASS_SETTINGS = transformOptions(oldInspection.TOP_LEVEL_CLASS_OPTIONS)
-    newInspection.INNER_CLASS_SETTINGS = transformOptions(oldInspection.INNER_CLASS_OPTIONS)
-    newInspection.FIELD_SETTINGS = transformOptions(oldInspection.FIELD_OPTIONS)
-    newInspection.METHOD_SETTINGS = transformOptions(oldInspection.METHOD_OPTIONS)
+    val ignoreAccessors = JDOMExternalizerUtil.readCustomField(sourceElement, "IGNORE_ACCESSORS")?.toBooleanStrictOrNull()
+    if (ignoreAccessors != null) {
+      newInspection.IGNORE_ACCESSORS = ignoreAccessors
+    }
+    val ignoreDeprecated = JDOMExternalizerUtil.readField(sourceElement, "IGNORE_DEPRECATED")?.toBooleanStrictOrNull()
+    if (ignoreDeprecated != null) {
+      newInspection.IGNORE_DEPRECATED_ELEMENTS = ignoreDeprecated
+    }
+    readOptions(newInspection.PACKAGE_SETTINGS, sourceElement)
+    readOptions(newInspection.MODULE_SETTINGS, JDOMExternalizerUtil.readOption(sourceElement, "MODULE_OPTIONS"))
+    readOptions(newInspection.TOP_LEVEL_CLASS_SETTINGS, getFieldValue(sourceElement, "TOP_LEVEL_CLASS_OPTIONS"))
+    readOptions(newInspection.INNER_CLASS_SETTINGS, getFieldValue(sourceElement, "INNER_CLASS_OPTIONS"))
+    readOptions(newInspection.FIELD_SETTINGS, getFieldValue(sourceElement, "FIELD_OPTIONS"))
+    readOptions(newInspection.METHOD_SETTINGS, getFieldValue(sourceElement, "METHOD_OPTIONS"))
     newInspection.writeSettings(toolElement)
     return toolElement
   }
 
-  private fun transformOptions(oldOption: JavaDocLocalInspection.Options): MissingJavadocInspection.Options {
-    val newOption = MissingJavadocInspection.Options()
-    newOption.ENABLED = oldOption.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE
-    if (oldOption.ACCESS_JAVADOC_REQUIRED_FOR.equals(JavaDocLocalInspection.NONE)) {
-      newOption.MINIMAL_VISIBILITY = JavaDocLocalInspection.PUBLIC
+  override fun writeMergedContent(toolElement: Element): Boolean {
+    return true
+  }
+
+  override fun isEnabledByDefault(sourceToolName: String): Boolean {
+    return false
+  }
+
+  private fun getFieldValue(sourceElement: Element, field: String) = JDOMExternalizerUtil.readOption(sourceElement, field)?.getChild("value")
+
+  private fun readOptions(options: MissingJavadocInspection.Options, element: Element?)  {
+    //default scope in previous inspection was "none" which is equivalent to disabled settings
+    options.ENABLED = false
+    if (element == null) return
+    val requiredTags = JDOMExternalizerUtil.readField(element, "REQUIRED_TAGS")
+    if (requiredTags != null) {
+      options.REQUIRED_TAGS = requiredTags
     }
-    else {
-      newOption.MINIMAL_VISIBILITY = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
+
+    val requiredAccess = JDOMExternalizerUtil.readField(element, "ACCESS_JAVADOC_REQUIRED_FOR")
+    if (requiredAccess != null) {
+      options.ENABLED = requiredAccess != "none"
+      options.MINIMAL_VISIBILITY = requiredAccess.takeIf { it != "none" } ?: MissingJavadocInspection.PUBLIC
     }
-    newOption.REQUIRED_TAGS = oldOption.REQUIRED_TAGS
-    return newOption
   }
 }

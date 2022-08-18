@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
 
 class KotlinProjectDescriptorWithFacet(
@@ -42,7 +43,8 @@ class KotlinProjectDescriptorWithFacet(
     companion object {
         val KOTLIN_10 = KotlinProjectDescriptorWithFacet(LanguageVersion.KOTLIN_1_0)
         val KOTLIN_11 = KotlinProjectDescriptorWithFacet(LanguageVersion.KOTLIN_1_1)
-        val KOTLIN_STABLE_WITH_MULTIPLATFORM = KotlinProjectDescriptorWithFacet(LanguageVersion.LATEST_STABLE, multiPlatform = true)
+        val KOTLIN_STABLE_WITH_MULTIPLATFORM =
+            KotlinProjectDescriptorWithFacet(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, multiPlatform = true)
     }
 }
 

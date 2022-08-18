@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -76,7 +76,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * <p>
    * The {@code task} might be executed several times, it may be cancelled on write action,
    * and then restarted again once write action is finished.
-   * If the client doesn’t expect a result, then the task is mutating some outer state,
+   * If the client doesn't expect a result, then the task is mutating some outer state,
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
    */
@@ -120,5 +120,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
     @Internal
     public CannotReadException() { super(); }
+
+    @Internal
+    public CannotReadException(@NotNull Throwable cause) {
+      super(cause);
+    }
   }
 }

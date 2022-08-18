@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnumerationCanBeIterationInspection extends BaseInspection {
+public class EnumerationCanBeIterationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final int KEEP_NOTHING = 0;
   static final int KEEP_INITIALIZATION = 1;
@@ -247,9 +249,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
     }
 
     /**
-     * @return true if the initialization of the Enumeration variable can
-     * be deleted.
+     * @return {@link #KEEP_NOTHING} if both the variable declaration and initialization can be deleted;
+     * {@link #KEEP_DECLARATION} if the initialization of the Enumeration variable can be deleted but the variable must be kept;
+     * {@link #KEEP_INITIALIZATION} if the variable along with initialization should be preserved.
      */
+    @MagicConstant(valuesFromClass = EnumerationCanBeIterationInspection.class)
     private static int replaceMethodCalls(PsiVariable enumerationVariable, int startOffset, String newVariableName) {
       final PsiManager manager = enumerationVariable.getManager();
       final Project project = manager.getProject();
@@ -263,7 +267,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         referenceElements.add(referenceElement);
       }
       referenceElements.sort(PsiElementOrderComparator.getInstance());
-      int result = 0;
+      int result = KEEP_NOTHING;
       for (PsiElement referenceElement : referenceElements) {
         if (!(referenceElement instanceof PsiReferenceExpression)) {
           result = KEEP_DECLARATION;
@@ -337,7 +341,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
       final SuggestedNameInfo nameInfo =
         codeStyleManager.suggestUniqueVariableName(baseNameInfo,
                                                    context, true);
-      if (nameInfo.names.length <= 0) {
+      if (nameInfo.names.length == 0) {
         return "iterator";
       }
       return nameInfo.names[0];
@@ -349,7 +353,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
@@ -400,12 +404,12 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
       if (!isEnumerationMethodCalled(variable, containingMethod)) {
         return;
       }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
       if (isElements) {
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass containingClass = method.getContainingClass();
         if (InheritanceUtil.isInheritor(containingClass,
                                         "java.util.Vector")) {
           registerMethodCallError(expression, ITERATOR_TEXT);
@@ -416,11 +420,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         }
       }
       else {
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass containingClass = method.getContainingClass();
         if (InheritanceUtil.isInheritor(containingClass,
                                         "java.util.Hashtable")) {
           registerMethodCallError(expression, KEY_SET_ITERATOR_TEXT);
@@ -448,7 +447,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
       @Override
       public void visitMethodCallExpression(
-        PsiMethodCallExpression expression) {
+        @NotNull PsiMethodCallExpression expression) {
         if (enumerationMethodCalled) {
           return;
         }

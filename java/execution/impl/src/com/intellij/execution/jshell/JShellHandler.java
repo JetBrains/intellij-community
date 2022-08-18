@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,32 +68,32 @@ public final class JShellHandler {
   private static final Executor EXECUTOR = DefaultRunExecutor.getRunExecutorInstance();
   private static final String JSHELL_FRONTEND_JAR = "jshell-frontend.jar";
 
-  private final Project myProject;
-  private final RunContentDescriptor myRunContent;
-  private final ConsoleViewImpl myConsoleView;
-  private final OSProcessHandler myProcess;
-  private final MessageReader<Response> myMessageReader;
-  private final MessageWriter<Request> myMessageWriter;
-  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+  private final @NotNull Project myProject;
+  private final @NotNull RunContentDescriptor myRunContent;
+  private final @NotNull ConsoleViewImpl myConsoleView;
+  private final @NotNull OSProcessHandler myProcessHandler;
+  private final @NotNull MessageReader<Response> myMessageReader;
+  private final @NotNull MessageWriter<Request> myMessageWriter;
+  private final @NotNull ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     ExecutionBundle.message("jshell.command.queue"));
   private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,
-                        RunContentDescriptor descriptor,
-                        ConsoleViewImpl view,
-                        VirtualFile contentFile,
-                        OSProcessHandler handler) throws Exception {
+                        @NotNull RunContentDescriptor descriptor,
+                        @NotNull ConsoleViewImpl consoleView,
+                        @NotNull VirtualFile contentFile,
+                        @NotNull OSProcessHandler processHandler) throws Exception {
     myProject = project;
     myRunContent = descriptor;
-    myConsoleView = view;
-    myProcess = handler;
+    myConsoleView = consoleView;
+    myProcessHandler = processHandler;
 
     final PipedInputStream is = new PipedInputStream();
     final OutputStreamWriter readerSink = new OutputStreamWriter(new PipedOutputStream(is), StandardCharsets.UTF_8);
     myMessageReader = new MessageReader<>(is, Response.class);
-    myMessageWriter = new MessageWriter<>(handler.getProcessInput());
+    myMessageWriter = new MessageWriter<>(processHandler.getProcessInput());
 
-    handler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDOUT) {
@@ -134,18 +135,18 @@ public final class JShellHandler {
     });
 
     contentFile.putUserData(MARKER_KEY, this);
-    view.attachToProcess(handler);
+    consoleView.attachToProcess(processHandler);
   }
 
-  @Nullable
-  public static JShellHandler getAssociatedHandler(VirtualFile contentFile) {
-    return contentFile != null? contentFile.getUserData(MARKER_KEY) : null;
+  public static @Nullable JShellHandler getAssociatedHandler(@NotNull VirtualFile virtualFile) {
+    return virtualFile.getUserData(MARKER_KEY);
   }
 
-  public static @NotNull JShellHandler create(@NotNull final Project project,
-                                              @NotNull final VirtualFile contentFile,
+  @RequiresEdt
+  public static @NotNull JShellHandler create(@NotNull Project project,
+                                              @NotNull VirtualFile contentFile,
                                               @Nullable Module module,
-                                              @Nullable Sdk alternateSdk) throws Exception{
+                                              @Nullable Sdk alternateSdk) throws Exception {
     final OSProcessHandler processHandler = launchProcess(project, module, alternateSdk);
 
     final String title = JShellDiagnostic.TITLE + " " + contentFile.getNameWithoutExtension();
@@ -156,8 +157,9 @@ public final class JShellHandler {
 
     // init classpath for evaluation
     final Set<String> cp = new LinkedHashSet<>();
-    final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
-                                                                       : () -> ProjectRootManager.getInstance(project).orderEntries();
+    final Computable<OrderEnumerator> orderEnumerator = module != null ?
+                                                        () -> ModuleRootManager.getInstance(module).orderEntries() :
+                                                        () -> ProjectRootManager.getInstance(project).orderEntries();
     ApplicationManager.getApplication().runReadAction(() -> {
       cp.addAll(orderEnumerator.compute().librariesOnly().recursively().withoutSdk().getPathsList().getPathList());
     });
@@ -292,7 +294,7 @@ public final class JShellHandler {
   }
 
   public void stop() {
-    myProcess.destroyProcess(); // use force
+    myProcessHandler.destroyProcess(); // use force
     RunContentManager.getInstance(myProject).removeRunContent(EXECUTOR, myRunContent);
   }
 
@@ -315,7 +317,7 @@ public final class JShellHandler {
 
   @Nullable
   private Response sendInput(final Request request) {
-    final boolean alive = !myProcess.isProcessTerminating() && !myProcess.isProcessTerminated();
+    final boolean alive = !myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated();
     if (alive) {
       // consume evaluation classpath, if any
       final Collection<String> cp = myEvalClasspathRef.getAndSet(null);

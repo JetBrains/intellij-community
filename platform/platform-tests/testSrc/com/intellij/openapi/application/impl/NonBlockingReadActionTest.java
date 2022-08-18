@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -32,12 +32,14 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -451,13 +453,12 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   private static void watchLoggedExceptions(Consumer<? super AtomicReference<Throwable>> runnable) {
     AtomicReference<Throwable> loggedError = new AtomicReference<>();
-
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         assertNotNull(t);
         loggedError.set(t);
-        return false;
+        return Action.NONE;
       }
     }, ()->runnable.accept(loggedError));
   }
@@ -553,6 +554,31 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       parents.forEach(Disposer::dispose);
 
       futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+    }
+  }
+
+  public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+
+    for (int i = 0; i < 50; i++) {
+      List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+      List<Future<?>> futuresList = new ArrayList<>();
+      for (Disposable disposable : disposables) {
+        futuresList.add(executor.submit(() -> {
+          try {
+            Boolean value = ReadAction.nonBlocking(() -> {
+              return Boolean.TRUE;
+            }).expireWith(disposable).executeSynchronously();
+            assertNotNull(value);
+          }
+          catch (ProcessCanceledException e) {
+            //valid outcome
+          }
+        }));
+      }
+      disposables.forEach(Disposer::dispose);
+
+      futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
 }

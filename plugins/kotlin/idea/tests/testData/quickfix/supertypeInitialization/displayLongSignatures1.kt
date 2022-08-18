@@ -1,6 +1,9 @@
 // "Add constructor parameters from Base(Int)" "true"
 // ACTION: Add constructor parameters from Base(Char, Char, String, Int, Any?,...)
 // ACTION: Add constructor parameters from Base(Char, Char, String?, Int, Any?)
+// ACTION: Add constructor parameters from Base(Int)
+// ACTION: Change to constructor invocation
+// ACTION: Introduce import alias
 
 open class Base {
     constructor(p: Int){}

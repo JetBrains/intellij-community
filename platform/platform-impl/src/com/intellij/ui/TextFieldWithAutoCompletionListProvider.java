@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -39,8 +40,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Roman.Chernyatchik
  */
-public abstract class TextFieldWithAutoCompletionListProvider<T> extends DefaultTextCompletionValueDescriptor<T> implements
-                                                                                                                 TextCompletionProvider {
+public abstract class TextFieldWithAutoCompletionListProvider<T> extends DefaultTextCompletionValueDescriptor<T>
+  implements TextCompletionProvider, PossiblyDumbAware {
+
   private static final Logger LOG = Logger.getInstance(TextFieldWithAutoCompletionListProvider.class);
   @NotNull
   protected Collection<T> myVariants;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.openapi.application.ReadAction;
@@ -62,7 +62,6 @@ public class SceneBuilderImpl implements SceneBuilder {
   private final EditorCallback myEditorCallback;
   private final JComponent myPanel = JavaFXPlatformHelper.createJFXPanel();
 
-  private @Nullable PsiClass nodeClass;
   protected EditorController myEditorController;
   private URLClassLoader myClassLoader;
   private volatile Collection<JavaFXPlatformHelper.CustomComponent> myCustomComponents;
@@ -95,9 +94,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
     Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
-    nodeClass = ReadAction.nonBlocking(() -> JavaPsiFacade.getInstance(myProject)
-        .findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject)))
-      .executeSynchronously();
     myEditorController = new EditorController();
     updateCustomLibrary();
     JavaFXPlatformHelper.setupJFXPanel(myPanel, myEditorController);
@@ -149,6 +145,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
+     PsiClass nodeClass = JavaPsiFacade.getInstance(myProject).findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
+
     if (nodeClass == null) {
       return Collections.emptyList();
     }
@@ -256,7 +254,6 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   private void closeImpl() {
     JavaFXPlatformHelper.removeListeners(myEditorController, myListener, mySelectionListener);
-    nodeClass = null;
     myEditorController = null;
     try {
       if (myClassLoader != null) {
@@ -409,7 +406,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @NotNull
-  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
+  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
     final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();

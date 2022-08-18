@@ -88,13 +88,13 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
       super.visitEnumConstant(enumConstant);
       visitCall(enumConstant);
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression call) {
+    public void visitCallExpression(@NotNull PsiCallExpression call) {
       super.visitCallExpression(call);
       visitCall(call);
     }

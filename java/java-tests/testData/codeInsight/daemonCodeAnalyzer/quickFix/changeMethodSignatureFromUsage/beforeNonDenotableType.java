@@ -1,4 +1,4 @@
-// "Remove 2nd parameter from method 'foo'" "true"
+// "Remove 2nd parameter from method 'foo'" "true-preview"
 class Test {
 
   private List<? extends CharSequence> sequences = null;

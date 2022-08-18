@@ -16,23 +16,36 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class InsertMethodCallFix implements IntentionAction, LowPriorityAction {
-  private final PsiMethodCallExpression myCall;
-  private final String myMethodName;
+public class InsertMethodCallFix implements IntentionActionWithFixAllOption, LowPriorityAction {
+  private final @NotNull PsiMethodCallExpression myCall;
+  private final @NotNull String myMethodName;
 
-  public InsertMethodCallFix(PsiMethodCallExpression call, PsiMethod method) {
+  public InsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull PsiMethod method) {
+    this(call, method.getName());
+  }
+
+  private InsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull String name) {
     myCall = call;
-    myMethodName = method.getName();
+    myMethodName = name;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new InsertMethodCallFix(PsiTreeUtil.findSameElementInCopy(myCall, target), myMethodName);
   }
 
   @Nls

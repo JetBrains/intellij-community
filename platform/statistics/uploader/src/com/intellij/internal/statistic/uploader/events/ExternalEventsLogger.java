@@ -17,13 +17,15 @@ import java.util.logging.*;
 import static com.intellij.internal.statistic.uploader.ExternalDataCollectorLogger.findDirectory;
 
 public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
+  private static final int CURRENT_VERSION = 1;
+
   @SuppressWarnings("NonConstantLogger") @NonNls private final Logger myLogger;
 
   public ExternalEventsLogger() {
     myLogger = Logger.getLogger("com.intellij.internal.statistic.uploader.events");
     String logDirectory = findDirectory(1_000_000L);
     if (logDirectory != null) {
-      myLogger.addHandler(newAppender(getEventLogFile(logDirectory).getAbsolutePath()));
+      myLogger.addHandler(newAppender(getEventLogFile(logDirectory, CURRENT_VERSION).getAbsolutePath()));
       myLogger.setLevel(Level.ALL);
     }
   }
@@ -49,32 +51,39 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   }
 
   @NotNull
-  private static File getEventLogFile(@NotNull String logDirectory) {
-    return new File(logDirectory, "idea_statistics_uploader_events.log");
+  private static File getEventLogFile(@NotNull String logDirectory, int version) {
+    return new File(logDirectory, "idea_statistics_uploader_events_v" + version + ".log");
   }
 
   public void logSendingLogsStarted() {
-    logEvent(new ExternalUploadStartedEvent(System.currentTimeMillis()));
+    logEvent(new ExternalUploadStartedEvent(System.currentTimeMillis(), null));
   }
 
   public void logSendingLogsFinished(@NotNull String error) {
-    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error));
+    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error, null));
   }
 
-  public void logSendingLogsFinished(@NotNull StatisticsResult.ResultCode code) {
+  public void logSendingLogsFinished(@NotNull String recorderId, @NotNull String error) {
+    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error, recorderId));
+  }
+
+  public void logSendingLogsFinished(@NotNull String recorderId, @NotNull StatisticsResult.ResultCode code) {
     String error = code == StatisticsResult.ResultCode.SEND ? null : code.name();
-    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error));
+    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error, recorderId));
   }
 
-  public void logSendingLogsSucceed(@NotNull List<String> successfullySentFiles, @NotNull List<Integer> errors, int total) {
+  public void logSendingLogsSucceed(@NotNull String recorderId,
+                                    @NotNull List<String> successfullySentFiles,
+                                    @NotNull List<Integer> errors,
+                                    int total) {
     int succeed = successfullySentFiles.size();
     int failed = errors.size();
-    logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total, successfullySentFiles, errors));
+    logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total, successfullySentFiles, errors, recorderId));
   }
 
   @Override
-  public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
-    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception));
+  public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
+    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception, recorderId));
   }
 
   private void logEvent(@NotNull ExternalSystemEvent event) {
@@ -83,12 +92,12 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
 
   @NotNull
   public static List<ExternalSystemEvent> parseEvents(@NotNull File directory) throws IOException {
-    File file = getEventLogFile(directory.getAbsolutePath());
-    List<String> lines = file.exists() ? Files.readAllLines(file.toPath()) : Collections.emptyList();
+    VersionedFile versionedFile = VersionedFile.find(directory.getAbsolutePath());
+    List<String> lines = versionedFile.file.exists() ? Files.readAllLines(versionedFile.file.toPath()) : Collections.emptyList();
     if (!lines.isEmpty()) {
       List<ExternalSystemEvent> events = new ArrayList<>();
       for (String line : lines) {
-        ExternalSystemEvent event = ExternalSystemEventSerializer.deserialize(line);
+        ExternalSystemEvent event = ExternalSystemEventSerializer.deserialize(line, versionedFile.version);
         if (event != null) {
           events.add(event);
         }
@@ -96,5 +105,26 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
       return events;
     }
     return Collections.emptyList();
+  }
+
+  private static class VersionedFile {
+    protected final File file;
+    protected final int version;
+
+    private VersionedFile(@NotNull File file, int version) {
+      this.file = file;
+      this.version = version;
+    }
+
+    protected static @NotNull ExternalEventsLogger.VersionedFile find(@NotNull String logDirectory) {
+      int version = 0;
+      File file = new File(logDirectory, "idea_statistics_uploader_events.log");
+
+      if (!file.exists()) {
+        version++;
+        file = getEventLogFile(logDirectory, version);
+      }
+      return new VersionedFile(file, version);
+    }
   }
 }

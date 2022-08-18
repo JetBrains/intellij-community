@@ -265,12 +265,10 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
             }
         } else {
             // clear Main Menu: remove all except first (AppMenu)
-            id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
-            if (appMenu != nil) {
-                [appMenu retain];
-                [mainMenu removeAllItems];
-                [mainMenu addItem:appMenu];
-                [appMenu release];
+            if ([mainMenu numberOfItems] > 0) {
+                for (int i = [mainMenu numberOfItems]; i - 1 > 0; i--) {
+                    [mainMenu removeItemAtIndex:i - 1];
+                }
             }
         }
 
@@ -410,11 +408,66 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeFindItemByTitle(JNIEnv *env, jobj
  */
 JNIEXPORT jlong JNICALL
 Java_com_intellij_ui_mac_screenmenu_Menu_nativeGetAppMenu(JNIEnv *env, jclass peerClass) {
-    NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
-    id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
-    if (appMenu != nil) {
-        appMenu = [appMenu submenu];
-        [appMenu retain];
+    JNI_COCOA_ENTER();
+    __block id appMenu = nil;
+    dispatch_block_t block = ^{
+        NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
+        appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
+        if (appMenu != nil) {
+            appMenu = [appMenu submenu];
+            [appMenu retain];
+        }
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async_and_wait(dispatch_get_main_queue(), block);
     }
     return (jlong)appMenu;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeRenameAppMenuItems
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeRenameAppMenuItems(JNIEnv *env, jclass peerClass, jobjectArray jStringArray) {
+    JNI_COCOA_ENTER();
+    const int stringCount = (*env)->GetArrayLength(env, jStringArray);
+    if (stringCount < 2) return; // simple protection (just for insurance)
+    NSMutableArray * __strong stringArray = [NSMutableArray arrayWithCapacity:stringCount];
+    for (int i = 0; i < stringCount; i += 2) {
+        jstring jTitle = (jstring) ((*env)->GetObjectArrayElement(env, jStringArray, i));
+        [stringArray addObject:JavaStringToNSString(env, jTitle)];
+        if (i + 1 >= stringCount) return; // simple protection (just for insurance)
+        jstring jLocalizedTitle = (jstring) ((*env)->GetObjectArrayElement(env, jStringArray, i + 1));
+        [stringArray addObject:JavaStringToNSString(env, jLocalizedTitle)];
+    }
+
+    dispatch_block_t block = ^{
+        NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
+        id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
+        if (appMenu != nil) {
+            appMenu = [appMenu submenu];
+        }
+        for (int i = 0; i < stringCount; i += 2) {
+            NSString * title = [stringArray objectAtIndex:i];
+            NSString * localizedTitle = [stringArray objectAtIndex:i + 1];
+            NSMenuItem * item = findItemByTitle(appMenu, title);
+            if (item != nil) {
+                 [item setTitle:localizedTitle];
+                 if ([item.view isKindOfClass:CustomMenuItemView.class]) {
+                     [(CustomMenuItemView *)(item.view) recalcSizes];
+                 }
+            }
+        }
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
+    JNI_COCOA_EXIT();
 }

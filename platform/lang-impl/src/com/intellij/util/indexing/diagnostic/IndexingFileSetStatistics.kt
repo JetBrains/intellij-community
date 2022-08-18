@@ -19,7 +19,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     const val SLOW_FILE_PROCESSING_THRESHOLD_MS = 500
   }
 
-  var indexingTimeInAllThreads: TimeNano = 0
+  var processingTimeInAllThreads: TimeNano = 0
 
   var contentLoadingTimeInAllThreads: TimeNano = 0
 
@@ -45,7 +45,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
   data class StatsPerIndexer(
-    var indexingTime: TimeNano,
+    var evaluateIndexValueChangerTime: TimeNano,
     var numberOfFiles: Int,
     var numberOfFilesIndexedByExtensions: Int,
     var totalBytes: BytesNumber
@@ -72,14 +72,17 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       numberOfFilesFullyIndexedByExtensions++
       listOfFilesFullyIndexedByExtensions.add(file.toString())
     }
-    indexingTimeInAllThreads += processingTime
+    processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
-    val perIndexerTimes = fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes
-    perIndexerTimes.forEach { (indexId, time) ->
+    val perIndexerEvaluationOfValueChangerTimes = fileStatistics.perIndexerEvaluateIndexValueTimes.toMutableMap()
+    fileStatistics.perIndexerEvaluatingIndexValueRemoversTimes.forEach { (indexId, time) ->
+      perIndexerEvaluationOfValueChangerTimes[indexId] = time + perIndexerEvaluationOfValueChangerTimes.getOrDefault(indexId, 0)
+    }
+    perIndexerEvaluationOfValueChangerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(0, 0, 0, 0)
       }
-      stats.indexingTime += time
+      stats.evaluateIndexValueChangerTime += time
       stats.numberOfFiles++
       if (indexId in fileStatistics.indexesProvidedByExtensions) {
         stats.numberOfFilesIndexedByExtensions++
@@ -91,7 +94,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       StatsPerFileType(0, 0, 0, 0)
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
-    val indexingTime = perIndexerTimes.values.sum()
+    val evaluationOfIndexValueChangerTime = perIndexerEvaluationOfValueChangerTimes.values.sum()
     stats.processingTimeInAllThreads += processingTime
     stats.totalBytes += fileSize
     stats.numberOfFiles++
@@ -99,7 +102,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
-      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, indexingTime, contentLoadingTime))
+      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
     }
     allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime

@@ -50,7 +50,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
     }
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
 
       final IElementType tokenType = expression.getOperationTokenType();

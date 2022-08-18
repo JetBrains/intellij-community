@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
@@ -17,12 +18,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
@@ -63,7 +64,9 @@ import java.util.function.Supplier;
 public class RecentProjectPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
 
-  public static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeBundle.messagePointer("popup.title.recent.projects");
+  public static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeUICustomization
+    .getInstance()
+    .projectMessagePointer("popup.title.recent.projects");
 
   protected final JBList<AnAction> myList;
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
@@ -152,6 +155,10 @@ public class RecentProjectPanel extends JPanel {
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(true);
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
 
@@ -174,7 +181,6 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
-    ProjectDetector.runDetectors((projects) -> RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(myList.getModel()));
   }
 
   public static Function<? super AnAction, String> createProjectNameFunction() {
@@ -577,7 +583,7 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  private static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
+  public static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
     private ScheduledExecutorService myService = null;
     private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());
@@ -585,7 +591,7 @@ public class RecentProjectPanel extends JPanel {
     private final Runnable myCallback;
     private final Collection<String> myPaths;
 
-    FilePathChecker(Runnable callback, Collection<String> paths) {
+    public FilePathChecker(Runnable callback, Collection<String> paths) {
       myCallback = callback;
       myPaths = paths;
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
@@ -594,7 +600,7 @@ public class RecentProjectPanel extends JPanel {
       onAppStateChanged();
     }
 
-    boolean isValid(String path) {
+    public boolean isValid(String path) {
       return !myInvalidPaths.contains(path);
     }
 

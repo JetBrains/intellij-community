@@ -9,17 +9,20 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -46,6 +49,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.name
@@ -60,7 +64,10 @@ internal open class UpdateIdeFromSourcesAction
 @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
              else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
-             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware, UpdateInBackground {
+             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -136,8 +143,9 @@ internal open class UpdateIdeFromSourcesAction
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
     val params = createScriptJavaParameters(project, deployDir, distRelativePath,
                                             buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
-    ProjectTaskManager.getInstance(project)
-      .buildAllModules()
+    val taskManager = ProjectTaskManager.getInstance(project)
+    taskManager
+      .run(taskManager.createModulesBuildTask(ModuleManager.getInstance(project).modules, true, true, true, false))
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
           runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically)
@@ -299,7 +307,6 @@ internal open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
       val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")
@@ -344,37 +351,64 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
-    updatePlugins(deployDirPath)
+    val pluginsDir = Paths.get(deployDirPath)
+      .resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
+
+    val nonBundledPluginsPaths = lazy { nonBundledPluginsPaths() }
+    readPluginsDir(pluginsDir).forEach { newPluginNode ->
+      updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths.value[it] }
+    }
+
     Restarter.doNotLockInstallFolderOnRestart()
-    (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
+    (ApplicationManagerEx.getApplicationEx() as ApplicationImpl).restart(
+      ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE,
+      command,
+    )
   }
 
-  private fun updatePlugins(deployDirPath: String) {
-    val pluginsDir = Paths.get(deployDirPath).resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
-    val pluginsXml = pluginsDir.resolve("plugins.xml")
+  private fun readPluginsDir(pluginsDirPath: Path): List<PluginNode> {
+    val pluginsXml = pluginsDirPath.resolve("plugins.xml")
     if (!pluginsXml.isFile()) {
       LOG.warn("Cannot read non-bundled plugins from $pluginsXml, they won't be updated")
-      return
+      return emptyList()
     }
-    val plugins = try {
+
+    return try {
       pluginsXml.inputStream().use {
         MarketplaceRequests.parsePluginList(it)
       }
     }
     catch (e: Exception) {
       LOG.error("Failed to parse $pluginsXml", e)
-      return
+      emptyList()
     }
-    val existingCustomPlugins =
-      PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.associateBy { it.pluginId.idString }
-    LOG.debug("Existing custom plugins: $existingCustomPlugins")
-    val pluginsToUpdate =
-      plugins.mapNotNull { node -> existingCustomPlugins[node.pluginId.idString]?.let { it to node } }
-    for ((existing, update) in pluginsToUpdate) {
-      val pluginFile = pluginsDir.resolve(update.downloadUrl)
-      LOG.debug("Adding update command: ${existing.pluginPath} to $pluginFile")
-      PluginInstaller.installAfterRestart(pluginFile, false, existing.pluginPath, update)
-    }
+  }
+
+  private fun nonBundledPluginsPaths(): Map<PluginId, Path> {
+    return PluginManagerCore.getLoadedPlugins()
+      .asSequence()
+      .filterNot { it.isBundled }
+      .associate { it.pluginId to it.pluginPath }
+      .also { LOG.debug("Existing custom plugins: $it") }
+  }
+
+  private fun updateNonBundledPlugin(
+    newDescriptor: PluginNode,
+    pluginsDir: Path,
+    oldPluginPathProvider: (PluginId) -> Path?,
+  ) {
+    assert(!newDescriptor.isBundled)
+    val oldPluginPath = oldPluginPathProvider(newDescriptor.pluginId) ?: return
+
+    val newPluginPath = pluginsDir.resolve(newDescriptor.downloadUrl)
+      .also { LOG.debug("Adding update command: $oldPluginPath to $it") }
+
+    PluginInstaller.installAfterRestart(
+      newDescriptor,
+      newPluginPath,
+      oldPluginPath,
+      false,
+    )
   }
 
   private fun createScriptJavaParameters(project: Project,
@@ -407,7 +441,7 @@ internal open class UpdateIdeFromSourcesAction
     params.classPath.addAll(classpath)
 
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
-    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
+    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
 
     if (buildEnabledPluginsOnly) {
       if (bundledPluginDirsToSkip.isNotEmpty()) {

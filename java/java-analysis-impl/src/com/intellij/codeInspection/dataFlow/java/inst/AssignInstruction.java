@@ -54,9 +54,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myAssignedValue == null) return this;
-    var instruction = new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
   }
 
   @Override

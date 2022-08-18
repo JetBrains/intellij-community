@@ -16,8 +16,8 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class EmptyFinallyBlockInspection extends BaseInspection {
+public class EmptyFinallyBlockInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -153,7 +153,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
         final String childText = child.getText();
         if (PsiKeyword.FINALLY.equals(childText)) {
           final boolean canDeleteTry = statement.getCatchBlocks().length == 0 && statement.getResourceList() == null;
-          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.valueOf(canDeleteTry));
+          registerError(child, Boolean.valueOf(canDeleteTry));
           return;
         }
       }

@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ ******************************************************************************/
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -7,33 +9,24 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.NotABooleanOptionDescription
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.toNullableProperty
 import org.jetbrains.annotations.Nls
-import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
 
 internal val TAB_PLACEMENTS = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
-internal val EXP_UI_TAB_PLACEMENTS = arrayOf(TOP, TABS_NONE)
 
 internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.placement")
 
 internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
 
 internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
-  val model = if (ExperimentalUI.isNewEditorTabs()) DefaultComboBoxModel(EXP_UI_TAB_PLACEMENTS)
-              else DefaultComboBoxModel(TAB_PLACEMENTS)
-  return tabPlacementComboBox(model)
-}
-
-internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<Int>> {
   val ui = UISettings.getInstance().state
-  return comboBox(model,
+  return comboBox(DefaultComboBoxModel(TAB_PLACEMENTS),
                   renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
                   }).bindItem(ui::editorTabPlacement.toNullableProperty())

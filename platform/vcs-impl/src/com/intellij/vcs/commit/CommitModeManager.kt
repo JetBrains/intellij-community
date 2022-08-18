@@ -27,6 +27,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
 private const val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
@@ -39,12 +42,16 @@ internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
   project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
 
 internal class NonModalCommitCustomization : ApplicationInitializedListener {
-  override fun componentsInitialized() {
-    if (!isNewUser()) return
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    if (!isNewUser()) {
+      return
+    }
 
     PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true
-    logStateChanged(null)
+    asyncScope.launch {
+      logStateChanged(null)
+    }
   }
 
   companion object {
@@ -107,6 +114,7 @@ class CommitModeManager(private val project: Project) : Disposable {
     return CommitMode.ModalCommitMode
   }
 
+  @CalledInAny
   fun getCurrentCommitMode() = commitMode
 
   internal fun canSetNonModal(): Boolean {
@@ -117,18 +125,19 @@ class CommitModeManager(private val project: Project) : Disposable {
 
   private fun subscribeToChanges() {
     isForceNonModalCommit.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = scheduleUpdateCommitMode()
+      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
     }, this)
+
     val connection = getApplication().messageBus.connect(this)
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == TOGGLE_COMMIT_UI) {
-          scheduleUpdateCommitMode()
+          updateCommitMode()
         }
       }
     })
     connection.subscribe(SETTINGS, object : SettingsListener {
-      override fun settingsChanged() = scheduleUpdateCommitMode()
+      override fun settingsChanged() = updateCommitMode()
     })
 
     VcsEP.EP_NAME.addChangeListener(::scheduleUpdateCommitMode, this)

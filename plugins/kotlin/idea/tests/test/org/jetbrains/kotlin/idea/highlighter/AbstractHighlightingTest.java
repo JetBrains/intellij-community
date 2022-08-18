@@ -1,19 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.InspectionTestUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
+
+import static org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun;
 
 public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFixtureTestCase {
 
@@ -21,24 +28,35 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
     public static final String NO_CHECK_WEAK_WARNINGS_PREFIX = "// NO_CHECK_WEAK_WARNINGS";
     public static final String NO_CHECK_WARNINGS_PREFIX = "// NO_CHECK_WARNINGS";
     public static final String EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX = "// EXPECTED_DUPLICATED_HIGHLIGHTING";
+    public static final String TOOL_PREFIX = "// TOOL:";
 
     protected void checkHighlighting(@NotNull String fileText) {
         boolean checkInfos = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_INFOS_PREFIX);
         boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
         boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
 
-        myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+        KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
+                myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings));
     }
 
     protected void doTest(String unused) throws Exception {
-        String fileText = FileUtil.loadFile(new File(testPath()), true);
+        String fileText = FileUtil.loadFile(new File(dataFilePath(fileName())), true);
         boolean expectedDuplicatedHighlighting = InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
 
         myFixture.configureByFile(fileName());
+        List<String> tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, TOOL_PREFIX);
+        if (!tools.isEmpty()) {
+            for (InspectionProfileEntry tool : InspectionTestUtil.instantiateTools(Set.copyOf(tools))) {
+                myFixture.enableInspections(tool);
+            }
+        }
 
         withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
-                checkHighlighting(fileText);
+                configureRegistryAndRun(fileText, () -> {
+                    checkHighlighting(fileText);
+                    return Unit.INSTANCE;
+                });
             }
             catch (FileComparisonFailure e) {
                 List<HighlightInfo> highlights =

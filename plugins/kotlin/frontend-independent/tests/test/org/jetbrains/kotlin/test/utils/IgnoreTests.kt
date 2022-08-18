@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.test.utils
 
@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.useLines
-import kotlin.io.path.writeLines
+import kotlin.io.path.*
 
 object IgnoreTests {
     private const val INSERT_DIRECTIVE_AUTOMATICALLY = false // TODO use environment variable instead
@@ -90,7 +89,6 @@ object IgnoreTests {
             test()
             return
         }
-
         val testIsEnabled = directive.isEnabledInFile(testFile)
 
         try {
@@ -201,13 +199,18 @@ object IgnoreTests {
         return isEnabledIfDirectivePresent(isDirectivePresent)
     }
 
-    private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean =
-        file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+    private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean {
+        if (file.notExists()) return false
+        return file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+    }
 
     private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
         substringBefore(':').trim() == directive.directiveText.trim()
 
     private fun Path.insertDirective(directive: EnableOrDisableTestDirective, directivePosition: DirectivePosition) {
+        if (notExists()) {
+            createFile()
+        }
         toFile().apply {
             val originalText = readText()
             val textWithDirective = when (directivePosition) {
@@ -230,7 +233,10 @@ object IgnoreTests {
         const val FIR_COMPARISON = "// FIR_COMPARISON"
         const val FIR_COMPARISON_MULTILINE_COMMENT = "/* FIR_COMPARISON */"
 
+        const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"
+
         const val IGNORE_FIR = "// IGNORE_FIR"
+        const val IGNORE_K2 = "// IGNORE_K2"
         const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
 
         const val FIX_ME = "// FIX_ME: "

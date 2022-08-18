@@ -86,7 +86,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression condition = statement.getCondition();
       final PsiStatement body = statement.getThenBranch();
@@ -94,13 +94,13 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       checkLoop(statement);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       checkLoop(statement);
     }
@@ -212,7 +212,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (read || stop) {
         return;
       }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.providers;
 
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -31,24 +32,17 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return PropertyReferenceBase.isPropertyPsi(target);
+  }
+
+  @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     Object value = null;
 
     if (element instanceof GrLiteral) {
       GrLiteral literalExpression = (GrLiteral) element;
       value = literalExpression.getValue();
-
-      //final Map<String, Object> annotationParams = new HashMap<String, Object>();
-      //annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-      /*if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
-        soft = false;
-        final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
-        if (resourceBundleName instanceof PsiExpression) {
-          PsiExpression expr = (PsiExpression)resourceBundleName;
-          final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
-          bundleName = bundleValue == null ? null : bundleValue.toString();
-        }
-      }*/
     }
 
     if (value instanceof String && !((String)value).contains("\n")) {
@@ -56,8 +50,4 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     }
     return PsiReference.EMPTY_ARRAY;
   }
-
-  //public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-  //}
-
 }

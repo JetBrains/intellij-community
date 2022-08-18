@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -24,7 +23,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
 
   @Override
   protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite candidate, EditorWindow window) {
-    VirtualFile contextFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile contextFile = window.getSelectedFile();
     VirtualFile candidateFile = candidate.getFile();
     if (candidate.isPinned()) return false;
     if (Comparing.equal(candidateFile, contextFile)) return false;

@@ -11,16 +11,18 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.add.PyAddSdkDialog
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.util.function.Consumer
 
-internal fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> =
+fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> =
   listOf(AddLocalInterpreterAction(project, module, onSdkCreated::accept)) +
   collectNewInterpreterOnTargetActions(project, onSdkCreated::accept)
 
@@ -70,4 +72,38 @@ private class AddInterpreterOnTargetAction(private val project: Project,
       }
     }
   }
+}
+
+class AddInterpreterAction(val project: Project, val module: Module, val currentSdk: Sdk?)
+  : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val model = PyConfigurableInterpreterList.getInstance(project).model
+
+    PyAddSdkDialog.show(
+      project,
+      module,
+      model.sdks.asList(),
+      Consumer {
+        if (it != null && model.findSdk(it.name) == null) {
+          model.addSdk(it)
+          model.apply()
+          switchToSdk(module, it, currentSdk)
+        }
+      }
+    )
+  }
+}
+
+fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
+  val project = module.project
+  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
+
+  removeTransferredRootsFromModulesWithInheritedSdk(project, currentSdk)
+  project.pythonSdk = sdk
+  transferRootsToModulesWithInheritedSdk(project, sdk)
+
+  removeTransferredRoots(module, currentSdk)
+  module.pythonSdk = sdk
+  transferRoots(module, sdk)
 }

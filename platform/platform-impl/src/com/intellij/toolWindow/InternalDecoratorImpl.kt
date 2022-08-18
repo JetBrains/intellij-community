@@ -2,10 +2,11 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
@@ -38,7 +39,6 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.*
-import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
@@ -47,7 +47,7 @@ import javax.swing.border.Border
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
-  internal @JvmField val toolWindow: ToolWindowImpl,
+  @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
@@ -197,7 +197,7 @@ class InternalDecoratorImpl internal constructor(
         layout = BorderLayout()
         add(dividerAndHeader, BorderLayout.NORTH)
         add(myDecoratorChild, BorderLayout.CENTER)
-        ApplicationManager.getApplication().invokeLater({ border = InnerPanelBorder(toolWindow) }, toolWindow.project.disposed)
+        border = InnerPanelBorder(toolWindow)
         firstDecorator?.let {
           Disposer.dispose(it.contentManager)
         }
@@ -422,17 +422,6 @@ class InternalDecoratorImpl internal constructor(
     return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) toolWindow else null
   }
 
-  public override fun processKeyBinding(ks: KeyStroke, e: KeyEvent, condition: Int, pressed: Boolean): Boolean {
-    if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
-      val keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction("FocusEditor").shortcutSet)
-      if (keyStrokes.contains(ks)) {
-        toolWindow.toolWindowManager.activateEditorComponent()
-        return true
-      }
-    }
-    return super.processKeyBinding(ks, e, condition, pressed)
-  }
-
   fun setTitleActions(actions: List<AnAction>) {
     header.setAdditionalTitleActions(actions)
   }
@@ -456,8 +445,8 @@ class InternalDecoratorImpl internal constructor(
         LinePainter2D.paint(graphics2D, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
       if (insets.left > 0) {
+        LinePainter2D.paint(graphics2D, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(graphics2D, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
-        LinePainter2D.paint(graphics2D, (x + 1).toDouble(), y.toDouble(), (x + 1).toDouble(), (y + height).toDouble())
       }
       if (insets.right > 0) {
         LinePainter2D.paint(graphics2D, (x + width - 1).toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(),
@@ -524,10 +513,15 @@ class InternalDecoratorImpl internal constructor(
     get() = toolWindow.isActive
 
   fun updateActiveAndHoverState() {
+    val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
     val toolbar = headerToolbar
     if (toolbar is AlphaAnimated) {
       val alpha = toolbar as AlphaAnimated
-      alpha.alphaAnimator.setVisible(!toolWindow.toolWindowManager.isNewUi || isWindowHovered || header.isPopupShowing || toolWindow.isActive)
+      alpha.alphaAnimator.setVisible(narrow
+                                     || !toolWindow.toolWindowManager.isNewUi
+                                     || isWindowHovered
+                                     || header.isPopupShowing
+                                     || toolWindow.isActive)
     }
   }
 
@@ -594,6 +588,7 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun reshape(x: Int, y: Int, w: Int, h: Int) {
+    val rectangle = bounds
     super.reshape(x, y, w, h)
     val topLevelDecorator = findTopLevelDecorator(this)
     if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
@@ -613,7 +608,9 @@ class InternalDecoratorImpl internal constructor(
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons)
       putClientProperty(INACTIVE_LOOK, hideActivity)
     }
-    contentUi.update()
+    if (!rectangle.equals(bounds)) {
+      contentUi.update()
+    }
   }
 
   fun setDropInfoIndex(index: Int, width: Int) {

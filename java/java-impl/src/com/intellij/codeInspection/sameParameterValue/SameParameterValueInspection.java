@@ -3,6 +3,7 @@ package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
@@ -223,7 +224,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (!anchor.isPhysical()) return null;
     return manager.createProblemDescriptor(anchor,
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                              name,
                                                               StringUtil.unquoteString(shortName)),
                                            suggestFix ? createFix(name, stringPresentation.startsWith("\"\"")
                                                                         ? stringPresentation
@@ -273,7 +273,34 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method == null) return;
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
+      PsiParameter parameter = findParameter(method, element);
+      if (parameter == null) return;
+      final PsiExpression defToInline;
+      try {
+        defToInline = JavaPsiFacade.getElementFactory(project)
+                                   .createExpressionFromText(myValue, parameter);
+      }
+      catch (IncorrectOperationException e) {
+        return;
+      }
+      inlineSameParameterValue(method, parameter, defToInline);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method == null) return IntentionPreviewInfo.EMPTY;
+      final PsiParameter parameter = findParameter(method, element);
+      if (parameter == null) return IntentionPreviewInfo.EMPTY;
+      var references = ReferencesSearch.search(parameter).findAll();
+      final PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
+      references.forEach((ref) -> ref.getElement().replace(defToInline));
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    private @Nullable PsiParameter findParameter(PsiMethod method, PsiElement descriptorElement) {
+      PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptorElement, PsiParameter.class, false);
       if (parameter == null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         for (PsiParameter psiParameter : parameters) {
@@ -283,19 +310,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           }
         }
       }
-      if (parameter == null) return;
-
-
-      final PsiExpression defToInline;
-      try {
-        defToInline = JavaPsiFacade.getElementFactory(project)
-                                   .createExpressionFromText(myValue, parameter);
-      }
-      catch (IncorrectOperationException e) {
-        return;
-      }
-      final PsiParameter parameterToInline = parameter;
-      inlineSameParameterValue(method, parameterToInline, defToInline);
+      return parameter;
     }
 
     @Override

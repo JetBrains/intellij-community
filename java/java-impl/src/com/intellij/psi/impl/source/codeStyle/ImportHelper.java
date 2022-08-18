@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -72,7 +73,7 @@ public final class ImportHelper{
 
   @Nullable("null means no need to replace the import list because they are the same")
   PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
-    return prepareOptimizeImportsResult(file, __ -> true);
+    return prepareOptimizeImportsResult(file, Predicates.alwaysTrue());
   }
 
   /**
@@ -347,7 +348,7 @@ public final class ImportHelper{
       String packageName = file.getPackageName();
       file.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           if (reference.getQualifier() != null) return;
           PsiElement element = reference.resolve();
@@ -634,7 +635,7 @@ public final class ImportHelper{
           }
 
           @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
             if (shortClassName.equals(reference.getReferenceName()) && 
                 file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
               foundRef[0] = true;
@@ -662,7 +663,7 @@ public final class ImportHelper{
     String className = extractClassName(file, fullyQualifiedName);
 
     Project project = file.getProject();
-    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+    PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
 
     PsiClass psiClass = resolveHelper.resolveReferencedClass(className, file);
     return psiClass != null && fullyQualifiedName.equals(psiClass.getQualifiedName());
@@ -998,7 +999,7 @@ public final class ImportHelper{
       if (!(aClass instanceof PsiCompiledElement)) {
         aClass.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
             String name = reference.getReferenceName();
             Pair<String, Boolean> pair = unresolvedNames.get(name);
             if (reference.multiResolve(false).length == 0) {

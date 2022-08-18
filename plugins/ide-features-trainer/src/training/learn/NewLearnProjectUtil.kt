@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.ide.util.TipDialog
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -27,7 +27,7 @@ object NewLearnProjectUtil {
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->
-      TipDialog.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
+      TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
       CodeStyle.setMainProjectSettings(newProject, CodeStyleSettings.getDefaults())
       try {
         val sdkForProject = langSupport.getSdkForProject(newProject, selectedSdk)
@@ -39,7 +39,9 @@ object NewLearnProjectUtil {
         LOG.error(e)
       }
 
-      if (!unitTestMode) newProject.save()
+      if (!unitTestMode) {
+        newProject.save()
+      }
 
       newProject.save()
       postInitCallback(newProject)

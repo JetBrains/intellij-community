@@ -4,6 +4,9 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
+import com.intellij.execution.ui.UIExperiment
+import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -31,21 +34,25 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.lang.LangManager
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.Lesson
@@ -269,7 +276,7 @@ object LessonUtil {
    * @return location of window before adjustment
    */
   fun TaskRuntimeContext.adjustPopupPosition(windowKey: String): Point? {
-    val window = UIUtil.getWindow(previous.ui) ?: return null
+    val window = ComponentUtil.getWindow(previous.ui) ?: return null
     val previousWindowLocation = WindowStateService.getInstance(project).getLocation(windowKey)
     return if (adjustPopupPosition(project, window)) previousWindowLocation else null
   }
@@ -392,10 +399,13 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
-fun LessonContext.highlightRunToolbar() {
+fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
     val stopAction = getActionById("Stop")
-    triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: ActionToolbarImpl ->
       ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
         val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
         val stop = ui.components.find { it is ActionButton && it.action == stopAction }
@@ -412,22 +422,28 @@ fun LessonContext.highlightRunToolbar() {
   }
 }
 
-fun LessonContext.highlightDebugActionsToolbar() {
+fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume")
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
 
   task {
-    if (!Registry.`is`("debugger.new.tool.window.layout")) {
-      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
+                                 highlightInside, usePulsation, clearPreviousHighlights = false)
     }
   }
 }
 
-private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
+private fun TaskContext.highlightToolbarWithAction(place: String,
+                                                   actionId: String,
+                                                   highlightInside: Boolean,
+                                                   usePulsation: Boolean,
+                                                   clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
-  triggerAndFullHighlight {
-    usePulsation = true
+  triggerAndBorderHighlight {
+    this.highlightInside = highlightInside
+    this.usePulsation = usePulsation
     this.clearPreviousHighlights = clearPreviousHighlights
   }.component { ui: ActionToolbarImpl ->
     if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
@@ -447,6 +463,21 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   addStep(gotIt)
   test {
     clickLessonMessagePaneLink("Click to proceed")
+  }
+}
+
+fun TaskContext.gotItStep(position: Balloon.Position,
+                          width: Int,
+                          @Nls text: String,
+                          cornerToPointerDistance: Int = -1,
+                          duplicateMessage: Boolean = true) {
+  val gotIt = CompletableFuture<Boolean>()
+  text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+    gotIt.complete(true)
+  })
+  addStep(gotIt)
+  test(waitEditorToBeReady = false) {
+    ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
   }
 }
 
@@ -580,7 +611,10 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true) {
+fun LessonContext.highlightButtonById(actionId: String,
+                                      highlightInside: Boolean = true,
+                                      usePulsation: Boolean = true,
+                                      clearHighlights: Boolean = true) {
   val needToFindButton = getActionById(actionId)
 
   task {
@@ -598,13 +632,15 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
         }
         catch (e: Throwable) {
           // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
-          feature.complete(false)
+          taskInvokeLater { feature.complete(false) }
           throw IllegalStateException("Cannot find button for $actionId", e)
         }
         taskInvokeLater {
           feature.complete(result.isNotEmpty())
           for (button in result) {
-            val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
+            val options = LearningUiHighlightingManager.HighlightingOptions(highlightInside = highlightInside,
+                                                                            usePulsation = usePulsation,
+                                                                            clearPreviousHighlights = false)
             LearningUiHighlightingManager.highlightComponent(button, options)
           }
         }
@@ -672,4 +708,31 @@ fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls messag
     highlightingComponent = highlightingComponent,
     duplicateMessage = false)
   text(message, useBalloon)
+}
+
+fun LessonContext.showInvalidDebugLayoutWarning() = task {
+  val step = stateCheck {
+    val viewImpl = getDebugFramesView()
+    !(viewImpl?.isMinimizedInGrid ?: false)
+  }
+  val callbackId = LearningUiManager.addCallback {
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)?.contentManager?.removeAllContents(true)
+    val viewImpl = getDebugFramesView()
+    viewImpl?.let { it.isMinimizedInGrid = false }
+    step.complete(true)
+  }
+  val framesOptionName = strong(XDebuggerBundle.message("debugger.session.tab.frames.title"))
+  showWarning(LessonsBundle.message("debug.workflow.frames.disabled.warning", callbackId, framesOptionName)) {
+    val viewImpl = getDebugFramesView()
+    viewImpl?.isMinimizedInGrid ?: false
+  }
+}
+
+private fun getDebugFramesView() = RunnerLayoutSettings.getInstance().getLayout("Debug").getViewById("FrameContent")
+
+fun LessonContext.sdkConfigurationTasks() {
+  val langSupport = LangManager.getInstance().getLangSupport()
+  if (langSupport != null && lesson.languageId == langSupport.primaryLanguage) {
+    langSupport.sdkConfigurationTasks.invoke(this, lesson)
+  }
 }

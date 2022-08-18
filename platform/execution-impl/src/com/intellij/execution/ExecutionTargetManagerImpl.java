@@ -95,9 +95,8 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   public Element getState() {
     Element state = new Element("state");
     synchronized (myActiveTargetLock) {
-      String id = myActiveTarget == null ? mySavedActiveTargetId : myActiveTarget.getId();
-      if (id != null && !id.equals(DefaultExecutionTarget.INSTANCE.getId())) {
-        state.setAttribute("SELECTED_TARGET", id);
+      if (mySavedActiveTargetId != null && !mySavedActiveTargetId.equals(DefaultExecutionTarget.INSTANCE.getId())) {
+        state.setAttribute("SELECTED_TARGET", mySavedActiveTargetId);
       }
     }
     return state;
@@ -144,7 +143,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
                                                       : getTargetsFor(settings.getConfiguration());
     ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
-      if (toSelect == null) toSelect = myActiveTarget;
+      if (toSelect == null && !DefaultExecutionTarget.INSTANCE.equals(myActiveTarget)) {
+        toSelect = myActiveTarget;
+      }
 
       int index = -1;
       if (toSelect != null) {
@@ -182,7 +183,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Nullable
   private ExecutionTarget doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
-    mySavedActiveTargetId = null;
+    if (!DefaultExecutionTarget.INSTANCE.equals(newTarget)) {
+      mySavedActiveTargetId = newTarget.getId();
+    }
 
     ExecutionTarget prev = myActiveTarget;
     myActiveTarget = newTarget;

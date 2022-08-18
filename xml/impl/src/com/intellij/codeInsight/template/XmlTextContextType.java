@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlTextContextType extends TemplateContextType {
 
   public XmlTextContextType() {
-    super("XML_TEXT", XmlBundle.message("xml.text"), XmlContextType.class);
+    super(XmlBundle.message("xml.text"));
   }
 
   @Override

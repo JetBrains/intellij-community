@@ -83,7 +83,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -93,7 +92,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 
@@ -227,8 +225,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static void logError(Throwable e) {
-    if (e instanceof VMDisconnectedException) {
-      throw (VMDisconnectedException)e;
+    if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
+      throw (RuntimeException)e;
     }
     LOG.error(e);
   }
@@ -415,7 +413,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @NotNull
-  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<NodeRenderer> renderers, Type type) {
+  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     CompletableFuture<Boolean>[] futures = renderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
     return CompletableFuture.allOf(futures).thenApply(__ -> {
@@ -446,12 +444,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<T> action) {
+  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
     forEachSafe(ep.getIterable(), action);
   }
 
   // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(Iterable<T> iterable, Consumer<T> action) {
+  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
     for (T o : iterable) {
       try {
         action.accept(o);

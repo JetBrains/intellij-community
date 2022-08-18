@@ -44,7 +44,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * Note that list of roots is project dependent.
    *
    * @param type  required root type.
-   * @return list of virtual files.
+   * @return array of virtual files.
    * @see #getUrls(OrderRootType)
    */
   VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
@@ -56,7 +56,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * Note that list of roots is project-dependent.
    *
    * @param rootType the type of roots which should be returned.
-   * @return the list of roots of the specified type.
+   * @return the array of roots of the specified type.
    */
   String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 

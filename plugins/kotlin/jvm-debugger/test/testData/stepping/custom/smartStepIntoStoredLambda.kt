@@ -15,3 +15,4 @@ fun main(args: Array<String>) {
 
     some()
 }
+// IGNORE_K2

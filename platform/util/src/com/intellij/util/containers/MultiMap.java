@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -343,7 +344,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   public static @NotNull <K, V> MultiMap<@NotNull K, V> createWeakKey() {
-    return new MultiMap<>(ContainerUtil.createWeakMap());
+    return new MultiMap<>(new WeakHashMap<>());
   }
 
   public static <K, V> MultiMap<K, V> create(int initialCapacity, float loadFactor) {

@@ -185,10 +185,6 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testAlignMultipleVariablesLabeled() throws Throwable { doTest() }
 
-  void testSpockTableWithStringComment() throws Throwable { doTest() }
-
-  void testSpockTableWithComments() throws Throwable { doTest() }
-
   void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
     doTest()
@@ -1022,6 +1018,10 @@ class Scratch {
 
   }
 }""")
+  }
+
+  void testSafeIndex() {
+    checkFormatting("[1]?[2]","[1]?[2]")
   }
 
   private void doGeeseTest() {

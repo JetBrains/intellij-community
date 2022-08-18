@@ -4,7 +4,12 @@ package com.intellij.internal.statistic.eventLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link EventLogInternalSendConfig} because it contains both information about recorder and device
+ * Kept for compatibility with TBE.
+ */
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class DeviceConfiguration {
   private final String myDeviceId;
   private final int myBucket;

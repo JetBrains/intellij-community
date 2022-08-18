@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -34,8 +34,8 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 public final class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
   public static final String DISABLE_INTELLIJ_PROJECT_ANALYTICS = "ide.disable.intellij.project.analytics";
 
-  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 4);
-  private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", "registry_key");
+  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 5);
+  private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", RegistryUtilValidator.class);
 
   private static final VarargEventId REGISTRY = GROUP.registerVarargEvent("registry", REGISTRY_KEY, EventFields.PluginInfo);
   private static final VarargEventId EXPERIMENT = GROUP.registerVarargEvent("experiment", REGISTRY_KEY, EventFields.PluginInfo);
@@ -59,12 +59,12 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
       .map(key -> REGISTRY.metric(REGISTRY_KEY.with(key.getKey())))
       .collect(Collectors.toSet());
 
-    final Set<MetricEvent> experiments = Experiments.EP_NAME.extensions()
+    final Set<MetricEvent> experiments = Experiments.EP_NAME.getExtensionList().stream()
       .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
       .map(f -> EXPERIMENT.metric(REGISTRY_KEY.with(f.id)))
       .collect(Collectors.toSet());
 
-    final Set<MetricEvent> advancedSettings = AdvancedSettingBean.EP_NAME.extensions()
+    final Set<MetricEvent> advancedSettings = AdvancedSettingBean.EP_NAME.getExtensionList().stream()
       .filter(f -> ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).isNonDefault(f.id))
       .map(f -> ADVANCED_SETTING.metric(REGISTRY_KEY.with(f.id)))
       .collect(Collectors.toSet());
@@ -76,9 +76,10 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
   }
 
   public static class RegistryUtilValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "registry_key".equals(ruleId);
+    public String getRuleId() {
+      return "registry_key";
     }
 
     @NotNull

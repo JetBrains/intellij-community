@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,13 +63,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
           if (navBarExt != null) {
             final JComponent c = navBarExt.getComponent();
             final NavBarPanel panel = (NavBarPanel)c.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
-            panel.rebuildAndSelectItem((list) -> {
-              if (UISettings.getInstance().getShowMembersInNavigationBar()) {
-                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));
-                if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
-              }
-              return list.size() - 1;
-            }, showPopup);
+            panel.rebuildAndSelectLastDirectoryOrTail(showPopup);
           }
         }
       });

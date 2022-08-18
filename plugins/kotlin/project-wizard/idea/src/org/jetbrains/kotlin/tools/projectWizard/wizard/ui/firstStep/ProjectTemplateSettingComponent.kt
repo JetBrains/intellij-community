@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.ui.ScrollPaneFactory
@@ -67,7 +67,6 @@ class ProjectTemplateSettingComponent(
         addToBottom(templateDescriptionComponent.component.addBorder(JBUI.Borders.empty(/*top*/8,/*left*/ 3, 0, 0)))
     }
 
-
     private fun applySelectedTemplate() = modify {
         value?.let(::applyProjectTemplate)
     }
@@ -76,10 +75,7 @@ class ProjectTemplateSettingComponent(
         super.onValueUpdated(reference)
         if (reference == ProjectTemplatesPlugin.template.reference) {
             applySelectedTemplate()
-            value?.let { template ->
-                list.setSelectedValue(template, true)
-                templateDescriptionComponent.setTemplate(template)
-            }
+            updateHint()
         }
     }
 
@@ -89,6 +85,14 @@ class ProjectTemplateSettingComponent(
             list.selectedIndex = 0
             value = setting.type.values.firstOrNull()
             applySelectedTemplate()
+            updateHint()
+        }
+    }
+
+    private fun updateHint() {
+        value?.let { template ->
+            list.setSelectedValue(template, true)
+            templateDescriptionComponent.setTemplate(template)
         }
     }
 }

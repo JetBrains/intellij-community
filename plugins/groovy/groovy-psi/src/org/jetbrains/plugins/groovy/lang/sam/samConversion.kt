@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.openapi.util.registry.Registry
@@ -10,7 +10,9 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
@@ -163,5 +165,22 @@ private fun adjustUntypedParameter(argument : Argument, parameter : CallParamete
     resultTypeSubstitutor.substitute(argument.type)
   } else {
     null
+  }
+}
+
+internal fun samDistance(closure: Argument?, samClass: PsiClass?) : Int? {
+  if (closure !is ExpressionArgument || closure.type !is GroovyClosureType) {
+    return null
+  }
+  samClass ?: return null
+  val sam = findSingleAbstractMethod(samClass) ?: return null
+  val argument = closure.expression.castSafelyTo<GrFunctionalExpression>() ?: return null
+  if (argument.parameterList.isEmpty) {
+    return 3
+  }
+  if (sam.parameters.isEmpty() == argument.parameters.isEmpty()) {
+    return 2
+  } else {
+    return 3
   }
 }

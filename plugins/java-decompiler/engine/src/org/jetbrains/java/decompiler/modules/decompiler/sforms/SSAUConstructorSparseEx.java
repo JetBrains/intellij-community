@@ -406,7 +406,6 @@ public class SSAUConstructorSparseEx {
   private void createOrUpdatePhiNode(VarVersionPair phivar, FastSparseSet<Integer> vers, Statement stat) {
 
     FastSparseSet<Integer> versCopy = vers.getCopy();
-    HashSet<Integer> phiVers = new HashSet<>();
 
     // take into account the corresponding mm/pp node if existing
     int ppvers = phantomppnodes.containsKey(phivar) ? phantomppnodes.get(phivar).version : -1;
@@ -429,7 +428,6 @@ public class SSAUConstructorSparseEx {
         }
         else {
           versCopy.remove(verssrc);
-          phiVers.add(verssrc);
         }
       }
     }
@@ -457,8 +455,6 @@ public class SSAUConstructorSparseEx {
       edge = new VarVersionEdge(VarVersionEdge.EDGE_GENERAL, tempnode, phinode);
       tempnode.addSuccessor(edge);
       phinode.addPredecessor(edge);
-
-      phiVers.add(tempver);
     }
 
     ssuversions.addNodes(colnodes, colpaars);

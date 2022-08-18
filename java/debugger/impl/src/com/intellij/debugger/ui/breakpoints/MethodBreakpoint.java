@@ -71,8 +71,8 @@ import java.util.function.BiConsumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
-  @Nullable private JVMName mySignature;
-  private boolean myIsStatic;
+  @Nullable protected JVMName mySignature;
+  protected boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
@@ -538,15 +538,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getProperties().myMethodName;
   }
 
-  private void setMethodName(@Nullable String methodName) {
+  protected void setMethodName(@Nullable String methodName) {
     getProperties().myMethodName = methodName;
   }
 
-  private static final class MethodDescriptor {
-    String methodName;
-    JVMName methodSignature;
-    boolean isStatic;
-    int methodLine;
+  public static final class MethodDescriptor {
+    public String methodName;
+    public JVMName methodSignature;
+    public boolean isStatic;
+    public int methodLine;
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,

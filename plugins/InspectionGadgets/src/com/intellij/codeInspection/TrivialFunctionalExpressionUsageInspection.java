@@ -32,12 +32,12 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodReferenceExpression(final PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(final @NotNull PsiMethodReferenceExpression expression) {
         doCheckMethodCallOnFunctionalExpression(expression, call -> expression.resolve() != null);
       }
 
       @Override
-      public void visitLambdaExpression(final PsiLambdaExpression expression) {
+      public void visitLambdaExpression(final @NotNull PsiLambdaExpression expression) {
         final PsiElement body = expression.getBody();
         if (body == null) return;
 
@@ -75,7 +75,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       }
 
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false, Collections.emptySet())) {
           final PsiNewExpression newExpression = ObjectUtils.tryCast(aClass.getParent(), PsiNewExpression.class);
           doCheckMethodCallOnFunctionalExpression(call -> {
@@ -123,7 +123,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
           holder.registerProblem(referenceNameElement,
                                  InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                                 fix);
         }
       }
     };

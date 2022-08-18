@@ -18,8 +18,8 @@ fun foo(i: Int) {
 
 
         /*
-          Block multiline
-         */
+      Block multiline
+     */
         5 -> 6
 
         /** Doc */

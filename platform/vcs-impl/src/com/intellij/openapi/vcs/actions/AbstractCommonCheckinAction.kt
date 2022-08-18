@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -16,9 +16,8 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcs.commit.CommitMode
-import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.removeEllipsisSuffix
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,7 +30,10 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
-abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
+abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
     val project = vcsContext.project
 
@@ -119,7 +121,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    val workflowHandler = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
+    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
         setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())

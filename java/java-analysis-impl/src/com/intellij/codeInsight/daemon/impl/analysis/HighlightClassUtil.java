@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Checks and Highlights problems with classes
@@ -213,15 +213,33 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo checkDuplicateNestedClass(@NotNull PsiClass aClass) {
-    PsiElement parent = aClass;
-    if (aClass.getParent() instanceof PsiDeclarationStatement) {
-      parent = aClass.getParent();
-    }
     String name = aClass.getName();
-    if (name == null) return null;
-    boolean duplicateFound = false;
-    boolean checkSiblings = true;
-    PsiElement element = null;
+    if (name == null) {
+      return null;
+    }
+    PsiElement parent = aClass.getParent();
+    boolean checkSiblings;
+    if (parent instanceof PsiClass && !PsiUtil.isLocalOrAnonymousClass((PsiClass)parent) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      // optimization: instead of iterating PsiClass children manually we can get'em all from caches
+      PsiClass innerClass = ((PsiClass)parent).findInnerClassByName(name, false);
+      if (innerClass != null && innerClass != aClass) {
+        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
+          // report duplicate lower in text
+          PsiClass c = innerClass;innerClass=aClass;aClass=c;
+        }
+        HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix(innerClass));
+        return info;
+      }
+      checkSiblings = false; // there still might be duplicates in parents
+    }
+    else {
+      checkSiblings = true;
+    }
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      parent = aClass;
+    }
+    PsiElement element;
     while (parent != null) {
       if (parent instanceof PsiFile) break;
       element = checkSiblings ? parent.getPrevSibling() : null;
@@ -229,11 +247,11 @@ public final class HighlightClassUtil {
         element = parent.getParent();
         // JLS 14.3:
         // The name of a local class C may not be redeclared
-        //  as a local class of the directly enclosing method, constructor, or initializer block within the scope of C
-        // , or a compile-time error occurs.
-        //  However, a local class declaration may be shadowed (?6.3.1)
-        //  anywhere inside a class declaration nested within the local class declaration's scope.
-        if (element instanceof PsiMethod || element instanceof PsiClass ||
+        // as a local class of the directly enclosing method, constructor, or initializer block within the scope of C, or a compile-time
+        // error occurs. However, a local class declaration may be shadowed (6.3.1)
+        // anywhere inside a class declaration nested within the local class declaration's scope.
+        if (element instanceof PsiMethod ||
+            element instanceof PsiClass ||
             element instanceof PsiCodeBlock && element.getParent() instanceof PsiClassInitializer) {
           checkSiblings = false;
         }
@@ -242,16 +260,12 @@ public final class HighlightClassUtil {
 
       if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
       if (element instanceof PsiClass && name.equals(((PsiClass)element).getName())) {
-        duplicateFound = true;
-        break;
+        HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
+        return info;
       }
     }
 
-    if (duplicateFound) {
-      HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
-      return info;
-    }
     return null;
   }
 
@@ -597,7 +611,7 @@ public final class HighlightClassUtil {
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
                resolveHelper.isAccessible(constructor, aClass, null);
       })
-      .limit(2).collect(Collectors.toList());
+      .limit(2).toList();
 
     if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
       String m1 = PsiFormatUtil.formatMethod(constructorCandidates.get(0), PsiSubstitutor.EMPTY,
@@ -700,7 +714,7 @@ public final class HighlightClassUtil {
       String description = JavaErrorBundle.message("duplicate.class", name);
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnimplementInterfaceAction(name, true));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveDuplicateExtendsAction(name));
       return info;
     }
     return null;
@@ -840,7 +854,7 @@ public final class HighlightClassUtil {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiClass) {
@@ -1112,9 +1126,11 @@ public final class HighlightClassUtil {
     if (aClass != null) {
       PsiClass superClass = aClass.getBaseClassType().resolve();
       if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(aClass.getBaseClassReference())
           .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.not.extend.sealed.classes")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertAnonymousToInnerAction(aClass));
+        return info;
       }
     }
     return null;
@@ -1193,7 +1209,7 @@ public final class HighlightClassUtil {
                            .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
                            .create());
             }
-            else if (!hasPermittedSubclassModifier(inheritorClass)) {
+            else if (!(inheritorClass instanceof PsiCompiledElement || hasPermittedSubclassModifier(inheritorClass))) {
               HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(permitted)
                 .descriptionAndTooltip(JavaErrorBundle.message("permitted.subclass.must.have.modifier"))
@@ -1231,11 +1247,13 @@ public final class HighlightClassUtil {
           .create();
       }
       PsiFile parentFile = psiClass.getContainingFile();
-      boolean hasOutsideClasses = inheritors.stream().anyMatch(inheritor -> inheritor.getContainingFile() != parentFile);
+      PsiManager manager = parentFile.getManager();
+      boolean hasOutsideClasses = ContainerUtil.exists(inheritors, inheritor -> !manager.areElementsEquivalent(
+        inheritor.getNavigationElement().getContainingFile(), parentFile));
       if (hasOutsideClasses) {
         Map<PsiJavaCodeReferenceElement, PsiClass> permittedClassesRefs = getPermittedClassesRefs(psiClass);
         Collection<PsiClass> permittedClasses = permittedClassesRefs.values();
-        boolean hasMissingInheritors = inheritors.stream().anyMatch(inheritor -> !permittedClasses.contains(inheritor));
+        boolean hasMissingInheritors = ContainerUtil.exists(inheritors, inheritor -> !permittedClasses.contains(inheritor));
         if (hasMissingInheritors) {
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(nameIdentifier)

@@ -34,6 +34,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
     : this(base.lessonExecutor, base.actionsRecorder, base.restorePreviousTaskCallback, base.previousGetter)
 
   val taskDisposable: Disposable = actionsRecorder
+  val disposed: Boolean get() = actionsRecorder.disposed
 
   val editor: Editor get() = lessonExecutor.editor
   val project: Project get() = lessonExecutor.project

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -13,6 +12,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.StorageLockContext;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +23,10 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
@@ -40,7 +43,6 @@ import java.util.*;
 import java.util.concurrent.Executor;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
-import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 /**
 * @author Eugene Zhuravlev
@@ -53,7 +55,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final UUID mySessionId;
   private final Channel myChannel;
   @Nullable
-  private final PreloadedData myPreloadedData;
+  private PreloadedData myPreloadedData;
   private volatile boolean myCanceled;
   private final String myProjectPath;
   @Nullable
@@ -166,10 +168,26 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       myCacheLoadManager = null;
       if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
-        LOG.info("Trying to download JPS caches before build");
-        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
-                                                        mySessionId, myCacheDownloadSettings);
-        myCacheLoadManager.load(myBuildRunner, true, myScopes);
+        LOG.info("Cache download settings: disableDownload=" + myCacheDownloadSettings.getDisableDownload() + "; forceUpdate=" + myCacheDownloadSettings.getForceDownload());
+        if (myCacheDownloadSettings.getDisableDownload()) {
+          LOG.info("Cache download is disabled");
+        } else {
+          LOG.info("Trying to download JPS caches before build");
+          myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
+                                                          mySessionId, myCacheDownloadSettings);
+          myCacheLoadManager.load(myBuildRunner, true, myScopes, () -> {
+            if (myPreloadedData != null) {
+              LOG.info("Releasing old project description...");
+              ProjectDescriptor projectDescriptor = myPreloadedData.getProjectDescriptor();
+              if (projectDescriptor != null) {
+                projectDescriptor.release();
+                myPreloadedData.setProjectDescriptor(null);
+              }
+              JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext -> ext.discardPreloadedData(myPreloadedData));
+              myPreloadedData = null;
+            }
+          });
+        }
       }
 
       runBuild(new MessageHandler() {
@@ -239,9 +257,14 @@ final class BuildSession implements Runnable, CanceledStatus {
       error = e;
     }
     finally {
+      logStorageDiagnostic();
       finishBuild(error, hasErrors.get(), doneSomething.get());
-      Disposer.dispose(memWatcher);
+      memWatcher.shutdown();
     }
+  }
+
+  private static void logStorageDiagnostic() {
+    LOG.info("FilePageCache stats: " + StorageLockContext.getStatistics().dumpInfoImportantForBuildProcess());
   }
 
   private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
@@ -336,7 +359,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      if (myCacheLoadManager != null && !FORCE_DOWNLOAD_PORTABLE_CACHES) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
+      if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
@@ -639,7 +662,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
         }
-        if (myCacheLoadManager != null) myCacheLoadManager.saveLatestBuiltCommitId(status);
+        if (ProjectStamps.PORTABLE_CACHES) {
+          JpsOutputLoaderManager.saveLatestBuiltCommitId(status, myChannel, mySessionId);
+        }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
       }
     }

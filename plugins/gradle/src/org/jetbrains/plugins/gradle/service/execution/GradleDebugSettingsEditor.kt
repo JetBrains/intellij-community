@@ -2,15 +2,16 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.options.SettingsEditor
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 
 class GradleDebugSettingsEditor : SettingsEditor<GradleRunConfiguration?>() {
-  private val myScriptDebugCheckBox: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.script.debugging"))
-  private val myReattachDebugProcess: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.reattach.debug.process"))
-  private val myDebugAllCheckBox: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.debugging.all"))
+
+  private lateinit var myScriptDebugCheckBox: JCheckBox
+  private lateinit var myReattachDebugProcess: JCheckBox
+  private lateinit var myDebugAllCheckBox: JCheckBox
 
   override fun resetEditorFrom(s: GradleRunConfiguration) {
     myScriptDebugCheckBox.isSelected = s.isScriptDebugEnabled
@@ -27,17 +28,17 @@ class GradleDebugSettingsEditor : SettingsEditor<GradleRunConfiguration?>() {
   override fun createEditor(): JComponent =
     panel {
       row {
-        component(myScriptDebugCheckBox)
+        myScriptDebugCheckBox = checkBox(GradleBundle.message("gradle.tasks.script.debugging")).component
       }
       row {
-        component(myReattachDebugProcess).apply {
-          comment(GradleBundle.message("gradle.tasks.reattach.debug.process.comment"))
-        }
+        myReattachDebugProcess = checkBox(GradleBundle.message("gradle.tasks.reattach.debug.process"))
+          .comment(GradleBundle.message("gradle.tasks.reattach.debug.process.comment"))
+          .component
       }
       row {
-        component(myDebugAllCheckBox).apply {
-          comment(GradleBundle.message("gradle.tasks.debugging.all.comment"))
-        }
+        myDebugAllCheckBox = checkBox(GradleBundle.message("gradle.tasks.debugging.all"))
+          .comment(GradleBundle.message("gradle.tasks.debugging.all.comment"))
+          .component
       }
     }
 }

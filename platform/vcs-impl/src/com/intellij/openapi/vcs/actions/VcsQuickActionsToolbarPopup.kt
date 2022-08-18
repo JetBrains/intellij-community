@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePluralized
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
@@ -46,12 +47,12 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
       if (Registry.`is`("ide.helptooltip.enabled")) {
         HelpTooltip.dispose(this)
         HelpTooltip()
-          .setTitle(VcsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description"))
+          .setTitle(ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description"))
           .setShortcut(shortcut)
           .installOn(this)
       }
       else {
-        toolTipText = VcsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description", shortcutText, classesTabName)
+        toolTipText = ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description", shortcutText, classesTabName)
       }
     }
 
@@ -106,7 +107,11 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     }
     presentation.isEnabledAndVisible = true
     presentation.icon = AllIcons.Vcs.BranchNode
-    presentation.text = VcsBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
+    presentation.text = ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   companion object {

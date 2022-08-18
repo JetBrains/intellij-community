@@ -2,8 +2,13 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.ints.IntSet
+
+fun EntityStorage.assertConsistency() {
+  (this as AbstractEntityStorage).assertConsistency()
+}
 
 internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace { "Checking consistency of $this" }

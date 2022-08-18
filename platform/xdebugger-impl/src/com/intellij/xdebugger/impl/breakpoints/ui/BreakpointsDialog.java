@@ -194,6 +194,11 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myRulesEnabled.contains(myRule);
     }

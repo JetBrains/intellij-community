@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -14,15 +15,15 @@ public interface QualifiedNameProvider {
   ExtensionPointName<QualifiedNameProvider> EP_NAME = ExtensionPointName.create("com.intellij.qualifiedNameProvider");
 
   @Nullable
-  PsiElement adjustElementToCopy(PsiElement element);
+  PsiElement adjustElementToCopy(@NotNull PsiElement element);
 
   @Nullable
-  String getQualifiedName(PsiElement element);
+  String getQualifiedName(@NotNull PsiElement element);
 
   @Nullable
-  PsiElement qualifiedNameToElement(final String fqn, final Project project);
+  PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project);
 
-  default void insertQualifiedName(final String fqn, final PsiElement element, final Editor editor, final Project project) {
+  default void insertQualifiedName(@NotNull String fqn, @NotNull PsiElement element, @NotNull Editor editor, @NotNull Project project) {
     EditorModificationUtilEx.insertStringAtCaret(editor, fqn);
   }
 }

@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.DocumentationTarget
@@ -49,6 +50,9 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
   EDT.assertIsEdt()
   if (handleExternal(project, targetPointer, url)) {
     return true
+  }
+  if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
+    return false
   }
   return browseAbsolute(project, url)
 }

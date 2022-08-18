@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.accessStaticViaInstance;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -46,7 +46,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         checkAccessStaticMemberViaInstanceReference(expression, holder, isOnTheFly);
       }
     };
@@ -71,6 +71,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
     //don't report warnings on compilation errors
     PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
     if (containingClass != null && containingClass.isInterface()) return;
+    if (containingClass instanceof PsiAnonymousClass) return;
 
     String description = JavaErrorBundle.message("static.member.accessed.via.instance.reference",
                                                  JavaHighlightUtil.formatType(qualifierExpression.getType()),

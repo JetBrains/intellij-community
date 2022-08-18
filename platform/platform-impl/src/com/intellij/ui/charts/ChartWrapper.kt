@@ -1,10 +1,10 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.charts
 
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -260,7 +260,6 @@ open class Dataset<T> {
     addAll(values.toList())
   }
 
-  @Suppress("UNCHECKED_CAST")
   fun addAll(values: Collection<T>) {
     (data as? MutableList<T>)?.addAll(values) ?: throw UnsupportedOperationException()
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
@@ -98,8 +98,8 @@ public final class CachedValueProfilerDumpHelper {
 
   private static @Nullable CachedValueProfiler.EventConsumer openDumpViewer(@NotNull Project project) {
     VirtualFile file = LIVE_PROFILING_FILE;
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-    if (providers.length == 1 && "cvp-editor".equals(providers[0].getEditorTypeId())) {
+    List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
+    if (providers.size() == 1 && "cvp-editor".equals(providers.get(0).getEditorTypeId())) {
       FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true, false);
       FileEditor editor = editors.length > 0 ? editors[0] : null;
       if (editor instanceof EventConsumerFactory) {

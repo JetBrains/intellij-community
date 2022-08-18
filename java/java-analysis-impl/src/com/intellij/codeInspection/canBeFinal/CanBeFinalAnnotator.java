@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -6,12 +6,9 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UTypeReferenceExpression;
 
 import java.util.*;
 
@@ -33,24 +30,16 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
   }
 
-  public void mark(RefElement refElement) {
+  private static void mark(RefElement refElement) {
     if (refElement instanceof RefClass) {
       final RefClass refClass = (RefClass)refElement;
-      final UClass psiClass = refClass.getUastElement();
       if (refClass.isEntry()) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
       }
-      if (psiClass != null && !refClass.isSelfInheritor(psiClass)) {
-        for (UTypeReferenceExpression superRef : psiClass.getUastSuperTypes()) {
-          PsiElement psi = PsiTypesUtil.getPsiClass(superRef.getType());
-          if (myManager.belongsToScope(psi)) {
-            RefClass refSuperClass = (RefClass)myManager.getReference(psi);
-            if (refSuperClass != null) {
-              ((RefClassImpl)refSuperClass).setFlag(false, CAN_BE_FINAL_MASK);
-            }
-          }
-        }
+      for (RefClass baseClass : refClass.getBaseClasses()) {
+        baseClass.initializeIfNeeded();
+        ((RefClassImpl)baseClass).setFlag(false, CAN_BE_FINAL_MASK);
       }
       if (refClass.isAbstract() || refClass.isAnonymous() || refClass.isInterface()) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
@@ -59,24 +48,21 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     else if (refElement instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refElement;
       RefClass aClass = refMethod.getOwnerClass();
-      if (aClass != null) aClass.waitForInitialized();
+      if (aClass != null) aClass.initializeIfNeeded();
       if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
           PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || (aClass != null && aClass.isAnonymous()) ||
           (aClass != null && aClass.isInterface())) {
         ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
-      if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) && refMethod.getOwner() != null &&
-          !(aClass != null && aClass.getOwner() instanceof RefElement)) {
-        ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-      }
-      for (RefMethod refSuperMethod : refMethod.getSuperMethods()) {
-        ((RefMethodImpl)refSuperMethod).setFlag(false, CAN_BE_FINAL_MASK);
+      for (RefMethod superMethod : refMethod.getSuperMethods()) {
+        superMethod.initializeIfNeeded();
+        ((RefMethodImpl)superMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
-    else if (refElement instanceof RefField) {
-      final PsiElement element = refElement.getPsiElement();
-      if (RefUtil.isImplicitWrite(element)) {
-        ((RefElementImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
+    else if (refElement instanceof RefFieldImpl) {
+      final RefFieldImpl field = (RefFieldImpl)refElement;
+      if (field.isImplicitlyWritten()) {
+        field.setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
   }
@@ -200,11 +186,11 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                !allFields.contains(psiField)) && psiField.getInitializer() == null) {
             final RefFieldImpl refField = (RefFieldImpl)myManager.getReference(psiField);
             if (refField != null) {
+              refField.initializeIfNeeded();
               refField.setFlag(false, CAN_BE_FINAL_MASK);
             }
           }
         }
-
       }
     }
     else if (refElement instanceof RefMethod) {

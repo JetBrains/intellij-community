@@ -43,6 +43,10 @@ public interface RefElement extends RefEntity {
 
   default void buildReferences() {}
 
+  default boolean areReferencesBuilt() {
+    return false;
+  }
+
   /**
    * Checks if a chain of references exists from one of the entry points to this element.
    *
@@ -69,7 +73,7 @@ public interface RefElement extends RefEntity {
   /**
    * Tries to initialize this element, if it wasn't initialized yet.
    */
-  default void waitForInitialized() {}
+  default void initializeIfNeeded() {}
 
   /**
    * Returns the collection of references from this element to other elements.

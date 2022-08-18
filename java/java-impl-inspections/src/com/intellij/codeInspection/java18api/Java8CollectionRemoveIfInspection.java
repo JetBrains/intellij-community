@@ -94,21 +94,21 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       }
 
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         super.visitForStatement(statement);
         IteratorDeclaration declaration = IteratorDeclaration.fromLoop(statement);
         handleIteratorLoop(statement, statement.getRParenth(), declaration);
       }
 
       @Override
-      public void visitWhileStatement(PsiWhileStatement statement) {
+      public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
         super.visitWhileStatement(statement);
         IteratorDeclaration declaration = IteratorDeclaration.fromLoop(statement);
         handleIteratorLoop(statement, statement.getRParenth(), declaration);
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         ForEachCollectionTraversal traversal = ForEachCollectionTraversal.fromLoop(statement);
         if (traversal == null) return;

@@ -92,6 +92,10 @@
       "mnemonicsBorderInsets": {
         "os.default":"0,8,1,6",
         "os.linux":"0,8,1,8"
+      },
+      "mnemonicsInsets": {
+        "os.default":"0,0,0,8",
+        "os.linux":"0,0,0,8"
       }
     },
 
@@ -251,7 +255,8 @@
     "Editor": {
       "background": "grey09",
       "foreground": "infoPanelForeground",
-      "shortcutForeground": "#4274A6"
+      "shortcutForeground": "#4274A6",
+      "SearchField.background" : "contentBackground"
     },
 
     "EditorPane": {
@@ -524,10 +529,7 @@
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
-      "borderCornerRadiusX": 16,
-      "borderCornerRadiusY": 16,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
+      "borderCornerRadius": 8,
       "translucentBackground": "panel",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
@@ -909,9 +911,6 @@
     },
 
     "ToolbarComboWidget": {
-      "background": "#f2f2f2",
-      "hoverBackground": "#dfdfdf",
-      "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
@@ -924,7 +923,7 @@
         "pressedBackground": "#dfdfdf"
       },
       "Dropdown": {
-        "borderInsets": "12,6,12,6",
+        "borderInsets": "3,5,3,5",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"

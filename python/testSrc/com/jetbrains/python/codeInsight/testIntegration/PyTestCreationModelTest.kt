@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,7 +8,6 @@ import com.intellij.testFramework.VfsTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.testing.PyTestFactory
-import com.jetbrains.python.testing.PyUnitTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.TestRunnerService
 
@@ -72,12 +71,19 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   override fun tearDown() {
-    ApplicationManager.getApplication().invokeAndWait {
-      WriteAction.runAndWait<Throwable> {
-        dir.findChild(testsFolderName)?.let { VfsTestUtil.deleteFile(it) }
+    try {
+      ApplicationManager.getApplication().invokeAndWait {
+        WriteAction.runAndWait<Throwable> {
+          dir.findChild(testsFolderName)?.let { VfsTestUtil.deleteFile(it) }
+        }
       }
     }
-    super.tearDown()
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   private fun getModelForFunc() = getModel(null)

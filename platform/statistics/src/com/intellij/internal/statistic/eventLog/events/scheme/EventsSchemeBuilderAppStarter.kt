@@ -12,8 +12,13 @@ import java.io.File
 import java.lang.reflect.Type
 import kotlin.system.exitProcess
 
+private const val outputFileParameter = "--outputFile="
+private const val pluginsFileParameter = "--pluginsFile="
+private const val pluginIdParameter = "--pluginId="
+
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
-  override fun getCommandName(): String = "buildEventsScheme"
+  override val commandName: String
+    get() = "buildEventsScheme"
 
   override fun main(args: List<String>) {
     var outputFile: String? = null
@@ -32,7 +37,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(pluginId)
+    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId, getPluginsToSkipSchemeGeneration())
     val errors = EventSchemeValidator.validateEventScheme(groups)
     if (errors.isNotEmpty()) {
       throw IllegalStateException(errors.joinToString("\n"))
@@ -72,10 +77,10 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     }
   }
 
-  companion object {
-    private const val outputFileParameter = "--outputFile="
-    private const val pluginsFileParameter = "--pluginsFile="
-    private const val pluginIdParameter = "--pluginId="
+  private fun getPluginsToSkipSchemeGeneration(): Set<String> {
+    val skipGenerationOfBrokenPlugins = System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")
+    if (skipGenerationOfBrokenPlugins == null) return emptySet()
+    return skipGenerationOfBrokenPlugins.split(",").toSet()
   }
 
   object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {

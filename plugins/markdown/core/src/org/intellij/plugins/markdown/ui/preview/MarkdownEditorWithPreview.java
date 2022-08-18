@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.ProjectUtil;
@@ -79,6 +81,20 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   protected void onLayoutChange(Layout oldValue, Layout newValue) {
     myLayoutListeners.forEach(listener -> listener.onLayoutChange(oldValue, newValue));
     super.onLayoutChange(oldValue, newValue);
+    // Editor tab will lose focus after switching to JCEF preview for some reason.
+    // So we should explicitly request focus for our editor here.
+    if (newValue == Layout.SHOW_PREVIEW) {
+      requestFocusForPreview();
+    }
+  }
+
+  private void requestFocusForPreview() {
+    final var preferredComponent = myPreview.getPreferredFocusedComponent();
+    if (preferredComponent != null) {
+      preferredComponent.requestFocus();
+      return;
+    }
+    myPreview.getComponent().requestFocus();
   }
 
   public boolean isAutoScrollPreview() {
@@ -92,6 +108,21 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   public void setLayout(@NotNull Layout layout) {
     super.setLayout(layout);
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    if (state instanceof MarkdownEditorWithPreviewState) {
+      final var actualState = ((MarkdownEditorWithPreviewState)state);
+      super.setState(actualState.getUnderlyingState());
+      setVerticalSplit(actualState.isVerticalSplit());
+    }
+  }
+
+  @Override
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    final var underlyingState = super.getState(level);
+    return new MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit());
   }
 
   @Override

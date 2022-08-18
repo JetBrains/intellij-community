@@ -16,10 +16,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.FileCopyPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFileCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FileCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
@@ -51,27 +50,27 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new FileCopyPresentation(myFilePath, getOutputFileName());
+    return new FileCopyPresentation(getMyFilePath(), getOutputFileName());
   }
 
   public String getOutputFileName() {
-    return myRenamedOutputFileName != null ? myRenamedOutputFileName : PathUtil.getFileName(myFilePath);
+    return getMyRenamedOutputFileName() != null ? getMyRenamedOutputFileName() : PathUtil.getFileName(getMyFilePath());
   }
 
   @NonNls @Override
   public String toString() {
-    return "file:" + myFilePath + (myRenamedOutputFileName != null ? ",rename to:" + myRenamedOutputFileName : "");
+    return "file:" + getMyFilePath() + (getMyRenamedOutputFileName() != null ? ",rename to:" + getMyRenamedOutputFileName() : "");
   }
 
   public boolean isDirectory() {
-    return new File(FileUtil.toSystemDependentName(myFilePath)).isDirectory();
+    return new File(FileUtil.toSystemDependentName(getMyFilePath())).isDirectory();
   }
 
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileCopyPackagingElement && super.isEqualTo(element)
-           && Objects.equals(myRenamedOutputFileName, ((FileCopyPackagingElement)element).getRenamedOutputFileName());
+           && Objects.equals(getMyRenamedOutputFileName(), ((FileCopyPackagingElement)element).getRenamedOutputFileName());
   }
 
   @Override
@@ -88,17 +87,17 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   @Nullable
   @Attribute(OUTPUT_FILE_NAME_ATTRIBUTE)
   public String getRenamedOutputFileName() {
-    return myRenamedOutputFileName;
+    return getMyRenamedOutputFileName();
   }
 
   public void setRenamedOutputFileName(String renamedOutputFileName) {
-    String renamedBefore = myRenamedOutputFileName;
+    String renamedBefore = getMyRenamedOutputFileName();
     this.update(
       () -> myRenamedOutputFileName = renamedOutputFileName,
       (builder, entity) -> {
-        if (renamedBefore == renamedOutputFileName) return;
+        if (Objects.equals(renamedBefore, renamedOutputFileName)) return;
 
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setRenamedOutputFileName(renamedOutputFileName);
           return Unit.INSTANCE;
         });
@@ -118,11 +117,11 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
 
   @Override
   public void rename(@NotNull String newName) {
-    String updatedName = newName.equals(PathUtil.getFileName(myFilePath)) ? null : newName;
+    String updatedName = newName.equals(PathUtil.getFileName(getMyFilePath())) ? null : newName;
     this.update(
       () -> myRenamedOutputFileName = updatedName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setRenamedOutputFileName(updatedName);
           return Unit.INSTANCE;
         });
@@ -137,7 +136,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -149,12 +148,26 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
     if (renamedOutputFileName != null) {
-      addedEntity = BridgeModelModifiableEntitiesKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
+      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
     }
     else {
-      addedEntity = BridgeModelModifiableEntitiesKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
+      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
+  }
+
+  @Nullable
+  private String getMyRenamedOutputFileName() {
+    if (myStorage == null) {
+      return myRenamedOutputFileName;
+    } else {
+      FileCopyPackagingElementEntity entity = (FileCopyPackagingElementEntity)getThisEntity();
+      String path = entity.getRenamedOutputFileName();
+      if (!Objects.equals(myRenamedOutputFileName, path)) {
+        myRenamedOutputFileName = path;
+      }
+      return path;
+    }
   }
 }

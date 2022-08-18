@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.MutableDiffRequestChain
+import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.simple.SimpleDiffTool
+import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.DiffNotifications
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -40,6 +41,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -59,6 +61,10 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -90,11 +96,7 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
     }
 
     val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
-    chain.putUserData(DiffUserDataKeys.PLACE, "BlankDiffWindow")
-    chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
-    chain.putUserData(DiffUserDataKeysEx.PREFERRED_FOCUS_SIDE, Side.LEFT)
-    chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
-
+    BlankDiffWindowUtil.setupBlankContext(chain)
     DiffManagerEx.getInstance().showDiffBuiltin(project, chain, DiffDialogHints.DEFAULT)
   }
 }
@@ -140,19 +142,24 @@ internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
     return BlankDiffWindowUtil.getRecentFiles().map2Array { MySwitchAction(it) }
   }
 
-  @Suppress("DialogTitleCapitalization")
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
     init {
-      val text = content.text
-      val dateAppendix = DateFormatUtil.formatPrettyDateTime(content.timestamp)
-      val presentable = when {
-        text.length < 40 -> DiffBundle.message("blank.diff.recent.content.summary.text.date", text.trim(), dateAppendix)
-        else -> {
-          val shortenedText = StringUtil.shortenTextWithEllipsis(text.trim(), 30, 0)
-          DiffBundle.message("blank.diff.recent.content.summary.text.length.date", shortenedText, text.length, dateAppendix)
+      templatePresentation.setTextWithMnemonic {
+        val text = content.text
+        val dateAppendix = DateFormatUtil.formatPrettyDateTime(content.timestamp)
+        val presentable = when {
+          text.length < 40 -> DiffBundle.message("blank.diff.recent.content.summary.text.date", text.trim(), dateAppendix)
+          else -> {
+            val shortenedText = StringUtil.shortenTextWithEllipsis(text.trim(), 30, 0)
+            DiffBundle.message("blank.diff.recent.content.summary.text.length.date", shortenedText, text.length, dateAppendix)
+          }
         }
+        TextWithMnemonic.fromPlainText(presentable)
       }
-      templatePresentation.text = presentable
     }
 
     override fun isEnabled(currentContent: DiffContent): Boolean = true
@@ -188,9 +195,19 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
       val currentContent = side?.select(helper.chain.content1, helper.chain.baseContent, helper.chain.content2)
       e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
     }
+    else if (viewer is UnifiedDiffViewer) {
+      val line = viewer.editor.caretModel.logicalPosition.line
+      val side = viewer.transferLineFromOneside(line).second
+      val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
+      e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
+    }
     else {
       e.presentation.isEnabledAndVisible = false
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -208,6 +225,12 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
     }
     else if (viewer is ThreesideTextDiffViewer) {
       val side = ThreeSide.fromValue(viewer.editors, editor) ?: return
+      val newContent = createNewContent(viewer.project, viewer.component) ?: return
+      helper.setContent(newContent, side)
+    }
+    else if (viewer is UnifiedDiffViewer) {
+      val line = viewer.editor.caretModel.logicalPosition.line
+      val side = viewer.transferLineFromOneside(line).second
       val newContent = createNewContent(viewer.project, viewer.component) ?: return
       helper.setContent(newContent, side)
     }
@@ -243,6 +266,10 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
     val viewer = e.getRequiredData(DiffDataKeys.DIFF_VIEWER) as DiffViewerBase
@@ -273,6 +300,9 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
       DnDHandler3(viewer, helper, ThreeSide.BASE).install()
       DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
     }
+    else if (viewer is UnifiedDiffViewer) {
+      DnDHandlerUnified(viewer, helper).install()
+    }
 
     if (viewer is DiffViewerBase) {
       RecentContentHandler(viewer, helper).install()
@@ -281,78 +311,84 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
 }
 
 private class DnDHandler2(val viewer: TwosideTextDiffViewer,
-                          val helper: MutableDiffRequestChain.Helper,
-                          val side: Side) : EditorDropHandler {
+                          helper: MutableDiffRequestChain.Helper,
+                          val side: Side) : DnDHandlerBase(viewer.project, helper) {
   fun install() {
-    val editor = viewer.getEditor(side) as? EditorImpl ?: return
-    editor.setDropHandler(this)
-  }
-
-  override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
-    return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
+    install(viewer.getEditor(side))
   }
 
   override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
-    val success = doHandleDnD(t)
-    if (success) helper.fireRequestUpdated()
+    handleDnD2(t, side)
+  }
+}
+
+private class DnDHandlerUnified(val viewer: UnifiedDiffViewer,
+                                helper: MutableDiffRequestChain.Helper) : DnDHandlerBase(viewer.project, helper) {
+  fun install() {
+    install(viewer.editor)
   }
 
-  private fun doHandleDnD(transferable: Transferable): Boolean {
-    val files = FileCopyPasteUtil.getFileList(transferable)
-    if (files != null) {
-      if (files.size == 1) {
-        val newContent = createFileContent(viewer.project, files[0]) ?: return false
-        helper.setContent(newContent, side)
-        return true
-      }
-      if (files.size >= 2) {
-        val newContent1 = createFileContent(viewer.project, files[0]) ?: return false
-        val newContent2 = createFileContent(viewer.project, files[1]) ?: return false
-        helper.setContent(newContent1, Side.LEFT)
-        helper.setContent(newContent2, Side.RIGHT)
-        return true
-      }
-    }
-    return false
+  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+    handleDnD2(t, viewer.masterSide)
   }
 }
 
 private class DnDHandler3(val viewer: ThreesideTextDiffViewer,
-                          val helper: MutableDiffRequestChain.Helper,
-                          val side: ThreeSide) : EditorDropHandler {
+                          helper: MutableDiffRequestChain.Helper,
+                          val side: ThreeSide) : DnDHandlerBase(viewer.project, helper) {
   fun install() {
-    val editor = viewer.getEditor(side) as? EditorImpl ?: return
-    editor.setDropHandler(this)
+    install(viewer.getEditor(side))
+  }
+
+  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+    handleDnD3(t, side)
+  }
+}
+
+private abstract class DnDHandlerBase(val project: Project?,
+                                      val helper: MutableDiffRequestChain.Helper) : EditorDropHandler {
+  protected fun install(editor: Editor) {
+    if (editor is EditorImpl) {
+      editor.setDropHandler(this)
+    }
   }
 
   override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
     return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
   }
 
-  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
-    val success = doHandleDnD(t)
-    if (success) helper.fireRequestUpdated()
+  protected fun handleDnD2(transferable: Transferable, activeSide: Side) {
+    val files = FileCopyPasteUtil.getFileList(transferable) ?: return
+    if (files.size == 1) {
+      val newContent = createFileContent(project, files[0]) ?: return
+      helper.setContent(newContent, activeSide)
+      helper.fireRequestUpdated()
+    }
+    if (files.size >= 2) {
+      val newContent1 = createFileContent(project, files[0]) ?: return
+      val newContent2 = createFileContent(project, files[1]) ?: return
+      helper.setContent(newContent1, Side.LEFT)
+      helper.setContent(newContent2, Side.RIGHT)
+      helper.fireRequestUpdated()
+    }
   }
 
-  private fun doHandleDnD(transferable: Transferable): Boolean {
-    val files = FileCopyPasteUtil.getFileList(transferable)
-    if (files != null) {
-      if (files.size == 1) {
-        val newContent = createFileContent(viewer.project, files[0]) ?: return false
-        helper.setContent(newContent, side)
-        return true
-      }
-      if (files.size == 3) {
-        val newContent1 = createFileContent(viewer.project, files[0]) ?: return false
-        val newBaseContent = createFileContent(viewer.project, files[1]) ?: return false
-        val newContent2 = createFileContent(viewer.project, files[2]) ?: return false
-        helper.setContent(newContent1, ThreeSide.LEFT)
-        helper.setContent(newBaseContent, ThreeSide.BASE)
-        helper.setContent(newContent2, ThreeSide.RIGHT)
-        return true
-      }
+  protected fun handleDnD3(transferable: Transferable, activeSide: ThreeSide) {
+    val files = FileCopyPasteUtil.getFileList(transferable) ?: return
+    if (files.size == 1) {
+      val newContent = createFileContent(project, files[0]) ?: return
+      helper.setContent(newContent, activeSide)
+      helper.fireRequestUpdated()
     }
-    return false
+    if (files.size == 3) {
+      val newContent1 = createFileContent(project, files[0]) ?: return
+      val newBaseContent = createFileContent(project, files[1]) ?: return
+      val newContent2 = createFileContent(project, files[2]) ?: return
+      helper.setContent(newContent1, ThreeSide.LEFT)
+      helper.setContent(newBaseContent, ThreeSide.BASE)
+      helper.setContent(newContent2, ThreeSide.RIGHT)
+      helper.fireRequestUpdated()
+    }
   }
 }
 
@@ -378,6 +414,10 @@ object BlankDiffWindowUtil {
   val REMEMBER_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
 
   @JvmStatic
+  fun createBlankDiffRequestChain(project: Project?): MutableDiffRequestChain =
+    createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project))
+
+  @JvmStatic
   fun createBlankDiffRequestChain(content1: DocumentContent,
                                   content2: DocumentContent,
                                   baseContent: DocumentContent? = null): MutableDiffRequestChain {
@@ -386,6 +426,12 @@ object BlankDiffWindowUtil {
     return chain
   }
 
+  @JvmStatic
+  fun setupBlankContext(chain: DiffRequestChain) {
+    chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.BLANK)
+    chain.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, Side.LEFT)
+    chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
+  }
 
   private val ourRecentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
 
@@ -469,7 +515,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   }
   if (BlankDiffWindowUtil.getRecentFiles().isNotEmpty()) {
     panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.recent")) {
-      val menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, SwitchToRecentEditorActionGroup())
+      val menu = ActionManager.getInstance().createActionPopupMenu("popup@BlankDiffWindow.Recent.Menu", SwitchToRecentEditorActionGroup())
       menu.setTargetComponent(editor.component)
       val event = IdeEventQueue.getInstance().trueCurrentEvent
       if (event is MouseEvent) {

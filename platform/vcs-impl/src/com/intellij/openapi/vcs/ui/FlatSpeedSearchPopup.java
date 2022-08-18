@@ -74,8 +74,8 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
       if (clazz.isInstance(action)) {
         return clazz.cast(action);
       }
-      else if (action instanceof EmptyAction.MyDelegatingActionGroup) {
-        ActionGroup group = ((EmptyAction.MyDelegatingActionGroup)action).getDelegate();
+      else if (action instanceof ActionGroupWrapper) {
+        ActionGroup group = ((ActionGroupWrapper)action).getDelegate();
         return clazz.isInstance(group) ? clazz.cast(group) : null;
       }
     }
@@ -85,14 +85,14 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public interface SpeedsearchAction {
   }
 
-  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction, DumbAware {
+  private static class MySpeedSearchAction extends AnActionWrapper implements SpeedsearchAction, DumbAware {
 
     MySpeedSearchAction(@NotNull AnAction action) {
       super(action);
     }
   }
 
-  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction, DumbAware, AlwaysVisibleActionGroup {
+  private static class MySpeedSearchActionGroup extends ActionGroupWrapper implements SpeedsearchAction, DumbAware, AlwaysVisibleActionGroup {
     MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
     }

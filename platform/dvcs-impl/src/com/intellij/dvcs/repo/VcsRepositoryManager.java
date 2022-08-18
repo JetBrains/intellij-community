@@ -46,7 +46,8 @@ public final class VcsRepositoryManager implements Disposable {
   /**
    * VCS repository mapping updated. Project level.
    */
-  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED = new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
+    new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
 
   private final @NotNull Project myProject;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
@@ -56,6 +57,7 @@ public final class VcsRepositoryManager implements Disposable {
 
   private final @NotNull Map<VirtualFile, Repository> myRepositories = new HashMap<>();
   private final @NotNull Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
+  private final @NotNull Map<String, VirtualFile> myPathToRootMap = new HashMap<>();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
@@ -108,6 +110,8 @@ public final class VcsRepositoryManager implements Disposable {
         }
         myExternalRepositories.clear();
       }
+
+      updatePathToRootMap();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
@@ -121,16 +125,16 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   @RequiresBackgroundThread
-  public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file) {
+  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file) {
     return getRepositoryForFile(file, false);
   }
 
   @CalledInAny
-  public @Nullable Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
+  public @Nullable Repository getRepositoryForFileQuick(@Nullable VirtualFile file) {
     return getRepositoryForFile(file, true);
   }
 
-  public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
+  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
       return getExternalRepositoryForFile(file);
@@ -138,7 +142,7 @@ public final class VcsRepositoryManager implements Disposable {
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
-  public @Nullable Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
+  public @Nullable Repository getRepositoryForFile(@Nullable FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
       return getExternalRepositoryForFile(file);
@@ -146,7 +150,8 @@ public final class VcsRepositoryManager implements Disposable {
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
-  public @Nullable Repository getExternalRepositoryForFile(@NotNull VirtualFile file) {
+  public @Nullable Repository getExternalRepositoryForFile(@Nullable VirtualFile file) {
+    if (file == null) return null;
     Map<VirtualFile, Repository> repositories = getExternalRepositories();
     for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
       if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
@@ -156,7 +161,8 @@ public final class VcsRepositoryManager implements Disposable {
     return null;
   }
 
-  public @Nullable Repository getExternalRepositoryForFile(@NotNull FilePath file) {
+  public @Nullable Repository getExternalRepositoryForFile(@Nullable FilePath file) {
+    if (file == null) return null;
     Map<VirtualFile, Repository> repositories = getExternalRepositories();
     for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
       if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
@@ -164,6 +170,36 @@ public final class VcsRepositoryManager implements Disposable {
       }
     }
     return null;
+  }
+
+  public @Nullable Repository getRepositoryForRootQuick(@Nullable FilePath rootPath) {
+    VirtualFile root = getVirtualFileForRoot(rootPath);
+    if (root == null) return null;
+
+    return getRepositoryForRoot(root, false);
+  }
+
+  @Nullable
+  private VirtualFile getVirtualFileForRoot(@Nullable FilePath rootPath) {
+    if (rootPath == null) return null;
+
+    REPO_LOCK.readLock().lock();
+    try {
+      return myPathToRootMap.get(rootPath.getPath());
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+  }
+
+  private void updatePathToRootMap() {
+    myPathToRootMap.clear();
+    for (VirtualFile root : myRepositories.keySet()) {
+      myPathToRootMap.put(root.getPath(), root);
+    }
+    for (VirtualFile root : myExternalRepositories.keySet()) {
+      myPathToRootMap.put(root.getPath(), root);
+    }
   }
 
   public @Nullable Repository getRepositoryForRootQuick(@Nullable VirtualFile root) {
@@ -221,6 +257,7 @@ public final class VcsRepositoryManager implements Disposable {
     REPO_LOCK.writeLock().lock();
     try {
       myExternalRepositories.put(root, repository);
+      updatePathToRootMap();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
@@ -231,6 +268,7 @@ public final class VcsRepositoryManager implements Disposable {
     REPO_LOCK.writeLock().lock();
     try {
       myExternalRepositories.remove(root);
+      updatePathToRootMap();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
@@ -301,6 +339,8 @@ public final class VcsRepositoryManager implements Disposable {
           myRepositories.clear();
           myRepositories.putAll(repositories);
         }
+
+        updatePathToRootMap();
       }
       finally {
         REPO_LOCK.writeLock().unlock();

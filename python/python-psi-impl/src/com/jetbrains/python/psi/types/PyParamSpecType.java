@@ -36,7 +36,7 @@ public class PyParamSpecType implements PyType {
 
   @NotNull
   public PyParamSpecType withParameters(@Nullable List<PyCallableParameter> parameters, @NotNull TypeEvalContext context) {
-    return new PyParamSpecType(myName, myTargetExpression, getNamelessParameters(parameters, context));
+    return new PyParamSpecType(myName, myTargetExpression, getNonPsiParameters(parameters, context));
   }
 
   @NotNull
@@ -45,13 +45,13 @@ public class PyParamSpecType implements PyType {
   }
 
   @Nullable
-  private static List<PyCallableParameter> getNamelessParameters(@Nullable List<PyCallableParameter> parameters,
-                                                                 @NotNull TypeEvalContext context) {
+  private static List<PyCallableParameter> getNonPsiParameters(@Nullable List<PyCallableParameter> parameters,
+                                                               @NotNull TypeEvalContext context) {
     if (parameters == null) return null;
     return ContainerUtil.map(parameters, it -> {
-      if (it.isPositionalContainer()) return PyCallableParameterImpl.positionalNonPsi(null, it.getType(context));
-      if (it.isKeywordContainer()) return PyCallableParameterImpl.keywordNonPsi(null, it.getType(context));
-      return PyCallableParameterImpl.nonPsi(it.getType(context));
+      if (it.isPositionalContainer()) return PyCallableParameterImpl.positionalNonPsi(it.getName(), it.getType(context));
+      if (it.isKeywordContainer()) return PyCallableParameterImpl.keywordNonPsi(it.getName(), it.getType(context));
+      return PyCallableParameterImpl.nonPsi(it.getName(), it.getType(context));
     });
   }
 
@@ -98,6 +98,11 @@ public class PyParamSpecType implements PyType {
                                            },
                                            ", "));
     }
+  }
+
+  @NotNull
+  public String getVariableName() {
+    return myName;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.xxh3;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -71,21 +71,13 @@ public final class Xxh3 {
     return (int)hash(input);
   }
 
-  public static long hashUnencodedChars(CharSequence input) {
+  private static long hashUnencodedChars(CharSequence input) {
     return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
   }
 
   public static int hashUnencodedChars32(CharSequence input) {
     return (int)hashUnencodedChars(input);
   }
-
-  //<editor-fold desc="Ranges">
-
-  public static long hashRange(String input, int start, int end) {
-    return StringHash.longHash(input, start, end - start, 0);
-  }
-
-  //</editor-fold>
 
   public static long hashLongs(long[] input) {
     return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, 0);
@@ -105,7 +97,7 @@ public final class Xxh3 {
     private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
     private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
 
-    static final @NotNull Access<ByteBuffer> INSTANCE = new ByteBufferAccess();
+    private static final @NotNull Access<ByteBuffer> INSTANCE = new ByteBufferAccess();
 
     private ByteBufferAccess() { }
 
@@ -127,7 +119,7 @@ public final class Xxh3 {
 
   // special implementation for hashing long array - it is guaranteed that only i64 will be called (as input is aligned)
   private static final class LongArrayAccessForLongs extends Access<long[]> {
-    static final LongArrayAccessForLongs INSTANCE = new LongArrayAccessForLongs();
+    private static final LongArrayAccessForLongs INSTANCE = new LongArrayAccessForLongs();
 
     private LongArrayAccessForLongs() { }
 

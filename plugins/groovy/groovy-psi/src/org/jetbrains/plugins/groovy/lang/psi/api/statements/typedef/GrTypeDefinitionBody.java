@@ -13,10 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
-/**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
- */
 public interface GrTypeDefinitionBody extends GrVariableDeclarationOwner {
 
   GrField @NotNull [] getFields();

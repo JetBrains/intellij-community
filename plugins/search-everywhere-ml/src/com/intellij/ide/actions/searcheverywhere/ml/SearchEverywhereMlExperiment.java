@@ -3,7 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml;
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
-import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +30,7 @@ public class SearchEverywhereMlExperiment {
       SearchEverywhereTabWithMl.ACTION.getTabId(),
       SearchEverywhereTabWithMl.FILES.getTabId(),
       ClassSearchEverywhereContributor.class.getSimpleName(),
+      SymbolSearchEverywhereContributor.class.getSimpleName(),
       SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
     );
   }
@@ -42,13 +43,12 @@ public class SearchEverywhereMlExperiment {
             .addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 2));
 
       put(SearchEverywhereTabWithMl.FILES,
-          new Experiment().addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 3));
+          new Experiment().addExperiment(ExperimentType.NO_ML, 3));
     }};
   }
 
   public boolean isAllowed() {
-    final SearchEverywhereMlSettings settings = ApplicationManager.getApplication().getService(SearchEverywhereMlSettings.class);
-    return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
+    return myIsExperimentalMode && !Registry.is("search.everywhere.force.disable.logging.ml");
   }
 
   public boolean isLoggingEnabledForTab(@NotNull String tabId) {
@@ -57,7 +57,7 @@ public class SearchEverywhereMlExperiment {
 
   @NotNull
   public ExperimentType getExperimentForTab(@NotNull SearchEverywhereTabWithMl tab) {
-    if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return ExperimentType.NO_EXPERIMENT;
+    if (!isAllowed() || isDisableExperiments(tab)) return ExperimentType.NO_EXPERIMENT;
 
     final Experiment tabExperiment = myTabExperiments.get(tab);
     if (tabExperiment == null) {
@@ -66,10 +66,6 @@ public class SearchEverywhereMlExperiment {
     else {
       return tabExperiment.getExperimentByGroup(getExperimentGroup());
     }
-  }
-
-  private boolean isDisableLoggingAndExperiments() {
-    return !myIsExperimentalMode || Registry.is("search.everywhere.force.disable.logging.ml");
   }
 
   private static boolean isDisableExperiments(@NotNull SearchEverywhereTabWithMl tab) {

@@ -1,18 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.testFramework
 
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.BuildDataProvider
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.nsToMs
 import org.jetbrains.kotlin.util.PerformanceCounter
-import java.io.BufferedReader
-import java.io.FileInputStream
-import java.io.InputStreamReader
-import java.text.SimpleDateFormat
-import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.math.*
-import kotlin.system.measureTimeMillis
 
 class Stats(
     val name: String = "",
@@ -26,7 +22,6 @@ class Stats(
     init {
         PerformanceCounter.setTimeCounterEnabled(true)
     }
-
     private fun calcAndProcessMetrics(id: String, statInfosArray: Array<StatInfos>, rawMetricChildren: MutableList<Metric>) {
         val timingsMs = toTimingsMs(statInfosArray)
 
@@ -198,57 +193,18 @@ class Stats(
         internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
 
         @JvmStatic
-        private val BENCHMARK_STUB = run {
-            val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-            simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
-
-            var buildId: Int? = null
-            var agentName: String? = null
-            var buildBranch: String? = null
-            var commit: String? = null
-
-            System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
-                val buildProperties = Properties()
-                buildProperties.load(FileInputStream(teamcityConfig))
-
-                buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
-                agentName = buildProperties["agent.name"]?.toString()
-                buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
-                commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
-            }
-
-            buildBranch = buildBranch?.takeIf { it != "<default>" } ?: runGit("branch", "--show-current")
-            if (buildBranch == null || buildBranch == "<default>") {
-                val gitPath = System.getenv("TEAMCITY_GIT_PATH") ?: "git"
-                val processBuilder = ProcessBuilder(gitPath, "branch", "--show-current")
-                val process = processBuilder.start()
-                var line: String?
-                BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-                    line = reader.readLine()
-                }
-                if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                    buildBranch = line
-                }
-            }
-            check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
-            commit = commit ?: runGit("rev-parse", "HEAD")
+        internal val BENCHMARK_STUB by lazy {
+            val teamcityData = BuildDataProvider.getBuildDataFromTeamCity()
 
             Benchmark(
-                agentName = agentName,
-                buildBranch = buildBranch,
-                commit = commit,
-                buildId = buildId,
+                agentName = teamcityData?.agentName,
+                buildBranch = teamcityData?.buildBranch ?: BuildDataProvider.getBuildBranchByGit(),
+                commit = teamcityData?.commit ?: BuildDataProvider.getCommitByGit(),
+                buildId = teamcityData?.buildId,
                 benchmark = "",
-                buildTimestamp = simpleDateFormat.format(Date()),
+                buildTimestamp = teamcityData?.buildTimestamp ?: BuildDataProvider.getBuildTimestamp(),
                 metrics = emptyList()
             )
-        }
-
-        inline fun runAndMeasure(note: String, block: () -> Unit) {
-            val openProjectMillis = measureTimeMillis {
-                block()
-            }
-            logMessage { "$note took $openProjectMillis ms" }
         }
     }
 

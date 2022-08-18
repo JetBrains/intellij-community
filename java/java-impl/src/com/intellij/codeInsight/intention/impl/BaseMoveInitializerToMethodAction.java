@@ -162,7 +162,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.resolve() == field) {
           result.set(Boolean.TRUE);
         }

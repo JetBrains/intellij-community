@@ -56,7 +56,7 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
   }
 
   /**
-   * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel<Item>)} instead
+   * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel)} instead
    */
   @Deprecated(forRemoval = true)
   public void setModel(final ListTableModel<Item> model) {

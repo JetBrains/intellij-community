@@ -8,7 +8,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
@@ -26,23 +27,20 @@ class SelectProjectOpenProcessorDialog(
     init()
   }
 
-  override fun createCenterPanel(): JComponent? = panel {
+  override fun createCenterPanel(): JComponent = panel {
     row {
       label(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line1", processors.size, file.name))
     }
-    row {
-      label(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line2"))
-    }
-    buttonGroup(::selectedProcessor) {
+    buttonsGroup(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.description.line2")) {
       processors.forEach { processor ->
         row {
           radioButton(ProjectBundle.message("project.open.select.from.multiple.processors.dialog.choice", processor.name), processor)
         }
       }
-    }
+    }.bind(::selectedProcessor)
   }
 
-  override fun getHelpId(): String? = "project.open.select.from.multiple.providers"
+  override fun getHelpId(): String = "project.open.select.from.multiple.providers"
 
   fun showAndGetChoice(): ProjectOpenProcessor? = if (showAndGet()) selectedProcessor else null
 

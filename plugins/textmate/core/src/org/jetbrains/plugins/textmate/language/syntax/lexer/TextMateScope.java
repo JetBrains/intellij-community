@@ -8,6 +8,7 @@ import java.util.Objects;
 
 public class TextMateScope {
   public static final TextMateScope EMPTY = new TextMateScope(null, null);
+  public static final TextMateScope WHITESPACE = EMPTY.add("token.whitespace");
 
   @Nullable
   private final CharSequence scopeName;

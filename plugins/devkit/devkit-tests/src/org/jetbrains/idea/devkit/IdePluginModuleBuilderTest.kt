@@ -113,7 +113,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11)
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
         <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="212" until-build="222.*"/>
+        <idea-version since-build="213" until-build="223.*"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -133,9 +133,9 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11)
              Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
         <depends>com.intellij.modules.platform</depends>
 
-        <extensionPoints defaultExtensionNs="com.intellij">
+        <extensions defaultExtensionNs="com.intellij">
             <themeProvider id="demo" path="/theme/demo.theme.json"/>
-        </extensionPoints>
+        </extensions>
     </idea-plugin>
   """.trimIndent()
 

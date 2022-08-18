@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -19,7 +19,6 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-
 
 class PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
@@ -58,7 +57,9 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
+    fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) {
+      THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
+    }
 
     @JvmStatic
     fun pluginsStateChanged(
@@ -110,5 +111,5 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
   }
 }
 
-// We don't want to log actions when app did not initialized yet (e.g. migration process)
+// We don't want to log actions when app did not initialize yet (e.g. migration process)
 private fun <T: BaseEventId> T.getIfInitializedOrNull(): T? = if (ApplicationManager.getApplication() == null) null else this

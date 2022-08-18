@@ -117,7 +117,7 @@ final class HoverService {
       notifySafely(component, listener -> listener.mouseExited(component));
     }
 
-    private static void notifySafely(@NotNull Component component, @NotNull Consumer<HoverListener> notify) {
+    private static void notifySafely(@NotNull Component component, @NotNull Consumer<? super HoverListener> notify) {
       for (HoverListener listener : HoverListener.getAll(component)) {
         try {
           notify.accept(listener);

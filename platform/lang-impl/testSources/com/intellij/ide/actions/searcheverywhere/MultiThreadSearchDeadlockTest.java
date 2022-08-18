@@ -122,7 +122,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
     }
   }
 
-  private static class Collector implements SESearcher.Listener {
+  private static class Collector implements SearchListener {
     private final Map<String, List<Object>> resultsMap = new ConcurrentHashMap<>();
     private final CountDownLatch latch = new CountDownLatch(1);
 
@@ -143,9 +143,18 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
     }
 
     @Override
+    public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) { }
+
+    @Override
+    public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) { }
+
+    @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       latch.countDown();
     }
+
+    @Override
+    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) { }
 
     public List<Object> getFoundItems(String contributorID) {
       return resultsMap.get(contributorID);

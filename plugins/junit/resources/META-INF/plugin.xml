@@ -15,6 +15,7 @@
    </description>
   <category>Test Tools</category>
   <depends>com.intellij.java</depends>
+  <depends optional="true" config-file="junit-properties.xml">com.intellij.properties</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.JUnitBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
@@ -65,27 +66,6 @@
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
-    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
-
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="messages.JUnitBundle"
-                     key="junit5.malformed.repeated.test.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
-
-    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="messages.JUnitBundle"
-                     key="junit5.nested.test.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
- 
-    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedExtensions" bundle="messages.JUnitBundle"
-                     key="junit5.extensions.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedExtensionsInspection"/>
-
-    <localInspection language="UAST" shortName="Junit5MalformedParameterized" bundle="messages.JUnitBundle"
-                     key="junit5.malformed.parameterized.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
                             order="before commonJavaCustomizer"/>

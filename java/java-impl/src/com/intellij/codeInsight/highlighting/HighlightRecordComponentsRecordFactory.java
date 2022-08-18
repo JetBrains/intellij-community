@@ -59,7 +59,7 @@ public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandl
         Consumer<PsiExpression> onOccurence = (expr) -> addOccurrence(expr);
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (isReferenceToRecordComponent(name, expression)) {
               onOccurence.consume(expression);

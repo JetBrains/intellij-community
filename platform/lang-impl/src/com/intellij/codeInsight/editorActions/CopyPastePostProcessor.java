@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
@@ -24,18 +25,19 @@ public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData
    * This method will be run in the dispatch thread with alternative resolve enabled
    */
   @NotNull
-  public abstract List<T> collectTransferableData(final PsiFile file,
-                                                  final Editor editor,
-                                                  final int[] startOffsets,
-                                                  final int[] endOffsets);
+  @RequiresEdt
+  public abstract List<T> collectTransferableData(@NotNull PsiFile file,
+                                                  @NotNull Editor editor,
+                                                  int @NotNull [] startOffsets,
+                                                  int @NotNull [] endOffsets);
 
   @NotNull
-  public List<T> extractTransferableData(final Transferable content) {
+  public List<T> extractTransferableData(@NotNull Transferable content) {
     return Collections.emptyList();
   }
 
-  public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, int caretOffset,
-                                      Ref<? super Boolean> indented, final List<? extends T> values) {
+  public void processTransferableData(@NotNull Project project, @NotNull Editor editor, @NotNull RangeMarker bounds, int caretOffset,
+                                      @NotNull Ref<? super Boolean> indented, @NotNull List<? extends T> values) {
   }
 
   //For performance optimization implementations can return false in case when they dont have access to any other documents(psi file)

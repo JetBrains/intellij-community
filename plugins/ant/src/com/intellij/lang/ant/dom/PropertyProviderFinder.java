@@ -217,8 +217,6 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param propertiesProvider
-   * @return true if search should be continued and false in order to stop
    */
   protected abstract void propertyProviderFound(PropertiesProvider propertiesProvider);
 
@@ -276,17 +274,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param target
-   * @param taregetEffectiveName
    * @param dependenciesMap Map declared dependency reference->pair[tareget object, effective reference name]
    */
   protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
   }
 
   /**
-   * @param existingTarget
-   * @param duplicatingTarget
-   * @param taregetEffectiveName
    */
   protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
   }

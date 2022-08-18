@@ -1,14 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.ProjectViewSettings
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.PackageViewPane
-import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.*
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule
-import com.intellij.ide.projectView.impl.ProjectViewImpl
-import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,8 +25,15 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   private var originalNestingRules: MutableList<NestingRule>? = null
 
   override fun tearDown() {
-    originalNestingRules?.let { ProjectViewFileNestingService.getInstance().rules = it }
-    super.tearDown()
+    try {
+      originalNestingRules?.let { ProjectViewFileNestingService.getInstance().rules = it }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun getTestPath(): String? = null

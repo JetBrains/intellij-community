@@ -1,6 +1,24 @@
 <html>
 <body>
-Reports either a <code>StringTokenizer</code> constructor or a <code>nextToken</code> method call that
-contains duplicate characters in the delimiter argument, e.g. <code>tokenizer.nextToken("\n\n")</code>.
+Reports <code>StringTokenizer()</code> constructor calls or  <code>nextToken()</code> method calls that
+contain duplicate characters in the delimiter argument.
+<p><b>Example:</b></p>
+<pre><code>
+  void printTokens(String text) {
+    StringTokenizer tokenizer = new StringTokenizer(text, "\n\n");
+    while (tokenizer.hasMoreTokens()) {
+      System.out.println(tokenizer.nextToken());
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  void printTokens(String text) {
+    StringTokenizer tokenizer = new StringTokenizer(text, "\n");
+    while (tokenizer.hasMoreTokens()) {
+      System.out.println(tokenizer.nextToken());
+    }
+  }
+</code></pre>
 </body>
 </html>

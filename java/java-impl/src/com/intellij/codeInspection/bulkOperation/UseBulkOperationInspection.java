@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -226,7 +226,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         BulkMethodInfo info = findInfo(call.getMethodExpression());
         if (info == null) return;
@@ -237,7 +237,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReference) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReference) {
         super.visitMethodReferenceExpression(methodReference);
         BulkMethodInfo info = findInfo(methodReference);
         if (info == null) return;
@@ -276,6 +276,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static class UseBulkOperationFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final BulkMethodInfo myInfo;
 
     UseBulkOperationFix(BulkMethodInfo info) {

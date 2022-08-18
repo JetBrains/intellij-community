@@ -4,72 +4,43 @@ import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.createDirectories
-import com.intellij.util.toByteArray
+import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-
-private val TIMEOUT_UNIT = TimeUnit.MINUTES
 
 @RunWith(JUnit4::class)
-internal class SettingsSyncTest {
-
-  private val appRule = ApplicationRule()
-  private val tempDirManager = TemporaryDirectory()
-  private val disposableRule = DisposableRule()
-  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
-
-  private lateinit var application: ApplicationImpl
-  private lateinit var configDir: Path
+internal class SettingsSyncTest : SettingsSyncTestBase() {
   private lateinit var componentStore: TestComponentStore
-  private lateinit var remoteCommunicator: TestRemoteCommunicator
-  private lateinit var updateChecker: SettingsSyncUpdateChecker
-  private lateinit var bridge: SettingsSyncBridge
 
   @Before
-  fun setup() {
-    application = ApplicationManager.getApplication() as ApplicationImpl
-    val mainDir = tempDirManager.createDir()
-    configDir = mainDir.resolve("rootconfig").createDirectories()
+  fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
-    remoteCommunicator = TestRemoteCommunicator()
-
-    application.replaceService(IComponentStore::class.java, componentStore, disposableRule.disposable)
-  }
-
-  @After
-  fun cleanup() {
-    bridge.waitForAllExecuted(10, TimeUnit.SECONDS)
+    application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
   private fun initSettingsSync() {
-    val settingsSyncStorage = configDir.resolve("settingsSync")
-    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore, remoteCommunicator)
+    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
+    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
   }
 
   @Test
@@ -102,7 +73,7 @@ internal class SettingsSyncTest {
     runBlocking { componentStore.save() }
 
     assertSettingsPushed {
-      fileState("keymaps/$name.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
+      fileState("keymaps/$name.xml", String(keymap.writeScheme().toBufferExposingByteArray().toByteArray(), Charset.defaultCharset()))
     }
   }
 
@@ -167,7 +138,7 @@ internal class SettingsSyncTest {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
 
     updateChecker.scheduleUpdateFromServer()
 
@@ -176,11 +147,11 @@ internal class SettingsSyncTest {
   }
 
   private fun performInOfflineMode(action: () -> Unit) {
-    remoteCommunicator.offline = true
-    val cdl = CountDownLatch(1)
-    remoteCommunicator.startPushLatch = cdl
-    action()
-    assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
+    //remoteCommunicator.offline = true
+    //val cdl = CountDownLatch(1)
+    //remoteCommunicator.startPushLatch = cdl
+    //action()
+    //assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
   }
 
   // temporarily disabled: the failure needs to be investigated
@@ -201,8 +172,8 @@ internal class SettingsSyncTest {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
-    remoteCommunicator.offline = false
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
+    //remoteCommunicator.offline = false
 
     updateChecker.scheduleUpdateFromServer() // merge will happen here
 
@@ -241,17 +212,7 @@ internal class SettingsSyncTest {
     }
   }
 
-  private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
-    val cdl = CountDownLatch(1)
-    remoteCommunicator.pushedLatch = cdl
-    assertTrue("Didn't await until changes are pushed", cdl.await(5, TIMEOUT_UNIT))
-
-    val pushedSnap = remoteCommunicator.pushed
-    assertNotNull("Changes were not pushed", pushedSnap)
-    assertSnapshot(pushedSnap!!)
-  }
-
-  private fun <T : PersistentStateComponent<*>> T.init() : T {
+  private fun <T : PersistentStateComponent<*>> T.init(): T {
     componentStore.initComponent(this, null, null)
     return this
   }
@@ -271,40 +232,7 @@ internal class SettingsSyncTest {
   }
 
 
-  private fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
-    waitForSettingsPush { pushedSnap ->
-      pushedSnap.assertSettingsSnapshot {
-        build()
-      }
-    }
-  }
-
-  internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
-    var offline: Boolean = false
-    var updateResult: UpdateResult? = null
-    var pushed: SettingsSnapshot? = null
-    var startPushLatch: CountDownLatch? = null
-    lateinit var pushedLatch: CountDownLatch
-
-    override fun checkServerState(): ServerState {
-      return ServerState.UpdateNeeded
-    }
-
-    override fun receiveUpdates(): UpdateResult {
-      return updateResult ?: UpdateResult.Error("Unexpectedly null update result")
-    }
-
-    override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
-      startPushLatch?.countDown()
-      if (offline) return SettingsSyncPushResult.Error("Offline")
-
-      pushed = snapshot
-      if (::pushedLatch.isInitialized) pushedLatch.countDown()
-      return SettingsSyncPushResult.Success
-    }
-  }
-
-  internal class TestComponentStore(configDir: Path): ApplicationStoreImpl() {
+  private class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 

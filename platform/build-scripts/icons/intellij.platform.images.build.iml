@@ -17,11 +17,11 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-imaging" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="batik-transcoder" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="PROVIDED" />

@@ -88,6 +88,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                           body: String): CompletableFuture<GHPullRequestReviewCommentWithPendingReview> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(
+        it,
         GHGQLRequests.PullRequest.Review.addComment(repository.serverPath,
                                                     reviewId,
                                                     replyToCommentId,
@@ -107,32 +108,32 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
     }.logError(LOG, "Error occurred while deleting review comment")
 
   override fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String) =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
     }.logError(LOG, "Error occurred while updating review comment")
 
   override fun addThread(progressIndicator: ProgressIndicator, reviewId: String, body: String,
                          line: Int, side: Side, startLine: Int, fileName: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine, fileName))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine, fileName))
     }.logError(LOG, "Error occurred while adding review thread")
 
   override fun resolveThread(progressIndicator: ProgressIndicator,
                              pullRequestId: GHPRIdentifier,
                              id: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.resolveThread(repository.serverPath, id))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.resolveThread(repository.serverPath, id))
     }.logError(LOG, "Error occurred while resolving review thread")
 
   override fun unresolveThread(progressIndicator: ProgressIndicator,
                                pullRequestId: GHPRIdentifier,
                                id: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.unresolveThread(repository.serverPath, id))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.unresolveThread(repository.serverPath, id))
     }.logError(LOG, "Error occurred while unresolving review thread")
 
   companion object {

@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,31 +18,27 @@ import javax.swing.*;
  * Builder for the list of changes in the file system. The instances of
  * this class are used to collect changes that happened in the file system.
  *
- * @author max
  * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder, com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
  */
 public interface ChangelistBuilder {
   /**
    * Process a change to the file.
    * This method is used to report changes that the version control system knows about.
-   *
-   * @param change a change to process.
-   * @param vcsKey VCS
    */
-  void processChange(Change change, VcsKey vcsKey);
+  void processChange(@NotNull Change change, VcsKey vcsKey);
 
-  void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey);
+  /**
+   * Put the given change into the given change list.
+   * If there is no such change list, an error is logged and change goes to the default list.
+   */
+  void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey);
 
   /**
    * Put the given change into the change list with the given name.
    * If there is no such change list, it is created.
-   * This method allows not to refer to ChangeListManager for the LocalChangeList object.
-   *
-   * @param change         Submitted change
-   * @param changeListName A name for a change list.
-   * @param vcsKey         VCS
+   * This method allows not referring to ChangeListManager for the LocalChangeList object.
    */
-  void processChangeInList(Change change, @NlsSafe String changeListName, VcsKey vcsKey);
+  void processChangeInList(@NotNull Change change, @Nullable @NlsSafe String changeListName, VcsKey vcsKey);
 
   void removeRegisteredChangeFor(final FilePath path);
 

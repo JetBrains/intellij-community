@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
@@ -29,8 +29,6 @@ import java.util.Map;
 
 /**
  * Allows to set default colors for multiple languages.
- *
- * @author Rustam Vishnyakov
  */
 public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
   private final static TextAttributesKey FAKE_BAD_CHAR =
@@ -78,7 +76,6 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
-    TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
     TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
     TAG_HIGHLIGHTING_MAP.put("highlighted_reference", DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE);
   }
@@ -256,7 +253,6 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
       "    Reassigned local <reassigned_local>variable</reassigned_local>\n" +
-      "    Reassigned <reassigned_parameter>parameter</reassigned_parameter>\n" +
       "Function <func_call>call</func_call>(" +
       "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +
@@ -348,7 +344,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       region[0] = foldingModel.addCustomLinesFolding(line, line,
                                                      new CustomFoldRegionRendererWrapper(DocRenderItem.createDemoRenderer(editor), ourKey));
     });
-    return ourKey && region[0] != null ? new TextRange(region[0].getStartOffset(), region[0].getEndOffset()) : null;
+    return ourKey && region[0] != null ? region[0].getTextRange() : null;
   }
 
   @Override

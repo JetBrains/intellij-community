@@ -6,17 +6,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,8 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -42,7 +44,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   private final Disposable myDisposable = Disposer.newDisposable();
   private Path myTestData;
   private Path myJrtPath;
-  private VirtualFile myRoot;
+  private VirtualFile myRoot; // in jrt:// FS
 
   @Before
   public void setUp() throws IOException {
@@ -64,7 +66,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   private void setupJrtFileSystem() throws IOException {
     Files.createDirectories(myJrtPath);
-    Files.write(myJrtPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(StandardCharsets.UTF_8));
+    Files.writeString(myJrtPath.resolve("release"), "JAVA_VERSION=9\n");
     Path lib = Files.createDirectory(myJrtPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
@@ -109,7 +111,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Path modules = myJrtPath.resolve("lib/modules");
     Files.move(modules, myJrtPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
     Files.copy(myTestData.resolve("image2"), modules);
-    Files.write(myJrtPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(StandardCharsets.UTF_8));
+    Files.writeString(myJrtPath.resolve("release"), "JAVA_VERSION=9.0.1\n");
     List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
     assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
 
@@ -147,11 +149,27 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   }
 
   private static List<String> childNames(VirtualFile dir) {
-    return Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
+    return ContainerUtil.map(dir.getChildren(), VirtualFile::getName);
   }
 
   private static void assertPointers(VirtualFilePointer[] pointers, boolean valid) {
     assertThat(pointers).allMatch(p -> p.isValid() == valid);
     assertThat(pointers).allMatch(p -> p.getFile() == null || p.getFile().isValid());
+  }
+
+  @Test
+  public void testJDKInstalledIntoDiskRootUnderWindowsDoesntCauseHorribleThings() {
+    IoTestUtil.assumeWindows();
+
+    IoTestUtil.performTestOnWindowsSubst(myJrtPath.toString(), substRoot -> {
+      VfsRootAccess.allowRootAccess(myDisposable, substRoot.getPath());
+
+      String substedUrl = "jrt://" + UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(substRoot.getPath())) + "/!/java.base";
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(substedUrl, myDisposable, null);
+      assertTrue(pointer.isValid());
+      VirtualFile file = pointer.getFile();
+      assertNotNull(file);
+      assertTrue(file.getFileSystem() instanceof JrtFileSystem);
+    });
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.ClientProperty;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -18,7 +19,7 @@ import java.beans.PropertyChangeListener;
 
 abstract class MnemonicWrapper<T extends JComponent> implements Runnable, PropertyChangeListener {
   public static MnemonicWrapper<?> getWrapper(Component component) {
-    if (component == null || component.getClass().getName().equals("com.intellij.openapi.wm.impl.StripeButton")) {
+    if (component == null || ClientProperty.isTrue(component, MnemonicHelper.DISABLE_MNEMONIC_PROCESSING)) {
       return null;
     }
     for (PropertyChangeListener listener : component.getPropertyChangeListeners()) {

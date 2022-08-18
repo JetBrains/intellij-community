@@ -12,6 +12,7 @@ import com.intellij.lang.jvm.actions.ChangeModifierRequest;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -138,7 +139,7 @@ public final class HighlightControlFlowUtil {
     PsiClass aClass = field.getContainingClass();
     if (aClass != null) {
       // field might be assigned in the other field initializers
-      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, __->true)) return true;
+      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, Predicates.alwaysTrue())) return true;
     }
     PsiClassInitializer[] initializers;
     if (aClass != null) {
@@ -787,7 +788,7 @@ public final class HighlightControlFlowUtil {
           Ref<Boolean> stopped = new Ref<>(false);
           codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               if (expression.isReferenceTo(variable) &&
                   PsiUtil.isAccessedForWriting(expression) && 
                   ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) {

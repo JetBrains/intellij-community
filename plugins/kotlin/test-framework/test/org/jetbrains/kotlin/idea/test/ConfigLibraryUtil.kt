@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -15,13 +16,10 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import java.io.File
 import kotlin.test.assertNotNull
 
@@ -34,9 +32,9 @@ object ConfigLibraryUtil {
     private const val LIB_NAME_KOTLIN_STDLIB_JS = "KOTLIN_STDLIB_JS_LIB_NAME"
     private const val LIB_NAME_KOTLIN_STDLIB_COMMON = "KOTLIN_STDLIB_COMMON_LIB_NAME"
 
-    private val ATTACHABLE_LIBRARIES = mapOf(
+    val ATTACHABLE_LIBRARIES = mapOf(
         "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
-        "JUnit3" to AdditionalKotlinArtifacts.junit3,
+        "JUnit3" to TestKotlinArtifacts.junit3,
         "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
         "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java))
     )
@@ -47,24 +45,24 @@ object ConfigLibraryUtil {
     }
 
     fun configureKotlinStdlibJs(module: Module) {
-        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, JSLibraryKind) {
-            addRoot(KotlinArtifacts.instance.kotlinStdlibJs, OrderRootType.CLASSES)
+        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, KotlinJavaScriptLibraryKind) {
+            addRoot(TestKotlinArtifacts.kotlinStdlibJs, OrderRootType.CLASSES)
         }
     }
 
     fun configureKotlinStdlibCommon(module: Module) {
-        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_COMMON, CommonLibraryKind) {
-            addRoot(AdditionalKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
+        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_COMMON, KotlinCommonLibraryKind) {
+            addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
         }
     }
 
     fun configureKotlinRuntime(module: Module) {
         addLibrary(module, LIB_NAME_JAVA_RUNTIME) {
-            addRoot(KotlinArtifacts.instance.kotlinStdlib, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
         }
 
         addLibrary(module, LIB_NAME_KOTLIN_TEST) {
-            addRoot(KotlinArtifacts.instance.kotlinTest, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinTest, OrderRootType.CLASSES)
         }
     }
 
@@ -93,7 +91,7 @@ object ConfigLibraryUtil {
             val rootModel = rootManager.modifiableModel
 
             assertNotNull(
-                getProjectJdkTableSafe().findJdk(sdk.name),
+                ProjectJdkTable.getInstance().findJdk(sdk.name),
                 "Cannot find sdk in ProjectJdkTable. This may cause sdk leak.\n" +
                         "You can use ProjectPluginTestBase.addJdk(Disposable ...) to register sdk in ProjectJdkTable.\n" +
                         "Then sdk will be removed in tearDown"
@@ -126,19 +124,6 @@ object ConfigLibraryUtil {
             }
 
             commit()
-        }
-    }
-
-    fun addLibraries(rootModel: ModifiableRootModel, vararg librariesData: KotlinLibraryData) {
-        rootModel.moduleLibraryTable.modifiableModel.apply {
-            for (libraryData in librariesData) {
-                val library = createLibrary(libraryData.libraryName, libraryData.kind)
-                library.modifiableModel.apply {
-                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.classesRoot), OrderRootType.CLASSES)
-                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.sourcesRoot), OrderRootType.SOURCES)
-                    commit()
-                }
-            }
         }
     }
 

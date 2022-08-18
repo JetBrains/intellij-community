@@ -1,28 +1,55 @@
 package com.intellij.settingsSync
 
-import com.intellij.ide.FrameStateListener
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
-  override fun onFrameActivated() {
-    if (!isSettingsSyncEnabledByKey() ||
-        !isSettingsSyncEnabledInSettings()) {
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    if (!isSettingsSyncEnabledByKey()) {
       return
     }
 
-    if (!SettingsSyncMain.isAvailable()) {
-      executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
+    SettingsSyncPluginManager.getInstance()
+    SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+
+    if (isSettingsSyncEnabledInSettings()) {
+      executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.JustInit), 0, TimeUnit.SECONDS)
+      return
+    }
+
+    if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
+      val migration = MIGRATION_EP.extensionList.firstOrNull()
+      if (migration != null) {
+        val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
+        LOG.info("Found migration from an old storage: ${migration.javaClass.name}, migration possible: $migrationPossible")
+        SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+        if (migrationPossible) {
+          SettingsSyncSettings.getInstance().syncEnabled = true
+          executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
+        }
+      }
+    }
+  }
+
+  override fun applicationActivated(ideFrame: IdeFrame) {
+    if (!isSettingsSyncEnabledByKey() || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 
@@ -35,26 +62,20 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
     }
   }
 
-  override fun onFrameDeactivated() {
+  override fun applicationDeactivated(ideFrame: IdeFrame) {
     stopSyncingByTimer()
   }
 
-  private fun initializeSyncing(): Runnable = Runnable {
+  private fun initializeSyncing(initMode: SettingsSyncBridge.InitMode): Runnable = Runnable {
     LOG.info("Initializing settings sync")
-    SettingsSyncMain.getInstance().syncSettings()
+    val settingsSyncMain = SettingsSyncMain.getInstance()
+    settingsSyncMain.controls.bridge.initialize(initMode)
+    settingsSyncMain.syncSettings()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    if (syncEnabled) {
-      if (!SettingsSyncMain.isAvailable()) {
-        executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
-      }
-      else {
-        SettingsSyncMain.getInstance().enableSyncing()
-        scheduleSyncing("Syncing settings after enabling")
-      }
-    }
-    else {
+    // syncEnabled part is handled inside SettingsSyncEnabler
+    if (!syncEnabled) {
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
@@ -85,6 +106,8 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
   }
 
   companion object {
-    val LOG = logger<SettingsSynchronizer>()
+    private val LOG = logger<SettingsSynchronizer>()
+
+    private val MIGRATION_EP = ExtensionPointName.create<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
   }
 }

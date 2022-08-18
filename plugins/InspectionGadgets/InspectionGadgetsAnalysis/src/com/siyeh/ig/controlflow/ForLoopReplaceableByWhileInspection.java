@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -40,7 +41,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
-public class ForLoopReplaceableByWhileInspection extends BaseInspection {
+public class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField

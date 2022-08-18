@@ -207,7 +207,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           PsiExpression expression = statement.getExpression();
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;

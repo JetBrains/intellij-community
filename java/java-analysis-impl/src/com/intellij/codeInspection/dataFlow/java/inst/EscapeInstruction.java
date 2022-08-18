@@ -28,9 +28,7 @@ public class EscapeInstruction extends Instruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
   }
 
   @Override

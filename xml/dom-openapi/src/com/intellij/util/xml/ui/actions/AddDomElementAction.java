@@ -54,6 +54,11 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final AnAction[] actions = getChildren(e);
     if (actions.length > 1) {

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -13,14 +14,11 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -134,7 +132,7 @@ public class ArrangementSettingsSerializationTest {
     defaultSettings.addGrouping(groupingRule);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 1);
+    assertEquals(1, holder.getChildren().size());
     assertNull(holder.getChild("groups"));
     assertNotNull(holder.getChild("rules"));
   }
@@ -152,7 +150,7 @@ public class ArrangementSettingsSerializationTest {
     defaultSettings.addRule(rule);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 1);
+    assertEquals(1, holder.getChildren().size());
     assertNotNull(holder.getChild("groups"));
     assertNull(holder.getChild("rules"));
   }
@@ -167,7 +165,7 @@ public class ArrangementSettingsSerializationTest {
     defaultSettings.addGrouping(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 2);
+    assertEquals(2, holder.getChildren().size());
     final Element groups = holder.getChild("groups");
     assertNotNull(groups);
     assertTrue(groups.getChildren().isEmpty());
@@ -184,7 +182,7 @@ public class ArrangementSettingsSerializationTest {
     defaultSettings.addRule(rule);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    assertTrue(holder.getChildren().size() == 2);
+    assertEquals(2, holder.getChildren().size());
     final Element rules = holder.getChild("rules");
     assertNotNull(rules);
     assertTrue(rules.getChildren().isEmpty());
@@ -195,14 +193,14 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementSettings settings =
       settings(ContainerUtil.newArrayList(group(OVERRIDDEN_METHODS)), ContainerUtil.newArrayList(section(true, FIELD)));
     final Element holder = doSerializationTest(settings, emptySettings());
-    assertTrue(holder.getChildren().size() == 2);
+    assertEquals(2, holder.getChildren().size());
     assertNotNull(holder.getChild("groups"));
     final Element rules = holder.getChild("rules");
     assertNotNull(rules);
-    assertTrue(rules.getChildren().size() == 1);
+    assertEquals(1, rules.getChildren().size());
     final Element section = rules.getChild("section");
     assertNotNull(section);
-    assertTrue(section.getChildren().size() == 1);
+    assertEquals(1, section.getChildren().size());
     assertNotNull(section.getChild("rule"));
   }
 
@@ -215,11 +213,11 @@ public class ArrangementSettingsSerializationTest {
       settings(ContainerUtil.newArrayList(group(OVERRIDDEN_METHODS)), sections);
 
     final Element holder = doSerializationTest(settings, emptySettings());
-    assertTrue(holder.getChildren().size() == 2);
+    assertEquals(2, holder.getChildren().size());
     assertNotNull(holder.getChild("groups"));
     final Element rules = holder.getChild("rules");
     assertNotNull(rules);
-    assertTrue(rules.getChildren().size() == 2);
+    assertEquals(2, rules.getChildren().size());
     final Element section = rules.getChild("section");
     assertEquals(section.getAttribute("start_comment").getValue(), "start section");
     assertEquals(section.getAttribute("end_comment").getValue(), "end section");
@@ -419,19 +417,13 @@ public class ArrangementSettingsSerializationTest {
     doSerializationTest(settings, defaultSettings);
   }
 
-  private static class TestArrangementSettingsSerializer extends DefaultArrangementSettingsSerializer {
-
-    TestArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
+  private static final class TestArrangementSettingsSerializer extends DefaultArrangementSettingsSerializer {
+    private TestArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
       super(defaultSettings);
     }
   }
 
-  private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
-    StringWriter writer = new StringWriter();
-    Format format = Format.getPrettyFormat();
-    format.setLineSeparator("\n");
-    new XMLOutputter(format).output(root, writer);
-    String actual = writer.toString();
-    assertEquals(expected, actual);
+  private static void assertXmlOutputEquals(String expected, Element root) {
+    assertEquals(expected, JDOMUtil.write(root));
   }
 }

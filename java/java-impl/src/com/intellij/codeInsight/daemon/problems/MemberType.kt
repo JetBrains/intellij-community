@@ -14,8 +14,8 @@ internal enum class MemberType {
       when (psiMember) {
         is PsiMethod -> METHOD
         is PsiClass -> CLASS
-        is PsiField -> FIELD
         is PsiEnumConstant -> ENUM_CONSTANT
+        is PsiField -> FIELD
         else -> null
       }
 

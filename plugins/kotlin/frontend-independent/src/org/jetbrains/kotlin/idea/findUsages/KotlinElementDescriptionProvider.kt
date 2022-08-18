@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -15,9 +15,9 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.util.string.collapseSpaces
+import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -58,6 +58,14 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                 override fun visitTypeReference(typeReference: KtTypeReference, data: Unit): String {
                     val typeText = typeReference.typeElement?.accept(this, data) ?: "???"
                     return if (typeReference.hasParentheses()) "($typeText)" else typeText
+                }
+
+                override fun visitIntersectionType(definitelyNotNullType: KtIntersectionType, data: Unit): String {
+                    return buildString {
+                        append(definitelyNotNullType.getLeftTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                        append(" & ")
+                        append(definitelyNotNullType.getRightTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                    }
                 }
 
                 override fun visitDynamicType(type: KtDynamicType, data: Unit) = type.text
@@ -149,7 +157,6 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
             targetElement.parent as? KtProperty
         } else targetElement as? PsiNamedElement
 
-        @Suppress("FoldInitializerAndIfToElvis")
         if (namedElement == null) {
             return if (targetElement is KtElement) "'" + StringUtil.shortenTextWithEllipsis(
                 targetElement.text.collapseSpaces(),

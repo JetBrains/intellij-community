@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,6 @@ import java.util.Collections;
 import static com.intellij.psi.codeStyle.CodeStyleScheme.CODE_STYLE_TAG_NAME;
 
 public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -66,19 +64,18 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
     assertNotNull(codeStyle);
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     setupLegacyManager();
     return super.getProjectDescriptor();
   }
 
   private void setupLegacyManager() {
-    ProjectServiceContainerCustomizer.getEp().maskAll(Collections.singletonList(project -> {
+    ProjectServiceContainerCustomizer.Companion.getEp().maskAll(Collections.singletonList(project -> {
       try {
         LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = new LegacyCodeStyleSettingsManager();
-        Document document = JDOMUtil.loadDocument(new File(getTestDataPath() + getTestName(true) + ".xml"));
-        legacyCodeStyleSettingsManager.loadState(document.getRootElement());
+        Element element = JDOMUtil.load(new File(getTestDataPath() + getTestName(true) + ".xml"));
+        legacyCodeStyleSettingsManager.loadState(element);
         ServiceContainerUtil.registerServiceInstance(project, LegacyCodeStyleSettingsManager.class, legacyCodeStyleSettingsManager);
       }
       catch (Exception e) {
@@ -87,9 +84,8 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
     }), getTestRootDisposable(), false);
   }
 
-  @Nullable
   @Override
-  protected String getTestDir() {
+  protected @Nullable String getTestDir() {
     return "projectSettingsMigration";
   }
 }

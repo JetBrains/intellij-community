@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -63,11 +63,7 @@ class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
         tool.testVersionMessage = "\$PLUGIN_VERSION"
         val problems = getInspectionResultFromTestDataProject(tool)
 
-        assertEquals(1, problems.size)
-        assertEquals(
-            "Kotlin version that is used for building with Gradle ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) differs from the one bundled into the IDE plugin (\$PLUGIN_VERSION)",
-            problems.single()
-        )
+        assertEquals(0, problems.size)
     }
 
     @Test

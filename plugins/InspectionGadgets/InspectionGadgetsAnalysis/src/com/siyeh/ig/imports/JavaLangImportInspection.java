@@ -16,7 +16,6 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -57,7 +56,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   private static class JavaLangImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
       super.visitImportStatement(statement);
       final PsiJavaCodeReferenceElement reference = statement.getImportReference();
       if (reference == null) {
@@ -69,7 +68,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
       }
       if (statement.isOnDemand()) {
         if (HardcodedMethodConstants.JAVA_LANG.equals(text)) {
-          registerError(statement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(statement);
         }
       }
       else {
@@ -84,7 +83,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
         if (ImportUtils.hasOnDemandImportConflict(text, statement)) {
           return;
         }
-        registerError(statement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(statement);
       }
     }
   }

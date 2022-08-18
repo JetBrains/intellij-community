@@ -44,7 +44,8 @@ object GHPRStatisticsCollector {
   }
 
   fun logDiffOpened(project: Project) {
-    val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRDiffVirtualFile }
+    val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRDiffVirtualFileBase
+                                                                         || it is GHPRCombinedDiffPreviewVirtualFileBase }
     DIFF_OPENED_EVENT.log(project, count)
   }
 

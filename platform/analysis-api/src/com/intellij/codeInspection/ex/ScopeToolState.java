@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
@@ -31,6 +29,7 @@ public final class ScopeToolState {
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
+  private String myEditorAttributesKey;
   private ConfigPanelState myAdditionalConfigPanelState;
 
   public ScopeToolState(@NotNull NamedScope scope,
@@ -91,6 +90,22 @@ public final class ScopeToolState {
     myLevel = level;
   }
 
+  public @Nullable TextAttributesKey getEditorAttributesKey() {
+    if (myEditorAttributesKey != null) {
+      return TextAttributesKey.find(myEditorAttributesKey);
+    }
+    final String externalName = myToolWrapper.getDefaultEditorAttributes();
+    return externalName == null ? null : TextAttributesKey.find(externalName);
+  }
+
+  public @Nullable String getEditorAttributesExternalName() {
+    return myEditorAttributesKey;
+  }
+
+  public void setEditorAttributesExternalName(@Nullable String textAttributesKey) {
+    myEditorAttributesKey = textAttributesKey;
+  }
+
   @Nullable
   public JComponent getAdditionalConfigPanel() {
     if (myAdditionalConfigPanelState == null) {
@@ -110,6 +125,7 @@ public final class ScopeToolState {
   public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
+    if (!Objects.equals(getEditorAttributesExternalName(), state2.getEditorAttributesExternalName())) return false;
     InspectionToolWrapper<?, ?> toolWrapper = getTool();
     InspectionToolWrapper<?, ?> toolWrapper2 = state2.getTool();
     if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;

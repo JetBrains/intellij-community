@@ -1,14 +1,12 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.core.*
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.cce.core.Language
-import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.CodeToken
 
 class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursiveElementVisitor() {
   private var _codeFragment: CodeFragment? = null
@@ -26,7 +24,7 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
 
   override fun visitElement(node: PsiElement) {
     if (tokenSetContributor.keywordTokens.contains(node.elementType)) {
-      val token = CodeToken(node.text, node.textOffset, node.textLength)
+      val token = CodeToken(node.text, node.textOffset, node.textLength, keywordProperties())
       _codeFragment?.addChild(token)
     }
     super.visitElement(node)
@@ -35,7 +33,13 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
   override fun visitPyReferenceExpression(node: PyReferenceExpression) {
     val name = node.nameElement
     if (name != null) {
-      val token = CodeToken(name.text, name.startOffset, name.textLength)
+      val qualifier = node.qualifier?.reference?.resolve()
+      val properties = if (qualifier is PyParameter && !qualifier.isSelf) {
+        SimpleTokenProperties.create(TypeProperty.PARAMETER_MEMBER, SymbolLocation.PROJECT) {}
+      } else {
+        TokenProperties.UNKNOWN
+      }
+      val token = CodeToken(name.text, name.startOffset, name.textLength, properties)
       _codeFragment?.addChild(token)
     }
     super.visitPyReferenceExpression(node)
@@ -44,11 +48,13 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
   override fun visitPyKeywordArgument(node: PyKeywordArgument) {
     val keyword = node.keywordNode
     if (keyword != null) {
-      val token = CodeToken(keyword.text, keyword.startOffset, keyword.textLength)
+      val token = CodeToken(keyword.text, keyword.startOffset, keyword.textLength, keywordProperties())
       _codeFragment?.addChild(token)
     }
     super.visitPyKeywordArgument(node)
   }
 
   override fun visitComment(comment: PsiComment) = Unit
+
+  private fun keywordProperties() = SimpleTokenProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}
 }

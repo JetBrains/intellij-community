@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,12 +70,15 @@ public interface Notifications {
 
     public static void notify(@NotNull Notification notification, @Nullable Project project) {
       notification.assertHasTitleOrContent();
-      //noinspection SSBasedInspection
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isDispatchThread()) {
         doNotify(notification, project);
       }
+      else if (project == null) {
+        app.invokeLater(() -> doNotify(notification, null));
+      }
       else {
-        UIUtil.invokeLaterIfNeeded(() -> doNotify(notification, project));
+        app.invokeLater(() -> doNotify(notification, project), project.getDisposed());
       }
     }
 
@@ -93,11 +95,6 @@ public interface Notifications {
           app.getMessageBus().syncPublisher(TOPIC).notify(notification);
         }
       }
-    }
-
-    @ApiStatus.Experimental
-    public static void notifyAndHide(@NotNull Notification notification) {
-      notifyAndHide(notification, null);
     }
 
     @ApiStatus.Experimental

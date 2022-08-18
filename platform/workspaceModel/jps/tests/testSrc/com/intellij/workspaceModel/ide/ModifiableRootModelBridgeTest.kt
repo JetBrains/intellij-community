@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
@@ -50,7 +50,7 @@ class ModifiableRootModelBridgeTest {
   @Test(expected = Test.None::class)
   fun `getting module root model from modifiable module`() {
     runWriteActionAndWait {
-      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).getModifiableModel()
       val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
                                                       EmptyModuleType.EMPTY_MODULE) as ModuleBridge
 
@@ -58,7 +58,7 @@ class ModifiableRootModelBridgeTest {
       val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
 
       // Assert no exceptions
-      val model = moduleRootManager.getModifiableModel(newModule.diff!! as WorkspaceEntityStorageBuilder,
+      val model = moduleRootManager.getModifiableModel(newModule.diff!! as MutableEntityStorage,
                                                        RootConfigurationAccessor.DEFAULT_INSTANCE)
       model.dispose()
       moduleModifiableModel.dispose()
@@ -68,7 +68,7 @@ class ModifiableRootModelBridgeTest {
   @Test(expected = Test.None::class)
   fun `get modifiable models of renamed module`() {
     runWriteActionAndWait {
-      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).getModifiableModel()
       val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
                                                       EmptyModuleType.EMPTY_MODULE) as ModuleBridge
       moduleModifiableModel.commit()

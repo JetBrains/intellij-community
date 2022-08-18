@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -52,7 +52,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
 
 @State(name = "ActionMacroManager", storages = @Storage("macros.xml"), category = SettingsCategory.UI)
@@ -471,14 +470,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
     // fix references to and icons of renamed macros in the custom actions schema
     final CustomActionsSchema customActionsSchema = CustomActionsSchema.getInstance();
-    final List<ActionUrl> actions = customActionsSchema.getActions();
-    for (final ActionUrl actionUrl : actions) {
+    for (ActionUrl actionUrl : customActionsSchema.getActions()) {
       final String newId = renamingMap.get(actionUrl.getComponent());
       if (newId != null) {
         actionUrl.setComponent(newId);
       }
     }
-    customActionsSchema.setActions(actions);
     for (Map.Entry<String, String> entry : renamingMap.entrySet()) {
       final String oldId = entry.getKey();
       final String path = customActionsSchema.getIconPath(oldId);
@@ -532,6 +529,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     public void actionPerformed(@NotNull AnActionEvent e) {
       IdeEventQueue.getInstance().doWhenReady(() -> getInstance().playMacro(myMacro));
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
 
     @Override
     public void update(@NotNull AnActionEvent e) {

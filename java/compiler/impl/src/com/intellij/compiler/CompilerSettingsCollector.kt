@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 class CompilerSettingsCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup {
-    return GROUP;
+    return GROUP
   }
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {

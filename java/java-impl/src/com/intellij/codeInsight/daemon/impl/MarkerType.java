@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,6 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -285,7 +287,6 @@ public class MarkerType {
     }
   });
 
-  // Used in Kotlin, please don't make private
   public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = getProcessor(5, true);
     ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
@@ -303,13 +304,11 @@ public class MarkerType {
     return getImplementationTooltip(aClass.isInterface() ? "tooltip.is.implemented.by" : "tooltip.is.subclassed.by", subclasses);
   }
 
-  // Used in Kotlin, please don't make private
   public static void navigateToSubclassedClass(MouseEvent e,
                                                @NotNull final PsiClass aClass) {
     navigateToSubclassedClass(e, aClass, new PsiClassOrFunctionalExpressionListCellRenderer());
   }
 
-  // Used in Kotlin, please don't make private
   public static void navigateToSubclassedClass(MouseEvent e,
                                                @NotNull final PsiClass aClass,
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
@@ -340,9 +339,10 @@ public class MarkerType {
                                         subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
-  private static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
-    private OverridingMembersUpdater(@Nullable Project project,
-                                     @NotNull @Nls String title,
+  @IntellijInternalApi
+  public static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
+    public OverridingMembersUpdater(@Nullable Project project,
+                                     @NotNull @ProgressTitle String title,
                                      @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
     }
@@ -360,10 +360,11 @@ public class MarkerType {
     }
   }
 
-  private static final class SubclassUpdater extends OverridingMembersUpdater {
+  @IntellijInternalApi
+  public static final class SubclassUpdater extends OverridingMembersUpdater {
     private final PsiClass myClass;
 
-    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+    public SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(aClass.getProject(), JavaAnalysisBundle.message("subclasses.search.progress.title"), renderer);
       myClass = aClass;
     }
@@ -390,15 +391,12 @@ public class MarkerType {
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       ClassInheritorsSearch.search(myClass, ReadAction.compute(() -> PsiSearchHelper.getInstance(myProject).getUseScope(myClass)), true).forEach(
-        new CommonProcessors.CollectProcessor<>() {
-          @Override
-          public boolean process(final PsiClass o) {
-            if (!updateComponent(o)) {
-              indicator.cancel();
-            }
-            ProgressManager.checkCanceled();
-            return super.process(o);
+        o -> {
+          if (!updateComponent(o)) {
+            indicator.cancel();
           }
+          ProgressManager.checkCanceled();
+          return true;
         });
 
       collectFunctionalInheritors(indicator, myClass);

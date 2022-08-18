@@ -4,15 +4,18 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 internal class NodeDeleteTypeAction : DumbAwareAction(BookmarkBundle.messagePointer("mnemonic.chooser.mnemonic.delete.action.text")) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = false
     val manager = event.bookmarksManager ?: return
-    val nodes = event.bookmarksView?.selectedNodes ?: return
+    val nodes = event.bookmarkNodes ?: return
     for (node in nodes) {
       val bookmark = node.value as? Bookmark ?: return
       val type = manager.getType(bookmark) ?: return
@@ -23,7 +26,7 @@ internal class NodeDeleteTypeAction : DumbAwareAction(BookmarkBundle.messagePoin
 
   override fun actionPerformed(event: AnActionEvent) {
     val manager = event.bookmarksManager ?: return
-    val nodes = event.bookmarksView?.selectedNodes ?: return
+    val nodes = event.bookmarkNodes ?: return
     for (node in nodes) {
       val bookmark = node.value as? Bookmark ?: continue
       manager.setType(bookmark, BookmarkType.DEFAULT)

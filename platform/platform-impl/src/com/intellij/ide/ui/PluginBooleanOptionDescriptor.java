@@ -8,7 +8,6 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -105,7 +104,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         }
       });
 
-    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginSet(descriptors);
+    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
 
     DisabledPluginsState.addDisablePluginListener(new Runnable() {
       @Override
@@ -171,13 +170,11 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Notification notification = ourPreviousNotification.get();
-    if (notification == null) {
-      return;
-    }
-
-    Balloon balloon = notification.getBalloon();
-    if (balloon != null && !balloon.isDisposed()) {
-      return;
+    if (notification != null) {
+      Balloon balloon = notification.getBalloon();
+      if (balloon != null && !balloon.isDisposed()) {
+        return;
+      }
     }
 
     Notification newNotification = UpdateChecker.getNotificationGroupForIdeUpdateResults()

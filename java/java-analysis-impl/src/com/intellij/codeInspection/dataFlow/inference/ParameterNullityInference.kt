@@ -19,8 +19,7 @@ internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<Strin
   val queue = ArrayDeque(statements)
   while (queue.isNotEmpty() && canBeNulls.isNotEmpty()) {
     val element = queue.removeFirst()
-    val type = element.tokenType
-    when (type) {
+    when (val type = element.tokenType) {
       CONDITIONAL_EXPRESSION, EXPRESSION_STATEMENT -> JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       RETURN_STATEMENT -> {
         queue.clear()
@@ -49,7 +48,7 @@ internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<Strin
           dereference(tree, expression, canBeNulls, notNulls, queue)
         }
       }
-      SWITCH_STATEMENT -> {
+      SWITCH_STATEMENT, SWITCH_EXPRESSION -> {
         queue.clear()
         val expression = JavaLightTreeUtil.findExpressionChild(tree, element)
         val hasExplicitNullCheck = findCaseLabelElementList(tree, element)
@@ -196,6 +195,7 @@ internal fun getParameterNames(tree: LighterAST, method: LighterASTNode): List<S
 
 private fun findCaseLabelElementList(tree: LighterAST, switchNode: LighterASTNode): List<LighterASTNode> {
   val codeBlock = LightTreeUtil.firstChildOfType(tree, switchNode, CODE_BLOCK) ?: return emptyList()
-  val rules = LightTreeUtil.getChildrenOfType(tree, codeBlock, SWITCH_LABELED_RULE)
+  var rules: List<LighterASTNode> = LightTreeUtil.getChildrenOfType(tree, codeBlock, SWITCH_LABELED_RULE)
+  rules += LightTreeUtil.getChildrenOfType(tree, codeBlock, SWITCH_LABEL_STATEMENT)
   return rules.mapNotNull { node -> LightTreeUtil.firstChildOfType(tree, node, CASE_LABEL_ELEMENT_LIST) }
 }

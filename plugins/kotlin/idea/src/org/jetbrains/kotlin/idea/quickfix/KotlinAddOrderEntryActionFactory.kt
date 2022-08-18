@@ -1,20 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.runWhenSmart
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val simpleExpression = diagnostic.psiElement as? KtSimpleNameExpression ?: return emptyList()
-        if (!ProjectRootsUtil.isInProjectSource(simpleExpression, includeScriptsOutsideSourceRoots = false)) return emptyList()
+        if (!RootKindFilter.projectSources.matches(simpleExpression)) return emptyList()
 
         val refElement = simpleExpression.getQualifiedElement()
 
@@ -51,6 +52,6 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
         }
 
         @Suppress("UNCHECKED_CAST")
-        return OrderEntryFix.registerFixes(QuickFixActionRegistrarImpl(null), reference) as List<IntentionAction>? ?: emptyList()
+        return OrderEntryFix.registerFixes(QuickFixActionRegistrar.IGNORE_ALL, reference) as List<IntentionAction>? ?: emptyList()
     }
 }

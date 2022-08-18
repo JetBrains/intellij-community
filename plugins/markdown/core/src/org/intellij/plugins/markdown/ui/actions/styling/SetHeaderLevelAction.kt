@@ -33,6 +33,10 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   private fun updateWithChildren(event: AnActionEvent) {
     event.presentation.isPopupGroup = true
     val children = group.getChildren(event).asSequence().filterIsInstance<SetHeaderLevelImpl>()
@@ -70,9 +74,15 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     SetHeaderLevelImpl.Heading(level = 5),
     SetHeaderLevelImpl.Heading(level = 6)
   ) {
-    override fun isPopup() = true
+    init {
+      templatePresentation.isPopupGroup = true
+    }
 
     override fun displayTextInToolbar() = true
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
   }
 
   private class MyActionButton(group: ActionGroup, presentation: Presentation, place: String): ActionButtonWithText(group, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {

@@ -21,17 +21,21 @@ class GitNewProjectWizardStep(
     NewProjectWizardBaseData by parent,
     GitNewProjectWizardData {
 
-  override val gitProperty = propertyGraph.property(false)
+  private val gitRepositoryInitializer = GitRepositoryInitializer.getInstance()
+
+  private val gitProperty = propertyGraph.property(false)
     .bindBooleanStorage("NewProjectWizard.gitState")
 
-  override var git by gitProperty
+  override val git get() = gitRepositoryInitializer != null && gitProperty.get()
 
   override fun setupUI(builder: Panel) {
-    with(builder) {
-      row(EMPTY_LABEL) {
-        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-          .bindSelected(gitProperty)
-      }.bottomGap(BottomGap.SMALL)
+    if (gitRepositoryInitializer != null) {
+      with(builder) {
+        row(EMPTY_LABEL) {
+          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+            .bindSelected(gitProperty)
+        }.bottomGap(BottomGap.SMALL)
+      }
     }
   }
 
@@ -40,7 +44,7 @@ class GitNewProjectWizardStep(
       val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
       if (projectBaseDirectory != null) {
         runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+          gitRepositoryInitializer!!.initRepository(project, projectBaseDirectory, true)
         }
       }
     }

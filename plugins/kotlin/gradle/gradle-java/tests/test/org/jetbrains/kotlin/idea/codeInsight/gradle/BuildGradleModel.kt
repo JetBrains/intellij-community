@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.testFramework.IdeaTestUtil
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -11,7 +10,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
-import org.jetbrains.kotlin.idea.projectModel.KotlinVariant
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -43,7 +42,9 @@ class BuiltGradleModel<T : Any>(val modules: Map<IdeaModule, T?>) {
     }
 }
 
-fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, clazz: KClass<T>): BuiltGradleModel<T> {
+fun <T : Any> buildGradleModel(
+    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>
+): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
     connector.useDistribution(AbstractModelBuilderTest.DistributionLocator().getDistributionFor(gradleVersion))
     connector.forProjectDirectory(projectPath)
@@ -59,7 +60,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
                 setOf(
                     clazz.java,
                     /* Representative of the `kotlin.project-module` module */
-                    KotlinVariant::class.java,
+                    KotlinCompilation::class.java,
                     /* Representative of the kotlin stdlib */
                     Unit::class.java
                 ), setOf(IdeaProject::class.java)
@@ -75,7 +76,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
                         KotlinMPPGradleModelBuilder::class.java,
 
                         /* Representative of the `kotlin.project-module` module */
-                        KotlinVariant::class.java,
+                        KotlinCompilation::class.java,
 
                         /* Representative of the kotlin stdlib */
                         Unit::class.java
@@ -87,8 +88,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
         val buildActionExecutor = gradleConnection.action(projectImportAction)
         buildActionExecutor.withArguments(executionSettings.arguments)
 
-        val jdkHome = IdeaTestUtil.requireRealJdkHome()
-        buildActionExecutor.setJavaHome(File(jdkHome))
+        buildActionExecutor.setJavaHome(File(javaHomePath))
         buildActionExecutor.setJvmArguments("-Xmx512m")
         buildActionExecutor.setStandardOutput(System.out)
         buildActionExecutor.setStandardError(System.err)

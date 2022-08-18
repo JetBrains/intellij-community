@@ -221,7 +221,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   /**
    * Invoked in atomic action
    */
-  public boolean prepare(@Nullable java.util.function.Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
+  public boolean prepare(@Nullable Consumer<? super ExtractMethodProcessor> pass) throws PrepareFailedException {
     if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
@@ -370,7 +370,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               super.visitReferenceExpression(expression);
               final PsiElement resolve = expression.resolve();
               if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
@@ -524,15 +524,15 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
     final List<PsiClass> localClasses = new ArrayList<>();
     container.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(final PsiClass aClass) {
+      @Override public void visitClass(final @NotNull PsiClass aClass) {
         localClasses.add(aClass);
       }
 
-      @Override public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      @Override public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         visitElement(aClass);
       }
 
-      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      @Override public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         visitElement(classParameter);
       }
     });
@@ -665,13 +665,13 @@ public class ExtractMethodProcessor implements MatchProvider {
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitLocalVariable(PsiLocalVariable variable) {
+            public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
               super.visitLocalVariable(variable);
               vars.put(variable.getName(), variable);
             }
 
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
           });
         }
         for (VariableData parameter : parameters) {
@@ -897,12 +897,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  public void previewRefactoring(@Nullable Set<TextRange> textRanges) {
+  public void previewRefactoring(@Nullable Set<? extends TextRange> textRanges) {
     initDuplicates(textRanges);
     chooseAnchor();
   }
 
-  protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+  protected void initDuplicates(@Nullable Set<? extends TextRange> textRanges) {
     myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, textRanges);
     if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
       myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT, textRanges);
@@ -1254,7 +1254,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         method.accept(new JavaRecursiveElementVisitor() {
 
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             if (resolved != null) {
               final int index = ArrayUtil.find(parameters, resolved);
@@ -1276,7 +1276,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       else if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)){
         method.accept(new JavaRecursiveElementVisitor() {
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             final int index = ArrayUtil.find(parameters, resolved);
             if (index >= 0) {
@@ -1678,7 +1678,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void copyParamAnnotations(PsiParameter parm) {
-    final PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(parm.getName(), myElements[0]);
+    final PsiVariable variable = PsiResolveHelper.getInstance(myProject).resolveReferencedVariable(parm.getName(), myElements[0]);
     if (variable instanceof PsiParameter) {
       final PsiModifierList modifierList = variable.getModifierList();
       if (modifierList != null) {
@@ -1868,7 +1868,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment,
-                                    final java.util.function.Consumer<ExtractMethodProcessor> extractPass,
+                                    final Consumer<? super ExtractMethodProcessor> extractPass,
                                     @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
@@ -2039,7 +2039,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<ExtractMethodProcessor> extractPass, PsiElement target) {
+  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<? super ExtractMethodProcessor> extractPass, PsiElement target) {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 
@@ -2114,7 +2114,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(PsiType expressionType) {
+  @NotNull
+  protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(@NotNull PsiType expressionType) {
     @Nls
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(

@@ -4159,18 +4159,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "8B",
-    "name": "intellij.externalSystem.dependencyUpdater",
-    "n": "i.externalSystem.dependencyUpdater",
-    "package": null,
-    "sourceModule": "intellij.externalSystem.dependencyUpdater",
-    "descriptor": "community/plugins/dependency-updater/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.externalSystem.dependencyUpdater",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "RP1",
     "name": "kotlin.idea",
     "n": "kotlin.idea",
@@ -4283,18 +4271,6 @@
     "sourceModule": "intellij.xpath",
     "descriptor": "community/plugins/xpath/xpath-view/src/META-INF/plugin.xml",
     "pluginId": "XPathView",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "QD1",
-    "name": "intellij.jps.cache",
-    "n": "i.jps.cache",
-    "package": null,
-    "sourceModule": "intellij.jps.cache",
-    "descriptor": "community/plugins/jps-cache/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.jps.cache",
     "type": 1
   }
 }, {

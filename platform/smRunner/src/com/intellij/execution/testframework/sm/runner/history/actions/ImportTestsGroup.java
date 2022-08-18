@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.TestStateStorage;
@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +37,11 @@ public class ImportTestsGroup extends ActionGroup {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
@@ -44,8 +51,8 @@ public class ImportTestsGroup extends ActionGroup {
     final List<File> fileNames = filePaths.stream()
       .map(fileName -> new File(testHistoryRoot, fileName))
       .filter(file -> file.exists())
-      .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()))
-      .collect(Collectors.toList());
+      .sorted(Comparator.comparingLong(File::lastModified).reversed())
+      .toList();
     final int historySize = fileNames.size();
     final AnAction[] actions = new AnAction[historySize];
     for (int i = 0; i < historySize; i++) {

@@ -111,6 +111,7 @@ class BuildScriptDataBuilder(
   override fun withKotlinJvmPlugin() = apply { backend.withKotlinJvmPlugin() }
   override fun withKotlinJsPlugin() = apply { backend.withKotlinJsPlugin() }
   override fun withKotlinMultiplatformPlugin() = apply { backend.withKotlinMultiplatformPlugin() }
+  override fun withGroovyPlugin() = apply { backend.withGroovyPlugin() }
   override fun withGroovyPlugin(version: String) = apply { backend.withGroovyPlugin(version) }
   override fun withApplicationPlugin(mainClass: String?, mainModule: String?, executableDir: String?, defaultJvmArgs: List<String>?) =
     apply { backend.withApplicationPlugin(mainClass, mainModule, executableDir, defaultJvmArgs) }

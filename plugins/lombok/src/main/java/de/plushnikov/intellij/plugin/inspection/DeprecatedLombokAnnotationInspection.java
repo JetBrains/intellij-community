@@ -31,7 +31,7 @@ public class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBa
     }
 
     @Override
-    public void visitAnnotation(final PsiAnnotation annotation) {
+    public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
       checkFor("lombok.experimental.Builder", LombokClassNames.BUILDER, annotation);
       checkFor("lombok.experimental.Value", LombokClassNames.VALUE, annotation);
       checkFor("lombok.experimental.Wither", LombokClassNames.WITH, annotation);

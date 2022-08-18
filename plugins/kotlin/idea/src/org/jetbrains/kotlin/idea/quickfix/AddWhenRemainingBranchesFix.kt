@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -10,16 +10,15 @@ import org.jetbrains.kotlin.cfg.hasUnknown
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddRemainingWhenBranchesApplicator.generateWhenBranches
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
-import org.jetbrains.kotlin.idea.util.generateWhenBranches
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 class AddWhenRemainingBranchesFix(
     expression: KtWhenExpression,
@@ -70,6 +69,7 @@ class AddWhenRemainingBranchesFix(
             if (element == null) return
             val missingCases = WhenChecker.getMissingCases(element, element.analyze())
 
+            @Suppress("DEPRECATION")
             generateWhenBranches(element, missingCases)
 
             ShortenReferences.DEFAULT.process(element)
@@ -84,7 +84,7 @@ class AddWhenRemainingBranchesFix(
                 element.entries
                     .map { it.conditions.toList() }
                     .flatten()
-                    .firstNotNullResult {
+                    .firstNotNullOfOrNull {
                         (it as? KtWhenConditionWithExpression)?.expression as? KtDotQualifiedExpression
                     }?.importReceiverMembers()
             }

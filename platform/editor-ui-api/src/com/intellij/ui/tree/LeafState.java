@@ -15,20 +15,20 @@ public enum LeafState {
    */
   ALWAYS,
   /**
-   * Specifies that a tree should always show the collapse/expand icon for the node, even if this node have no children.
+   * Specifies that a tree should always show the collapse/expand icon for the node, even if this node has no children.
    *
    * @see AbstractTreeNode#isAlwaysShowPlus()
    */
   NEVER,
   /**
-   * Specifies that a tree should show the collapse/expand icon for the node, only if this node have some children.
+   * Specifies that a tree should show the collapse/expand icon for the node only if this node has some children.
    * By default, children are counted immediately that may cause performance problems.
    *
    * @see TreeModel#getChildCount(Object)
    */
   DEFAULT,
   /**
-   * Specifies that a tree should show the collapse/expand icon for the node, only if this node have some children.
+   * Specifies that a tree should show the collapse/expand icon for the node only if this node has some children.
    * In this mode children are counted later that may cause a "blinking" of the collapse/expand icon.
    */
   ASYNC;

@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.openapi.roots.ui.configuration.ComboBoxWithSeparators.EntryModel
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.JBColor
-import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.panels.OpaquePanel
+import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JList
@@ -43,7 +46,12 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
   }
 
   private inner class MyListCellRenderer: ColoredListCellRenderer<ComboBoxWithSeparators<T>.EntryModel<T>>() {
-    private val separator = SeparatorWithText()
+    private val separator = GroupHeaderSeparator(JBUI.insets(3, 8, 1, 0)).apply {
+      useComboLineInsets()
+    }
+    private val separatorPanel = OpaquePanel(BorderLayout()).apply {
+      add(separator)
+    }
 
     override fun getListCellRendererComponent(list: JList<out EntryModel<T>>?,
                                               value: EntryModel<T>?,
@@ -53,7 +61,7 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
       return when (value) {
         is Separator -> {
           separator.caption = value.text
-          separator
+          separatorPanel
         }
         else -> super.getListCellRendererComponent(list, value, index, selected, hasFocus)
       }

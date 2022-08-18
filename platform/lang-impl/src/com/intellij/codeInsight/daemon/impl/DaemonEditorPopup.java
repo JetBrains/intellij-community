@@ -63,6 +63,11 @@ public class DaemonEditorPopup extends PopupHandler {
         }
 
         @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
+        @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           UISettings.getInstance().setShowEditorToolTip(state);
           UISettings.getInstance().fireUISettingsChanged();
@@ -88,6 +93,11 @@ public class DaemonEditorPopup extends PopupHandler {
                     }
 
                     @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
+                    }
+
+                    @Override
                     public void setSelected(@NotNull AnActionEvent e, boolean state) {
                       DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(state);
                     }
@@ -102,6 +112,11 @@ public class DaemonEditorPopup extends PopupHandler {
                     @Override
                     public boolean isSelected(@NotNull AnActionEvent e) {
                       return !DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
+                    }
+
+                    @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
                     }
 
                     @Override

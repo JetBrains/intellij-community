@@ -4,3 +4,5 @@ public class A {
     @JvmOverloads
     <caret>constructor(x: Int = 0, y: Double = 0.0, z: String = "0")
 }
+
+// FIR_COMPARISON

@@ -196,7 +196,7 @@ public class AboutDialog extends DialogWrapper {
     openSourceSoftware.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
     openSourceSoftware.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         AboutPopup.showOpenSoftwareSources(ObjectUtils.notNull(AboutPopup.loadThirdPartyLibraries(), ""));
       }
     });

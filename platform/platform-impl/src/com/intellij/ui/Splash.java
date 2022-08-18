@@ -53,8 +53,9 @@ public final class Splash extends Dialog {
   private final Image image;
 
   public Splash(@NotNull ApplicationInfoEx info) {
-    super((Frame)null);
+    super((Frame)null, "splash" /* not visible, but available through window properties on Linux */);
     setUndecorated(true);
+    setResizable(false); // makes tiling window managers on Linux show window as floating
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
     progressHeight = uiScale(info.getProgressHeight());

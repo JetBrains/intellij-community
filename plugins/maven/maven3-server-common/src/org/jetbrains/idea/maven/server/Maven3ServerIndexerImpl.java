@@ -49,12 +49,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    MavenServerUtil.registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        release(MavenServerUtil.getToken());
-      }
-    });
+    MavenServerUtil.registerShutdownTask(() -> release(MavenServerUtil.getToken()));
   }
 
   @Override
@@ -139,21 +134,18 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
           final IndexUpdateRequest request = new IndexUpdateRequest(index);
 
           try {
-            embedder.executeWithMavenSession(r, new Runnable() {
-              @Override
-              public void run() {
-                request.setResourceFetcher(
-                  new Maven3ServerIndexFetcher(
-                    index.getRepositoryId(), index.getRepositoryUrl(), embedder.getComponent(WagonManager.class),
-                    embedder.getComponent(RepositorySystem.class), getWagonTransferListenerAdapter(indicator)
-                  )
-                );
-                try {
-                  myUpdater.fetchAndUpdateIndex(request);
-                }
-                catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
+            embedder.executeWithMavenSession(r, (Runnable)() -> {
+              request.setResourceFetcher(
+                new Maven3ServerIndexFetcher(
+                  index.getRepositoryId(), index.getRepositoryUrl(), embedder.getComponent(WagonManager.class),
+                  embedder.getComponent(RepositorySystem.class), getWagonTransferListenerAdapter(indicator)
+                )
+              );
+              try {
+                myUpdater.fetchAndUpdateIndex(request);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
               }
             });
           }

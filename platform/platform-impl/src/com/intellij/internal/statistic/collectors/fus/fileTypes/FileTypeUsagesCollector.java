@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -20,7 +21,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,12 +28,12 @@ import java.util.*;
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 6);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 7);
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 
   // temporary not collected
-  private final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
+  private final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private final IntEventField PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_SCHEME_PERCENT = new ObjectListEventField("file_schema", SCHEMA, PERCENT);
 
@@ -88,9 +88,10 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   }
 
   public static class ValidationRule extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "file_type".equals(ruleId);
+    public String getRuleId() {
+      return "file_type";
     }
 
     @NotNull

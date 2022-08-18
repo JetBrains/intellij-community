@@ -42,7 +42,8 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
         val isVarArgs = type is JKJavaArrayType && name.value == "value"
         return JKParameter(
             JKTypeElement(
-                if (!isVarArgs) type else (type as JKJavaArrayType).type
+                if (!isVarArgs) type else (type as JKJavaArrayType).type,
+                returnType::annotationList.detached()
             ),
             JKNameIdentifier(name.value),
             isVarArgs = isVarArgs,

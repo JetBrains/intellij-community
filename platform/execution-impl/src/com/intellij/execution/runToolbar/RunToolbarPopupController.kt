@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.*
 import java.util.function.Supplier
+import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
@@ -53,7 +54,11 @@ class RunToolbarPopupController(val project: Project,
     }
 
     mainWidgetComponent.isOpened = true
-    val slotPane = (if (pane.project == project) pane else null) ?: RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
+    val slotPane = (if (pane.project == project) pane else null) ?:
+                   run {
+                     pane.clear()
+                     RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
+                   }
     pane = slotPane
 
     fun getTrackerRelativePoint(): RelativePoint {
@@ -93,11 +98,29 @@ class RunToolbarPopupController(val project: Project,
       .setShowBorder(true)
       .createPopup()
 
+    fun updatePopupLocation() {
+      if (popup is AbstractPopup) {
+        popup.setLocation(tracker.recalculateLocation(popup))
+
+        popup.popupWindow?.let {
+          if (it.isShowing) {
+            it.pack()
+          }
+        }
+      }
+    }
+
+    SwingUtilities.invokeLater {
+      updatePopupLocation()
+    }
+
     popup.show(if (popup is AbstractPopup)
                  tracker.recalculateLocation(popup)
                else
                  getTrackerRelativePoint()
     )
+
+    updatePopupLocation()
 
     val ancestorListener = object : AncestorListener {
       override fun ancestorAdded(event: AncestorEvent?) {
@@ -124,15 +147,7 @@ class RunToolbarPopupController(val project: Project,
       }
 
       private fun updateLocation() {
-        if (popup is AbstractPopup) {
-          popup.setLocation(tracker.recalculateLocation(popup))
-
-          popup.popupWindow?.let {
-            if (it.isShowing) {
-              it.pack()
-            }
-          }
-        }
+        updatePopupLocation()
       }
     }
 
@@ -168,9 +183,11 @@ class RunToolbarPopupController(val project: Project,
       mainWidgetComponent.removeComponentListener(adapterListener)
       Toolkit.getDefaultToolkit().removeAWTEventListener(awtEventListener)
       canClose = false
+      pane.clear()
       this.popup = null
     }
     getPopupControllers().forEach { it.updateIconImmediately(mainWidgetComponent.isOpened) }
+
     this.popup = popup
   }
 
@@ -185,6 +202,7 @@ class RunToolbarPopupController(val project: Project,
   internal fun cancel() {
     componentPressed = false
     canClose = true
+    pane.clear()
     popup?.cancel()
   }
 

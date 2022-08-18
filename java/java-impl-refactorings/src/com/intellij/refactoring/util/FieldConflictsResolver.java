@@ -76,7 +76,7 @@ public class FieldConflictsResolver {
     final PsiReferenceExpression[] replacedRef = {null};
     initializer.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         if (qualifierExpression != null) {
           qualifierExpression.accept(this);

@@ -1,4 +1,4 @@
-// "Make 'a.i' package-private" "true"
+// "Make 'a.i' package-private" "true-preview"
 import java.io.*;
 
 class a {

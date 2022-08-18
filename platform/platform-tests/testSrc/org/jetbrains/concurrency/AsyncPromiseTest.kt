@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
@@ -190,7 +190,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -209,7 +209,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - do not log CancellationException`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -224,7 +224,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -244,7 +244,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error2 in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
     try {
       val promise = AsyncPromise<String>()
       val promise2 = promise
@@ -344,7 +344,7 @@ class AsyncPromiseTest {
 
   @Test
   fun `test onProcessed is called even for canceled promise`() {
-    val called = AtomicBoolean();
+    val called = AtomicBoolean()
     val promise = AsyncPromise<String>()
     promise.onProcessed {
       called.set(true)
@@ -357,9 +357,9 @@ class AsyncPromiseTest {
   fun testExceptionInsideComputationIsLogged() {
     val loggedError = AtomicBoolean()
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         loggedError.set(true)
-        return false
+        return Action.NONE
       }
     }) {
       val promise = ReadAction.nonBlocking {

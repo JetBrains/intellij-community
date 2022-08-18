@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,11 +38,16 @@ import java.util.Random;
 /**
  * @author Konstantin Bulenkov
  */
-public class TestMacMessagesAction extends AnAction {
+final class TestMacMessagesAction extends AnAction {
   private int num = 1;
   private String TITLE = "Title";
   private String MESSAGE = "Message";
   private String DONT_ASK_TEXT = "Do not ask me again";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -35,7 +35,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         if (!OptionalUtil.OPTIONAL_GET.test(call)) return;
@@ -61,7 +61,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodRef) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodRef) {
         if (!OptionalUtil.OPTIONAL_GET.methodReferenceMatches(methodRef)) return;
         if (isOptionalProblem(methodRef, new JavaMethodReferenceArgumentAnchor(methodRef))) {
           holder.registerProblem(methodRef, JavaBundle.message("inspection.optional.get.without.is.present.method.reference.message"));

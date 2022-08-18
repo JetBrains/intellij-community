@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -55,12 +55,12 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class ComponentPanelTestAction extends DumbAwareAction {
+final class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
-    Top    (SwingConstants.TOP, "Top"),
-    Bottom (SwingConstants.BOTTOM, "Bottom"),
-    Left   (SwingConstants.LEFT, "Left"),
-    Right  (SwingConstants.RIGHT, "Right");
+    Top(SwingConstants.TOP, "Top"),
+    Bottom(SwingConstants.BOTTOM, "Bottom"),
+    Left(SwingConstants.LEFT, "Left"),
+    Right(SwingConstants.RIGHT, "Right");
 
     private final String name;
     private final int placement;
@@ -79,6 +79,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     public int placement() {
       return placement;
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
@@ -806,6 +816,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[0]);
         }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -821,6 +835,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[1]);
         }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -834,6 +852,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[2]);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
 
         @Override
@@ -919,15 +941,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
-    private JComponent createComboBoxTab() {
+    private @NotNull JComponent createComboBoxTab() {
       JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
       pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
 
       class Item {
         final Icon myIcon;
         final String myText;
-        final ImmutableList<Item> myChildren;
+        final List<Item> myChildren;
 
         Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
@@ -936,7 +957,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
-          this.myChildren = ImmutableList.copyOf(myChildren);
+          this.myChildren = List.copyOf(myChildren);
         }
       }
 

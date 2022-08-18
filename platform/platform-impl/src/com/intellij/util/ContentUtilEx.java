@@ -61,7 +61,7 @@ public final class ContentUtilEx extends ContentsUtil {
                                            @NotNull TabGroupId tabGroupId,
                                            @NotNull TabDescriptor tab,
                                            boolean select) {
-    Content content = ContentFactory.SERVICE.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
+    Content content = ContentFactory.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
                                                                          true);
     content.setTabName(tabGroupId.getDisplayName(tab));
     content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);

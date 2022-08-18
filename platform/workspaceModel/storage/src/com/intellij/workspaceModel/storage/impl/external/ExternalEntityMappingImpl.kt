@@ -47,7 +47,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   override fun addMapping(entity: WorkspaceEntity, data: T) {
     startWrite()
     add((entity as WorkspaceEntityBase).id, data)
-    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+    (entityStorage as MutableEntityStorageImpl).incModificationCount()
   }
 
   internal fun add(id: EntityId, data: T) {
@@ -86,7 +86,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     startWrite()
     entity as WorkspaceEntityBase
     val removed = remove(entity.id)
-    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+    (entityStorage as MutableEntityStorageImpl).incModificationCount()
     return removed
   }
 
@@ -106,7 +106,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
                    replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
-                   target: WorkspaceEntityStorageBuilderImpl) {
+                   target: MutableEntityStorageImpl) {
     val initialData = HashMap<EntityId, T>()
     //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
     other.indexLog.forEach { indexEntry ->
@@ -133,7 +133,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     }
   }
 
-  private fun getTargetId(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>, target: WorkspaceEntityStorageBuilderImpl, id: EntityId): EntityId? {
+  private fun getTargetId(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>, target: MutableEntityStorageImpl, id: EntityId): EntityId? {
     val possibleTargetId = replaceMap[id.notThis()]
     if (possibleTargetId != null) return possibleTargetId.id
 

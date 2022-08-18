@@ -38,8 +38,6 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private val surroundingStatementStartRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
-
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
     val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
@@ -47,7 +45,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
       val text = action.textFragment.text
       when {
         text == "}" -> return langSupport.handleCloseBraceDeleted(action)
-        text.matches(surroundingStatementStartRegex) -> {
+        text.matches(Holder.surroundingStatementStartRegex) -> {
           return langSupport.handleStatementStartDeleted(action)
         }
         else -> State.reset()
@@ -137,5 +135,9 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
 
   companion object {
     const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 7000L
+  }
+
+  private object Holder {
+    val surroundingStatementStartRegex: Regex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
   }
 }

@@ -21,4 +21,4 @@ UFile (package = ) [public final class ElvisTypeKt {...]
         UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull o: java.lang.Object) : void {...}]
             UParameter (name = o) [@org.jetbrains.annotations.NotNull var o: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void

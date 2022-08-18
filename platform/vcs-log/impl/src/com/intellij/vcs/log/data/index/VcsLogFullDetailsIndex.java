@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -37,7 +37,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   @NotNull protected final StorageId myStorageId;
   @NotNull protected final String myName;
   @NotNull protected final DataIndexer<Integer, T, D> myIndexer;
-  @NotNull private final FatalErrorHandler myFatalErrorHandler;
+  @NotNull private final VcsLogErrorHandler myErrorHandler;
   private volatile boolean myDisposed = false;
 
   public VcsLogFullDetailsIndex(@NotNull StorageId storageId,
@@ -45,13 +45,13 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
                                 @NotNull DataIndexer<Integer, T, D> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
                                 @Nullable StorageLockContext storageLockContext,
-                                @NotNull FatalErrorHandler fatalErrorHandler,
+                                @NotNull VcsLogErrorHandler errorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
     myName = name;
     myStorageId = storageId;
     myIndexer = indexer;
-    myFatalErrorHandler = fatalErrorHandler;
+    myErrorHandler = errorHandler;
 
     myMapReduceIndex = createMapReduceIndex(externalizer, storageLockContext);
 
@@ -68,7 +68,8 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     try {
       return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
                                   forwardIndexAccessor);
-    } finally {
+    }
+    finally {
       PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
     }
   }
@@ -162,7 +163,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
     @Override
     public void requestRebuild(@NotNull Throwable ex) {
-      myFatalErrorHandler.consume(this, ex);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, ex);
     }
   }
 

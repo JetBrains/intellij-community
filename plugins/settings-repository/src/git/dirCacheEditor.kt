@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.SystemInfo
@@ -16,7 +16,6 @@ import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
-import java.util.*
 
 private val EDIT_CMP = Comparator<PathEdit> { o1, o2 ->
   val a = o1.path
@@ -167,7 +166,6 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
   }
 }
 
-@Suppress("FunctionName")
 fun DeleteFile(path: String): DeleteFile = DeleteFile(encodePath(path))
 
 class DeleteFile(path: ByteArray) : PathEditBase(path) {

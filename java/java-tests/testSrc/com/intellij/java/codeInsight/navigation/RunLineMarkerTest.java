@@ -47,11 +47,18 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
   @Override
   protected void tearDown() throws Exception {
-    RunManager runManager = RunManager.getInstance(getProject());
-    for (RunnerAndConfigurationSettings setting : myTempSettings) {
-      runManager.removeConfiguration(setting);
+    try {
+      RunManager runManager = RunManager.getInstance(getProject());
+      for (RunnerAndConfigurationSettings setting : myTempSettings) {
+        runManager.removeConfiguration(setting);
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testRunLineMarker() {
@@ -189,7 +196,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                                                    "", ""));
       myFixture.addClass("package junit.framework; public class TestCase {}");
       PsiFile file = myFixture.configureByText("MainTest.java", "public class Main {\n" +
-                                                                "  public class Main<caret>Test extends junit.framework.TestCase {\n" +
+                                                                "  public static class Main<caret>Test extends junit.framework.TestCase {\n" +
                                                                 "    public void testFoo() {\n" +
                                                                 "    }\n" +
                                                                 "  }" +

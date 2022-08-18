@@ -1,0 +1,98 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.codeInsight.hints
+
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.SettingsKey
+import com.intellij.ui.layout.*
+import com.intellij.util.castSafelyTo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import javax.swing.JComponent
+
+class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {
+
+    data class Settings(
+        var ranges: Boolean = true
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType): Boolean =
+            when (hintType) {
+                HintType.RANGES -> ranges
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when (hintType) {
+                HintType.RANGES -> ranges = enable
+                else -> Unit
+            }
+    }
+
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.values.hints")
+    override val name: String = KotlinBundle.message("hints.settings.values.ranges")
+    override val group: InlayGroup
+        get() = InlayGroup.VALUES_GROUP
+
+    override fun createSettings(): Settings = Settings()
+
+    override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
+        override fun createComponent(listener: ChangeListener): JComponent = panel {}
+
+        override val mainCheckboxText: String = KotlinBundle.message("hints.settings.common.items")
+
+        override val cases: List<ImmediateConfigurable.Case>
+            get() = listOf(
+                ImmediateConfigurable.Case(
+                    KotlinBundle.message("hints.settings.values.ranges"),
+                    "kotlin.values.ranges",
+                    settings::ranges,
+                    KotlinBundle.message("inlay.kotlin.values.hints.kotlin.values.ranges")
+                )
+            )
+
+    }
+
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
+        when (resolved) {
+            HintType.RANGES -> settings.ranges
+            else -> false
+        }
+
+    override fun isHintSupported(hintType: HintType): Boolean = hintType == HintType.RANGES
+
+    override val previewText: String? = null
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.values.hints")
+}
+
+internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
+
+internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
+    val binaryExprName = castSafelyTo<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
+    val dotQualifiedName = castSafelyTo<KtDotQualifiedExpression>()?.callExpression?.calleeExpression?.text
+    val name = binaryExprName ?: dotQualifiedName
+    return when {
+        binaryExprName == ".." || dotQualifiedName == "rangeTo" -> RangeKtExpressionType.RANGE_TO
+        binaryExprName == "..<" || dotQualifiedName == "rangeUntil" -> RangeKtExpressionType.RANGE_UNTIL
+        name == "downTo" -> RangeKtExpressionType.DOWN_TO
+        name == "until" -> RangeKtExpressionType.UNTIL
+        else -> null
+    }?.takeIf {
+        val notNullContext = context?.value ?: safeAnalyze(BodyResolveMode.PARTIAL)
+        getResolvedCall(notNullContext)?.resultingDescriptor?.fqNameOrNull()?.asString()?.startsWith("kotlin.") == true
+    }
+}
+
+enum class RangeKtExpressionType {
+    RANGE_TO, RANGE_UNTIL, DOWN_TO, UNTIL
+}

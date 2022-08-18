@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UExpression
-import kotlin.streams.asSequence
 
 /**
  * Extension which allows to provide additional information (facts) about UAST expressions which could be used in analysis for all UAST languages.
@@ -16,7 +15,7 @@ interface UastAnalysisPlugin {
     private val extensionPointName = ExtensionPointName<UastAnalysisPlugin>("org.jetbrains.uast.analysis.uastAnalysisPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language) = extensionPointName.extensions().asSequence().firstOrNull { it.language == language }
+    fun byLanguage(language: Language) = extensionPointName.extensionList.firstOrNull { it.language == language }
   }
 
   /**

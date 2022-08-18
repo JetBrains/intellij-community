@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer
 
 import com.intellij.lang.java.lexer.JavaLexer
@@ -15,10 +15,12 @@ class JavaKeywordsTest {
     assertFalse(JavaLexer.isSoftKeyword("char", LanguageLevel.JDK_1_9))
     assertFalse(JavaLexer.isKeyword("module", LanguageLevel.JDK_1_9))
     assertTrue(JavaLexer.isSoftKeyword("module", LanguageLevel.JDK_1_9))
-    assertFalse(JavaLexer.isKeyword("sealed", LanguageLevel.JDK_16_PREVIEW))
-    assertTrue(JavaLexer.isSoftKeyword("sealed", LanguageLevel.JDK_16_PREVIEW))
-    assertFalse(JavaLexer.isKeyword("permits", LanguageLevel.JDK_16_PREVIEW))
-    assertTrue(JavaLexer.isSoftKeyword("permits", LanguageLevel.JDK_16_PREVIEW))
+    assertFalse(JavaLexer.isKeyword("sealed", LanguageLevel.JDK_17))
+    assertTrue(JavaLexer.isSoftKeyword("sealed", LanguageLevel.JDK_17))
+    assertFalse(JavaLexer.isKeyword("permits", LanguageLevel.JDK_17))
+    assertTrue(JavaLexer.isSoftKeyword("permits", LanguageLevel.JDK_17))
+    assertFalse(JavaLexer.isKeyword("when", LanguageLevel.JDK_19_PREVIEW))
+    assertTrue(JavaLexer.isSoftKeyword("when", LanguageLevel.JDK_19_PREVIEW))
   }
 
   @Test fun sequences() {

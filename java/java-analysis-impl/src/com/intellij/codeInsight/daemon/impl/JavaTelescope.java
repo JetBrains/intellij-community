@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -41,7 +42,8 @@ final class JavaTelescope {
       int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
       return newCount != TOO_MANY_USAGES;
     });
-    if (totalUsageCount.get() == TOO_MANY_USAGES || totalUsageCount.get() == 0) return null;
+    if (totalUsageCount.get() == TOO_MANY_USAGES) return null;
+    if (!Registry.is("code.lens.java.show.0.usages") && totalUsageCount.get() == 0) return null;
     return JavaBundle.message("usages.telescope", totalUsageCount.get());
   }
 

@@ -11,10 +11,10 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -41,7 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class AbstractRerunFailedTestsAction extends AnAction implements UpdateInBackground {
+public abstract class AbstractRerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
@@ -51,6 +51,11 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     ActionUtil.copyFrom(this, "RerunFailedTests");
     registerCustomShortcutSet(getShortcutSet(), componentContainer.getComponent());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public void init(TestConsoleProperties consoleProperties) {
@@ -184,7 +189,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((value) -> performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value)))
+        .setItemChosenCallback(value -> performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value)))
         .createPopup().showUnderneathOf(event.getComponent());
     }
   }

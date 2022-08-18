@@ -7,25 +7,28 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.util.application
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import com.intellij.psi.util.parents
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 
 internal object MarkdownActionUtil {
+  @RequiresEdt
   @JvmStatic
   fun findSplitEditor(event: AnActionEvent): MarkdownEditorWithPreview? {
     val editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR)
     return findSplitEditor(editor)
   }
 
+  @RequiresEdt
   @JvmStatic
   fun findSplitEditor(editor: FileEditor?): MarkdownEditorWithPreview? {
     return when (editor) {
@@ -34,6 +37,7 @@ internal object MarkdownActionUtil {
     }
   }
 
+  @RequiresEdt
   @JvmStatic
   fun findMarkdownPreviewEditor(event: AnActionEvent): MarkdownPreviewFileEditor? {
     val splitEditor = findSplitEditor(event) ?: return null
@@ -45,31 +49,43 @@ internal object MarkdownActionUtil {
   }
 
   @JvmStatic
-  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
-    val splitEditor = findSplitEditor(event)
-    if (splitEditor == null) {
-      // This fallback is used primarily for testing
-      val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-      return when {
-        psiFile.language == MarkdownLanguage.INSTANCE && application.isUnitTestMode -> event.getData(CommonDataKeys.EDITOR)
-        else -> null
-      }
-    }
-    val mainEditor = splitEditor.textEditor
+  fun findMarkdownEditor(event: AnActionEvent): Editor? {
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      !mainEditor.component.isVisible -> null
-      else -> mainEditor.editor
+      file.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
+      else -> null
     }
   }
 
   @JvmStatic
+  fun findRequiredMarkdownEditor(event: AnActionEvent): Editor {
+    val editor = findMarkdownEditor(event)
+    return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
+  }
+
+  @Deprecated(
+    message = "Use findMarkdownEditor instead",
+    replaceWith = ReplaceWith("findMarkdownEditor")
+  )
+  @JvmStatic
+  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
+    return findMarkdownEditor(event)
+  }
+
+  @RequiresEdt
+  @JvmStatic
   fun getElementsUnderCaretOrSelection(file: PsiFile, caret: Caret): Pair<PsiElement, PsiElement> {
-    if (caret.selectionStart == caret.selectionEnd) {
-      val element = PsiUtilBase.getElementAtOffset(file, caret.selectionStart)
+    return getElementsUnderCaretOrSelection(file, caret.selectionStart, caret.selectionEnd)
+  }
+
+  @JvmStatic
+  fun getElementsUnderCaretOrSelection(file: PsiFile, selectionStart: Int, selectionEnd: Int): Pair<PsiElement, PsiElement> {
+    if (selectionStart == selectionEnd) {
+      val element = PsiUtilBase.getElementAtOffset(file, selectionStart)
       return element to element
     }
-    val startElement = PsiUtilBase.getElementAtOffset(file, caret.selectionStart)
-    val endElement = PsiUtilBase.getElementAtOffset(file, caret.selectionEnd)
+    val startElement = PsiUtilBase.getElementAtOffset(file, selectionStart)
+    val endElement = PsiUtilBase.getElementAtOffset(file, selectionEnd)
     return startElement to endElement
   }
 
@@ -79,30 +95,14 @@ internal object MarkdownActionUtil {
   }
 
   @JvmStatic
-  fun getCommonTopmostParentOfTypes(left: PsiElement, right: PsiElement, tokenSet: TokenSet): PsiElement? {
+  fun getCommonTopmostParentOfTypes(left: PsiElement, right: PsiElement, types: TokenSet): PsiElement? {
     val base = PsiTreeUtil.findCommonParent(left, right)
-    return getTopmostParentOfType(base, Condition {
-      val node = it.node
-      node != null && tokenSet.contains(node.elementType)
-    })
+    return base?.parents(withSelf = true)?.findLast { it.hasType(types) }
   }
 
   @JvmStatic
-  fun getTopmostParentOfType(element: PsiElement?, condition: Condition<in PsiElement>): PsiElement? {
-    var answer = PsiTreeUtil.findFirstParent(element, false, condition)
-    do {
-      val next = PsiTreeUtil.findFirstParent(answer, true, condition) ?: break
-      answer = next
-    } while (true)
-    return answer
-  }
-
-  @JvmStatic
-  fun getCommonParentOfTypes(left: PsiElement, right: PsiElement, tokenSet: TokenSet): PsiElement? {
+  fun getCommonParentOfTypes(left: PsiElement, right: PsiElement, types: TokenSet): PsiElement? {
     val base = PsiTreeUtil.findCommonParent(left, right)
-    return PsiTreeUtil.findFirstParent(base, false) {
-      val node = it.node
-      node != null && tokenSet.contains(node.elementType)
-    }
+    return base?.parents(withSelf = true)?.find { it.hasType(types) }
   }
 }

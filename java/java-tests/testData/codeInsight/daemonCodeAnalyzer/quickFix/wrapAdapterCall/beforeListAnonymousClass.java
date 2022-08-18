@@ -1,4 +1,4 @@
-// "Wrap using 'Collections.singletonList()'" "true"
+// "Adapt using 'Collections.singletonList()'" "true-preview"
 import java.util.*;
 
 class Test {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.application.options.CodeStyle;
@@ -36,13 +22,13 @@ import static com.intellij.formatting.Indent.Type.*;
 import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 /**
- * A base class for Java-like language line indent provider. 
+ * A base class for Java-like language line indent provider.
  * If a LineIndentProvider is not provided, {@link FormatterBasedLineIndentProvider} is used.
- * If a registered provider is unable to calculate the indentation, 
+ * If a registered provider is unable to calculate the indentation,
  * {@link FormatterBasedIndentAdjuster} will be used.
  */
 public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvider{
-  
+
   public enum JavaLikeElement implements SyntaxElement {
     Whitespace,
     Semicolon,
@@ -67,8 +53,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     Comma,
     LanguageStartDelimiter
   }
-  
-  
+
+
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
@@ -83,7 +69,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     return null;
   }
-  
+
   @Nullable
   protected IndentCalculator getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     IndentCalculatorFactory myFactory = new IndentCalculatorFactory(project, editor);
@@ -261,14 +247,14 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
 
   /**
    * Returns the start offset of the statement or new-line-'{' that owns the code block in {@code position}.
-   * 
+   *
    * Custom implementation for language can overwrite the default behavior for multi-lines statements like
    * <pre>{@code
    *    template<class T>
    *    class A {};
    * }</pre>
    * or check indentation after new-line-'{' vs the brace style.
-   * 
+   *
    * @param position the position in the code block
    */
   protected int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
@@ -291,8 +277,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   /**
-   * Returns the start offset of the statement that owns the code block in {@code position}  
-   * 
+   * Returns the start offset of the statement that owns the code block in {@code position}
+   *
    * @param position the position in the code block
    */
   protected int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
@@ -331,9 +317,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         return useParentControlStructures ? getFirstUppermostControlStructureKeywordOffset(position) : position.getStartOffset();
       }
       else if (position.isAtAnyOf(Semicolon,
-                                  BlockOpeningBrace, 
-                                  BlockComment, 
-                                  DocBlockEnd, 
+                                  BlockOpeningBrace,
+                                  BlockComment,
+                                  DocBlockEnd,
                                   LeftParenthesis,
                                   LanguageStartDelimiter) ||
                (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
@@ -361,9 +347,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   /**
    * Returns {@code true} if the {@code position} starts a statement that <i>can</i> have a code block and the statement
    * is the first in the code line.
-   * In C-like languages it is one of {@code if, else, for, while, do, try}. 
-   * 
-   * @param position
+   * In C-like languages it is one of {@code if, else, for, while, do, try}.
+   *
    */
   protected boolean isStartOfStatementWithOptionalBlock(@NotNull SemanticEditorPosition position) {
     return position.matchesRule(
@@ -400,7 +385,6 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * 4  [position]
    * </pre>
    * The method will return an offset of the first {@code for} on line 1.
-   * @return
    */
   private int getFirstUppermostControlStructureKeywordOffset(@NotNull SemanticEditorPosition position) {
     SemanticEditorPosition curr = position.copy();
@@ -440,10 +424,10 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   /**
-   * Returns abstract semantic position in {@code editor} for indent calculation.  
-   * 
-   * @param editor the editor in action   
-   * @param offset the offset in the {@code editor}    
+   * Returns abstract semantic position in {@code editor} for indent calculation.
+   *
+   * @param editor the editor in action
+   * @param offset the offset in the {@code editor}
    */
   public SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
     return SemanticEditorPosition.createEditorPosition(editor, offset,
@@ -458,8 +442,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
 
   @Nullable
   protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
-  
-  
+
+
   @Nullable
   protected Indent getIndentInBlock(@NotNull Project project,
                                     @Nullable Language language,
@@ -472,7 +456,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     return getDefaultIndentFromType(NORMAL);
   }
-  
+
   @Contract("_, null -> null")
   private static Type getBlockIndentType(@NotNull Editor editor, @Nullable Language language) {
     if (language != null) {
@@ -490,7 +474,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
            ? null
            : Indent.getIndent(type, 0, false, false);
   }
-  
+
   public static class IndentCalculatorFactory {
     private final Project myProject;
     private final Editor myEditor;
@@ -516,6 +500,19 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                   indent)
                             : null;
     }
+
+    public @Nullable IndentCalculator createIndentCalculatorWithCustomBaseIndent(@Nullable Indent indent, @NotNull String baseIndent) {
+      if (indent == null) {
+        return null;
+      }
+
+      return new IndentCalculator(myProject, myEditor, IndentCalculator.LINE_BEFORE, indent) {
+        @Override
+        protected @NotNull String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
+          return baseIndent;
+        }
+      };
+    }
   }
 
   @Override
@@ -523,7 +520,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   public final boolean isSuitableFor(@Nullable Language language) {
     return language != null && isSuitableForLanguage(language);
   }
-  
+
   public abstract boolean isSuitableForLanguage(@NotNull Language language);
 
   protected Type getIndentTypeInBrackets() {

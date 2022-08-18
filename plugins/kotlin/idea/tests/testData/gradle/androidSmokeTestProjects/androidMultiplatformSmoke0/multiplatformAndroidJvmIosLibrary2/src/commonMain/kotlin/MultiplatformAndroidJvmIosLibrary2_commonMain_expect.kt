@@ -1,0 +1,1 @@
+expect fun multiplatformAndroidJvmIosLibrary2_expect(): Unit

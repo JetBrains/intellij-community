@@ -29,6 +29,8 @@
                     dynamic="true"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
+    <extensionPoint name="testLocationCustomizer" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -40,6 +42,7 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+    <taskResultListener implementation="org.jetbrains.plugins.gradle.service.GradleProjectOutputsUpdater"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -56,6 +59,8 @@
     <externalSystem.debuggerBackend implementation="org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend" />
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
+
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.plugins.gradle.findUsages.GradleImplicitPropertyUsageProvider"/>
 
     <compiler.updateResourcesBuildContributor
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
@@ -95,5 +100,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector"/>
     <registryKey key="gradle.execution.target.server.debug.port" defaultValue="-1"
                  description="Specifies port at which Gradle target server process will wait for debugger connections. -1 means disabled feature."/>
+    <registryKey key="gradle.refresh.project.outputs" defaultValue="true"
+                 description="After a Gradle task, do a shallow refresh of modules outputs in VFS"/>
   </extensions>
 </idea-plugin>

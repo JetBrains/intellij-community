@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
@@ -15,17 +17,21 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.tree.TreeUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
@@ -227,7 +233,51 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     )
   }
 
-  private fun runTasksAndGetTestRunnerTree(tasks: List<String>): String {
+  @TargetVersions("5.6+")
+  @Test
+  fun `navigation for unrolled spock 2 tests`() {
+    createProjectSubFile("src/test/groovy/HelloSpockSpec.groovy", """
+      import spock.lang.Specification
+
+      class HelloSpockSpec extends Specification {
+
+          def "length of #name is #length"() {
+              expect:
+              name.size() != length
+
+              where:
+              name     | length
+              "Spock"  | 5
+          }
+      }
+    """.trimIndent())
+
+    importProject {
+      withGroovyPlugin("3.0.0")
+
+      addTestImplementationDependency(call("platform", "org.spockframework:spock-bom:2.1-groovy-3.0"))
+      addTestImplementationDependency("org.spockframework:spock-core:2.1-groovy-3.0")
+
+      withJUnit5()
+    }
+
+    val console = getTestExecutionConsole(listOf("clean", "test"))
+    val root = console.resultsViewer.root
+    val classChild = root.children.single()
+    assertEquals("HelloSpockSpec", classChild.name)
+
+    fun AbstractTestProxy.resolveToMethod() : PsiMethod = getLocation(myProject, GlobalSearchScope.allScope(myProject)).psiElement.castSafelyTo<PsiMethod>()!!
+
+    runReadAction {
+      val testNodeChild = classChild.children.single()
+      assertEquals("length of #name is #length", testNodeChild.resolveToMethod().name)
+      val failedTestChild = testNodeChild.children.single()
+      assertEquals("length of #name is #length", failedTestChild.resolveToMethod().name)
+    }
+
+  }
+
+  private fun getTestExecutionConsole(tasks: List<String>): GradleTestsExecutionConsole {
     var testsExecutionConsole: GradleTestsExecutionConsole? = null
     maskExtensions(ExternalSystemExecutionConsoleManager.EP_NAME,
                    listOf(object : GradleTestsExecutionConsoleManager() {
@@ -251,9 +301,14 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
                                myProject, GradleConstants.SYSTEM_ID, null,
                                ProgressExecutionMode.NO_PROGRESS_SYNC)
 
+    return testsExecutionConsole!!
+  }
+
+  private fun runTasksAndGetTestRunnerTree(tasks: List<String>): String {
+    val console = getTestExecutionConsole(tasks)
     return runInEdtAndGet {
-      val tree = testsExecutionConsole!!.resultsViewer.treeView!!
-      TestConsoleProperties.HIDE_PASSED_TESTS.set(testsExecutionConsole!!.properties, false)
+      val tree = console.resultsViewer.treeView!!
+      TestConsoleProperties.HIDE_PASSED_TESTS.set(console.properties, false)
       TreeUtil.expandAll(tree)
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       PlatformTestUtil.waitWhileBusy(tree)

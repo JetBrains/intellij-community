@@ -26,10 +26,10 @@ interface DependencyAnalyzerContributor {
   /**
    * Gets scopes/configurations (e.g. compile, runtime, test, etc.) for specified external project.
    */
-  fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope>
+  fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope>
 
   /**
    * Gets dependencies for specified external project.
    */
-  fun getDependencies(externalProjectPath: String): List<Dependency>
+  fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency>
 }

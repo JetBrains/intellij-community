@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.completion.ml.experiment
@@ -63,7 +63,8 @@ class ClientExperimentStatus : ExperimentStatus {
         ExperimentInfo(false, experimentConfig.version)
       }
       else {
-        ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
+        ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures,
+                       languageSettings.shouldLogElementFeatures)
       }
       languageToGroup.put(languageSettings.id, groupInfo)
     }
@@ -77,7 +78,7 @@ class ClientExperimentStatus : ExperimentStatus {
       val group = experimentConfig.groups.find { it.number == experimentGroupRegistry.asInteger() }
       if (group != null) {
         setDisabled(false)
-        return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
+        return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures, true)
       }
     }
     return languageToGroup[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)

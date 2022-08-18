@@ -5,15 +5,18 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -28,6 +31,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
 
   public static final String DEBUG_CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))";
   private boolean myDebugConsoleInitialized = false;
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -35,12 +39,10 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
     super(consoleView, new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode));
 
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      if (consoleView instanceof ConsoleViewImpl) {
-        var console = this.getPydevConsoleView();
-        var action = new ShowCommandQueueAction(console);
-        ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
-      }
+    if (consoleView instanceof ConsoleViewImpl) {
+      var console = this.getPydevConsoleView();
+      var action = new ShowCommandQueueAction(console);
+      ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
     }
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
@@ -86,6 +88,21 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   public void showStartMessageForFirstExecution(String startCommand, PythonConsoleView console) {
     console.setPrompt("");
     console.executeStatement(startCommand + "\n", ProcessOutputTypes.SYSTEM);
+  }
+
+  @Override
+  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    Key<?> outputType;
+    if (contentType.equals(ConsoleViewContentType.ERROR_OUTPUT)) {
+      outputType = ProcessOutputTypes.STDERR;
+    }
+    else {
+      outputType = ProcessOutputTypes.STDOUT;
+    }
+
+    myAnsiEscapeDecoder.escapeText(text, outputType, (chunk, attributes) -> {
+      getPydevConsoleView().print(chunk, attributes);
+    });
   }
 
   @Override

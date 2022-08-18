@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
@@ -27,10 +28,12 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
   public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");
+  public static final DataKey<FileEditor> LAST_ACTIVE_FILE_EDITOR = DataKey.create("LAST_ACTIVE_FILE_EDITOR");
 
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 
   public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create("treeExpander");
+  public static final DataKey<Boolean> TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER = DataKey.create("treeExpanderHideActions");
 
   /**
    * @see com.intellij.ide.actions.ExportToTextFileAction

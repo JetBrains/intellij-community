@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -24,7 +24,6 @@ private const val VERSION = 1
 
 private const val MAX_CONTENT_LENGTH = 0xFFFF
 
-@Suppress("HardCodedStringLiteral")
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)
 

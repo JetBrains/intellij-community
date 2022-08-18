@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -70,7 +70,7 @@ trait T implements II {
   }
 
   void 'test highlighting'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 interface I {}
 @SelfType(I)
 trait T {}
@@ -86,7 +86,7 @@ trait T2 extends T {}
     file.findReferenceAt(editor.caretModel.offset).resolve()
   }
 
-  void testHighlighting(String text) {
+  void doTestHighlighting(String text) {
     fixture.configureByText '_.groovy', "$defaultImports$text"
     fixture.checkHighlighting()
   }

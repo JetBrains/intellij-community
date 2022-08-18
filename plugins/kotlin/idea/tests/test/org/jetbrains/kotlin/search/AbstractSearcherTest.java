@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.search;
 
@@ -10,10 +10,10 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.Query;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixture
     }
 
     protected void checkClassWithDirectives(@NotNull String unused) throws IOException {
-        File testDataFile = testDataFile();
+        File testDataFile = dataFile();
         myFixture.configureByFile(fileName());
         List<String> directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(testDataFile, true), "// CLASS: ");
         assertFalse("Specify CLASS directive in test file", directives.isEmpty());

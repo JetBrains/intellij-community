@@ -79,17 +79,22 @@ public final class EventLogSystemLogger {
     logEvent(recorderId, "external.send.finished", data);
   }
 
-  public static void logCreatingExternalSendCommand(@NotNull String recorderId) {
-    logEvent(recorderId, "external.send.command.creation.started");
+  public static void logCreatingExternalSendCommand(@NotNull List<String> recorders) {
+    for (String recorderId : recorders) {
+      logEvent(recorderId, "external.send.command.creation.started");
+    }
   }
 
-  public static void logFinishedCreatingExternalSendCommand(@NotNull String recorderId, @Nullable EventLogUploadErrorType errorType) {
+  public static void logFinishedCreatingExternalSendCommand(@NotNull List<String> recorders, @Nullable EventLogUploadErrorType errorType) {
     boolean succeed = errorType == null;
     FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed);
     if (!succeed) {
       data.addData("error", errorType.name());
     }
-    logEvent(recorderId, "external.send.command.creation.finished", data);
+
+    for (String recorderId : recorders) {
+      logEvent(recorderId, "external.send.command.creation.finished", data);
+    }
   }
 
   public static void logSystemError(@NotNull String recorderId, @NotNull String eventId, @NotNull String errorClass, long time) {

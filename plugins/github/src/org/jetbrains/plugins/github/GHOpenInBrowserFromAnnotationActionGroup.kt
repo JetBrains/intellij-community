@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.annotate.GitFileAnnotation
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 
 class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
@@ -25,7 +25,7 @@ class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
     val filePath = VcsUtil.getFilePath(virtualFile)
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val revisionHash = annotation.getLineRevisionNumber(myLineNumber)?.asString()

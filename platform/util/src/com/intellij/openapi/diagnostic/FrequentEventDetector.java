@@ -58,29 +58,31 @@ public class FrequentEventDetector {
    * @return an error message to be logged, if the current event is a part of a "frequent"-series, null otherwise
    */
   @Nullable
-  public String getMessageOnEvent(@NotNull Object event) {
-    if (disableRequests.get() == 0 && myEventsPosted.incrementAndGet() > myEventCountThreshold && manyEventsHappenedInSmallTimeSpan()) {
-      return generateMessage(event);
+  private String getMessageOnEvent(@NotNull Object event) {
+    if (disableRequests.get() == 0) {
+      return manyEventsHappenedInSmallTimeSpan(event);
     }
     return null;
   }
 
-  private boolean manyEventsHappenedInSmallTimeSpan() {
+  private String manyEventsHappenedInSmallTimeSpan(@NotNull Object event) {
+    int eventsPosted = myEventsPosted.incrementAndGet();
     boolean shouldLog = false;
-
-    synchronized (myEventsPosted) {
-      if (myEventsPosted.get() > myEventCountThreshold) {
-        long timeNow = System.currentTimeMillis();
-        shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
-        myEventsPosted.set(0);
-        myStartedCounting = timeNow;
+    if (eventsPosted > myEventCountThreshold) {
+      synchronized (myEventsPosted) {
+        if (myEventsPosted.get() > myEventCountThreshold) {
+          long timeNow = System.currentTimeMillis();
+          shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
+          myEventsPosted.set(0);
+          myStartedCounting = timeNow;
+        }
       }
     }
-    return shouldLog;
+    return shouldLog ? generateMessage(event, eventsPosted) : null;
   }
 
   @NotNull
-  private @NonNls String generateMessage(@NotNull Object event) {
+  private @NonNls String generateMessage(@NotNull Object event, int eventsPosted) {
     String trace = ExceptionUtil.getThrowableText(new Throwable());
     boolean logTrace;
     int traceId;
@@ -95,7 +97,9 @@ public class FrequentEventDetector {
       }
     }
 
-    return "Too many events posted, #" + traceId + ". Event: " + event + (logTrace ? "\n" + trace : "");
+    return "Too many events posted (" + eventsPosted+")"
+           + " #" + traceId + ". Event: '" + event + "'"
+           + (logTrace ? "\n" + trace : "");
   }
 
   public void logMessage(@NotNull String message) {

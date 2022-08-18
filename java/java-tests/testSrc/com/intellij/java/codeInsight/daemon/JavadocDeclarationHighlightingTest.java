@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.ReplaceWithJavadocInspection;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
@@ -31,7 +32,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
     super.setUp();
     myInspection = new JavadocDeclarationInspection();
     myInspection.IGNORE_THROWS_DUPLICATE = false;
-    enableInspectionTools(myInspection, new JavaDocReferenceInspection());
+    enableInspectionTools(myInspection, new JavaDocReferenceInspection(), new ReplaceWithJavadocInspection());
   }
 
   @Override
@@ -122,6 +123,13 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testEmptySnippet() { doTest(); }
   public void testOnlyEmptyLinesInSnippet() { doTest(); }
   public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
+  public void testJavaDocWithSpaces() { doTest(); }
+  public void testCommentsAfterArguments() { doTest(); }
+  public void testAnonymousClass() { doTest(); }
+  public void testCommentsBeforeArguments() { doTest(); }
+  public void testCommentsInModifierList() { doTest(); }
+  public void testCommentsBeforeType() { doTest(); }
+  public void testCommentsBeforeName() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

@@ -89,10 +89,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrClassInitializer createClassInitializer() throws IncorrectOperationException;
 
   /**
-   * @param qName
-   * @param isStatic
-   * @param isOnDemand
-   * @param alias
    * @return import statement for given class
    */
   @NotNull

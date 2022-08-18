@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.psi.PsiClass
@@ -88,5 +88,16 @@ abstract class BaseClass extends Script {
 @groovy.transform.BaseScript BaseClass script
 <caret>stuffFromBaseClass
 ''', GrMethod
+  }
+
+  @Test
+  void 'circularInheritance'() {
+    fixture.addFileToProject 'Util.groovy', '''\
+abstract class Util extends Script {}
+'''
+    fixture.configureByText 'Script.groovy', '''\
+<error>@groovy.transform.BaseScript</error> Util script
+'''
+    fixture.checkHighlighting()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin
 
@@ -24,7 +24,7 @@ abstract class AbstractDataFlowValueRenderingTest: KotlinLightCodeInsightFixture
         is IdentifierInfo.Expression -> expression.text
         is IdentifierInfo.Receiver -> (value as? ImplicitReceiver)?.declarationDescriptor?.name?.let { "this@$it" }
         is IdentifierInfo.Variable -> variable.name.asString()
-        is IdentifierInfo.PackageOrClass -> (descriptor as? PackageViewDescriptor)?.let { it.fqName.asString() }
+        is IdentifierInfo.PackageOrClass -> (descriptor as? PackageViewDescriptor)?.fqName?.asString()
         is IdentifierInfo.Qualified -> receiverInfo.render() + "." + selectorInfo.render()
         else -> null
     }

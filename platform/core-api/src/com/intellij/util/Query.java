@@ -128,4 +128,16 @@ public interface Query<Result> extends Iterable<Result> {
   default @NotNull Iterator<Result> iterator() {
     return findAll().iterator();
   }
+
+  @Experimental
+  @NotNull
+  default Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
+    Query<Result> query = this;
+    return new AbstractQuery<Result>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
+        return wrapper.wrapExecution(c -> AbstractQuery.delegateProcessResults(query, c), consumer);
+      }
+    };
+  }
 }

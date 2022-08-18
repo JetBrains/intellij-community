@@ -1,4 +1,4 @@
-// "Extract if (a)" "true"
+// "Extract if (a)" "true-preview"
 class TestThreadInspection {
   void f(boolean a, boolean b, boolean c){
       /*the comment inside redundant parenthesis*/

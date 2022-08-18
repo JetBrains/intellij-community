@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 private class StaticFileHandler : WebServerFileHandler() {
-  @Suppress("HardCodedStringLiteral")
   override val pageFileExtensions = listOf("html", "htm", "shtml", "stm", "shtm")
 
   private var ssiProcessor: SsiProcessor? = null
@@ -93,7 +92,7 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-internal fun checkAccess(file: Path, root: Path = file.root): Boolean {
+fun checkAccess(file: Path, root: Path = file.root): Boolean {
   var parent = file
   do {
     if (!hasAccess(parent)) {

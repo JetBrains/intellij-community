@@ -18,6 +18,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,11 +101,13 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   // store file<->document association with hard references to avoid undesired gc.
-  // use for non-physical ViewProviders only to avoid memleaks
+  // works for non-physical ViewProviders only to avoid memleaks.
+  // please do not use under the penalty of severe memory leaks and wild PSI inconsistencies.
+  @ApiStatus.Internal
   public static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile) {
     if (!(virtualFile instanceof LightVirtualFile) &&
         !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem)) {
-      throw new IllegalArgumentException("Hard-coding file<->document association is permitted for non-physical files only (see ViewProvider.isPhysical()) to avoid memleaks. virtualFile="+virtualFile);
+      throw new IllegalArgumentException("Hard-coding file<->document association is permitted for non-physical files only (see FileViewProvider.isPhysical()) to avoid memleaks. virtualFile="+virtualFile);
     }
     synchronized (lock) {
       document.putUserData(FILE_KEY, virtualFile);
@@ -159,6 +162,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   private Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
+  }
+
+  @ApiStatus.Internal
+  protected void clearDocumentCache() {
+    myDocumentCache.clear();
   }
 
   protected abstract void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document);

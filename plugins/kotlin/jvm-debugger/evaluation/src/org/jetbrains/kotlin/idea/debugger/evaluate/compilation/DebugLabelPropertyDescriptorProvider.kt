@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.impl.PackageFragmentDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
-import org.jetbrains.kotlin.idea.debugger.getClassDescriptor
+import org.jetbrains.kotlin.idea.debugger.evaluate.getClassDescriptor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -146,7 +146,7 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
     override val builtIns: KotlinBuiltIns
         get() = DefaultBuiltIns.Instance
 
-    override val stableName: Name?
+    override val stableName: Name
         get() = name
 
     override fun shouldSeeInternalsOf(targetModule: ModuleDescriptor) = false
@@ -173,7 +173,7 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
         }
     }
 
-    override val platform: TargetPlatform?
+    override val platform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
     override fun getSubPackagesOf(fqName: FqName, nameFilter: (Name) -> Boolean): Collection<FqName> {

@@ -27,11 +27,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackground {
+public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ViewAsGroup.class);
 
   public ViewAsGroup() {
     super(Presentation.NULL_STRING, true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static class RendererAction extends ToggleAction {
@@ -182,10 +187,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
 
   @NotNull
   public static List<JavaValue> getSelectedValues(@NotNull AnActionEvent event) {
-    List<XValueNodeImpl> selectedNodes = event.getData(XDebuggerTree.SELECTED_NODES);
-    if (selectedNodes == null) {
-      return Collections.emptyList();
-    }
+    List<XValueNodeImpl> selectedNodes = XDebuggerTree.getSelectedNodes(event.getDataContext());
     return StreamEx.of(selectedNodes)
       .map(XValueNodeImpl::getValueContainer)
       .select(JavaValue.class)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,7 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -30,6 +19,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -56,10 +46,6 @@ public class PushDownConflicts {
     }
 
     myConflicts = conflicts;
-  }
-
-  public boolean isAnyConflicts() {
-    return !myConflicts.isEmpty();
   }
 
   public MultiMap<PsiElement, String> getConflicts() {
@@ -91,7 +77,7 @@ public class PushDownConflicts {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {
         member.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
               final PsiMethod resolvedMethod = expression.resolveMethod();
@@ -157,7 +143,7 @@ public class PushDownConflicts {
           if (myConflicts.containsKey(element)) continue;
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-          if (qualifier instanceof PsiSuperExpression && isSuperCallToBeInlined(member, targetClass, myClass, element)) continue;
+          if (qualifier instanceof PsiSuperExpression && isSuperCallToBeInlined(member, targetClass, myClass)) continue;
           if (qualifier != null) {
             final PsiType qualifierType = qualifier.getType();
             PsiClass aClass = null;
@@ -238,14 +224,13 @@ public class PushDownConflicts {
 
   public static boolean isSuperCallToBeInlined(PsiMember member,
                                                PsiClass targetClass,
-                                               PsiClass sourceClass,
-                                               PsiElement referenceOnSuper) {
+                                               PsiClass sourceClass) {
     if (member instanceof PsiMethod) {
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
       PsiMethod methodInTarget = MethodSignatureUtil.findMethodBySuperSignature(targetClass,
                                                                                 ((PsiMethod)member).getSignature(substitutor),
                                                                                 true);
-      return methodInTarget != null && PsiTreeUtil.isAncestor(methodInTarget, referenceOnSuper, false);
+      return methodInTarget != null && targetClass.equals(methodInTarget.getContainingClass());
     }
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -31,7 +31,7 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
     return super.buildVisitor(holder, isOnTheFly);
   }
 
-  static boolean isAllowed(@NotNull PsiFile file) {
+  public static boolean isAllowed(@NotNull PsiFile file) {
     return isAllowed(file, __ -> true);
   }
 
@@ -63,6 +63,12 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
   private static boolean isPluginFile(@NotNull PsiFile file) {
     String path = file.getVirtualFile().getPath();
     boolean isPlatform = path.contains("/platform/") && !path.contains("/platform/cwm-") && !path.contains("/platform/rd-");
-    return !isPlatform;
+
+    // Rider lives in other repository, but also kind-of platform for Rider IDE
+    boolean isRider = path.contains("/Rider/Frontend/rider/") ||
+                      path.contains("/Rider/Frontend/rider-cpp-core/") ||
+                      path.contains("/Rider/Frontend/rdclient-dotnet/");
+
+    return !isPlatform && !isRider;
   }
 }

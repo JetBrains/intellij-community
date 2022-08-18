@@ -10,4 +10,3 @@ fun test(base: Base) {
         is Base.A -> ""
     }
 }
-/* IGNORE_FIR */

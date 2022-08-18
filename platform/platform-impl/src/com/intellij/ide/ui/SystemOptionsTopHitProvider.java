@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.GeneralSettings;
@@ -32,6 +32,6 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
   }
 
   static BooleanOptionDescription option(@Nls String option, @NonNls String getter, @NonNls String setter) {
-    return new PublicMethodBasedOptionDescription(option, "preferences.general", getter, setter, () -> GeneralSettings.getInstance());
+    return new PublicMethodBasedOptionDescription(option, "preferences.general", getter, setter, GeneralSettings::getInstance);
   }
 }

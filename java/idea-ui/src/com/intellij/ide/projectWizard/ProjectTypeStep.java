@@ -74,7 +74,6 @@ import java.util.function.Consumer;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("unchecked")
 public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
   private static final ExtensionPointName<ProjectCategory> CATEGORY_EP =
@@ -114,11 +113,16 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myContext = context;
     myContext.addContextListener(new WizardContext.Listener() {
       @Override
-      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
           myProjectTypeList.setSelectedValue(groupToSelect, true);
-          configure.accept(getCustomStep());
+          try {
+            configure.accept(getCustomStep());
+          }
+          catch (Throwable exception) {
+            throw new IllegalStateException("Cannot switch on " + placeId + ", current step " + myCurrentCard, exception);
+          }
         }
       }
     });
@@ -132,7 +136,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myProjectTypeList = new JBList<>();
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
-    myProjectTypeList.addListSelectionListener(__ -> updateSelection());
     myProjectTypeList.setCellRenderer(new ProjectTypeListRenderer(groups));
 
     if (isNewWizard()) {
@@ -199,9 +202,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     };
 
-    myProjectTypeList.getSelectionModel().addListSelectionListener(__ -> projectTypeChanged());
+    myProjectTypeList.addListSelectionListener(event -> {
+      if (!event.getValueIsAdjusting()) {
+        projectTypeChanged();
+      }
+    });
 
-    myTemplatesList.addListSelectionListener(__ -> updateSelection());
+    myTemplatesList.addListSelectionListener(event -> {
+      if (!event.getValueIsAdjusting()) {
+        updateSelection();
+      }
+    });
 
     for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
       ModuleBuilder builder = templatesGroup.getModuleBuilder();
@@ -556,9 +567,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     catch (Throwable e) {
       LOG.error(e);
     }
-
-    NewProjectWizardCollector.logGeneratorSelected(myContext, builder.getClass());
-    NewProjectWizardCollector.logScreen(myContext, 1);
+    myContext.setScreen(1);
 
     showCard(card);
 
@@ -771,17 +780,16 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
     myWizard.updateWizardButtons();
+
+    NewProjectWizardCollector.Companion.logGeneratorSelected(myContext);
   }
 
   @TestOnly
   public String availableTemplateGroupsToString() {
     ListModel<TemplatesGroup> model = myProjectTypeList.getModel();
-    StringBuilder builder = new StringBuilder();
+    StringJoiner builder = new StringJoiner(", ");
     for (int i = 0; i < model.getSize(); i++) {
-      if (builder.length() > 0) {
-        builder.append(", ");
-      }
-      builder.append(model.getElementAt(i).getName());
+      builder.add(model.getElementAt(i).getName());
     }
     return builder.toString();
   }

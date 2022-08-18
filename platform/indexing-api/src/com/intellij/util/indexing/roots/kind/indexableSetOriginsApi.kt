@@ -25,14 +25,17 @@ interface LibraryOrigin : IndexableSetOrigin {
 
 interface SyntheticLibraryOrigin : IndexableSetOrigin {
   val syntheticLibrary: SyntheticLibrary
+  val rootsToIndex: Collection<VirtualFile>
 }
 
 interface SdkOrigin : IndexableSetOrigin {
   val sdk: Sdk
+  val rootsToIndex: Collection<VirtualFile>
 }
 
 interface IndexableSetContributorOrigin : IndexableSetOrigin {
   val indexableSetContributor: IndexableSetContributor
+  val rootsToIndex: Set<VirtualFile>
 }
 
 interface ProjectFileOrDirOrigin : IndexableSetOrigin {

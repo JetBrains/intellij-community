@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnclearBinaryExpressionInspection extends BaseInspection {
+public class UnclearBinaryExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Pattern(VALID_ID_PATTERN)
   @NotNull
@@ -73,7 +74,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
   private static class UnclearBinaryExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       super.visitExpression(expression);
       final PsiElement parent = expression.getParent();
       if (mightBeConfusingExpression(parent) || !isUnclearExpression(expression, parent)) {

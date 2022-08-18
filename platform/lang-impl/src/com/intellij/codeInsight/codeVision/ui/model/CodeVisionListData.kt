@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.map
 import com.jetbrains.rd.util.throttleLast
@@ -20,7 +21,7 @@ class CodeVisionListData(
 ) {
   companion object {
     @JvmField
-    val KEY = Key.create<CodeVisionListData>("CodeVisionListData")
+    val KEY: Key<CodeVisionListData> = Key.create<CodeVisionListData>("CodeVisionListData")
 
   }
 
@@ -34,7 +35,7 @@ class CodeVisionListData(
       }
     }
 
-  val visibleLens = ArrayList<CodeVisionEntry>()
+  val visibleLens: ArrayList<CodeVisionEntry> = ArrayList<CodeVisionEntry>()
   private var throttle = false
 
   init {
@@ -62,8 +63,8 @@ class CodeVisionListData(
     visibleLens.addAll(anchoredLens.subList(0, visibleCount))
   }
 
-  fun state() = rangeCodeVisionModel.state()
-  fun isMoreLensActive() = throttle
-  fun isHoveredEntry(entry: CodeVisionEntry) = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
+  fun state(): RangeCodeVisionModel.InlayState = rangeCodeVisionModel.state()
+  fun isMoreLensActive(): Boolean = throttle && Registry.`is`("editor.codeVision.more.inlay")
+  fun isHoveredEntry(entry: CodeVisionEntry): Boolean = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
 }
 

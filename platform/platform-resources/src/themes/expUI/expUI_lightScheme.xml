@@ -12,6 +12,7 @@
     <option name="ANNOTATIONS_LAST_COMMIT_COLOR" value="0" />
     <option name="CARET_ROW_COLOR" value="f5f8fe" />
     <option name="DELETED_LINES_COLOR" value="767a8a" />
+    <option name="DIFF_SEPARATORS_BACKGROUND" value="e4e6eb" />
     <option name="DOCUMENTATION_COLOR" value="ffffff" />
     <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="7d5020" />
     <option name="GUTTER_BACKGROUND" value="ffffff" />
@@ -19,11 +20,15 @@
     <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="767a8a" />
     <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="88adf7" />
     <option name="INDENT_GUIDE" value="ebecf0" />
+    <option name="INFORMATION_HINT" value="ffffff" />
     <option name="LINE_NUMBERS_COLOR" value="aeb3c2" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="767a8a" />
     <option name="LOOKUP_COLOR" value="ffffff" />
     <option name="MATCHED_BRACES_INDENT_GUIDE_COLOR" value="62b3b3" />
+    <option name="METHOD_SEPARATORS_COLOR" value="dfe1e5" />
     <option name="MODIFIED_LINES_COLOR" value="88adf7" />
+    <option name="NOTIFICATION_BACKGROUND" value="fff8e3" />
+    <option name="RIGHT_MARGIN_COLOR" value="ebecf0" />
     <option name="SELECTED_INDENT_GUIDE" value="aeb3c2" />
     <option name="SELECTION_BACKGROUND" value="a6d2ff" />
     <option name="SELECTION_FOREGROUND" value="" />
@@ -33,10 +38,42 @@
     <option name="VCS_ANNOTATIONS_COLOR_3" value="dee8fc" />
     <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
     <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
+    <option name="VISUAL_INDENT_GUIDE" value="dae6fd" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
+    <option name="ERROR_HINT" value="FFE8E8" />
+    <option name="PROMOTION_PANE" value="e7effd" />
+    <option name="QUESTION_HINT" value="f5f8fe" />
+    <option name="RECENT_LOCATIONS_SELECTION" value="E7EFFD" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
+    <option name="BREADCRUMBS_CURRENT">
+      <value>
+        <option name="FOREGROUND" value="0" />
+        <option name="BACKGROUND" value="ebecf0" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_DEFAULT">
+      <value>
+        <option name="FOREGROUND" value="6c707e" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_HOVERED">
+      <value>
+        <option name="FOREGROUND" value="0" />
+        <option name="BACKGROUND" value="ebecf0" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_INACTIVE">
+      <value>
+        <option name="FOREGROUND" value="a8adbd" />
+      </value>
+    </option>
+    <option name="CODE_LENS_BORDER_COLOR">
+      <value>
+        <option name="EFFECT_COLOR" value="818594" />
+      </value>
+    </option>
     <option name="CTRL_CLICKABLE">
       <value>
         <option name="FOREGROUND" value="6dcc" />

@@ -70,3 +70,8 @@ class S {
     void fooUnknownSuppression() {}
 
 }
+
+@SuppressWarnings("UnnecessaryUnicodeEscape")
+class UnicodeEscapeSuppressBug {
+  String s = "\u0062";
+}

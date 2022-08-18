@@ -38,7 +38,7 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (expression.getAnonymousClass() != null || expression.isArrayCreation() ||
             expression.getArgumentList() == null || !expression.getArgumentList().isEmpty()) {
           return;

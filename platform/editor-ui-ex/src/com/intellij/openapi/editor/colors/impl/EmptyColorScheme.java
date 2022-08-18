@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -15,25 +14,16 @@ import java.awt.*;
  */
 @SuppressWarnings("UseJBColor")
 public final class EmptyColorScheme extends DefaultColorsScheme {
+  private static final TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
   public static final String NAME = "Empty";
   public static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
 
-  private static final TextAttributes EMPTY_TEXT = new TextAttributes(Color.BLACK, Color.white, null, EffectType.BOXED, Font.PLAIN);
-  private static final TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
-
   private EmptyColorScheme() {
-    myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), EMPTY_TEXT);
+    myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS);
     initFonts();
   }
 
   @NotNull
-  @Override
-  public TextAttributes getAttributes(TextAttributesKey key) {
-    TextAttributes attributes = super.getAttributes(key);
-    return attributes == null ? DEFAULT_ATTRS : attributes;
-  }
-
-  @Nullable
   @Override
   protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
     return myAttributesMap.get(HighlighterColors.TEXT.getExternalName());

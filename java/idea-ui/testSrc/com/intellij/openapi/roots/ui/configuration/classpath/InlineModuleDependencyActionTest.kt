@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath
 
 import com.intellij.openapi.application.WriteAction
@@ -15,8 +15,15 @@ import junit.framework.TestCase
 class InlineModuleDependencyActionTest : JavaModuleTestCase() {
 
   override fun tearDown() {
-    ProjectStructureConfigurable.getInstance(myProject).context.modulesConfigurator.disposeUIResources()
-    super.tearDown()
+    try {
+      ProjectStructureConfigurable.getInstance(myProject).context.modulesConfigurator.disposeUIResources()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test inline module with module library`() {

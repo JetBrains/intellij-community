@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -21,6 +21,7 @@ import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
@@ -144,6 +145,15 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @NotNull
   public final MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
+  }
+
+  public final ComponentAdapter getComponentAdapter(@NotNull Object componentKey) {
+    return myPicoContainer.getComponentAdapter(componentKey);
+  }
+
+  @Override
+  public final boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return getComponentAdapter(interfaceClass) != null;
   }
 
   @Override

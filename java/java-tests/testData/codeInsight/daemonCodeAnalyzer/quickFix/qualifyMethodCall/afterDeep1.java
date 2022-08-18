@@ -1,4 +1,4 @@
-// "Qualify the call with 'B'" "true"
+// "Qualify the call with 'B'" "true-preview"
 class A {
   class B {
     class C {

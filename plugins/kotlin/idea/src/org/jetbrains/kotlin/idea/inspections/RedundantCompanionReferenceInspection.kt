@@ -1,17 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -26,14 +25,19 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeAsSequence
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
+import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.supertypes
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -42,7 +46,6 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     expression,
                     KotlinBundle.message("redundant.companion.reference"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     RemoveRedundantCompanionReferenceFix()
                 )
             }
@@ -73,6 +76,15 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
             context[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass] as? ClassDescriptor ?: return false
         if (containingClassDescriptor.hasSameNameMemberAs(selectorExpression, context)) return false
 
+        val implicitReceiverClassDescriptor = reference.getResolutionScope(context)?.getImplicitReceiversHierarchy().orEmpty()
+            .flatMap {
+                val type = it.value.type
+                if (type.isTypeParameter()) type.supertypes() else listOf(type)
+            }
+            .mapNotNull { it.constructor.declarationDescriptor as? ClassDescriptor }
+            .filterNot { it.isCompanionObject }
+        if (implicitReceiverClassDescriptor.any { it.hasSameNameMemberAs(selectorExpression, context) }) return false
+
         (reference as? KtSimpleNameExpression)?.getReceiverExpression()?.getQualifiedElementSelector()
             ?.mainReference?.resolveToDescriptors(context)?.firstOrNull()
             ?.let { if (it != containingClassDescriptor) return false }
@@ -98,7 +110,8 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         return descriptor == null || descriptor is ConstructorDescriptor || descriptor is FakeCallableDescriptorForObject
     }
 
-    private fun ClassDescriptor.hasSameNameMemberAs(expression: KtExpression?, context: BindingContext): Boolean {
+    private fun ClassDescriptor?.hasSameNameMemberAs(expression: KtExpression?, context: BindingContext): Boolean {
+        if (this == null) return false
         when (val descriptor = expression?.getResolvedCall(context)?.resultingDescriptor) {
             is PropertyDescriptor -> {
                 val name = descriptor.name

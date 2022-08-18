@@ -16,3 +16,16 @@ UFile (package = declaration)
                     UPolyadicExpression (operator = +)
                         UThisExpression (label = null)
                         ULiteralExpression (value = "... zzz...")
+        UMethod (name = getBoo)
+        UMethod (name = getBar)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = field)
+        UMethod (name = getBaq)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = field)
+        UMethod (name = getBaz)
+            UBlockExpression
+                UReturnExpression
+                    ULiteralExpression (value = 42)

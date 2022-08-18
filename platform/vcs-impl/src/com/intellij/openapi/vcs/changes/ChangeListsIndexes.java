@@ -84,7 +84,7 @@ public class ChangeListsIndexes {
     return data != null ? data.status : null;
   }
 
-  public void changeAdded(@NotNull Change change, AbstractVcs key) {
+  public void changeAdded(@NotNull Change change, @Nullable AbstractVcs key) {
     myChanges.add(change);
 
     ContentRevision afterRevision = change.getAfterRevision();
@@ -203,10 +203,10 @@ public class ChangeListsIndexes {
 
   private static class Data {
     @NotNull public final FileStatus status;
-    public final AbstractVcs vcs;
+    @Nullable public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
+    Data(@NotNull FileStatus status, @Nullable AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
       this.status = status;
       this.vcs = vcs;
       this.revision = revision;

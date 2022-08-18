@@ -8,6 +8,7 @@ import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider
+import java.util.function.Supplier
 import javax.swing.Icon
 
 class TextProblemSeverities: SeveritiesProvider() {
@@ -16,39 +17,58 @@ class TextProblemSeverities: SeveritiesProvider() {
       TextHighlightInfoType(STYLE_ERROR, STYLE_ERROR_ATTRIBUTES, GrazieIcons.StyleError),
       TextHighlightInfoType(STYLE_WARNING, STYLE_WARNING_ATTRIBUTES, GrazieIcons.StyleWarning),
       TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
-      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, GrazieIcons.GrammarError)
+      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, GrazieIcons.GrammarError, applicableToInspections = true)
     )
   }
 
   private class TextHighlightInfoType(
     severity: HighlightSeverity,
     attributesKey: TextAttributesKey,
-    private val icon: Icon
+    private val icon: Icon,
+    private val applicableToInspections: Boolean = false
   ): HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
     override fun getIcon(): Icon = icon
-    override fun isApplicableToInspections() = false
+    override fun isApplicableToInspections() = applicableToInspections
   }
 
   companion object {
-    private fun createStyleSeverity(name: String, value: Int): HighlightSeverity {
+    private fun createStyleSeverity(name: String,
+                                    displayName: Supplier<String>,
+                                    displayNameCapitalized: Supplier<String>,
+                                    value: Int): HighlightSeverity {
       return HighlightSeverity(
         name,
         SpellCheckerSeveritiesProvider.TYPO.myVal - value,
-        GrazieBundle.messagePointer("style.problem.severity.name"),
-        GrazieBundle.messagePointer("style.problem.severity.name.capitalized"),
+        displayName,
+        displayNameCapitalized,
         @Suppress("InvalidBundleOrProperty")
         GrazieBundle.messagePointer("style.problem.severity.count")
       )
     }
 
     @JvmField
-    val STYLE_ERROR = createStyleSeverity("STYLE_ERROR", 1)
+    val STYLE_ERROR = createStyleSeverity(
+      "STYLE_ERROR",
+      GrazieBundle.messagePointer("style.error.severity.name"),
+      GrazieBundle.messagePointer("style.error.severity.name.capitalized"),
+      1
+    )
 
     @JvmField
-    val STYLE_WARNING = createStyleSeverity("STYLE_WARNING", 2)
+    val STYLE_WARNING = createStyleSeverity(
+      "STYLE_WARNING",
+      GrazieBundle.messagePointer("style.warning.severity.name"),
+      GrazieBundle.messagePointer("style.warning.severity.name.capitalized"),
+      2
+    )
 
     @JvmField
-    val STYLE_SUGGESTION = createStyleSeverity("STYLE_SUGGESTION", 3)
+    val STYLE_SUGGESTION = createStyleSeverity(
+      "STYLE_SUGGESTION",
+      GrazieBundle.messagePointer("style.suggestion.severity.name"),
+      GrazieBundle.messagePointer("style.suggestion.severity.name.capitalized"),
+      3
+    )
 
     @JvmField
     val GRAMMAR_ERROR = HighlightSeverity(
@@ -61,15 +81,15 @@ class TextProblemSeverities: SeveritiesProvider() {
     )
 
     @JvmField
-    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_ERROR")
+    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_ERROR")
 
     @JvmField
-    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_WARNING")
+    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_WARNING")
 
     @JvmField
-    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_SUGGESTION")
+    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_SUGGESTION")
 
     @JvmField
-    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_GRAMMAR_ERROR")
+    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAMMAR_ERROR")
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -15,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -27,13 +27,34 @@ public final class SealedUtils {
 
   private SealedUtils() {}
 
-  public static void fillPermitsList(@NotNull PsiClass parent, @NotNull Collection<String> missingInheritors) {
-    PsiReferenceList permitsList = parent.getPermitsList();
-    PsiFileFactory factory = PsiFileFactory.getInstance(parent.getProject());
+  /**
+   * Add a new subclass to existing class permits list. If permits list was absent, it's created with same-file inheritors,
+   * in order to avoid new compilation errors.
+   *
+   * @param psiClass a sealed class to add a new permitted subclass
+   * @param fqn fully-qualified name of the new permitted subclass
+   */
+  public static void addClassToPermitsList(@NotNull PsiClass psiClass, @NotNull String fqn) {
+    Set<String> missingInheritors = new HashSet<>();
+    missingInheritors.add(fqn);
+    if (psiClass.getPermitsList() == null) {
+      missingInheritors.addAll(findSameFileInheritors(psiClass));
+    }
+    fillPermitsList(psiClass, missingInheritors);
+  }
+
+  /**
+   * Add specified classes to permits list; creating one if it hasn't existed before
+   * @param psiClass class to add permits to
+   * @param missingInheritors collection of fully-qualified names to add to permits list
+   */
+  public static void fillPermitsList(@NotNull PsiClass psiClass, @NotNull Collection<String> missingInheritors) {
+    PsiReferenceList permitsList = psiClass.getPermitsList();
+    PsiFileFactory factory = PsiFileFactory.getInstance(psiClass.getProject());
     if (permitsList == null) {
-      PsiReferenceList implementsList = Objects.requireNonNull(parent.getImplementsList());
+      PsiReferenceList implementsList = Objects.requireNonNull(psiClass.getImplementsList());
       String permitsClause = StreamEx.of(missingInheritors).sorted().joining(",", "permits ", "");
-      parent.addAfter(createPermitsClause(factory, permitsClause), implementsList);
+      psiClass.addAfter(createPermitsClause(factory, permitsClause), implementsList);
     }
     else {
       Stream<String> curClasses = Arrays.stream(permitsList.getReferenceElements()).map(PsiJavaCodeReferenceElement::getQualifiedName);

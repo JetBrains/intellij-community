@@ -6,7 +6,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
 
-@Suppress("unused")
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
 
   fun addGroup(group: String): BSB
@@ -61,7 +60,8 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withKotlinJvmPlugin(): BSB
   fun withKotlinJsPlugin(): BSB
   fun withKotlinMultiplatformPlugin(): BSB
-  fun withGroovyPlugin(version: String = getGroovyVersion()): BSB
+  fun withGroovyPlugin(): BSB
+  fun withGroovyPlugin(version: String): BSB
   fun withApplicationPlugin(
     mainClass: String? = null,
     mainModule: String? = null,

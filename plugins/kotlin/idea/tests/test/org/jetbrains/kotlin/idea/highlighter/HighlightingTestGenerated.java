@@ -81,6 +81,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/deprecated/Operation.kt");
         }
 
+        @TestMetadata("OperationSuppressedDeprecation.kt")
+        public void testOperationSuppressedDeprecation() throws Exception {
+            runTest("testData/highlighter/deprecated/OperationSuppressedDeprecation.kt");
+        }
+
         @TestMetadata("Property.kt")
         public void testProperty() throws Exception {
             runTest("testData/highlighter/deprecated/Property.kt");
@@ -108,6 +113,49 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighter/suppress")
+    public static class Suppress extends AbstractHighlightingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllSuppressed.kt")
+        public void testAllSuppressed() throws Exception {
+            runTest("testData/highlighter/suppress/AllSuppressed.kt");
+        }
+
+        @TestMetadata("Class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/highlighter/suppress/Class.kt");
+        }
+
+        @TestMetadata("Diagnosics.kt")
+        public void testDiagnosics() throws Exception {
+            runTest("testData/highlighter/suppress/Diagnosics.kt");
+        }
+
+        @TestMetadata("File.kt")
+        public void testFile() throws Exception {
+            runTest("testData/highlighter/suppress/File.kt");
+        }
+
+        @TestMetadata("Functions.kt")
+        public void testFunctions() throws Exception {
+            runTest("testData/highlighter/suppress/Functions.kt");
+        }
+
+        @TestMetadata("Parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("testData/highlighter/suppress/Parameter.kt");
+        }
+
+        @TestMetadata("Unused.kt")
+        public void testUnused() throws Exception {
+            runTest("testData/highlighter/suppress/Unused.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter")
     public static class Uncategorized extends AbstractHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -122,6 +170,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("testData/highlighter/AutoCreatedItParameter.kt");
+        }
+
+        @TestMetadata("DefinitelyNonNullableType.kt")
+        public void testDefinitelyNonNullableType() throws Exception {
+            runTest("testData/highlighter/DefinitelyNonNullableType.kt");
         }
 
         @TestMetadata("DelegatingCtor.kt")

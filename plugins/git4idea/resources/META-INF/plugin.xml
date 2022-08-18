@@ -104,6 +104,8 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
     </group>
 
+    <action id="Git.CompareWithTag" class="git4idea.actions.GitCompareWithTagAction"/>
+
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>
     </group>
@@ -248,7 +250,8 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <action id="Git.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+    <action id="Git.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch"
+            use-shortcut-of="Git.Branches">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 
@@ -429,6 +432,18 @@
       <separator/>
       <reference id="LocalHistory.ShowHistory"/>
     </group>
+
+    <action id="git4idea.actions.GitUseSharedLogAction"
+            class="git4idea.actions.GitUseSharedLogAction"
+            internal="true"/>
+    <action id="git4idea.actions.GitDumpLogIndexDataAction"
+            class="git4idea.actions.GitDumpLogIndexDataAction"
+            internal="true"/>
+    <group id="git4idea.actions.ShareLogIndexData" internal="true">
+      <reference id="git4idea.actions.GitUseSharedLogAction"/>
+      <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
+      <add-to-group group-id="Vcs.Log.Internal"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -514,6 +529,8 @@
                  defaultValue="true"/>
     <registryKey key="git.branches.popup.tree" defaultValue="false"
                  description="Show branches tree in a popup instead of a list"/>
+    <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
+                 description="Persist branches panel tree state between restarts"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -537,9 +554,11 @@
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="git4idea.GitBranchesUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="git4idea.GitStashUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="git4idea.GitRefreshUsageCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <gitRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializerImpl"/>
+    <gitSilentFileAdder implementation="git4idea.repo.GitSilentFileAdderProviderImpl"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
       implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.repo.GitIgnoredFilesHolder$Provider"/>

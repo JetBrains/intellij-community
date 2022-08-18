@@ -31,33 +31,33 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
 
-private val LOG = logger<BrowserLauncherAppless>()
-
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
+    private val LOG = logger<BrowserLauncherAppless>()
+
     @JvmStatic
     fun canUseSystemDefaultBrowserPolicy(): Boolean =
-      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.isUnix && SystemInfo.hasXdgOpen()
+      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.hasXdgOpen()
 
-    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
+    private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
+      !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+
+    private fun isAffectedByDesktopBug(): Boolean =
+      Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isProjectorEnvironment())
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)
 
   override fun browse(file: File) {
-    var path = file.absolutePath
-    if (SystemInfo.isWindows && path[0] != '/') {
-      path = "/$path"
-    }
-    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
+    val path = file.absolutePath
+    val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
+    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", true)
   }
 
   override fun browse(file: Path) {
-    var path = file.toAbsolutePath().toString()
-    if (SystemInfo.isWindows && path[0] != '/') {
-      path = "/$path"
-    }
-    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
+    val path = file.toAbsolutePath().toString()
+    val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
+    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", true)
   }
 
   protected open fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
@@ -188,26 +188,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return false
     }
 
-    val commandWithUrl = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
-    if (url != null) {
-      if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
-      else commandWithUrl += url
-    }
-
-    val commandLine = GeneralCommandLine(commandWithUrl)
-
     val browserSpecificSettings = browser?.specificSettings
+    val parameters = (browserSpecificSettings?.additionalParameters ?: emptyList()) + additionalParameters
+    val commandLine = GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(effectivePath, url, parameters, openInNewWindow))
     if (browserSpecificSettings != null) {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
-    }
-
-    val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
-    if (specific.size + additionalParameters.size > 0) {
-      if (isOpenCommandUsed(commandLine)) {
-        commandLine.addParameter("--args")
-      }
-      commandLine.addParameters(specific)
-      commandLine.addParameters(*additionalParameters)
     }
 
     doLaunch(commandLine, project, browser, fix)
@@ -231,27 +216,25 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  protected open fun showError(@NlsContexts.DialogMessage error: String?, browser: WebBrowser? = null, project: Project? = null, @NlsContexts.DialogTitle title: String? = null, fix: (() -> Unit)? = null) {
-    // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
+  protected open fun showError(@NlsContexts.DialogMessage error: String?,
+                               browser: WebBrowser? = null,
+                               project: Project? = null,
+                               @NlsContexts.DialogTitle title: String? = null,
+                               fix: (() -> Unit)? = null) {
+    // not started yet; unable to show a message (may happen in the License panel on Linux)
     LOG.warn(error)
   }
 
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
+
+  private val generalSettings: GeneralSettings
+    get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()
+
+  private val defaultBrowserCommand: List<String>?
+    get() = when {
+      SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+      SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
+      SystemInfo.hasXdgOpen() -> listOf("xdg-open")
+      else -> null
+    }
 }
-
-private fun isAffectedByDesktopBug(): Boolean =
-  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isProjectorEnvironment())
-
-private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
-  !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
-
-private val generalSettings: GeneralSettings
-  get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()
-
-private val defaultBrowserCommand: List<String>?
-  get() = when {
-    SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
-    SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
-    SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
-    else -> null
-  }

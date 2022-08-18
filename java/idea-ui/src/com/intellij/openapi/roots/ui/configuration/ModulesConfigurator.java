@@ -43,7 +43,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +74,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private boolean myModuleModelCommitted = false;
   private ProjectFacetsConfigurator myFacetsConfigurator;
-  private WorkspaceEntityStorageBuilder myWorkspaceEntityStorageBuilder;
+  private MutableEntityStorage myMutableEntityStorage;
 
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
@@ -96,17 +96,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private void initModuleModel() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     if (moduleManager instanceof ModuleManagerBridgeImpl) {
-      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
-      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+      myMutableEntityStorage = MutableEntityStorage.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myMutableEntityStorage);
     }
     else {
       myModuleModel = moduleManager.getModifiableModel();
-      myWorkspaceEntityStorageBuilder = null;
+      myMutableEntityStorage = null;
     }
   }
 
-  public @Nullable WorkspaceEntityStorageBuilder getWorkspaceEntityStorageBuilder() {
-    return myWorkspaceEntityStorageBuilder;
+  public @Nullable MutableEntityStorage getWorkspaceEntityStorageBuilder() {
+    return myMutableEntityStorage;
   }
 
   public void setContext(final StructureConfigurableContext context) {
@@ -132,7 +132,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (myModuleModel != null) {
         myModuleModel.dispose();
       }
-      myWorkspaceEntityStorageBuilder = null;
+      myMutableEntityStorage = null;
 
       if (myFacetsConfigurator != null) {
         myFacetsConfigurator.disposeEditors();

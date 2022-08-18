@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui;
 
@@ -21,11 +21,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.ClassDescriptor;
-import org.jetbrains.kotlin.idea.KotlinBundle;
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider;
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator;
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester;
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator;
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester;
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator;
+import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
 import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
 import org.jetbrains.kotlin.name.FqName;
@@ -171,11 +172,11 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
             KtClassBody innerClassBody = innerClass.getBody();
             Function1<String, Boolean> validator =
                     innerClassBody != null
-                    ? new NewDeclarationNameValidator(innerClassBody, (PsiElement) null,
-                                                      NewDeclarationNameValidator.Target.VARIABLES,
-                                                      Collections.emptyList())
+                    ? new Fe10KotlinNewDeclarationNameValidator(innerClassBody, (PsiElement) null,
+                                                                KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+                                                                Collections.emptyList())
                     : new CollectingNameValidator();
-            List<String> suggestions = KotlinNameSuggester.INSTANCE.suggestNamesByType(getOuterInstanceType(), validator, "outer");
+            List<String> suggestions = Fe10KotlinNameSuggester.INSTANCE.suggestNamesByType(getOuterInstanceType(), validator, "outer");
             parameterField.setSuggestions(ArrayUtil.toStringArray(suggestions));
         }
         else {

@@ -20,7 +20,7 @@ public interface MultiHostRegistrar {
   /**
    * Start injecting the {@code language} in this place.
    * <p>
-   * After calling {@link #startInjecting(Language)}, invoke
+   * After calling {@code startInjecting()}, invoke
    * {@link #addPlace(String, String, PsiLanguageInjectionHost, TextRange)} one or several times
    * finished by {@link #doneInjecting()}.<br/>
    * Text in ranges denoted by one or several {@link #addPlace(String, String, PsiLanguageInjectionHost, TextRange)} calls

@@ -2,6 +2,7 @@
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.largeFilesEditor.search.LfeSearchManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
@@ -33,6 +34,11 @@ public class LargeFileToggleAction extends CheckboxAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

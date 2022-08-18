@@ -16,6 +16,7 @@ import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,7 +187,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     return EmptyIndex.getInstance();
   }
 
-  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, UpdatableIndex.EmptyData> {
+  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void>, MeasurableIndexStore {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
     private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -215,17 +216,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
+    public Void getFileIndexMetaData(@NotNull IndexedFile file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
       throw new UnsupportedOperationException();
     }
 
@@ -310,6 +306,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
     @Override
     public void dispose() {
+    }
+
+    @Override
+    public int keysCountApproximately() {
+      return 0;
     }
   }
 }

@@ -18,7 +18,6 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
 
   /**
    * @deprecated Use {@link #getCoverageDataManager(Project)}
-   * @return
    */
   @Nullable
   @Deprecated(forRemoval = true)

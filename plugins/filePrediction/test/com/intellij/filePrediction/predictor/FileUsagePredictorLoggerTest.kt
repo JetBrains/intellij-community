@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FilePredictionSessionManager
@@ -9,7 +10,7 @@ import com.intellij.filePrediction.predictor.model.disableFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setConstantFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setCustomCandidateProviderModel
 import com.intellij.filePrediction.predictor.model.setPredefinedProbabilityModel
-import com.intellij.internal.statistic.FUCounterCollectorTestCase.collectLogEvents
+import com.intellij.internal.statistic.FUCollectorTestCase.collectLogEvents
 import com.intellij.internal.statistic.TestStatisticsEventValidatorBuilder
 import com.intellij.internal.statistic.TestStatisticsEventsValidator
 import com.intellij.openapi.Disposable
@@ -125,7 +126,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
-    val events = collectLogEvents {
+    val events = collectLogEvents(testRootDisposable) {
       ApplicationManager.getApplication().executeOnPooledThread{
         predictor.onSessionStarted(myFixture.project, file!!)
         predictor.onSessionStarted(myFixture.project, nextFile!!)
@@ -276,7 +277,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       "com/test/Foo3.txt"
     )
 
-    @Suppress("UNCHECKED_CAST")
     val validator = TestFileCandidatesValidatorBuilder()
       .hasField("opened", 0) { (it["features"] as String).contains("JAVA").not() }
       .hasField("opened", 1) { (it["features"] as String).contains("JAVA") }.build()

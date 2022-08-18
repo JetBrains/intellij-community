@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -22,7 +22,7 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testInlineOneClass() { doTest(false, true); }
@@ -76,6 +76,7 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   public void testSealedGrandParentNonSealedInheritor() { doTest(false, true); }
   public void testSealedParentInlineAll() { doTest(); }
   public void testMultipleSealedParents() { doTest(false, true); }
+  public void testMultipleSuperCalls() { doTest(false, true); }
 
   private void doTest() {
     doTest(false, false);

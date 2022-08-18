@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -26,18 +27,23 @@ import java.util.stream.Stream;
 public final class SynchronizeCurrentFileAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && getSupportedFiles(e).findAny().isPresent());
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && supportedFiles(e).findAny().isPresent());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    List<VirtualFile> files = getSupportedFiles(e).collect(Collectors.toList());
+    List<VirtualFile> files = supportedFiles(e).collect(Collectors.toList());
     synchronizeFiles(files, project, true);
   }
 
-  public static void synchronizeFiles(Collection<VirtualFile> files, Project project, boolean async) {
+  public static void synchronizeFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project, boolean async) {
     if (files.isEmpty()) return;
 
     for (VirtualFile file : files) {
@@ -56,7 +62,7 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     RefreshQueue.getInstance().refresh(async, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  private static void postRefresh(Project project, Collection<VirtualFile> files) {
     List<VirtualFile> localFiles = ContainerUtil.filter(files, f -> f.isInLocalFileSystem());
     if (!localFiles.isEmpty()) {
       VcsFacade.getInstance().markFilesDirty(project, localFiles);
@@ -67,12 +73,9 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     }
   }
 
-  private static @NotNull Stream<VirtualFile> getSupportedFiles(AnActionEvent e) {
+  private static Stream<VirtualFile> supportedFiles(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    return files != null ? Stream.of(files).filter(f -> {
-      if (!f.isValid()) return false;
-      VirtualFileSystem fs = f.getFileSystem();
-      return fs instanceof LocalFileSystem || fs instanceof ArchiveFileSystem;
-    }) : Stream.empty();
+    return files == null ? Stream.empty() : Stream.of(files)
+      .filter(f -> f.isValid() && (f.getFileSystem() instanceof LocalFileSystem || f.getFileSystem() instanceof ArchiveFileSystem));
   }
 }

@@ -787,6 +787,10 @@ void SendCommandLineToFirstInstance(int response_id)
 
 int CheckSingleInstance()
 {
+  if (LoadStdString(IDS_INSTANCE_ACTIVATION) != std::string("true")) {
+    return -1;
+  }
+
   char moduleFileName[_MAX_PATH];
   GetModuleFileNameA(NULL, moduleFileName, _MAX_PATH - 1);
   for (char *p = moduleFileName; *p; p++)

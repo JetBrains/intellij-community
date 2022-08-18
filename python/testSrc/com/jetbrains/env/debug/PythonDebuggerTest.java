@@ -16,6 +16,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -1606,6 +1607,98 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertNotNull(getCurrentStackFrame().getSourcePosition());
         resume();
         waitForTerminate();
+      }
+    });
+  }
+
+  @Test
+  public void testDontStopTwiceOnException() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_double_stop_on_exception.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        // Check: debugger doesn't stop on the breakpoint second time
+        resume();
+        waitForTerminate();
+      }
+    });
+  }
+
+  @Test
+  public void testLoadElementsForGroupsOnDemand() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_load_elements_for_groups_on_demand.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+        toggleBreakpoint(getFilePath(getScriptName()), 8);
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.setWatchReturnValues(true);
+      }
+
+      @Override
+      public void doFinally() {
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.setWatchReturnValues(false);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForPause();
+
+        List<PyDebugValue> defaultVariables = loadSpecialVariables(ProcessDebugger.GROUP_TYPE.DEFAULT);
+        List<String> names = List.of("_dummy_ret_val", "_dummy_special_var", "boolean", "get_foo", "string");
+        List<String> values = List.of("", "True", "1", "Hello!");
+        containsValue(defaultVariables, names, values);
+
+        List<PyDebugValue> specialVariables = loadSpecialVariables(ProcessDebugger.GROUP_TYPE.SPECIAL);
+        names = List.of("__builtins__", "__doc__", "__file__", "__loader__", "__name__", "__package__", "__spec__");
+        values = List.of("<module 'builtins' (built-in)>", "None", "test_load_elements_for_groups_on_demand.py", " ", "__main__", "");
+        containsValue(specialVariables, names, values);
+
+        List<PyDebugValue> returnVariables = loadSpecialVariables(ProcessDebugger.GROUP_TYPE.RETURN);
+        names = List.of("foo");
+        values = List.of("1");
+        containsValue(returnVariables, names, values);
+
+        resume();
+        waitForTerminate();
+      }
+
+      private void containsValue(List<PyDebugValue> variablesGroup, List<String> names, List<String> values) {
+        for (PyDebugValue elem : variablesGroup) {
+          assertTrue(names.contains(elem.getName()));
+          assertTrue(values.contains(elem.getValue()));
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testDictWithUnicodeOrBytesValuesOrNames() {
+    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_dict_with_unicode_or_bytes_values_names.py") {
+      private final static String PYTHON2_TAG = "python2";
+
+      @Override
+      public void testing() throws Exception {
+        if (hasPython2Tag()) {
+          waitForOutput("{u\"u'Foo \\u201cFoo\\u201d Bar' (4706573888)\": u'\\u201cFoo\\u201d'}");
+          waitForOutput("{'\\xfc\\x00': '\\x00\\x10'}");
+        }
+        else {
+          waitForOutput("{\"u'Foo “Foo” Bar' (4706573888)\": '“Foo”'}");
+          waitForOutput("{b'\\xfc\\x00': b'\\x00\\x10'}");
+        }
+      }
+
+      private boolean hasPython2Tag() throws NullPointerException {
+        return hasTag(PYTHON2_TAG);
       }
     });
   }

@@ -16,7 +16,6 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade.Companion.createFromTopConcatenation
 import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
-import java.util.*
 
 private const val i18nizedExpr = "i18nizedExpr"
 

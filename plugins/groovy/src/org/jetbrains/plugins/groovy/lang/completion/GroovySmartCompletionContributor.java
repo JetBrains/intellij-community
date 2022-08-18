@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
+import org.jetbrains.plugins.groovy.lang.completion.impl.FastGroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -120,7 +122,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
                                                });
         }
 
-        addExpectedClassMembers(params, result);
+        addExpectedClassMembers(params, new FastGroovyCompletionConsumer(result));
       }
     });
 
@@ -233,9 +235,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     return false;
   }
 
-  static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
+  static void addExpectedClassMembers(CompletionParameters params, final GroovyCompletionConsumer result) {
     for (final TypeConstraint info : getExpectedTypeInfos(params)) {
-      Consumer<LookupElement> consumer = element -> result.addElement(element);
+      Consumer<LookupElement> consumer = result::consume;
       PsiType type = info.getType();
       PsiType defType = info.getDefaultType();
       boolean searchInheritors = params.getInvocationCount() > 1;

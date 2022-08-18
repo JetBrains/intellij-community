@@ -138,6 +138,10 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: Path, block: (fi
   }
 }
 
+internal fun commit(repo: Path, message: String) {
+  execute(repo, GIT, "commit", "-m", message)
+}
+
 internal fun commit(repo: Path, message: String, user: String, email: String) {
   execute(
     repo, GIT,
@@ -375,7 +379,7 @@ internal fun gitStatus(repo: Path, includeUntracked: Boolean = false) = Changes(
         .toList()
       val type = when(status) {
         "A", "??" -> Changes.Type.ADDED
-        "M" -> Changes.Type.MODIFIED
+        "M", "MM" -> Changes.Type.MODIFIED
         "D" -> Changes.Type.DELETED
         else -> error("Unknown change type: $status. Git status line: $it")
       }

@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -49,21 +50,15 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
 
-  private final int myStartOffset;
-  private final int myEndOffset;
+  private final TextRange myVisibleRange;
   private final boolean hasDirtyTextRange;
 
   ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor) {
     super(file.getProject(), editor.getDocument(), false);
 
     myEditor = editor;
-
-    TextRange range = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    myStartOffset = range.getStartOffset();
-    myEndOffset = range.getEndOffset();
-
+    myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     myFile = file;
-
     hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL) != null;
   }
 
@@ -89,15 +84,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int caretOffset = myEditor.getCaretModel().getOffset();
     importUnambiguousImports(caretOffset);
     if (isImportHintEnabled()) {
-      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor, hasDirtyTextRange);
-
-      for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
-        HighlightInfo info = visibleHighlights.get(i);
-        if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
-      }
-
+      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange.getStartOffset(), myVisibleRange.getEndOffset(), myProject, myEditor, hasDirtyTextRange);
+      // sort by distance to the caret
+      visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
       for (HighlightInfo visibleHighlight : visibleHighlights) {
-        if (visibleHighlight.startOffset > caretOffset && showAddImportHint(visibleHighlight)) return;
+        if (showAddImportHint(visibleHighlight)) {
+          break;
+        }
       }
     }
   }
@@ -193,7 +186,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // really can't run highlighting from within EDT
       // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      throw new IllegalStateException("Must not be run from within EDT"); //return Collections.emptyList();
+      throw new IllegalStateException("Must not be run from within EDT");
     }
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);

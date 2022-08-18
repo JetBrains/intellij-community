@@ -117,6 +117,14 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   TextContent excludeRanges(List<Exclusion> ranges);
 
   /**
+   * @return the part of this text inside the corresponding range, or {@code null} if the result is empty
+   */
+  default @Nullable TextContent subText(TextRange range) {
+    if (range.isEmpty()) return null;
+    return excludeRange(new TextRange(range.getEndOffset(), length())).excludeRange(new TextRange(0, range.getStartOffset()));
+  }
+
+  /**
    * @return whether the given PSI file text range has non-empty intersection with any fragment covered by this text content.
    */
   @Contract(pure = true)

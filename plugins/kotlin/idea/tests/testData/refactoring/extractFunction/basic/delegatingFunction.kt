@@ -1,4 +1,4 @@
-// PARAM_DESCRIPTOR: val t: <no name provided> defined in foo
+// PARAM_DESCRIPTOR: val t: `<no name provided>` defined in foo
 // PARAM_TYPES: T
 interface T {
     fun test() {}

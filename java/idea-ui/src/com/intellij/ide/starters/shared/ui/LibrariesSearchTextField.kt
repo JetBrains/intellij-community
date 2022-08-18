@@ -9,11 +9,13 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
-internal class LibrariesSearchTextField : SearchTextField() {
+@ApiStatus.Internal
+class LibrariesSearchTextField : SearchTextField() {
 
   var list: JComponent? = null
 

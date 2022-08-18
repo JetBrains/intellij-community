@@ -19,6 +19,7 @@ import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
@@ -289,7 +290,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
     @Override
     public int @NotNull [] asArray() {
-      return myResult.toIntArray();
+      return myResult.toArray(ArrayUtil.EMPTY_INT_ARRAY);
     }
 
     @Override

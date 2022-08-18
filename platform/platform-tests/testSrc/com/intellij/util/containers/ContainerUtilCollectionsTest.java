@@ -353,7 +353,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testWeakMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createWeakMap());
+    assertNullKeysMustThrow(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
   }
   @Test
   public void testSoftMapMustNotAcceptNullKey() {
@@ -620,7 +620,8 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeyMapsKeySetIsIterable() {
-    checkKeySetIterable(ContainerUtil.createWeakMap());
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> CollectionFactory.createWeakMap(11,1,HashingStrategy.canonical()));
+    checkKeySetIterable(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
     checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
     checkKeySetIterable(ContainerUtil.createWeakKeyWeakValueMap());
     checkKeySetIterable(ContainerUtil.createConcurrentWeakMap());

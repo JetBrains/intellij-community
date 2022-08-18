@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.serviceIfCreated
@@ -20,6 +21,10 @@ abstract class GitSingleStashAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null && e.getData(STASH_INFO)?.size == 1
     e.presentation.isVisible = e.isFromActionToolbar || (e.project != null && e.getData(STASH_INFO) != null)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -47,7 +52,7 @@ class GitApplyStashAction : GitSingleStashAction() {
   }
 }
 
-class GitUnstashAsAction: GitSingleStashAction() {
+class GitUnstashAsAction : GitSingleStashAction() {
   override fun perform(project: Project, stashInfo: StashInfo): Boolean {
     val dialog = GitUnstashAsDialog(project, stashInfo)
     if (dialog.showAndGet()) {
@@ -58,7 +63,7 @@ class GitUnstashAsAction: GitSingleStashAction() {
 
 }
 
-class GitStashOperationsGroup: SavedPatchesOperationsGroup() {
+class GitStashOperationsGroup : SavedPatchesOperationsGroup() {
   override fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
     return patchObject.data is StashInfo
   }

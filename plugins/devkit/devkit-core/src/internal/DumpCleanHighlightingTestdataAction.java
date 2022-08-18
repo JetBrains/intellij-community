@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.internal;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +34,7 @@ import java.nio.file.Path;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
-final class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware, UpdateInBackground {
+final class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DumpCleanHighlightingTestdataAction.class);
 
   private final NullableLazyValue<Class<?>> myHighlightingDataClass = lazyNullable(() -> {
@@ -53,6 +53,11 @@ final class DumpCleanHighlightingTestdataAction extends AnAction implements Dumb
       return null;
     }
   });
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

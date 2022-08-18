@@ -6,7 +6,8 @@ import com.intellij.cce.workspace.Config
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import java.awt.event.ItemEvent
 import javax.swing.JPanel
 
@@ -15,13 +16,16 @@ class CompletionTypeConfigurable : EvaluationConfigurable {
 
   override fun createPanel(previousState: Config): JPanel {
     completionType = previousState.interpret.completionType
-    return panel(title = EvaluationPluginBundle.message("evaluation.settings.type.title"), constraints = arrayOf(LCFlags.noGrid)) {
-      buttonGroup {
-        row {
-          radioButton(EvaluationPluginBundle.message("evaluation.settings.type.basic")).configure(CompletionType.BASIC)
-          radioButton(EvaluationPluginBundle.message("evaluation.settings.type.smart")).configure(CompletionType.SMART)
-          radioButton(EvaluationPluginBundle.message("evaluation.settings.type.ml")).configure(CompletionType.ML)
-          radioButton(EvaluationPluginBundle.message("evaluation.settings.type.full.line")).configure(CompletionType.FULL_LINE).enabled(isFullLineEnabled())
+    return panel {
+      group(EvaluationPluginBundle.message("evaluation.settings.type.title")) {
+        buttonsGroup {
+          row {
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.type.basic")).configure(CompletionType.BASIC)
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.type.smart")).configure(CompletionType.SMART)
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.type.ml")).configure(CompletionType.ML)
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.type.full.line")).configure(CompletionType.FULL_LINE)
+              .enabled(isFullLineEnabled())
+          }
         }
       }
     }
@@ -37,13 +41,12 @@ class CompletionTypeConfigurable : EvaluationConfigurable {
              .findEnabledPlugin(PluginId.getId("org.jetbrains.completion.full.line"))?.isEnabled ?: false
   }
 
-  private fun CellBuilder<JBRadioButton>.configure(value: CompletionType): CellBuilder<JBRadioButton> {
+  private fun Cell<JBRadioButton>.configure(value: CompletionType): Cell<JBRadioButton> {
     return this.apply {
       component.isSelected = completionType == value
       component.addItemListener { event ->
         if (event.stateChange == ItemEvent.SELECTED) completionType = value
       }
-
     }
   }
 }

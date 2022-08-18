@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
@@ -6,13 +6,13 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.observable.util.addItemListener
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCodeFragment
@@ -35,7 +35,7 @@ import com.intellij.util.ui.table.JBTableRowEditor
 import com.intellij.util.ui.table.JBTableRowRenderer
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.types.isError
 import java.awt.Font
 import java.awt.Toolkit
 import java.awt.event.ItemEvent
+import java.awt.event.ItemListener
 import javax.swing.*
 
 class KotlinChangeSignatureDialog(
@@ -155,31 +156,43 @@ class KotlinChangeSignatureDialog(
                         component = editor
                     } else if (KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) && isDefaultColumnEnabled()) {
                         defaultParameterCheckbox.isSelected = item.parameter.defaultValue != null
-                        defaultParameterCheckbox.addItemListener {
-                            parametersTableModel.setValueAtWithoutUpdate(it.stateChange == ItemEvent.SELECTED, row, columnFinal)
-                            updateSignature()
-                        }
+                        defaultParameterCheckbox.addItemListener(
+                            disposable,
+                            ItemListener {
+                                parametersTableModel.setValueAtWithoutUpdate(it.stateChange == ItemEvent.SELECTED, row, columnFinal)
+                                updateSignature()
+                            },
+                        )
+
                         component = defaultParameterCheckbox
                         editor = null
                         notifyReceiverListeners()
                     } else if (KotlinPrimaryConstructorParameterTableModel.isValVarColumn(columnInfo)) {
                         val comboBox = ComboBox(KotlinValVar.values())
                         comboBox.selectedItem = item.parameter.valOrVar
-                        comboBox.addItemListener {
-                            parametersTableModel.setValueAtWithoutUpdate(it.item, row, columnFinal)
-                            updateSignature()
-                        }
+                        comboBox.addItemListener(
+                            disposable,
+                            ItemListener {
+                                parametersTableModel.setValueAtWithoutUpdate(it.item, row, columnFinal)
+                                updateSignature()
+                            },
+                        )
+
                         component = comboBox
                         editor = null
                     } else if (KotlinFunctionParameterTableModel.isReceiverColumn(columnInfo)) {
                         val checkBox = JCheckBox()
                         checkBox.isSelected = parametersTableModel.receiver == item.parameter
-                        checkBox.addItemListener {
-                            val newReceiver = if (it.stateChange == ItemEvent.SELECTED) item.parameter else null
-                            (parametersTableModel as KotlinFunctionParameterTableModel).receiver = newReceiver
-                            updateSignature()
-                            notifyReceiverListeners()
-                        }
+                        checkBox.addItemListener(
+                            disposable,
+                            ItemListener {
+                                val newReceiver = if (it.stateChange == ItemEvent.SELECTED) item.parameter else null
+                                (parametersTableModel as KotlinFunctionParameterTableModel).receiver = newReceiver
+                                updateSignature()
+                                notifyReceiverListeners()
+                            },
+                        )
+
                         component = checkBox
                         editor = null
                     } else
@@ -189,13 +202,12 @@ class KotlinChangeSignatureDialog(
                     panel.add(label)
 
                     if (editor != null) {
-                        editor.addDocumentListener(
-                            object : DocumentListener {
-                                override fun documentChanged(e: DocumentEvent) {
-                                    fireDocumentChanged(e, columnFinal)
-                                }
-                            }
-                        )
+                        val listener = RowEditorChangeListener(columnFinal)
+                        editor.addDocumentListener(listener)
+                        Disposer.register(disposable) {
+                            editor.removeDocumentListener(listener)
+                        }
+
                         editor.setPreferredWidth(table.width / parametersTableModel.columnCount)
                     }
 
@@ -287,7 +299,7 @@ class KotlinChangeSignatureDialog(
 
     override fun isListTableViewSupported() = true
 
-    override fun createCallerChooser(title: String, treeToReuse: Tree?, callback: Consumer<Set<PsiElement>>) =
+    override fun createCallerChooser(title: String, treeToReuse: Tree?, callback: Consumer<in Set<PsiElement>>) =
         KotlinCallerChooser(myMethod.method, myProject, title, treeToReuse, callback)
 
     // Forbid receiver propagation

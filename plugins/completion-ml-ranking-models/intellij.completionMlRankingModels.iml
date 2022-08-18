@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module-library">
       <library name="completion-ranking-java-exp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.8.0" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.8.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.8.0/completion-ranking-java-0.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.8.2/completion-ranking-java-0.8.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -22,9 +22,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-java-exp2" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.9.0" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.9.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.0/completion-ranking-java-0.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.2/completion-ranking-java-0.9.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -42,9 +42,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-scala-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-scala:0.3.4" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-scala:0.4.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.3.4/completion-ranking-scala-0.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.4.1/completion-ranking-scala-0.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

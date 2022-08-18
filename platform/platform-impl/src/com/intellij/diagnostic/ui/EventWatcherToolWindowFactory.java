@@ -6,6 +6,7 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       .subscribe(listener.TOPIC, listener);
 
     ContentManager manager = toolWindow.getContentManager();
-    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    ContentFactory contentFactory = ContentFactory.getInstance();
     listener.createNamedPanels()
       .map(entry -> {
         JPanel panel = new JPanel(new BorderLayout());
@@ -149,6 +150,11 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
             Objects.requireNonNull(EventWatcher.getInstanceOrNull())
               .reset();
             setItems(tableModel, List.of());
+          }
+
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.BGT;
           }
         }).createPanel();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,13 +20,18 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.toolWindow.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.DevicePoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -48,6 +53,8 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+
+import static javax.swing.SwingConstants.CENTER;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
@@ -144,7 +151,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   @Contract("null, _ -> null")
   @Override
-  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter) {
+  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter) {
     if (c == null) {
       return null;
     }
@@ -217,7 +224,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JDialog(UIUtil.getWindow(me.getComponent()));
+      myWindow = new JDialog(ComponentUtil.getWindow(me.getComponent()));
       myWindow.setUndecorated(true);
       myContent = content;
       myStartDragContainer = getContainerFor(me.getComponent());
@@ -268,8 +275,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     private void setLocationFrom(MouseEvent me) {
-      Point showPoint = me.getPoint();
-      SwingUtilities.convertPointToScreen(showPoint, me.getComponent());
+      DevicePoint devicePoint = new DevicePoint(me);
+      Point showPoint = devicePoint.getLocationOnScreen();
 
       Dimension size = myImageContainer.getSize();
       showPoint.x -= size.width / 2;
@@ -279,11 +286,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     @Override
     public @NotNull DockContainer.ContentResponse getResponse(MouseEvent e) {
-      RelativePoint point = new RelativePoint(e);
+      DevicePoint point = new DevicePoint(e);
       for (DockContainer each : getAllContainers()) {
         RelativeRectangle rec = each.getAcceptArea();
         if (rec.contains(point)) {
-          DockContainer.ContentResponse response = each.getContentResponse(myContent, point);
+          DockContainer.ContentResponse response = each.getContentResponse(myContent, point.toRelativePoint(each.getContainerComponent()));
           if (response.canAccept()) {
             return response;
           }
@@ -294,11 +301,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     @Override
     public void process(MouseEvent e) {
-      RelativePoint point = new RelativePoint(e);
+      DevicePoint devicePoint = new DevicePoint(e);
 
       Image img = null;
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
-        DockContainer over = findContainerFor(point, myContent);
+        DockContainer over = findContainerFor(devicePoint, myContent);
         if (myCurrentOverContainer != null && myCurrentOverContainer != over) {
           myCurrentOverContainer.resetDropOver(myContent);
           myCurrentOverContainer = null;
@@ -306,10 +313,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
         if (myCurrentOverContainer == null && over != null) {
           myCurrentOverContainer = over;
+          RelativePoint point = devicePoint.toRelativePoint(over.getContainerComponent());
           img = myCurrentOverContainer.startDropOver(myContent, point);
         }
 
         if (myCurrentOverContainer != null) {
+          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
           img = myCurrentOverContainer.processDropOver(myContent, point);
         }
 
@@ -327,11 +336,20 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       }
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
+          // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
+          // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
+          // fix it up inside createNewDockContainerFor
+          RelativePoint point = new RelativePoint(e);
           createNewDockContainerFor(myContent, point);
           e.consume();//Marker for DragHelper: drag into separate window is not tabs reordering
         }
         else {
+          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
           myCurrentOverContainer.add(myContent, point);
+          ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
+            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+            if (container.getCurrentDropSide() == CENTER) e.consume();
+          });
         }
         stopCurrentDragSession();
       }
@@ -352,21 +370,21 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
   }
 
-  private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
+  private @Nullable DockContainer findContainerFor(DevicePoint devicePoint, @NotNull DockableContent<?> content) {
     List<DockContainer> containers = new ArrayList<>(getContainers());
     containers.remove(myCurrentDragSession.myStartDragContainer);
     containers.add(0, myCurrentDragSession.myStartDragContainer);
 
     for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptArea();
-      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
         return each;
       }
     }
 
     for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
-      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
         return each;
       }
     }
@@ -391,8 +409,17 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       window.setupNorthPanel();
     }
 
+    boolean canDockToolWindows = container instanceof DockableEditorTabbedContainer &&
+                                 !isSingletonEditorInWindow(((DockableEditorTabbedContainer)container).getSplitters().getSelectedEditors());
+    if (canDockToolWindows) {
+      window.setupToolWindowPane();
+    }
+
     Dimension size = content.getPreferredSize();
-    Point showPoint = point.getScreenPoint();
+
+    // The given relative point might be relative to a component on a different screen, using different DPI screen coordinates. Convert to
+    // device coordinates first. Ideally, we would be given a DevicePoint
+    Point showPoint = new DevicePoint(point).getLocationOnScreen();
     showPoint.x -= size.width / 2;
     showPoint.y -= size.height / 2;
 
@@ -415,13 +442,20 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                                                                                      @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
 
+    // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
+    // parent window is floating.
     DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       window.show(true);
     }
 
     EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
     Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
+
+    if (!isSingletonEditorInWindow(result.first)) {
+      window.setupToolWindowPane();
+    }
+
     boolean isNorthPanelAvailable = isNorthPanelAvailable(result.first);
     if (isNorthPanelAvailable) {
       window.setupNorthPanel();
@@ -432,6 +466,16 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
     return result;
+  }
+
+  private static boolean isSingletonEditorInWindow(FileEditor[] editors) {
+    for (FileEditor editor : editors) {
+      if (FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(editor, false)
+        || EditorWindow.HIDE_TABS.get(editor, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static @Nullable String getWindowDimensionKey(@NotNull DockableContent<?> content) {
@@ -486,6 +530,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final JPanel myCenterPanel = new JPanel(new BorderLayout(0, 2));
     private final JPanel myDockContentUiContainer;
+    @Nullable private ToolWindowPane myToolWindowPane = null;
 
     private DockWindow(@Nullable String dimensionKey,
                        @Nullable String id,
@@ -517,10 +562,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myDockContentUiContainer = new JPanel(new BorderLayout());
       myDockContentUiContainer.setOpaque(false);
+
       myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
       myCenterPanel.add(myDockContentUiContainer, BorderLayout.CENTER);
-
       myUiContainer.add(myCenterPanel, BorderLayout.CENTER);
+
       StatusBar statusBar = getStatusBar();
       if (statusBar != null) {
         myUiContainer.add(statusBar.getComponent(), BorderLayout.SOUTH);
@@ -534,13 +580,38 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         @Override
         public void contentRemoved(Object key) {
           getReady().doWhenDone(() -> {
-            if (myContainer.isEmpty()) {
+            if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
               close();
               myContainers.remove(myContainer);
             }
           });
         }
       }, this);
+    }
+
+    private void setupToolWindowPane() {
+      if (ApplicationManager.getApplication().isUnitTestMode() || !(getFrame() instanceof JFrame)) {
+        return;
+      }
+
+      final String paneId = Objects.requireNonNull(getDimensionKey());
+
+      final ToolWindowButtonManager buttonManager;
+      if (ExperimentalUI.isNewUI()) {
+        buttonManager = new ToolWindowPaneNewButtonManager(paneId, false);
+        buttonManager.add(myDockContentUiContainer);
+        buttonManager.initMoreButton();
+      }
+      else {
+        buttonManager = new ToolWindowPaneOldButtonManager(paneId);
+      }
+
+      final JComponent containerComponent = myContainer.getContainerComponent();
+      myToolWindowPane = new ToolWindowPane((JFrame)getFrame(), this, paneId, buttonManager);
+      myToolWindowPane.setDocumentComponent(containerComponent);
+
+      myDockContentUiContainer.remove(containerComponent);
+      myDockContentUiContainer.add(myToolWindowPane, BorderLayout.CENTER);
     }
 
     private void setupNorthPanel() {
@@ -570,8 +641,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           continue;
         }
         IdeRootPaneNorthExtension toInstall = each.copy();
-        myNorthExtensions.put(toInstall.getKey(), toInstall);
-        myNorthPanel.add(toInstall.getComponent());
+        if(toInstall != null) {
+          myNorthExtensions.put(toInstall.getKey(), toInstall);
+          myNorthPanel.add(toInstall.getComponent());
+        }
       }
 
       Iterator<String> existing = myNorthExtensions.keySet().iterator();
@@ -672,6 +745,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           eachWindowElement.setAttribute("id", id);
         }
         eachWindowElement.setAttribute("withNorthPanel", Boolean.toString(eachWindow.myNorthPanelAvailable));
+        eachWindowElement.setAttribute("withToolWindowPane", Boolean.toString(eachWindow.myToolWindowPane != null));
         Element content = new Element("content");
         content.setAttribute("type", eachContainer.getDockContainerType());
         content.addContent(eachContainer.getState());
@@ -716,9 +790,14 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
       boolean withNorthPanel = Boolean.parseBoolean(withNorthPanelStr);
+      String withToolWindowPaneStr = windowElement.getAttributeValue("withToolWindowPane", Boolean.toString(true));
+      boolean withToolWindowPane = Boolean.parseBoolean(withToolWindowPaneStr);
       DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
       if (withNorthPanel) {
         window.setupNorthPanel();
+      }
+      if (withToolWindowPane) {
+        window.setupToolWindowPane();
       }
       UIUtil.invokeLaterIfNeeded(window::show);
     }
