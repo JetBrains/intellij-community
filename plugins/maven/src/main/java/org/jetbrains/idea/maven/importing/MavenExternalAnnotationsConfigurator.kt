@@ -31,7 +31,7 @@ class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plu
 
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     if (!shouldRun(context.project)) return
-    val projectsWithChanges = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
+    val projectsWithChanges = context.mavenProjectsWithModules.filter { it.hasChanges() }.map { it.mavenProject }
 
     if (projectsWithChanges.none()) return
 

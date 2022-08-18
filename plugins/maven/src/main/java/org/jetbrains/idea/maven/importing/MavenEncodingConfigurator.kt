@@ -39,7 +39,7 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
   }
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
-    val allMavenProjects = context.mavenProjectsWithModules.filter { it.changes.hasChanges() }.map { it.mavenProject }
+    val allMavenProjects = context.mavenProjectsWithModules.filter { it.hasChanges() }.map { it.mavenProject }
     val mapper = mapEncodings(allMavenProjects, context.project)
     PREPARED_MAPPER.set(context, mapper)
   }

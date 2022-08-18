@@ -161,3 +161,7 @@ interface MavenAfterImportConfigurator {
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
   }
 }
+
+fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
+  return this.changes.hasChanges()
+}
