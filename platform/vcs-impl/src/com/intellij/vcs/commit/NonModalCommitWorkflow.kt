@@ -21,10 +21,14 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(sessionInfo, checker)
-      processExecuteChecksResult(sessionInfo, result)
     }
     finally {
-      if (!result.shouldCommit) endExecution()
+      if (result.shouldCommit) {
+        performCommit(sessionInfo)
+      }
+      else {
+        endExecution()
+      }
     }
   }
 

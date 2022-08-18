@@ -161,26 +161,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
 
   fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(sessionInfo)
-    processExecuteChecksResult(sessionInfo, beforeCommitChecksResult)
-    return beforeCommitChecksResult.shouldCommit
-  }
-
-  protected open fun processExecuteChecksResult(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
-    if (result.shouldCommit) {
-      performCommit(sessionInfo)
-    }
-  }
-
-  protected abstract fun performCommit(sessionInfo: CommitSessionInfo)
-
-  protected fun runBeforeCommitChecksWithEvents(sessionInfo: CommitSessionInfo): CommitChecksResult {
     fireBeforeCommitChecksStarted(sessionInfo)
     val result = runBeforeCommitChecks(sessionInfo)
     fireBeforeCommitChecksEnded(sessionInfo, result)
 
-    return result
+    if (!result.shouldCommit) return false
+
+    performCommit(sessionInfo)
+    return true
   }
+
+  protected abstract fun performCommit(sessionInfo: CommitSessionInfo)
 
   protected fun fireBeforeCommitChecksStarted(sessionInfo: CommitSessionInfo) =
     eventDispatcher.multicaster.beforeCommitChecksStarted(sessionInfo)
