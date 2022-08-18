@@ -155,4 +155,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveToSubstituteOverride() {
+        checkResolveToSubstituteOverride(myFixture)
+    }
+
 }
