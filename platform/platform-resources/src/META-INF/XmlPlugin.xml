@@ -489,68 +489,81 @@
                         overrides="true"/>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.util.CollapseTagIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction</className>
