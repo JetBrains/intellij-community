@@ -19,10 +19,11 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeInsightActionHandler {
+    abstract val toImplement: Boolean
 
     abstract fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<T>
 
-    abstract val toImplement: Boolean
+    abstract fun generateMembers(editor: Editor, classOrObject: KtClassOrObject, selectedElements: Collection<T>, copyDoc: Boolean)
 
     @NlsContexts.DialogTitle
     protected abstract fun getChooserTitle(): String
@@ -30,19 +31,9 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
     @NlsContexts.HintText
     protected abstract fun getNoMembersFoundHint(): String
 
-    abstract fun generateMembers(
-        editor: Editor,
-        classOrObject: KtClassOrObject,
-        selectedElements: Collection<T>,
-        copyDoc: Boolean
-    )
-
     protected open fun isValidForClass(classOrObject: KtClassOrObject) = true
 
-    private fun showOverrideImplementChooser(
-        project: Project,
-        members: Collection<T>
-    ): MemberChooser<T>? {
+    private fun showOverrideImplementChooser(project: Project, members: Collection<T>): MemberChooser<T>? {
         @Suppress("UNCHECKED_CAST")
         val memberArray = members.toTypedArray<ClassMember>() as Array<T>
         val chooser = MemberChooser(memberArray, true, true, project)
@@ -81,6 +72,7 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
 
         val copyDoc: Boolean
         val selectedElements: Collection<T>
+
         if (implementAll) {
             selectedElements = members
             copyDoc = false
@@ -89,6 +81,7 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
             selectedElements = chooser.selectedElements ?: return
             copyDoc = chooser.isCopyJavadoc
         }
+
         if (selectedElements.isEmpty()) return
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
