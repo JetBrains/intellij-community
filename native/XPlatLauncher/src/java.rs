@@ -8,7 +8,8 @@ use crate::{err_from_string, errors};
 use crate::errors::{LauncherError, Result};
 
 #[cfg(target_os = "linux")] use {
-    std::thread::sleep
+    std::thread::sleep,
+    std::time::Duration
 };
 
 #[cfg(target_os = "macos")] use {

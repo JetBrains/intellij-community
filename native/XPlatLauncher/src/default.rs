@@ -583,7 +583,7 @@ fn get_xdg_config_home() -> Option<PathBuf> {
     debug!("XDG_CONFIG_HOME={xdg_config_home}");
 
     if xdg_config_home.is_empty() {
-        return Option::None
+        return None
     }
 
     let path = PathBuf::from(xdg_config_home);
@@ -592,7 +592,7 @@ fn get_xdg_config_home() -> Option<PathBuf> {
         warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
     }
 
-    Option::Some(path)
+    Some(path)
 }
 
 
