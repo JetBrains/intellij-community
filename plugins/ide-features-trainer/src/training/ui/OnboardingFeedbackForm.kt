@@ -7,6 +7,7 @@ import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.submitGeneralFeedback
+import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.notification.Notification
@@ -36,7 +37,6 @@ import com.intellij.util.ui.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
-import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -307,8 +307,8 @@ private fun showSystemData(project: Project?,
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Like)
-  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Dislike)
+  val likeIcon = getLikenessIcon(AllIcons.Ide.Like)
+  val dislikeIcon = getLikenessIcon(AllIcons.Ide.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
   val likeAnswer = FeedbackOption(likeIcon)
   votePanel.add(likeAnswer)
