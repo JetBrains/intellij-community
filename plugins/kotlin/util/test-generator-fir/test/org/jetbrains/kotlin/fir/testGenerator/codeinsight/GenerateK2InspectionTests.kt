@@ -39,6 +39,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractSharedK2InspectionTest> {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("inspections", pattern = pattern)
+            model("inspectionsLocal", pattern = pattern)
         }
     }
 }

@@ -1360,6 +1360,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractSharedK1InspectionTest> {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("inspections", pattern = pattern)
+            model("inspectionsLocal", pattern = pattern)
         }
     }
 }
