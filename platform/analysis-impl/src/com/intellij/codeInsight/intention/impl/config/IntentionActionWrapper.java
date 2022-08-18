@@ -5,7 +5,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.InspectionEngine;
+import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -19,11 +21,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean extension;
   private String fullFamilyName;
-  private @IntentionFamilyName String familyName;
+
+  private volatile @Nullable Set<String> applicableToLanguages;
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     this.extension = extension;
@@ -44,9 +52,37 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
   @Override
   public @NotNull String getFamilyName() {
-    String result = familyName;
-    if (result == null) {
-      familyName = result = getDelegate().getFamilyName();
+    return getDelegate().getFamilyName();
+  }
+
+  public @Nullable Set<String> getLanguages() {
+    if (extension.language == null) return null;
+    if ("any".equals(extension.language)) return null;
+    if (applicableToLanguages != null) return applicableToLanguages;
+
+    Set<String> languageIds = getLanguageWithDialects(extension.language);
+
+    applicableToLanguages = languageIds;
+
+    return languageIds;
+  }
+
+  private static @NotNull Set<String> getLanguageWithDialects(@NotNull String langId) {
+    Language language = Language.findLanguageByID(langId);
+    Set<String> result;
+    if (language == null) {
+      // unknown language in plugin.xml, ignore
+      result = Collections.singleton(langId);
+    }
+    else if (language instanceof MetaLanguage) {
+      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
+      result = new HashSet<>();
+      for (Language matchingLanguage : matchingLanguages) {
+        result.addAll(InspectionEngine.getLanguageWithDialects(matchingLanguage, true));
+      }
+    }
+    else {
+      result = InspectionEngine.getLanguageWithDialects(language, true);
     }
     return result;
   }

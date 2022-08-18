@@ -169,6 +169,7 @@
     <toolWindowAllowlist id="JSONPathEvaluate"/>
 
     <intentionAction>
+      <language>JSONPath</language>
       <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>

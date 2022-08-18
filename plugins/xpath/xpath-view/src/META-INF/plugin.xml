@@ -129,18 +129,22 @@
                      key="inspection.xslt.variable.shadowing.display.name" bundle="messages.XPathBundle"/>
 
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
