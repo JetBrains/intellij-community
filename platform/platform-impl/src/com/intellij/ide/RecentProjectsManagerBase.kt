@@ -697,7 +697,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
     var file: File? = File(projectPath)
     while (file != null) {
-      val projectMetaInfo = state.additionalInfo.remove(projectPath)
+      val projectMetaInfo = state.additionalInfo.remove(FileUtil.toSystemIndependentName(file.path))
       if (projectMetaInfo != null) break
 
       file = FileUtil.getParentFile(file)
