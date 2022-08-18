@@ -30,10 +30,11 @@ class KotlinStructureViewElement(
                 KotlinStructureElementPresentation(isInherited, element, countDescriptor())
             }
 
-    private var visibility
+    var visibility
             by AssignableLazyProperty {
                 Visibility(countDescriptor())
             }
+        private set
 
     constructor(element: NavigatablePsiElement, descriptor: DeclarationDescriptor, isInherited: Boolean) : this(element, isInherited) {
         if (element !is KtElement) {
