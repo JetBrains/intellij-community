@@ -255,7 +255,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-    return CommitChecksResult.Passed(toCommit = true)
+    return CommitChecksResult.Passed
   }
 
   open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
