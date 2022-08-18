@@ -237,6 +237,99 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/removeCurlyBracesFromTemplate")
+    public static class RemoveCurlyBracesFromTemplate extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("necessaryBrackets1.kt")
+        public void testNecessaryBrackets1() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets1.kt");
+        }
+
+        @TestMetadata("necessaryBrackets2.kt")
+        public void testNecessaryBrackets2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets2.kt");
+        }
+
+        @TestMetadata("necessaryBrackets3.kt")
+        public void testNecessaryBrackets3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets3.kt");
+        }
+
+        @TestMetadata("necessaryBrackets4.kt")
+        public void testNecessaryBrackets4() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets4.kt");
+        }
+
+        @TestMetadata("necessaryBrackets5.kt")
+        public void testNecessaryBrackets5() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets5.kt");
+        }
+
+        @TestMetadata("necessaryBrackets6.kt")
+        public void testNecessaryBrackets6() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets6.kt");
+        }
+
+        @TestMetadata("necessaryBrackets7.kt")
+        public void testNecessaryBrackets7() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets7.kt");
+        }
+
+        @TestMetadata("necessaryBrackets8.kt")
+        public void testNecessaryBrackets8() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets8.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets1.kt")
+        public void testUnnecessaryBrackets1() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets1.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets2.kt")
+        public void testUnnecessaryBrackets2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets2.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets3.kt")
+        public void testUnnecessaryBrackets3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets3.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets4.kt")
+        public void testUnnecessaryBrackets4() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets4.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets5.kt")
+        public void testUnnecessaryBrackets5() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets5.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets6.kt")
+        public void testUnnecessaryBrackets6() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets6.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets7.kt")
+        public void testUnnecessaryBrackets7() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets7.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets8.kt")
+        public void testUnnecessaryBrackets8() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets8.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets9.kt")
+        public void testUnnecessaryBrackets9() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets9.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptyClassBody")
     public static class RemoveEmptyClassBody extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
