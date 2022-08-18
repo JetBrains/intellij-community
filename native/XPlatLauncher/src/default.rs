@@ -93,7 +93,7 @@ impl DefaultLaunchConfiguration {
                 debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
                 x
             }
-            Err(_) => { env::current_dir()?.join("xplat_launcher.exe") }
+            Err(_) => { env::current_dir()?.join("xplat-launcher.exe") }
         };
 
         debug!("Resolved current executable path as '{current_exe:?}'");

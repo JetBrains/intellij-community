@@ -6,9 +6,13 @@ use std::process::{Command, Output};
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
     let executable_name = get_gradlew_executable_name();
-    let executable = PathBuf::from("resources/TestProject").join(executable_name);
+    let executable = PathBuf::from("./resources/TestProject")
+        .join(executable_name);
 
-    let command_to_execute = Command::new(executable)
+    assert!(executable.exists());
+
+    let gradlew = executable.canonicalize().expect("Failed to get canonical path to gradlew");
+    let command_to_execute = Command::new(gradlew)
         .arg(gradle_command)
         .current_dir("resources/TestProject")
         .output()
@@ -68,7 +72,7 @@ pub fn layout_into_test_dir(
     // linux:
     // .
     // ├── bin/
-    // │   └── xplat_launcher
+    // │   └── xplat-launcher
     // │   └── idea64.vmoptions
     // ├── lib/
     // │   └── app.jar
@@ -83,10 +87,10 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat-launcher");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
     File::create("bin/idea64.vmoptions").expect("Failed to create idea.vmoptions");
@@ -104,7 +108,7 @@ pub fn layout_into_test_dir(
     // .
     // └── Contents
     //     ├── bin/
-    //     │   └── xplat_launcher
+    //     │   └── xplat-launcher
     //     │   └── idea.vmoptions
     //     ├── Resources/
     //     │   └── product-info.json
@@ -125,10 +129,10 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat-launcher");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "Contents/bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "Contents/bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "Contents/jbr").expect("Failed to create symlink for jbr");
     File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
@@ -145,7 +149,7 @@ pub fn layout_into_test_dir(
     // windows:
     // .
     // ├── bin/
-    // │   └── xplat_launcher
+    // │   └── xplat-launcher
     // │   └── idea64.exe.vmoptions
     // ├── lib/
     // │   └── app.jar
@@ -161,10 +165,10 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher.exe");
+        .join("xplat-launcher.exe");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     junction::create(jbr_absolute_path, "jbr").expect("Failed to create junction for jbr");
     File::create("bin/idea64.exe.vmoptions").expect("Failed to create idea.vmoptions");
