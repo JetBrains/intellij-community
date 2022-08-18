@@ -229,16 +229,18 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
-private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
+internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  val profilerExecutor: ExecutorGroup<*>? = registry.getExecutorById(PROFILER) as? ExecutorGroup<*>
-  actions.add(RunToolbarWidgetRunAction(runExecutor) { RunManager.getInstance(it).selectedConfiguration })
-  actions.add(RunToolbarWidgetRunAction(debugExecutor) { RunManager.getInstance(it).selectedConfiguration })
-  if (profilerExecutor != null) {
-    actions.add(profilerExecutor.createExecutorActionGroup { RunManager.getInstance(it).selectedConfiguration })
+  if (addHeader) {
+    val profilerExecutor: ExecutorGroup<*>? = registry.getExecutorById(PROFILER) as? ExecutorGroup<*>
+    actions.add(RunToolbarWidgetRunAction(runExecutor) { RunManager.getInstance(it).selectedConfiguration })
+    actions.add(RunToolbarWidgetRunAction(debugExecutor) { RunManager.getInstance(it).selectedConfiguration })
+    if (profilerExecutor != null) {
+      actions.add(profilerExecutor.createExecutorActionGroup { RunManager.getInstance(it).selectedConfiguration })
+    }
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
   RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
@@ -260,8 +262,13 @@ private fun createRunConfigurationPopup(context: DataContext, project: Project):
   }
   actions.add(Separator.create())
   actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
-                                                   ActionManager.getInstance().getAction("ChooseRunConfiguration")))
+                             ActionManager.getInstance().getAction("ChooseRunConfiguration")))
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
+  return actions
+}
+
+private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
+  val actions = createRunConfigurationsActionGroup(project)
   return JBPopupFactory.getInstance().createActionGroupPopup(
     null,
     actions,

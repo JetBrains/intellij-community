@@ -243,10 +243,8 @@ private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAct
   }
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
-    val component = e.inputEvent?.component as? JComponent ?: return null
-    val action = ActionManager.getInstance().getAction("RunConfiguration")
-    val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return null
-    return runConfigAction.createPopupActionGroupOpen(component)
+    val project = e.project ?: return null
+    return createRunConfigurationsActionGroup(project, addHeader = false)
   }
 
   override fun update(e: AnActionEvent) {

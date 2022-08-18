@@ -195,17 +195,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     );
   }
 
-  /**
-   * @deprecated It is a temporary function just to reuse existing code. Will be soon deleted.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.Internal
-  @NotNull
-  public DefaultActionGroup createPopupActionGroupOpen(final JComponent button) {
-    return createPopupActionGroup(button);
-  }
-
   @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
