@@ -214,19 +214,23 @@ private class OtherRunOptions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    val executorFilter: (Executor) -> Boolean = {
-      // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-      it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
-    }
-
-    if (selectedConfiguration != null) {
-      return RunConfigurationsComboBoxAction.SelectConfigAction(selectedConfiguration, project, executorFilter)
-    }
-    if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-      return RunConfigurationsComboBoxAction.RunCurrentFileAction(executorFilter)
-    }
-    return ActionGroup.EMPTY_GROUP
+    return createOtherRunnersSubgroup(selectedConfiguration, project)
   }
+}
+
+internal fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
+  val executorFilter: (Executor) -> Boolean = {
+    // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+    it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+  }
+
+  if (runConfiguration != null) {
+    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, executorFilter)
+  }
+  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction(executorFilter)
+  }
+  return ActionGroup.EMPTY_GROUP
 }
 
 private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {

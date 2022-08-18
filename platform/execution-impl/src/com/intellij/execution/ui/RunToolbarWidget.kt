@@ -5,8 +5,9 @@ import com.intellij.execution.*
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
-import com.intellij.execution.impl.*
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.isProcessRunning
+import com.intellij.execution.impl.isOfSameType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
@@ -241,24 +241,10 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
           templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
         }
 
-        if (profilerExecutor != null) {
-          add(profilerExecutor.createExecutorActionGroup { conf })
+        val subgroup = createOtherRunnersSubgroup(conf, project)
+        if (subgroup != null) {
+          addAll(subgroup)
         }
-        add(Separator.create())
-        add(DumbAwareAction.create(ExecutionBundle.message("run.toolbar.widget.dropdown.edit.text")) {
-          it.project?.let { project ->
-            EditConfigurationsDialog(project, object: ProjectRunConfigurationConfigurable(project) {
-              override fun getSelectedConfiguration() = conf
-            }).show()
-          }
-        })
-        add(DumbAwareAction.create(ExecutionBundle.message("run.toolbar.widget.dropdown.delete.text")) {
-          val prj = it.project ?: return@create
-          if (Messages.showYesNoDialog(prj, ExecutionBundle.message("run.toolbar.widget.delete.dialog.message", conf.shortenName()), ExecutionBundle.message("run.toolbar.widget.delete.dialog.title"), null) == Messages.YES) {
-            val runManager = RunManagerImpl.getInstanceImpl(prj)
-            runManager.removeConfiguration(conf)
-          }
-        })
       })
     }
     actions.add(Separator.create())
