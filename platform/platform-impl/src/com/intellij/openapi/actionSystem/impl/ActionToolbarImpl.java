@@ -531,8 +531,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
     if (component instanceof ActionButton) {
       ((ActionButton)component).setLook(look);
+      component.setBorder(getActionButtonBorder());
     }
-    component.setBorder(getActionButtonBorder());
     tweakActionComponentUI(component);
     ToolbarActionTracker.followToolbarComponent(presentation, component, getComponent());
   }
