@@ -52,7 +52,7 @@ class SingleChangeListCommitWorkflow(
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
-      doCommit(commitState)
+      doCommit(sessionInfo)
     }
     else {
       doCommitCustom(sessionInfo)
@@ -61,24 +61,18 @@ class SingleChangeListCommitWorkflow(
 
   override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  private fun doCommit(commitState: ChangeListCommitState) {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
     with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
-      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
+      addCommonResultHandlers(sessionInfo, this)
       addResultHandler(DefaultNameChangeListCleaner(project, commitState))
-      addResultHandler(getCommitEventDispatcher(this))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
       }
       else {
         addResultHandler(ShowNotificationCommitResultHandler(this))
       }
-      addResultHandler(object : CommitterResultHandler {
-        override fun onAfterRefresh() {
-          endExecution()
-        }
-      })
 
       runCommit(DIALOG_TITLE, false)
     }
@@ -88,13 +82,11 @@ class SingleChangeListCommitWorkflow(
     sessionInfo as CommitSessionInfo.Custom
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
+      addCommonResultHandlers(sessionInfo, this)
       addResultHandler(DefaultNameChangeListCleaner(project, commitState))
-      addResultHandler(getCommitCustomEventDispatcher(this))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
       }
-      addResultHandler(getEndExecutionHandler())
 
       runCommit(sessionInfo.executor.actionText)
     }

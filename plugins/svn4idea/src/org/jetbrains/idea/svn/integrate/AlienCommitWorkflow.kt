@@ -4,7 +4,10 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitChangeListDialogWorkflow
+import com.intellij.vcs.commit.CommitSessionInfo
+import com.intellij.vcs.commit.DefaultNameChangeListCleaner
+import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 import org.jetbrains.annotations.Nls
 
 class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val changes: List<Change>, commitMessage: String?) :
@@ -23,11 +26,9 @@ class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     with(AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)) {
-      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
+      addCommonResultHandlers(sessionInfo, this)
       addResultHandler(DefaultNameChangeListCleaner(project, commitState))
-      addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
-      addResultHandler(getEndExecutionHandler())
 
       runCommit(DIALOG_TITLE, false)
     }

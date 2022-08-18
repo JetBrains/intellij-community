@@ -28,7 +28,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
-      doCommit()
+      doCommit(sessionInfo)
     }
     else {
       doCommitCustom(sessionInfo)
@@ -37,18 +37,12 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
 
   override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  private fun doCommit() {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
     with(LocalChangesCommitter(project, commitState, commitContext)) {
-      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
-      addResultHandler(getCommitEventDispatcher(this))
+      addCommonResultHandlers(sessionInfo, this)
       addResultHandler(ShowNotificationCommitResultHandler(this))
-      addResultHandler(object : CommitterResultHandler {
-        override fun onAfterRefresh() {
-          endExecution()
-        }
-      })
 
       runCommit(VcsBundle.message("commit.changes"), false)
     }
@@ -58,9 +52,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     sessionInfo as CommitSessionInfo.Custom
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
-      addResultHandler(getCommitCustomEventDispatcher(this))
-      addResultHandler(getEndExecutionHandler())
+      addCommonResultHandlers(sessionInfo, this)
 
       runCommit(sessionInfo.executor.actionText)
     }
