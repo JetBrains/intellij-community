@@ -62,8 +62,8 @@ interface CommitWorkflowListener : EventListener {
 
 abstract class AbstractCommitWorkflow(val project: Project) {
   private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
-  private val commitEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
-  private val commitCustomEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
+  private val commitEventDispatcher = EventDispatcher.create(CommitterResultHandler::class.java)
+  private val commitCustomEventDispatcher = EventDispatcher.create(CommitterResultHandler::class.java)
 
   var isExecuting = false
     private set
@@ -146,9 +146,14 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     eventDispatcher.multicaster.executionEnded()
   }
 
-  fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
-  fun addCommitListener(listener: CommitResultHandler, parent: Disposable) = commitEventDispatcher.addListener(listener, parent)
-  fun addCommitCustomListener(listener: CommitResultHandler, parent: Disposable) = commitCustomEventDispatcher.addListener(listener, parent)
+  fun addListener(listener: CommitWorkflowListener, parent: Disposable) =
+    eventDispatcher.addListener(listener, parent)
+
+  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable) =
+    commitEventDispatcher.addListener(listener, parent)
+
+  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
+    commitCustomEventDispatcher.addListener(listener, parent)
 
   fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     fireBeforeCommitChecksStarted(sessionInfo)
@@ -165,8 +170,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected open fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
     committer.addResultHandler(CheckinHandlersNotifier(committer, commitHandlers))
-    committer.addResultHandler(if (sessionInfo.isVcsCommit) CommitResultHandlerNotifier(committer, commitEventDispatcher.multicaster)
-                               else CommitResultHandlerNotifier(committer, commitCustomEventDispatcher.multicaster))
+    if (sessionInfo.isVcsCommit) {
+      committer.addResultHandler(commitEventDispatcher.multicaster)
+    }
+    else {
+      committer.addResultHandler(commitCustomEventDispatcher.multicaster)
+    }
     committer.addResultHandler(EndExecutionCommitResultHandler(this))
   }
 

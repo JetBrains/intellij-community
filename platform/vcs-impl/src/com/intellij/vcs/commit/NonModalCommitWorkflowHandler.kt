@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -415,10 +414,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
-  protected open inner class CommitStateCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = resetState()
+  protected open inner class CommitStateCleaner : CommitterResultHandler {
+    override fun onSuccess() = resetState()
     override fun onCancel() = Unit
-    override fun onFailure(errors: List<VcsException>) = resetState()
+    override fun onFailure() = resetState()
 
     protected open fun resetState() {
       disposeCommitOptions()

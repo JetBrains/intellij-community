@@ -60,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(this, ui)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(GitCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(GitCommitStateCleaner(), this)
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
@@ -288,10 +288,10 @@ internal class ChangesViewCommitWorkflowHandler(
 
     private fun initCommitMessage() = setCommitMessage(getCommitMessageFromPolicy())
 
-    override fun onSuccess(commitMessage: String) {
+    override fun onSuccess() {
       initCommitMessage()
 
-      super.onSuccess(commitMessage)
+      super.onSuccess()
     }
   }
 }
