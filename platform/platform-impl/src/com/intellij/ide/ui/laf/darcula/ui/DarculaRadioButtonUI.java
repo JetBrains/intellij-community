@@ -67,7 +67,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     AbstractButton button = (AbstractButton)c;
-    AbstractButtonLayout layout = new AbstractButtonLayout(button, removeInsetsBeforeLayout(button), getDefaultIcon());
+    AbstractButtonLayout layout = new AbstractButtonLayout(button, button.getSize(), removeInsetsBeforeLayout(button), getDefaultIcon());
 
     layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
     paintFocus(button, g, layout.textRect);
@@ -96,17 +96,15 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension dimension = computeOurPreferredSize(c);
-    return dimension != null ? dimension : super.getPreferredSize(c);
+    AbstractButton button = (AbstractButton)c;
+    AbstractButtonLayout layout = new AbstractButtonLayout(button, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE),
+                                                           removeInsetsBeforeLayout(button), getDefaultIcon());
+    return layout.getPreferredSize();
   }
 
   @Override
   public Dimension getMaximumSize(JComponent c) {
     return getPreferredSize(c);
-  }
-
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return DarculaCheckBoxUI.computeCheckboxPreferredSize(c, getDefaultIcon());
   }
 
   @Override
