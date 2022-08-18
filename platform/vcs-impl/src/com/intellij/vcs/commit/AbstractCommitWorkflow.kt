@@ -253,7 +253,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-    return CommitChecksResult.Passed(toCommit = true)
+    return CommitChecksResult.Passed
   }
 
   protected open fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
