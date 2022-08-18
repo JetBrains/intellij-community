@@ -241,11 +241,6 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   }
 
   @Override
-  protected Graphics getComponentGraphics(Graphics g) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
-  }
-
-  @Override
   protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
     if (!StartupUiUtil.isUnderDarcula()) {
