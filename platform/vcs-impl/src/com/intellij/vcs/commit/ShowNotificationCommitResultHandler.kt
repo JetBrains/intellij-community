@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISH
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
+import com.intellij.vcs.commit.Committer.Companion.collectErrors
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
