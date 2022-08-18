@@ -113,12 +113,12 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
   }
 
   private data class MLRankingSettingsState(val language: String,
-                                            val diffEnabled: Boolean,
+                                            val rankingEnabled: Boolean,
                                             val languageEnabled: Boolean,
-                                            val rankingEnabled: Boolean) {
+                                            val diffEnabled: Boolean) {
     companion object {
       fun build(language: String, settings: CompletionMLRankingSettings): MLRankingSettingsState {
-        return MLRankingSettingsState(language, settings.isRankingEnabled, settings.isShowDiffEnabled, settings.isLanguageEnabled(language))
+        return MLRankingSettingsState(language, settings.isRankingEnabled, settings.isLanguageEnabled(language), settings.isShowDiffEnabled)
       }
     }
 
