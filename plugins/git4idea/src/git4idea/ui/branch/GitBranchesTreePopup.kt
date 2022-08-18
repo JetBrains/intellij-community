@@ -5,12 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.ActiveComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.TreeActions
@@ -70,6 +72,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
     setSpeedSearchAlwaysShown()
     installShortcutActions(step.treeModel)
+    installHeaderToolbar()
   }
 
   override fun createContent(): JComponent {
@@ -106,6 +109,20 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       .forEach { action ->
         registerAction(ActionManager.getInstance().getId(action), KeymapUtil.getKeyStroke(action.shortcutSet), createShortcutAction(action))
       }
+  }
+
+  private fun installHeaderToolbar() {
+    val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass))
+    val toolbar = ActionManager.getInstance()
+      .createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+      .apply {
+        targetComponent = this@GitBranchesTreePopup.component
+        setReservePlaceAutoPopupIcon(false)
+        component.isOpaque = false
+      }
+    title.setButtonComponent(object : ActiveComponent.Adapter() {
+      override fun getComponent(): JComponent = toolbar.component
+    }, JBUI.Borders.emptyRight(2))
   }
 
   private fun createShortcutAction(action: AnAction) = object : AbstractAction() {

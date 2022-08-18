@@ -14,21 +14,27 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import kotlin.streams.asSequence
 
-class GitBranchPopupFetchAction<P: WizardPopup>(private val project: Project, private val popupClass: Class<P>) : GitFetch() {
+class GitBranchPopupFetchAction<P: WizardPopup>(private val popupClass: Class<P>) : GitFetch() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
+    val project = e.project
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     e.presentation.icon = if (isBusy(project)) GitBranchPopup.LOADING_ICON else AllIcons.Vcs.Fetch
     e.presentation.text = if (isBusy(project)) GitBundle.message("fetching") else GitBundle.message("action.fetch.text")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (isBusy(project)) return
+    val project = e.project
+    if (project == null || isBusy(project)) return
 
     super.actionPerformed(e)
   }
 
-  override fun onFetchFinished(result: GitFetchResult) {
+  override fun onFetchFinished(project: Project, result: GitFetchResult) {
     GitBranchIncomingOutgoingManager.getInstance(project)
       .forceUpdateBranches { ActivityTracker.getInstance().inc() }
     showNotificationIfNeeded(result)

@@ -103,16 +103,11 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
       myPopup.addToolbarAction(createUnsupportedIncomingAction(myProject), false);
     }
-    myPopup.addToolbarAction(createFetchAction(myProject), false);
+    myPopup.addToolbarAction(new GitBranchPopupFetchAction<>(BranchActionGroupPopup.class), false);
     MessageBusConnection connection = myProject.getMessageBus().connect(myPopup);
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, () -> {
       ApplicationManager.getApplication().invokeLater(() -> myPopup.update(), o -> myPopup.isDisposed());
     });
-  }
-
-  @NotNull
-  private static AnAction createFetchAction(@NotNull Project project) {
-    return new GitBranchPopupFetchAction<>(project, BranchActionGroupPopup.class);
   }
 
   @NotNull
