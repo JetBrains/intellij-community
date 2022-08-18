@@ -22,12 +22,9 @@ class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val
   override fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>) = sessionInfo.isVcsCommit
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
-    DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-  }
-
-  private fun doCommit(commitState: ChangeListCommitState) {
     with(AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)) {
       addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
+      addResultHandler(DefaultNameChangeListCleaner(project, commitState))
       addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
       addResultHandler(getEndExecutionHandler())

@@ -52,7 +52,7 @@ class SingleChangeListCommitWorkflow(
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
-      DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+      doCommit(commitState)
     }
     else {
       doCommitCustom(sessionInfo)
@@ -66,6 +66,7 @@ class SingleChangeListCommitWorkflow(
 
     with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
       addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
+      addResultHandler(DefaultNameChangeListCleaner(project, commitState))
       addResultHandler(getCommitEventDispatcher(this))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
@@ -85,15 +86,10 @@ class SingleChangeListCommitWorkflow(
 
   private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
     sessionInfo as CommitSessionInfo.Custom
-    val cleaner = DefaultNameChangeListCleaner(project, commitState)
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
-      addResultHandler(object : CommitterResultHandler {
-        override fun onSuccess() {
-          cleaner.clean()
-        }
-      })
+      addResultHandler(DefaultNameChangeListCleaner(project, commitState))
       addResultHandler(getCommitCustomEventDispatcher(this))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
@@ -117,17 +113,12 @@ abstract class CommitChangeListDialogWorkflow(
   lateinit var commitState: ChangeListCommitState
 }
 
-class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
+class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
   private val listName = commitState.changeList.name
 
-  fun use(block: () -> Unit) {
-    block()
-    clean()
-  }
-
-  fun clean() {
+  override fun onSuccess() {
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
       ChangeListManager.getInstance(project).editComment(listName, "")
     }
