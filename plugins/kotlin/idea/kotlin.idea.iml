@@ -105,5 +105,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
   </component>
 </module>

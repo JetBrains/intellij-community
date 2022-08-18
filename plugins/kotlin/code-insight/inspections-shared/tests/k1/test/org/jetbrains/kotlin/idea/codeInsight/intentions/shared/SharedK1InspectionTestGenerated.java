@@ -17,21 +17,45 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-shared/tests/k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/inspections")
 public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1InspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inspections/dataClassPrivateConstructor")
-    public abstract static class DataClassPrivateConstructor extends AbstractSharedK1InspectionTest {
+    @TestMetadata("../testData/inspections")
+    public abstract static class Inspections extends AbstractSharedK1InspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/inspections/dataClassPrivateConstructor/inspectionData")
-        public static class InspectionData extends AbstractSharedK1InspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("../testData/inspections/dataClassPrivateConstructor")
+        public abstract static class DataClassPrivateConstructor extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/dataClassPrivateConstructor/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("inspections.test")
-            public void testInspections_test() throws Exception {
-                runTest("../testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
+                }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal")
+    public abstract static class InspectionsLocal extends AbstractSharedK1InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
+        public abstract static class SimplifyNegatedBinaryExpression extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
+                }
             }
         }
     }
