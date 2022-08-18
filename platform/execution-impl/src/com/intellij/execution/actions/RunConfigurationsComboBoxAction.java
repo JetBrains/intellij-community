@@ -224,7 +224,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     addTargetGroup(project, allActionsGroup);
 
-    allActionsGroup.add(new RunCurrentFileAction());
+    allActionsGroup.add(new RunCurrentFileAction(executor -> true));
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
@@ -380,12 +380,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
-    private RunCurrentFileAction() {
+  @ApiStatus.Internal
+  public static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
+    private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
+
+    public RunCurrentFileAction(@NotNull Function<? super Executor, Boolean> executorFilter) {
       super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
             ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
             null);
-
+      myExecutorFilter = executorFilter;
       setPopup(true);
       getTemplatePresentation().setPerformGroup(true);
 
@@ -394,7 +397,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     private void addSubActions() {
       // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
-      addExecutorActions(this, ExecutorRegistryImpl.RunCurrentFileExecutorAction::new, executor -> true);
+      addExecutorActions(this, ExecutorRegistryImpl.RunCurrentFileExecutorAction::new, myExecutorFilter);
       addSeparator();
       addAction(new ExecutorRegistryImpl.EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
     }

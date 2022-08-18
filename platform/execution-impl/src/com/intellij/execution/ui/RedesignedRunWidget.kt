@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
+import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
@@ -158,6 +159,9 @@ private class RunWidgetButtonLook(private val project: Project) : IdeaActionButt
 
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+    if (icon.iconWidth == 0 || icon.iconHeight == 0) {
+      return
+    }
     // TODO: need more magic about icons
     var targetIcon = icon
     if (targetIcon is DeferredIcon) {
@@ -208,11 +212,18 @@ private class OtherRunOptions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-
-    return RunConfigurationsComboBoxAction.SelectConfigAction(selectedConfiguration, project) {
+    val executorFilter: (Executor) -> Boolean = {
       // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
       it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
     }
+
+    if (selectedConfiguration != null) {
+      return RunConfigurationsComboBoxAction.SelectConfigAction(selectedConfiguration, project, executorFilter)
+    }
+    if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+      return RunConfigurationsComboBoxAction.RunCurrentFileAction(executorFilter)
+    }
+    return ActionGroup.EMPTY_GROUP
   }
 }
 
