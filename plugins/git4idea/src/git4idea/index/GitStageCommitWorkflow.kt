@@ -6,7 +6,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitHandlersNotifier
+import com.intellij.vcs.commit.CommitSessionInfo
+import com.intellij.vcs.commit.NonModalCommitWorkflow
+import com.intellij.vcs.commit.isCleanupCommitMessage
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitCommitTemplateTracker
@@ -47,7 +50,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(GitStageShowNotificationCommitResultHandler(this))
-      addResultHandler(EdtCommitResultHandler(getEndExecutionHandler()))
+      addResultHandler(getEndExecutionHandler())
 
       runCommit(message("stage.commit.process"), false)
     }

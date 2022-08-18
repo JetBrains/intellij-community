@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.containers.forEachLoggingErrors
@@ -119,6 +120,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitContext = CommitContext()
   }
 
+  @RequiresEdt
   internal fun startExecution(block: () -> Boolean) {
     check(!isExecuting)
 
@@ -144,6 +146,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       false
     }
 
+  @RequiresEdt
   internal fun endExecution() {
     check(isExecuting)
 
@@ -297,9 +300,13 @@ class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitR
 }
 
 private class EndExecutionCommitResultHandler(private val workflow: AbstractCommitWorkflow) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = workflow.endExecution()
-  override fun onCancel() = workflow.endExecution()
-  override fun onFailure(errors: List<VcsException>) = workflow.endExecution()
+  override fun onSuccess(commitMessage: String) = endExecution()
+  override fun onCancel() = endExecution()
+  override fun onFailure(errors: List<VcsException>) = endExecution()
+
+  private fun endExecution() {
+    runInEdt { workflow.endExecution() }
+  }
 }
 
 sealed class CommitSessionInfo {
