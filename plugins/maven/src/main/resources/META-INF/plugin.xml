@@ -24,6 +24,8 @@
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
     <extensionPoint name="importing.workspaceConfigurator" interface="org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator"
                     dynamic="true"/>
+    <extensionPoint name="importing.afterImportConfigurator" interface="org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator"
+                    dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"

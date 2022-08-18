@@ -101,9 +101,11 @@ interface MavenWorkspaceConfigurator {
    * Implement this method in order to make modifications in components, which are not represented in the [com.intellij.workspaceModel.ide.WorkspaceModel],
    * but which should be kept in sync with it.
    *
+   * For slower/non-immediate configuration use [MavenAfterImportConfigurator]
+   *
    * * Called in WriteAction.
    * * Should be as fast as possible.
-   * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder]
+   * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
   @RequiresWriteLock
   @JvmDefault
@@ -142,5 +144,20 @@ interface MavenWorkspaceConfigurator {
 
   interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
+  }
+}
+
+@ApiStatus.Experimental
+interface MavenAfterImportConfigurator {
+  /**
+   * Called in background after project import is finished.
+   * See also [org.jetbrains.idea.maven.project.MavenImportListener]
+   */
+  fun afterImport(context: Context) {
+  }
+
+  interface Context : UserDataHolder {
+    val project: Project
+    val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
   }
 }

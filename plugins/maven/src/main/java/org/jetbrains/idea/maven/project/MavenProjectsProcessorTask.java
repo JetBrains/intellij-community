@@ -16,9 +16,11 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
+@ApiStatus.Internal
 public interface MavenProjectsProcessorTask {
   void perform(Project project,
                MavenEmbeddersManager embeddersManager,

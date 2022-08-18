@@ -35,6 +35,8 @@ import java.util.function.Function
 
 internal val WORKSPACE_CONFIGURATOR_EP: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create(
   "org.jetbrains.idea.maven.importing.workspaceConfigurator")
+internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName.create(
+  "org.jetbrains.idea.maven.importing.afterImportConfigurator")
 
 internal class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
@@ -78,6 +80,17 @@ internal class WorkspaceProjectImporter(
     createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
 
     stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
+
+    postTasks.add(MavenProjectsProcessorTask { _, _, _, indicator ->
+      val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
+        override val project = myProject
+        override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
+      }
+      for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
+        indicator.checkCanceled()
+        configurator.afterImport(context)
+      }
+    })
 
     return postTasks
 
