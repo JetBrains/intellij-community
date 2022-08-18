@@ -91,8 +91,10 @@ private class CoroutineTimeMeasurer(
   override val key: CoroutineContext.Key<*> get() = CoroutineTimeMeasurerKey
 
   private val creationTime: Long = StartUpMeasurer.getCurrentTime()
+
   @Suppress("unused")
   private var currentActivity: Activity? = null
+
   @Suppress("unused")
   private var lastSuspensionTime: Long = -1
 
