@@ -176,7 +176,7 @@ fun start(args: Array<String>) {
       else {
         val euaDocument = euaDocumentDeferred.await()
         val baseLaF = initUiJob.await()
-        withContext(subtask("show eua")) {
+        subtask("show eua") {
           showEuaIfNeeded(euaDocument, baseLaF)
         }
       }
@@ -187,7 +187,7 @@ fun start(args: Array<String>) {
       configImportNeededDeferred.join()
 
       val (configPath, systemPath) = pathDeferred.await()
-      withContext(subtask("system dirs checking")) {
+      subtask("system dirs checking") {
         if (!checkSystemDirs(configPath, systemPath)) {
           exitProcess(AppExitCodes.DIR_CHECK_FAILED)
         }
@@ -268,11 +268,11 @@ fun start(args: Array<String>) {
       // this must happen after locking system dirs
       val log = logDeferred.await()
 
-      withContext(subtask("system libs setup")) {
+      subtask("system libs setup") {
         setupSystemLibraries()
       }
 
-      withContext(subtask("system libs loading") + Dispatchers.IO) {
+      subtask("system libs loading", Dispatchers.IO) {
         JnaLoader.load(log)
         if (SystemInfoRt.isWindows) {
           IdeaWin32.isAvailable()
@@ -289,7 +289,7 @@ fun start(args: Array<String>) {
         launch {
           initUiJob.join()
 
-          withContext(subtask("mac app init")) {
+          subtask("mac app init") {
             MacOSApplicationProvider.initApplication(log)
           }
         }
@@ -310,7 +310,7 @@ fun start(args: Array<String>) {
 
     val telemetryInitJob = launch(asyncDispatcher) {
       appInfoDeferred.join()
-      withContext(subtask("opentelemetry configuration")) {
+      subtask("opentelemetry configuration") {
         TraceManager.init()
       }
     }
@@ -873,7 +873,7 @@ private fun CoroutineScope.lockSystemDirs(checkConfig: Boolean,
 
   return async(Dispatchers.IO) {
     val (configPath, systemPath) = pathDeferred.await()
-    withContext(subtask("system dirs locking")) {
+    subtask("system dirs locking") {
       // this check must be performed before system directories are locked
       val importNeeded = checkConfig &&
                          (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
