@@ -45,7 +45,6 @@ fun rootTask(): CoroutineContext = MeasureCoroutineTime
  *   ...
  * }
  */
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 suspend fun subtask(name: String): CoroutineContext {
   val measurer = coroutineContext[CoroutineTimeMeasurerKey]
   val childMeasurer = measurer?.copyForChild() ?: EmptyCoroutineContext
