@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.vcs.commit.CommitHandlersNotifier
+import com.intellij.vcs.commit.CheckinHandlersNotifier
 import com.intellij.vcs.commit.CommitSessionInfo
 import com.intellij.vcs.commit.NonModalCommitWorkflow
 import com.intellij.vcs.commit.isCleanupCommitMessage
@@ -47,7 +47,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
 
     val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
     with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
-      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(GitStageShowNotificationCommitResultHandler(this))
       addResultHandler(getEndExecutionHandler())

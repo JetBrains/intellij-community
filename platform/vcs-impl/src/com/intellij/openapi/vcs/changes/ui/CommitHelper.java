@@ -41,7 +41,7 @@ public class CommitHelper {
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
     myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName);
 
-    myCommitter.addResultHandler(new CommitHandlersNotifier(myCommitter, handlers));
+    myCommitter.addResultHandler(new CheckinHandlersNotifier(myCommitter, handlers));
     if (resultHandler != null) {
       myCommitter.addResultHandler(new CommitResultHandlerNotifier(myCommitter, resultHandler));
     }

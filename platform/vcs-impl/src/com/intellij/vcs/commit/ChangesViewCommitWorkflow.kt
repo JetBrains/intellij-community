@@ -41,7 +41,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     LOG.debug("Do actual commit")
 
     with(LocalChangesCommitter(project, commitState, commitContext)) {
-      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
       addResultHandler(object : CommitterResultHandler {
@@ -58,7 +58,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     sessionInfo as CommitSessionInfo.Custom
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitCustomEventDispatcher(this))
       addResultHandler(getEndExecutionHandler())
 

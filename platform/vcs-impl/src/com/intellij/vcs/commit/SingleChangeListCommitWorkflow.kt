@@ -65,7 +65,7 @@ class SingleChangeListCommitWorkflow(
     LOG.debug("Do actual commit")
 
     with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
-      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitEventDispatcher(this))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
@@ -88,7 +88,7 @@ class SingleChangeListCommitWorkflow(
     val cleaner = DefaultNameChangeListCleaner(project, commitState)
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(this, commitHandlers))
+      addResultHandler(CheckinHandlersNotifier(this, commitHandlers))
       addResultHandler(object : CommitterResultHandler {
         override fun onSuccess() {
           cleaner.clean()

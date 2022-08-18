@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.containers.forEachLoggingErrors
 
-private val LOG = logger<CommitHandlersNotifier>()
+private val LOG = logger<CheckinHandlersNotifier>()
 
-class CommitHandlersNotifier(private val committer: Committer,
-                             private val handlers: List<CheckinHandler>) : CommitterResultHandler {
+class CheckinHandlersNotifier(private val committer: Committer,
+                              private val handlers: List<CheckinHandler>) : CommitterResultHandler {
   override fun onSuccess() {
     handlers.forEachLoggingErrors(LOG) { it.checkinSuccessful() }
   }

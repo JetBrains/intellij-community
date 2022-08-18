@@ -30,7 +30,7 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.CommitHandlersNotifier;
+import com.intellij.vcs.commit.CheckinHandlersNotifier;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
@@ -325,7 +325,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     SingleChangeListCommitter committer =
       new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), "Commit");
 
-    committer.addResultHandler(new CommitHandlersNotifier(committer, singletonList(checkinHandler)));
+    committer.addResultHandler(new CheckinHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
   }
 
