@@ -488,7 +488,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                                    AllIcons.Actions.PreviewDetails) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+        return ActionUpdateThread.BGT;
       }
 
 
@@ -510,7 +510,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                             filterModifiedIcon) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -541,7 +541,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
         @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
+          return ActionUpdateThread.BGT;
         }
 
         @Override
