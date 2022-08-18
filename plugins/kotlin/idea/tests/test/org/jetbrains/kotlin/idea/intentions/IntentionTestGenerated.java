@@ -7374,6 +7374,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("differentTypes.kt")
+        public void testDifferentTypes() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/differentTypes.kt");
+        }
+
         @TestMetadata("double.kt")
         public void testDouble() throws Exception {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/double.kt");
