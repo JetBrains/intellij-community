@@ -66,7 +66,6 @@ class SingleChangeListCommitWorkflow(
 
     with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
       addCommonResultHandlers(sessionInfo, this)
-      addResultHandler(DefaultNameChangeListCleaner(project, commitState))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
       }
@@ -83,7 +82,6 @@ class SingleChangeListCommitWorkflow(
 
     with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
       addCommonResultHandlers(sessionInfo, this)
-      addResultHandler(DefaultNameChangeListCleaner(project, commitState))
       if (resultHandler != null) {
         addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
       }
@@ -103,9 +101,14 @@ abstract class CommitChangeListDialogWorkflow(
   internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
   lateinit var commitState: ChangeListCommitState
+
+  override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
+    super.addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(DefaultNameChangeListCleaner(project, commitState))
+  }
 }
 
-class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
+private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
   private val listName = commitState.changeList.name
