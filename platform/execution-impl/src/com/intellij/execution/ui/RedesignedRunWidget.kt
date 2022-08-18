@@ -53,6 +53,7 @@ internal fun createRunToolbarWithoutStop(project: Project): ActionToolbar {
       setSeparatorCreator { Box.createHorizontalStrut(JBUIScale.scale(8)) }
       setMinimumButtonSize(JBUI.size(36, 30))
       setActionButtonBorder(Borders.empty())
+      border = Borders.empty(5, 0)
     }
   }
 }
@@ -82,6 +83,7 @@ private fun createRunActionToolbar(project: Project): ActionToolbar {
       setActionButtonBorder(Borders.empty())
       setSeparatorCreator { createSeparator() }
       setCustomButtonLook(RunWidgetButtonLook(project))
+      border = null
     }
   }
 }
