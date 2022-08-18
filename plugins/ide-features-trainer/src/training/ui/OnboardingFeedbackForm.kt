@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
@@ -353,9 +352,7 @@ private fun installSubPanelLogic(feedbackOption: FeedbackOption, feedbackSubPane
   }
 }
 
-private fun getLikenessIcon(icon: Icon): Icon {
-  return IndentedIcon(IconUtil.scale(icon, null, 0.25f), JBUI.insets(6))
-}
+private fun getLikenessIcon(icon: Icon): Icon = IndentedIcon(icon, JBUI.insets(6))
 
 private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JButton() {
   var isChosen = false
