@@ -28,9 +28,9 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
-                              MavenWorkspaceConfigurator {
-  private val LOG = Logger.getInstance(MavenCompilerImporter::class.java)
+class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+                                  MavenWorkspaceConfigurator {
+  private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
 
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {

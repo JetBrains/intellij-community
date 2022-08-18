@@ -20,8 +20,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveMavenHomeDirectory
 
-class MavenWslTargetImporter : MavenImporter("", ""),
-                               MavenWorkspaceConfigurator {
+class MavenWslTargetConfigurator : MavenImporter("", ""),
+                                   MavenWorkspaceConfigurator {
 
   override fun isMigratedToConfigurator(): Boolean {
     return true

@@ -17,8 +17,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
 @ApiStatus.Internal
-class RemoteRepositoriesImporter : MavenImporter("", ""),
-                                   MavenWorkspaceConfigurator {
+class MavenRemoteRepositoriesConfigurator : MavenImporter("", ""),
+                                            MavenWorkspaceConfigurator {
   private val COLLECTED_REPOSITORIES = Key.create<MutableSet<RemoteRepositoryDescription>>("COLLECTED_REPOSITORIES")
 
   override fun processChangedModulesOnly(): Boolean = false
@@ -78,6 +78,6 @@ class RemoteRepositoriesImporter : MavenImporter("", ""),
   }
 
   companion object {
-    val LOG = Logger.getInstance(RemoteRepositoriesImporter::class.java)
+    val LOG = Logger.getInstance(MavenRemoteRepositoriesConfigurator::class.java)
   }
 }

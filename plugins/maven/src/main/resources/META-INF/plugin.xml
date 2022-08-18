@@ -494,20 +494,20 @@
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
 
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfigurator"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenExternalAnnotationsConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenExternalAnnotationsConfigurator"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenRemoteRepositoriesConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenRemoteRepositoriesConfigurator"/>
 
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>

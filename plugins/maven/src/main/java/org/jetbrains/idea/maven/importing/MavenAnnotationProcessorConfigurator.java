@@ -48,7 +48,7 @@ import java.util.function.Function;
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
 @ApiStatus.Internal
-public class MavenAnnotationProcessorImporter extends MavenImporter implements MavenWorkspaceConfigurator {
+public class MavenAnnotationProcessorConfigurator extends MavenImporter implements MavenWorkspaceConfigurator {
 
   private static final String PROFILE_PREFIX = "Annotation profile for ";
   public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
@@ -62,7 +62,7 @@ public class MavenAnnotationProcessorImporter extends MavenImporter implements M
   private static final Key<Map<MavenProject, List<String>>> ANNOTATION_PROCESSOR_MODULE_NAMES =
     Key.create("ANNOTATION_PROCESSOR_MODULE_NAMES");
 
-  public MavenAnnotationProcessorImporter() {
+  public MavenAnnotationProcessorConfigurator() {
     super("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 

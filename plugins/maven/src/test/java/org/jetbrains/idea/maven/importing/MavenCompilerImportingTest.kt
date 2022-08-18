@@ -14,7 +14,7 @@ import junit.framework.TestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
-open class MavenCompilerImporterTest : MavenMultiVersionImportingTestCase() {
+open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var ideCompilerConfiguration: CompilerConfigurationImpl
 
   private lateinit var javacCompiler: BackendCompiler

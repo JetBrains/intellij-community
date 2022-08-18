@@ -20,8 +20,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 @ApiStatus.Internal
-class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
-                                    MavenWorkspaceConfigurator {
+class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+                                             MavenWorkspaceConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
@@ -121,6 +121,6 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
     }
 
   companion object {
-    val LOG = Logger.getInstance(ExternalAnnotationsImporter::class.java)
+    val LOG = Logger.getInstance(MavenExternalAnnotationsConfigurator::class.java)
   }
 }
