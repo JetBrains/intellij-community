@@ -46,8 +46,9 @@ abstract class AbstractCommitter(
       val indicator = DelegatingProgressIndicator()
       TransactionGuard.getInstance().assertWriteSafeContext(indicator.modalityState)
       val endSemaphore = Semaphore()
-
       endSemaphore.down()
+
+      indicator.text = message("message.text.background.tasks")
       ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
         indicator.text = message("message.text.commit.progress")
         try {
@@ -63,7 +64,6 @@ abstract class AbstractCommitter(
         }
       }
 
-      indicator.text = message("message.text.background.tasks")
       ProgressIndicatorUtils.awaitWithCheckCanceled(endSemaphore, indicator)
     }
     finally {
